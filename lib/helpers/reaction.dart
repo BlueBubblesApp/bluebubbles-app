@@ -35,14 +35,14 @@ class ReactionTypes {
 }
 
 class Reaction {
-  final String? reactionType;
+  final String reactionType;
 
   List<Message> messages = [];
 
-  Reaction({this.reactionType});
+  Reaction({required this.reactionType});
 
   static List<Message> getUniqueReactionMessages(List<Message> messages) {
-    List<int?> handleCache = [];
+    List<int> handleCache = [];
     List<Message> current = messages;
     List<Message> output = [];
 
@@ -51,7 +51,7 @@ class Reaction {
 
     // Iterate over the messages and insert the latest reaction for each user
     for (Message msg in current) {
-      int? cache = msg.isFromMe! ? 0 : msg.handleId;
+      int cache = msg.isFromMe! ? 0 : msg.handleId ?? 0;
       if (!handleCache.contains(cache)) {
         handleCache.add(cache);
 
@@ -86,36 +86,6 @@ class Reaction {
 
   void addMessage(Message message) {
     this.messages.add(message);
-  }
-
-  bool hasMyReaction({List<Message>? messages}) {
-    for (Message msg in messages ?? this.messages) {
-      if (msg.isFromMe!) return true;
-    }
-
-    return false;
-  }
-
-  List<Message> getUniqueReactions({List<Message>? messages}) {
-    List<int?> cache = [];
-    List<Message> msgs = [];
-    List<Message> current = messages ?? this.messages;
-
-    // Sort the messages
-    current.sort((a, b) => -a.dateCreated!.compareTo(b.dateCreated!));
-
-    // Iterate over them and get the unique reactions (per participant)
-    for (Message msg in current) {
-      int? cached = msg.isFromMe! ? 0 : msg.handleId;
-      if (!cache.contains(cached)) {
-        cache.add(cached);
-
-        // Only add the reaction if it's not a "negative"
-        if (!msg.associatedMessageType!.startsWith("-")) msgs.add(msg);
-      }
-    }
-
-    return msgs;
   }
 
   Widget? getSmallWidget(BuildContext context) {

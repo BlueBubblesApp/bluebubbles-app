@@ -208,9 +208,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                     onPressed: () async {
                       Share.file(
                         "Shared ${widget.attachment!.mimeType!.split("/")[0]} from BlueBubbles: ${widget.attachment!.transferName}",
-                        widget.attachment!.transferName,
                         widget.file!.path,
-                        widget.attachment!.mimeType,
                       );
                     },
                     child: Icon(

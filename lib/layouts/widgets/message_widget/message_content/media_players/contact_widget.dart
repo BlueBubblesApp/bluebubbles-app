@@ -25,7 +25,7 @@ class ContactWidget extends StatefulWidget {
 }
 
 class _ContactWidgetState extends State<ContactWidget> {
-  Contact? contact;
+  late Contact contact;
 
   @override
   void initState() {

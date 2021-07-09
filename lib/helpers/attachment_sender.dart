@@ -24,14 +24,14 @@ class AttachmentSender {
 
   int _totalChunks = 0;
   int _chunkSize = 500;
-  Chat? _chat;
+  late Chat _chat;
 
   // String _tempGuid;
 
   late File _attachment;
-  String? _attachmentGuid;
+  late String _attachmentGuid;
   late List<int> _imageBytes;
-  String? _text;
+  late String _text;
   String? _attachmentName;
   Attachment? messageAttachment;
   Message? sentMessage;
@@ -42,8 +42,8 @@ class AttachmentSender {
 
   AttachmentSender(
     File attachment,
-    Chat? chat,
-    String? text,
+    Chat chat,
+    String text,
   ) {
     // Set default chunk size to what is set in the settings
     _chunkSize = SettingsManager().settings.chunkSize * 1024;

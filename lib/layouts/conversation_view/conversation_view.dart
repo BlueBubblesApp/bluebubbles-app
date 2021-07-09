@@ -178,14 +178,14 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       }
     }
 
-    if (attachments.length > 0) {
+    if (attachments.length > 0 && chat != null) {
       for (int i = 0; i < attachments.length; i++) {
         OutgoingQueue().add(
           new QueueItem(
             event: "send-attachment",
             item: new AttachmentSender(
               attachments[i],
-              chat,
+              chat!,
               // This means to send the text when the last attachment is sent
               // If we switched this to i == 0, then it will be send with the first attachment
               i == attachments.length - 1 ? text : "",

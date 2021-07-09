@@ -112,7 +112,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget> with TickerProvider
       // If pre-caching is enabled, fetch the image and save it
       if (SettingsManager().settings.preCachePreviewImages && !isNullOrEmpty(meta!.image)!) {
         // Save from URL
-        File? newFile = await saveImageFromUrl(widget.message!.guid, meta.image!);
+        File? newFile = await saveImageFromUrl(widget.message!.guid!, meta.image!);
 
         // If we downloaded a file, set the new metadata path
         if (newFile != null && newFile.existsSync()) {

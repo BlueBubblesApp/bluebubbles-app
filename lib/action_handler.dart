@@ -178,7 +178,7 @@ class ActionHandler {
           item: new AttachmentSender(
             file,
             chat,
-            i == message.attachments!.length - 1 ? message.text : "",
+            i == message.attachments!.length - 1 ? message.text ?? "" : "",
           ),
         ),
       );

@@ -23,7 +23,7 @@ import 'package:flutter/material.dart';
 
 class SentMessageHelper {
   static Widget buildMessageWithTail(
-      BuildContext context, Message? message, bool showTail, bool hasReactions, bool? bigEmoji,
+      BuildContext context, Message? message, bool showTail, bool hasReactions, bool bigEmoji,
       {Widget? customContent,
       Message? olderMessage,
       CurrentChat? currentChat,
@@ -215,7 +215,7 @@ class SentMessageHelper {
 
 class SentMessage extends StatefulWidget {
   final bool showTail;
-  final Message? message;
+  final Message message;
   final Message? olderMessage;
   final Message? newerMessage;
   final bool? showHero;
@@ -289,7 +289,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
       message = BalloonBundleWidget(message: widget.message);
     } else if (!isEmptyString(widget.message!.text)) {
       message = SentMessageHelper.buildMessageWithTail(
-          context, widget.message, widget.showTail, widget.message!.hasReactions, widget.message!.bigEmoji,
+          context, widget.message, widget.showTail, widget.message!.hasReactions, widget.message!.bigEmoji ?? false,
           olderMessage: widget.olderMessage);
       if (widget.showHero!) {
         message = Hero(

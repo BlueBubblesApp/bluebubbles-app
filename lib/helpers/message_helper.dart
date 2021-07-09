@@ -37,11 +37,11 @@ class MessageHelper {
     // Create master list for all the messages and a chat cache
     List<Message> _messages = <Message>[];
     Map<Message, String?> notificationMessages = <Message, String?>{};
-    Map<String?, Chat> chats = <String?, Chat>{};
+    Map<String, Chat> chats = <String, Chat>{};
 
     // Add the chat in the cache and save it if it hasn't been saved yet
-    if (chat != null) {
-      chats[chat.guid] = chat;
+    if (chat?.guid != null) {
+      chats[chat!.guid!] = chat;
       if (chat.id == null) {
         await chat.save();
       }
@@ -62,9 +62,9 @@ class MessageHelper {
         // If there is a cached chat, get it. Otherwise, save the new one
         if (msgChat != null && chats.containsKey(msgChat.guid)) {
           msgChat = chats[msgChat.guid];
-        } else if (msgChat != null) {
-          await msgChat.save();
-          chats[msgChat.guid] = msgChat;
+        } else if (msgChat?.guid != null) {
+          await msgChat!.save();
+          chats[msgChat.guid!] = msgChat;
         }
       }
 
@@ -102,7 +102,8 @@ class MessageHelper {
 
     if (notifyForNewMessage && notifyMessageManager) {
       notificationMessages.forEach((message, value) async {
-        Chat? msgChat = chats[value];
+        //this should always be non-null
+        Chat msgChat = chats[value]!;
 
         if (notifyForNewMessage) {
           await MessageHelper.handleNotification(message, msgChat, force: true);
@@ -121,11 +122,11 @@ class MessageHelper {
 
   static Future<void> bulkDownloadAttachments(Chat? chat, List<dynamic> messages) async {
     // Create master list for all the messages and a chat cache
-    Map<String?, Chat> chats = <String?, Chat>{};
+    Map<String, Chat> chats = <String, Chat>{};
 
     // Add the chat in the cache and save it if it hasn't been saved yet
-    if (chat != null) {
-      chats[chat.guid] = chat;
+    if (chat?.guid != null) {
+      chats[chat!.guid!] = chat;
       if (chat.id == null) {
         await chat.save();
       }
@@ -142,9 +143,9 @@ class MessageHelper {
         // If there is a cached chat, get it. Otherwise, save the new one
         if (msgChat != null && chats.containsKey(msgChat.guid)) {
           msgChat = chats[msgChat.guid];
-        } else if (msgChat != null) {
-          await msgChat.save();
-          chats[msgChat.guid] = msgChat;
+        } else if (msgChat?.guid != null) {
+          await msgChat!.save();
+          chats[msgChat.guid!] = msgChat;
         }
       }
 
@@ -184,7 +185,7 @@ class MessageHelper {
     return chats;
   }
 
-  static Future<void> handleNotification(Message message, Chat? chat, {bool force = false}) async {
+  static Future<void> handleNotification(Message message, Chat chat, {bool force = false}) async {
     // See if there is an existing message for the given GUID
     Message? existingMessage;
     if (!force) existingMessage = await Message.findOne({"guid": message.guid});
@@ -230,7 +231,7 @@ class MessageHelper {
     );
   }
 
-  static Future<String?> getNotificationText(Message message) async {
+  static Future<String> getNotificationText(Message message) async {
     // If the item type is not 0, it's a group event
     if (message.isGroupEvent()) {
       return await getGroupEventText(message);
@@ -295,11 +296,11 @@ class MessageHelper {
       return "$sender ${message.text}";
     } else {
       // It's all other message types
-      return message.text;
+      return message.text ?? "Unknown Message";
     }
   }
 
-  static bool shouldShowBigEmoji(String? text) {
+  static bool shouldShowBigEmoji(String text) {
     if (isEmptyString(text)) return false;
 
     RegExp pattern = emojiRegex;
@@ -327,10 +328,10 @@ class MessageHelper {
     return normalized;
   }
 
-  static String? getInteractiveText(Message message) {
+  static String getInteractiveText(Message message) {
     if (message.balloonBundleId == null) return "Null Balloon Bundle ID";
     if (nameMap.containsKey(message.balloonBundleId)) {
-      return nameMap[message.balloonBundleId!];
+      return nameMap[message.balloonBundleId!]!;
     }
 
     String val = message.balloonBundleId!.toLowerCase();
@@ -372,7 +373,7 @@ class MessageHelper {
     return false;
   }
 
-  static bool getShowTailReversed(BuildContext context, Message? message, Message? olderMessage) =>
+  static bool getShowTailReversed(BuildContext context, Message message, Message? olderMessage) =>
       getShowTail(context, message, olderMessage);
 
 // static List<TextSpan> buildEmojiText(String text, TextStyle style) {

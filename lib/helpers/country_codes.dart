@@ -1244,7 +1244,7 @@ List<CountryCode> getCountryCodes() {
   if (countryCodes.length > 0) return countryCodes;
   for (Map<String, String> item in codes) {
     if (countryCodes.firstWhereOrNull((element) => element.code == item['code']) == null) {
-      countryCodes.add(CountryCode(name: item["name"], code: item["code"], dialCode: item["dial_code"]));
+      countryCodes.add(CountryCode(name: item["name"]!, code: item["code"]!, dialCode: item["dial_code"]!));
     }
   }
 
@@ -1252,9 +1252,9 @@ List<CountryCode> getCountryCodes() {
 }
 
 class CountryCode {
-  String? name;
-  String? code;
-  String? dialCode;
+  String name;
+  String code;
+  String dialCode;
 
   CountryCode({
     required this.name,

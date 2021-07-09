@@ -118,9 +118,7 @@ class _VideoViewerState extends State<VideoViewer> {
                 // final Uint8List bytes = await widget.file.readAsBytes();
                 Share.file(
                   "Shared ${widget.attachment.mimeType!.split("/")[0]} from BlueBubbles: ${widget.attachment.transferName}",
-                  widget.attachment.transferName,
                   widget.file.path,
-                  widget.attachment.mimeType,
                 );
               },
               child: Icon(

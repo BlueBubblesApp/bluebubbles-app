@@ -612,9 +612,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                 for (Attachment? element in widget.message!.attachments!) {
                   Share.file(
                     "${element!.mimeType!.split("/")[0].capitalizeFirst} shared from BlueBubbles: ${element.transferName}",
-                    element.transferName,
                     element.getPath(),
-                    element.mimeType,
                   );
                 }
               } else if (widget.message!.text!.length > 0) {

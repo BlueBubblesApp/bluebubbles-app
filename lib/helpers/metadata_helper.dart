@@ -11,13 +11,13 @@ import 'package:metadata_fetch/metadata_fetch.dart';
 
 /// Adds getter/setter for the original [Response.request.url]
 extension HttpRequestData on Document? {
-  static String? _requestUrl;
+  static String _requestUrl = "";
 
-  String? get requestUrl {
+  String get requestUrl {
     return _requestUrl;
   }
 
-  set requestUrl(String? newValue) {
+  set requestUrl(String newValue) {
     _requestUrl = newValue;
   }
 }
@@ -40,12 +40,12 @@ class MetadataHelper {
     }
   }
 
-  static Map<String?, Completer<Metadata>> _metaCache = {};
+  static Map<String, Completer<Metadata>> _metaCache = {};
 
   static Future<Metadata?> fetchMetadata(Message? message) async {
     Metadata? data;
 
-    if (message == null || isEmptyString(message.text)) return null;
+    if (message?.guid == null || isEmptyString(message!.text)) return null;
 
     // If we have a cached item for this already, return that future
     if (_metaCache.containsKey(message.guid)) {
@@ -54,7 +54,7 @@ class MetadataHelper {
 
     // Create a new completer for this request
     Completer<Metadata> completer = new Completer();
-    _metaCache[message.guid] = completer;
+    _metaCache[message.guid!] = completer;
 
     // Make sure there is a schema with the URL
     String url = message.text!;
@@ -162,7 +162,7 @@ class MetadataHelper {
     if (data?.description == "null") data?.description = null;
 
     // Set the OG URL
-    data!.url = originalUrl;
+    data?.url = originalUrl;
 
     // Delete from the cache after 15 seconds (arbitrary)
     Future.delayed(Duration(seconds: 15), () {

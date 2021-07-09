@@ -109,9 +109,9 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   StreamBuilder(
                       stream: SocketManager().connectionStateStream,
                       builder: (context, AsyncSnapshot<SocketState> snapshot) {
-                        SocketState? connectionStatus;
+                        late SocketState connectionStatus;
                         if (snapshot.hasData) {
-                          connectionStatus = snapshot.data;
+                          connectionStatus = snapshot.data!;
                         } else {
                           connectionStatus = SocketManager().state;
                         }

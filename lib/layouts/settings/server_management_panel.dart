@@ -192,7 +192,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                               logFile.writeAsStringSync(res['data']);
 
                               try {
-                                Share.file("BlueBubbles Server Log", "main.log", logFile.absolute.path, "text/log");
+                                Share.file("BlueBubbles Server Log", logFile.absolute.path);
 
                                 if (this.mounted) {
                                   setState(() {

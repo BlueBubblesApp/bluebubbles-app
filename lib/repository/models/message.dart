@@ -514,14 +514,14 @@ class Message {
     return isEmptyString(this.fullText) && !this.hasAttachments && this.balloonBundleId == null;
   }
 
-  bool? isBigEmoji() {
+  bool isBigEmoji() {
     // We are checking the variable first because we want to
     // avoid processing twice for this as it won't change
     if (this.bigEmoji == null) {
-      this.bigEmoji = MessageHelper.shouldShowBigEmoji(this.fullText);
+      this.bigEmoji = MessageHelper.shouldShowBigEmoji(this.fullText ?? "");
     }
 
-    return this.bigEmoji;
+    return this.bigEmoji!;
   }
 
   List<Attachment?> getRealAttachments() {

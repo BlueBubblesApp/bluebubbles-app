@@ -153,13 +153,13 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
       // Make sure we have the required data to qualify for this tile
       if (event.chatGuid != widget.chat!.guid) return;
       if (!event.event.containsKey("message")) return;
-
+      if (widget.chat.guid == null) return;
       // Make sure the message is a group event
       Message message = event.event["message"];
       if (!message.isGroupEvent()) return;
 
       // If it's a group event, let's fetch the new information and save it
-      await fetchChatSingleton(widget.chat!.guid);
+      await fetchChatSingleton(widget.chat!.guid!);
       this.setNewChatData(forceUpdate: true);
     });
   }

@@ -131,7 +131,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                AttachmentHelper.getIcon(mimeType),
+                AttachmentHelper.getIcon(mimeType ?? ""),
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
               Align(

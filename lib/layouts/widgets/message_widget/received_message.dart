@@ -18,10 +18,10 @@ import 'package:flutter/material.dart';
 
 class ReceivedMessage extends StatefulWidget {
   final bool showTail;
-  final Message? message;
+  final Message message;
   final Message? olderMessage;
   final Message? newerMessage;
-  final bool? showHandle;
+  final bool showHandle;
 
   // Sub-widgets
   final Widget stickersWidget;

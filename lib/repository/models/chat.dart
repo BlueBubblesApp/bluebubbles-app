@@ -397,7 +397,7 @@ class Chat {
             message.metadata!.containsKey("image") &&
             !isNullOrEmpty(message.metadata!["image"])!) {
           // Save from URL
-          File? newFile = await saveImageFromUrl(message.guid, message.metadata!["image"]);
+          File? newFile = await saveImageFromUrl(message.guid!, message.metadata!["image"]);
 
           // If we downloaded a file, set the new metadata path
           if (newFile != null && newFile.existsSync()) {

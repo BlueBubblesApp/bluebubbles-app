@@ -119,10 +119,10 @@ class AttachmentHelper {
 
     // Parse addresses numbers from results
     for (dynamic address in _contact.typedAddress) {
-      String? street = address[0].length > 0 ? address[0][0] : '';
-      String? city = address[0].length > 1 ? address[0][1] : '';
-      String? state = address[0].length > 2 ? address[0][2] : '';
-      String? country = address[0].length > 3 ? address[0][3] : '';
+      String street = address[0].length > 0 ? address[0][0] : '';
+      String city = address[0].length > 1 ? address[0][1] : '';
+      String state = address[0].length > 2 ? address[0][2] : '';
+      String country = address[0].length > 3 ? address[0][3] : '';
 
       String label = "HOME";
       if (address.length > 1 && address[1].length > 0 && address[1][1] != null) {
@@ -140,13 +140,13 @@ class AttachmentHelper {
   }
 
   static String getPreviewPath(Attachment attachment) {
-    String? fileName = attachment.transferName;
+    String fileName = attachment.transferName ?? randomString(8);
     String appDocPath = SettingsManager().appDocDir.path;
     String pathName = AttachmentHelper.getAttachmentPath(attachment);
 
     // If the file is an image, compress it for the preview
     if ((attachment.mimeType ?? "").startsWith("image/")) {
-      String fn = fileName!.split(".").sublist(0, fileName.length - 1).join("") + "prev";
+      String fn = fileName.split(".").sublist(0, fileName.length - 1).join("") + "prev";
       String ext = fileName.split(".").last;
       pathName = "$appDocPath/attachments/${attachment.guid}/$fn.$ext";
     }
@@ -184,7 +184,7 @@ class AttachmentHelper {
   }
 
   static String getAttachmentPath(Attachment attachment) {
-    String? fileName = attachment.transferName;
+    String fileName = attachment.transferName ?? randomString(8);
     return "${getBaseAttachmentsPath()}/${attachment.guid}/$fileName";
   }
 
@@ -209,8 +209,8 @@ class AttachmentHelper {
     }
   }
 
-  static IconData getIcon(String? mimeType) {
-    if (mimeType == null) return Icons.open_in_new;
+  static IconData getIcon(String mimeType) {
+    if (mimeType.isEmpty) return Icons.open_in_new;
     if (mimeType == "application/pdf") {
       return Icons.picture_as_pdf;
     } else if (mimeType == "application/zip") {

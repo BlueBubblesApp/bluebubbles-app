@@ -24,7 +24,7 @@ class RegularFileOpener extends StatefulWidget {
 class _RegularFileOpenerState extends State<RegularFileOpener> {
   @override
   Widget build(BuildContext context) {
-    IconData fileIcon = AttachmentHelper.getIcon(widget.attachment!.mimeType);
+    IconData fileIcon = AttachmentHelper.getIcon(widget.attachment!.mimeType ?? "");
 
     return Container(
       height: 140,

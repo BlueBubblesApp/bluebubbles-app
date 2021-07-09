@@ -92,8 +92,8 @@ Future<String> formatPhoneNumber(String str) async {
   return meta['national'];
 }
 
-Future<List<String?>> getCompareOpts(Handle handle) async {
-  if (handle.address!.isEmail) return [handle.address];
+Future<List<String>> getCompareOpts(Handle handle) async {
+  if (handle.address!.isEmail) return [handle.address!];
 
   // Build a list of formatted address (max: 3)
   String formatted = handle.address.toString();
@@ -132,9 +132,7 @@ bool sameAddress(List<String?> options, String? compared) {
   return match;
 }
 
-String? getInitials(Contact? contact) {
-  if (contact == null) return null;
-
+String getInitials(Contact contact) {
   // Set default initials
   String initials = (contact.givenName!.isNotEmpty == true ? contact.givenName![0] : "") +
       (contact.familyName!.isNotEmpty == true ? contact.familyName![0] : "");
@@ -323,26 +321,7 @@ Future<String> getGroupEventText(Message message) async {
   return text;
 }
 
-Future<MemoryImage?> loadAvatar(Chat? chat, Handle? handle) async {
-  if (chat != null) {
-    // If the chat hasn't been saved, save it
-    if (chat.id == null) await chat.save();
-
-    // If there are no participants, get them
-    if (isNullOrEmpty(chat.participants)!) {
-      await chat.getParticipants();
-    }
-
-    String? address = handle != null ? handle.address : null;
-    if (address == null) {
-      address = chat.participants.first.address;
-    }
-
-    // See if the update contains the current conversation
-    int matchIdx = chat.participants.map((i) => i.address).toList().indexOf(handle!.address);
-    if (matchIdx == -1) return null;
-  }
-
+Future<MemoryImage?> loadAvatar(Chat chat, Handle? handle) async {
   // Get the contact
   Contact? contact = await ContactManager().getCachedContact(handle);
   Uint8List? avatar = contact?.avatar;
@@ -467,7 +446,7 @@ Brightness getBrightness(BuildContext context) {
 /// Take the passed [address] or serverAddress from Settings
 /// and sanitize it, making sure it includes an http schema
 String? getServerAddress({String? address}) {
-  String? serverAddress = address ?? SettingsManager().settings.serverAddress;
+  String serverAddress = address ?? SettingsManager().settings.serverAddress;
 
   String sanitized = serverAddress.replaceAll("https://", "").replaceAll("http://", "").trim();
   if (sanitized.isEmpty) return null;
@@ -526,7 +505,7 @@ String? getFilenameFromUrl(String url) {
   return null;
 }
 
-Future<File?> saveImageFromUrl(String? guid, String url) async {
+Future<File?> saveImageFromUrl(String guid, String url) async {
   // Make sure the URL is "formed"
   if (!url.contains("/")) return null;
 
@@ -552,7 +531,7 @@ Future<File?> saveImageFromUrl(String? guid, String url) async {
   }
 }
 
-Icon getIndicatorIcon(SocketState? socketState, {double size = 24}) {
+Icon getIndicatorIcon(SocketState socketState, {double size = 24}) {
   Icon icon;
 
   if (SettingsManager().settings.colorblindMode) {

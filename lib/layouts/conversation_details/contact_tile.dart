@@ -19,17 +19,17 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ContactTile extends StatefulWidget {
-  final Handle? handle;
-  final Chat? chat;
-  final Function? updateChat;
-  final bool? canBeRemoved;
+  final Handle handle;
+  final Chat chat;
+  final Function updateChat;
+  final bool canBeRemoved;
 
   ContactTile({
     Key? key,
-    this.handle,
-    this.chat,
-    this.updateChat,
-    this.canBeRemoved,
+    required this.handle,
+    required this.chat,
+    required this.updateChat,
+    required this.canBeRemoved,
   }) : super(key: key);
 
   @override
@@ -49,7 +49,7 @@ class _ContactTileState extends State<ContactTile> {
     ContactManager().stream.listen((List<String?> addresses) {
       // Check if any of the addresses are members of the chat
       List<Handle> participants = widget.chat!.participants;
-      List<String?> handles = participants.map((Handle handle) => handle.address) as List<String?>;
+      List<String?> handles = participants.map((Handle handle) => handle.address).toList();
       for (String? addr in addresses) {
         if (handles.contains(addr)) {
           fetchAvatar();

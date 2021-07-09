@@ -24,16 +24,16 @@ import 'package:flutter/material.dart';
 class MessageWidget extends StatefulWidget {
   MessageWidget({
     Key? key,
-    this.message,
-    this.olderMessage,
-    this.newerMessage,
+    required this.message,
+    required this.olderMessage,
+    required this.newerMessage,
     this.showHandle,
     this.isFirstSentMessage,
     this.showHero,
     this.onUpdate,
   }) : super(key: key);
 
-  final Message? message;
+  final Message message;
   final Message? newerMessage;
   final Message? olderMessage;
   final bool? showHandle;
@@ -56,7 +56,7 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
   bool handledInit = false;
   CurrentChat? currentChat;
   StreamSubscription<NewMessageEvent>? subscription;
-  Message? _message;
+  late Message _message;
   Message? _newerMessage;
   Message? _olderMessage;
 
@@ -291,7 +291,7 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
         olderMessage: widget.olderMessage,
         newerMessage: widget.newerMessage,
         message: _message,
-        showHandle: widget.showHandle,
+        showHandle: widget.showHandle ?? false,
         urlPreviewWidget: urlPreviewWidget,
         stickersWidget: stickersWidget,
         attachmentsWidget: widgetAttachments,

@@ -314,9 +314,9 @@ class _ConversationListState extends State<ConversationList> {
           stream: SocketManager().connectionStateStream,
           initialData: SocketManager().state,
           builder: (context, AsyncSnapshot<SocketState> snapshot) {
-            SocketState? connectionStatus;
+            late SocketState connectionStatus;
             if (snapshot.hasData) {
-              connectionStatus = snapshot.data;
+              connectionStatus = snapshot.data!;
             } else {
               connectionStatus = SocketManager().state;
             }

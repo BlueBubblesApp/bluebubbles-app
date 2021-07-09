@@ -107,13 +107,13 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       // Make sure we have the required data to qualify for this tile
       if (event.chatGuid != widget.chat!.guid) return;
       if (!event.event.containsKey("message")) return;
-
+      if (widget.chat?.guid == null) return;
       // Make sure the message is a group event
       Message message = event.event["message"];
       if (!message.isGroupEvent()) return;
 
       // If it's a group event, let's fetch the new information and save it
-      await fetchChatSingleton(widget.chat!.guid);
+      await fetchChatSingleton(widget.chat!.guid!);
       setNewChatData(forceUpdate: true);
     });
   }
@@ -163,6 +163,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   }
 
   Future<void> fetchParticipants() async {
+    if (chat?.guid == null) return;
     if (isCreator!) return;
     // Prevent multiple calls to fetch participants
     if (processingParticipants) return;
@@ -182,7 +183,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
       try {
         // If we don't have participants, we should fetch them from the server
-        Chat? data = await fetchChatSingleton(chat!.guid);
+        Chat? data = await fetchChatSingleton(chat!.guid!);
         // If we got data back, fetch the participants and update the state
         if (data != null) {
           await chat!.getParticipants();
@@ -281,9 +282,9 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       items.add(StreamBuilder(
           stream: SocketManager().connectionStateStream,
           builder: (context, AsyncSnapshot<SocketState> snapshot) {
-            SocketState? connectionStatus;
+            late SocketState connectionStatus;
             if (snapshot.hasData) {
-              connectionStatus = snapshot.data;
+              connectionStatus = snapshot.data!;
             } else {
               connectionStatus = SocketManager().state;
             }
@@ -339,9 +340,9 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             StreamBuilder(
                 stream: SocketManager().connectionStateStream,
                 builder: (context, AsyncSnapshot<SocketState> snapshot) {
-                  SocketState? connectionStatus;
+                  late SocketState connectionStatus;
                   if (snapshot.hasData) {
-                    connectionStatus = snapshot.data;
+                    connectionStatus = snapshot.data!;
                   } else {
                     connectionStatus = SocketManager().state;
                   }
