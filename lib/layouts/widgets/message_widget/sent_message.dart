@@ -35,8 +35,7 @@ class SentMessageHelper {
         ? Theme.of(context).primaryColor.darkenAmount(0.2)
         : Theme.of(context).primaryColor;
 
-    final bool hideContent = SettingsManager().settings.redactedMode && SettingsManager().settings.hideMessageContent;
-    final bool hideType = SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachmentTypes;
+    final bool hideContent = SettingsManager().settings.redactedMode && SettingsManager().settings.hideEmojis;
 
     Widget msg;
     bool hasReactions = (message?.getReactions() ?? []).length > 0;
@@ -49,31 +48,23 @@ class SentMessageHelper {
           top: (hasReactions) ? 15.0 : 0.0,
           right: 5,
         ),
-        child: Stack(
-          children: <Widget>[
-            Text(
-              message!.text!,
-              style: Theme.of(context).textTheme.bodyText2!.apply(fontSizeFactor: 4),
-            ),
-            if (hideContent)
-              Positioned.fill(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(25.0),
-                  child: Container(color: Theme.of(context).accentColor),
-                ),
+        child: hideContent ? ClipRRect(
+          borderRadius: BorderRadius.circular(25.0),
+          child: Container(
+            width: 70,
+            height: 70,
+            color: Theme.of(context).accentColor,
+            child: Center(
+              child: Text(
+                "emoji",
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyText1,
               ),
-            if (hideContent && !hideType)
-              Positioned.fill(
-                child: Container(
-                  alignment: Alignment.center,
-                  child: Text(
-                    "emoji",
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyText1,
-                  ),
-                ),
-              ),
-          ],
+            )
+          ),
+        ) : Text(
+          message!.text!,
+          style: Theme.of(context).textTheme.bodyText2!.apply(fontSizeFactor: 4),
         ),
       );
     } else {

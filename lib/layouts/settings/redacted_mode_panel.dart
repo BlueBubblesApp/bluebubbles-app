@@ -62,6 +62,14 @@ class _RedactedModePanelState extends State<RedactedModePanel> {
         ),
         SettingsSwitch(
           onChanged: (bool val) {
+            _settingsCopy.hideEmojis = val;
+            saveSettings();
+          },
+          initialVal: _settingsCopy.hideEmojis,
+          title: "Hide Big Emojis",
+        ),
+        SettingsSwitch(
+          onChanged: (bool val) {
             _settingsCopy.hideAttachments = val;
             saveSettings();
           },

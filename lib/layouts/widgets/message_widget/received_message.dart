@@ -87,8 +87,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
   /// Builds the message bubble with teh tail (if applicable)
   Widget _buildMessageWithTail(Message message) {
     if (message.isBigEmoji()!) {
-      final bool hideContent = SettingsManager().settings.redactedMode && SettingsManager().settings.hideMessageContent;
-      final bool hideType = SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachmentTypes;
+      final bool hideContent = SettingsManager().settings.redactedMode && SettingsManager().settings.hideEmojis;
 
       bool hasReactions = message.getReactions().length > 0;
       return Padding(
@@ -97,31 +96,23 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
           right: (hasReactions) ? 15.0 : 0.0,
           top: widget.message!.getReactions().length > 0 ? 15 : 0,
         ),
-        child: Stack(
-          children: <Widget>[
-            Text(
-              message.text!,
-              style: Theme.of(context).textTheme.bodyText2!.apply(fontSizeFactor: 4),
-            ),
-            if (hideContent)
-              Positioned.fill(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(25.0),
-                  child: Container(color: Theme.of(context).accentColor),
+        child: hideContent ? ClipRRect(
+          borderRadius: BorderRadius.circular(25.0),
+          child: Container(
+              width: 70,
+              height: 70,
+              color: Theme.of(context).accentColor,
+              child: Center(
+                child: Text(
+                  "emoji",
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyText1,
                 ),
-              ),
-            if (hideContent && !hideType)
-              Positioned.fill(
-                child: Container(
-                  alignment: Alignment.center,
-                  child: Text(
-                    "emoji",
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyText1,
-                  ),
-                ),
-              ),
-          ],
+              )
+          ),
+        ) : Text(
+          message.text!,
+          style: Theme.of(context).textTheme.bodyText2!.apply(fontSizeFactor: 4),
         ),
       );
     }

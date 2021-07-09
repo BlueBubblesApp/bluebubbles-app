@@ -62,6 +62,7 @@ class Settings {
   bool hideMessageContent = true;
   bool hideReactions = false;
   bool hideAttachments = true;
+  bool hideEmojis = false;
   bool hideAttachmentTypes = false;
   bool hideContactPhotos = true;
   bool hideContactInfo = true;
