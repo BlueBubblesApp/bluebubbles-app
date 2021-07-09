@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:assets_audio_player/assets_audio_player.dart';
+import 'package:bluebubbles/helpers/message_marker.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_details_popup.dart';
@@ -34,8 +35,6 @@ class CurrentChat {
   Stream get attachmentStream => _attachmentStream.stream;
 
   Chat chat;
-  Message? myLastMessage;
-  Message? lastReadMessage;
 
   Map<String?, Uint8List?> imageData = {};
   Map<String?, Metadata?> urlPreviews = {};
@@ -58,7 +57,7 @@ class CurrentChat {
 
   StreamController<double> timeStampOffsetStream = StreamController<double>.broadcast();
 
-  StreamController<Map<String, Message?>> messageMarkerStream = StreamController<Map<String, Message>>.broadcast();
+  late MessageMarkers messageMarkers;
 
   double get timeStampOffset => _timeStampOffset;
 
@@ -75,21 +74,7 @@ class CurrentChat {
   bool get showScrollDown => _showScrollDown;
 
   CurrentChat(this.chat) {
-    NewMessageManager().stream.listen((msgEvent) {
-      if (messageMarkerStream.isClosed) return;
-
-      // Ignore any events that don't have to do with the current chat
-      if (msgEvent.chatGuid != chat.guid) return;
-
-      // If it's the event we want
-      if (msgEvent.type == NewMessageType.UPDATE || msgEvent.type == NewMessageType.ADD) {
-        tryUpdateMessageMarkers(msgEvent.event["message"]);
-      }
-
-      if (!messageMarkerStream.isClosed) {
-        messageMarkerStream.sink.add({"myLastMessage": this.myLastMessage, "lastReadMessage": this.lastReadMessage});
-      }
-    });
+    messageMarkers = new MessageMarkers(this.chat);
 
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
       if (!event.containsKey("type")) return;
@@ -170,10 +155,6 @@ class CurrentChat {
 
     if (timeStampOffsetStream.isClosed) {
       timeStampOffsetStream = StreamController.broadcast();
-    }
-
-    if (messageMarkerStream.isClosed) {
-      messageMarkerStream = StreamController.broadcast();
     }
 
     if (showScrollDownStream.isClosed) {
@@ -323,24 +304,6 @@ class CurrentChat {
     );
   }
 
-  void tryUpdateMessageMarkers(Message msg) {
-    if (!msg.isFromMe!) return;
-
-    if (myLastMessage == null ||
-        (myLastMessage?.dateCreated != null &&
-            msg.dateCreated != null &&
-            msg.dateCreated!.millisecondsSinceEpoch > myLastMessage!.dateCreated!.millisecondsSinceEpoch)) {
-      myLastMessage = msg;
-    }
-
-    if ((lastReadMessage == null && msg.dateRead != null) ||
-        (lastReadMessage?.dateRead != null &&
-            msg.dateRead != null &&
-            msg.dateRead!.millisecondsSinceEpoch > lastReadMessage!.dateRead!.millisecondsSinceEpoch)) {
-      lastReadMessage = msg;
-    }
-  }
-
   /// Dispose all of the controllers and whatnot
   void dispose() {
     if (!isNullOrEmpty(currentPlayingVideo)!) {
@@ -359,7 +322,8 @@ class CurrentChat {
     if (!_attachmentStream.isClosed) _attachmentStream.close();
     if (!timeStampOffsetStream.isClosed) timeStampOffsetStream.close();
     if (!showScrollDownStream.isClosed) showScrollDownStream.close();
-    if (!messageMarkerStream.isClosed) messageMarkerStream.close();
+
+    messageMarkers.dispose();
 
     _timeStampOffset = 0;
     _showScrollDown = false;
