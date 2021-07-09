@@ -52,7 +52,7 @@ class AttachmentDownloader {
         }
 
         // Finish the downloader
-        SocketManager().finishDownloader(attachment.guid);
+        SocketManager().finishDownloader(attachment.guid!);
         if (_onComplete != null) _onComplete!();
 
         _stream.sink.addError("Error");
@@ -110,7 +110,7 @@ class AttachmentDownloader {
       File file = new File(attachment.getPath());
 
       // Finish the downloader
-      SocketManager().finishDownloader(attachment.guid);
+      SocketManager().finishDownloader(attachment.guid!);
       if (_onComplete != null) _onComplete!();
 
       // Add attachment to sink based on if we got data
@@ -120,7 +120,7 @@ class AttachmentDownloader {
       _stream.close();
     };
 
-    SocketManager().addAttachmentDownloader(attachment.guid, this);
+    SocketManager().addAttachmentDownloader(attachment.guid!, this);
 
     getChunkRecursive(attachment.guid!, 0, numOfChunks, [], _cb);
   }

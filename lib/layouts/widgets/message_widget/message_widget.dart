@@ -206,7 +206,7 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
       if (lastRequestCount != nullAttachments.length) {
         lastRequestCount = nullAttachments.length;
 
-        List<dynamic> msgs = await SocketManager().getAttachments(currentChat!.chat.guid, _message!.guid);
+        List<dynamic> msgs = await SocketManager().getAttachments(currentChat!.chat.guid!, _message!.guid!);
 
         for (var msg in msgs) await ActionHandler.handleMessage(msg, forceProcess: true);
       }

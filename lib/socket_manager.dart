@@ -57,8 +57,8 @@ class SocketManager {
   //Socket io
   IO.Socket? socket;
 
-  Map<String?, AttachmentDownloader> attachmentDownloaders = Map();
-  Map<String?, AttachmentSender> attachmentSenders = Map();
+  Map<String, AttachmentDownloader> attachmentDownloaders = Map();
+  Map<String, AttachmentSender> attachmentSenders = Map();
   Map<int, Function> socketProcesses = new Map();
 
   SocketState _state = SocketState.DISCONNECTED;
@@ -94,26 +94,27 @@ class SocketManager {
     });
   }
 
-  StreamController _socketProcessUpdater = StreamController<List<int>>.broadcast();
+  StreamController<List<int>> _socketProcessUpdater = StreamController<List<int>>.broadcast();
 
-  Stream<List<int>> get socketProcessUpdater => _socketProcessUpdater.stream as Stream<List<int>>;
+  Stream<List<int>> get socketProcessUpdater => _socketProcessUpdater.stream;
 
-  StreamController _attachmentSenderCompleter = StreamController<String?>.broadcast();
-  Stream<String?> get attachmentSenderCompleter => _attachmentSenderCompleter.stream as Stream<String?>;
+  StreamController<String> _attachmentSenderCompleter = StreamController<String>.broadcast();
+  Stream<String> get attachmentSenderCompleter => _attachmentSenderCompleter.stream;
 
-  void addAttachmentDownloader(String? guid, AttachmentDownloader downloader) {
+  void addAttachmentDownloader(String guid, AttachmentDownloader downloader) {
     attachmentDownloaders[guid] = downloader;
   }
 
   void addAttachmentSender(AttachmentSender sender) {
-    attachmentSenders[sender.guid] = sender;
+    if (sender.guid == null) return;
+    attachmentSenders[sender.guid!] = sender;
   }
 
-  void finishDownloader(String? guid) {
+  void finishDownloader(String guid) {
     attachmentDownloaders.remove(guid);
   }
 
-  void finishSender(String? attachmentGuid) {
+  void finishSender(String attachmentGuid) {
     attachmentSenders.remove(attachmentGuid);
     _attachmentSenderCompleter.sink.add(attachmentGuid);
   }
@@ -474,7 +475,7 @@ class SocketManager {
     isAuthingFcm = false;
   }
 
-  Future<void>? registerDevice(String name, String? token) {
+  Future<dynamic>? registerDevice(String name, String? token) {
     if (name.trim().length == 0 || token == null || token.trim().length == 0) return null;
     dynamic params = {"deviceId": token.trim(), "deviceName": name.trim()};
     return request("add-fcm-device", params);
@@ -522,7 +523,7 @@ class SocketManager {
     return completer.future;
   }
 
-  Future<List<dynamic>> getAttachments(String? chatGuid, String? messageGuid, {Function(List<dynamic>?)? cb}) {
+  Future<List<dynamic>> getAttachments(String chatGuid, String messageGuid, {Function(List<dynamic>?)? cb}) {
     Completer<List<dynamic>> completer = new Completer();
 
     Map<String, dynamic> params = {
@@ -579,7 +580,7 @@ class SocketManager {
     return completer.future;
   }
 
-  Future<Chat> fetchChat(String? chatGuid, {withParticipants = true}) async {
+  Future<Chat> fetchChat(String chatGuid, {withParticipants = true}) async {
     Completer<Chat> completer = new Completer();
     debugPrint("(Fetch Chat) Fetching full chat metadata from server.");
 
@@ -609,7 +610,7 @@ class SocketManager {
   }
 
   Future<dynamic>? fetchMessages(Chat? chat,
-      {int? offset: 0,
+      {int offset: 0,
       int limit: 100,
       int? after,
       bool onlyAttachments: false,
@@ -703,7 +704,7 @@ class SocketManager {
   /// Updates and saves a new server address and then forces a new reconnection to the socket with this address
   ///
   /// @param [serverAddress] is the new address to update to
-  Future<void> newServer(String? serverAddress) async {
+  Future<void> newServer(String serverAddress) async {
     // We copy the settings to a local variable
     Settings settingsCopy = SettingsManager().settings;
     if (settingsCopy.serverAddress == serverAddress) {

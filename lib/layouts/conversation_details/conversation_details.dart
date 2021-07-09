@@ -546,8 +546,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
 }
 
 class SyncDialog extends StatefulWidget {
-  SyncDialog({Key? key, this.chat, this.initialMessage, this.withOffset = false, this.limit = 100}) : super(key: key);
-  final Chat? chat;
+  SyncDialog({Key? key, required this.chat, this.initialMessage, this.withOffset = false, this.limit = 100}) : super(key: key);
+  final Chat chat;
   final String? initialMessage;
   final bool withOffset;
   final int limit;
@@ -570,9 +570,9 @@ class _SyncDialogState extends State<SyncDialog> {
   }
 
   void syncMessages() async {
-    int? offset = 0;
+    int offset = 0;
     if (widget.withOffset) {
-      offset = await Message.countForChat(widget.chat);
+      offset = await Message.countForChat(widget.chat) ?? 0;
     }
 
     SocketManager().fetchMessages(widget.chat, offset: offset, limit: widget.limit)!.then((dynamic messages) {

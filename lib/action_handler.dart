@@ -33,7 +33,7 @@ class ActionHandler {
   /// ```dart
   /// sendMessage(chatObject, 'Hello world!')
   /// ```
-  static Future<void> sendMessage(Chat? chat, String? text,
+  static Future<void> sendMessage(Chat chat, String text,
       {MessageBloc? messageBloc, List<Attachment> attachments = const []}) async {
     if (isNullOrEmpty(text, trimString: true)!) return;
 
@@ -335,10 +335,10 @@ class ActionHandler {
   /// handleChat(chat: chatObject, checkIfExists: true)
   /// ```
   static Future<void> handleChat(
-      {Map<String, dynamic>? chatData, Chat? chat, bool checkIfExists = false, bool? isHeadless = false}) async {
+      {Map<String, dynamic>? chatData, required Chat chat, bool checkIfExists = false, bool isHeadless = false}) async {
     Chat? currentChat;
     Chat? newChat = chat;
-    if (chatData != null && newChat == null) {
+    if (chatData != null) {
       newChat = Chat.fromMap(chatData);
     }
 
@@ -357,7 +357,7 @@ class ActionHandler {
     if (currentChat != null) return;
 
     // Fetch chat data from server
-    newChat = await SocketManager().fetchChat(newChat!.guid);
+    newChat = await SocketManager().fetchChat(newChat!.guid!);
     await ChatBloc().updateChatPosition(newChat);
   }
 
@@ -371,7 +371,7 @@ class ActionHandler {
   /// handleMessage(JsonMap)
   /// ```
   static Future<void> handleMessage(Map<String, dynamic> data,
-      {bool? createAttachmentNotification = false, bool? isHeadless = false, bool forceProcess = false}) async {
+      {bool createAttachmentNotification = false, bool isHeadless = false, bool forceProcess = false}) async {
     Message message = Message.fromMap(data);
     List<Chat> chats = MessageHelper.parseChats(data);
 
