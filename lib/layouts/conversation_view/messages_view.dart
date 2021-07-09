@@ -269,7 +269,6 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
         currentChat?.messageMarkers.updateMessageMarkers(message);
 
         if (!isEmptyString(message.fullText, stripWhitespace: true)) {
-          print(message.fullText);
           if (message.isFromMe ?? false) {
             smartReply.addConversationForLocalUser(message.fullText!);
           } else {
