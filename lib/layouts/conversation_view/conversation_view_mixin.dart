@@ -539,47 +539,43 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                     ),
                     Container(height: 5.0),
                     Center(
-                      child: Container(
-                        constraints: BoxConstraints(
-                          maxWidth: Get.width / 2,
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              constraints: BoxConstraints(
-                                maxWidth: Get.width / 2 - 55,
-                              ),
-                              child: RichText(
-                                maxLines: 1,
-                                overflow: Cupertino.TextOverflow.ellipsis,
-                                textAlign: TextAlign.center,
-                                text: TextSpan(
-                                  style: Theme.of(context).textTheme.headline2,
-                                  children: [
-                                    TextSpan(
-                                      text: title,
-                                      style: titleStyle,
-                                    ),
-                                  ],
+                        child: Container(
+                      constraints: BoxConstraints(
+                        maxWidth: Get.width / 2,
+                      ),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Container(
+                          constraints: BoxConstraints(
+                            maxWidth: Get.width / 2 - 55,
+                          ),
+                          child: RichText(
+                            maxLines: 1,
+                            overflow: Cupertino.TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            text: TextSpan(
+                              style: Theme.of(context).textTheme.headline2,
+                              children: [
+                                TextSpan(
+                                  text: title,
+                                  style: titleStyle,
                                 ),
-                              ),
+                              ],
                             ),
-                            RichText(
-                              text: TextSpan(
-                                style: Theme.of(context).textTheme.headline2,
-                                children: [
-                                  TextSpan(
-                                    text: " >",
-                                    style: Theme.of(context).textTheme.subtitle1,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ]
+                          ),
                         ),
-                      )
-                    ),
+                        RichText(
+                          text: TextSpan(
+                            style: Theme.of(context).textTheme.headline2,
+                            children: [
+                              TextSpan(
+                                text: " >",
+                                style: Theme.of(context).textTheme.subtitle1,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ]),
+                    )),
                   ],
                 ),
               ),

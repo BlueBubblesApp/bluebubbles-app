@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/socket_singletons.dart';
@@ -309,12 +310,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
       title = widget.chat!.fakeParticipants.length == 1 ? widget.chat!.fakeParticipants[0] : "Group Chat";
     else if (hideInfo) style = style!.copyWith(color: Colors.transparent);
 
-    return Text(
-      title!,
-      style: style,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-    );
+    return TextOneLine(title!, style: style, overflow: TextOverflow.ellipsis);
   }
 
   Widget buildSubtitle() {
@@ -363,12 +359,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
 
         return widget.chat!.latestMessageText != null && !(widget.chat!.latestMessageText is String)
             ? widget.chat!.latestMessageText as Widget
-            : Text(
-                message != null ? message : "",
-                style: style,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              );
+            : TextOneLine(message ?? "", style: style, overflow: TextOverflow.ellipsis);
       },
     );
   }
@@ -677,7 +668,8 @@ class _Material extends StatelessWidget {
                     height: 10,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(20),
-                      color: parent.widget.chat!.hasUnreadMessage! ? Theme.of(context).primaryColor : Colors.transparent,
+                      color:
+                          parent.widget.chat!.hasUnreadMessage! ? Theme.of(context).primaryColor : Colors.transparent,
                     ),
                   ),
               ],
@@ -766,7 +758,8 @@ class _Samsung extends StatelessWidget {
                     height: 15,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(30),
-                      color: parent.widget.chat!.hasUnreadMessage! ? Theme.of(context).primaryColor : Colors.transparent,
+                      color:
+                          parent.widget.chat!.hasUnreadMessage! ? Theme.of(context).primaryColor : Colors.transparent,
                     ),
                   ),
               ],
