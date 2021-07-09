@@ -20,7 +20,7 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:learning_smart_reply/learning_smart_reply.dart' as SmartReply;
+import 'package:google_ml_kit/google_ml_kit.dart';
 
 class MessagesView extends StatefulWidget {
   final MessageBloc? messageBloc;
@@ -48,6 +48,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
 
   GlobalKey<SliverAnimatedListState>? _listKey;
   final Duration animationDuration = Duration(milliseconds: 400);
+  final smartReply = GoogleMlKit.nlp.smartReply();
   bool initializedList = false;
   List<int> loadedPages = [];
   CurrentChat? currentChat;
@@ -126,37 +127,15 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     if (isNullOrEmpty(_messages)!) return resetReplies();
     if (_messages!.first.isFromMe!) return resetReplies();
 
-    Iterable<Message?> filtered = _messages!
-        .where((item) => !isNullOrEmpty(item.fullText, trimString: true)! && item.associatedMessageGuid == null);
+    debugPrint("Getting smart replies...");
+    Map<String, dynamic> results = await smartReply.suggestReplies();
 
-    if (isNullOrEmpty(filtered)!) return resetReplies();
-
-    // Calculate the max amount of items
-    int max = SettingsManager().settings.smartReplySampleSize;
-    if (max > filtered.length) {
-      max = filtered.length;
+    if (results.containsKey('suggestions')) {
+      List<SmartReplySuggestion> suggestions = results['suggestions'];
+      debugPrint("Smart Replies found: ${suggestions.length}");
+      replies = suggestions.map((e) => e.getText()).toList().toSet().toList();
+      debugPrint(replies.toString());
     }
-
-    // Get the first 'x' messages
-    List<Message?> msgs = filtered.toList().sublist(0, max);
-    List<SmartReply.Message> texts = [];
-    for (var msg in msgs) {
-      // Skip empty messages
-      if (isEmptyString(msg!.fullText, stripWhitespace: true)) continue;
-
-      // Add to list based on who sent the message
-      texts.add(SmartReply.Message(msg.fullText!,
-          user: msg.handle?.address ?? "You", timestamp: msg.dateCreated!.millisecondsSinceEpoch));
-    }
-
-    debugPrint("Getting smart replies for ${texts.length} texts");
-    SmartReply.SmartReplyGenerator smartReply = SmartReply.SmartReplyGenerator();
-    replies = (await smartReply.generateReplies(texts.reversed.toList())) as List<String?>;
-    smartReply.dispose();
-
-    // De-duplicate the list
-    replies = replies.toSet().toList();
-    debugPrint("Smart Replies found: $replies");
 
     // If there is nothing in the list, get out
     if (isNullOrEmpty(replies)!) {
@@ -282,8 +261,21 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
       int originalMessageLength = _messages!.length;
       _messages = event.messages;
       _messages!.forEach((message) {
-        currentChat?.messageMarkers.updateMessageMarkers(message);
         currentChat?.getAttachmentsForMessage(message);
+      });
+
+      // This needs to be in reverse so that the oldest message gets added first
+      _messages!.reversed.forEach((message) {
+        currentChat?.messageMarkers.updateMessageMarkers(message);
+
+        if (!isEmptyString(message.fullText, stripWhitespace: true)) {
+          print(message.fullText);
+          if (message.isFromMe ?? false) {
+            smartReply.addConversationForLocalUser(message.fullText!);
+          } else {
+            smartReply.addConversationForRemoteUser(message.fullText!, message.handle?.address ?? "participant");
+          }
+        }
       });
 
       // We only want to update smart replies on the intial message fetch
@@ -502,6 +494,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
   @override
   void dispose() {
     if (!smartReplyController.isClosed) smartReplyController.close();
+    smartReply.close();
     super.dispose();
   }
 }
