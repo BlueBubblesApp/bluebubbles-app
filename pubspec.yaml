@@ -15,7 +15,7 @@ version: 1.3.0
 publish_to: none
 
 environment:
-  sdk: '>=2.12.0 <3.0.0'
+  sdk: ">=2.12.0 <3.0.0"
 
 dependencies:
   flutter:
@@ -69,7 +69,7 @@ dependencies:
   flutter_markdown: ^0.6.2
   keyboard_attachable: ^2.0.0
   device_info: ^2.0.2
-  learning_smart_reply: ^0.0.2
+  google_ml_kit: ^0.6.0
   faker: ^2.0.0
   share_plus: ^2.1.4
   # for nullsafety

@@ -28,6 +28,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../setup/qr_code_scanner.dart';
 
@@ -73,7 +74,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarIconBrightness:
+            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
@@ -191,8 +193,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       } catch (e) {
                         return;
                       }
-                      if (fcmData != null && fcmData[0] != null
-                          && getServerAddress(address: fcmData[1]) != null) {
+                      if (fcmData != null && fcmData[0] != null && getServerAddress(address: fcmData[1]) != null) {
                         _fcmDataCopy = FCMData(
                           projectID: fcmData[2],
                           storageBucket: fcmData[3],
@@ -312,6 +313,16 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       );
                     },
                     trailing: nextIcon,
+                  ),
+                  SettingsTile(
+                    title: "Rate the App!",
+                    onTap: () async {
+                      launch("market://details?id=com.bluebubbles.messaging");
+                    },
+                    trailing: Icon(
+                      Icons.star,
+                      color: Theme.of(context).primaryColor,
+                    ),
                   ),
                   SettingsTile(
                     title: "Join Our Discord",
@@ -659,7 +670,9 @@ class _SettingsOptionsState<T> extends State<SettingsOptions<T?>> {
                       return DropdownMenuItem(
                         value: e,
                         child: Text(
-                          widget.capitalize ? GetUtils.capitalize(widget.textProcessing!(e))! : widget.textProcessing!(e),
+                          widget.capitalize
+                              ? GetUtils.capitalize(widget.textProcessing!(e))!
+                              : widget.textProcessing!(e),
                           style: Theme.of(context).textTheme.bodyText1,
                         ),
                       );
