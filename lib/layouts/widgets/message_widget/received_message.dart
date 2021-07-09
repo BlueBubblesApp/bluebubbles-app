@@ -96,24 +96,25 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
           right: (hasReactions) ? 15.0 : 0.0,
           top: widget.message!.getReactions().length > 0 ? 15 : 0,
         ),
-        child: hideContent ? ClipRRect(
-          borderRadius: BorderRadius.circular(25.0),
-          child: Container(
-              width: 70,
-              height: 70,
-              color: Theme.of(context).accentColor,
-              child: Center(
-                child: Text(
-                  "emoji",
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyText1,
-                ),
+        child: hideContent
+            ? ClipRRect(
+                borderRadius: BorderRadius.circular(25.0),
+                child: Container(
+                    width: 70,
+                    height: 70,
+                    color: Theme.of(context).accentColor,
+                    child: Center(
+                      child: Text(
+                        "emoji",
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyText1,
+                      ),
+                    )),
               )
-          ),
-        ) : Text(
-          message.text!,
-          style: Theme.of(context).textTheme.bodyText2!.apply(fontSizeFactor: 4),
-        ),
+            : Text(
+                message.text!,
+                style: Theme.of(context).textTheme.bodyText2!.apply(fontSizeFactor: 4),
+              ),
       );
     }
 
@@ -165,7 +166,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                 : (SettingsManager().settings.skin == Skins.Material)
                     ? BorderRadius.only(
                         topLeft: widget.olderMessage == null ||
-                                MessageHelper.getShowTail(widget.olderMessage, widget.message)
+                                MessageHelper.getShowTail(context, widget.olderMessage, widget.message)
                             ? Radius.circular(20)
                             : Radius.circular(5),
                         topRight: Radius.circular(20),

@@ -20,7 +20,7 @@ abstract class MessageBlocEventType {
 }
 
 class MessageBlocEvent {
-  List<Message?>? messages;
+  List<Message>? messages;
   Message? message;
   String? remove;
   String? oldGuid;
@@ -33,16 +33,16 @@ class MessageBloc {
   final _messageController = StreamController<MessageBlocEvent>.broadcast();
 
   Stream<MessageBlocEvent> get stream => _messageController.stream;
-  LinkedHashMap<String?, Message?> _allMessages = new LinkedHashMap();
+  LinkedHashMap<String?, Message> _allMessages = new LinkedHashMap();
 
   int _reactions = 0;
   bool showDeleted = false;
   bool _canLoadMore = true;
   bool _isGettingMore = false;
 
-  LinkedHashMap<String?, Message?> get messages {
+  LinkedHashMap<String?, Message> get messages {
     if (!showDeleted) {
-      _allMessages.removeWhere((key, value) => value!.dateDeleted != null);
+      _allMessages.removeWhere((key, value) => value.dateDeleted != null);
     }
 
     return _allMessages;
@@ -138,7 +138,7 @@ class MessageBloc {
     }
 
     if (sentFromThisClient!) {
-      _allMessages = linkedHashMapInsert(_allMessages, 0, message.guid, message) as LinkedHashMap<String?, Message?>;
+      _allMessages = linkedHashMapInsert(_allMessages, 0, message.guid, message) as LinkedHashMap<String?, Message>;
     } else {
       List<Message?> messages = _allMessages.values.toList();
       for (int i = 0; i < messages.length; i++) {
@@ -148,7 +148,7 @@ class MessageBloc {
                 message.originalROWID! > messages[i]!.originalROWID!) ||
             ((messages[i]!.originalROWID == null || message.originalROWID == null) &&
                 messages[i]!.dateCreated!.compareTo(message.dateCreated!) < 0)) {
-          _allMessages = linkedHashMapInsert(_allMessages, i, message.guid, message) as LinkedHashMap<String?, Message?>;
+          _allMessages = linkedHashMapInsert(_allMessages, i, message.guid, message) as LinkedHashMap<String?, Message>;
           index = i;
 
           break;
@@ -184,7 +184,7 @@ class MessageBloc {
     }
   }
 
-  Future<LinkedHashMap<String?, Message?>> getMessages() async {
+  Future<LinkedHashMap<String?, Message>> getMessages() async {
     // If we are already fetching, return empty
     if (_isGettingMore || !this._canLoadMore) return new LinkedHashMap();
     _isGettingMore = true;

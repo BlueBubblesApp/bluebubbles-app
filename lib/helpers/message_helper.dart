@@ -13,6 +13,7 @@ import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:contacts_service/contacts_service.dart';
+import 'package:flutter/widgets.dart';
 import 'emoji_regex.dart';
 
 class EmojiConst {
@@ -355,15 +356,24 @@ class MessageHelper {
     return second.dateCreated!.difference(first.dateCreated!).inMinutes.abs() > threshold;
   }
 
-  static bool getShowTail(Message? message, Message? newerMessage) =>
-      MessageHelper.withinTimeThreshold(message, newerMessage, threshold: 1) ||
-      !sameSender(message, newerMessage) ||
-      (message!.isFromMe! &&
-          newerMessage!.isFromMe! &&
-          message.dateDelivered != null &&
-          newerMessage.dateDelivered == null);
+  static bool getShowTail(BuildContext context, Message? message, Message? newerMessage) {
+    if (MessageHelper.withinTimeThreshold(message, newerMessage, threshold: 1)) return true;
+    if (!sameSender(message, newerMessage)) return true;
+    if (message!.isFromMe! &&
+        newerMessage!.isFromMe! &&
+        message.dateDelivered != null &&
+        newerMessage.dateDelivered == null) return true;
 
-  static bool getShowTailReversed(Message? message, Message? olderMessage) => getShowTail(message, olderMessage);
+    Message? lastRead = CurrentChat.of(context)?.messageMarkers.lastReadMessage;
+    if (lastRead != null && lastRead.guid == message.guid) return true;
+    Message? lastDelivered = CurrentChat.of(context)?.messageMarkers.lastDeliveredMessage;
+    if (lastDelivered != null && lastDelivered.guid == message.guid) return true;
+
+    return false;
+  }
+
+  static bool getShowTailReversed(BuildContext context, Message? message, Message? olderMessage) =>
+      getShowTail(context, message, olderMessage);
 
 // static List<TextSpan> buildEmojiText(String text, TextStyle style) {
 //   final children = <TextSpan>[];

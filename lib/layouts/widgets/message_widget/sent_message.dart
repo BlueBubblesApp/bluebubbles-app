@@ -48,24 +48,25 @@ class SentMessageHelper {
           top: (hasReactions) ? 15.0 : 0.0,
           right: 5,
         ),
-        child: hideContent ? ClipRRect(
-          borderRadius: BorderRadius.circular(25.0),
-          child: Container(
-            width: 70,
-            height: 70,
-            color: Theme.of(context).accentColor,
-            child: Center(
-              child: Text(
-                "emoji",
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyText1,
+        child: hideContent
+            ? ClipRRect(
+                borderRadius: BorderRadius.circular(25.0),
+                child: Container(
+                    width: 70,
+                    height: 70,
+                    color: Theme.of(context).accentColor,
+                    child: Center(
+                      child: Text(
+                        "emoji",
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyText1,
+                      ),
+                    )),
+              )
+            : Text(
+                message!.text!,
+                style: Theme.of(context).textTheme.bodyText2!.apply(fontSizeFactor: 4),
               ),
-            )
-          ),
-        ) : Text(
-          message!.text!,
-          style: Theme.of(context).textTheme.bodyText2!.apply(fontSizeFactor: 4),
-        ),
       );
     } else {
       msg = Stack(
@@ -100,7 +101,7 @@ class SentMessageHelper {
                   : (currentSkin == Skins.Material)
                       ? BorderRadius.only(
                           topLeft: Radius.circular(20),
-                          topRight: olderMessage == null || MessageHelper.getShowTail(olderMessage, message)
+                          topRight: olderMessage == null || MessageHelper.getShowTail(context, olderMessage, message)
                               ? Radius.circular(20)
                               : Radius.circular(5),
                           bottomLeft: Radius.circular(20),

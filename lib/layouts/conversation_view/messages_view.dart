@@ -44,7 +44,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
   Completer<LoadMessageResult>? loader;
   bool noMoreMessages = false;
   bool noMoreLocalMessages = false;
-  List<Message?>? _messages = <Message?>[];
+  List<Message>? _messages = <Message>[];
 
   GlobalKey<SliverAnimatedListState>? _listKey;
   final Duration animationDuration = Duration(milliseconds: 400);
@@ -124,10 +124,10 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
   void updateReplies() async {
     // If there are no messages or the latest message is from me, reset the replies
     if (isNullOrEmpty(_messages)!) return resetReplies();
-    if (_messages!.first!.isFromMe!) return resetReplies();
+    if (_messages!.first.isFromMe!) return resetReplies();
 
     Iterable<Message?> filtered = _messages!
-        .where((item) => !isNullOrEmpty(item!.fullText, trimString: true)! && item.associatedMessageGuid == null);
+        .where((item) => !isNullOrEmpty(item.fullText, trimString: true)! && item.associatedMessageGuid == null);
 
     if (isNullOrEmpty(filtered)!) return resetReplies();
 
@@ -145,7 +145,8 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
       if (isEmptyString(msg!.fullText, stripWhitespace: true)) continue;
 
       // Add to list based on who sent the message
-      texts.add(SmartReply.Message(msg.fullText!, user: msg.handle?.address ?? "You", timestamp: msg.dateCreated!.millisecondsSinceEpoch));
+      texts.add(SmartReply.Message(msg.fullText!,
+          user: msg.handle?.address ?? "You", timestamp: msg.dateCreated!.millisecondsSinceEpoch));
     }
 
     debugPrint("Getting smart replies for ${texts.length} texts");
@@ -215,7 +216,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     // Skip deleted messages
     if (event.message != null && event.message!.dateDeleted != null) return;
     if (!isNullOrEmpty(event.messages)!) {
-      event.messages = event.messages!.where((element) => element!.dateDeleted == null).toList();
+      event.messages = event.messages!.where((element) => element.dateDeleted == null).toList();
     }
 
     if (event.type == MessageBlocEventType.insert) {
@@ -272,7 +273,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
       }
     } else if (event.type == MessageBlocEventType.remove) {
       for (int i = 0; i < _messages!.length; i++) {
-        if (_messages![i]!.guid == event.remove && _listKey!.currentState != null) {
+        if (_messages![i].guid == event.remove && _listKey!.currentState != null) {
           _messages!.removeAt(i);
           _listKey!.currentState!.removeItem(i, (context, animation) => Container());
         }
@@ -280,7 +281,10 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     } else {
       int originalMessageLength = _messages!.length;
       _messages = event.messages;
-      _messages!.forEach((message) => currentChat!.getAttachmentsForMessage(message));
+      _messages!.forEach((message) {
+        currentChat?.messageMarkers.updateMessageMarkers(message);
+        currentChat?.getAttachmentsForMessage(message);
+      });
 
       // We only want to update smart replies on the intial message fetch
       if (originalMessageLength == 0) {
@@ -323,7 +327,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
 
     bool updatedAMessage = false;
     for (int i = 0; i < _messages!.length; i++) {
-      if (_messages![i]!.guid == oldGuid) {
+      if (_messages![i].guid == oldGuid) {
         debugPrint("(Message status) Update message: [${message!.text}] - [${message.guid}] - [$oldGuid]");
         _messages![i] = message;
         updatedAMessage = true;
@@ -443,17 +447,17 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                           newerMessage = _messages![index - 1];
                         }
 
-                        bool fullAnimation = index == 0 && _messages![index]!.originalROWID == null;
+                        bool fullAnimation = index == 0 && _messages![index].originalROWID == null;
 
                         Widget messageWidget = Padding(
                             padding: EdgeInsets.only(left: 5.0, right: 5.0),
                             child: MessageWidget(
-                              key: Key(_messages![index]!.guid!),
+                              key: Key(_messages![index].guid!),
                               message: _messages![index],
                               olderMessage: olderMessage,
                               newerMessage: newerMessage,
                               showHandle: widget.showHandle,
-                              isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages![index]!.guid,
+                              isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages![index].guid,
                               showHero: fullAnimation,
                               onUpdate: (event) => onUpdateMessage(event),
                             ));
