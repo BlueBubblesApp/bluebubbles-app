@@ -20,11 +20,11 @@ abstract class MessageBlocEventType {
 }
 
 class MessageBlocEvent {
-  List<Message>? messages;
+  List<Message> messages = [];
   Message? message;
   String? remove;
   String? oldGuid;
-  bool? outGoing = false;
+  bool outGoing = false;
   int? index;
   String? type;
 }
@@ -33,14 +33,14 @@ class MessageBloc {
   final _messageController = StreamController<MessageBlocEvent>.broadcast();
 
   Stream<MessageBlocEvent> get stream => _messageController.stream;
-  LinkedHashMap<String?, Message> _allMessages = new LinkedHashMap();
+  LinkedHashMap<String, Message> _allMessages = new LinkedHashMap();
 
   int _reactions = 0;
   bool showDeleted = false;
   bool _canLoadMore = true;
   bool _isGettingMore = false;
 
-  LinkedHashMap<String?, Message> get messages {
+  LinkedHashMap<String, Message> get messages {
     if (!showDeleted) {
       _allMessages.removeWhere((key, value) => value.dateDeleted != null);
     }
@@ -53,8 +53,8 @@ class MessageBloc {
   Chat? get currentChat => _currentChat;
 
   String? get firstSentMessage {
-    for (Message? message in _allMessages.values) {
-      if (message!.isFromMe!) {
+    for (Message message in _allMessages.values) {
+      if (message.isFromMe!) {
         return message.guid;
       }
     }
@@ -103,12 +103,12 @@ class MessageBloc {
     });
   }
 
-  void insert(Message message, {bool? sentFromThisClient = false, bool addToSink = true}) {
+  void insert(Message message, {bool sentFromThisClient = false, bool addToSink = true}) {
     if (message.associatedMessageGuid != null) {
       if (_allMessages.containsKey(message.associatedMessageGuid)) {
         Message messageWithReaction = _allMessages[message.associatedMessageGuid]!;
         messageWithReaction.hasReactions = true;
-        _allMessages.update(message.associatedMessageGuid, (value) => messageWithReaction);
+        _allMessages.update(message.associatedMessageGuid!, (value) => messageWithReaction);
         if (addToSink) {
           MessageBlocEvent event = MessageBlocEvent();
           event.messages = _allMessages.values.toList();
@@ -122,8 +122,8 @@ class MessageBloc {
     }
 
     int index = 0;
-    if (_allMessages.isEmpty) {
-      _allMessages.addAll({message.guid: message});
+    if (_allMessages.isEmpty && message.guid != null) {
+      _allMessages.addAll({message.guid!: message});
       if (!_messageController.isClosed && addToSink) {
         MessageBlocEvent event = MessageBlocEvent();
         event.messages = _allMessages.values.toList();
@@ -137,18 +137,18 @@ class MessageBloc {
       return;
     }
 
-    if (sentFromThisClient!) {
-      _allMessages = linkedHashMapInsert(_allMessages, 0, message.guid, message) as LinkedHashMap<String?, Message>;
+    if (sentFromThisClient && message.guid != null) {
+      _allMessages = linkedHashMapInsert<String, Message>(_allMessages, 0, message.guid!, message);
     } else {
       List<Message?> messages = _allMessages.values.toList();
       for (int i = 0; i < messages.length; i++) {
         //if _allMessages[i] dateCreated is earlier than the new message, insert at that index
-        if ((messages[i]!.originalROWID != null &&
+        if (message.guid != null && (messages[i]!.originalROWID != null &&
                 message.originalROWID != null &&
                 message.originalROWID! > messages[i]!.originalROWID!) ||
             ((messages[i]!.originalROWID == null || message.originalROWID == null) &&
                 messages[i]!.dateCreated!.compareTo(message.dateCreated!) < 0)) {
-          _allMessages = linkedHashMapInsert(_allMessages, i, message.guid, message) as LinkedHashMap<String?, Message>;
+          _allMessages = linkedHashMapInsert<String, Message>(_allMessages, i, message.guid!, message);
           index = i;
 
           break;
@@ -167,13 +167,13 @@ class MessageBloc {
     }
   }
 
-  LinkedHashMap linkedHashMapInsert(map, int index, key, value) {
-    List keys = map.keys.toList();
-    List values = map.values.toList();
+  LinkedHashMap<M, N> linkedHashMapInsert<M, N>(map, int index, M key, N value) {
+    List<M> keys = map.keys.toList();
+    List<N> values = map.values.toList();
     keys.insert(index, key);
     values.insert(index, value);
 
-    return LinkedHashMap<String, Message>.from(LinkedHashMap.fromIterables(keys, values));
+    return LinkedHashMap<M, N>.from(LinkedHashMap.fromIterables(keys, values));
   }
 
   void emitLoaded() {
@@ -184,7 +184,7 @@ class MessageBloc {
     }
   }
 
-  Future<LinkedHashMap<String?, Message>> getMessages() async {
+  Future<LinkedHashMap<String, Message>> getMessages() async {
     // If we are already fetching, return empty
     if (_isGettingMore || !this._canLoadMore) return new LinkedHashMap();
     _isGettingMore = true;
@@ -196,8 +196,8 @@ class MessageBloc {
       _allMessages = new LinkedHashMap();
     } else {
       for (var element in messages) {
-        if (element.associatedMessageGuid == null) {
-          _allMessages.addAll({element.guid: element});
+        if (element.associatedMessageGuid == null && element.guid != null) {
+          _allMessages.addAll({element.guid!: element});
         } else {
           _reactions++;
         }
@@ -223,9 +223,10 @@ class MessageBloc {
 
     // List<dynamic> res =
     //     await SocketManager().fetchMessages(null, limit: 3, where: params);
-
     _allMessages = new LinkedHashMap();
-    _allMessages.addAll({message.guid: message});
+    if (message.guid != null) {
+      _allMessages.addAll({message.guid!: message});
+    }
 
     // print("ITEMS OG");
     // for (var i in _allMessages.values.toList()) {
@@ -302,8 +303,8 @@ class MessageBloc {
       // Save the messages to the bloc
       debugPrint("(CHUNK) Emitting ${messages.length} messages to listeners");
       for (Message element in messages) {
-        if (element.associatedMessageGuid == null) {
-          _allMessages.addAll({element.guid: element});
+        if (element.associatedMessageGuid == null && element.guid != null) {
+          _allMessages.addAll({element.guid!: element});
         } else {
           _reactions++;
         }

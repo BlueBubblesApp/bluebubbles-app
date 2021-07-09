@@ -29,7 +29,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 class ConversationTile extends StatefulWidget {
-  final Chat? chat;
+  final Chat chat;
   final bool? onTapGoToChat;
   final Function? onTapCallback;
   final List<File>? existingAttachments;
@@ -40,7 +40,7 @@ class ConversationTile extends StatefulWidget {
 
   ConversationTile({
     Key? key,
-    this.chat,
+    required this.chat,
     this.onTapGoToChat,
     this.existingAttachments,
     this.existingText,

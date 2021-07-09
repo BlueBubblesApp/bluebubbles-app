@@ -32,7 +32,7 @@ class ConversationList extends StatefulWidget {
 }
 
 class _ConversationListState extends State<ConversationList> {
-  List<Chat?> chats = [];
+  List<Chat> chats = [];
   bool? colorfulAvatars = false;
   bool? reducedForehead = false;
   bool? showIndicator = false;
@@ -71,7 +71,7 @@ class _ConversationListState extends State<ConversationList> {
   void initState() {
     super.initState();
     if (!widget.showArchivedChats!) {
-      ChatBloc().chatStream.listen((List<Chat?> chats) {
+      ChatBloc().chatStream.listen((List<Chat> chats) {
         if (chats.length == 0) return;
         this.chats = chats;
         if (this.mounted) setState(() {});
@@ -79,7 +79,7 @@ class _ConversationListState extends State<ConversationList> {
 
       ChatBloc().refreshChats();
     } else {
-      ChatBloc().archivedChatStream.listen((List<Chat?> chats) {
+      ChatBloc().archivedChatStream.listen((List<Chat> chats) {
         if (chats.length == 0) return;
         this.chats = chats;
         if (this.mounted) setState(() {});
@@ -567,7 +567,7 @@ class _Material extends StatefulWidget {
 class __MaterialState extends State<_Material> {
   DisplayMode? currentMode;
   List<DisplayMode>? modes;
-  List<Chat?> selected = [];
+  List<Chat> selected = [];
 
   bool hasPinnedChat() {
     for (var i = 0; i < widget.parent.chats.length; i++) {

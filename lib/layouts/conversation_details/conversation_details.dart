@@ -20,19 +20,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class ConversationDetails extends StatefulWidget {
-  final Chat? chat;
+  final Chat chat;
   final MessageBloc? messageBloc;
 
-  ConversationDetails({Key? key, this.chat, this.messageBloc}) : super(key: key);
+  ConversationDetails({Key? key, required this.chat, this.messageBloc}) : super(key: key);
 
   @override
   _ConversationDetailsState createState() => _ConversationDetailsState();
 }
 
 class _ConversationDetailsState extends State<ConversationDetails> {
-  TextEditingController? controller;
+  late TextEditingController controller;
   bool readOnly = true;
-  Chat? chat;
+  late Chat chat;
   List<Attachment> attachmentsForChat = <Attachment>[];
   bool isClearing = false;
   bool isCleared = false;

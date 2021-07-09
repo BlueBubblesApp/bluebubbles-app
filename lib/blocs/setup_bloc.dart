@@ -30,7 +30,7 @@ class SetupOutputData {
 class SetupBloc {
   StreamController<SetupData> _stream = StreamController<SetupData>.broadcast();
   StreamController<SocketState> _connectionStatusStream = StreamController<SocketState>.broadcast();
-  StreamSubscription? connectionSubscription;
+  late StreamSubscription connectionSubscription;
 
   Stream<SocketState> get conenctionStatus => _connectionStatusStream.stream;
 
@@ -331,7 +331,7 @@ class SetupBloc {
     processId = null;
 
     output = [];
-    connectionSubscription?.cancel();
+    connectionSubscription.cancel();
   }
 
   void dispose() {
