@@ -22,7 +22,7 @@ class AttachmentFullscreenViewer extends StatefulWidget {
     this.currentChat,
   }) : super(key: key);
   final CurrentChat? currentChat;
-  final Attachment? attachment;
+  final Attachment attachment;
   final bool showInteractions;
 
   static AttachmentFullscreenViewerState? of(BuildContext context) {

@@ -14,11 +14,11 @@ import 'package:video_thumbnail/video_thumbnail.dart';
 class AttachmentListItem extends StatefulWidget {
   AttachmentListItem({
     Key? key,
-    this.file,
-    this.onRemove,
+    required this.file,
+    required this.onRemove,
   }) : super(key: key);
-  final File? file;
-  final Function()? onRemove;
+  final File file;
+  final Function() onRemove;
 
   @override
   _AttachmentListItemState createState() => _AttachmentListItemState();

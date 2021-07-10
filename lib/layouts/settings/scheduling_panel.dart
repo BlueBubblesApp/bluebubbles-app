@@ -179,7 +179,8 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
             Navigator.of(context).push(
               ThemeSwitcher.buildPageRoute(
                 builder: (BuildContext context) {
-                  return SchedulePanel();
+                  //todo
+                  /*return SchedulePanel();*/
                 },
               ),
             );

@@ -7,23 +7,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
 class AvatarColorPickerPopup extends StatefulWidget {
-  AvatarColorPickerPopup({Key? key, this.handle, this.onSet, this.onReset}) : super(key: key);
-  final Handle? handle;
-  final Function(Color? color)? onSet;
-  final Function()? onReset;
+  AvatarColorPickerPopup({Key? key, required this.handle, required this.onSet, required this.onReset}) : super(key: key);
+  final Handle handle;
+  final Function(Color? color) onSet;
+  final Function() onReset;
 
   @override
   _AvatarColorPickerPopupState createState() => _AvatarColorPickerPopupState();
 }
 
 class _AvatarColorPickerPopupState extends State<AvatarColorPickerPopup> {
-  Color? currentColor;
+  Color currentColor = Colors.black;
 
   @override
   void initState() {
     super.initState();
-
-    currentColor = Colors.black;
     if (widget.handle!.color != null) {
       currentColor = HexColor(widget.handle!.color!);
     } else {

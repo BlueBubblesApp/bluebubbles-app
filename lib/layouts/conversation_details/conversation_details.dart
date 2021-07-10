@@ -21,9 +21,9 @@ import 'package:flutter/services.dart';
 
 class ConversationDetails extends StatefulWidget {
   final Chat chat;
-  final MessageBloc? messageBloc;
+  final MessageBloc messageBloc;
 
-  ConversationDetails({Key? key, required this.chat, this.messageBloc}) : super(key: key);
+  ConversationDetails({Key? key, required this.chat, required this.messageBloc}) : super(key: key);
 
   @override
   _ConversationDetailsState createState() => _ConversationDetailsState();

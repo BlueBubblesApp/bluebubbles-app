@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
 class ThemingColorPickerPopup extends StatefulWidget {
-  ThemingColorPickerPopup({Key? key, this.onSet, this.entry}) : super(key: key);
-  final ThemeEntry? entry;
-  final Function(Color? color, {int? fontSize})? onSet;
+  ThemingColorPickerPopup({Key? key, required this.onSet, required this.entry}) : super(key: key);
+  final ThemeEntry entry;
+  final Function(Color? color, {int? fontSize}) onSet;
 
   @override
   _ThemingColorPickerPopupState createState() => _ThemingColorPickerPopupState();

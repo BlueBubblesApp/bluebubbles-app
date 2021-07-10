@@ -18,7 +18,7 @@ class ThemingPanel extends StatefulWidget {
 }
 
 class _ThemingPanelState extends State<ThemingPanel> with TickerProviderStateMixin {
-  TabController? controller;
+  late TabController controller;
   StreamController streamController = StreamController.broadcast();
 
   @override

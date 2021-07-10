@@ -24,7 +24,7 @@ class MessageAttachment extends StatefulWidget {
     required this.updateAttachment,
     required this.message,
   }) : super(key: key);
-  final Attachment? attachment;
+  final Attachment attachment;
   final Function() updateAttachment;
   final Message? message;
 

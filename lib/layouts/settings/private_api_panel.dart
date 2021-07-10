@@ -21,7 +21,7 @@ class PrivateAPIPanel extends StatefulWidget {
 
 class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
   late Settings _settingsCopy;
-  bool? enablePrivateAPI = false;
+  bool enablePrivateAPI = false;
 
   @override
   void initState() {

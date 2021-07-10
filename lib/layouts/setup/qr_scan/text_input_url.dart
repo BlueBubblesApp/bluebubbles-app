@@ -18,8 +18,8 @@ class TextInputURL extends StatefulWidget {
 
 class _TextInputURLState extends State<TextInputURL> {
   bool connecting = false;
-  TextEditingController? urlController;
-  TextEditingController? passwordController;
+  late TextEditingController urlController;
+  late TextEditingController passwordController;
   String? error;
 
   @override

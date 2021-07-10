@@ -24,8 +24,8 @@ class VideoWidget extends StatefulWidget {
     required this.file,
     required this.attachment,
   }) : super(key: key);
-  final File? file;
-  final Attachment? attachment;
+  final File file;
+  final Attachment attachment;
 
   @override
   _VideoWidgetState createState() => _VideoWidgetState();
@@ -100,9 +100,9 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
   @override
   Widget build(BuildContext context) {
     VideoPlayerController? controller;
-    Map<String?, VideoPlayerController?>? controllers = CurrentChat.of(context)!.currentPlayingVideo;
+    Map<String, VideoPlayerController> controllers = CurrentChat.of(context)!.currentPlayingVideo;
     // If the currently playing video is this attachment guid
-    if (controllers != null && controllers.containsKey(widget.attachment!.guid)) {
+    if (controllers.isNotEmpty && controllers.containsKey(widget.attachment!.guid)) {
       controller = controllers[widget.attachment!.guid];
       this.createListener(controller);
     }

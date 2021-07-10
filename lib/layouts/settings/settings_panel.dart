@@ -457,7 +457,7 @@ class SettingsTextField extends StatelessWidget {
   const SettingsTextField(
       {Key? key,
       this.onTap,
-      this.title,
+      required this.title,
       this.trailing,
       required this.controller,
       this.placeholder,
@@ -466,9 +466,9 @@ class SettingsTextField extends StatelessWidget {
       this.inputFormatters = const []})
       : super(key: key);
 
-  final TextEditingController? controller;
+  final TextEditingController controller;
   final Function? onTap;
-  final String? title;
+  final String title;
   final String? placeholder;
   final Widget? trailing;
   final int maxLines;
@@ -541,13 +541,13 @@ class SettingsTextField extends StatelessWidget {
 class SettingsSwitch extends StatefulWidget {
   SettingsSwitch({
     Key? key,
-    this.initialVal,
+    required this.initialVal,
     this.onChanged,
-    this.title,
+    required this.title,
   }) : super(key: key);
-  final bool? initialVal;
+  final bool initialVal;
   final Function(bool)? onChanged;
-  final String? title;
+  final String title;
 
   @override
   _SettingsSwitchState createState() => _SettingsSwitchState();
@@ -590,19 +590,19 @@ class _SettingsSwitchState extends State<SettingsSwitch> {
 class SettingsOptions<T> extends StatefulWidget {
   SettingsOptions({
     Key? key,
-    this.onChanged,
-    this.options,
-    this.initial,
+    required this.onChanged,
+    required this.options,
+    required this.initial,
     this.textProcessing,
-    this.title,
+    required this.title,
     this.subtitle,
     this.showDivider = true,
     this.capitalize = true,
   }) : super(key: key);
-  final String? title;
-  final Function(dynamic)? onChanged;
-  final List<T>? options;
-  final T? initial;
+  final String title;
+  final Function(dynamic) onChanged;
+  final List<T> options;
+  final T initial;
   final String Function(dynamic)? textProcessing;
   final bool showDivider;
   final String? subtitle;
@@ -612,8 +612,8 @@ class SettingsOptions<T> extends StatefulWidget {
   _SettingsOptionsState createState() => _SettingsOptionsState();
 }
 
-class _SettingsOptionsState<T> extends State<SettingsOptions<T?>> {
-  T? currentVal;
+class _SettingsOptionsState<T> extends State<SettingsOptions<T>> {
+  late T currentVal;
 
   @override
   void initState() {
@@ -680,7 +680,7 @@ class _SettingsOptionsState<T> extends State<SettingsOptions<T?>> {
                     onChanged: (T? val) {
                       widget.onChanged!(val);
 
-                      if (!this.mounted) return;
+                      if (!this.mounted || val == null) return;
 
                       setState(() {
                         currentVal = val;

@@ -5,9 +5,9 @@ import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:flutter/material.dart';
 
 class TextFieldAttachmentList extends StatefulWidget {
-  TextFieldAttachmentList({Key? key, this.attachments, this.onRemove}) : super(key: key);
-  final List<File>? attachments;
-  final Function(File)? onRemove;
+  TextFieldAttachmentList({Key? key, required this.attachments, required this.onRemove}) : super(key: key);
+  final List<File> attachments;
+  final Function(File) onRemove;
 
   @override
   _TextFieldAttachmentListState createState() => _TextFieldAttachmentListState();

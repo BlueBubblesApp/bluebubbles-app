@@ -20,15 +20,13 @@ import 'package:photo_view/photo_view.dart';
 class ImageViewer extends StatefulWidget {
   ImageViewer({
     Key? key,
-    this.tag,
-    this.file,
-    this.attachment,
-    this.showInteractions,
+    required this.file,
+    required this.attachment,
+    required this.showInteractions,
   }) : super(key: key);
-  final String? tag;
-  final File? file;
-  final Attachment? attachment;
-  final bool? showInteractions;
+  final File file;
+  final Attachment attachment;
+  final bool showInteractions;
 
   @override
   _ImageViewerState createState() => _ImageViewerState();
@@ -37,7 +35,7 @@ class ImageViewer extends StatefulWidget {
 class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClientMixin {
   double top = 0;
   int duration = 0;
-  PhotoViewController? controller;
+  late PhotoViewController controller;
   bool showOverlay = true;
   Uint8List? bytes;
 

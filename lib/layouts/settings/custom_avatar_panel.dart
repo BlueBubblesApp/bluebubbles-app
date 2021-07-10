@@ -26,8 +26,6 @@ class CustomAvatarPanel extends StatefulWidget {
 
 class _CustomAvatarPanelState extends State<CustomAvatarPanel> {
   late Settings _settingsCopy;
-  List<DisplayMode>? modes;
-  DisplayMode? currentMode;
   bool isFetching = false;
   List<Widget> handleWidgets = [];
 

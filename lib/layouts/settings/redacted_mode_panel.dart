@@ -20,7 +20,7 @@ class RedactedModePanel extends StatefulWidget {
 
 class _RedactedModePanelState extends State<RedactedModePanel> {
   late Settings _settingsCopy;
-  bool? redactedMode = false;
+  bool redactedMode = false;
 
   @override
   void initState() {

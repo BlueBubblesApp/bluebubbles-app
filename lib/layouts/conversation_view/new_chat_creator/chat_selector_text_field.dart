@@ -21,7 +21,7 @@ class ChatSelectorTextField extends StatefulWidget {
   }) : super(key: key);
   final TextEditingController controller;
   final Function(UniqueContact) onRemove;
-  final bool? isCreator;
+  final bool isCreator;
   final List<UniqueContact> selectedContacts;
   final List<UniqueContact> allContacts;
   final Function(UniqueContact item) onSelected;
@@ -31,7 +31,7 @@ class ChatSelectorTextField extends StatefulWidget {
 }
 
 class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
-  FocusNode? inputFieldNode;
+  late FocusNode inputFieldNode;
 
   @override
   void initState() {

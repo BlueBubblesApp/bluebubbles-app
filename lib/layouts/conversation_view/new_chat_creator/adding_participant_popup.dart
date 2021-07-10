@@ -8,9 +8,9 @@ import 'package:flutter/material.dart';
 
 class AddingParticipantPopup extends StatefulWidget {
   final List<UniqueContact> contacts;
-  final Chat? chat;
+  final Chat chat;
 
-  AddingParticipantPopup({Key? key, required this.contacts, this.chat}) : super(key: key);
+  AddingParticipantPopup({Key? key, required this.contacts, required this.chat}) : super(key: key);
 
   @override
   _AddingParticipantPopupState createState() => _AddingParticipantPopupState();

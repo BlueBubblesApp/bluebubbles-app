@@ -12,9 +12,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class ThemingColorOptionsList extends StatefulWidget {
-  ThemingColorOptionsList({Key? key, this.isDarkMode, this.controller}) : super(key: key);
-  final bool? isDarkMode;
-  final StreamController? controller;
+  ThemingColorOptionsList({Key? key, required this.isDarkMode, required this.controller}) : super(key: key);
+  final bool isDarkMode;
+  final StreamController controller;
 
   @override
   _ThemingColorOptionsListState createState() => _ThemingColorOptionsListState();
@@ -143,7 +143,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
                     return ThemingColorSelector(
-                      currentTheme: currentTheme,
+                      currentTheme: currentTheme!,
                       entry: currentTheme!.entries[index],
                       editable: editable,
                     );
@@ -194,9 +194,9 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
 }
 
 class NewThemeCreateAlert extends StatefulWidget {
-  NewThemeCreateAlert({Key? key, this.onCreate, this.onCancel}) : super(key: key);
-  final Function(String name)? onCreate;
-  final Function()? onCancel;
+  NewThemeCreateAlert({Key? key, required this.onCreate, required this.onCancel}) : super(key: key);
+  final Function(String name) onCreate;
+  final Function() onCancel;
 
   @override
   _NewThemeCreateAlertState createState() => _NewThemeCreateAlertState();

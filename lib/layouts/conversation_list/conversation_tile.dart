@@ -32,22 +32,22 @@ class ConversationTile extends StatefulWidget {
   final Chat chat;
   final bool? onTapGoToChat;
   final Function? onTapCallback;
-  final List<File>? existingAttachments;
+  final List<File> existingAttachments;
   final String? existingText;
   final Function(bool)? onSelect;
   final bool inSelectMode;
-  final List<Chat?>? selected;
+  final List<Chat> selected;
 
   ConversationTile({
     Key? key,
     required this.chat,
     this.onTapGoToChat,
-    this.existingAttachments,
+    this.existingAttachments = const [],
     this.existingText,
     this.onTapCallback,
     this.onSelect,
     this.inSelectMode = false,
-    this.selected,
+    this.selected = const [],
   }) : super(key: key);
 
   @override
@@ -55,26 +55,24 @@ class ConversationTile extends StatefulWidget {
 }
 
 class _ConversationTileState extends State<ConversationTile> with AutomaticKeepAliveClientMixin {
-  bool? hideDividers = false;
+  bool hideDividers = false;
   bool isFetching = false;
-  bool? denseTiles = false;
-  List<DisplayMode>? modes;
-  DisplayMode? currentMode;
+  bool denseTiles = false;
   Brightness? brightness;
   Color? previousBackgroundColor;
   bool gotBrightness = false;
 
   // Redacted Mode stuff that's visible on this screen (to detect and respond to changes)
-  bool? redactedMode = false;
-  bool? hideMessageContent = true;
-  bool? hideContactPhotos = true;
-  bool? hideContactInfo = true;
-  bool? removeLetterAvatars = true;
-  bool? generateFakeContactNames = false;
-  bool? generateFakeMessageContent = false;
+  bool redactedMode = false;
+  bool hideMessageContent = true;
+  bool hideContactPhotos = true;
+  bool hideContactInfo = true;
+  bool removeLetterAvatars = true;
+  bool generateFakeContactNames = false;
+  bool generateFakeMessageContent = false;
 
   // Typing indicator
-  bool? showTypingIndicator = false;
+  bool showTypingIndicator = false;
 
   void loadBrightness() {
     Color now = Theme.of(context).backgroundColor;
@@ -90,7 +88,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
   }
 
   bool get selected {
-    if (widget.selected == null) return false;
+    if (widget.selected.isEmpty) return false;
     return widget.selected!.where((element) => widget.chat!.guid == element!.guid).isNotEmpty;
   }
 

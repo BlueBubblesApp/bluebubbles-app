@@ -146,11 +146,11 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
 
   void onAvatarTap() {
     if (widget.onTap != null) widget.onTap!();
-    if (!widget.editable || !SettingsManager().settings.colorfulAvatars) return;
+    if (!widget.editable || !SettingsManager().settings.colorfulAvatars || widget.handle == null) return;
     showDialog(
       context: context,
       builder: (context) => AvatarColorPickerPopup(
-        handle: widget.handle,
+        handle: widget.handle!,
         onReset: () async {
           widget.handle!.color = null;
           await widget.handle!.update();

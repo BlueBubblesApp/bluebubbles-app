@@ -21,9 +21,9 @@ import 'package:path/path.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
 class AttachmentDetailsCard extends StatefulWidget {
-  AttachmentDetailsCard({Key? key, this.attachment, this.allAttachments}) : super(key: key);
-  final Attachment? attachment;
-  final List<Attachment>? allAttachments;
+  AttachmentDetailsCard({Key? key, required this.attachment, required this.allAttachments}) : super(key: key);
+  final Attachment attachment;
+  final List<Attachment> allAttachments;
 
   @override
   _AttachmentDetailsCardState createState() => _AttachmentDetailsCardState();

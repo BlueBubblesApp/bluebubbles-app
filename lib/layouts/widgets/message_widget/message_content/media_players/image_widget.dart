@@ -15,11 +15,11 @@ import 'package:visibility_detector/visibility_detector.dart';
 class ImageWidget extends StatefulWidget {
   ImageWidget({
     Key? key,
-    this.file,
-    this.attachment,
+    required this.file,
+    required this.attachment,
   }) : super(key: key);
-  final File? file;
-  final Attachment? attachment;
+  final File file;
+  final Attachment attachment;
 
   @override
   _ImageWidgetState createState() => _ImageWidgetState();

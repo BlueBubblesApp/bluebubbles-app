@@ -23,9 +23,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 
 class ConversationList extends StatefulWidget {
-  ConversationList({Key? key, this.showArchivedChats}) : super(key: key);
+  ConversationList({Key? key, required this.showArchivedChats}) : super(key: key);
 
-  final bool? showArchivedChats;
+  final bool showArchivedChats;
 
   @override
   _ConversationListState createState() => _ConversationListState();
@@ -33,23 +33,22 @@ class ConversationList extends StatefulWidget {
 
 class _ConversationListState extends State<ConversationList> {
   List<Chat> chats = [];
-  bool? colorfulAvatars = false;
-  bool? reducedForehead = false;
-  bool? showIndicator = false;
-  bool? showSyncIndicator = false;
-  bool? moveChatCreatorButton = false;
+  bool colorfulAvatars = false;
+  bool reducedForehead = false;
+  bool showIndicator = false;
+  bool showSyncIndicator = false;
+  bool moveChatCreatorButton = false;
 
   Color? currentHeaderColor;
-  bool hasPinnedChata = false;
+  bool hasPinnedChats = false;
 
   // ignore: close_sinks
   StreamController<Color?> headerColorStream = StreamController<Color?>.broadcast();
 
-  String? model;
   int pinnedChats = 0;
-  ScrollController? scrollController;
-  Skins? skinSet;
-  bool? swipableTiles = false;
+  late ScrollController scrollController;
+  late Skins skinSet;
+  bool swipableTiles = false;
 
   @override
   void didChangeDependencies() {
@@ -64,7 +63,7 @@ class _ConversationListState extends State<ConversationList> {
     super.dispose();
 
     // Remove the scroll listener from the state
-    if (scrollController != null) scrollController!.removeListener(scrollListener);
+    scrollController.removeListener(scrollListener);
   }
 
   @override
@@ -154,7 +153,7 @@ class _ConversationListState extends State<ConversationList> {
   }
 
   bool get _isAppBarExpanded {
-    return scrollController != null && scrollController!.hasClients && scrollController!.offset > (125 - kToolbarHeight);
+    return scrollController!.hasClients && scrollController!.offset > (125 - kToolbarHeight);
   }
 
   List<Widget> getHeaderTextWidgets({double? size}) {
@@ -565,14 +564,12 @@ class _Material extends StatefulWidget {
 }
 
 class __MaterialState extends State<_Material> {
-  DisplayMode? currentMode;
-  List<DisplayMode>? modes;
   List<Chat> selected = [];
 
   bool hasPinnedChat() {
     for (var i = 0; i < widget.parent.chats.length; i++) {
       if (widget.parent.chats[i]!.isPinned!) {
-        widget.parent.hasPinnedChata = true;
+        widget.parent.hasPinnedChats = true;
         return true;
       } else {
         return false;
@@ -1037,14 +1034,12 @@ class _Samsung extends StatefulWidget {
 }
 
 class _SamsungState extends State<_Samsung> {
-  DisplayMode? currentMode;
-  List<DisplayMode>? modes;
-  List<Chat?> selected = [];
+  List<Chat> selected = [];
 
   bool hasPinnedChat() {
     for (var i = 0; i < widget.parent.chats.length; i++) {
       if (widget.parent.chats[i]!.isPinned!) {
-        widget.parent.hasPinnedChata = true;
+        widget.parent.hasPinnedChats = true;
         return true;
       } else {
         return false;

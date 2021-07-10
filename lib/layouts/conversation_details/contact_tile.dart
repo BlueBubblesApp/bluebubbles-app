@@ -46,11 +46,11 @@ class _ContactTileState extends State<ContactTile> {
 
     getContact();
     fetchAvatar();
-    ContactManager().stream.listen((List<String?> addresses) {
+    ContactManager().stream.listen((List<String> addresses) {
       // Check if any of the addresses are members of the chat
       List<Handle> participants = widget.chat!.participants;
       List<String?> handles = participants.map((Handle handle) => handle.address).toList();
-      for (String? addr in addresses) {
+      for (String addr in addresses) {
         if (handles.contains(addr)) {
           fetchAvatar();
           break;
@@ -78,13 +78,13 @@ class _ContactTileState extends State<ContactTile> {
     });
   }
 
-  Future<void> makeCall(String? phoneNumber) async {
+  Future<void> makeCall(String phoneNumber) async {
     if (await Permission.phone.request().isGranted) {
       launch("tel://$phoneNumber");
     }
   }
 
-  Future<void> startEmail(String? email) async {
+  Future<void> startEmail(String email) async {
     launch('mailto:$email');
   }
 
@@ -181,7 +181,8 @@ class _ContactTileState extends State<ContactTile> {
                       backgroundColor: Theme.of(context).accentColor,
                     ),
                     onPressed: () {
-                      startEmail(widget.handle!.address);
+                      if (widget.handle!.address == null) return;
+                      startEmail(widget.handle!.address!);
                     },
                     child: Icon(Icons.email, color: Theme.of(context).primaryColor, size: 20),
                   ),
@@ -196,11 +197,12 @@ class _ContactTileState extends State<ContactTile> {
                         ),
                         onPressed: () {
                           if (contact == null) {
-                            makeCall(widget.handle!.address);
+                            if (widget.handle!.address == null) return;
+                            makeCall(widget.handle!.address!);
                           } else {
                             List<Item> phones = getUniqueNumbers(contact!.phones!);
                             if (phones.length == 1) {
-                              makeCall(contact!.phones!.elementAt(0).value);
+                              makeCall(contact!.phones!.first.value!);
                             } else {
                               showDialog(
                                 context: context,
@@ -220,7 +222,7 @@ class _ContactTileState extends State<ContactTile> {
                                                 style: TextStyle(color: Theme.of(context).textTheme.bodyText1!.color),
                                                 textAlign: TextAlign.start),
                                             onPressed: () async {
-                                              makeCall(phones[i].value);
+                                              makeCall(phones[i].value!);
                                               Navigator.of(context).pop();
                                             },
                                           )

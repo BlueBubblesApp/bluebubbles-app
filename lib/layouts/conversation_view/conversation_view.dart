@@ -34,22 +34,22 @@ abstract class ChatSelectorTypes {
 }
 
 class ConversationView extends StatefulWidget {
-  final List<File>? existingAttachments;
+  final List<File> existingAttachments;
   final String? existingText;
-  final List<UniqueContact>? selected;
+  final List<UniqueContact> selected;
 
   ConversationView({
     Key? key,
     this.chat,
-    this.existingAttachments,
+    this.existingAttachments = const [],
     this.existingText,
-    this.isCreator,
+    this.isCreator = false,
     this.onSelect,
     this.selectIcon,
     this.customHeading,
     this.customMessageBloc,
     this.onMessagesViewComplete,
-    this.selected,
+    this.selected = const [],
     this.type = ChatSelectorTypes.ALL,
     this.showSnackbar = false,
   }) : super(key: key);
@@ -59,7 +59,7 @@ class ConversationView extends StatefulWidget {
   final Widget? selectIcon;
   final String? customHeading;
   final String type;
-  final bool? isCreator;
+  final bool isCreator;
   final MessageBloc? customMessageBloc;
   final Function? onMessagesViewComplete;
   final bool showSnackbar;
@@ -69,10 +69,8 @@ class ConversationView extends StatefulWidget {
 }
 
 class ConversationViewState extends State<ConversationView> with ConversationViewMixin {
-  List<File>? existingAttachments;
+  List<File> existingAttachments = [];
   String? existingText;
-  List<DisplayMode>? modes;
-  DisplayMode? currentMode;
   Brightness? brightness;
   Color? previousBackgroundColor;
   bool gotBrightness = false;
@@ -89,13 +87,13 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
     // Initialize the current chat state
     if (widget.chat != null) {
-      initCurrentChat(widget.chat);
+      initCurrentChat(widget.chat!);
     }
 
     isCreator = widget.isCreator ?? false;
     chat = widget.chat;
 
-    if (widget.selected == null) {
+    if (widget.selected.isEmpty) {
       initChatSelector();
     }
     initConversationViewState();
@@ -161,7 +159,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
       // If the current chat is null, set it
       if (isDifferentChat) {
-        initCurrentChat(chat);
+        initCurrentChat(chat!);
       }
 
       bool isDifferentBloc = messageBloc == null || messageBloc?.currentChat?.guid != chat!.guid;
@@ -174,7 +172,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       }
     } else {
       if (isDifferentChat) {
-        initCurrentChat(chat);
+        initCurrentChat(chat!);
       }
     }
 
@@ -355,7 +353,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                     if (this.mounted) setState(() {});
                   },
                   onSelected: onSelected,
-                  isCreator: widget.isCreator,
+                  isCreator: widget.isCreator ?? false,
                   allContacts: contacts,
                   selectedContacts: selected,
                 ),

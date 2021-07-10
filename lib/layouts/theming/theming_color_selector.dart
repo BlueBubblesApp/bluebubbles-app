@@ -7,10 +7,10 @@ import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:flutter/material.dart';
 
 class ThemingColorSelector extends StatefulWidget {
-  ThemingColorSelector({Key? key, this.currentTheme, this.entry, this.editable}) : super(key: key);
-  final ThemeObject? currentTheme;
-  final ThemeEntry? entry;
-  final bool? editable;
+  ThemingColorSelector({Key? key, required this.currentTheme, required this.entry, required this.editable}) : super(key: key);
+  final ThemeObject currentTheme;
+  final ThemeEntry entry;
+  final bool editable;
 
   @override
   _ThemingColorSelectorState createState() => _ThemingColorSelectorState();

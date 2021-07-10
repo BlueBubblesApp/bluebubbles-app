@@ -49,14 +49,12 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   List<UniqueContact> contacts = [];
   List<UniqueContact> selected = [];
   List<UniqueContact> prevSelected = [];
-  String? searchQuery = "";
+  String searchQuery = "";
   bool currentlyProcessingDeleteKey = false;
   CurrentChat? currentChat;
-  List<DisplayMode>? modes;
-  DisplayMode? currentMode;
   bool markingAsRead = false;
   bool markedAsRead = false;
-  String? previousSearch = '';
+  String previousSearch = '';
   int previousContactCount = 0;
 
   final _contactStreamController = StreamController<List<UniqueContact>>.broadcast();
@@ -138,7 +136,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     SocketManager().removeChatNotification(chat!);
   }
 
-  void initCurrentChat(Chat? chat) {
+  void initCurrentChat(Chat chat) {
     currentChat = CurrentChat.getCurrentChat(chat);
     currentChat!.init();
     currentChat!.updateChatAttachments().then((value) {
@@ -150,9 +148,9 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     });
   }
 
-  MessageBloc? initMessageBloc() {
+  MessageBloc initMessageBloc() {
     messageBloc = new MessageBloc(chat);
-    return messageBloc;
+    return messageBloc!;
   }
 
   void dispose() {
@@ -784,10 +782,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     searchQuery = slugText(searchQuery);
 
     List<UniqueContact> _contacts = [];
-    List<String?> cache = [];
+    List<String> cache = [];
     Function addContactEntries = (Contact contact, {conditionally = false}) {
       for (Item phone in contact.phones!) {
-        String? cleansed = slugText(phone.value);
+        String cleansed = slugText(phone.value);
         if (conditionally && !cleansed!.contains(searchQuery!)) continue;
 
         if (!cache.contains(cleansed)) {
@@ -803,7 +801,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       }
 
       for (Item email in contact.emails!) {
-        String? emailVal = slugText(email.value);
+        String emailVal = slugText(email.value);
         if (conditionally && !emailVal!.contains(searchQuery!)) continue;
 
         if (!cache.contains(emailVal)) {
@@ -833,10 +831,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     List<UniqueContact> _conversations = [];
     if (selected.length == 0 && widget.type != ChatSelectorTypes.ONLY_CONTACTS) {
       for (Chat chat in conversations) {
-        String title = slugText(chat.title);
+        String title = slugText(chat.title ?? chat.displayName);
         if (title.contains(searchQuery!)) {
           if (!cache.contains(chat.guid)) {
-            cache.add(chat.guid);
+            cache.add(chat.guid!);
             _conversations.add(
               new UniqueContact(
                 chat: chat,

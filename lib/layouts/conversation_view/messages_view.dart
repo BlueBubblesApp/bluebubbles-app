@@ -24,14 +24,14 @@ import 'package:google_ml_kit/google_ml_kit.dart';
 
 class MessagesView extends StatefulWidget {
   final MessageBloc? messageBloc;
-  final bool? showHandle;
+  final bool showHandle;
   final Chat? chat;
   final Function? initComplete;
 
   MessagesView({
     Key? key,
     this.messageBloc,
-    this.showHandle,
+    required this.showHandle,
     this.chat,
     this.initComplete,
   }) : super(key: key);
@@ -44,7 +44,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
   Completer<LoadMessageResult>? loader;
   bool noMoreMessages = false;
   bool noMoreLocalMessages = false;
-  List<Message>? _messages = <Message>[];
+  List<Message> _messages = <Message>[];
 
   GlobalKey<SliverAnimatedListState>? _listKey;
   final Duration animationDuration = Duration(milliseconds: 400);
@@ -59,7 +59,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
 
   late StreamController<List<String?>> smartReplyController;
 
-  bool? get showScrollDown => currentChat?.showScrollDown;
+  bool get showScrollDown => currentChat?.showScrollDown ?? false;
 
   ScrollController? get scrollController {
     if (currentChat == null) return null;

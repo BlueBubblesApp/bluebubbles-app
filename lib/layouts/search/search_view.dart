@@ -30,7 +30,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
   final TextEditingController textEditingController = new TextEditingController();
 
   bool isSearching = false;
-  Map<String?, Chat?> chatCache = {};
+  Map<String, Chat> chatCache = {};
   FocusNode _focusNode = new FocusNode();
   Map<String, int> resultCache = {};
   bool noResults = false;

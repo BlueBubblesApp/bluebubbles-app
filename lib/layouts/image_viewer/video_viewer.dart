@@ -15,10 +15,10 @@ import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoViewer extends StatefulWidget {
-  VideoViewer({Key? key, required this.file, required this.attachment, this.showInteractions}) : super(key: key);
+  VideoViewer({Key? key, required this.file, required this.attachment, required this.showInteractions}) : super(key: key);
   final File file;
   final Attachment attachment;
-  final bool? showInteractions;
+  final bool showInteractions;
 
   @override
   _VideoViewerState createState() => _VideoViewerState();
@@ -28,7 +28,7 @@ class _VideoViewerState extends State<VideoViewer> {
   StreamController<double> videoProgressStream = StreamController();
   bool showPlayPauseOverlay = false;
   Timer? hideOverlayTimer;
-  VideoPlayerController? controller;
+  late VideoPlayerController controller;
   PlayerStatus status = PlayerStatus.NONE;
   bool hasListener = false;
 

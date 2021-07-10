@@ -453,7 +453,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           } else {
             // If it's not a group chat, get the participant's contact info
             String? address = CurrentChat.of(context)?.chat.participants[0].address;
-            Contact? contact = ContactManager().getCachedContactSync(address);
+            Contact? contact = ContactManager().getCachedContactSync(address ?? "");
             if (contact == null) {
               placeholder = await formatPhoneNumber(address!);
             } else {

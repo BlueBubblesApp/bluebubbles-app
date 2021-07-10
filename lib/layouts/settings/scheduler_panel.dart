@@ -22,9 +22,9 @@ List<dynamic> timeOptions = [
 ];
 
 class SchedulePanel extends StatefulWidget {
-  final Chat? chat;
+  final Chat chat;
 
-  SchedulePanel({Key? key, this.chat}) : super(key: key);
+  SchedulePanel({Key? key, required this.chat}) : super(key: key);
 
   @override
   _SchedulePanelState createState() => _SchedulePanelState();
@@ -33,9 +33,7 @@ class SchedulePanel extends StatefulWidget {
 class _SchedulePanelState extends State<SchedulePanel> {
   Chat? _chat;
   String? title;
-  TextEditingController? messageController;
-  TextEditingController? customController;
-  bool? customTime;
+  late TextEditingController messageController;
   int? scheduleSeconds = 300;
   TimeOfDay? messageTime;
   DateTime? messageDate;

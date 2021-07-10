@@ -196,14 +196,14 @@ class _ThemePanelState extends State<ThemePanel> {
                   // For whatever fucking reason, this needs to be down here, otherwise all of the switch values are false
                   if (currentMode != null && modes != null)
                     SettingsOptions<DisplayMode>(
-                      initial: currentMode,
+                      initial: currentMode ?? DisplayMode.auto,
                       showDivider: false,
                       onChanged: (val) async {
                         currentMode = val;
                         _settingsCopy.displayMode = currentMode!.id;
                       },
-                      options: modes,
-                      textProcessing: (val) => val.toString(),
+                      options: modes!,
+                      textProcessing: (val) => val == DisplayMode.auto ? "Automatic" : val.toString(),
                       title: "Display",
                     ),
                   // SettingsOptions<String>(
