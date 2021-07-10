@@ -154,17 +154,6 @@ class _ConvoSettingsState extends State<ConvoSettings> {
                     initialVal: _settingsCopy.smartReply,
                     title: "Smart Replies",
                   ),
-                  if (_settingsCopy.smartReply)
-                    SettingsSlider(
-                        text: "Smart Reply Sample Size",
-                        startingVal: _settingsCopy.smartReplySampleSize.toDouble(),
-                        update: (double val) {
-                          _settingsCopy.smartReplySampleSize = val.toInt();
-                        },
-                        formatValue: ((double val) => val.toStringAsFixed(2)),
-                        min: 1,
-                        max: 10,
-                        divisions: 9),
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.sendWithReturn = val;

@@ -41,7 +41,6 @@ class Settings {
   bool swipeToOpenKeyboard = false;
   bool openKeyboardOnSTB = false;
   bool swipableConversationTiles = false;
-  int smartReplySampleSize = 2;
   bool colorblindMode = false;
   bool showDeliveryTimestamps = false;
   int previewCompressionQuality = 25;
@@ -152,8 +151,6 @@ class Settings {
         settings.enablePrivateAPI = entry.value;
       } else if (entry.name == "privateSendTypingIndicators") {
         settings.privateSendTypingIndicators = entry.value;
-      } else if (entry.name == "smartReplySampleSize") {
-        settings.smartReplySampleSize = entry.value;
       } else if (entry.name == "colorblindMode") {
         settings.colorblindMode = entry.value;
       } else if (entry.name == "privateMarkChatAsRead") {
@@ -411,11 +408,6 @@ class Settings {
           name: "privateSendTypingIndicators",
           value: this.privateSendTypingIndicators,
           type: this.privateSendTypingIndicators.runtimeType,
-        ),
-        ConfigEntry(
-          name: "smartReplySampleSize",
-          value: this.smartReplySampleSize,
-          type: this.smartReplySampleSize.runtimeType,
         ),
         ConfigEntry(
           name: "colorblindMode",
