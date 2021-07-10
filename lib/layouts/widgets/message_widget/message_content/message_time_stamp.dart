@@ -20,7 +20,7 @@ class MessageTimeStamp extends StatelessWidget {
         stream: CurrentChat.of(context)?.timeStampOffsetStream.stream,
         builder: (context, snapshot) {
           double offset = CurrentChat.of(context)!.timeStampOffset;
-          String text = DateFormat('h:mm a').format(message!.dateCreated!).toLowerCase();
+          String text = buildTime(message!.dateCreated).toLowerCase();
           if (!message!.dateCreated!.isToday()) {
             String formatted = buildDate(message!.dateCreated);
             text = "$formatted${singleLine ? " " : "\n"}$text";

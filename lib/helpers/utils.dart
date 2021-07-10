@@ -199,7 +199,8 @@ bool sameSender(Message? first, Message? second) {
 
 String buildDate(DateTime? dateTime) {
   if (dateTime == null || dateTime.millisecondsSinceEpoch == 0) return "";
-  String time = new intl.DateFormat.jm().format(dateTime);
+  String time = SettingsManager().settings.use24HrFormat ?
+    intl.DateFormat.Hm().format(dateTime) : new intl.DateFormat.jm().format(dateTime);
   String date;
   if (dateTime.isToday()) {
     date = time;
@@ -211,6 +212,13 @@ String buildDate(DateTime? dateTime) {
     date = "${dateTime.month.toString()}/${dateTime.day.toString()}/${dateTime.year.toString()}";
   }
   return date;
+}
+
+String buildTime(DateTime? dateTime) {
+  if (dateTime == null || dateTime.millisecondsSinceEpoch == 0) return "";
+  String time = SettingsManager().settings.use24HrFormat ?
+    intl.DateFormat.Hm().format(dateTime) : new intl.DateFormat.jm().format(dateTime);
+  return time;
 }
 
 extension DateHelpers on DateTime {

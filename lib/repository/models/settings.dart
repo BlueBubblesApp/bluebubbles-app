@@ -47,6 +47,7 @@ class Settings {
   bool filteredChatList = false;
   bool startVideosMuted = false;
   bool startVideosMutedFullscreen = false;
+  bool use24HrFormat = false;
 
   // String emojiFontFamily;
 
@@ -185,6 +186,12 @@ class Settings {
         settings.previewCompressionQuality = entry.value;
       } else if (entry.name == "filteredChatList") {
         settings.filteredChatList = entry.value;
+      } else if (entry.name == "startVideosMuted") {
+        settings.startVideosMuted = entry.value;
+      } else if (entry.name == "startVideosMutedFullscreen") {
+        settings.startVideosMutedFullscreen = entry.value;
+      } else if (entry.name == "use24HrFormat") {
+        settings.use24HrFormat = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -488,6 +495,21 @@ class Settings {
           name: "filteredChatList",
           value: this.filteredChatList,
           type: this.filteredChatList.runtimeType,
+        ),
+        ConfigEntry(
+          name: "startVideosMuted",
+          value: this.startVideosMuted,
+          type: this.startVideosMuted.runtimeType,
+        ),
+        ConfigEntry(
+          name: "startVideosMutedFullscreen",
+          value: this.startVideosMutedFullscreen,
+          type: this.startVideosMutedFullscreen.runtimeType,
+        ),
+        ConfigEntry(
+          name: "use24HrFormat",
+          value: this.use24HrFormat,
+          type: this.use24HrFormat.runtimeType,
         ),
         // ConfigEntry(
         //     name: "emojiFontFamily",

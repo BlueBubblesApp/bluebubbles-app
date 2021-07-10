@@ -212,6 +212,14 @@ class _UXPanelState extends State<UXPanel> {
                     initialVal: _settingsCopy.startVideosMutedFullscreen,
                     title: "Play Videos Muted by Default in Fullscreen Player",
                   ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.use24HrFormat = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.use24HrFormat,
+                    title: "Use 24 Hour Format for Times",
+                  ),
                 ],
               ),
             ),
