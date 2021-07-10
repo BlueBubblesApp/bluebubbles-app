@@ -152,7 +152,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
       );
     } else {
       return SizedBox(
-        width: Get.mediaQuery.size.width / 2,
+        width: context.width / 2,
         child: _buildPreview(file, context),
       );
     }
@@ -191,8 +191,8 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
                         alignment: Alignment.center,
                       )
                     : Container()),
-            width: Get.mediaQuery.size.width / 2,
-            height: Get.mediaQuery.size.width / 2,
+            width: context.width / 2,
+            height: context.width / 2,
           ),
           Material(
             color: Colors.transparent,
@@ -230,8 +230,8 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
                     )
                   : Container(),
             ),
-            width: Get.mediaQuery.size.width / 2,
-            height: Get.mediaQuery.size.width / 2,
+            width: context.width / 2,
+            height: context.width / 2,
           ),
           Material(
             color: Colors.transparent,

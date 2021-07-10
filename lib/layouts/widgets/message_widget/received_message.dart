@@ -149,7 +149,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
             right: 10,
           ),
           constraints: BoxConstraints(
-            maxWidth: Get.mediaQuery.size.width * MessageWidgetMixin.MAX_SIZE,
+            maxWidth: context.width * MessageWidgetMixin.MAX_SIZE,
           ),
           padding: EdgeInsets.symmetric(
             vertical: 8,

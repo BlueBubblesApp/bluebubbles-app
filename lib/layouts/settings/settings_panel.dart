@@ -81,7 +81,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
         appBar: PreferredSize(
-          preferredSize: Size(Get.mediaQuery.size.width, 80),
+          preferredSize: Size(context.width, 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
@@ -671,7 +671,7 @@ class _SettingsOptionsState<T> extends State<SettingsOptions<T>> {
                         value: e,
                         child: Text(
                           widget.capitalize
-                              ? GetUtils.capitalize(widget.textProcessing!(e))!
+                              ? widget.textProcessing!(e).capitalize!
                               : widget.textProcessing!(e),
                           style: Theme.of(context).textTheme.bodyText1,
                         ),

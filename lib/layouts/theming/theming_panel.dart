@@ -49,7 +49,7 @@ class _ThemingPanelState extends State<ThemingPanel> with TickerProviderStateMix
         extendBody: true,
         backgroundColor: Colors.white,
         appBar: PreferredSize(
-          preferredSize: Size(Get.mediaQuery.size.width, 80),
+          preferredSize: Size(context.width, 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(

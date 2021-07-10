@@ -83,7 +83,7 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
                         bottom: 13,
                       ),
                       constraints: BoxConstraints(
-                        maxWidth: Get.mediaQuery.size.width * MessageWidgetMixin.MAX_SIZE,
+                        maxWidth: context.width * MessageWidgetMixin.MAX_SIZE,
                       ),
                       padding: EdgeInsets.symmetric(
                         vertical: 8,

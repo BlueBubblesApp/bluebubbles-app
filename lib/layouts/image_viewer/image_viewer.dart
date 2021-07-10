@@ -75,7 +75,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
       duration: Duration(milliseconds: 125),
       child: Container(
           height: 150.0,
-          width: Get.mediaQuery.size.width,
+          width: context.width,
           color: Colors.black.withOpacity(0.65),
           child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Padding(
@@ -128,8 +128,8 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                           ),
                           backgroundColor: Theme.of(context).accentColor,
                           content: SizedBox(
-                            width: Get.mediaQuery.size.width * 3 / 5,
-                            height: Get.mediaQuery.size.height * 1 / 4,
+                            width: context.width * 3 / 5,
+                            height: context.height * 1 / 4,
                             child: Container(
                               padding: EdgeInsets.all(10.0),
                               decoration: BoxDecoration(

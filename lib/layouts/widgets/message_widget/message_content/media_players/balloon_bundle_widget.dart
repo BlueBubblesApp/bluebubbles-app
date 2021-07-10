@@ -68,7 +68,7 @@ class _BalloonBubbleState extends State<BalloonBundleWidget> {
       borderRadius: BorderRadius.circular(20),
       child: Container(
           constraints: BoxConstraints(
-            maxWidth: Get.mediaQuery.size.width * 3 / 4,
+            maxWidth: context.width * 3 / 4,
           ),
           child: Container(
             width: 200,

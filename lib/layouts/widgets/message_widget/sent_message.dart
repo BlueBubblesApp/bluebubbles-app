@@ -84,7 +84,7 @@ class SentMessageHelper {
               right: margin ? 10 : 0,
             ),
             constraints: BoxConstraints(
-              maxWidth: Get.mediaQuery.size.width * MessageWidgetMixin.MAX_SIZE + (!padding ? 100 : 0),
+              maxWidth: context.width * MessageWidgetMixin.MAX_SIZE + (!padding ? 100 : 0),
             ),
             padding: EdgeInsets.symmetric(
               vertical: padding ? 8 : 0,

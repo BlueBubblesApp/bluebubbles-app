@@ -93,7 +93,7 @@ class _StickersWidgetState extends State<StickersWidget> {
     List<Widget> stickers = this.stickers.map((item) {
       String pathName = AttachmentHelper.getAttachmentPath(item!);
       return Image.file(new File(pathName),
-          width: Get.mediaQuery.size.width * 2 / 3, height: Get.mediaQuery.size.width * 2 / 4);
+          width: context.width * 2 / 3, height: context.width * 2 / 4);
     }).toList();
 
     return GestureDetector(

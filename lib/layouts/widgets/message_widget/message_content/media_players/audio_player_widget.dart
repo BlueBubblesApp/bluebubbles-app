@@ -95,7 +95,7 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
   @override
   Widget build(BuildContext context) {
     Playing? playing = player!.current.valueWrapper!.value;
-    double maxWidth = widget.width ?? Get.mediaQuery.size.width * 3 / 4;
+    double maxWidth = widget.width ?? context.width * 3 / 4;
 
     double currentValue = current?.inSeconds.toDouble() ?? 0.0;
     double maxValue = (playing?.audio.duration ?? current)!.inSeconds.toDouble();

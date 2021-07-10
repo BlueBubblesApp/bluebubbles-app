@@ -44,7 +44,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
         appBar: PreferredSize(
-          preferredSize: Size(Get.mediaQuery.size.width, 80),
+          preferredSize: Size(context.width, 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
@@ -391,8 +391,8 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                                     ),
                                     backgroundColor: Theme.of(context).accentColor,
                                     content: SizedBox(
-                                      width: Get.mediaQuery.size.width * 3 / 5,
-                                      height: Get.mediaQuery.size.height * 1 / 4,
+                                      width: context.width * 3 / 5,
+                                      height: context.height * 1 / 4,
                                       child: Container(
                                         padding: EdgeInsets.all(10.0),
                                         decoration: BoxDecoration(

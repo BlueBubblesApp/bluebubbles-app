@@ -164,7 +164,7 @@ class AttachmentHelper {
     double width = attachment.width?.toDouble() ?? 0.0;
     double factor = attachment.height?.toDouble() ?? 0.0;
     if (attachment.width == null || attachment.width == 0 || attachment.height == null || attachment.height == 0) {
-      width = Get.mediaQuery.size.width;
+      width = context.width;
       factor = 2;
     }
 

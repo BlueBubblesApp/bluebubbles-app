@@ -160,8 +160,8 @@ class _VideoViewerState extends State<VideoViewer> {
                     children: <Widget>[
                       Container(
                         constraints: BoxConstraints(
-                          maxHeight: Get.mediaQuery.size.height,
-                          maxWidth: Get.mediaQuery.size.width,
+                          maxHeight: context.height,
+                          maxWidth: context.width,
                         ),
                         child: AspectRatio(
                           aspectRatio: controller!.value.aspectRatio,
@@ -228,7 +228,7 @@ class _VideoViewerState extends State<VideoViewer> {
                       children: [
                         Expanded(
                           child: SizedBox(
-                            height: Get.mediaQuery.size.height * 1 / 10,
+                            height: context.height * 1 / 10,
                             child: Slider(
                               min: 0,
                               max: controller!.value.duration.inMilliseconds.toDouble(),

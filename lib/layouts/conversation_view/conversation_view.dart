@@ -81,8 +81,8 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   void initState() {
     super.initState();
 
-    this.selected = widget.selected ?? [];
-    this.existingAttachments = widget.existingAttachments;
+    this.selected = widget.selected.isEmpty ? [] : widget.selected;
+    this.existingAttachments = widget.existingAttachments.isEmpty ? [] : widget.existingAttachments;
     this.existingText = widget.existingText;
 
     // Initialize the current chat state

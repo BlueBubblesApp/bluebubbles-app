@@ -96,7 +96,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
     SchedulerBinding.instance!.addPostFrameCallback((_) {
       if (this.mounted) {
         setState(() {
-          double totalHeight = Get.mediaQuery.size.height - Get.mediaQuery.viewInsets.bottom - detailsMenuHeight! - 20;
+          double totalHeight = context.height - Get.mediaQuery.viewInsets.bottom - detailsMenuHeight! - 20;
           double offset = (widget.childOffset.dy + widget.childSize!.height) - totalHeight;
           messageTopOffset = widget.childOffset.dy.clamp(topMinimum + 40, double.infinity);
           if (offset > 0) {
@@ -209,7 +209,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                             child: Container(
                               alignment: Alignment.center,
                               height: 120,
-                              width: Get.mediaQuery.size.width - 20,
+                              width: context.width - 20,
                               color: Theme.of(context).accentColor,
                               child: Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 0),
@@ -507,7 +507,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                     );
                     Widget content = Container(
                       constraints: BoxConstraints(
-                        maxHeight: Get.mediaQuery.size.height * 2 / 3,
+                        maxHeight: context.height * 2 / 3,
                       ),
                       child: SingleChildScrollView(
                         physics: ThemeSwitcher.getScrollPhysics(),

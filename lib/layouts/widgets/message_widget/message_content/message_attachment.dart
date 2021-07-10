@@ -63,7 +63,7 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
       borderRadius: BorderRadius.circular(20),
       child: Container(
         constraints: BoxConstraints(
-          maxWidth: Get.mediaQuery.size.width * 3 / 4,
+          maxWidth: context.width * 3 / 4,
           // maxHeight: 600,
         ),
         child: _buildAttachmentWidget(),

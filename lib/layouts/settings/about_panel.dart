@@ -68,7 +68,7 @@ class _AboutPanelState extends State<AboutPanel> {
         // extendBodyBehindAppBar: true,
         backgroundColor: Theme.of(context).backgroundColor,
         appBar: PreferredSize(
-          preferredSize: Size(Get.mediaQuery.size.width, 80),
+          preferredSize: Size(context.width, 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
@@ -200,8 +200,8 @@ class _AboutPanelState extends State<AboutPanel> {
                           ),
                           backgroundColor: Theme.of(context).accentColor,
                           content: SizedBox(
-                            width: Get.mediaQuery.size.width * 3 / 5,
-                            height: Get.mediaQuery.size.height * 1 / 9,
+                            width: context.width * 3 / 5,
+                            height: context.height * 1 / 9,
                             child: ListView(
                               physics: AlwaysScrollableScrollPhysics(
                                 parent: BouncingScrollPhysics(),

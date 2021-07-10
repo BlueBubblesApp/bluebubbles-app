@@ -83,16 +83,16 @@ class ContactSelectorOption extends StatelessWidget {
       subtitle = getTextWidget(context, "");
     } else if (!item.isChat || item.chat!.participants.length == 1) {
       if (item.address != null) {
-        if (!GetUtils.isEmail(item.address!)) {
+        if (!item.address!.isEmail) {
           subtitle = formattedNumberFuture(item.address!);
         } else {
           subtitle = getTextWidget(context, item.address);
         }
       } else if (item.chat != null &&
           item.chat!.participants[0].address != null &&
-          !GetUtils.isEmail(item.chat!.participants[0].address!)) {
+          !item.chat!.participants[0].address!.isEmail) {
         subtitle = formattedNumberFuture(item.chat!.participants[0].address!);
-      } else if (GetUtils.isEmail(item.chat!.participants[0].address!)) {
+      } else if (item.chat!.participants[0].address!.isEmail) {
         subtitle = getTextWidget(context, item.chat!.participants[0].address!);
       } else {
         subtitle = getTextWidget(context, "Person ${index + 1}");

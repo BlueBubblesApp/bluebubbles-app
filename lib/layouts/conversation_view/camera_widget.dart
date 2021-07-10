@@ -173,7 +173,7 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
           ),
           Padding(
             padding: EdgeInsets.only(
-              bottom: Get.mediaQuery.size.height / 30,
+              bottom: context.height / 30,
             ),
             child: TextButton(
               style: TextButton.styleFrom(
@@ -212,7 +212,7 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
         alignment: Alignment.topLeft,
         child: Padding(
           padding: EdgeInsets.only(
-            bottom: Get.mediaQuery.size.height / 30,
+            bottom: context.height / 30,
           ),
           child: TextButton(
             style: TextButton.styleFrom(
@@ -236,7 +236,7 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
         alignment: Alignment.topCenter,
         child: Padding(
           padding: EdgeInsets.only(
-            bottom: Get.mediaQuery.size.height / 30,
+            bottom: context.height / 30,
           ),
           child: TextButton(
             style: TextButton.styleFrom(
@@ -258,7 +258,7 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
       ),
       Padding(
         padding: EdgeInsets.only(
-          bottom: Get.mediaQuery.size.height / 30,
+          bottom: context.height / 30,
         ),
         child: TextButton(
           style: TextButton.styleFrom(

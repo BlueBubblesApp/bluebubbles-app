@@ -293,7 +293,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget> with TickerProvider
               },
               child: Container(
                 // The minus 5 here is so the timestamps show OK during swipe
-                width: (Get.mediaQuery.size.width * 2 / 3) - 5,
+                width: (context.width * 2 / 3) - 5,
                 child: (hideContent || hideType) ? Stack(children: items) : Column(children: items),
               ),
             ),

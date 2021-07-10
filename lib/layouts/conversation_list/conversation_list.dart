@@ -353,7 +353,7 @@ class _Cupertino extends StatelessWidget {
       child: Scaffold(
         appBar: PreferredSize(
           preferredSize: Size(
-            Get.mediaQuery.size.width,
+            context.width,
             parent.reducedForehead! ? 10 : 40,
           ),
           child: ClipRRect(

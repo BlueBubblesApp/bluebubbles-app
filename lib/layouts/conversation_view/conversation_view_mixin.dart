@@ -413,7 +413,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     // IT KINDA WORKED BUT ULTIMATELY FAILED
 
     // return PreferredSize(
-    //     preferredSize: Size(Get.width, 80),
+    //     preferredSize: Size(context.width, 80),
     //     child: ClipRect(
     //         child: BackdropFilter(
     //             filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
@@ -540,12 +540,12 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                     Center(
                         child: Container(
                       constraints: BoxConstraints(
-                        maxWidth: Get.width / 2,
+                        maxWidth: context.width / 2,
                       ),
                       child: Row(mainAxisSize: MainAxisSize.min, children: [
                         Container(
                           constraints: BoxConstraints(
-                            maxWidth: Get.width / 2 - 55,
+                            maxWidth: context.width / 2 - 55,
                           ),
                           child: RichText(
                             maxLines: 1,

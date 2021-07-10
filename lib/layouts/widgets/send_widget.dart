@@ -66,7 +66,7 @@ class _SendWidgetState extends State<SendWidget> {
         children: [
           Container(
             constraints: BoxConstraints(
-              minWidth: Get.mediaQuery.size.width * 3 / 37,
+              minWidth: context.width * 3 / 37,
             ),
             child: SentMessageHelper.buildMessageWithTail(
               context,
@@ -147,7 +147,7 @@ class _SendWidgetState extends State<SendWidget> {
   Widget buildAnimation(flightContext, _animation, flightDirection, fromHeroContext, toHeroContext) {
     Animation<double> animation = _animation.drive(
       Tween<double>(
-        end: Get.mediaQuery.size.width * 3 / 4 + 37,
+        end: context.width * 3 / 4 + 37,
         begin: 0,
       ),
     );
@@ -175,8 +175,8 @@ class _SendWidgetState extends State<SendWidget> {
                     constraints: BoxConstraints(
                       minWidth: animation.value,
                       maxWidth: animation.value.clamp(
-                        Get.mediaQuery.size.width * MessageWidgetMixin.MAX_SIZE,
-                        Get.mediaQuery.size.width * 3 / 4 + 37,
+                        context.width * MessageWidgetMixin.MAX_SIZE,
+                        context.width * 3 / 4 + 37,
                       ),
                     ),
                     child: child,

@@ -169,8 +169,8 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
         // ignore: unnecessary_null_comparison
         child: Container(
                 constraints: BoxConstraints(
-                  maxWidth: Get.mediaQuery.size.width / 2,
-                  maxHeight: Get.mediaQuery.size.height / 2,
+                  maxWidth: context.width / 2,
+                  maxHeight: context.height / 2,
                 ),
                 child: Hero(
                   tag: widget.attachment!.guid!,
@@ -276,8 +276,8 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
           children: [
             Container(
               constraints: BoxConstraints(
-                maxWidth: Get.mediaQuery.size.width / 2,
-                maxHeight: Get.mediaQuery.size.height / 2,
+                maxWidth: context.width / 2,
+                maxHeight: context.height / 2,
               ),
               child: buildSwitcher(),
             ),

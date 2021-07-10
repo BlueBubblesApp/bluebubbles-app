@@ -87,7 +87,7 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
         // extendBodyBehindAppBar: true,
         backgroundColor: Theme.of(context).backgroundColor,
         appBar: PreferredSize(
-          preferredSize: Size(Get.mediaQuery.size.width, 80),
+          preferredSize: Size(context.width, 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
