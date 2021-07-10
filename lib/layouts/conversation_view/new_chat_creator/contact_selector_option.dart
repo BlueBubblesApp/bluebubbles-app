@@ -92,6 +92,8 @@ class ContactSelectorOption extends StatelessWidget {
           item.chat!.participants[0].address != null &&
           !GetUtils.isEmail(item.chat!.participants[0].address!)) {
         subtitle = formattedNumberFuture(item.chat!.participants[0].address!);
+      } else if (GetUtils.isEmail(item.chat!.participants[0].address!)) {
+        subtitle = getTextWidget(context, item.chat!.participants[0].address!);
       } else {
         subtitle = getTextWidget(context, "Person ${index + 1}");
       }
