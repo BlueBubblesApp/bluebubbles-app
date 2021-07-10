@@ -98,17 +98,17 @@ class DBProvider {
         }),
   ];
 
-  Future<Database?> get database async {
-    if (_database != null) return _database;
+  Future<Database> get database async {
+    if (_database != null) return _database!;
 
     // if _database is null we instantiate it
     _database = await initDB();
-    return _database;
+    return _database!;
   }
 
   String get path => _path;
 
-  initDB() async {
+  Future<Database> initDB() async {
     Directory documentsDirectory = await getApplicationDocumentsDirectory();
     _path = join(documentsDirectory.path, "chat.db");
     return await openDatabase(_path,
@@ -146,8 +146,7 @@ class DBProvider {
   }
 
   static Future<void> deleteDB() async {
-    Database? db = await DBProvider.db.database;
-    if (db == null) return;
+    Database db = await DBProvider.db.database;
     // Remove base tables
     await Handle.flush();
     await Chat.flush();

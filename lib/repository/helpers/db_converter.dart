@@ -7,7 +7,7 @@ class DBConverter {
     String: "string",
   };
 
-  static Type? getType(String? type) {
+  static Type? getType(String type) {
     return types.containsValue(type)
         ? types.keys.firstWhere((key) => types[key] == type)
         : null;
@@ -31,7 +31,7 @@ class DBConverter {
     }
   }
 
-  static dynamic getValue(String? value, String? type) {
+  static dynamic getValue(String value, String type) {
     if (type == types[bool]) {
       return value == "1";
     } else if (type == types[double]) {

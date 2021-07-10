@@ -18,7 +18,7 @@ class ConfigEntry<T> {
   });
 
   static ConfigEntry fromMap(Map<String, dynamic> json) {
-    String? _type = json["type"];
+    String _type = json["type"] ?? "";
     Type t = DBConverter.getType(_type) ?? String;
     if (t == bool) {
       return ConfigEntry<bool>(
