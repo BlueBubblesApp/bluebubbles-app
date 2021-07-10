@@ -389,7 +389,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                   builder: (context, snapshot) {
                     return SliverToBoxAdapter(
                       child: AnimatedSize(
-                        duration: Duration(milliseconds: 500),
+                        duration: Duration(milliseconds: 250),
                         vsync: this,
                         child: Row(
                             mainAxisAlignment: MainAxisAlignment.end,
