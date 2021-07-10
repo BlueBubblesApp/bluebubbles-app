@@ -307,7 +307,7 @@ class Chat {
     } else {
       EventDispatcher().emit("remove-unread-chat", {"chatGuid": this.guid});
     }
-
+    ChatBloc().updateUnreads();
     return this;
   }
 
