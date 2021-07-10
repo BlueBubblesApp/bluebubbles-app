@@ -18,8 +18,8 @@ class StickersWidget extends StatefulWidget {
 
 class _StickersWidgetState extends State<StickersWidget> {
   bool _visible = true;
-  List<Attachment?> stickers = [];
-  List<String?> loaded = [];
+  List<Attachment> stickers = [];
+  List<String> loaded = [];
   Completer? request;
 
   @override
@@ -60,7 +60,7 @@ class _StickersWidgetState extends State<StickersWidget> {
         // If we've already loaded it, don't try again
         if (loaded.contains(attachment!.guid)) continue;
 
-        loaded.add(attachment.guid);
+        loaded.add(attachment.guid!);
         String pathName = AttachmentHelper.getAttachmentPath(attachment);
 
         // Check if the attachment exists

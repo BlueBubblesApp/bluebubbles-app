@@ -229,7 +229,7 @@ class ActionHandler {
   /// resyncChat(chatObj)
   /// ```
   static Future<void> resyncChat(Chat chat, MessageBloc messageBloc) async {
-    final Database? db = await DBProvider.db.database;
+    final Database db = await DBProvider.db.database;
     if (db == null) return;
 
     await chat.save();

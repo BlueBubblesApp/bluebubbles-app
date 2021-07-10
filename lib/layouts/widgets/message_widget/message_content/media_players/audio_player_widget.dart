@@ -13,7 +13,7 @@ class AudioPlayerWiget extends StatefulWidget {
     this.width,
   }) : super(key: key);
 
-  final File? file;
+  final File file;
   final BuildContext context;
   final double? width;
 
@@ -23,7 +23,7 @@ class AudioPlayerWiget extends StatefulWidget {
 
 class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
   bool isPlaying = false;
-  Duration? current;
+  late Duration current;
 
   late AssetsAudioPlayer player;
 

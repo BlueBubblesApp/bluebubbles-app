@@ -6,14 +6,14 @@ import 'package:flutter/widgets.dart';
 /// Draws a circular animated progress bar.
 class CircleProgressBar extends StatefulWidget {
   final Duration? animationDuration;
-  final Color? backgroundColor;
+  final Color backgroundColor;
   final Color foregroundColor;
-  final double? value;
+  final double value;
 
   const CircleProgressBar({
     Key? key,
     this.animationDuration,
-    this.backgroundColor,
+    required this.backgroundColor,
     required this.foregroundColor,
     required this.value,
   }) : super(key: key);
@@ -139,11 +139,11 @@ class CircleProgressBarState extends State<CircleProgressBar> with SingleTickerP
 class CircleProgressBarPainter extends CustomPainter {
   final double percentage;
   final double strokeWidth;
-  final Color? backgroundColor;
+  final Color backgroundColor;
   final Color foregroundColor;
 
   CircleProgressBarPainter({
-    this.backgroundColor,
+    required this.backgroundColor,
     required this.foregroundColor,
     required this.percentage,
     double? strokeWidth,

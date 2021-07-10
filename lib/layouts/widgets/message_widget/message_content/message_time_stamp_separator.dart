@@ -10,14 +10,14 @@ class MessageTimeStampSeparator extends StatelessWidget {
     required this.message,
   }) : super(key: key);
   final Message? newerMessage;
-  final Message? message;
+  final Message message;
 
-  bool withinTimeThreshold(Message? first, Message? second, {threshold: 5}) {
+  bool withinTimeThreshold(Message first, Message? second, {threshold: 5}) {
     if (first == null || second == null) return false;
     return second.dateCreated!.difference(first.dateCreated!).inMinutes.abs() > threshold;
   }
 
-  Map<String, String>? _buildTimeStamp() {
+  Map<String, String> _buildTimeStamp() {
     if (newerMessage != null &&
         (!isEmptyString(message!.fullText) || message!.hasAttachments) &&
         withinTimeThreshold(message, newerMessage, threshold: 30)) {
@@ -26,15 +26,15 @@ class MessageTimeStampSeparator extends StatelessWidget {
       String date = timeOfnewerMessage.isToday() ? "Today" : buildDate(timeOfnewerMessage);
       return {"date": date, "time": time};
     } else {
-      return null;
+      return {};
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    Map<String, String>? timeStamp = _buildTimeStamp();
+    Map<String, String> timeStamp = _buildTimeStamp();
 
-    return timeStamp != null
+    return timeStamp.isNotEmpty
         ? Padding(
             padding: const EdgeInsets.all(14.0),
             child: RichText(

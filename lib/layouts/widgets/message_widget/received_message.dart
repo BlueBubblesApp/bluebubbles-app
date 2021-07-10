@@ -135,7 +135,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
       children: [
         if (widget.showTail && SettingsManager().settings.skin == Skins.iOS)
           MessageTail(
-            message: message,
+            isFromMe: false,
             color: bubbleColors[0],
           ),
         Container(

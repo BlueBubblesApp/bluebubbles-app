@@ -53,7 +53,7 @@ class ThemeEntry {
 
   Future<ThemeEntry> save(ThemeObject theme,
       {bool updateIfAbsent = true}) async {
-    final Database? db = await DBProvider.db.database;
+    final Database db = await DBProvider.db.database;
 
     assert(theme.id != null);
     this.themeId = theme.id;
@@ -88,7 +88,7 @@ class ThemeEntry {
   }
 
   Future<ThemeEntry> update(ThemeObject theme) async {
-    final Database? db = await DBProvider.db.database;
+    final Database db = await DBProvider.db.database;
 
     // If it already exists, update it
     if (this.id != null) {

@@ -18,7 +18,7 @@ import 'package:metadata_fetch/metadata_fetch.dart';
 class UrlPreviewWidget extends StatefulWidget {
   UrlPreviewWidget({Key? key, required this.linkPreviews, required this.message}) : super(key: key);
   final List<Attachment?> linkPreviews;
-  final Message? message;
+  final Message message;
 
   @override
   _UrlPreviewWidgetState createState() => _UrlPreviewWidgetState();

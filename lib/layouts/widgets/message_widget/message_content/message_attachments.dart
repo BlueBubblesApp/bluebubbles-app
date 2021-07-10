@@ -81,7 +81,6 @@ class _MessageAttachmentsState extends State<MessageAttachments> with TickerProv
     for (Attachment? attachment in items) {
       if (attachment!.mimeType != null) {
         Widget attachmentWidget = MessageAttachment(
-          message: widget.message,
           attachment: attachment,
           updateAttachment: () {
             // attachment = AttachmentHelper.getContent(attachment);

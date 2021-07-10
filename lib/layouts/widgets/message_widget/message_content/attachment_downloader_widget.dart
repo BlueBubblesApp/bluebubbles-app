@@ -6,12 +6,12 @@ class AttachmentDownloaderWidget extends StatefulWidget {
   AttachmentDownloaderWidget({
     Key? key,
     required this.placeHolder,
-    this.onPressed,
-    this.attachment,
+    required this.onPressed,
+    required this.attachment,
   }) : super(key: key);
   final Widget placeHolder;
-  final Function()? onPressed;
-  final Attachment? attachment;
+  final Function() onPressed;
+  final Attachment attachment;
 
   @override
   _AttachmentDownloaderWidgetState createState() => _AttachmentDownloaderWidgetState();

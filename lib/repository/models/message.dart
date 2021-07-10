@@ -205,7 +205,7 @@ class Message {
   }
 
   Future<Message> save([bool updateIfAbsent = true]) async {
-    final Database? db = await DBProvider.db.database;
+    final Database db = await DBProvider.db.database;
     // Try to find an existing chat before saving it
     Message? existing = await Message.findOne({"guid": this.guid});
     if (existing != null) {
@@ -252,7 +252,7 @@ class Message {
 
   static Future<Message?> replaceMessage(String? oldGuid, Message? newMessage,
       {bool awaitNewMessageEvent = true, Chat? chat}) async {
-    final Database? db = await DBProvider.db.database;
+    final Database db = await DBProvider.db.database;
     Message? existing = await Message.findOne({"guid": oldGuid});
 
     if (existing == null) {
@@ -302,7 +302,7 @@ class Message {
   }
 
   Future<Message> updateMetadata(Metadata? metadata) async {
-    final Database? db = await DBProvider.db.database;
+    final Database db = await DBProvider.db.database;
     if (this.id == null) return this;
     this.metadata = metadata!.toJson();
 
@@ -313,7 +313,7 @@ class Message {
   }
 
   Future<Message> update() async {
-    final Database? db = await DBProvider.db.database;
+    final Database db = await DBProvider.db.database;
 
     Map<String, dynamic> params = {
       "dateCreated": (this.dateCreated == null) ? null : this.dateCreated!.millisecondsSinceEpoch,
@@ -351,7 +351,7 @@ class Message {
       if (this.attachments!.length != 0) return this.attachments;
     }
 
-    final Database? db = await DBProvider.db.database;
+    final Database db = await DBProvider.db.database;
     if (this.id == null) return [];
 
     var res = await db!.rawQuery(
@@ -383,7 +383,7 @@ class Message {
   }
 
   static Future<Chat?> getChat(Message message) async {
-    final Database? db = await DBProvider.db.database;
+    final Database db = await DBProvider.db.database;
     if (db == null) return null;
     var res = await db.rawQuery(
         "SELECT"
@@ -411,7 +411,7 @@ class Message {
   }
 
   Future<Handle?> getHandle() async {
-    final Database? db = await DBProvider.db.database;
+    final Database db = await DBProvider.db.database;
     if (db == null) return null;
     var res = await db.rawQuery(
         "SELECT"
@@ -431,7 +431,7 @@ class Message {
   }
 
   static Future<Message?> findOne(Map<String, dynamic> filters) async {
-    final Database? db = await DBProvider.db.database;
+    final Database db = await DBProvider.db.database;
     if (db == null) return null;
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
@@ -447,7 +447,7 @@ class Message {
   }
 
   static Future<List<Message>> find([Map<String, dynamic> filters = const {}]) async {
-    final Database? db = await DBProvider.db.database;
+    final Database db = await DBProvider.db.database;
 
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
@@ -461,7 +461,7 @@ class Message {
   }
 
   static Future<void> delete(Map<String, dynamic> where) async {
-    final Database? db = await DBProvider.db.database;
+    final Database db = await DBProvider.db.database;
 
     List<String> whereParams = [];
     where.keys.forEach((filter) => whereParams.add('$filter = ?'));
@@ -476,7 +476,7 @@ class Message {
   }
 
   static Future<void> softDelete(Map<String, dynamic> where) async {
-    final Database? db = await DBProvider.db.database;
+    final Database db = await DBProvider.db.database;
 
     List<String> whereParams = [];
     where.keys.forEach((filter) => whereParams.add('$filter = ?'));
@@ -491,7 +491,7 @@ class Message {
   }
 
   static flush() async {
-    final Database? db = await DBProvider.db.database;
+    final Database db = await DBProvider.db.database;
     if (db == null) return;
     await db.delete("message");
   }
@@ -540,7 +540,7 @@ class Message {
   }
 
   static Future<int?> countForChat(Chat? chat) async {
-    final Database? db = await DBProvider.db.database;
+    final Database db = await DBProvider.db.database;
     if (chat == null || chat.id == null) return 0;
 
     String query = ("SELECT"

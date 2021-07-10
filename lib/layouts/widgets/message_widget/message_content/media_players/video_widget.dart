@@ -45,16 +45,16 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
   void initState() {
     super.initState();
     muted = SettingsManager().settings.startVideosMuted;
-    Map<String?, VideoPlayerController?> controllers = CurrentChat.of(context)!.currentPlayingVideo ?? {};
+    Map<String, VideoPlayerController> controllers = CurrentChat.of(context)!.currentPlayingVideo ?? {};
     showPlayPauseOverlay = !controllers.containsKey(widget.attachment!.guid) ||
         !controllers[widget.attachment!.guid]!.value.isPlaying;
 
     if (controllers.containsKey(widget.attachment!.guid)) {
-      createListener(controllers[widget.attachment!.guid]);
+      createListener(controllers[widget.attachment!.guid]!);
     }
   }
 
-  void createListener(VideoPlayerController? controller) {
+  void createListener(VideoPlayerController controller) {
     if (controller == null || hasListener) return;
 
     controller.addListener(() async {
@@ -103,7 +103,7 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
     Map<String, VideoPlayerController> controllers = CurrentChat.of(context)!.currentPlayingVideo;
     // If the currently playing video is this attachment guid
     if (controllers.isNotEmpty && controllers.containsKey(widget.attachment!.guid)) {
-      controller = controllers[widget.attachment!.guid];
+      controller = controllers[widget.attachment!.guid]!;
       this.createListener(controller);
     }
 

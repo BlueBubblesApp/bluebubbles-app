@@ -9,7 +9,7 @@ class ReactionsWidget extends StatefulWidget {
     required this.message,
     required this.associatedMessages,
   }) : super(key: key);
-  final Message? message;
+  final Message message;
   final List<Message> associatedMessages;
 
   @override

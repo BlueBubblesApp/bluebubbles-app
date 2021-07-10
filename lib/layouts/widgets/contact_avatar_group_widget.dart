@@ -15,7 +15,7 @@ class ContactAvatarGroupWidget extends StatefulWidget {
       required this.chat})
       : super(key: key);
   final List<Handle> participants;
-  final Chat? chat;
+  final Chat chat;
   final double? width;
   final double? height;
   final bool editable;
@@ -26,7 +26,6 @@ class ContactAvatarGroupWidget extends StatefulWidget {
 }
 
 class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
-  List<dynamic>? icons;
   List<Handle> participants = [];
 
   @override

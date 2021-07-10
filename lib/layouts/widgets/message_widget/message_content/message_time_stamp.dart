@@ -7,8 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class MessageTimeStamp extends StatelessWidget {
-  const MessageTimeStamp({Key? key, this.message, this.singleLine = false, this.useYesterday = false}) : super(key: key);
-  final Message? message;
+  const MessageTimeStamp({Key? key, required this.message, this.singleLine = false, this.useYesterday = false}) : super(key: key);
+  final Message message;
   final bool singleLine;
   final bool useYesterday;
 

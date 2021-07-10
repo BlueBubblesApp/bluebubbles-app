@@ -14,11 +14,11 @@ import 'package:path/path.dart';
 class ContactWidget extends StatefulWidget {
   ContactWidget({
     Key? key,
-    this.file,
-    this.attachment,
+    required this.file,
+    required this.attachment,
   }) : super(key: key);
-  final File? file;
-  final Attachment? attachment;
+  final File file;
+  final Attachment attachment;
 
   @override
   _ContactWidgetState createState() => _ContactWidgetState();

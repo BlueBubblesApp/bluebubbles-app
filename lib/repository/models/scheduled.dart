@@ -37,7 +37,7 @@ class ScheduledMessage {
   }
 
   Future<ScheduledMessage> save([bool updateIfAbsent = false]) async {
-    final Database? db = await DBProvider.db.database;
+    final Database db = await DBProvider.db.database;
 
     // Try to find an existing handle before saving it
     ScheduledMessage? existing = await ScheduledMessage.findOne({
@@ -67,7 +67,7 @@ class ScheduledMessage {
   }
 
   Future<ScheduledMessage> update() async {
-    final Database? db = await DBProvider.db.database;
+    final Database db = await DBProvider.db.database;
 
     // If it already exists, update it
     if (this.id != null) {
@@ -89,7 +89,7 @@ class ScheduledMessage {
   }
 
   static Future<ScheduledMessage?> findOne(Map<String, dynamic> filters) async {
-    final Database? db = await DBProvider.db.database;
+    final Database db = await DBProvider.db.database;
     if (db == null) return null;
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
@@ -107,7 +107,7 @@ class ScheduledMessage {
 
   static Future<List<ScheduledMessage>> find(
       [Map<String, dynamic> filters = const {}]) async {
-    final Database? db = await DBProvider.db.database;
+    final Database db = await DBProvider.db.database;
 
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
@@ -123,7 +123,7 @@ class ScheduledMessage {
   }
 
   static Future<List<ScheduledMessage>> getScheduledMessages(Chat chat) async {
-    final Database? db = await DBProvider.db.database;
+    final Database db = await DBProvider.db.database;
 
     var res = await db!.rawQuery(
         "SELECT"
@@ -142,7 +142,7 @@ class ScheduledMessage {
   }
 
   static flush() async {
-    final Database? db = await DBProvider.db.database;
+    final Database db = await DBProvider.db.database;
     if (db == null) return;
     await db.delete("scheduled");
   }

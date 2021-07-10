@@ -59,7 +59,7 @@ class ThemeObject {
 
   Future<ThemeObject> save({bool updateIfAbsent = true}) async {
     assert(this.data != null);
-    final Database? db = await DBProvider.db.database;
+    final Database db = await DBProvider.db.database;
 
     if (entries.isEmpty) {
       entries = this.toEntries();
@@ -93,7 +93,7 @@ class ThemeObject {
 
   Future<void> delete() async {
     if (this.isPreset) return;
-    final Database? db = await DBProvider.db.database;
+    final Database db = await DBProvider.db.database;
     if (db == null) return null;
     if (this.id == null) await this.save(updateIfAbsent: false);
     await this.fetchData();
@@ -105,7 +105,7 @@ class ThemeObject {
   }
 
   Future<ThemeObject> update() async {
-    final Database? db = await DBProvider.db.database;
+    final Database db = await DBProvider.db.database;
 
     // If it already exists, update it
     if (this.id != null) {
@@ -148,7 +148,7 @@ class ThemeObject {
   }
 
   static Future<void> setSelectedTheme({int? light, int? dark}) async {
-    final Database? db = await DBProvider.db.database;
+    final Database db = await DBProvider.db.database;
     if (light != null) {
       await db!.update("themes", {"selectedLightTheme": 0});
       await db.update("themes", {"selectedLightTheme": 1}, where: "ROWID = ?", whereArgs: [light]);
@@ -162,7 +162,7 @@ class ThemeObject {
   static Future<ThemeObject?> findOne(
     Map<String, dynamic> filters,
   ) async {
-    final Database? db = await DBProvider.db.database;
+    final Database db = await DBProvider.db.database;
     if (db == null) return null;
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
@@ -178,7 +178,7 @@ class ThemeObject {
   }
 
   static Future<List<ThemeObject>> getThemes() async {
-    final Database? db = await DBProvider.db.database;
+    final Database db = await DBProvider.db.database;
     var res = await db!.query("themes");
     if (res.isEmpty) return Themes.themes;
 
@@ -198,7 +198,7 @@ class ThemeObject {
       this.entries = this.toEntries();
       return this.entries;
     }
-    final Database? db = await DBProvider.db.database;
+    final Database db = await DBProvider.db.database;
 
     var res = await db!.rawQuery(
         "SELECT"

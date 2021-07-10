@@ -115,7 +115,7 @@ class Attachment {
   }
 
   Future<Attachment> save(Message? message) async {
-    final Database? db = await DBProvider.db.database;
+    final Database db = await DBProvider.db.database;
 
     // Try to find an existing attachment before saving it
     Attachment? existing = await Attachment.findOne({"guid": this.guid});
@@ -146,7 +146,7 @@ class Attachment {
   }
 
   Future<Attachment> update() async {
-    final Database? db = await DBProvider.db.database;
+    final Database db = await DBProvider.db.database;
 
     Map<String, dynamic> params = {
       "width": this.width,
@@ -170,7 +170,7 @@ class Attachment {
 
   static Future<Attachment> replaceAttachment(
       String? oldGuid, Attachment newAttachment) async {
-    final Database? db = await DBProvider.db.database;
+    final Database db = await DBProvider.db.database;
     Attachment? existing = await Attachment.findOne({"guid": oldGuid});
     if (existing == null) {
       throw ("Old GUID does not exist!");
@@ -204,7 +204,7 @@ class Attachment {
   }
 
   static Future<Attachment?> findOne(Map<String, dynamic> filters) async {
-    final Database? db = await DBProvider.db.database;
+    final Database db = await DBProvider.db.database;
     if (db == null) return null;
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
@@ -222,7 +222,7 @@ class Attachment {
 
   static Future<List<Attachment>> find(
       [Map<String, dynamic> filters = const {}]) async {
-    final Database? db = await DBProvider.db.database;
+    final Database db = await DBProvider.db.database;
 
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
@@ -238,7 +238,7 @@ class Attachment {
   }
 
   static flush() async {
-    final Database? db = await DBProvider.db.database;
+    final Database db = await DBProvider.db.database;
     if (db == null) return;
     await db.delete("attachment");
   }
@@ -268,7 +268,7 @@ class Attachment {
   }
 
   static Future<int?> countForChat(Chat chat) async {
-    final Database? db = await DBProvider.db.database;
+    final Database db = await DBProvider.db.database;
     if (chat.id == null) return 0;
 
     String query = ("SELECT"

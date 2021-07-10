@@ -22,11 +22,9 @@ class MessageAttachment extends StatefulWidget {
     Key? key,
     required this.attachment,
     required this.updateAttachment,
-    required this.message,
   }) : super(key: key);
   final Attachment attachment;
   final Function() updateAttachment;
-  final Message? message;
 
   @override
   _MessageAttachmentState createState() => _MessageAttachmentState();
@@ -184,7 +182,7 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
                           height: 40,
                           width: 40,
                           child: CircleProgressBar(
-                            value: progress == 1.0 ? null : (progress ?? 0),
+                            value: progress ?? 0,
                             backgroundColor: Colors.grey,
                             foregroundColor: Colors.white,
                           ),

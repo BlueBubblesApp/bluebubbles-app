@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
 class MessageTail extends StatelessWidget {
-  final Color? color;
-  final Message? message;
+  final Color color;
+  final bool isFromMe;
 
-  const MessageTail({Key? key, required this.message, this.color}) : super(key: key);
+  const MessageTail({Key? key, required this.isFromMe, required this.color}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +14,6 @@ class MessageTail extends StatelessWidget {
     bool hideTail = ((routeCtx?.settings.arguments ?? {"hideTail": false}) as Map)["hideTail"] ?? false;
     if (hideTail) return Container();
 
-    bool isFromMe = message?.isFromMe ?? true;
     return Stack(
       alignment: isFromMe ? AlignmentDirectional.bottomEnd : AlignmentDirectional.bottomStart,
       children: [

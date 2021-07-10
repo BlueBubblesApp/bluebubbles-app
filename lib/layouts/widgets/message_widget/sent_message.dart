@@ -72,9 +72,9 @@ class SentMessageHelper {
       msg = Stack(
         alignment: AlignmentDirectional.bottomEnd,
         children: [
-          if (showTail && currentSkin == Skins.iOS)
+          if (showTail && currentSkin == Skins.iOS && message != null)
             MessageTail(
-              message: message,
+              isFromMe: true,
               color: customColor ?? bubbleColor,
             ),
           Container(
@@ -218,9 +218,9 @@ class SentMessage extends StatefulWidget {
   final Message message;
   final Message? olderMessage;
   final Message? newerMessage;
-  final bool? showHero;
-  final bool? shouldFadeIn;
-  final bool? showDeliveredReceipt;
+  final bool showHero;
+  final bool shouldFadeIn;
+  final bool showDeliveredReceipt;
 
   // Sub-widgets
   final Widget stickersWidget;

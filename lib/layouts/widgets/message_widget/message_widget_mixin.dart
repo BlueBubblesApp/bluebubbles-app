@@ -10,7 +10,7 @@ import 'package:flutter/material.dart';
 
 // Mixin just for commonly shared functions and properties between the SentMessage and ReceivedMessage
 abstract class MessageWidgetMixin {
-  String? contactTitle = "";
+  String contactTitle = "";
   bool hasHyperlinks = false;
   static const double MAX_SIZE = 3 / 5;
 
@@ -25,7 +25,7 @@ abstract class MessageWidgetMixin {
     String? title = await ContactManager().getContactTitle(message.handle);
 
     if (title != contactTitle) {
-      contactTitle = title;
+      contactTitle = title ?? "";
     }
   }
 

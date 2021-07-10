@@ -10,11 +10,11 @@ import 'package:map_launcher/map_launcher.dart' as ML;
 class LocationWidget extends StatefulWidget {
   LocationWidget({
     Key? key,
-    this.file,
-    this.attachment,
+    required this.file,
+    required this.attachment,
   }) : super(key: key);
-  final File? file;
-  final Attachment? attachment;
+  final File file;
+  final Attachment attachment;
 
   @override
   _LocationWidgetState createState() => _LocationWidgetState();

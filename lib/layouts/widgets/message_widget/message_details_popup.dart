@@ -41,8 +41,8 @@ class MessageDetailsPopup extends StatefulWidget {
     required this.child,
     required this.currentChat,
   }) : super(key: key);
-  final Message? message;
 
+  final Message message;
   final Offset childOffset;
   final Size? childSize;
   final Widget child;

@@ -30,11 +30,11 @@ class SendWidget extends StatefulWidget {
   SendWidget({
     Key? key,
     this.text,
-    this.tag,
+    required this.tag,
     this.currentChat,
   }) : super(key: key);
   final String? text;
-  final String? tag;
+  final String tag;
   final CurrentChat? currentChat;
 
   @override

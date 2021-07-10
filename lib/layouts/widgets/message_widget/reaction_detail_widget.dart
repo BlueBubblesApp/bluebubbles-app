@@ -9,11 +9,11 @@ import 'package:flutter_svg/flutter_svg.dart';
 class ReactionDetailWidget extends StatefulWidget {
   ReactionDetailWidget({
     Key? key,
-    this.handle,
-    this.message,
+    required this.handle,
+    required this.message,
   }) : super(key: key);
   final Handle? handle;
-  final Message? message;
+  final Message message;
 
   @override
   _ReactionDetailWidgetState createState() => _ReactionDetailWidgetState();

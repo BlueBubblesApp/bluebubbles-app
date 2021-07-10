@@ -8,13 +8,13 @@ import 'package:flutter/material.dart';
 class DeliveredReceipt extends StatefulWidget {
   DeliveredReceipt({
     Key? key,
-    this.message,
-    this.showDeliveredReceipt,
-    this.shouldAnimate,
+    required this.message,
+    required this.showDeliveredReceipt,
+    required this.shouldAnimate,
   }) : super(key: key);
-  final bool? showDeliveredReceipt;
-  final bool? shouldAnimate;
-  final Message? message;
+  final bool showDeliveredReceipt;
+  final bool shouldAnimate;
+  final Message message;
 
   @override
   _DeliveredReceiptState createState() => _DeliveredReceiptState();

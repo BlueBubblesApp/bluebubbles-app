@@ -11,11 +11,11 @@ import 'package:path/path.dart';
 class RegularFileOpener extends StatefulWidget {
   RegularFileOpener({
     Key? key,
-    this.attachment,
-    this.file,
+    required this.attachment,
+    required this.file,
   }) : super(key: key);
-  final Attachment? attachment;
-  final File? file;
+  final Attachment attachment;
+  final File file;
 
   @override
   _RegularFileOpenerState createState() => _RegularFileOpenerState();

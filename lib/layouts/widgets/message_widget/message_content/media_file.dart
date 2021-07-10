@@ -12,7 +12,7 @@ class MediaFile extends StatefulWidget {
     required this.attachment,
   }) : super(key: key);
   final Widget child;
-  final Attachment? attachment;
+  final Attachment attachment;
 
   @override
   _MediaFileState createState() => _MediaFileState();
@@ -56,7 +56,7 @@ class _MediaFileState extends State<MediaFile> {
                       foregroundColor: Colors.white,
                       backgroundColor: Colors.grey,
                       value: snapshot.hasData
-                          ? snapshot.data
+                          ? snapshot.data!
                           : SocketManager().attachmentSenders[widget.attachment!.guid]!.progress));
             },
             stream: SocketManager().attachmentSenders[widget.attachment!.guid]!.stream,

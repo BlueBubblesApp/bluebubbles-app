@@ -27,18 +27,18 @@ class MessageWidget extends StatefulWidget {
     required this.message,
     required this.olderMessage,
     required this.newerMessage,
-    this.showHandle,
-    this.isFirstSentMessage,
-    this.showHero,
+    required  this.showHandle,
+    required this.isFirstSentMessage,
+    required this.showHero,
     this.onUpdate,
   }) : super(key: key);
 
   final Message message;
   final Message? newerMessage;
   final Message? olderMessage;
-  final bool? showHandle;
-  final bool? isFirstSentMessage;
-  final bool? showHero;
+  final bool showHandle;
+  final bool isFirstSentMessage;
+  final bool showHero;
   final Message? Function(NewMessageEvent event)? onUpdate;
 
   @override
@@ -281,7 +281,7 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
         stickersWidget: stickersWidget,
         attachmentsWidget: widgetAttachments,
         reactionsWidget: reactionsWidget,
-        shouldFadeIn: currentChat?.sentMessages.contains(_message!.guid),
+        shouldFadeIn: currentChat?.sentMessages.contains(_message!.guid) ?? false,
         showHero: widget.showHero,
         showDeliveredReceipt: widget.isFirstSentMessage,
       );

@@ -20,8 +20,8 @@ class BalloonBundleWidget extends StatefulWidget {
 }
 
 class _BalloonBubbleState extends State<BalloonBundleWidget> {
-  String? bundleName;
-  IconData? bundleIcon;
+  late String bundleName;
+  late IconData bundleIcon;
 
   @override
   void initState() {
@@ -42,10 +42,10 @@ class _BalloonBubbleState extends State<BalloonBundleWidget> {
     }
   }
 
-  IconData? getIcon() {
+  IconData getIcon() {
     if (widget.message!.balloonBundleId == null) return Icons.device_unknown;
     if (nameMap.containsKey(widget.message!.balloonBundleId)) {
-      return iconMap[widget.message!.balloonBundleId!];
+      return iconMap[widget.message!.balloonBundleId!]!;
     }
 
     String val = widget.message!.balloonBundleId!.toLowerCase();
