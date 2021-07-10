@@ -500,12 +500,12 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           onTap: () {
             Navigator.of(context).pop();
           },
-          child: Row(
+          child: Obx(() => Row(
             mainAxisSize: Cupertino.MainAxisSize.min,
             mainAxisAlignment: Cupertino.MainAxisAlignment.start,
             children: [
               buildBackButton(context),
-              if (newMessages.length > 0)
+              if (ChatBloc().unreads.value > 0)
                 Container(
                   width: 25.0,
                   height: 20.0,
@@ -514,11 +514,11 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                       shape: BoxShape.rectangle,
                       borderRadius: BorderRadius.circular(10)),
                   child: Center(
-                      child: Text(newMessages.length.toString(),
+                      child: Text(ChatBloc().unreads.value.toString(),
                           textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 12.0))),
                 ),
             ],
-          ),
+          )),
         ),
         middle: ListView(
           physics: Cupertino.NeverScrollableScrollPhysics(),

@@ -11,6 +11,7 @@ import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../repository/models/chat.dart';
 import '../repository/models/handle.dart';
@@ -34,8 +35,17 @@ class ChatBloc {
   static StreamSubscription<NewMessageEvent>? _messageSubscription;
 
   List<Chat> _chats = [];
+  RxInt _unreads = 0.obs;
+  RxInt get unreads => _unreads;
   bool _hasChats = false;
   bool get hasChats => _hasChats;
+
+  void updateUnreads() {
+    _unreads.value = chats
+        .where((element) => element.hasUnreadMessage ?? false)
+        .map((e) => e.guid)
+        .toList().length;
+  }
 
   // Remove duplicates when this gets accessed
   List<Chat> get chats {
