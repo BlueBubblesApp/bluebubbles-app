@@ -1015,7 +1015,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
               style: Theme.of(context).textTheme.headline2,
             ),
           ),
-          leading: Container(),
+          leading: buildBackButton(context, iconSize: 20),
         ),
       );
 }
