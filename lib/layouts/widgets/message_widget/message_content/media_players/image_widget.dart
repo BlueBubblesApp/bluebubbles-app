@@ -49,8 +49,8 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
       } else {
         data = await widget.file!.readAsBytes();
       }
-
-      CurrentChat.of(context)?.saveImageData(data, widget.attachment!);
+      if (data == null) return;
+      CurrentChat.of(context)?.saveImageData(data!, widget.attachment!);
       if (this.mounted) setState(() {});
     }
   }

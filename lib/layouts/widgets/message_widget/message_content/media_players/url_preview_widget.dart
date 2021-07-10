@@ -129,7 +129,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget> with TickerProvider
 
     // Save the metadata
     if (data != null) {
-      CurrentChat.of(context)!.urlPreviews[widget.message!.text] = data;
+      CurrentChat.of(context)!.urlPreviews[widget.message!.text!] = data!;
     }
 
     // We are done loading

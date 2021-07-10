@@ -52,7 +52,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
   void initState() {
     super.initState();
 
-    state = ContactManager().getState(widget.handle?.address);
+    state = ContactManager().getState(widget.handle?.address ?? "");
 
     if (!isInvalid) {
       ContactManager().colorStream.listen((event) {
@@ -154,7 +154,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
         onReset: () async {
           widget.handle!.color = null;
           await widget.handle!.update();
-          ContactManager().colorStreamObject.sink.add({widget.handle!.address: null});
+          ContactManager().colorStreamObject.sink.add({widget.handle!.address!: null});
         },
         onSet: (Color? color) async {
           if (color == null) return;
@@ -173,7 +173,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
           ContactManager()
               .colorStreamObject
               .sink
-              .add({widget.handle!.address: widget.handle?.color == null ? null : HexColor(widget.handle!.color!)});
+              .add({widget.handle!.address!: widget.handle?.color == null ? null : HexColor(widget.handle!.color!)});
         },
       ),
     );

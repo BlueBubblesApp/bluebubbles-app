@@ -111,7 +111,7 @@ class ActionHandler {
         message.error = response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
 
         await Message.replaceMessage(tempGuid, message);
-        NewMessageManager().updateMessage(chat, tempGuid, message);
+        NewMessageManager().updateMessage(chat, tempGuid!, message);
       }
 
       completer.complete();
@@ -306,8 +306,8 @@ class ActionHandler {
       chat = Chat.fromMap(data["chats"][0]);
     }
 
-    if (!headless)
-      NewMessageManager().updateMessage(chat, updatedMessage.guid, updatedMessage);
+    if (!headless && chat != null)
+      NewMessageManager().updateMessage(chat, updatedMessage.guid!, updatedMessage);
   }
 
   /// Handles marking a chat by [chatGuid], with a new [status] of read or unread.

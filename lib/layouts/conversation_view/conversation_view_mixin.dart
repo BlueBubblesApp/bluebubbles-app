@@ -970,7 +970,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           UniqueContact contact = new UniqueContact(
               address: e.address,
               displayName:
-                  ContactManager().getCachedContactSync(e.address)?.displayName ?? await formatPhoneNumber(e.address!));
+                  ContactManager().getCachedContactSync(e.address ?? "")?.displayName ?? await formatPhoneNumber(e.address!));
           selected.add(contact);
         }
 

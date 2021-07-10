@@ -25,14 +25,14 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
   bool isPlaying = false;
   Duration? current;
 
-  AssetsAudioPlayer? player;
+  late AssetsAudioPlayer player;
 
   @override
   void initState() {
     super.initState();
 
     if (CurrentChat.of(widget.context)!.audioPlayers.containsKey(widget.file!.path)) {
-      player = CurrentChat.of(widget.context)!.audioPlayers[widget.file!.path];
+      player = CurrentChat.of(widget.context)!.audioPlayers[widget.file!.path]!;
     } else {
       player = new AssetsAudioPlayer();
       player!.open(Audio.file(widget.file!.path), autoStart: false);

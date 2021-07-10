@@ -191,10 +191,10 @@ class MessageHelper {
     if (!force) existingMessage = await Message.findOne({"guid": message.guid});
 
     // If we've already processed the GUID, skip it
-    if (NotificationManager().hasProcessed(message.guid)) return;
+    if (NotificationManager().hasProcessed(message.guid!)) return;
 
     // Add the message to the "processed" list
-    NotificationManager().addProcessed(message.guid);
+    NotificationManager().addProcessed(message.guid!);
 
     // Handle all the cases that would mean we don't show the notification
     if (!SettingsManager().settings.finishedSetup) return; // Don't notify if not fully setup

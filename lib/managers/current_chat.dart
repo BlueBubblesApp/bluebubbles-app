@@ -30,28 +30,28 @@ class CurrentChat {
 
   Stream get stream => _stream.stream;
 
-  StreamController<Map<String?, List<Attachment?>?>> _attachmentStream = StreamController.broadcast();
+  StreamController<Map<String, List<Attachment?>>> _attachmentStream = StreamController.broadcast();
 
   Stream get attachmentStream => _attachmentStream.stream;
 
   Chat chat;
 
-  Map<String?, Uint8List?> imageData = {};
-  Map<String?, Metadata?> urlPreviews = {};
-  Map<String?, VideoPlayerController?>? currentPlayingVideo = {};
-  Map<String?, AssetsAudioPlayer?> audioPlayers = {};
-  List<VideoPlayerController?> videoControllersToDispose = [];
+  Map<String, Uint8List> imageData = {};
+  Map<String, Metadata> urlPreviews = {};
+  Map<String, VideoPlayerController> currentPlayingVideo = {};
+  Map<String, AssetsAudioPlayer> audioPlayers = {};
+  List<VideoPlayerController> videoControllersToDispose = [];
   List<Attachment> chatAttachments = [];
   List<Message?> sentMessages = [];
   bool showTypingIndicator = false;
   Timer? indicatorHideTimer;
   OverlayEntry? entry;
-  bool? keyboardOpen = false;
+  bool keyboardOpen = false;
   double keyboardOpenOffset = 0;
 
   bool isAlive = false;
 
-  Map<String?, List<Attachment?>?> messageAttachments = {};
+  Map<String, List<Attachment?>> messageAttachments = {};
 
   double _timeStampOffset = 0.0;
 
@@ -90,18 +90,18 @@ class CurrentChat {
   }
 
   static CurrentChat? getCurrentChat(Chat? chat) {
-    if (chat == null) return null;
+    if (chat?.guid == null) return null;
 
-    CurrentChat? currentChat = AttachmentInfoBloc().getCurrentChat(chat.guid);
+    CurrentChat? currentChat = AttachmentInfoBloc().getCurrentChat(chat!.guid!);
     if (currentChat == null) {
-      currentChat = CurrentChat(chat);
+      currentChat = CurrentChat(chat!);
       AttachmentInfoBloc().addCurrentChat(currentChat);
     }
 
     return currentChat;
   }
 
-  static bool isActive(String? chatGuid) => AttachmentInfoBloc().getCurrentChat(chatGuid)?.isAlive ?? false;
+  static bool isActive(String chatGuid) => AttachmentInfoBloc().getCurrentChat(chatGuid)?.isAlive ?? false;
 
   static CurrentChat? get activeChat {
     if (AttachmentInfoBloc().chatData.isNotEmpty) {
@@ -201,7 +201,7 @@ class CurrentChat {
     if (!messageAttachments.containsKey(message!.guid)) {
       preloadMessageAttachments(specificMessages: [message]).then(
         (value) => _attachmentStream.sink.add(
-          {message.guid: messageAttachments[message.guid]},
+          {message.guid!: messageAttachments[message.guid] ?? []},
         ),
       );
       return [];
@@ -217,21 +217,21 @@ class CurrentChat {
     if (message.attachments!.isEmpty) return [];
 
     messageAttachments.remove(oldGuid);
-    messageAttachments[message.guid] = message.attachments;
+    messageAttachments[message.guid!] = message.attachments ?? [];
 
     String? newAttachmentGuid = message.attachments!.first!.guid;
     if (imageData.containsKey(oldGuid)) {
-      Uint8List? data = imageData.remove(oldGuid);
-      imageData[newAttachmentGuid] = data;
+      Uint8List data = imageData.remove(oldGuid)!;
+      imageData[newAttachmentGuid!] = data;
     } else if (currentPlayingVideo!.containsKey(oldGuid)) {
-      VideoPlayerController? data = currentPlayingVideo!.remove(oldGuid);
-      currentPlayingVideo![newAttachmentGuid] = data;
+      VideoPlayerController data = currentPlayingVideo!.remove(oldGuid)!;
+      currentPlayingVideo![newAttachmentGuid!] = data;
     } else if (audioPlayers.containsKey(oldGuid)) {
-      AssetsAudioPlayer? data = audioPlayers.remove(oldGuid);
-      audioPlayers[newAttachmentGuid] = data;
+      AssetsAudioPlayer data = audioPlayers.remove(oldGuid)!;
+      audioPlayers[newAttachmentGuid!] = data;
     } else if (urlPreviews.containsKey(oldGuid)) {
-      Metadata? data = urlPreviews.remove(oldGuid);
-      urlPreviews[newAttachmentGuid] = data;
+      Metadata data = urlPreviews.remove(oldGuid)!;
+      urlPreviews[newAttachmentGuid!] = data;
     }
     return message.attachments;
   }
@@ -241,8 +241,8 @@ class CurrentChat {
     return imageData[attachment.guid];
   }
 
-  void saveImageData(Uint8List? data, Attachment attachment) {
-    imageData[attachment.guid] = data;
+  void saveImageData(Uint8List data, Attachment attachment) {
+    imageData[attachment.guid!] = data;
   }
 
   void clearImageData(Attachment attachment) {
@@ -256,7 +256,7 @@ class CurrentChat {
     for (Message? message in messages) {
       if (message!.hasAttachments) {
         List<Attachment?>? attachments = await message.fetchAttachments();
-        messageAttachments[message.guid] = attachments;
+        messageAttachments[message.guid!] = attachments ?? [];
       }
     }
   }
@@ -288,11 +288,10 @@ class CurrentChat {
     chatAttachments = await Chat.getAttachments(chat);
   }
 
-  void changeCurrentPlayingVideo(Map<String?, VideoPlayerController?>? video) {
+  void changeCurrentPlayingVideo(Map<String, VideoPlayerController> video) {
     if (!isNullOrEmpty(currentPlayingVideo)!) {
       currentPlayingVideo!.values.forEach((element) {
         videoControllersToDispose.add(element);
-        element = null;
       });
     }
     currentPlayingVideo = video;

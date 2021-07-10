@@ -180,7 +180,7 @@ class MethodChannelInterface {
             Chat chat = chats.first!;
 
             // Open the chat
-            openChat(chat.guid, existingAttachments: attachments);
+            openChat(chat.guid!, existingAttachments: attachments);
 
             // Nothing else to do
             return new Future.value("");
@@ -219,7 +219,7 @@ class MethodChannelInterface {
             Chat chat = chats.first!;
 
             // Open the chat
-            openChat(chat.guid, existingText: text);
+            openChat(chat.guid!, existingText: text);
 
             // Nothing else to do
             return new Future.value("");
@@ -256,7 +256,7 @@ class MethodChannelInterface {
     }
   }
 
-  Future<void> openChat(String? id, {List<File>? existingAttachments, String? existingText}) async {
+  Future<void> openChat(String id, {List<File> existingAttachments = const [], String? existingText}) async {
     if (CurrentChat.activeChat?.chat.guid == id) {
       NotificationManager().switchChat(CurrentChat.activeChat!.chat);
       return;

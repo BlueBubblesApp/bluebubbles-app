@@ -26,14 +26,14 @@ class NotificationManager {
 
   /// [processedItems] holds all of the notifications that have already been notified / processed
   /// This ensures that items don't get processed twice
-  List<String?> processedItems = <String?>[];
+  List<String> processedItems = <String>[];
 
   /// [defaultAvatar] is the avatar that is used if there is no contact icon
   Uint8List? defaultAvatar;
   Uint8List? defaultMultiUserAvatar;
 
   /// Checks if a [guid] has been marked as processed
-  bool hasProcessed(String? guid) {
+  bool hasProcessed(String guid) {
     return processedItems.contains(guid);
   }
 
@@ -42,7 +42,7 @@ class NotificationManager {
   /// the list to 100 items. This is to mitigate memory issues
   /// when the app has been running for a while. We insert at
   /// index 0 to speed up the "search" process
-  void addProcessed(String? guid) {
+  void addProcessed(String guid) {
     processedItems.insert(0, guid);
     if (processedItems.length > 100) {
       processedItems = processedItems.sublist(0, 100);

@@ -287,7 +287,7 @@ class Chat {
   Future<Chat> setUnreadStatus(bool hasUnreadMessage) async {
     final Database? db = await DBProvider.db.database;
     if (hasUnreadMessage) {
-      if (CurrentChat.isActive(this.guid)) {
+      if (CurrentChat.isActive(this.guid!)) {
         return this;
       }
     }
@@ -367,7 +367,7 @@ class Chat {
       // If the message is not from the same chat as the current chat, mark unread
       if (message.isFromMe!) {
         await this.setUnreadStatus(false);
-      } else if (!CurrentChat.isActive(this.guid)) {
+      } else if (!CurrentChat.isActive(this.guid!)) {
         await this.setUnreadStatus(true);
       }
     }

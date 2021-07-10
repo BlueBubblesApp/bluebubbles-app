@@ -206,7 +206,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         _settingsCopy.serverAddress = getServerAddress(address: fcmData[1])!;
 
                         SettingsManager().saveSettings(_settingsCopy);
-                        SettingsManager().saveFCMData(_fcmDataCopy);
+                        SettingsManager().saveFCMData(_fcmDataCopy!);
                         SocketManager().authFCM();
                       }
                     },

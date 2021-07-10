@@ -92,8 +92,8 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
       imageFormat: ImageFormat.JPEG,
       quality: SettingsManager().compressionQuality!,
     );
-
-    CurrentChat.of(context)?.saveImageData(thumbnail, widget.attachment!);
+    if (thumbnail == null) return;
+    CurrentChat.of(context)?.saveImageData(thumbnail!, widget.attachment!);
     if (this.mounted) this.setState(() {});
   }
 
@@ -113,7 +113,7 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
           isVisible = false;
           if (controller != null) {
             controller = null;
-            CurrentChat.of(context)?.changeCurrentPlayingVideo(null);
+            CurrentChat.of(context)?.changeCurrentPlayingVideo({});
           }
           if (SettingsManager().settings.lowMemoryMode) {
             CurrentChat.of(context)?.clearImageData(widget.attachment!);
@@ -270,7 +270,7 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
           await controller.initialize();
           controller.setVolume(muted ? 0.0 : 1.0);
           controller.play();
-          CurrentChat.of(context)!.changeCurrentPlayingVideo({widget.attachment!.guid: controller});
+          CurrentChat.of(context)!.changeCurrentPlayingVideo({widget.attachment!.guid!: controller});
         },
         child: Stack(
           children: [

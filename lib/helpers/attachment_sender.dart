@@ -98,7 +98,7 @@ class AttachmentSender {
         sentMessage!.error = response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
 
         await Message.replaceMessage(tempGuid, sentMessage);
-        NewMessageManager().updateMessage(_chat, tempGuid, sentMessage!);
+        NewMessageManager().updateMessage(_chat, tempGuid!, sentMessage!);
         if (messageWithText != null) {
           tempGuid = messageWithText!.guid;
           messageWithText!.guid = messageWithText!.guid!.replaceAll("temp", "error-${response['error']['message']}");
@@ -106,7 +106,7 @@ class AttachmentSender {
               response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
 
           await Message.replaceMessage(tempGuid, messageWithText);
-          NewMessageManager().updateMessage(_chat, tempGuid, messageWithText!);
+          NewMessageManager().updateMessage(_chat, tempGuid!, messageWithText!);
         }
         SocketManager().finishSender(_attachmentGuid);
         _stream.sink.addError("failed to send");
@@ -161,12 +161,12 @@ class AttachmentSender {
     // Add the message to the chat.
     // This will save the message, attachments, and chat
     await _chat!.addMessage(sentMessage!);
-    NewMessageManager().addMessage(_chat, sentMessage, outgoing: true);
+    NewMessageManager().addMessage(_chat, sentMessage!, outgoing: true);
 
     // If there is any text, save the text too
     if (messageWithText != null) {
       await _chat!.addMessage(messageWithText!);
-      NewMessageManager().addMessage(_chat, messageWithText, outgoing: true);
+      NewMessageManager().addMessage(_chat, messageWithText!, outgoing: true);
     }
 
     _totalChunks = numOfChunks;
