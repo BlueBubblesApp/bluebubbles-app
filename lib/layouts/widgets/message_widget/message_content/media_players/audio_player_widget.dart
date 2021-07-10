@@ -77,6 +77,12 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
     });
   }
 
+  @override
+  void dispose() {
+    player.dispose();
+    super.dispose();
+  }
+
   String formatDuration(Duration? duration) {
     if (duration == null) return "00:00";
     String minutes = duration.inMinutes.toString();
@@ -94,7 +100,7 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
 
   @override
   Widget build(BuildContext context) {
-    Playing? playing = player!.current.valueWrapper!.value;
+    Playing? playing = player!.current.valueWrapper?.value;
     double maxWidth = widget.width ?? context.width * 3 / 4;
 
     double currentValue = current?.inSeconds.toDouble() ?? 0.0;
