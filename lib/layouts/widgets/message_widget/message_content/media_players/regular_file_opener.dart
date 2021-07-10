@@ -26,41 +26,44 @@ class _RegularFileOpenerState extends State<RegularFileOpener> {
   Widget build(BuildContext context) {
     IconData fileIcon = AttachmentHelper.getIcon(widget.attachment!.mimeType ?? "");
 
-    return Container(
-      height: 140,
-      width: 200,
-      color: Theme.of(context).accentColor,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Text(
-            basename(widget.file!.path),
-            textAlign: TextAlign.center,
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodyText2,
-          ),
-          CupertinoButton(
-            child: Icon(
-              fileIcon,
-              color: Theme.of(context).textTheme.bodyText2!.color,
-            ),
-            onPressed: () async {
-              try {
-                await MethodChannelInterface().invokeMethod(
-                  "open_file",
-                  {
-                    "path": "/attachments/" + widget.attachment!.guid! + "/" + basename(widget.file!.path),
-                    "mimeType": widget.attachment!.mimeType,
-                  },
-                );
-              } catch (ex) {
-                showSnackbar('Error', "No handler for this file type!");
-              }
+    return GestureDetector(
+      onTap: () async {
+        try {
+          await MethodChannelInterface().invokeMethod(
+            "open_file",
+            {
+              "path": "/attachments/" + widget.attachment!.guid! + "/" + basename(widget.file!.path),
+              "mimeType": widget.attachment!.mimeType,
             },
-          ),
-          Text(widget.attachment!.mimeType!, style: Theme.of(context).textTheme.bodyText2),
-        ],
+          );
+        } catch (ex) {
+          showSnackbar('Error', "No handler for this file type!");
+        }
+      },
+      child: Container(
+        height: 140,
+        width: 200,
+        color: Theme.of(context).accentColor,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Text(
+              basename(widget.file!.path),
+              textAlign: TextAlign.center,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodyText2,
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Icon(
+                fileIcon,
+                color: Theme.of(context).textTheme.bodyText2!.color,
+              ),
+            ),
+            Text(widget.attachment!.mimeType!, style: Theme.of(context).textTheme.bodyText2),
+          ],
+        ),
       ),
     );
   }
