@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
@@ -194,19 +195,22 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     debugPrint("[Content Commit] Keyboard received content");
     debugPrint("  -> Content Type: ${content.mimeType}");
     debugPrint("  -> URI: ${content.uri}");
-    debugPrint("  -> Content Length: ${content.hasData ? content.data.length : "null"}");
+    debugPrint("  -> Content Length: ${content.hasData ? content.data!.length : "null"}");
 
     // Parse the filename from the URI and read the data as a List<int>
     String filename = uriToFilename(content.uri, content.mimeType);
-    List<int> data = ((content.data ?? []) as List).map((e) => e as int).toList();
 
     // Save the data to a location and add it to the file picker
-    File file = await _saveData(data, filename);
-    this.addAttachments([file]);
+    if (content.hasData) {
+      File file = await _saveData(content.data!, filename);
+      this.addAttachments([file]);
 
-    // Update the state
-    updateTextFieldAttachments();
-    if (this.mounted) setState(() {});
+      // Update the state
+      updateTextFieldAttachments();
+      if (this.mounted) setState(() {});
+    } else {
+      showSnackbar('Insertion Failed', 'Attachment has no data!');
+    }
   }
 
   Future<void> reviewAudio(BuildContext originalContext, File file) async {
@@ -325,7 +329,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     if (this.mounted) setState(() {});
   }
 
-  Future<File> _saveData(List<int> data, String filename) async {
+  Future<File> _saveData(Uint8List data, String filename) async {
     String dir = SettingsManager().appDocDir.path;
     Directory tempAssets = Directory("$dir/tempAssets");
     if (!await tempAssets.exists()) {
