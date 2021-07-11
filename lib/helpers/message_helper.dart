@@ -48,6 +48,7 @@ class MessageHelper {
     }
 
     // Iterate over each message to parse it
+    int index = 0;
     for (dynamic item in messages) {
       if (onProgress != null) {
         onProgress(_messages.length, messages.length);
@@ -98,6 +99,14 @@ class MessageHelper {
 
       // Add message to the "master list"
       _messages.add(message);
+
+      // Every 50 messages synced, who a message
+      index += 1;
+      if (index % 50 == 0) {
+        debugPrint('[Bulk Ingest] Saved $index of ${messages.length} messages');
+      } else if (index == messages.length) {
+        debugPrint('[Bulk Ingest] Saved ${messages.length} messages');
+      }
     }
 
     if (notifyForNewMessage && notifyMessageManager) {
