@@ -81,33 +81,38 @@ class _SettingsPanelState extends State<SettingsPanel> {
     Color tileColor;
     if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance()
         || SettingsManager().settings.skin.value != Skins.iOS) {
-      headerColor = Theme.of(context).accentColor.withOpacity(0.5);
+      headerColor = Theme.of(context).accentColor;
       tileColor = Theme.of(context).backgroundColor;
     } else {
-      headerColor = Theme.of(context).backgroundColor.withOpacity(0.5);
+      headerColor = Theme.of(context).backgroundColor;
       tileColor = Theme.of(context).accentColor;
     }
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: tileColor, // navigation bar color
+        systemNavigationBarColor: headerColor, // navigation bar color
         systemNavigationBarIconBrightness:
-          tileColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+          headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
-        backgroundColor: tileColor,
+        backgroundColor: SettingsManager().settings.skin.value != Skins.iOS ? tileColor : headerColor,
         appBar: PreferredSize(
           preferredSize: Size(context.width, 80),
-          child: AppBar(
-            brightness: ThemeData.estimateBrightnessForColor(tileColor),
-            toolbarHeight: 100.0,
-            elevation: 0,
-            leading: buildBackButton(context),
-            backgroundColor: headerColor,
-            title: Text(
-              "Settings",
-              style: Theme.of(context).textTheme.headline1,
+          child: ClipRRect(
+            child: BackdropFilter(
+              child: AppBar(
+                brightness: ThemeData.estimateBrightnessForColor(headerColor),
+                toolbarHeight: 100.0,
+                elevation: 0,
+                leading: buildBackButton(context),
+                backgroundColor: headerColor.withOpacity(0.5),
+                title: Text(
+                  "Settings",
+                  style: Theme.of(context).textTheme.headline1,
+                ),
+              ),
+              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
             ),
           ),
         ),
@@ -269,9 +274,12 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     trailing: nextIcon,
                     showDivider: false,
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 65.0),
-                    child: SettingsDivider(color: headerColor),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
+                    ),
                   ),
                   SettingsTile(
                     backgroundColor: tileColor,
@@ -316,9 +324,12 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       containerColor: getIndicatorColor(SettingsManager().settings.enablePrivateAPI ? SocketState.CONNECTED : SocketState.CONNECTING),
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 65.0),
-                    child: SettingsDivider(color: headerColor),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
+                    ),
                   ),
                   SettingsTile(
                     backgroundColor: tileColor,
@@ -387,9 +398,12 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       materialIcon: Icons.info,
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 65.0),
-                    child: SettingsDivider(color: headerColor),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
+                    ),
                   ),
                   SettingsTile(
                     backgroundColor: tileColor,
@@ -403,9 +417,12 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     ),
                     showDivider: false,
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 65.0),
-                    child: SettingsDivider(color: headerColor),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
+                    ),
                   ),
                   SettingsTile(
                     backgroundColor: tileColor,
@@ -431,9 +448,12 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     ),
                     showDivider: false,
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 65.0),
-                    child: SettingsDivider(color: headerColor),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
+                    ),
                   ),
                   SettingsTile(
                     backgroundColor: tileColor,
@@ -496,6 +516,16 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     title: "Reset",
                     subTitle: "Resets the app to default settings",
                     showDivider: false,
+                  ),
+                  Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
+                  Container(
+                      height: 30,
+                      decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
+                        color: headerColor,
+                        border: Border(
+                            top: BorderSide(color: Colors.grey, width: 0.3)
+                        ),
+                      ) : null,
                   ),
                 ],
               ),
@@ -915,7 +945,7 @@ class SettingsHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Container(padding: EdgeInsets.only(top: 5.0)),
+        Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
         Container(
             height: SettingsManager().settings.skin.value == Skins.iOS ? 60 : 40,
             alignment: Alignment.bottomLeft,
@@ -935,7 +965,7 @@ class SettingsHeader extends StatelessWidget {
               child: Text(text.psCapitalize, style: SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
             )
         ),
-        Container(padding: EdgeInsets.only(top: 5.0)),
+        Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
       ]
     );
   }
