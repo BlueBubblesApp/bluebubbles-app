@@ -347,7 +347,8 @@ class _Cupertino extends StatelessWidget {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarIconBrightness:
+            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
@@ -518,9 +519,7 @@ class _Cupertino extends StatelessWidget {
                         child: Container(
                           padding: EdgeInsets.only(top: 50.0),
                           child: Text(
-                            parent.widget.showArchivedChats!
-                                ? "You have no archived chats :("
-                                : "You have no chats :(",
+                            parent.widget.showArchivedChats ? "You have no archived chats :(" : "You have no chats :(",
                             style: Theme.of(context).textTheme.subtitle1,
                           ),
                         ),
@@ -715,7 +714,8 @@ class __MaterialState extends State<_Material> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarIconBrightness:
+            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
@@ -1183,7 +1183,8 @@ class _SamsungState extends State<_Samsung> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarIconBrightness:
+            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
@@ -1415,7 +1416,8 @@ class _SamsungState extends State<_Samsung> {
                                 child: (!widget.parent.widget.showArchivedChats! &&
                                         widget.parent.chats[index]!.isArchived!)
                                     ? Container()
-                                    : (widget.parent.widget.showArchivedChats! && !widget.parent.chats[index]!.isArchived!)
+                                    : (widget.parent.widget.showArchivedChats! &&
+                                            !widget.parent.chats[index]!.isArchived!)
                                         ? Container()
                                         : widget.parent.chats[index]!.isPinned!
                                             ? ConversationTile(
@@ -1521,7 +1523,8 @@ class _SamsungState extends State<_Samsung> {
                                 child: (!widget.parent.widget.showArchivedChats! &&
                                         widget.parent.chats[index]!.isArchived!)
                                     ? Container()
-                                    : (widget.parent.widget.showArchivedChats! && !widget.parent.chats[index]!.isArchived!)
+                                    : (widget.parent.widget.showArchivedChats! &&
+                                            !widget.parent.chats[index]!.isArchived!)
                                         ? Container()
                                         : (!widget.parent.chats[index]!.isPinned!)
                                             ? ConversationTile(

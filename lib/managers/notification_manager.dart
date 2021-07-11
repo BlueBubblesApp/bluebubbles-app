@@ -12,6 +12,15 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
 
+class NotificationVisibility {
+  // ignore: non_constant_identifier_names
+  static const SECRET = -1;
+  // ignore: non_constant_identifier_names
+  static const PRIVATE = 0;
+  // ignore: non_constant_identifier_names
+  static const PUBLIC = 1;
+}
+
 /// [NotificationManager] holds data relating to the current chat, and manages things such as
 class NotificationManager {
   factory NotificationManager() {
@@ -107,8 +116,19 @@ class NotificationManager {
   /// @param [handle] optional parameter of the handle of the message
   ///
   /// @param [contact] optional parameter of the contact of the message
-  void createNewNotification(String contentTitle, String? contentText, String? group, Chat chat, int id, int? summaryId,
-      int timeStamp, String? senderName, bool groupConversation, Handle? handle, Contact? contact) async {
+  void createNewNotification(
+      String contentTitle,
+      String? contentText,
+      String? group,
+      Chat chat,
+      int id,
+      int? summaryId,
+      int timeStamp,
+      String? senderName,
+      bool groupConversation,
+      Handle? handle,
+      Contact? contact,
+      int visibility) async {
     Uint8List? contactIcon;
 
     try {
@@ -143,6 +163,7 @@ class NotificationManager {
       "name": senderName,
       "groupConversation": groupConversation,
       "contactIcon": contactIcon,
+      "visibility": visibility
     });
   }
 
