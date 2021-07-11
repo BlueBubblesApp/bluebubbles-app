@@ -30,6 +30,7 @@ class ContactManager {
   ContactManager._internal();
 
   List<Contact> contacts = [];
+  bool hasFetchedContacts = false;
   Map<String, Contact?> handleToContact = new Map();
   Map<String, String?> handleToFakeName = new Map();
   Map<String, ContactAvatarWidgetState> contactWidgetStates = new Map();
@@ -98,6 +99,7 @@ class ContactManager {
     // Fetch the current list of contacts
     debugPrint("[ContactManager] -> Fetching contacts");
     contacts = (await ContactsService.getContacts(withThumbnails: false)).toList();
+    hasFetchedContacts = true;
 
     // Match handles in the database with contacts
     await this.matchHandles();
@@ -182,7 +184,7 @@ class ContactManager {
 
     // If the contact list is null, get the contacts
     try {
-      if (contacts.isEmpty) await getContacts();
+      if (!hasFetchedContacts && contacts.isEmpty) await getContacts();
     } catch (ex) {
       return null;
     }
