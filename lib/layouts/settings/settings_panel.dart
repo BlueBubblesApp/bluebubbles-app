@@ -2,7 +2,9 @@ import 'dart:convert';
 import 'dart:ui';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
@@ -86,6 +88,9 @@ class _SettingsPanelState extends State<SettingsPanel> {
     } else {
       headerColor = Theme.of(context).backgroundColor;
       tileColor = Theme.of(context).accentColor;
+    }
+    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
+      tileColor = headerColor;
     }
 
     return AnnotatedRegion<SystemUiOverlayStyle>(

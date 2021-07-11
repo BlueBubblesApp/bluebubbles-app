@@ -20,6 +20,11 @@ class Themes {
       ];
 }
 
+bool isEqual(ThemeData one, ThemeData two) {
+  return one.accentColor == two.accentColor
+      && one.backgroundColor == two.backgroundColor;
+}
+
 ThemeData oledDarkTheme = ThemeData(
   primarySwatch: Colors.blue,
   splashFactory: InkRipple.splashFactory,

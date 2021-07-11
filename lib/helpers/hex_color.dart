@@ -10,6 +10,16 @@ class HexColor extends Color {
     }
     return int.parse(hexColor, radix: 16);
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (other.runtimeType != runtimeType)
+      return false;
+    return other is HexColor && other.value == value;
+  }
+
+  @override
+  int get hashCode => super.hashCode;
 }
 
 extension ColorHelpers on Color {
