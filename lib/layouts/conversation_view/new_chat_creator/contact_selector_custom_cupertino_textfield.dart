@@ -512,7 +512,7 @@ class ContactSelectorCustomCupertinoTextfield extends StatefulWidget {
   final ValueChanged<String>? onChanged;
 
   /// Once new content is commited...
-  final ValueChanged<Map<String, dynamic>>? onContentCommitted;
+  final ValueChanged<CommittedContent>? onContentCommitted;
 
   /// {@macro flutter.widgets.editableText.onEditingComplete}
   final VoidCallback? onEditingComplete;

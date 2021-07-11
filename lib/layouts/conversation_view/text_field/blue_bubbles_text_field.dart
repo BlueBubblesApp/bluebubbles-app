@@ -189,16 +189,16 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     super.dispose();
   }
 
-  void onContentCommit(Map<String, dynamic> content) async {
+  void onContentCommit(CommittedContent content) async {
     // Add some debugging logs
     debugPrint("[Content Commit] Keyboard received content");
-    debugPrint("  -> Content Type: ${content['mimeType']}");
-    debugPrint("  -> URI: ${content['uri']}");
-    debugPrint("  -> Content Length: ${content['data'] != null ? (content['data'] as List<dynamic>).length : "null"}");
+    debugPrint("  -> Content Type: ${content.mimeType}");
+    debugPrint("  -> URI: ${content.uri}");
+    debugPrint("  -> Content Length: ${content.hasData ? content.data.length : "null"}");
 
     // Parse the filename from the URI and read the data as a List<int>
-    String filename = uriToFilename(content['uri'] as String?, content['mimeType'] as String?);
-    List<int> data = ((content['data'] ?? []) as List).map((e) => e as int).toList();
+    String filename = uriToFilename(content.uri, content.mimeType);
+    List<int> data = ((content.data ?? []) as List).map((e) => e as int).toList();
 
     // Save the data to a location and add it to the file picker
     File file = await _saveData(data, filename);
