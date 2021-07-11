@@ -5,6 +5,7 @@ import 'dart:typed_data';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/country_codes.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
@@ -539,28 +540,38 @@ Future<File?> saveImageFromUrl(String guid, String url) async {
   }
 }
 
-Icon getIndicatorIcon(SocketState socketState, {double size = 24}) {
+Icon getIndicatorIcon(SocketState socketState, {double size = 24, bool showAlpha = true}) {
   Icon icon;
 
   if (SettingsManager().settings.colorblindMode) {
     if (socketState == SocketState.CONNECTING) {
-      icon = Icon(Icons.cloud_upload, color: HexColor('ffd500').withAlpha(200), size: size);
+      icon = Icon(Icons.cloud_upload, color: HexColor('ffd500').withAlpha(showAlpha ? 200 : 255), size: size);
     } else if (socketState == SocketState.CONNECTED) {
-      icon = Icon(Icons.cloud_done, color: HexColor('32CD32').withAlpha(200), size: size);
+      icon = Icon(Icons.cloud_done, color: HexColor('32CD32').withAlpha(showAlpha ? 200 : 255), size: size);
     } else {
-      icon = Icon(Icons.cloud_off, color: HexColor('DC143C').withAlpha(200), size: size);
+      icon = Icon(Icons.cloud_off, color: HexColor('DC143C').withAlpha(showAlpha ? 200 : 255), size: size);
     }
   } else {
     if (socketState == SocketState.CONNECTING) {
-      icon = Icon(Icons.fiber_manual_record, color: HexColor('ffd500').withAlpha(200), size: size);
+      icon = Icon(Icons.fiber_manual_record, color: HexColor('ffd500').withAlpha(showAlpha ? 200 : 255), size: size);
     } else if (socketState == SocketState.CONNECTED) {
-      icon = Icon(Icons.fiber_manual_record, color: HexColor('32CD32').withAlpha(200), size: size);
+      icon = Icon(Icons.fiber_manual_record, color: HexColor('32CD32').withAlpha(showAlpha ? 200 : 255), size: size);
     } else {
-      icon = Icon(Icons.fiber_manual_record, color: HexColor('DC143C').withAlpha(200), size: size);
+      icon = Icon(Icons.fiber_manual_record, color: HexColor('DC143C').withAlpha(showAlpha ? 200 : 255), size: size);
     }
   }
 
   return icon;
+}
+
+Color getIndicatorColor(SocketState socketState) {
+  if (socketState == SocketState.CONNECTING) {
+    return HexColor('ffd500');
+  } else if (socketState == SocketState.CONNECTED) {
+    return HexColor('32CD32');
+  } else {
+    return HexColor('DC143C');
+  }
 }
 
 FCMData parseFcmJson(Map<String, dynamic> fcmMeta) {
@@ -603,3 +614,14 @@ Future<PlayerStatus> getControllerStatus(VideoPlayerController controller) async
 
   return PlayerStatus.NONE;
 }
+
+extension PlatformSpecificCapitalize on String {
+  String get psCapitalize {
+    if (SettingsManager().settings.skin.value == Skins.iOS) {
+      return this.toUpperCase();
+    } else {
+      return this;
+    }
+  }
+}
+

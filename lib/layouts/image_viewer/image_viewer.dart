@@ -86,7 +86,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                   Navigator.pop(context);
                 },
                 child: Icon(
-                  SettingsManager().settings.skin == Skins.iOS ? Icons.arrow_back_ios : Icons.arrow_back,
+                  SettingsManager().settings.skin.value == Skins.iOS ? Icons.arrow_back_ios : Icons.arrow_back,
                   color: Colors.white,
                 ),
               ),

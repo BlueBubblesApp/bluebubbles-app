@@ -28,7 +28,7 @@ class MessageTimeStamp extends StatelessWidget {
 
           return AnimatedContainer(
             duration: Duration(milliseconds: offset == 0 ? 150 : 0),
-            width: (SettingsManager().settings.skin == Skins.iOS || SettingsManager().settings.skin == Skins.Material)
+            width: (SettingsManager().settings.skin.value == Skins.iOS || SettingsManager().settings.skin.value == Skins.Material)
                 ? (-offset).clamp(0, 70).toDouble()
                 : (singleLine)
                     ? 100
@@ -44,7 +44,7 @@ class MessageTimeStamp extends StatelessWidget {
                   duration: Duration(milliseconds: offset == 0 ? 150 : 0),
                   child: Text(
                     text,
-                    textAlign: (message!.isFromMe! && SettingsManager().settings.skin == Skins.Samsung)
+                    textAlign: (message!.isFromMe! && SettingsManager().settings.skin.value == Skins.Samsung)
                         ? TextAlign.right
                         : TextAlign.left,
                     style: Theme.of(context).textTheme.subtitle1!.apply(fontSizeFactor: 0.8),

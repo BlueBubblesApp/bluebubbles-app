@@ -87,7 +87,7 @@ class _UXPanelState extends State<UXPanel> {
                       );
                     },
                     trailing: Icon(
-                      SettingsManager().settings.skin == Skins.iOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
+                      SettingsManager().settings.skin.value == Skins.iOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
                       color: Theme.of(context).primaryColor,
                     ),
                   ),
@@ -123,8 +123,8 @@ class _UXPanelState extends State<UXPanel> {
                     initialVal: _settingsCopy.filteredChatList,
                     title: "Filtered Chat List",
                   ),
-                  if (SettingsManager().settings.skin == Skins.Samsung ||
-                      SettingsManager().settings.skin == Skins.Material)
+                  if (SettingsManager().settings.skin.value == Skins.Samsung ||
+                      SettingsManager().settings.skin.value == Skins.Material)
                     SettingsSwitch(
                       onChanged: (bool val) {
                         _settingsCopy.swipableConversationTiles = val;
@@ -173,7 +173,7 @@ class _UXPanelState extends State<UXPanel> {
                     initialVal: _settingsCopy.showIncrementalSync,
                     title: "Notify when incremental sync complete",
                   ),
-                  if (SettingsManager().settings.skin == Skins.iOS)
+                  if (SettingsManager().settings.skin.value == Skins.iOS)
                     SettingsSlider(
                         text: "Scroll Speed Multiplier",
                         startingVal: _settingsCopy.scrollVelocity,

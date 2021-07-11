@@ -1,8 +1,13 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/setup/qr_code_scanner.dart';
+import 'package:bluebubbles/repository/models/fcm_data.dart';
+import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/share.dart';
@@ -32,6 +37,16 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
   int? lastRestartMessages;
   bool isRestarting = false;
   bool isRestartingMessages = false;
+
+  late Settings _settingsCopy;
+  FCMData? _fcmDataCopy;
+
+  @override
+  void initState() {
+    _settingsCopy = SettingsManager().settings;
+    _fcmDataCopy = SettingsManager().fcmData;
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,6 +84,42 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
               delegate: SliverChildListDelegate(
                 <Widget>[
                   Container(padding: EdgeInsets.only(top: 5.0)),
+                  SettingsTile(
+                    title: "Re-configure with MacOS Server",
+                    trailing: Icon(Icons.camera, color: Theme.of(context).primaryColor.withAlpha(200)),
+                    onTap: () async {
+                      var fcmData;
+                      try {
+                        fcmData = jsonDecode(
+                          await Navigator.of(context).push(
+                            CupertinoPageRoute(
+                              builder: (BuildContext context) {
+                                return QRCodeScanner();
+                              },
+                            ),
+                          ),
+                        );
+                      } catch (e) {
+                        return;
+                      }
+                      if (fcmData != null && fcmData[0] != null && getServerAddress(address: fcmData[1]) != null) {
+                        _fcmDataCopy = FCMData(
+                          projectID: fcmData[2],
+                          storageBucket: fcmData[3],
+                          apiKey: fcmData[4],
+                          firebaseURL: fcmData[5],
+                          clientID: fcmData[6],
+                          applicationID: fcmData[7],
+                        );
+                        _settingsCopy.guidAuthKey = fcmData[0];
+                        _settingsCopy.serverAddress = getServerAddress(address: fcmData[1])!;
+
+                        SettingsManager().saveSettings(_settingsCopy);
+                        SettingsManager().saveFCMData(_fcmDataCopy!);
+                        SocketManager().authFCM();
+                      }
+                    },
+                  ),
                   StreamBuilder(
                       stream: SocketManager().connectionStateStream,
                       builder: (context, AsyncSnapshot<SocketState> snapshot) {

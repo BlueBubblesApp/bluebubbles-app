@@ -133,7 +133,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     return Stack(
       alignment: AlignmentDirectional.bottomStart,
       children: [
-        if (widget.showTail && SettingsManager().settings.skin == Skins.iOS)
+        if (widget.showTail && SettingsManager().settings.skin.value == Skins.iOS)
           MessageTail(
             isFromMe: false,
             color: bubbleColors[0],
@@ -156,14 +156,14 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
             horizontal: 14,
           ),
           decoration: BoxDecoration(
-            borderRadius: SettingsManager().settings.skin == Skins.iOS
+            borderRadius: SettingsManager().settings.skin.value == Skins.iOS
                 ? BorderRadius.only(
                     bottomLeft: Radius.circular(17),
                     bottomRight: Radius.circular(20),
                     topLeft: Radius.circular(20),
                     topRight: Radius.circular(20),
                   )
-                : (SettingsManager().settings.skin == Skins.Material)
+                : (SettingsManager().settings.skin.value == Skins.Material)
                     ? BorderRadius.only(
                         topLeft: widget.olderMessage == null ||
                                 MessageHelper.getShowTail(context, widget.olderMessage, widget.message)
@@ -173,7 +173,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                         bottomRight: Radius.circular(20),
                         bottomLeft: Radius.circular(widget.showTail ? 20 : 5),
                       )
-                    : (SettingsManager().settings.skin == Skins.Samsung)
+                    : (SettingsManager().settings.skin.value == Skins.Samsung)
                         ? BorderRadius.only(
                             topLeft: Radius.circular(17.5),
                             topRight: Radius.circular(17.5),
@@ -267,9 +267,9 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     // -> Contact avatar
     // -> Message
     List<Widget> msgRow = [];
-    if (widget.showTail && (isGroup || SettingsManager().settings.skin == Skins.Samsung)) {
+    if (widget.showTail && (isGroup || SettingsManager().settings.skin.value == Skins.Samsung)) {
       double topPadding = (isGroup) ? 5 : 0;
-      if (SettingsManager().settings.skin == Skins.Samsung) {
+      if (SettingsManager().settings.skin.value == Skins.Samsung) {
         topPadding = 5.0;
         if (isGroup) topPadding += 18;
         if (widget.message!.hasReactions) topPadding += 20;
@@ -305,20 +305,20 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     return Padding(
       // Add padding when we are showing the avatar
       padding: EdgeInsets.only(
-          top: (SettingsManager().settings.skin != Skins.iOS &&
+          top: (SettingsManager().settings.skin.value != Skins.iOS &&
                   widget.message?.isFromMe == widget.olderMessage?.isFromMe)
               ? 3.0
               : 0.0,
-          left: (!widget.showTail && (isGroup || SettingsManager().settings.skin == Skins.Samsung)) ? 35.0 : 0.0,
-          bottom: (widget.showTail && SettingsManager().settings.skin == Skins.iOS) ? 10.0 : 0.0),
+          left: (!widget.showTail && (isGroup || SettingsManager().settings.skin.value == Skins.Samsung)) ? 35.0 : 0.0,
+          bottom: (widget.showTail && SettingsManager().settings.skin.value == Skins.iOS) ? 10.0 : 0.0),
       child: Row(
         mainAxisSize: MainAxisSize.max,
         mainAxisAlignment:
-            (SettingsManager().settings.skin == Skins.iOS || SettingsManager().settings.skin == Skins.Material)
+            (SettingsManager().settings.skin.value == Skins.iOS || SettingsManager().settings.skin.value == Skins.Material)
                 ? MainAxisAlignment.spaceBetween
                 : MainAxisAlignment.start,
         crossAxisAlignment:
-            (SettingsManager().settings.skin != Skins.Samsung) ? CrossAxisAlignment.center : CrossAxisAlignment.end,
+            (SettingsManager().settings.skin.value != Skins.Samsung) ? CrossAxisAlignment.center : CrossAxisAlignment.end,
         children: [
           MessagePopupHolder(
               message: widget.message,
@@ -326,13 +326,13 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: (SettingsManager().settings.skin == Skins.Samsung)
+                  crossAxisAlignment: (SettingsManager().settings.skin.value == Skins.Samsung)
                       ? CrossAxisAlignment.start
                       : CrossAxisAlignment.end,
                   children: msgRow,
                 ),
                 // Add the timestamp for the samsung theme
-                if (SettingsManager().settings.skin == Skins.Samsung &&
+                if (SettingsManager().settings.skin.value == Skins.Samsung &&
                     widget.message?.dateCreated != null &&
                     (widget.newerMessage?.dateCreated == null ||
                         widget.message?.isFromMe != widget.newerMessage?.isFromMe ||
@@ -347,7 +347,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                     ),
                   )
               ])),
-          if ((SettingsManager().settings.skin != Skins.Samsung && widget.message?.guid != widget.olderMessage?.guid))
+          if ((SettingsManager().settings.skin.value != Skins.Samsung && widget.message?.guid != widget.olderMessage?.guid))
             MessageTimeStamp(
               message: widget.message,
             )

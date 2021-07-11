@@ -12,7 +12,7 @@ class ThemeSwitcher extends StatefulWidget {
   final Widget samsungSkin;
 
   static PageRoute buildPageRoute({required Function(BuildContext context) builder}) {
-    switch (SettingsManager().settings.skin) {
+    switch (SettingsManager().settings.skin.value) {
       case Skins.iOS:
         return CupertinoPageRoute(builder: builder as Widget Function(BuildContext));
       case Skins.Material:
@@ -25,7 +25,7 @@ class ThemeSwitcher extends StatefulWidget {
   }
 
   static ScrollPhysics getScrollPhysics() {
-    switch (SettingsManager().settings.skin) {
+    switch (SettingsManager().settings.skin.value) {
       case Skins.iOS:
         return AlwaysScrollableScrollPhysics(
           parent: CustomBouncingScrollPhysics(),
@@ -55,13 +55,13 @@ class _ThemeSwitcherState extends State<ThemeSwitcher> {
   @override
   void initState() {
     super.initState();
-    skin = SettingsManager().settings.skin;
+    skin = SettingsManager().settings.skin.value;
 
     SettingsManager().stream.listen((event) {
       if (!this.mounted) return;
 
-      if (event!.skin != skin) {
-        skin = event.skin;
+      if (event!.skin.value != skin) {
+        skin = event.skin.value;
         setState(() {});
       }
     });

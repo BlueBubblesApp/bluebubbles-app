@@ -366,14 +366,14 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
       behavior: HitTestBehavior.deferToChild,
       onHorizontalDragStart: (details) {},
       onHorizontalDragUpdate: (details) {
-        if (SettingsManager().settings.skin != Skins.Samsung)
+        if (SettingsManager().settings.skin.value != Skins.Samsung)
           CurrentChat.of(context)!.timeStampOffset += details.delta.dx * 0.3;
       },
       onHorizontalDragEnd: (details) {
-        if (SettingsManager().settings.skin != Skins.Samsung) CurrentChat.of(context)!.timeStampOffset = 0;
+        if (SettingsManager().settings.skin.value != Skins.Samsung) CurrentChat.of(context)!.timeStampOffset = 0;
       },
       onHorizontalDragCancel: () {
-        if (SettingsManager().settings.skin != Skins.Samsung) CurrentChat.of(context)!.timeStampOffset = 0;
+        if (SettingsManager().settings.skin.value != Skins.Samsung) CurrentChat.of(context)!.timeStampOffset = 0;
       },
       child: Stack(
         alignment: AlignmentDirectional.bottomCenter,

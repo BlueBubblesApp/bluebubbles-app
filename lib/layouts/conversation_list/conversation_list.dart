@@ -92,7 +92,7 @@ class _ConversationListState extends State<ConversationList> {
     showSyncIndicator = SettingsManager().settings.showSyncIndicator;
     moveChatCreatorButton = SettingsManager().settings.moveChatCreatorToHeader;
     swipableTiles = SettingsManager().settings.swipableConversationTiles;
-    skinSet = SettingsManager().settings.skin;
+    skinSet = SettingsManager().settings.skin.value;
 
     SettingsManager().stream.listen((Settings? newSettings) {
       if (newSettings!.colorfulAvatars != colorfulAvatars) {
@@ -115,8 +115,8 @@ class _ConversationListState extends State<ConversationList> {
         swipableTiles = newSettings.swipableConversationTiles;
       }
 
-      if (newSettings.skin != skinSet) {
-        skinSet = newSettings.skin;
+      if (newSettings.skin.value != skinSet) {
+        skinSet = newSettings.skin.value;
       }
 
       if (newSettings.showSyncIndicator != showSyncIndicator) {
@@ -400,13 +400,13 @@ class _Cupertino extends StatelessWidget {
           physics: ThemeManager().scrollPhysics,
           slivers: <Widget>[
             SliverAppBar(
-              leading: ((SettingsManager().settings.skin == Skins.iOS && parent.widget.showArchivedChats!) ||
-                      (SettingsManager().settings.skin == Skins.Material ||
-                              SettingsManager().settings.skin == Skins.Samsung) &&
+              leading: ((SettingsManager().settings.skin.value == Skins.iOS && parent.widget.showArchivedChats!) ||
+                      (SettingsManager().settings.skin.value == Skins.Material ||
+                              SettingsManager().settings.skin.value == Skins.Samsung) &&
                           !parent.widget.showArchivedChats!)
                   ? IconButton(
                       icon: Icon(
-                          (SettingsManager().settings.skin == Skins.iOS && parent.widget.showArchivedChats!)
+                          (SettingsManager().settings.skin.value == Skins.iOS && parent.widget.showArchivedChats!)
                               ? Icons.arrow_back_ios
                               : Icons.arrow_back,
                           color: Theme.of(context).primaryColor),

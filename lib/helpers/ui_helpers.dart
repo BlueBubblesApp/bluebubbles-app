@@ -9,7 +9,7 @@ Widget buildBackButton(BuildContext context, {EdgeInsets padding = EdgeInsets.ze
     width: 25,
     child: IconButton(
       iconSize: iconSize ?? 24,
-      icon: Icon(SettingsManager().settings.skin == Skins.iOS ? Icons.arrow_back_ios : Icons.arrow_back,
+      icon: Icon(SettingsManager().settings.skin.value == Skins.iOS ? Icons.arrow_back_ios : Icons.arrow_back,
           color: Theme.of(context).primaryColor),
       onPressed: () {
         Navigator.of(context).pop();

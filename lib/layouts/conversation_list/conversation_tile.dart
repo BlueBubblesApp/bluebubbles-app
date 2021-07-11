@@ -552,7 +552,7 @@ class __CupertinoState extends State<_Cupertino> {
                               child: widget.parent._buildDate(),
                             ),
                             Icon(
-                              SettingsManager().settings.skin == Skins.iOS
+                              SettingsManager().settings.skin.value == Skins.iOS
                                   ? Icons.arrow_forward_ios
                                   : Icons.arrow_forward,
                               color: Theme.of(context).textTheme.subtitle1!.color,

@@ -316,7 +316,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       title = chat!.fakeParticipants.length > 1 ? "Group Chat" : chat!.fakeParticipants[0];
     else if (hideTitle) fontColor = Colors.transparent;
 
-    if (SettingsManager().settings.skin == Skins.Material || SettingsManager().settings.skin == Skins.Samsung) {
+    if (SettingsManager().settings.skin.value == Skins.Material || SettingsManager().settings.skin.value == Skins.Samsung) {
       return AppBar(
         brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
         title: Text(

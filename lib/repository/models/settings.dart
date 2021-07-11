@@ -5,6 +5,7 @@ import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/config_entry.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
+import 'package:get/get.dart';
 import 'package:sqflite/sqflite.dart';
 
 class Settings {
@@ -70,7 +71,7 @@ class Settings {
   bool generateFakeContactNames = false;
   bool generateFakeMessageContent = false;
 
-  Skins skin = Skins.iOS;
+  Rx<Skins> skin = Skins.iOS.obs;
   ThemeMode theme = ThemeMode.system;
 
   Settings();
@@ -111,7 +112,7 @@ class Settings {
       } else if (entry.name == "theme") {
         settings.theme = ThemeMode.values[entry.value];
       } else if (entry.name == "skin") {
-        settings.skin = Skins.values[entry.value];
+        settings.skin.value = Skins.values[entry.value];
       } else if (entry.name == "sendTypingIndicators") {
         settings.sendTypingIndicators = entry.value;
       } else if (entry.name == "scrollVelocity") {
@@ -318,8 +319,8 @@ class Settings {
         ),
         ConfigEntry(
           name: "skin",
-          value: this.skin.index,
-          type: this.skin.index.runtimeType,
+          value: this.skin.value.index,
+          type: this.skin.value.index.runtimeType,
         ),
         ConfigEntry(
           name: "sendTypingIndicators",

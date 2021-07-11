@@ -107,7 +107,7 @@ class _ThemePanelState extends State<ThemePanel> {
                   SettingsTile(
                     title: "Theming",
                     trailing: Icon(
-                        SettingsManager().settings.skin == Skins.iOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
+                        SettingsManager().settings.skin.value == Skins.iOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
                         color: Theme.of(context).primaryColor),
                     onTap: () async {
                       Navigator.of(context).push(
@@ -118,9 +118,9 @@ class _ThemePanelState extends State<ThemePanel> {
                     },
                   ),
                   SettingsOptions<Skins>(
-                    initial: _settingsCopy.skin,
+                    initial: _settingsCopy.skin.value,
                     onChanged: (val) {
-                      _settingsCopy.skin = val;
+                      _settingsCopy.skin.value = val;
                       if (val == Skins.Material) {
                         _settingsCopy.hideDividers = true;
                       } else if (val == Skins.Samsung) {
@@ -156,7 +156,7 @@ class _ThemePanelState extends State<ThemePanel> {
                   SettingsTile(
                     title: "Custom Avatar Colors",
                     trailing: Icon(
-                        SettingsManager().settings.skin == Skins.iOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
+                        SettingsManager().settings.skin.value == Skins.iOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
                         color: Theme.of(context).primaryColor),
                     onTap: () async {
                       Navigator.of(context).push(
@@ -166,7 +166,7 @@ class _ThemePanelState extends State<ThemePanel> {
                       );
                     },
                   ),
-                  if (SettingsManager().settings.skin != Skins.Samsung)
+                  if (SettingsManager().settings.skin.value != Skins.Samsung)
                     SettingsSwitch(
                       onChanged: (bool val) {
                         _settingsCopy.hideDividers = val;
@@ -183,7 +183,7 @@ class _ThemePanelState extends State<ThemePanel> {
                     initialVal: _settingsCopy.denseChatTiles,
                     title: "Dense Conversation Tiles",
                   ),
-                  if (SettingsManager().settings.skin == Skins.iOS)
+                  if (SettingsManager().settings.skin.value == Skins.iOS)
                     SettingsSwitch(
                       onChanged: (bool val) {
                         _settingsCopy.reducedForehead = val;

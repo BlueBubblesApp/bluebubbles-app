@@ -233,7 +233,7 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
     if (_newerMessage != null) {
       if (_newerMessage!.isGroupEvent()) {
         showTail = true;
-      } else if (SettingsManager().settings.skin == Skins.Samsung) {
+      } else if (SettingsManager().settings.skin.value == Skins.Samsung) {
         showTail = MessageHelper.getShowTailReversed(context, _message, _olderMessage);
       } else {
         showTail = MessageHelper.getShowTail(context, _message, _newerMessage);
@@ -302,7 +302,7 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
     return Column(
       children: [
         message,
-        if (SettingsManager().settings.skin != Skins.Samsung)
+        if (SettingsManager().settings.skin.value != Skins.Samsung)
           MessageTimeStampSeparator(
             newerMessage: _newerMessage,
             message: _message,

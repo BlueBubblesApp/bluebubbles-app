@@ -391,14 +391,14 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       children: <Widget>[
         buildShareButton(),
         buildActualTextField(),
-        if (SettingsManager().settings.skin == Skins.Material || SettingsManager().settings.skin == Skins.Samsung)
+        if (SettingsManager().settings.skin.value == Skins.Material || SettingsManager().settings.skin.value == Skins.Samsung)
           buildSendButton(canRecord),
       ],
     );
   }
 
   Widget buildShareButton() {
-    double size = SettingsManager().settings.skin == Skins.iOS ? 35 : 40;
+    double size = SettingsManager().settings.skin.value == Skins.iOS ? 35 : 40;
     return Container(
       height: size,
       width: size,
@@ -689,7 +689,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 ),
               ),
             ),
-            if (SettingsManager().settings.skin == Skins.iOS) buildSendButton(canRecord),
+            if (SettingsManager().settings.skin.value == Skins.iOS) buildSendButton(canRecord),
           ],
         ),
       ),
@@ -793,7 +793,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         alignment: Alignment.bottomRight,
         child: Row(mainAxisAlignment: MainAxisAlignment.end, crossAxisAlignment: CrossAxisAlignment.center, children: [
           if (sendCountdown != null) Text(sendCountdown.toString()),
-          (SettingsManager().settings.skin == Skins.iOS)
+          (SettingsManager().settings.skin.value == Skins.iOS)
               ? Container(
                   constraints: BoxConstraints(maxWidth: 38, maxHeight: 37),
                   padding: EdgeInsets.only(right: 4, top: 2, bottom: 2),

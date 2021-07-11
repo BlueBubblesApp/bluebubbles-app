@@ -223,7 +223,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       );
     } else if (currentChat != null &&
         currentChat!.showScrollDown &&
-        (SettingsManager().settings.skin == Skins.Material || SettingsManager().settings.skin == Skins.Samsung)) {
+        (SettingsManager().settings.skin.value == Skins.Material || SettingsManager().settings.skin.value == Skins.Samsung)) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 55.0),
         child: FloatingActionButton(
@@ -235,7 +235,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
           backgroundColor: Theme.of(context).accentColor,
         ),
       );
-    } else if (currentChat != null && currentChat!.showScrollDown && SettingsManager().settings.skin == Skins.iOS) {
+    } else if (currentChat != null && currentChat!.showScrollDown && SettingsManager().settings.skin.value == Skins.iOS) {
       return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         Padding(
           padding: EdgeInsets.only(left: 25.0, bottom: 45),

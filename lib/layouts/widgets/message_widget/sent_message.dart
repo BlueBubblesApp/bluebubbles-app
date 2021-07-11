@@ -39,7 +39,7 @@ class SentMessageHelper {
 
     Widget msg;
     bool hasReactions = (message?.getReactions() ?? []).length > 0;
-    Skins currentSkin = SettingsManager().settings.skin;
+    Skins currentSkin = SettingsManager().settings.skin.value;
 
     if (message?.isBigEmoji() ?? false) {
       msg = Padding(
@@ -336,15 +336,15 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
       Padding(
         // Padding to shift the bubble up a bit, relative to the avatar
         padding: EdgeInsets.only(
-            top: (SettingsManager().settings.skin != Skins.iOS &&
+            top: (SettingsManager().settings.skin.value != Skins.iOS &&
                     widget.message?.isFromMe == widget.olderMessage?.isFromMe)
-                ? (SettingsManager().settings.skin != Skins.iOS)
+                ? (SettingsManager().settings.skin.value != Skins.iOS)
                     ? 0
                     : 3
-                : (SettingsManager().settings.skin == Skins.iOS)
+                : (SettingsManager().settings.skin.value == Skins.iOS)
                     ? 0.0
                     : 10,
-            bottom: (SettingsManager().settings.skin == Skins.iOS &&
+            bottom: (SettingsManager().settings.skin.value == Skins.iOS &&
                     widget.showTail &&
                     !isEmptyString(widget.message!.fullText))
                 ? 5.0
@@ -363,9 +363,9 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
       mainAxisSize: MainAxisSize.max,
       mainAxisAlignment: MainAxisAlignment.end,
       crossAxisAlignment:
-          (SettingsManager().settings.skin == Skins.iOS) ? CrossAxisAlignment.center : CrossAxisAlignment.end,
+          (SettingsManager().settings.skin.value == Skins.iOS) ? CrossAxisAlignment.center : CrossAxisAlignment.end,
       children: [
-        if (SettingsManager().settings.skin == Skins.iOS || SettingsManager().settings.skin == Skins.Material)
+        if (SettingsManager().settings.skin.value == Skins.iOS || SettingsManager().settings.skin.value == Skins.Material)
           MessagePopupHolder(
             message: widget.message,
             child: Row(
@@ -375,7 +375,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
               children: msgRow,
             ),
           ),
-        if (SettingsManager().settings.skin == Skins.Samsung)
+        if (SettingsManager().settings.skin.value == Skins.Samsung)
           MessagePopupHolder(
             message: widget.message,
             child: Row(
@@ -385,7 +385,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
               children: msgRow,
             ),
           ),
-        if (SettingsManager().settings.skin != Skins.Samsung && widget.message?.guid != widget.olderMessage?.guid)
+        if (SettingsManager().settings.skin.value != Skins.Samsung && widget.message?.guid != widget.olderMessage?.guid)
           MessageTimeStamp(
             message: widget.message,
           )
