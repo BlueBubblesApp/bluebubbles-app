@@ -15,6 +15,7 @@ import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:camera/camera.dart';
 import 'package:contacts_service/contacts_service.dart';
@@ -452,10 +453,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             placeholder = "BlueBubbles";
           } else {
             // If it's not a group chat, get the participant's contact info
-            String? address = CurrentChat.of(context)?.chat.participants[0].address;
-            Contact? contact = ContactManager().getCachedContactSync(address ?? "");
+            Handle? handle = CurrentChat.of(context)?.chat.participants[0];
+            Contact? contact = ContactManager().getCachedContactSync(handle?.address ?? "");
             if (contact == null) {
-              placeholder = await formatPhoneNumber(address!);
+              placeholder = await formatPhoneNumber(handle);
             } else {
               placeholder = contact.displayName ?? "BlueBubbles";
             }

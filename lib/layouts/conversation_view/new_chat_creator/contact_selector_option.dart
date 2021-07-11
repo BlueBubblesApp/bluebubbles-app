@@ -29,7 +29,7 @@ class ContactSelectorOption extends StatelessWidget {
     for (var item in item.chat!.participants) {
       String? contact = ContactManager().getCachedContactSync(item.address ?? "")?.displayName;
       if (contact == null) {
-        contact = await formatPhoneNumber(item.address!);
+        contact = await formatPhoneNumber(item);
       }
 
       formatted.add(contact);
@@ -38,9 +38,16 @@ class ContactSelectorOption extends StatelessWidget {
     return formatted.join(", ");
   }
 
-  FutureBuilder<String> formattedNumberFuture(String address) {
+  FutureBuilder<String> formattedNumberFuture(dynamic item) {
+    String address = '';
+    if (item is String) {
+      address = item;
+    } else if (item is Handle) {
+      address = item.address ?? "";
+    }
+
     return FutureBuilder<String>(
-        future: formatPhoneNumber(address),
+        future: formatPhoneNumber(item),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return this.getTextWidget(context, address);
@@ -84,14 +91,14 @@ class ContactSelectorOption extends StatelessWidget {
     } else if (!item.isChat || item.chat!.participants.length == 1) {
       if (item.address != null) {
         if (!item.address!.isEmail) {
-          subtitle = formattedNumberFuture(item.address!);
+          subtitle = formattedNumberFuture(item);
         } else {
           subtitle = getTextWidget(context, item.address);
         }
       } else if (item.chat != null &&
           item.chat!.participants[0].address != null &&
           !item.chat!.participants[0].address!.isEmail) {
-        subtitle = formattedNumberFuture(item.chat!.participants[0].address!);
+        subtitle = formattedNumberFuture(item.chat!.participants[0]);
       } else if (item.chat!.participants[0].address!.isEmail) {
         subtitle = getTextWidget(context, item.chat!.participants[0].address!);
       } else {

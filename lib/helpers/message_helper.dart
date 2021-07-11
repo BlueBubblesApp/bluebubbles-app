@@ -295,7 +295,7 @@ class MessageHelper {
       return "$output: ${attachmentStr.join(attachmentStr.length == 2 ? " & " : ", ")}";
     } else if (![null, ""].contains(message.associatedMessageGuid)) {
       // It's a reaction message, get the "sender"
-      String? sender = message.isFromMe! ? "You" : await formatPhoneNumber(message.handle!.address!);
+      String? sender = message.isFromMe! ? "You" : await formatPhoneNumber(message.handle);
       if (!message.isFromMe! && message.handle != null) {
         Contact? contact = await ContactManager().getCachedContact(message.handle);
         if (contact != null) {

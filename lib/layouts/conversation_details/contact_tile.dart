@@ -132,7 +132,7 @@ class _ContactTileState extends State<ContactTile> {
                 style: Theme.of(context).textTheme.bodyText1,
               )
             : FutureBuilder<String>(
-                future: formatPhoneNumber(widget.handle?.address ?? ""),
+                future: formatPhoneNumber(widget.handle),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
                     return Text(
@@ -149,7 +149,7 @@ class _ContactTileState extends State<ContactTile> {
         subtitle: (contact == null || hideInfo || generateName)
             ? null
             : FutureBuilder<String>(
-                future: formatPhoneNumber(widget.handle?.address ?? ""),
+                future: formatPhoneNumber(widget.handle),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
                     return Text(

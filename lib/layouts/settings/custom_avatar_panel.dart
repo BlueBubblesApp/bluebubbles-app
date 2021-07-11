@@ -58,8 +58,7 @@ class _CustomAvatarPanelState extends State<CustomAvatarPanel> {
     List<Widget> items = [];
     for (var item in handles) {
       items.add(SettingsTile(
-        title:
-            ContactManager().getCachedContactSync(item.address ?? "")?.displayName ?? await formatPhoneNumber(item.address!),
+        title: ContactManager().getCachedContactSync(item.address ?? "")?.displayName ?? await formatPhoneNumber(item),
         subTitle: "Tap avatar to change color",
         trailing: ContactAvatarWidget(handle: item),
       ));
@@ -77,7 +76,8 @@ class _CustomAvatarPanelState extends State<CustomAvatarPanel> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarIconBrightness:
+            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(

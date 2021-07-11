@@ -501,24 +501,24 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             Navigator.of(context).pop();
           },
           child: Obx(() => Row(
-            mainAxisSize: Cupertino.MainAxisSize.min,
-            mainAxisAlignment: Cupertino.MainAxisAlignment.start,
-            children: [
-              buildBackButton(context),
-              if (ChatBloc().unreads.value > 0)
-                Container(
-                  width: 25.0,
-                  height: 20.0,
-                  decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor,
-                      shape: BoxShape.rectangle,
-                      borderRadius: BorderRadius.circular(10)),
-                  child: Center(
-                      child: Text(ChatBloc().unreads.value.toString(),
-                          textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 12.0))),
-                ),
-            ],
-          )),
+                mainAxisSize: Cupertino.MainAxisSize.min,
+                mainAxisAlignment: Cupertino.MainAxisAlignment.start,
+                children: [
+                  buildBackButton(context),
+                  if (ChatBloc().unreads.value > 0)
+                    Container(
+                      width: 25.0,
+                      height: 20.0,
+                      decoration: BoxDecoration(
+                          color: Theme.of(context).primaryColor,
+                          shape: BoxShape.rectangle,
+                          borderRadius: BorderRadius.circular(10)),
+                      child: Center(
+                          child: Text(ChatBloc().unreads.value.toString(),
+                              textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 12.0))),
+                    ),
+                ],
+              )),
         ),
         middle: ListView(
           physics: Cupertino.NeverScrollableScrollPhysics(),
@@ -968,7 +968,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           UniqueContact contact = new UniqueContact(
               address: e.address,
               displayName:
-                  ContactManager().getCachedContactSync(e.address ?? "")?.displayName ?? await formatPhoneNumber(e.address!));
+                  ContactManager().getCachedContactSync(e.address ?? "")?.displayName ?? await formatPhoneNumber(e));
           selected.add(contact);
         }
 

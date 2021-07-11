@@ -193,8 +193,12 @@ class ContactManager {
       // Get a phone number match
       if (!isEmailAddr) {
         for (Item item in c.phones ?? []) {
-          if (!item.value!.endsWith(lastDigits!)) continue;
+          String compStr = "";
+          if (item.value != null) {
+            compStr = item.value!.replaceAll(" ", "").trim();
+          }
 
+          if (!compStr.endsWith(lastDigits!)) continue;
           if (sameAddress(opts, item.value)) {
             contact = c;
             break;
@@ -243,7 +247,7 @@ class ContactManager {
       String contactTitle = address!;
       bool isEmailAddr = contactTitle.isEmail;
       if (contactTitle == address && !isEmailAddr) {
-        return await formatPhoneNumber(contactTitle);
+        return await formatPhoneNumber(handle);
       }
 
       // If it's an email and starts with "e:", strip it out
