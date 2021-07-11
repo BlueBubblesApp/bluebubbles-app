@@ -48,6 +48,7 @@ class MessageHelper {
     }
 
     // Iterate over each message to parse it
+    int index = 0;
     for (dynamic item in messages) {
       if (onProgress != null) {
         onProgress(_messages.length, messages.length);
@@ -98,6 +99,14 @@ class MessageHelper {
 
       // Add message to the "master list"
       _messages.add(message);
+
+      // Every 50 messages synced, who a message
+      index += 1;
+      if (index % 50 == 0) {
+        debugPrint('[Bulk Ingest] Saved $index of ${messages.length} messages');
+      } else if (index == messages.length) {
+        debugPrint('[Bulk Ingest] Saved ${messages.length} messages');
+      }
     }
 
     if (notifyForNewMessage && notifyMessageManager) {
@@ -185,7 +194,8 @@ class MessageHelper {
     return chats;
   }
 
-  static Future<void> handleNotification(Message message, Chat chat, {bool force = false}) async {
+  static Future<void> handleNotification(Message message, Chat chat,
+      {bool force = false, int visibility = NotificationVisibility.PUBLIC}) async {
     // See if there is an existing message for the given GUID
     Message? existingMessage;
     if (!force) existingMessage = await Message.findOne({"guid": message.guid});
@@ -199,7 +209,7 @@ class MessageHelper {
     // Handle all the cases that would mean we don't show the notification
     if (!SettingsManager().settings.finishedSetup) return; // Don't notify if not fully setup
     if (existingMessage != null) return;
-    if (chat!.isMuted!) return; // Don''t notify if the chat is muted
+    if (chat.isMuted!) return; // Don''t notify if the chat is muted
     if (message.isFromMe! || message.handle == null) return; // Don't notify if the text is from me
 
     CurrentChat? currChat = CurrentChat.activeChat;
@@ -217,18 +227,18 @@ class MessageHelper {
       notification = "iMessage";
     }
     NotificationManager().createNewNotification(
-      title,
-      notification,
-      chat.guid,
-      chat,
-      Random().nextInt(9998) + 1,
-      chat.id,
-      message.dateCreated!.millisecondsSinceEpoch,
-      contactTitle,
-      chat.participants.length > 1,
-      message.handle,
-      contact,
-    );
+        title,
+        notification,
+        chat.guid,
+        chat,
+        Random().nextInt(9998) + 1,
+        chat.id,
+        message.dateCreated!.millisecondsSinceEpoch,
+        contactTitle,
+        chat.participants.length > 1,
+        message.handle,
+        contact,
+        visibility);
   }
 
   static Future<String> getNotificationText(Message message) async {
@@ -285,7 +295,7 @@ class MessageHelper {
       return "$output: ${attachmentStr.join(attachmentStr.length == 2 ? " & " : ", ")}";
     } else if (![null, ""].contains(message.associatedMessageGuid)) {
       // It's a reaction message, get the "sender"
-      String? sender = message.isFromMe! ? "You" : await formatPhoneNumber(message.handle!.address!);
+      String? sender = message.isFromMe! ? "You" : await formatPhoneNumber(message.handle);
       if (!message.isFromMe! && message.handle != null) {
         Contact? contact = await ContactManager().getCachedContact(message.handle);
         if (contact != null) {
@@ -304,7 +314,7 @@ class MessageHelper {
     if (isEmptyString(text)) return false;
 
     RegExp pattern = emojiRegex;
-    List<RegExpMatch> matches = pattern.allMatches(text!).toList();
+    List<RegExpMatch> matches = pattern.allMatches(text).toList();
     if (matches.isEmpty) return false;
 
     List<String> items = matches.map((m) => m.toString()).toList();

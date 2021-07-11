@@ -63,21 +63,33 @@ Size textSize(String text, TextStyle style) {
   return textPainter.size;
 }
 
-Future<String> formatPhoneNumber(String str) async {
-  // If the string is an email, we don't want to format it
-  if (str.isEmail) return str;
-  str = str.trim();
-
+Future<String> formatPhoneNumber(dynamic item) async {
   String countryCode = SettingsManager().countryCode ?? "US";
+  String? address;
+
+  // Set the address/country accordingly
+  if (item is String) {
+    address = item;
+  } else if (item is Handle) {
+    address = item.address;
+    countryCode = item.country ?? countryCode;
+  } else {
+    return 'Unsupported';
+  }
+
+  // If we don't have a valid address, or it's an email, return it
+  if (address == null || address.isEmail) return item;
+  address = address.trim(); // Trim it just in case
+
   Map<String, dynamic> meta = {};
 
   try {
-    meta = await FlutterLibphonenumber().parse(str, region: countryCode);
+    meta = await FlutterLibphonenumber().parse(address, region: countryCode);
   } catch (ex) {
     CountryCode? cc = getCountryCodes().firstWhereOrNull((e) => e.code == countryCode);
-    if (!str.startsWith("+") && cc != null) {
+    if (!address.startsWith("+") && cc != null) {
       try {
-        meta = await FlutterLibphonenumber().parse("${cc.dialCode}$str", region: countryCode);
+        meta = await FlutterLibphonenumber().parse("${cc.dialCode}$address", region: countryCode);
       } catch (x) {}
     }
   }
@@ -86,7 +98,7 @@ Future<String> formatPhoneNumber(String str) async {
     if (meta.containsKey("international")) {
       return meta['international'];
     } else {
-      return str;
+      return address;
     }
   }
 
@@ -180,12 +192,14 @@ String randomString(int length) {
 }
 
 void showSnackbar(String title, String message) {
-  Get.snackbar(title, message,
-      snackPosition: SnackPosition.BOTTOM,
-      colorText: Get.textTheme.bodyText1!.color,
-      backgroundColor: Get.theme.accentColor,
-      margin: EdgeInsets.only(bottom: 10),
-      maxWidth: Get.width - 20,
+  Get.snackbar(
+    title,
+    message,
+    snackPosition: SnackPosition.BOTTOM,
+    colorText: Get.textTheme.bodyText1!.color,
+    backgroundColor: Get.theme.accentColor,
+    margin: EdgeInsets.only(bottom: 10),
+    maxWidth: Get.width - 20,
   );
 }
 
@@ -200,8 +214,9 @@ bool sameSender(Message? first, Message? second) {
 
 String buildDate(DateTime? dateTime) {
   if (dateTime == null || dateTime.millisecondsSinceEpoch == 0) return "";
-  String time = SettingsManager().settings.use24HrFormat ?
-    intl.DateFormat.Hm().format(dateTime) : new intl.DateFormat.jm().format(dateTime);
+  String time = SettingsManager().settings.use24HrFormat
+      ? intl.DateFormat.Hm().format(dateTime)
+      : new intl.DateFormat.jm().format(dateTime);
   String date;
   if (dateTime.isToday()) {
     date = time;
@@ -217,8 +232,9 @@ String buildDate(DateTime? dateTime) {
 
 String buildTime(DateTime? dateTime) {
   if (dateTime == null || dateTime.millisecondsSinceEpoch == 0) return "";
-  String time = SettingsManager().settings.use24HrFormat ?
-    intl.DateFormat.Hm().format(dateTime) : new intl.DateFormat.jm().format(dateTime);
+  String time = SettingsManager().settings.use24HrFormat
+      ? intl.DateFormat.Hm().format(dateTime)
+      : new intl.DateFormat.jm().format(dateTime);
   return time;
 }
 
@@ -600,7 +616,6 @@ String encodeUri(String uri) {
 }
 
 Future<PlayerStatus> getControllerStatus(VideoPlayerController controller) async {
-
   Duration currentPos = controller.value.position;
   if (controller.value.duration == currentPos) {
     return PlayerStatus.ENDED;

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
+import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:collection/collection.dart';
 
 import 'package:bluebubbles/action_handler.dart';
@@ -386,11 +387,12 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             highlightColor: Colors.transparent,
             onTap: () async {
               bool shouldShowSnackbar = (await SettingsManager().getMacOSVersion())! >= 11;
-              String? address = widget.message!.handle!.address;
-              Contact? contact = ContactManager().getCachedContactSync(address ?? "");
+              Handle? handle = widget.message.handle;
+              String? address = handle?.address ?? "";
+              Contact? contact = ContactManager().getCachedContactSync(address);
               UniqueContact uniqueContact;
               if (contact == null) {
-                uniqueContact = UniqueContact(address: address, displayName: (await formatPhoneNumber(address!)));
+                uniqueContact = UniqueContact(address: address, displayName: (await formatPhoneNumber(handle)));
               } else {
                 uniqueContact = UniqueContact(address: address, displayName: contact.displayName ?? address);
               }

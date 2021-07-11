@@ -1,5 +1,6 @@
 package com.bluebubbles.messaging.method_call_handler.handlers;
 
+import android.util.Log;
 import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -173,6 +174,12 @@ public class NewMessageNotification implements Handler {
         //     bubbleData = bubbleMetadata.build();
         // }
 
+        Integer visibility = Notification.VISIBILITY_PUBLIC;
+        Integer visibilityArg = (Integer) call.argument("visibility");
+        if (visibilityArg != null) {
+            visibility = visibilityArg;
+        }
+
         // Build the actual notification
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, (String) call.argument("CHANNEL_ID"))
                 .setSmallIcon(R.mipmap.ic_stat_icon)
@@ -182,6 +189,7 @@ public class NewMessageNotification implements Handler {
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                 // Set the priority to high since it's a message they should see
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setVisibility(visibility)
                 .setContentIntent(openIntent)
                 .addAction(dismissAction)
                 .addAction(replyAction)
