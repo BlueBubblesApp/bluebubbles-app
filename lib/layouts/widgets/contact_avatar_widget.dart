@@ -97,7 +97,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
     Contact? contact = await ContactManager().getCachedContact(widget.handle);
     if (contact == null && !isInvalid) {
       List<Contact> contactRes = [];
-      List<Contact> contacts = ContactManager().contacts ?? [];
+      List<Contact> contacts = ContactManager().contacts;
       if (widget.handle!.address!.isEmail) {
         contactRes = contacts.where((element) => element.emails!.any((e) => e.value == widget.handle!.address)).toList();
       } else {
@@ -107,7 +107,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
       if (contactRes.length > 0) {
         contact = contactRes.first;
         if (isNullOrEmpty(contact.avatar)!) {
-          contact.avatar = await ContactsService.getAvatar(contact);
+          contact.avatar = await ContactsService.getAvatar(contact, photoHighRes: false);
         }
       }
     }

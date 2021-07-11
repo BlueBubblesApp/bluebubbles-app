@@ -157,7 +157,7 @@ class ContactManager {
       Contact? contact = handleToContact[address];
       if (handleToContact[address] == null) continue;
 
-      ContactsService.getAvatar(contact!).then((avatar) {
+      ContactsService.getAvatar(contact!, photoHighRes: false).then((avatar) {
         if (avatar == null) return;
 
         contact.avatar = avatar;
@@ -221,7 +221,7 @@ class ContactManager {
     }
 
     if (fetchAvatar) {
-      Uint8List? avatar = await ContactsService.getAvatar(contact!);
+      Uint8List? avatar = await ContactsService.getAvatar(contact!, photoHighRes: false);
       contact.avatar = avatar;
     }
 
