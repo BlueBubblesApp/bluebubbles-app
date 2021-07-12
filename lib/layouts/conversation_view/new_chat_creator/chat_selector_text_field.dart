@@ -41,7 +41,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
 
   @override
   void dispose() {
-    inputFieldNode!.dispose();
+    inputFieldNode.dispose();
     super.dispose();
   }
 
@@ -68,8 +68,13 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
                   mainAxisAlignment: MainAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    Text(generateName ? ContactManager().handleToFakeName[contact.address] ?? "Person ${index + 1}" :
-                    hideInfo ? "          " : contact.displayName!.trim(), style: Theme.of(context).textTheme.bodyText1),
+                    Text(
+                        generateName
+                            ? ContactManager().handleToFakeName[contact.address] ?? "Person ${index + 1}"
+                            : hideInfo
+                                ? "          "
+                                : contact.displayName!.trim(),
+                        style: Theme.of(context).textTheme.bodyText1),
                     SizedBox(
                       width: 5.0,
                     ),
@@ -101,8 +106,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
             if (done.isEmail || done.isPhoneNumber) {
               Contact? contact = ContactManager().getCachedContactSync(done);
               if (contact == null) {
-                widget
-                    .onSelected(new UniqueContact(address: done, displayName: await formatPhoneNumber(done)));
+                widget.onSelected(new UniqueContact(address: done, displayName: await formatPhoneNumber(done)));
               } else {
                 widget.onSelected(new UniqueContact(address: done, displayName: contact.displayName ?? done));
               }

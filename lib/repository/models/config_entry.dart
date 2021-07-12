@@ -51,14 +51,11 @@ class ConfigEntry<T> {
     }
   }
 
-  Future<ConfigEntry> save(String table,
-      {bool updateIfAbsent = true, Database? database}) async {
-    final Database? db =
-        database != null ? database : await DBProvider.db.database;
+  Future<ConfigEntry> save(String table, {bool updateIfAbsent = true, Database? database}) async {
+    final Database? db = database != null ? database : await DBProvider.db.database;
 
     // Try to find an existing ConfigEntry before saving it
-    ConfigEntry? existing = await ConfigEntry.findOne(table, {"name": this.name},
-        database: database);
+    ConfigEntry? existing = await ConfigEntry.findOne(table, {"name": this.name}, database: database);
     if (existing != null) {
       this.id = existing.id;
     }
@@ -81,8 +78,7 @@ class ConfigEntry<T> {
   }
 
   Future<ConfigEntry> update(String table, {Database? database}) async {
-    final Database? db =
-        database != null ? database : await DBProvider.db.database;
+    final Database? db = database != null ? database : await DBProvider.db.database;
 
     // If it already exists, update it
     if (this.id != null) {
@@ -102,17 +98,14 @@ class ConfigEntry<T> {
     return this;
   }
 
-  static Future<ConfigEntry?> findOne(String table, Map<String, dynamic> filters,
-      {Database? database}) async {
-    final Database db =
-        database != null ? database : (await DBProvider.db.database)!;
+  static Future<ConfigEntry?> findOne(String table, Map<String, dynamic> filters, {Database? database}) async {
+    final Database db = database != null ? database : await DBProvider.db.database;
 
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];
     filters.values.forEach((filter) => whereArgs.add(filter));
-    var res = await db.query(table,
-        where: whereParams.join(" AND "), whereArgs: whereArgs, limit: 1);
+    var res = await db.query(table, where: whereParams.join(" AND "), whereArgs: whereArgs, limit: 1);
 
     if (res.isEmpty) {
       return null;
@@ -121,10 +114,6 @@ class ConfigEntry<T> {
     return fromMap(res.first);
   }
 
-  Map<String, dynamic> toMap() => {
-        "ROWID": id,
-        "name": name,
-        "value": DBConverter.getString(value),
-        "type": DBConverter.getStringType(type)
-      };
+  Map<String, dynamic> toMap() =>
+      {"ROWID": id, "name": name, "value": DBConverter.getString(value), "type": DBConverter.getStringType(type)};
 }

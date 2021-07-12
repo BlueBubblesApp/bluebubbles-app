@@ -78,7 +78,7 @@ Future<String> formatPhoneNumber(dynamic item) async {
   }
 
   // If we don't have a valid address, or it's an email, return it
-  if (address == null || address.isEmail) return item;
+  if (address == null || address.isEmail) return address!;
   address = address.trim(); // Trim it just in case
 
   Map<String, dynamic> meta = {};
@@ -640,4 +640,3 @@ extension PlatformSpecificCapitalize on String {
     }
   }
 }
-

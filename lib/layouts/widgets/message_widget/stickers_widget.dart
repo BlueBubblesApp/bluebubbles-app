@@ -91,15 +91,14 @@ class _StickersWidgetState extends State<StickersWidget> {
 
     // Turn the attachments into Image Widgets
     List<Widget> stickers = this.stickers.map((item) {
-      String pathName = AttachmentHelper.getAttachmentPath(item!);
-      return Image.file(new File(pathName),
-          width: context.width * 2 / 3, height: context.width * 2 / 4);
+      String pathName = AttachmentHelper.getAttachmentPath(item);
+      return Image.file(new File(pathName), width: context.width * 2 / 3, height: context.width * 2 / 4);
     }).toList();
 
     return GestureDetector(
         onTap: toggleShow,
         child: Opacity(
-            key: new Key(this.stickers.first!.guid!),
+            key: new Key(this.stickers.first.guid!),
             opacity: _visible ? 1.0 : 0.25,
             child: Stack(children: stickers, alignment: Alignment.center)));
   }

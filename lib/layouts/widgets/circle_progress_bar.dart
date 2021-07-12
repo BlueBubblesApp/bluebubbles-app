@@ -70,19 +70,19 @@ class CircleProgressBarState extends State<CircleProgressBar> with SingleTickerP
     if (this.widget.value != oldWidget.value) {
       // Try to start with the previous tween's end value. This ensures that we
       // have a smooth transition from where the previous animation reached.
-      double beginValue = this.valueTween?.evaluate(this.curve) ?? oldWidget.value ?? 0;
+      double beginValue = this.valueTween?.evaluate(this.curve) ?? oldWidget.value;
 
       // Update the value tween.
       this.valueTween = Tween<double>(
         begin: beginValue,
-        end: this.widget.value ?? 1,
+        end: this.widget.value,
       );
 
       // Clear cached color tweens when the color hasn't changed.
       if (oldWidget.backgroundColor != this.widget.backgroundColor) {
         this.backgroundColorTween = ColorTween(
-          begin: oldWidget.backgroundColor ?? TRANSPARENT,
-          end: this.widget.backgroundColor ?? TRANSPARENT,
+          begin: oldWidget.backgroundColor,
+          end: this.widget.backgroundColor,
         );
       } else {
         this.backgroundColorTween = null;
@@ -166,13 +166,11 @@ class CircleProgressBarPainter extends CustomPainter {
     final double sweepAngle = (2 * Math.pi * this.percentage);
 
     // Don't draw the background if we don't have a background color
-    if (this.backgroundColor != null) {
-      final backgroundPaint = Paint()
-        ..color = this.backgroundColor!
-        ..strokeWidth = this.strokeWidth
-        ..style = PaintingStyle.stroke;
-      canvas.drawCircle(center, radius, backgroundPaint);
-    }
+    final backgroundPaint = Paint()
+      ..color = this.backgroundColor
+      ..strokeWidth = this.strokeWidth
+      ..style = PaintingStyle.stroke;
+    canvas.drawCircle(center, radius, backgroundPaint);
 
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius),

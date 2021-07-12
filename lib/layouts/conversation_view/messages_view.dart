@@ -79,9 +79,9 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     widget.messageBloc?.stream.listen(handleNewMessage);
 
     // See if we need to load anything from the message bloc
-    if (_messages!.isEmpty && widget.messageBloc!.messages.isEmpty) {
+    if (_messages.isEmpty && widget.messageBloc!.messages.isEmpty) {
       widget.messageBloc!.getMessages();
-    } else if (_messages!.isEmpty && widget.messageBloc!.messages.isNotEmpty) {
+    } else if (_messages.isEmpty && widget.messageBloc!.messages.isNotEmpty) {
       widget.messageBloc!.emitLoaded();
     }
 
@@ -125,7 +125,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
   void updateReplies() async {
     // If there are no messages or the latest message is from me, reset the replies
     if (isNullOrEmpty(_messages)!) return resetReplies();
-    if (_messages!.first.isFromMe!) return resetReplies();
+    if (_messages.first.isFromMe!) return resetReplies();
 
     debugPrint("Getting smart replies...");
     Map<String, dynamic> results = await smartReply.suggestReplies();
@@ -148,8 +148,8 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
   }
 
   Future<void>? loadNextChunk() {
-    if (noMoreMessages || loadedPages.contains(_messages!.length)) return null;
-    int messageCount = _messages!.length;
+    if (noMoreMessages || loadedPages.contains(_messages.length)) return null;
+    int messageCount = _messages.length;
 
     // If we already are loading a chunk, don't load again
     if (loader != null && !loader!.isCompleted) {
@@ -162,7 +162,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
 
     // Start loading the next chunk of messages
     widget.messageBloc!
-        .loadMessageChunk(_messages!.length, checkLocal: !noMoreLocalMessages)
+        .loadMessageChunk(_messages.length, checkLocal: !noMoreLocalMessages)
         .then((LoadMessageResult val) {
       if (val != LoadMessageResult.FAILED_TO_RETREIVE) {
         if (val == LoadMessageResult.RETREIVED_NO_MESSAGES) {
@@ -195,7 +195,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     // Skip deleted messages
     if (event.message != null && event.message!.dateDeleted != null) return;
     if (!isNullOrEmpty(event.messages)!) {
-      event.messages = event.messages!.where((element) => element.dateDeleted == null).toList();
+      event.messages = event.messages.where((element) => element.dateDeleted == null).toList();
     }
 
     if (event.type == MessageBlocEventType.insert) {
@@ -203,7 +203,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
         NotificationManager().switchChat(CurrentChat.of(context)?.chat);
       }
       currentChat!.getAttachmentsForMessage(event.message);
-      if (event.outGoing!) {
+      if (event.outGoing) {
         currentChat!.sentMessages.add(event.message);
         Future.delayed(SendWidget.SEND_DURATION * 2, () {
           currentChat!.sentMessages.removeWhere((element) => element!.guid == event.message!.guid);
@@ -223,7 +223,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
       }
 
       bool isNewMessage = true;
-      for (Message? message in _messages!) {
+      for (Message? message in _messages) {
         if (message!.guid == event.message!.guid) {
           isNewMessage = false;
           break;
@@ -235,7 +235,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
         _listKey!.currentState!.insertItem(
           event.index != null ? event.index! : 0,
           duration: isNewMessage
-              ? event.outGoing!
+              ? event.outGoing
                   ? Duration(milliseconds: 500)
                   : animationDuration
               : Duration(milliseconds: 0),
@@ -251,21 +251,21 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
         updateReplies();
       }
     } else if (event.type == MessageBlocEventType.remove) {
-      for (int i = 0; i < _messages!.length; i++) {
-        if (_messages![i].guid == event.remove && _listKey!.currentState != null) {
-          _messages!.removeAt(i);
+      for (int i = 0; i < _messages.length; i++) {
+        if (_messages[i].guid == event.remove && _listKey!.currentState != null) {
+          _messages.removeAt(i);
           _listKey!.currentState!.removeItem(i, (context, animation) => Container());
         }
       }
     } else {
-      int originalMessageLength = _messages!.length;
+      int originalMessageLength = _messages.length;
       _messages = event.messages;
-      _messages!.forEach((message) {
+      _messages.forEach((message) {
         currentChat?.getAttachmentsForMessage(message);
       });
 
       // This needs to be in reverse so that the oldest message gets added first
-      _messages!.reversed.forEach((message) {
+      _messages.reversed.forEach((message) {
         currentChat?.messageMarkers.updateMessageMarkers(message);
 
         if (!isEmptyString(message.fullText, stripWhitespace: true)) {
@@ -280,18 +280,18 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
       // We only want to update smart replies on the intial message fetch
       if (originalMessageLength == 0) {
         if (this.showSmartReplies) {
-          if (_messages!.length > 0) updateReplies();
+          if (_messages.length > 0) updateReplies();
         }
       }
       if (_listKey == null) _listKey = GlobalKey<SliverAnimatedListState>();
 
-      if (originalMessageLength < _messages!.length) {
-        for (int i = originalMessageLength; i < _messages!.length; i++) {
+      if (originalMessageLength < _messages.length) {
+        for (int i = originalMessageLength; i < _messages.length; i++) {
           if (_listKey != null && _listKey!.currentState != null)
             _listKey!.currentState!.insertItem(i, duration: Duration(milliseconds: 0));
         }
-      } else if (originalMessageLength > _messages!.length) {
-        for (int i = originalMessageLength; i >= _messages!.length; i--) {
+      } else if (originalMessageLength > _messages.length) {
+        for (int i = originalMessageLength; i >= _messages.length; i--) {
           if (_listKey != null && _listKey!.currentState != null) {
             try {
               _listKey!.currentState!
@@ -317,10 +317,10 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     Message? message = event.event["message"];
 
     bool updatedAMessage = false;
-    for (int i = 0; i < _messages!.length; i++) {
-      if (_messages![i].guid == oldGuid) {
+    for (int i = 0; i < _messages.length; i++) {
+      if (_messages[i].guid == oldGuid) {
         debugPrint("(Message status) Update message: [${message!.text}] - [${message.guid}] - [$oldGuid]");
-        _messages![i] = message;
+        _messages[i] = message;
         updatedAMessage = true;
         break;
       }
@@ -412,43 +412,43 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                 )),
               _listKey != null
                   ? SliverAnimatedList(
-                      initialItemCount: _messages!.length + 1,
+                      initialItemCount: _messages.length + 1,
                       key: _listKey,
                       itemBuilder: (BuildContext context, int index, Animation<double> animation) {
                         // Load more messages if we are at the top and we aren't alrady loading
                         // and we have more messages to load
-                        if (index == _messages!.length) {
+                        if (index == _messages.length) {
                           if (!noMoreMessages &&
-                              (loader == null || !loader!.isCompleted || !loadedPages.contains(_messages!.length))) {
+                              (loader == null || !loader!.isCompleted || !loadedPages.contains(_messages.length))) {
                             loadNextChunk();
                             return NewMessageLoader();
                           }
 
                           return Container();
-                        } else if (index > _messages!.length) {
+                        } else if (index > _messages.length) {
                           return Container();
                         }
 
                         Message? olderMessage;
                         Message? newerMessage;
-                        if (index + 1 >= 0 && index + 1 < _messages!.length) {
-                          olderMessage = _messages![index + 1];
+                        if (index + 1 >= 0 && index + 1 < _messages.length) {
+                          olderMessage = _messages[index + 1];
                         }
-                        if (index - 1 >= 0 && index - 1 < _messages!.length) {
-                          newerMessage = _messages![index - 1];
+                        if (index - 1 >= 0 && index - 1 < _messages.length) {
+                          newerMessage = _messages[index - 1];
                         }
 
-                        bool fullAnimation = index == 0 && _messages![index].originalROWID == null;
+                        bool fullAnimation = index == 0 && _messages[index].originalROWID == null;
 
                         Widget messageWidget = Padding(
                             padding: EdgeInsets.only(left: 5.0, right: 5.0),
                             child: MessageWidget(
-                              key: Key(_messages![index].guid!),
-                              message: _messages![index],
+                              key: Key(_messages[index].guid!),
+                              message: _messages[index],
                               olderMessage: olderMessage,
                               newerMessage: newerMessage,
                               showHandle: widget.showHandle,
-                              isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages![index].guid,
+                              isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages[index].guid,
                               showHero: fullAnimation,
                               onUpdate: (event) => onUpdateMessage(event),
                             ));

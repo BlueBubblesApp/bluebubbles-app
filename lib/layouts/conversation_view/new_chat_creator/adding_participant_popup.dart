@@ -32,7 +32,7 @@ class _AddingParticipantPopupState extends State<AddingParticipantPopup> {
     if (this.mounted) setState(() {});
 
     Map<String, dynamic> params = {};
-    params["identifier"] = widget.chat!.guid;
+    params["identifier"] = widget.chat.guid;
     params["address"] = cleansePhoneNumber(widget.contacts[i].address!);
     SocketManager().sendMessage("add-participant", params, (data) async {
       if (data['status'] != 200) {

@@ -24,7 +24,7 @@ class RegularFileOpener extends StatefulWidget {
 class _RegularFileOpenerState extends State<RegularFileOpener> {
   @override
   Widget build(BuildContext context) {
-    IconData fileIcon = AttachmentHelper.getIcon(widget.attachment!.mimeType ?? "");
+    IconData fileIcon = AttachmentHelper.getIcon(widget.attachment.mimeType ?? "");
 
     return GestureDetector(
       onTap: () async {
@@ -32,8 +32,8 @@ class _RegularFileOpenerState extends State<RegularFileOpener> {
           await MethodChannelInterface().invokeMethod(
             "open_file",
             {
-              "path": "/attachments/" + widget.attachment!.guid! + "/" + basename(widget.file!.path),
-              "mimeType": widget.attachment!.mimeType,
+              "path": "/attachments/" + widget.attachment.guid! + "/" + basename(widget.file.path),
+              "mimeType": widget.attachment.mimeType,
             },
           );
         } catch (ex) {
@@ -48,7 +48,7 @@ class _RegularFileOpenerState extends State<RegularFileOpener> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Text(
-              basename(widget.file!.path),
+              basename(widget.file.path),
               textAlign: TextAlign.center,
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
@@ -61,7 +61,7 @@ class _RegularFileOpenerState extends State<RegularFileOpener> {
                 color: Theme.of(context).textTheme.bodyText2!.color,
               ),
             ),
-            Text(widget.attachment!.mimeType!, style: Theme.of(context).textTheme.bodyText2),
+            Text(widget.attachment.mimeType!, style: Theme.of(context).textTheme.bodyText2),
           ],
         ),
       ),

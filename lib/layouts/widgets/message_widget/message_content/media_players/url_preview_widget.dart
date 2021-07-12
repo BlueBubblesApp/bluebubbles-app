@@ -45,8 +45,8 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget> with TickerProvider
     super.initState();
 
     // If we already have metadata, don't re-fetch it
-    if (MetadataHelper.mapIsNotEmpty(widget.message!.metadata)) {
-      data = Metadata.fromJson(widget.message!.metadata!);
+    if (MetadataHelper.mapIsNotEmpty(widget.message.metadata)) {
+      data = Metadata.fromJson(widget.message.metadata!);
     } else {
       fetchPreview();
     }
@@ -83,8 +83,8 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget> with TickerProvider
 
   Future<void> fetchPreview() async {
     // Try to get any already loaded attachment data
-    if (CurrentChat.of(context)!.urlPreviews.containsKey(widget.message!.text)) {
-      data = CurrentChat.of(context)!.urlPreviews[widget.message!.text];
+    if (CurrentChat.of(context)!.urlPreviews.containsKey(widget.message.text)) {
+      data = CurrentChat.of(context)!.urlPreviews[widget.message.text];
     }
 
     if (data != null || isLoading) return;
@@ -112,7 +112,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget> with TickerProvider
       // If pre-caching is enabled, fetch the image and save it
       if (SettingsManager().settings.preCachePreviewImages && !isNullOrEmpty(meta!.image)!) {
         // Save from URL
-        File? newFile = await saveImageFromUrl(widget.message!.guid!, meta.image!);
+        File? newFile = await saveImageFromUrl(widget.message.guid!, meta.image!);
 
         // If we downloaded a file, set the new metadata path
         if (newFile != null && newFile.existsSync()) {
@@ -120,7 +120,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget> with TickerProvider
         }
       }
 
-      widget.message!.updateMetadata(meta);
+      widget.message.updateMetadata(meta);
 
       if (!MetadataHelper.isNotEmpty(data)) {
         data = meta;
@@ -129,7 +129,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget> with TickerProvider
 
     // Save the metadata
     if (data != null) {
-      CurrentChat.of(context)!.urlPreviews[widget.message!.text!] = data!;
+      CurrentChat.of(context)!.urlPreviews[widget.message.text!] = data!;
     }
 
     // We are done loading
@@ -168,7 +168,8 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget> with TickerProvider
         } else if (data?.title == "Image Preview") {
           return Container();
         } else {
-          return Text("Unable to Load Preview", style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2));
+          return Text("Unable to Load Preview",
+              style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2));
         }
       },
     );
@@ -221,7 +222,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget> with TickerProvider
                   Padding(
                     padding: EdgeInsets.only(top: (data?.title == "Image Preview" ? 0 : 5.0), bottom: 10.0),
                     child: Text(
-                      widget.message!.text!.replaceAll("https://", "").replaceAll("http://", "").toLowerCase(),
+                      widget.message.text!.replaceAll("https://", "").replaceAll("http://", "").toLowerCase(),
                       style: Theme.of(context).textTheme.subtitle2,
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,
@@ -274,10 +275,10 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget> with TickerProvider
       vsync: this,
       child: Padding(
         padding: EdgeInsets.only(
-          top: widget.message!.hasReactions ? 18.0 : 4,
+          top: widget.message.hasReactions ? 18.0 : 4,
           bottom: 4,
-          right: !widget.message!.isFromMe! && widget.message!.hasReactions ? 10.0 : 5.0,
-          left: widget.message!.isFromMe! && widget.message!.hasReactions ? 5.0 : 0,
+          right: !widget.message.isFromMe! && widget.message.hasReactions ? 10.0 : 5.0,
+          left: widget.message.isFromMe! && widget.message.hasReactions ? 5.0 : 0,
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(20),
@@ -288,7 +289,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget> with TickerProvider
               onTap: () {
                 MethodChannelInterface().invokeMethod(
                   "open-link",
-                  {"link": data?.url ?? widget.message!.text},
+                  {"link": data?.url ?? widget.message.text},
                 );
               },
               child: Container(

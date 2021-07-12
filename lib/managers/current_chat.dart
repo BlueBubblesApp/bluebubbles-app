@@ -82,7 +82,7 @@ class CurrentChat {
       // Track the offset for when the keyboard is opened
       if (event["type"] == "keyboard-status" && scrollController.hasClients) {
         keyboardOpen = event.containsKey("data") ? event["data"] : false;
-        if (keyboardOpen!) {
+        if (keyboardOpen) {
           keyboardOpenOffset = scrollController.offset;
         }
       }
@@ -94,7 +94,7 @@ class CurrentChat {
 
     CurrentChat? currentChat = AttachmentInfoBloc().getCurrentChat(chat!.guid!);
     if (currentChat == null) {
-      currentChat = CurrentChat(chat!);
+      currentChat = CurrentChat(chat);
       AttachmentInfoBloc().addCurrentChat(currentChat);
     }
 
@@ -123,7 +123,7 @@ class CurrentChat {
 
       // Check and see if we need to unfocus the keyboard
       // The +100 is relatively arbitrary. It was the threshold I thought was good
-      if (keyboardOpen! &&
+      if (keyboardOpen &&
           SettingsManager().settings.hideKeyboardOnScroll &&
           scrollController.offset > keyboardOpenOffset + 100) {
         EventDispatcher().emit("unfocus-keyboard", null);
@@ -223,9 +223,9 @@ class CurrentChat {
     if (imageData.containsKey(oldGuid)) {
       Uint8List data = imageData.remove(oldGuid)!;
       imageData[newAttachmentGuid!] = data;
-    } else if (currentPlayingVideo!.containsKey(oldGuid)) {
-      VideoPlayerController data = currentPlayingVideo!.remove(oldGuid)!;
-      currentPlayingVideo![newAttachmentGuid!] = data;
+    } else if (currentPlayingVideo.containsKey(oldGuid)) {
+      VideoPlayerController data = currentPlayingVideo.remove(oldGuid)!;
+      currentPlayingVideo[newAttachmentGuid!] = data;
     } else if (audioPlayers.containsKey(oldGuid)) {
       AssetsAudioPlayer data = audioPlayers.remove(oldGuid)!;
       audioPlayers[newAttachmentGuid!] = data;
@@ -290,7 +290,7 @@ class CurrentChat {
 
   void changeCurrentPlayingVideo(Map<String, VideoPlayerController> video) {
     if (!isNullOrEmpty(currentPlayingVideo)!) {
-      currentPlayingVideo!.values.forEach((element) {
+      currentPlayingVideo.values.forEach((element) {
         videoControllersToDispose.add(element);
       });
     }
@@ -306,14 +306,14 @@ class CurrentChat {
   /// Dispose all of the controllers and whatnot
   void dispose() {
     if (!isNullOrEmpty(currentPlayingVideo)!) {
-      currentPlayingVideo!.values.forEach((element) {
-        element!.dispose();
+      currentPlayingVideo.values.forEach((element) {
+        element.dispose();
       });
     }
 
     if (!isNullOrEmpty(audioPlayers)!) {
       audioPlayers.values.forEach((element) {
-        element!.dispose();
+        element.dispose();
       });
     }
 
@@ -332,7 +332,7 @@ class CurrentChat {
     urlPreviews = {};
     videoControllersToDispose = [];
     audioPlayers.forEach((key, value) async {
-      await value?.dispose();
+      await value.dispose();
       audioPlayers.remove(key);
     });
     chatAttachments = [];
@@ -368,14 +368,14 @@ class CurrentChat {
 
   void disposeVideoControllers() {
     videoControllersToDispose.forEach((element) {
-      element!.dispose();
+      element.dispose();
     });
     videoControllersToDispose = [];
   }
 
   void disposeAudioControllers() {
     audioPlayers.forEach((guid, player) {
-      player!.dispose();
+      player.dispose();
     });
     audioPlayers = {};
   }

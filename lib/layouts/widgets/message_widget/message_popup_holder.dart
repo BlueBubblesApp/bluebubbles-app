@@ -78,7 +78,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
   Widget build(BuildContext context) {
     return GestureDetector(
       key: containerKey,
-      onDoubleTap: SettingsManager().settings.doubleTapForDetails && !widget.message!.guid!.startsWith('temp')
+      onDoubleTap: SettingsManager().settings.doubleTapForDetails && !widget.message.guid!.startsWith('temp')
           ? this.openMessageDetails
           : null,
       onLongPress: this.openMessageDetails,

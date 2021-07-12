@@ -33,13 +33,11 @@ class _BalloonBubbleState extends State<BalloonBundleWidget> {
 
   @override
   void didChangeDependencies() {
-    if (bundleName == null) {
-      super.didChangeDependencies();
-      setState(() {
-        bundleName = MessageHelper.getInteractiveText(widget.message!);
-        bundleIcon = getIcon();
-      });
-    }
+    super.didChangeDependencies();
+    setState(() {
+      bundleName = MessageHelper.getInteractiveText(widget.message!);
+      bundleIcon = getIcon();
+    });
   }
 
   IconData getIcon() {
@@ -78,7 +76,7 @@ class _BalloonBubbleState extends State<BalloonBundleWidget> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  Text(bundleName ?? "Unknown Balloon Bundle",
+                  Text(bundleName,
                       textAlign: TextAlign.center,
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,

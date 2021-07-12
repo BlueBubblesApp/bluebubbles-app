@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
-import 'package:flutter/material.dart';
 
 class NewMessageType {
   // ignore: non_constant_identifier_names
@@ -18,8 +17,7 @@ class NewMessageEvent {
   String type;
   Map<String, dynamic> event;
 
-  NewMessageEvent(
-      {required this.chatGuid, required this.type, required this.event});
+  NewMessageEvent({required this.chatGuid, required this.type, required this.event});
 }
 
 class NewMessageManager {
@@ -39,8 +37,7 @@ class NewMessageManager {
   //   }
   // }
 
-  StreamController<NewMessageEvent> _stream =
-      new StreamController<NewMessageEvent>.broadcast();
+  StreamController<NewMessageEvent> _stream = new StreamController<NewMessageEvent>.broadcast();
 
   Stream<NewMessageEvent> get stream => _stream.stream;
 
@@ -61,7 +58,7 @@ class NewMessageManager {
 
     _stream.sink.add(
       NewMessageEvent(
-        chatGuid: chat!.guid!,
+        chatGuid: chat.guid!,
         type: NewMessageType.UPDATE,
         event: {"oldGuid": oldGuid, "message": message},
       ),

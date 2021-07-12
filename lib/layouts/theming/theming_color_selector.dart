@@ -7,7 +7,8 @@ import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:flutter/material.dart';
 
 class ThemingColorSelector extends StatefulWidget {
-  ThemingColorSelector({Key? key, required this.currentTheme, required this.entry, required this.editable}) : super(key: key);
+  ThemingColorSelector({Key? key, required this.currentTheme, required this.entry, required this.editable})
+      : super(key: key);
   final ThemeObject currentTheme;
   final ThemeEntry entry;
   final bool editable;
@@ -28,21 +29,21 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
           child: InkWell(
             onTap: () {
               BuildContext _context = context;
-              if (widget.editable!) {
+              if (widget.editable) {
                 showDialog(
                   context: context,
                   builder: (context) => ThemingColorPickerPopup(
                     entry: widget.entry,
                     onSet: (Color? color, {int? fontSize}) async {
-                      widget.entry!.color = color;
-                      if (fontSize != null && widget.entry!.isFont!) {
-                        widget.entry!.fontSize = fontSize;
+                      widget.entry.color = color;
+                      if (fontSize != null && widget.entry.isFont!) {
+                        widget.entry.fontSize = fontSize;
                       }
-                      await widget.entry!.save(widget.currentTheme!);
-                      await widget.currentTheme!.fetchData();
-                      if (widget.currentTheme!.selectedDarkTheme) {
+                      await widget.entry.save(widget.currentTheme);
+                      await widget.currentTheme.fetchData();
+                      if (widget.currentTheme.selectedDarkTheme) {
                         await SettingsManager().saveSelectedTheme(_context, selectedDarkTheme: widget.currentTheme);
-                      } else if (widget.currentTheme!.selectedLightTheme) {
+                      } else if (widget.currentTheme.selectedLightTheme) {
                         await SettingsManager().saveSelectedTheme(_context, selectedLightTheme: widget.currentTheme);
                       }
                     },
@@ -58,14 +59,14 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    widget.entry!.isFont! ? Icons.text_fields : Icons.color_lens,
+                    widget.entry.isFont! ? Icons.text_fields : Icons.color_lens,
                     size: 40,
-                    color: widget.entry!.color,
+                    color: widget.entry.color,
                   ),
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Text(
-                      widget.entry!.name!,
+                      widget.entry.name!,
                       style: whiteLightTheme.textTheme.headline2,
                     ),
                   ),

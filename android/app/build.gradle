@@ -130,7 +130,7 @@ dependencies {
     //for crash reporting
     // implementation 'io.sentry:sentry-android:2.2.2'
 
-    implementation 'com.google.mlkit:smart-reply:16.1.0'
+    implementation 'com.google.mlkit:smart-reply:16.1.1'
 
     // for workmanager
     implementation "androidx.work:work-runtime:2.4.0"

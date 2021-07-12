@@ -101,7 +101,7 @@ class _TextInputURLState extends State<TextInputURL> {
           TextButton(
             child: Text("OK"),
             onPressed: () {
-              connect(urlController!.text, passwordController!.text);
+              connect(urlController.text, passwordController.text);
               connecting = true;
               if (this.mounted) setState(() {});
             },

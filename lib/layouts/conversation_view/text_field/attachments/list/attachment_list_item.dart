@@ -31,23 +31,23 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
   @override
   void initState() {
     super.initState();
-    mimeType = mime(widget.file!.path);
+    mimeType = mime(widget.file.path);
     loadPreview();
   }
 
   Future<void> loadPreview() async {
-    String? mimeType = mime(widget.file!.path);
+    String? mimeType = mime(widget.file.path);
     if (mimeType != null && mimeType.startsWith("video/")) {
       preview = await VideoThumbnail.thumbnailData(
-        video: widget.file!.path,
+        video: widget.file.path,
         imageFormat: ImageFormat.PNG,
         maxHeight: 100,
-        quality: SettingsManager().compressionQuality!,
+        quality: SettingsManager().compressionQuality,
       );
       if (this.mounted) setState(() {});
     } else if (mimeType == null || mimeType.startsWith("image/")) {
-      preview = await FlutterImageCompress.compressWithFile(widget.file!.absolute.path,
-          quality: SettingsManager().compressionQuality!);
+      preview = await FlutterImageCompress.compressWithFile(widget.file.absolute.path,
+          quality: SettingsManager().compressionQuality);
       if (this.mounted) setState(() {});
     }
   }
@@ -59,7 +59,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
       final bool hideAttachmentTypes =
           SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachmentTypes;
 
-      final mimeType = mime(widget.file!.path);
+      final mimeType = mime(widget.file.path);
 
       return Stack(children: <Widget>[
         InkWell(
@@ -73,7 +73,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
             if (mimeType == null) return;
             if (!this.mounted) return;
 
-            Attachment fakeAttachment = new Attachment(transferName: widget.file!.path, mimeType: mimeType);
+            Attachment fakeAttachment = new Attachment(transferName: widget.file.path, mimeType: mimeType);
             await Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (context) => AttachmentFullscreenViewer(
@@ -117,7 +117,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
           ),
         );
       } else {
-        String name = path.basename(widget.file!.path);
+        String name = path.basename(widget.file.path);
         if (mimeType == "text/x-vcard") {
           name = "Contact: ${name.split(".")[0]}";
         }

@@ -1,10 +1,8 @@
-import 'dart:convert';
 import 'dart:ui';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
-import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
@@ -16,7 +14,6 @@ import 'package:bluebubbles/layouts/settings/redacted_mode_panel.dart';
 import 'package:bluebubbles/layouts/settings/server_management_panel.dart';
 import 'package:bluebubbles/layouts/settings/theme_panel.dart';
 import 'package:bluebubbles/layouts/settings/ux_panel.dart';
-import 'package:bluebubbles/layouts/setup/qr_code_scanner.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoTextField.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
@@ -24,7 +21,6 @@ import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
-import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
@@ -32,8 +28,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-import '../setup/qr_code_scanner.dart';
 
 List disconnectedStates = [SocketState.DISCONNECTED, SocketState.ERROR, SocketState.FAILED];
 
@@ -46,7 +40,6 @@ class SettingsPanel extends StatefulWidget {
 
 class _SettingsPanelState extends State<SettingsPanel> {
   late Settings _settingsCopy;
-  FCMData? _fcmDataCopy;
   bool needToReconnect = false;
   int? lastRestart;
 
@@ -54,7 +47,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
   void initState() {
     super.initState();
     _settingsCopy = SettingsManager().settings;
-    _fcmDataCopy = SettingsManager().fcmData;
 
     // Listen for any incoming events
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
@@ -64,7 +56,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
         setState(() {});
       }
     });
-    
+
     SettingsManager().stream.listen((_) {
       if (mounted) setState(() {});
     });
@@ -73,16 +65,20 @@ class _SettingsPanelState extends State<SettingsPanel> {
   @override
   Widget build(BuildContext context) {
     Widget nextIcon = Obx(() => Icon(
-      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.chevron_right : Icons.arrow_forward,
-      color: Colors.grey,
-    ));
+          SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.chevron_right : Icons.arrow_forward,
+          color: Colors.grey,
+        ));
 
-    final iosSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
-    final materialSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
+    final iosSubtitle =
+        Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
+    final materialSubtitle = Theme.of(context)
+        .textTheme
+        .subtitle1
+        ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
     Color headerColor;
     Color tileColor;
-    if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance()
-        || SettingsManager().settings.skin.value != Skins.iOS) {
+    if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+        SettingsManager().settings.skin.value != Skins.iOS) {
       headerColor = Theme.of(context).accentColor;
       tileColor = Theme.of(context).backgroundColor;
     } else {
@@ -96,8 +92,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: headerColor, // navigation bar color
-        systemNavigationBarIconBrightness:
-          headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarIconBrightness: headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
@@ -122,426 +117,427 @@ class _SettingsPanelState extends State<SettingsPanel> {
           ),
         ),
         body: Obx(() => CustomScrollView(
-          physics: ThemeSwitcher.getScrollPhysics(),
-          slivers: <Widget>[
-            SliverList(
-              delegate: SliverChildListDelegate(
-                <Widget>[
-                  Container(
-                      height: SettingsManager().settings.skin.value == Skins.iOS ? 30 : 40,
-                      alignment: Alignment.bottomLeft,
-                      decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
-                        color: headerColor,
-                        border: Border(
-                          bottom: BorderSide(color: Colors.grey, width: 0.3)
-                        ),
-                      ) : BoxDecoration(
-                        color: tileColor,
-                        border: Border(
-                            top: BorderSide(color: Colors.grey, width: 0.3)
-                        ),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0, left: 15),
-                        child: Text("Server Management".psCapitalize, style: SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
-                      )
-                  ),
-                  StreamBuilder(
-                      stream: SocketManager().connectionStateStream,
-                      builder: (context, AsyncSnapshot<SocketState> snapshot) {
-                        late SocketState connectionStatus;
-                        if (snapshot.hasData) {
-                          connectionStatus = snapshot.data!;
-                        } else {
-                          connectionStatus = SocketManager().state;
-                        }
-                        String? subtitle;
-
-                        switch (connectionStatus) {
-                          case SocketState.CONNECTED:
-                            subtitle = "Connected";
-                            break;
-                          case SocketState.DISCONNECTED:
-                            subtitle = "Disconnected";
-                            break;
-                          case SocketState.ERROR:
-                            subtitle = "Error";
-                            break;
-                          case SocketState.CONNECTING:
-                            subtitle = "Connecting...";
-                            break;
-                          case SocketState.FAILED:
-                            subtitle = "Failed to connect";
-                            break;
-                          default:
-                            subtitle = "Error";
-                            break;
-                        }
-
-                        return SettingsTile(
-                          backgroundColor: tileColor,
-                          title: "Connection & Server",
-                          subTitle: subtitle,
-                          onTap: () async {
-                            Navigator.of(context).push(
-                              CupertinoPageRoute(
-                                builder: (context) => ServerManagementPanel(),
-                              ),
-                            );
-                          },
-                          onLongPress: () {
-                            Clipboard.setData(new ClipboardData(text: _settingsCopy.serverAddress));
-                            showSnackbar('Copied', "Address copied to clipboard");
-                          },
-                          leading: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Container(
-                                width: 32,
-                                height: 32,
-                                decoration: BoxDecoration(
-                                  color: SettingsManager().settings.skin.value == Skins.iOS ?
-                                  getIndicatorColor(connectionStatus) : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(5),
+              physics: ThemeSwitcher.getScrollPhysics(),
+              slivers: <Widget>[
+                SliverList(
+                  delegate: SliverChildListDelegate(
+                    <Widget>[
+                      Container(
+                          height: SettingsManager().settings.skin.value == Skins.iOS ? 30 : 40,
+                          alignment: Alignment.bottomLeft,
+                          decoration: SettingsManager().settings.skin.value == Skins.iOS
+                              ? BoxDecoration(
+                                  color: headerColor,
+                                  border: Border(bottom: BorderSide(color: Colors.grey, width: 0.3)),
+                                )
+                              : BoxDecoration(
+                                  color: tileColor,
+                                  border: Border(top: BorderSide(color: Colors.grey, width: 0.3)),
                                 ),
-                                alignment: Alignment.center,
-                                child: Stack(
-                                    children: [
-                                      Icon(SettingsManager().settings.skin.value == Skins.iOS
-                                          ? CupertinoIcons.antenna_radiowaves_left_right : Icons.router,
-                                          color: SettingsManager().settings.skin.value == Skins.iOS ?
-                                          Colors.white : Colors.grey,
-                                          size: SettingsManager().settings.skin.value == Skins.iOS ? 23 : 30,
+                          child: Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0, left: 15),
+                            child: Text("Server Management".psCapitalize,
+                                style: SettingsManager().settings.skin.value == Skins.iOS
+                                    ? iosSubtitle
+                                    : materialSubtitle),
+                          )),
+                      StreamBuilder(
+                          stream: SocketManager().connectionStateStream,
+                          builder: (context, AsyncSnapshot<SocketState> snapshot) {
+                            late SocketState connectionStatus;
+                            if (snapshot.hasData) {
+                              connectionStatus = snapshot.data!;
+                            } else {
+                              connectionStatus = SocketManager().state;
+                            }
+                            String? subtitle;
+
+                            switch (connectionStatus) {
+                              case SocketState.CONNECTED:
+                                subtitle = "Connected";
+                                break;
+                              case SocketState.DISCONNECTED:
+                                subtitle = "Disconnected";
+                                break;
+                              case SocketState.ERROR:
+                                subtitle = "Error";
+                                break;
+                              case SocketState.CONNECTING:
+                                subtitle = "Connecting...";
+                                break;
+                              case SocketState.FAILED:
+                                subtitle = "Failed to connect";
+                                break;
+                              default:
+                                subtitle = "Error";
+                                break;
+                            }
+
+                            return SettingsTile(
+                              backgroundColor: tileColor,
+                              title: "Connection & Server",
+                              subTitle: subtitle,
+                              onTap: () async {
+                                Navigator.of(context).push(
+                                  CupertinoPageRoute(
+                                    builder: (context) => ServerManagementPanel(),
+                                  ),
+                                );
+                              },
+                              onLongPress: () {
+                                Clipboard.setData(new ClipboardData(text: _settingsCopy.serverAddress));
+                                showSnackbar('Copied', "Address copied to clipboard");
+                              },
+                              leading: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    width: 32,
+                                    height: 32,
+                                    decoration: BoxDecoration(
+                                      color: SettingsManager().settings.skin.value == Skins.iOS
+                                          ? getIndicatorColor(connectionStatus)
+                                          : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(5),
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: Stack(children: [
+                                      Icon(
+                                        SettingsManager().settings.skin.value == Skins.iOS
+                                            ? CupertinoIcons.antenna_radiowaves_left_right
+                                            : Icons.router,
+                                        color: SettingsManager().settings.skin.value == Skins.iOS
+                                            ? Colors.white
+                                            : Colors.grey,
+                                        size: SettingsManager().settings.skin.value == Skins.iOS ? 23 : 30,
                                       ),
                                       if (SettingsManager().settings.skin.value != Skins.iOS)
                                         Positioned.fill(
                                           child: Align(
                                               alignment: Alignment.bottomRight,
-                                              child: getIndicatorIcon(connectionStatus, size: 15, showAlpha: false)
-                                          ),
+                                              child: getIndicatorIcon(connectionStatus, size: 15, showAlpha: false)),
                                         ),
-                                    ]
-                                ),
+                                    ]),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                          showDivider: false,
-                          trailing: nextIcon,
-                        );
-                      }),
-                  SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
-                    iosSubtitle: iosSubtitle,
-                    materialSubtitle: materialSubtitle,
-                    text: "Appearance"
-                  ),
-                  SettingsTile(
-                    backgroundColor: tileColor,
-                    title: "Theme Settings",
-                    subTitle: SettingsManager().settings.skin.value.toString().split(".").last
-                        + "   |   " + AdaptiveTheme.of(context).mode.toString().split(".").last.capitalizeFirst! + " Mode",
-                    onTap: () {
-                      Navigator.of(context).push(
-                        CupertinoPageRoute(
-                          builder: (context) => ThemePanel(),
-                        ),
-                      );
-                    },
-                    showDivider: false,
-                    trailing: nextIcon,
-                    leading: SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.paintbrush,
-                      materialIcon: Icons.palette,
-                    ),
-                  ),
-                  SettingsHeader(
-                      headerColor: headerColor,
-                      tileColor: tileColor,
-                      iosSubtitle: iosSubtitle,
-                      materialSubtitle: materialSubtitle,
-                      text: "Application Settings"
-                  ),
-                  SettingsTile(
-                    backgroundColor: tileColor,
-                    title: "Attachment Settings",
-                    onTap: () {
-                      Navigator.of(context).push(
-                        CupertinoPageRoute(
-                          builder: (context) => AttachmentPanel(),
-                        ),
-                      );
-                    },
-                    leading: SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.paperclip,
-                      materialIcon: Icons.attachment,
-                    ),
-                    trailing: nextIcon,
-                    showDivider: false,
-                  ),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
-                    ),
-                  ),
-                  SettingsTile(
-                    backgroundColor: tileColor,
-                    title: "User Experience Settings",
-                    onTap: () {
-                      Navigator.of(context).push(
-                        CupertinoPageRoute(
-                          builder: (context) => UXPanel(),
-                        ),
-                      );
-                    },
-                    leading: SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.person_alt,
-                      materialIcon: Icons.manage_accounts,
-                    ),
-                    showDivider: false,
-                    trailing: nextIcon,
-                  ),
-                  SettingsHeader(
-                      headerColor: headerColor,
-                      tileColor: tileColor,
-                      iosSubtitle: iosSubtitle,
-                      materialSubtitle: materialSubtitle,
-                      text: "Advanced"
-                  ),
-                  SettingsTile(
-                    backgroundColor: tileColor,
-                    title: "Private API Features",
-                    subTitle: "Private API ${SettingsManager().settings.enablePrivateAPI ? "Enabled" : "Disabled"}",
-                    trailing: nextIcon,
-                    onTap: () async {
-                      Navigator.of(context).push(
-                        CupertinoPageRoute(
-                          builder: (context) => PrivateAPIPanel(),
-                        ),
-                      );
-                    },
-                    showDivider: false,
-                    leading: SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.exclamationmark_shield,
-                      materialIcon: Icons.gpp_maybe,
-                      containerColor: getIndicatorColor(SettingsManager().settings.enablePrivateAPI ? SocketState.CONNECTED : SocketState.CONNECTING),
-                    ),
-                  ),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
-                    ),
-                  ),
-                  SettingsTile(
-                    backgroundColor: tileColor,
-                    title: "Redacted Mode",
-                    subTitle: "Redacted Mode ${SettingsManager().settings.redactedMode ? "Enabled" : "Disabled"}",
-                    trailing: nextIcon,
-                    onTap: () async {
-                      Navigator.of(context).push(
-                        CupertinoPageRoute(
-                          builder: (context) => RedactedModePanel(),
-                        ),
-                      );
-                    },
-                    showDivider: false,
-                    leading: SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.wand_stars,
-                      materialIcon: Icons.auto_fix_high,
-                      containerColor: getIndicatorColor(SettingsManager().settings.redactedMode ? SocketState.CONNECTED : SocketState.CONNECTING),
-                    ),
-                  ),
-                  // SettingsTile(
-                  //   title: "Message Scheduling",
-                  //   trailing: Icon(Icons.arrow_forward_ios,
-                  //       color: Theme.of(context).primaryColor),
-                  //   onTap: () async {
-                  //     Navigator.of(context).push(
-                  //       CupertinoPageRoute(
-                  //         builder: (context) => SchedulingPanel(),
-                  //       ),
-                  //     );
-                  //   },
-                  // ),
-                  // SettingsTile(
-                  //   title: "Search",
-                  //   trailing: Icon(Icons.arrow_forward_ios,
-                  //       color: Theme.of(context).primaryColor),
-                  //   onTap: () async {
-                  //     Navigator.of(context).push(
-                  //       CupertinoPageRoute(
-                  //         builder: (context) => SearchView(),
-                  //       ),
-                  //     );
-                  //   },
-                  // ),
-                  SettingsHeader(
-                      headerColor: headerColor,
-                      tileColor: tileColor,
-                      iosSubtitle: iosSubtitle,
-                      materialSubtitle: materialSubtitle,
-                      text: "About"
-                  ),
-                  SettingsTile(
-                    backgroundColor: tileColor,
-                    title: "About & Links",
-                    onTap: () {
-                      Navigator.of(context).push(
-                        CupertinoPageRoute(
-                          builder: (context) => AboutPanel(),
-                        ),
-                      );
-                    },
-                    showDivider: false,
-                    trailing: nextIcon,
-                    leading: SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.info_circle,
-                      materialIcon: Icons.info,
-                    ),
-                  ),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
-                    ),
-                  ),
-                  SettingsTile(
-                    backgroundColor: tileColor,
-                    title: "Rate",
-                    onTap: () async {
-                      launch("market://details?id=com.bluebubbles.messaging");
-                    },
-                    leading: SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.star,
-                      materialIcon: Icons.star,
-                    ),
-                    showDivider: false,
-                  ),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
-                    ),
-                  ),
-                  SettingsTile(
-                    backgroundColor: tileColor,
-                    title: "Join Our Discord",
-                    onTap: () {
-                      MethodChannelInterface().invokeMethod("open-link", {"link": "https://discord.gg/hbx7EhNFjp"});
-                    },
-                    leading: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 32,
-                          height: 32,
-                          alignment: Alignment.center,
-                          child: SvgPicture.asset(
-                            "assets/icon/discord.svg",
-                            color: HexColor("#7289DA"),
-                            alignment: Alignment.centerRight,
-                            width: 32,
-                          )
-                        ),
-                      ],
-                    ),
-                    showDivider: false,
-                  ),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
-                    ),
-                  ),
-                  SettingsTile(
-                    backgroundColor: tileColor,
-                    title: "Support Us",
-                    onTap: () {
-                      MethodChannelInterface().invokeMethod("open-link", {"link": "https://bluebubbles.app/donate/"});
-                    },
-                    leading: SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.money_dollar_circle,
-                      materialIcon: Icons.attach_money,
-                    ),
-                    showDivider: false,
-                  ),
-                  SettingsHeader(
-                      headerColor: headerColor,
-                      tileColor: tileColor,
-                      iosSubtitle: iosSubtitle,
-                      materialSubtitle: materialSubtitle,
-                      text: "Reset"
-                  ),
-                  SettingsTile(
-                    backgroundColor: tileColor,
-                    onTap: () {
-                      showDialog(
-                        barrierDismissible: false,
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: Text(
-                              "Are you sure?",
-                              style: Theme.of(context).textTheme.bodyText1,
+                              showDivider: false,
+                              trailing: nextIcon,
+                            );
+                          }),
+                      SettingsHeader(
+                          headerColor: headerColor,
+                          tileColor: tileColor,
+                          iosSubtitle: iosSubtitle,
+                          materialSubtitle: materialSubtitle,
+                          text: "Appearance"),
+                      SettingsTile(
+                        backgroundColor: tileColor,
+                        title: "Theme Settings",
+                        subTitle: SettingsManager().settings.skin.value.toString().split(".").last +
+                            "   |   " +
+                            AdaptiveTheme.of(context).mode.toString().split(".").last.capitalizeFirst! +
+                            " Mode",
+                        onTap: () {
+                          Navigator.of(context).push(
+                            CupertinoPageRoute(
+                              builder: (context) => ThemePanel(),
                             ),
-                            backgroundColor: Theme.of(context).backgroundColor,
-                            actions: <Widget>[
-                              TextButton(
-                                child: Text("Yes"),
-                                onPressed: () async {
-                                  await DBProvider.deleteDB();
-                                  await SettingsManager().resetConnection();
-
-                                  SocketManager().finishedSetup.sink.add(false);
-                                  Navigator.of(context).popUntil((route) => route.isFirst);
-                                },
-                              ),
-                              TextButton(
-                                child: Text("Cancel"),
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                },
-                              ),
-                            ],
                           );
                         },
-                      );
-                    },
-                    leading: SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.floppy_disk,
-                      materialIcon: Icons.storage,
-                    ),
-                    title: "Reset",
-                    subTitle: "Resets the app to default settings",
-                    showDivider: false,
-                  ),
-                  Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
-                  Container(
-                      height: 30,
-                      decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
-                        color: headerColor,
-                        border: Border(
-                            top: BorderSide(color: Colors.grey, width: 0.3)
+                        showDivider: false,
+                        trailing: nextIcon,
+                        leading: SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.paintbrush,
+                          materialIcon: Icons.palette,
                         ),
-                      ) : null,
+                      ),
+                      SettingsHeader(
+                          headerColor: headerColor,
+                          tileColor: tileColor,
+                          iosSubtitle: iosSubtitle,
+                          materialSubtitle: materialSubtitle,
+                          text: "Application Settings"),
+                      SettingsTile(
+                        backgroundColor: tileColor,
+                        title: "Attachment Settings",
+                        onTap: () {
+                          Navigator.of(context).push(
+                            CupertinoPageRoute(
+                              builder: (context) => AttachmentPanel(),
+                            ),
+                          );
+                        },
+                        leading: SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.paperclip,
+                          materialIcon: Icons.attachment,
+                        ),
+                        trailing: nextIcon,
+                        showDivider: false,
+                      ),
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 65.0),
+                          child: SettingsDivider(color: headerColor),
+                        ),
+                      ),
+                      SettingsTile(
+                        backgroundColor: tileColor,
+                        title: "User Experience Settings",
+                        onTap: () {
+                          Navigator.of(context).push(
+                            CupertinoPageRoute(
+                              builder: (context) => UXPanel(),
+                            ),
+                          );
+                        },
+                        leading: SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.person_alt,
+                          materialIcon: Icons.manage_accounts,
+                        ),
+                        showDivider: false,
+                        trailing: nextIcon,
+                      ),
+                      SettingsHeader(
+                          headerColor: headerColor,
+                          tileColor: tileColor,
+                          iosSubtitle: iosSubtitle,
+                          materialSubtitle: materialSubtitle,
+                          text: "Advanced"),
+                      SettingsTile(
+                        backgroundColor: tileColor,
+                        title: "Private API Features",
+                        subTitle: "Private API ${SettingsManager().settings.enablePrivateAPI ? "Enabled" : "Disabled"}",
+                        trailing: nextIcon,
+                        onTap: () async {
+                          Navigator.of(context).push(
+                            CupertinoPageRoute(
+                              builder: (context) => PrivateAPIPanel(),
+                            ),
+                          );
+                        },
+                        showDivider: false,
+                        leading: SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.exclamationmark_shield,
+                          materialIcon: Icons.gpp_maybe,
+                          containerColor: getIndicatorColor(SettingsManager().settings.enablePrivateAPI
+                              ? SocketState.CONNECTED
+                              : SocketState.CONNECTING),
+                        ),
+                      ),
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 65.0),
+                          child: SettingsDivider(color: headerColor),
+                        ),
+                      ),
+                      SettingsTile(
+                        backgroundColor: tileColor,
+                        title: "Redacted Mode",
+                        subTitle: "Redacted Mode ${SettingsManager().settings.redactedMode ? "Enabled" : "Disabled"}",
+                        trailing: nextIcon,
+                        onTap: () async {
+                          Navigator.of(context).push(
+                            CupertinoPageRoute(
+                              builder: (context) => RedactedModePanel(),
+                            ),
+                          );
+                        },
+                        showDivider: false,
+                        leading: SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.wand_stars,
+                          materialIcon: Icons.auto_fix_high,
+                          containerColor: getIndicatorColor(
+                              SettingsManager().settings.redactedMode ? SocketState.CONNECTED : SocketState.CONNECTING),
+                        ),
+                      ),
+                      // SettingsTile(
+                      //   title: "Message Scheduling",
+                      //   trailing: Icon(Icons.arrow_forward_ios,
+                      //       color: Theme.of(context).primaryColor),
+                      //   onTap: () async {
+                      //     Navigator.of(context).push(
+                      //       CupertinoPageRoute(
+                      //         builder: (context) => SchedulingPanel(),
+                      //       ),
+                      //     );
+                      //   },
+                      // ),
+                      // SettingsTile(
+                      //   title: "Search",
+                      //   trailing: Icon(Icons.arrow_forward_ios,
+                      //       color: Theme.of(context).primaryColor),
+                      //   onTap: () async {
+                      //     Navigator.of(context).push(
+                      //       CupertinoPageRoute(
+                      //         builder: (context) => SearchView(),
+                      //       ),
+                      //     );
+                      //   },
+                      // ),
+                      SettingsHeader(
+                          headerColor: headerColor,
+                          tileColor: tileColor,
+                          iosSubtitle: iosSubtitle,
+                          materialSubtitle: materialSubtitle,
+                          text: "About"),
+                      SettingsTile(
+                        backgroundColor: tileColor,
+                        title: "About & Links",
+                        onTap: () {
+                          Navigator.of(context).push(
+                            CupertinoPageRoute(
+                              builder: (context) => AboutPanel(),
+                            ),
+                          );
+                        },
+                        showDivider: false,
+                        trailing: nextIcon,
+                        leading: SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.info_circle,
+                          materialIcon: Icons.info,
+                        ),
+                      ),
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 65.0),
+                          child: SettingsDivider(color: headerColor),
+                        ),
+                      ),
+                      SettingsTile(
+                        backgroundColor: tileColor,
+                        title: "Rate",
+                        onTap: () async {
+                          launch("market://details?id=com.bluebubbles.messaging");
+                        },
+                        leading: SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.star,
+                          materialIcon: Icons.star,
+                        ),
+                        showDivider: false,
+                      ),
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 65.0),
+                          child: SettingsDivider(color: headerColor),
+                        ),
+                      ),
+                      SettingsTile(
+                        backgroundColor: tileColor,
+                        title: "Join Our Discord",
+                        onTap: () {
+                          MethodChannelInterface().invokeMethod("open-link", {"link": "https://discord.gg/hbx7EhNFjp"});
+                        },
+                        leading: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                                width: 32,
+                                height: 32,
+                                alignment: Alignment.center,
+                                child: SvgPicture.asset(
+                                  "assets/icon/discord.svg",
+                                  color: HexColor("#7289DA"),
+                                  alignment: Alignment.centerRight,
+                                  width: 32,
+                                )),
+                          ],
+                        ),
+                        showDivider: false,
+                      ),
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 65.0),
+                          child: SettingsDivider(color: headerColor),
+                        ),
+                      ),
+                      SettingsTile(
+                        backgroundColor: tileColor,
+                        title: "Support Us",
+                        onTap: () {
+                          MethodChannelInterface()
+                              .invokeMethod("open-link", {"link": "https://bluebubbles.app/donate/"});
+                        },
+                        leading: SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.money_dollar_circle,
+                          materialIcon: Icons.attach_money,
+                        ),
+                        showDivider: false,
+                      ),
+                      SettingsHeader(
+                          headerColor: headerColor,
+                          tileColor: tileColor,
+                          iosSubtitle: iosSubtitle,
+                          materialSubtitle: materialSubtitle,
+                          text: "Reset"),
+                      SettingsTile(
+                        backgroundColor: tileColor,
+                        onTap: () {
+                          showDialog(
+                            barrierDismissible: false,
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: Text(
+                                  "Are you sure?",
+                                  style: Theme.of(context).textTheme.bodyText1,
+                                ),
+                                backgroundColor: Theme.of(context).backgroundColor,
+                                actions: <Widget>[
+                                  TextButton(
+                                    child: Text("Yes"),
+                                    onPressed: () async {
+                                      await DBProvider.deleteDB();
+                                      await SettingsManager().resetConnection();
+
+                                      SocketManager().finishedSetup.sink.add(false);
+                                      Navigator.of(context).popUntil((route) => route.isFirst);
+                                    },
+                                  ),
+                                  TextButton(
+                                    child: Text("Cancel"),
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                        leading: SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.floppy_disk,
+                          materialIcon: Icons.storage,
+                        ),
+                        title: "Reset",
+                        subTitle: "Resets the app to default settings",
+                        showDivider: false,
+                      ),
+                      Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
+                      Container(
+                        height: 30,
+                        decoration: SettingsManager().settings.skin.value == Skins.iOS
+                            ? BoxDecoration(
+                                color: headerColor,
+                                border: Border(top: BorderSide(color: Colors.grey, width: 0.3)),
+                              )
+                            : null,
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
-            SliverList(
-              delegate: SliverChildListDelegate(
-                <Widget>[],
-              ),
-            )
-          ],
-        )),
+                ),
+                SliverList(
+                  delegate: SliverChildListDelegate(
+                    <Widget>[],
+                  ),
+                )
+              ],
+            )),
       ),
     );
   }
@@ -561,7 +557,16 @@ class _SettingsPanelState extends State<SettingsPanel> {
 }
 
 class SettingsTile extends StatelessWidget {
-  const SettingsTile({Key? key, this.onTap, this.onLongPress, this.title, this.trailing, this.leading, this.subTitle, this.showDivider = true, this.backgroundColor})
+  const SettingsTile(
+      {Key? key,
+      this.onTap,
+      this.onLongPress,
+      this.title,
+      this.trailing,
+      this.leading,
+      this.subTitle,
+      this.showDivider = true,
+      this.backgroundColor})
       : super(key: key);
 
   final Function? onTap;
@@ -636,7 +641,7 @@ class SettingsTextField extends StatelessWidget {
           children: <Widget>[
             ListTile(
               title: Text(
-                this.title!,
+                this.title,
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               trailing: this.trailing,
@@ -717,7 +722,7 @@ class _SettingsSwitchState extends State<SettingsSwitch> {
   Widget build(BuildContext context) {
     return SwitchListTile(
       title: Text(
-        widget.title!,
+        widget.title,
         style: Theme.of(context).textTheme.bodyText1,
       ),
       value: _value!,
@@ -786,7 +791,7 @@ class _SettingsOptionsState<T> extends State<SettingsOptions<T>> {
                 children: [
                   Container(
                     child: Text(
-                      widget.title!,
+                      widget.title,
                       style: Theme.of(context).textTheme.bodyText1,
                     ),
                   ),
@@ -817,19 +822,17 @@ class _SettingsOptionsState<T> extends State<SettingsOptions<T>> {
                       color: Theme.of(context).textTheme.bodyText1!.color,
                     ),
                     value: currentVal,
-                    items: widget.options!.map<DropdownMenuItem<T>>((e) {
+                    items: widget.options.map<DropdownMenuItem<T>>((e) {
                       return DropdownMenuItem(
                         value: e,
                         child: Text(
-                          widget.capitalize
-                              ? widget.textProcessing!(e).capitalize!
-                              : widget.textProcessing!(e),
+                          widget.capitalize ? widget.textProcessing!(e).capitalize! : widget.textProcessing!(e),
                           style: Theme.of(context).textTheme.bodyText1,
                         ),
                       );
                     }).toList(),
                     onChanged: (T? val) {
-                      widget.onChanged!(val);
+                      widget.onChanged(val);
 
                       if (!this.mounted || val == null) return;
 
@@ -938,41 +941,36 @@ class SettingsHeader extends StatelessWidget {
   final TextStyle? materialSubtitle;
   final String text;
 
-  SettingsHeader({
-    required this.headerColor,
-    required this.tileColor,
-    required this.iosSubtitle,
-    required this.materialSubtitle,
-    required this.text
-  });
+  SettingsHeader(
+      {required this.headerColor,
+      required this.tileColor,
+      required this.iosSubtitle,
+      required this.materialSubtitle,
+      required this.text});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
-        Container(
-            height: SettingsManager().settings.skin.value == Skins.iOS ? 60 : 40,
-            alignment: Alignment.bottomLeft,
-            decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
-              color: headerColor,
-              border: Border.symmetric(
-                  horizontal: BorderSide(color: Colors.grey, width: 0.3)
-              ),
-            ) : BoxDecoration(
-              color: tileColor,
-              border: Border(
-                  top: BorderSide(color: Colors.grey, width: 0.3)
-              ),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 8.0, left: 15),
-              child: Text(text.psCapitalize, style: SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
-            )
-        ),
-        Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
-      ]
-    );
+    return Column(children: [
+      Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
+      Container(
+          height: SettingsManager().settings.skin.value == Skins.iOS ? 60 : 40,
+          alignment: Alignment.bottomLeft,
+          decoration: SettingsManager().settings.skin.value == Skins.iOS
+              ? BoxDecoration(
+                  color: headerColor,
+                  border: Border.symmetric(horizontal: BorderSide(color: Colors.grey, width: 0.3)),
+                )
+              : BoxDecoration(
+                  color: tileColor,
+                  border: Border(top: BorderSide(color: Colors.grey, width: 0.3)),
+                ),
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 8.0, left: 15),
+            child: Text(text.psCapitalize,
+                style: SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
+          )),
+      Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
+    ]);
   }
 }
 
@@ -989,29 +987,25 @@ class SettingsLeadingIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-   return Column(
-     mainAxisAlignment: MainAxisAlignment.center,
-     children: [
-       Container(
-         width: 32,
-         height: 32,
-         decoration: BoxDecoration(
-           color: SettingsManager().settings.skin.value == Skins.iOS ?
-            containerColor ?? Colors.grey : Colors.transparent,
-           borderRadius: BorderRadius.circular(5),
-         ),
-         alignment: Alignment.center,
-         child: Icon(SettingsManager().settings.skin.value == Skins.iOS
-             ? iosIcon : materialIcon,
-             color: SettingsManager().settings.skin.value == Skins.iOS ?
-             Colors.white : Colors.grey,
-             size: SettingsManager().settings.skin.value == Skins.iOS ? 23 : 30
-         ),
-       ),
-     ],
-   );
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color:
+                SettingsManager().settings.skin.value == Skins.iOS ? containerColor ?? Colors.grey : Colors.transparent,
+            borderRadius: BorderRadius.circular(5),
+          ),
+          alignment: Alignment.center,
+          child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? iosIcon : materialIcon,
+              color: SettingsManager().settings.skin.value == Skins.iOS ? Colors.white : Colors.grey,
+              size: SettingsManager().settings.skin.value == Skins.iOS ? 23 : 30),
+        ),
+      ],
+    );
   }
-
 }
 
 class SettingsDivider extends StatelessWidget {

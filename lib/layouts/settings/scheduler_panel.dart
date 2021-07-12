@@ -45,8 +45,8 @@ class _SchedulePanelState extends State<SchedulePanel> {
     setChat(widget.chat);
 
     messageController = new TextEditingController();
-    messageController!.addListener(() {
-      if (messageController!.text.length > 0 && errors.length > 0 && this.mounted) {
+    messageController.addListener(() {
+      if (messageController.text.length > 0 && errors.length > 0 && this.mounted) {
         setState(() {
           errors = [];
         });
@@ -100,7 +100,8 @@ class _SchedulePanelState extends State<SchedulePanel> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarIconBrightness:
+            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
@@ -215,7 +216,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
             if (_chat == null) errors.add("Please select a chat!");
             if (scheduleSeconds == -1 && (messageDate == null || messageTime == null))
               errors.add("Please set a date and time!");
-            if (messageController!.text.length == 0) errors.add("Please enter a message!");
+            if (messageController.text.length == 0) errors.add("Please enter a message!");
 
             if (errors.length > 0 && this.mounted) {
               setState(() {});
@@ -229,7 +230,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
               }
 
               ScheduledMessage scheduled = new ScheduledMessage(
-                  chatGuid: _chat!.guid, message: messageController!.text, epochTime: occurs.millisecondsSinceEpoch);
+                  chatGuid: _chat!.guid, message: messageController.text, epochTime: occurs.millisecondsSinceEpoch);
 
               await scheduled.save();
               Navigator.of(context).pop();

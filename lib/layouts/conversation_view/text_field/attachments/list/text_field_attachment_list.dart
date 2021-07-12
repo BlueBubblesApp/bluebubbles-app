@@ -22,10 +22,10 @@ class _TextFieldAttachmentListState extends State<TextFieldAttachmentList> with 
       curve: Curves.easeInOut,
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxHeight: widget.attachments!.length > 0 ? 100 : 0,
+          maxHeight: widget.attachments.length > 0 ? 100 : 0,
         ),
         child: GridView.builder(
-          itemCount: widget.attachments!.length,
+          itemCount: widget.attachments.length,
           scrollDirection: Axis.horizontal,
           physics: ThemeSwitcher.getScrollPhysics(),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -33,10 +33,10 @@ class _TextFieldAttachmentListState extends State<TextFieldAttachmentList> with 
           ),
           itemBuilder: (context, int index) {
             return AttachmentListItem(
-              key: Key("attachmentList" + widget.attachments![index].path),
-              file: widget.attachments![index],
+              key: Key("attachmentList" + widget.attachments[index].path),
+              file: widget.attachments[index],
               onRemove: () {
-                widget.onRemove!(widget.attachments![index]);
+                widget.onRemove(widget.attachments[index]);
               },
             );
           },

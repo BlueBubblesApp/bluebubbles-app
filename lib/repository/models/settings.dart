@@ -227,7 +227,7 @@ class Settings {
   static Future<Settings> getSettings() async {
     Database? db = await DBProvider.db.database;
 
-    List<Map<String, dynamic>> result = await db!.query("config");
+    List<Map<String, dynamic>> result = await db.query("config");
     if (result.isEmpty) return new Settings();
     List<ConfigEntry> entries = [];
     for (Map<String, dynamic> setting in result) {

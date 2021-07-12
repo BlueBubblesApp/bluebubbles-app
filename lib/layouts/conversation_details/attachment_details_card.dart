@@ -47,8 +47,8 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
   }
 
   void subscribeToDownloadStream() {
-    if (SocketManager().attachmentDownloaders.containsKey(widget.attachment!.guid) && downloadStream == null) {
-      downloadStream = SocketManager().attachmentDownloaders[widget.attachment!.guid]!.stream.listen((event) {
+    if (SocketManager().attachmentDownloaders.containsKey(widget.attachment.guid) && downloadStream == null) {
+      downloadStream = SocketManager().attachmentDownloaders[widget.attachment.guid]!.stream.listen((event) {
         if (event is File && this.mounted) {
           Future.delayed(Duration(milliseconds: 500), () {
             setState(() {});
@@ -59,8 +59,8 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
   }
 
   void getCompressedImage() {
-    String path = AttachmentHelper.getAttachmentPath(widget.attachment!);
-    FlutterImageCompress.compressWithFile(path, quality: SettingsManager().compressionQuality!).then((data) {
+    String path = AttachmentHelper.getAttachmentPath(widget.attachment);
+    FlutterImageCompress.compressWithFile(path, quality: SettingsManager().compressionQuality).then((data) {
       if (this.mounted) {
         setState(() {
           previewImage = data;
@@ -71,7 +71,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
 
   @override
   Widget build(BuildContext context) {
-    Attachment attachment = widget.attachment!;
+    Attachment attachment = widget.attachment;
     File file = new File(
       "${SettingsManager().appDocDir.path}/attachments/${attachment.guid}/${attachment.transferName}",
     );
@@ -83,7 +83,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
         alignment: Alignment.center,
         color: Theme.of(context).accentColor,
         child: Text(
-          widget.attachment!.mimeType!,
+          widget.attachment.mimeType!,
           textAlign: TextAlign.center,
         ),
       );
@@ -166,14 +166,14 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
       quality: 50,
     );
     Size size = ImageSizeGetter.getSize(MemoryInput(previewImage!));
-    widget.attachment!.width = size.width;
-    widget.attachment!.height = size.height;
+    widget.attachment.width = size.width;
+    widget.attachment.height = size.height;
     aspectRatio = size.width / size.height;
     if (this.mounted) setState(() {});
   }
 
   Widget _buildPreview(File file, BuildContext context) {
-    if (widget.attachment!.mimeType!.startsWith("image/")) {
+    if (widget.attachment.mimeType!.startsWith("image/")) {
       if (previewImage == null) {
         getCompressedImage();
       }
@@ -182,7 +182,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
         children: <Widget>[
           SizedBox(
             child: Hero(
-                tag: widget.attachment!.guid!,
+                tag: widget.attachment.guid!,
                 child: (previewImage != null)
                     ? Image.memory(
                         previewImage!,
@@ -213,14 +213,14 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
           )
         ],
       );
-    } else if (widget.attachment!.mimeType!.startsWith("video/")) {
+    } else if (widget.attachment.mimeType!.startsWith("video/")) {
       getVideoPreview(file);
 
       return Stack(
         children: <Widget>[
           SizedBox(
             child: Hero(
-              tag: widget.attachment!.guid!,
+              tag: widget.attachment.guid!,
               child: previewImage != null
                   ? Image.memory(
                       previewImage!,

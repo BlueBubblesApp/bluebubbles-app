@@ -60,7 +60,7 @@ class _ThemeSwitcherState extends State<ThemeSwitcher> {
     SettingsManager().stream.listen((event) {
       if (!this.mounted) return;
 
-      if (event!.skin.value != skin) {
+      if (event.skin.value != skin) {
         skin = event.skin.value;
         setState(() {});
       }

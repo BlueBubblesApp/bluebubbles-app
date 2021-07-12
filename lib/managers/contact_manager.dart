@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:get/get.dart';
@@ -157,7 +158,7 @@ class ContactManager {
       Contact? contact = handleToContact[address];
       if (handleToContact[address] == null) continue;
 
-      ContactsService.getAvatar(contact!).then((avatar) {
+      ContactsService.getAvatar(contact!, photoHighRes: !SettingsManager().settings.lowMemoryMode).then((avatar) {
         if (avatar == null) return;
 
         contact.avatar = avatar;
@@ -221,7 +222,8 @@ class ContactManager {
     }
 
     if (fetchAvatar) {
-      Uint8List? avatar = await ContactsService.getAvatar(contact!);
+      Uint8List? avatar =
+          await ContactsService.getAvatar(contact!, photoHighRes: !SettingsManager().settings.lowMemoryMode);
       contact.avatar = avatar;
     }
 

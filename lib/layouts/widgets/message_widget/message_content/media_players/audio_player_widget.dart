@@ -31,24 +31,24 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
   void initState() {
     super.initState();
 
-    if (CurrentChat.of(widget.context)!.audioPlayers.containsKey(widget.file!.path)) {
-      player = CurrentChat.of(widget.context)!.audioPlayers[widget.file!.path]!;
+    if (CurrentChat.of(widget.context)!.audioPlayers.containsKey(widget.file.path)) {
+      player = CurrentChat.of(widget.context)!.audioPlayers[widget.file.path]!;
     } else {
       player = new AssetsAudioPlayer();
-      player!.open(Audio.file(widget.file!.path), autoStart: false);
-      CurrentChat.of(widget.context)!.audioPlayers[widget.file!.path] = player;
+      player.open(Audio.file(widget.file.path), autoStart: false);
+      CurrentChat.of(widget.context)!.audioPlayers[widget.file.path] = player;
     }
 
-    isPlaying = player!.isPlaying.valueWrapper!.value;
-    current = player!.currentPosition.valueWrapper!.value;
+    isPlaying = player.isPlaying.valueWrapper!.value;
+    current = player.currentPosition.valueWrapper!.value;
 
     // Listen for when the audio is finished
-    player!.playlistFinished.listen((bool finished) async {
+    player.playlistFinished.listen((bool finished) async {
       // We only care if it's finished
       if (!finished) return;
 
       // Restart the clip
-      player!.open(Audio.file(widget.file!.path), autoStart: false).catchError((err) {
+      player.open(Audio.file(widget.file.path), autoStart: false).catchError((err) {
         // Do nothing
       });
 
@@ -58,21 +58,21 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
     });
 
     // Listen for new play status
-    player!.isPlaying.listen((bool playing) {
+    player.isPlaying.listen((bool playing) {
       // Update the state with the correct isPlaying bool
       isPlaying = playing;
       if (this.mounted) setState(() {});
     });
 
     // Update the current position if it's changed
-    player!.currentPosition.listen((Duration position) {
-      if (position.inSeconds != (current ?? Duration()).inSeconds && this.mounted) {
+    player.currentPosition.listen((Duration position) {
+      if (position.inSeconds != current.inSeconds && this.mounted) {
         current = position;
         setState(() {});
       }
     });
 
-    player!.onReadyToPlay.listen((PlayingAudio? _) {
+    player.onReadyToPlay.listen((PlayingAudio? _) {
       if (this.mounted) setState(() {});
     });
   }
@@ -95,16 +95,16 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
 
   void seekToSecond(int second) {
     Duration newDuration = Duration(seconds: second);
-    player!.seek(newDuration);
+    player.seek(newDuration);
   }
 
   @override
   Widget build(BuildContext context) {
-    Playing? playing = player!.current.valueWrapper?.value;
+    Playing? playing = player.current.valueWrapper?.value;
     double maxWidth = widget.width ?? context.width * 3 / 4;
 
-    double currentValue = current?.inSeconds.toDouble() ?? 0.0;
-    double maxValue = (playing?.audio.duration ?? current)!.inSeconds.toDouble();
+    double currentValue = current.inSeconds.toDouble();
+    double maxValue = (playing?.audio.duration ?? current).inSeconds.toDouble();
     if (maxValue < currentValue) {
       maxValue = currentValue;
     }
@@ -119,9 +119,9 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
             setState(() {
               isPlaying = true;
             });
-            await player!.play();
+            await player.play();
           } else {
-            await player!.pause();
+            await player.pause();
           }
         },
         child: Padding(

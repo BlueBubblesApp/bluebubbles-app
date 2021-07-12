@@ -13,7 +13,6 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
 import 'package:bluebubbles/layouts/widgets/circle_progress_bar.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -42,7 +41,7 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
 
   void updateContent() async {
     // Ge the current attachment content (status)
-    content = AttachmentHelper.getContent(widget.attachment!);
+    content = AttachmentHelper.getContent(widget.attachment);
 
     // If we can download it, do so
     if (await AttachmentHelper.canAutoDownload() && content is Attachment) {
@@ -74,9 +73,9 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
   Widget _buildAttachmentWidget() {
     // If it's a file, it's already been downlaoded, so just display it
     if (content is File) {
-      String? mimeType = widget.attachment!.mimeType;
+      String? mimeType = widget.attachment.mimeType;
       if (mimeType != null) mimeType = mimeType.substring(0, mimeType.indexOf("/"));
-      if (mimeType == "image" && !widget.attachment!.mimeType!.endsWith("tiff")) {
+      if (mimeType == "image" && !widget.attachment.mimeType!.endsWith("tiff")) {
         return MediaFile(
           attachment: widget.attachment,
           child: ImageWidget(
@@ -92,12 +91,12 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
             file: content,
           ),
         );
-      } else if (mimeType == "audio" && !widget.attachment!.mimeType!.contains("caf")) {
+      } else if (mimeType == "audio" && !widget.attachment.mimeType!.contains("caf")) {
         return MediaFile(
           attachment: widget.attachment,
           child: AudioPlayerWiget(file: content, context: context, width: 250),
         );
-      } else if (widget.attachment!.mimeType == "text/x-vlocation" || widget.attachment!.uti == 'public.vlocation') {
+      } else if (widget.attachment.mimeType == "text/x-vlocation" || widget.attachment.uti == 'public.vlocation') {
         return MediaFile(
           attachment: widget.attachment,
           child: LocationWidget(
@@ -105,7 +104,7 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
             attachment: widget.attachment,
           ),
         );
-      } else if (widget.attachment!.mimeType == "text/vcard") {
+      } else if (widget.attachment.mimeType == "text/vcard") {
         return MediaFile(
           attachment: widget.attachment,
           child: ContactWidget(
@@ -113,7 +112,7 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
             attachment: widget.attachment,
           ),
         );
-      } else if (widget.attachment!.mimeType == null) {
+      } else if (widget.attachment.mimeType == null) {
         return Container();
       } else {
         return MediaFile(
@@ -138,7 +137,7 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
 
       // If it's an AttachmentDownloader, it is currently being downloaded
     } else if (content is AttachmentDownloader) {
-      if (widget.attachment!.mimeType == null) return Container();
+      if (widget.attachment.mimeType == null) return Container();
       return StreamBuilder(
         stream: content.stream,
         builder: (BuildContext context, AsyncSnapshot snapshot) {
@@ -188,7 +187,7 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
                           ),
                         ),
                       ),
-                      ((content as AttachmentDownloader).attachment!.mimeType != null)
+                      ((content as AttachmentDownloader).attachment.mimeType != null)
                           ? Container(height: 5.0)
                           : Container(),
                       (content.attachment.mimeType != null)

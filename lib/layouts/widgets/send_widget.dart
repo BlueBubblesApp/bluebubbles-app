@@ -93,7 +93,8 @@ class _SendWidgetState extends State<SendWidget> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarIconBrightness:
+            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
@@ -120,7 +121,7 @@ class _SendWidgetState extends State<SendWidget> {
                 children: <Widget>[
                   Hero(
                     flightShuttleBuilder: buildAnimation,
-                    tag: widget.tag!,
+                    tag: widget.tag,
                     child: Material(
                       type: MaterialType.transparency,
                       child: Row(
@@ -212,7 +213,7 @@ class SendPageBuilder extends PageRoute<void> {
   SendPageBuilder({
     required this.builder,
     RouteSettings? settings,
-  })  : super(settings: settings, fullscreenDialog: false);
+  }) : super(settings: settings, fullscreenDialog: false);
 
   final WidgetBuilder builder;
 
