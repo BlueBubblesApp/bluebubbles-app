@@ -62,7 +62,7 @@ class AttachmentSender {
   sendChunkRecursive(int index, int total, String? tempGuid) {
     // if (index < ) {
     Map<String, dynamic> params = new Map();
-    params["guid"] = _chat!.guid;
+    params["guid"] = _chat.guid;
     params["tempGuid"] = tempGuid;
     params["message"] = _text;
     params["attachmentGuid"] = _attachmentGuid;
@@ -131,7 +131,8 @@ class AttachmentSender {
       transferName: _attachmentName,
       mimeType: mime(_attachmentName),
       width: mime(_attachmentName)!.startsWith("image") ? ImageSizeGetter.getSize(FileInput(_attachment)).width : null,
-      height: mime(_attachmentName)!.startsWith("image") ? ImageSizeGetter.getSize(FileInput(_attachment)).height : null,
+      height:
+          mime(_attachmentName)!.startsWith("image") ? ImageSizeGetter.getSize(FileInput(_attachment)).height : null,
     );
 
     sentMessage = Message(
