@@ -231,6 +231,7 @@ String buildDate(DateTime? dateTime) {
 }
 
 String buildTime(DateTime? dateTime) {
+  SettingsManager().settings.use24HrFormat = MediaQuery.of(Get.context!).alwaysUse24HourFormat;
   if (dateTime == null || dateTime.millisecondsSinceEpoch == 0) return "";
   String time = SettingsManager().settings.use24HrFormat
       ? intl.DateFormat.Hm().format(dateTime)
