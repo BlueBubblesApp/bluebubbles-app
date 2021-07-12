@@ -42,7 +42,7 @@ class ActionHandler {
     // Check for URLs
     RegExpMatch? linkMatch;
     late String linkMsg;
-    List<RegExpMatch> matches = parseLinks(text!);
+    List<RegExpMatch> matches = parseLinks(text);
 
     // Get the first match (if it exists)
     if (matches.length > 0) {
@@ -54,27 +54,32 @@ class ActionHandler {
 
     // Create the main message
     Message mainMsg = Message(
-      guid: "temp-${randomString(8)}",
       text: (!shouldSplit) ? text : text.substring(0, linkMatch.start),
       dateCreated: DateTime.now(),
       hasAttachments: attachments.length > 0 ? true : false,
     );
 
+    // Generate a Temp GUID
+    mainMsg.generateTempGuid();
+
     if (mainMsg.text!.trim().length > 0) messages.add(mainMsg);
 
     // If there is a link, build the link message
     if (shouldSplit) {
-      messages.add(Message(
-        guid: "temp-${randomString(8)}",
+      Message secondaryMessage = Message(
         text: text.substring(linkMatch.start, linkMatch.end),
         dateCreated: DateTime.now(),
         hasAttachments: false,
-      ));
+      );
+
+      // Generate a Temp GUID
+      secondaryMessage.generateTempGuid();
+      messages.add(secondaryMessage);
     }
 
     // Make sure to save the chat
     // If we already have the ID, we don't have to wait to resave it
-    if (chat!.id == null) {
+    if (chat.id == null) {
       await chat.save();
     } else {
       chat.save();
@@ -132,7 +137,8 @@ class ActionHandler {
     Completer<void> completer = new Completer<void>();
     Map<String, dynamic> params = new Map();
 
-    String? text = !isEmptyString(message.text) ? message.text : "Some stupid ass text";
+    String? text = !isEmptyString(message.text) ? message.text : "A text";
+
     params["chatGuid"] = chat.guid;
     params["messageGuid"] = "temp-${randomString(8)}";
     params["messageText"] = text;
@@ -169,7 +175,8 @@ class ActionHandler {
     await message.fetchAttachments();
     for (int i = 0; i < message.attachments!.length; i++) {
       String appDocPath = SettingsManager().appDocDir.path;
-      String pathName = "$appDocPath/attachments/${message.attachments![i]!.guid}/${message.attachments![i]!.transferName}";
+      String pathName =
+          "$appDocPath/attachments/${message.attachments![i]!.guid}/${message.attachments![i]!.transferName}";
       File file = File(pathName);
 
       OutgoingQueue().add(
@@ -187,12 +194,22 @@ class ActionHandler {
     // If we sent attachments, return because we finished sending
     if (message.attachments!.length > 0) return;
 
+    // Generate the temp GUID for the message to be used
+    message.generateTempGuid();
+
     // Build request parameters
     Map<String, dynamic> params = new Map();
     params["guid"] = chat.guid;
     params["message"] = message.text!.trim();
-    String tempGuid = "temp-${randomString(8)}";
-    String? oldGuid = message.guid;
+
+    // Pull the Old GUID (substring so we "make a copy")
+    String? oldGuid = (message.guid ?? "").substring(0);
+
+    // Generate new GUID
+    message.generateTempGuid();
+
+    // Update the new GUID
+    String tempGuid = message.guid!;
     params["tempGuid"] = tempGuid;
 
     // Reset error, guid, and send date
@@ -296,8 +313,7 @@ class ActionHandler {
       debugPrint("(Message status) -> handleUpdatedMessage: " + updatedMessage.text!);
     }
 
-    updatedMessage = await Message.replaceMessage(updatedMessage.guid, updatedMessage)
-        ?? updatedMessage;
+    updatedMessage = await Message.replaceMessage(updatedMessage.guid, updatedMessage) ?? updatedMessage;
 
     Chat? chat;
     if (data["chats"] == null && updatedMessage.id != null) {
@@ -306,8 +322,7 @@ class ActionHandler {
       chat = Chat.fromMap(data["chats"][0]);
     }
 
-    if (!headless && chat != null)
-      NewMessageManager().updateMessage(chat, updatedMessage.guid!, updatedMessage);
+    if (!headless && chat != null) NewMessageManager().updateMessage(chat, updatedMessage.guid!, updatedMessage);
   }
 
   /// Handles marking a chat by [chatGuid], with a new [status] of read or unread.
@@ -344,20 +359,20 @@ class ActionHandler {
 
     // If we are told to check if the chat exists, do it
     if (checkIfExists) {
-      currentChat = await Chat.findOne({"guid": newChat!.guid});
+      currentChat = await Chat.findOne({"guid": newChat.guid});
     }
 
     // Save the new chat only if current chat isn't found
     if (currentChat == null) {
       debugPrint("(Handle Chat) Chat did not exist. Saving.");
-      await newChat!.save();
+      await newChat.save();
     }
 
     // If we already have a chat, don't fetch the participants
     if (currentChat != null) return;
 
     // Fetch chat data from server
-    newChat = await SocketManager().fetchChat(newChat!.guid!);
+    newChat = await SocketManager().fetchChat(newChat.guid!);
     await ChatBloc().updateChatPosition(newChat);
   }
 
@@ -401,7 +416,7 @@ class ActionHandler {
         }
         debugPrint("(Message status) -> Message match: [${data["text"]}] - ${data["guid"]} - ${data["tempGuid"]}");
 
-        if (!isHeadless!) NewMessageManager().updateMessage(chats.first, data['tempGuid'], message);
+        if (!isHeadless) NewMessageManager().updateMessage(chats.first, data['tempGuid'], message);
       }
     } else if (forceProcess || !NotificationManager().hasProcessed(data["guid"])) {
       // Add the message to the chats
@@ -447,7 +462,7 @@ class ActionHandler {
       }
 
       chats.forEach((element) {
-        if (!isHeadless!) NewMessageManager().addMessage(element, message);
+        if (!isHeadless) NewMessageManager().addMessage(element, message);
       });
     }
   }
