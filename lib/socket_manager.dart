@@ -178,7 +178,7 @@ class SocketManager {
         _manager.disconnectSubscribers.values.forEach((f) {
           f();
         });
-        debugPrint("disconnected");
+
         state = SocketState.DISCONNECTED;
         Timer t;
         t = Timer(const Duration(seconds: 5), () {
@@ -582,7 +582,7 @@ class SocketManager {
 
   Future<Chat> fetchChat(String chatGuid, {withParticipants = true}) async {
     Completer<Chat> completer = new Completer();
-    debugPrint("(Fetch Chat) Fetching full chat metadata from server.");
+    debugPrint("[Fetch Chat] Fetching full chat metadata from server.");
 
     Map<String, dynamic> params = Map();
     params["chatGuid"] = chatGuid;
@@ -594,11 +594,11 @@ class SocketManager {
 
       Map<String, dynamic>? chatData = data["data"];
       if (chatData == null) {
-        debugPrint("(Fetch Chat) Server returned no metadata for chat.");
+        debugPrint("[Fetch Chat] Server returned no metadata for chat.");
         return completer.complete(null);
       }
 
-      debugPrint("(Fetch Chat) Got updated chat metadata from server. Saving.");
+      debugPrint("[Fetch Chat] Got updated chat metadata from server. Saving.");
       Chat newChat = Chat.fromMap(chatData);
 
       // Resave the chat after we've got the participants
@@ -713,8 +713,7 @@ class SocketManager {
     }
 
     // Update the address of the copied settings
-    settingsCopy.serverAddress = getServerAddress(address: serverAddress)
-        ?? settingsCopy.serverAddress;
+    settingsCopy.serverAddress = getServerAddress(address: serverAddress) ?? settingsCopy.serverAddress;
 
     // And then save to disk
     // NOTE: we do not automatically connect to the socket or authorize fcm,
