@@ -247,8 +247,6 @@ class ActionHandler {
   /// ```
   static Future<void> resyncChat(Chat chat, MessageBloc messageBloc) async {
     final Database db = await DBProvider.db.database;
-    if (db == null) return;
-
     await chat.save();
 
     // Fetch messages associated with the chat

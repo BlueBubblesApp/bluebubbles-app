@@ -29,7 +29,6 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart' as Cupertino;
 import 'package:flutter/material.dart';
-import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:slugify/slugify.dart';
 
 mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on State<ConversationView> {
@@ -316,7 +315,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       title = chat!.fakeParticipants.length > 1 ? "Group Chat" : chat!.fakeParticipants[0];
     else if (hideTitle) fontColor = Colors.transparent;
 
-    if (SettingsManager().settings.skin.value == Skins.Material || SettingsManager().settings.skin.value == Skins.Samsung) {
+    if (SettingsManager().settings.skin.value == Skins.Material ||
+        SettingsManager().settings.skin.value == Skins.Samsung) {
       return AppBar(
         brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
         title: Text(
@@ -786,7 +786,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     Function addContactEntries = (Contact contact, {conditionally = false}) {
       for (Item phone in contact.phones!) {
         String cleansed = slugText(phone.value);
-        if (conditionally && !cleansed!.contains(searchQuery!)) continue;
+        if (conditionally && !cleansed.contains(searchQuery)) continue;
 
         if (!cache.contains(cleansed)) {
           cache.add(cleansed);
@@ -802,7 +802,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
       for (Item email in contact.emails!) {
         String emailVal = slugText(email.value);
-        if (conditionally && !emailVal!.contains(searchQuery!)) continue;
+        if (conditionally && !emailVal.contains(searchQuery)) continue;
 
         if (!cache.contains(emailVal)) {
           cache.add(emailVal);
@@ -818,9 +818,9 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     };
 
     if (widget.type != ChatSelectorTypes.ONLY_EXISTING) {
-      for (Contact contact in ContactManager().contacts ?? []) {
+      for (Contact contact in ContactManager().contacts) {
         String name = slugText(contact.displayName);
-        if (name.contains(searchQuery!)) {
+        if (name.contains(searchQuery)) {
           addContactEntries(contact);
         } else {
           addContactEntries(contact, conditionally: true);
@@ -832,7 +832,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     if (selected.length == 0 && widget.type != ChatSelectorTypes.ONLY_CONTACTS) {
       for (Chat chat in conversations) {
         String title = slugText(chat.title ?? chat.displayName);
-        if (title.contains(searchQuery!)) {
+        if (title.contains(searchQuery)) {
           if (!cache.contains(chat.guid)) {
             cache.add(chat.guid!);
             _conversations.add(
@@ -847,7 +847,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     }
 
     _conversations.addAll(_contacts);
-    if (searchQuery!.length > 0)
+    if (searchQuery.length > 0)
       _conversations.sort((a, b) {
         if (a.isChat && a.chat!.participants.length == 1) return -1;
         if (b.isChat && b.chat!.participants.length == 1) return 1;
@@ -865,7 +865,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   Future<Chat?> createChat() async {
     if (chat != null) return chat;
     Completer<Chat?> completer = Completer();
-    if (searchQuery!.length > 0) {
+    if (searchQuery.length > 0) {
       selected.add(new UniqueContact(address: searchQuery, displayName: searchQuery));
     }
 

@@ -206,7 +206,7 @@ class Chat {
         map.remove("participants");
       }
 
-      this.id = await db!.insert("chat", map);
+      this.id = await db.insert("chat", map);
     } else if (updateIfAbsent) {
       await this.update();
     }
@@ -221,7 +221,7 @@ class Chat {
 
   Future<Chat> changeName(String? name) async {
     final Database db = await DBProvider.db.database;
-    await db!.update("chat", {'displayName': name}, where: "ROWID = ?", whereArgs: [this.id]);
+    await db.update("chat", {'displayName': name}, where: "ROWID = ?", whereArgs: [this.id]);
     this.displayName = name;
     return this;
   }
@@ -263,7 +263,7 @@ class Chat {
 
     // If it already exists, update it
     if (this.id != null) {
-      await db!.update("chat", params, where: "ROWID = ?", whereArgs: [this.id]);
+      await db.update("chat", params, where: "ROWID = ?", whereArgs: [this.id]);
     } else {
       await this.save(updateIfAbsent: false);
     }
@@ -273,7 +273,6 @@ class Chat {
 
   static Future<void> deleteChat(Chat chat) async {
     final Database db = await DBProvider.db.database;
-    if (db == null) return;
     await chat.save();
     List<Message> messages = await Chat.getMessages(chat);
     for (Message message in messages) {
@@ -298,7 +297,7 @@ class Chat {
 
     // If it already exists, update it
     if (this.id != null) {
-      await db!.update("chat", params, where: "ROWID = ?", whereArgs: [this.id]);
+      await db.update("chat", params, where: "ROWID = ?", whereArgs: [this.id]);
     } else {
       await this.save(updateIfAbsent: false);
     }
@@ -356,7 +355,7 @@ class Chat {
 
     try {
       // Add the relationship
-      await db!.insert("chat_message_join", {"chatId": this.id, "messageId": message.id});
+      await db.insert("chat_message_join", {"chatId": this.id, "messageId": message.id});
     } catch (ex) {
       // Don't do anything if it already exists
     }
@@ -454,7 +453,7 @@ class Chat {
 
   static Future<int?> count() async {
     final Database db = await DBProvider.db.database;
-    if (db == null) return null;
+
     List<Map<String, dynamic>> test = await db.rawQuery("SELECT COUNT(*) FROM chat;");
     return test[0]['COUNT(*)'];
   }
@@ -484,7 +483,7 @@ class Chat {
     query += " ORDER BY message.dateCreated DESC LIMIT $limit OFFSET $offset";
 
     // Execute the query
-    var res = await db!.rawQuery("$query;", [chat.id]);
+    var res = await db.rawQuery("$query;", [chat.id]);
     List<Attachment> attachments = res.map((attachment) => Attachment.fromMap(attachment)).where((element) {
       String? mimeType = element.mimeType;
       if (mimeType == null) return false;
@@ -601,7 +600,7 @@ class Chat {
     String pagination = " ORDER BY message.originalROWID DESC LIMIT $limit OFFSET $offset;";
 
     // Execute the query
-    var res = await db!
+    var res = await db
         .rawQuery("$query" + " AND message.originalROWID IS NOT NULL GROUP BY message.ROWID" + pagination, [chat.id]);
 
     // Add the from/handle data to the messages
@@ -658,7 +657,7 @@ class Chat {
     final Database db = await DBProvider.db.database;
     if (this.id == null) return this;
 
-    var res = await db!.rawQuery(
+    var res = await db.rawQuery(
         "SELECT"
         " handle.ROWID AS ROWID,"
         " handle.originalROWID as originalROWID,"
@@ -686,7 +685,7 @@ class Chat {
     if (participant.id == null) return this;
 
     try {
-      await db!.insert("chat_handle_join", {"chatId": this.id, "handleId": participant.id});
+      await db.insert("chat_handle_join", {"chatId": this.id, "handleId": participant.id});
     } catch (ex) {
       // Don't do anything if it already exists
     }
@@ -702,7 +701,7 @@ class Chat {
     final Database db = await DBProvider.db.database;
 
     // First, remove from the JOIN table
-    await db!.delete("chat_handle_join", where: "chatId = ? AND handleId = ?", whereArgs: [this.id, participant.id]);
+    await db.delete("chat_handle_join", where: "chatId = ? AND handleId = ?", whereArgs: [this.id, participant.id]);
 
     // Second, remove from this object instance
     this.participants.removeWhere((element) => participant.id == element.id);
@@ -722,7 +721,7 @@ class Chat {
     if (this.id == null) return this;
 
     this.isPinned = true;
-    await db!.update("chat", {"isPinned": 1}, where: "ROWID = ?", whereArgs: [this.id]);
+    await db.update("chat", {"isPinned": 1}, where: "ROWID = ?", whereArgs: [this.id]);
 
     ChatBloc().updateChat(this);
     return this;
@@ -733,7 +732,7 @@ class Chat {
     if (this.id == null) return this;
 
     this.isPinned = false;
-    await db!.update("chat", {"isPinned": 0}, where: "ROWID = ?", whereArgs: [this.id]);
+    await db.update("chat", {"isPinned": 0}, where: "ROWID = ?", whereArgs: [this.id]);
 
     ChatBloc().updateChat(this);
     return this;
@@ -741,7 +740,7 @@ class Chat {
 
   static Future<Chat?> findOne(Map<String, dynamic> filters) async {
     final Database db = await DBProvider.db.database;
-    if (db == null) return null;
+
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];
@@ -763,7 +762,7 @@ class Chat {
     List<dynamic> whereArgs = [];
     filters.values.forEach((filter) => whereArgs.add(filter));
 
-    var res = await db!.query("chat",
+    var res = await db.query("chat",
         where: (whereParams.length > 0) ? whereParams.join(" AND ") : null,
         whereArgs: (whereArgs.length > 0) ? whereArgs : null,
         limit: limit,
@@ -774,7 +773,7 @@ class Chat {
   static Future<List<Chat>> getChats({bool archived = false, int limit = 15, int offset = 0}) async {
     final Database db = await DBProvider.db.database;
 
-    var res = await db!.rawQuery(
+    var res = await db.rawQuery(
         "SELECT"
         " chat.ROWID as ROWID,"
         " chat.originalROWID as originalROWID,"
@@ -810,7 +809,7 @@ class Chat {
 
   Future<void> clearTranscript() async {
     final Database db = await DBProvider.db.database;
-    if (db == null) return;
+
     await db.rawQuery(
         "UPDATE message "
         "SET dateDeleted = ${DateTime.now().toUtc().millisecondsSinceEpoch} "
@@ -835,7 +834,6 @@ class Chat {
 
   static flush() async {
     final Database db = await DBProvider.db.database;
-    if (db == null) return;
     await db.delete("chat");
   }
 

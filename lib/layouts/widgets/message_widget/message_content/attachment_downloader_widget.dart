@@ -31,13 +31,13 @@ class _AttachmentDownloaderWidgetState extends State<AttachmentDownloaderWidget>
           child: Column(
             children: <Widget>[
               Text(
-                widget.attachment!.getFriendlySize(),
+                widget.attachment.getFriendlySize(),
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               Icon(Icons.cloud_download, size: 28.0),
-              (widget.attachment!.mimeType != null)
+              (widget.attachment.mimeType != null)
                   ? Text(
-                      widget.attachment!.mimeType!,
+                      widget.attachment.mimeType!,
                       style: Theme.of(context).textTheme.bodyText1,
                     )
                   : Container()

@@ -1,7 +1,6 @@
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 class MessageTimeStampSeparator extends StatelessWidget {
   const MessageTimeStampSeparator({
@@ -13,13 +12,13 @@ class MessageTimeStampSeparator extends StatelessWidget {
   final Message message;
 
   bool withinTimeThreshold(Message first, Message? second, {threshold: 5}) {
-    if (first == null || second == null) return false;
+    if (second == null) return false;
     return second.dateCreated!.difference(first.dateCreated!).inMinutes.abs() > threshold;
   }
 
   Map<String, String> _buildTimeStamp() {
     if (newerMessage != null &&
-        (!isEmptyString(message!.fullText) || message!.hasAttachments) &&
+        (!isEmptyString(message.fullText) || message.hasAttachments) &&
         withinTimeThreshold(message, newerMessage, threshold: 30)) {
       DateTime timeOfnewerMessage = newerMessage!.dateCreated!;
       String time = buildTime(timeOfnewerMessage);

@@ -8,9 +8,7 @@ class DBConverter {
   };
 
   static Type? getType(String type) {
-    return types.containsValue(type)
-        ? types.keys.firstWhere((key) => types[key] == type)
-        : null;
+    return types.containsValue(type) ? types.keys.firstWhere((key) => types[key] == type) : null;
   }
 
   static String? getStringType(Type? type) {
@@ -35,9 +33,9 @@ class DBConverter {
     if (type == types[bool]) {
       return value == "1";
     } else if (type == types[double]) {
-      return double.tryParse(value!);
+      return double.tryParse(value);
     } else if (type == types[int]) {
-      return int.tryParse(value!);
+      return int.tryParse(value);
     } else if (type == types[String]) {
       return value;
     } else {

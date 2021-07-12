@@ -244,7 +244,7 @@ class Message {
         map.remove("handle");
       }
 
-      this.id = await db!.insert("message", map);
+      this.id = await db.insert("message", map);
     } else if (updateIfAbsent) {
       await this.update();
     }
@@ -298,7 +298,7 @@ class Message {
       newMessage.metadata = existing.metadata;
     }
 
-    await db!.update("message", params, where: "ROWID = ?", whereArgs: [existing.id]);
+    await db.update("message", params, where: "ROWID = ?", whereArgs: [existing.id]);
 
     return newMessage;
   }
@@ -308,7 +308,7 @@ class Message {
     if (this.id == null) return this;
     this.metadata = metadata!.toJson();
 
-    await db!.update("message", {"metadata": isNullOrEmpty(this.metadata)! ? null : jsonEncode(this.metadata)},
+    await db.update("message", {"metadata": isNullOrEmpty(this.metadata)! ? null : jsonEncode(this.metadata)},
         where: "ROWID = ?", whereArgs: [this.id]);
 
     return this;
@@ -335,7 +335,7 @@ class Message {
 
     // If it already exists, update it
     if (this.id != null) {
-      await db!.update("message", params, where: "ROWID = ?", whereArgs: [this.id]);
+      await db.update("message", params, where: "ROWID = ?", whereArgs: [this.id]);
     } else {
       await this.save(false);
     }
@@ -356,7 +356,7 @@ class Message {
     final Database db = await DBProvider.db.database;
     if (this.id == null) return [];
 
-    var res = await db!.rawQuery(
+    var res = await db.rawQuery(
         "SELECT"
         " attachment.ROWID AS ROWID,"
         " attachment.originalROWID AS originalROWID,"
@@ -386,7 +386,6 @@ class Message {
 
   static Future<Chat?> getChat(Message message) async {
     final Database db = await DBProvider.db.database;
-    if (db == null) return null;
     var res = await db.rawQuery(
         "SELECT"
         " chat.ROWID AS ROWID,"
@@ -414,7 +413,6 @@ class Message {
 
   Future<Handle?> getHandle() async {
     final Database db = await DBProvider.db.database;
-    if (db == null) return null;
     var res = await db.rawQuery(
         "SELECT"
         " handle.ROWID AS ROWID,"
@@ -434,7 +432,6 @@ class Message {
 
   static Future<Message?> findOne(Map<String, dynamic> filters) async {
     final Database db = await DBProvider.db.database;
-    if (db == null) return null;
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];
@@ -456,7 +453,7 @@ class Message {
     List<dynamic> whereArgs = [];
     filters.values.forEach((filter) => whereArgs.add(filter));
 
-    var res = await db!.query("message",
+    var res = await db.query("message",
         where: (whereParams.length > 0) ? whereParams.join(" AND ") : null,
         whereArgs: (whereArgs.length > 0) ? whereArgs : null);
     return (res.isNotEmpty) ? res.map((c) => Message.fromMap(c)).toList() : [];
@@ -472,7 +469,7 @@ class Message {
 
     List<Message> toDelete = await Message.find(where);
     for (Message msg in toDelete) {
-      await db!.delete("chat_message_join", where: "messageId = ?", whereArgs: [msg.id]);
+      await db.delete("chat_message_join", where: "messageId = ?", whereArgs: [msg.id]);
       await db.delete("message", where: "ROWID = ?", whereArgs: [msg.id]);
     }
   }
@@ -487,14 +484,13 @@ class Message {
 
     List<Message> toDelete = await Message.find(where);
     for (Message msg in toDelete) {
-      await db!.update("message", {'dateDeleted': DateTime.now().toUtc().millisecondsSinceEpoch},
+      await db.update("message", {'dateDeleted': DateTime.now().toUtc().millisecondsSinceEpoch},
           where: "ROWID = ?", whereArgs: [msg.id]);
     }
   }
 
   static flush() async {
     final Database db = await DBProvider.db.database;
-    if (db == null) return;
     await db.delete("message");
   }
 
@@ -567,7 +563,7 @@ class Message {
         " WHERE chat.ROWID = ?");
 
     // Execute the query
-    var res = await db!.rawQuery("$query;", [chat.id]);
+    var res = await db.rawQuery("$query;", [chat.id]);
     if (res.length == 0) return 0;
 
     return res[0]["count"] as int?;

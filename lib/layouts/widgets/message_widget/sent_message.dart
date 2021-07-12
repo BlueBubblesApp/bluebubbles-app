@@ -253,24 +253,22 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
   @override
   void initState() {
     super.initState();
-    initMessageState(widget.message!, false);
+    initMessageState(widget.message, false);
   }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.message == null) return Container();
-
     // The column that holds all the "messages"
     List<Widget> messageColumn = [];
 
     // Second, add the attachments
-    if (isEmptyString(widget.message!.fullText)) {
+    if (isEmptyString(widget.message.fullText)) {
       messageColumn.add(
         addStickersToWidget(
           message: addReactionsToWidget(
               messageWidget: widget.attachmentsWidget, reactions: widget.reactionsWidget, message: widget.message),
           stickers: widget.stickersWidget,
-          isFromMe: widget.message!.isFromMe!,
+          isFromMe: widget.message.isFromMe!,
         ),
       );
     } else {
@@ -279,19 +277,19 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
 
     // Third, let's add the message or URL preview
     Widget? message;
-    if (widget.message!.isUrlPreview()) {
+    if (widget.message.isUrlPreview()) {
       message = Padding(
         padding: EdgeInsets.only(left: 10.0),
         child: widget.urlPreviewWidget,
       );
-    } else if (widget.message!.balloonBundleId != null &&
-        widget.message!.balloonBundleId != 'com.apple.messages.URLBalloonProvider') {
+    } else if (widget.message.balloonBundleId != null &&
+        widget.message.balloonBundleId != 'com.apple.messages.URLBalloonProvider') {
       message = BalloonBundleWidget(message: widget.message);
-    } else if (!isEmptyString(widget.message!.text)) {
+    } else if (!isEmptyString(widget.message.text)) {
       message = SentMessageHelper.buildMessageWithTail(
-          context, widget.message, widget.showTail, widget.message!.hasReactions, widget.message!.bigEmoji ?? false,
+          context, widget.message, widget.showTail, widget.message.hasReactions, widget.message.bigEmoji ?? false,
           olderMessage: widget.olderMessage);
-      if (widget.showHero!) {
+      if (widget.showHero) {
         message = Hero(
           tag: "first",
           child: Material(
@@ -314,7 +312,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
               reactions: widget.reactionsWidget,
               message: widget.message),
           stickers: widget.stickersWidget,
-          isFromMe: widget.message!.isFromMe!,
+          isFromMe: widget.message.isFromMe!,
         ),
       );
     }
@@ -337,7 +335,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
         // Padding to shift the bubble up a bit, relative to the avatar
         padding: EdgeInsets.only(
             top: (SettingsManager().settings.skin.value != Skins.iOS &&
-                    widget.message?.isFromMe == widget.olderMessage?.isFromMe)
+                    widget.message.isFromMe == widget.olderMessage?.isFromMe)
                 ? (SettingsManager().settings.skin.value != Skins.iOS)
                     ? 0
                     : 3
@@ -346,10 +344,10 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
                     : 10,
             bottom: (SettingsManager().settings.skin.value == Skins.iOS &&
                     widget.showTail &&
-                    !isEmptyString(widget.message!.fullText))
+                    !isEmptyString(widget.message.fullText))
                 ? 5.0
                 : 0,
-            right: isEmptyString(widget.message!.fullText) && widget.message!.error == 0 ? 10.0 : 0.0),
+            right: isEmptyString(widget.message.fullText) && widget.message.error == 0 ? 10.0 : 0.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -365,7 +363,8 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
       crossAxisAlignment:
           (SettingsManager().settings.skin.value == Skins.iOS) ? CrossAxisAlignment.center : CrossAxisAlignment.end,
       children: [
-        if (SettingsManager().settings.skin.value == Skins.iOS || SettingsManager().settings.skin.value == Skins.Material)
+        if (SettingsManager().settings.skin.value == Skins.iOS ||
+            SettingsManager().settings.skin.value == Skins.Material)
           MessagePopupHolder(
             message: widget.message,
             child: Row(
@@ -385,7 +384,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
               children: msgRow,
             ),
           ),
-        if (SettingsManager().settings.skin.value != Skins.Samsung && widget.message?.guid != widget.olderMessage?.guid)
+        if (SettingsManager().settings.skin.value != Skins.Samsung && widget.message.guid != widget.olderMessage?.guid)
           MessageTimeStamp(
             message: widget.message,
           )

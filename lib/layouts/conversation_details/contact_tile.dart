@@ -48,7 +48,7 @@ class _ContactTileState extends State<ContactTile> {
     fetchAvatar();
     ContactManager().stream.listen((List<String> addresses) {
       // Check if any of the addresses are members of the chat
-      List<Handle> participants = widget.chat!.participants;
+      List<Handle> participants = widget.chat.participants;
       List<String?> handles = participants.map((Handle handle) => handle.address).toList();
       for (String addr in addresses) {
         if (handles.contains(addr)) {
@@ -111,16 +111,16 @@ class _ContactTileState extends State<ContactTile> {
     final bool redactedMode = SettingsManager().settings.redactedMode;
     final bool hideInfo = redactedMode && (SettingsManager().settings.hideContactInfo);
     final bool generateName = redactedMode && (SettingsManager().settings.generateFakeContactNames);
-    final bool isEmail = widget.handle?.address?.isEmail ?? false;
+    final bool isEmail = widget.handle.address?.isEmail ?? false;
     return InkWell(
       onLongPress: () {
-        Clipboard.setData(new ClipboardData(text: widget.handle!.address));
+        Clipboard.setData(new ClipboardData(text: widget.handle.address));
         showSnackbar('Copied', 'Address copied to clipboard');
       },
       onTap: () async {
         if (contact == null) {
           await MethodChannelInterface().invokeMethod("open-contact-form",
-              {'address': widget.handle!.address, 'addressType': widget.handle!.address!.isEmail ? 'email' : 'phone'});
+              {'address': widget.handle.address, 'addressType': widget.handle.address!.isEmail ? 'email' : 'phone'});
         } else {
           await MethodChannelInterface().invokeMethod("view-contact-form", {'id': contact!.identifier});
         }
@@ -128,7 +128,7 @@ class _ContactTileState extends State<ContactTile> {
       child: ListTile(
         title: (contact?.displayName != null || hideInfo || generateName)
             ? Text(
-                getContactName(context, contact?.displayName, widget.handle?.address, currentChat: widget.chat)!,
+                getContactName(context, contact?.displayName, widget.handle.address, currentChat: widget.chat)!,
                 style: Theme.of(context).textTheme.bodyText1,
               )
             : FutureBuilder<String>(
@@ -136,7 +136,7 @@ class _ContactTileState extends State<ContactTile> {
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
                     return Text(
-                      widget.handle?.address ?? "",
+                      widget.handle.address ?? "",
                       style: Theme.of(context).textTheme.bodyText1,
                     );
                   }
@@ -153,7 +153,7 @@ class _ContactTileState extends State<ContactTile> {
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
                     return Text(
-                      widget.handle?.address ?? "",
+                      widget.handle.address ?? "",
                       style: Theme.of(context).textTheme.subtitle1!.apply(fontSizeDelta: -0.5),
                     );
                   }
@@ -181,8 +181,8 @@ class _ContactTileState extends State<ContactTile> {
                       backgroundColor: Theme.of(context).accentColor,
                     ),
                     onPressed: () {
-                      if (widget.handle!.address == null) return;
-                      startEmail(widget.handle!.address!);
+                      if (widget.handle.address == null) return;
+                      startEmail(widget.handle.address!);
                     },
                     child: Icon(Icons.email, color: Theme.of(context).primaryColor, size: 20),
                   ),
@@ -197,8 +197,8 @@ class _ContactTileState extends State<ContactTile> {
                         ),
                         onPressed: () {
                           if (contact == null) {
-                            if (widget.handle!.address == null) return;
-                            makeCall(widget.handle!.address!);
+                            if (widget.handle.address == null) return;
+                            makeCall(widget.handle.address!);
                           } else {
                             List<Item> phones = getUniqueNumbers(contact!.phones!);
                             if (phones.length == 1) {
@@ -247,7 +247,7 @@ class _ContactTileState extends State<ContactTile> {
 
   @override
   Widget build(BuildContext context) {
-    return widget.canBeRemoved!
+    return widget.canBeRemoved
         ? Slidable(
             actionExtentRatio: 0.25,
             actionPane: SlidableStrechActionPane(),
@@ -271,8 +271,8 @@ class _ContactTileState extends State<ContactTile> {
                       });
 
                   Map<String, dynamic> params = new Map();
-                  params["identifier"] = widget.chat!.guid;
-                  params["address"] = widget.handle!.address;
+                  params["identifier"] = widget.chat.guid;
+                  params["address"] = widget.handle.address;
                   SocketManager().sendMessage("remove-participant", params, (response) async {
                     debugPrint("removed participant participant " + response.toString());
                     if (response["status"] == 200) {
@@ -281,7 +281,7 @@ class _ContactTileState extends State<ContactTile> {
                       await ChatBloc().updateChatPosition(updatedChat);
                       Chat chatWithParticipants = await updatedChat.getParticipants();
                       debugPrint("updating chat with ${chatWithParticipants.participants.length} participants");
-                      widget.updateChat!(chatWithParticipants);
+                      widget.updateChat(chatWithParticipants);
                       Navigator.of(context).pop();
                     }
                   });

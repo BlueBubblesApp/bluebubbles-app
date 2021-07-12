@@ -52,17 +52,17 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
   }
 
   Future<void> initBytes() async {
-    if (widget.attachment!.mimeType == "image/heic") {
-      bytes = await FlutterImageCompress.compressWithFile(widget.file!.absolute.path, quality: 100);
+    if (widget.attachment.mimeType == "image/heic") {
+      bytes = await FlutterImageCompress.compressWithFile(widget.file.absolute.path, quality: 100);
     } else {
-      bytes = await widget.file!.readAsBytes();
+      bytes = await widget.file.readAsBytes();
     }
     if (this.mounted) setState(() {});
   }
 
   @override
   void dispose() {
-    controller!.dispose();
+    controller.dispose();
     super.dispose();
   }
 
@@ -100,7 +100,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                     padding: EdgeInsets.symmetric(horizontal: 5),
                     onPressed: () async {
                       List<Widget> metaWidgets = [];
-                      for (var entry in widget.attachment!.metadata?.entries ?? {}.entries) {
+                      for (var entry in widget.attachment.metadata?.entries ?? {}.entries) {
                         metaWidgets.add(RichText(
                             text: TextSpan(children: [
                           TextSpan(
@@ -168,10 +168,10 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                   child: CupertinoButton(
                     padding: EdgeInsets.symmetric(horizontal: 5),
                     onPressed: () async {
-                      CurrentChat.of(context)?.clearImageData(widget.attachment!);
+                      CurrentChat.of(context)?.clearImageData(widget.attachment);
 
                       showSnackbar('In Progress', 'Redownloading attachment. Please wait...');
-                      await AttachmentHelper.redownloadAttachment(widget.attachment!, onComplete: () {
+                      await AttachmentHelper.redownloadAttachment(widget.attachment, onComplete: () {
                         initBytes();
                       }, onError: () {
                         Navigator.pop(context);
@@ -205,8 +205,8 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                     padding: EdgeInsets.symmetric(horizontal: 5),
                     onPressed: () async {
                       Share.file(
-                        "Shared ${widget.attachment!.mimeType!.split("/")[0]} from BlueBubbles: ${widget.attachment!.transferName}",
-                        widget.file!.path,
+                        "Shared ${widget.attachment.mimeType!.split("/")[0]} from BlueBubbles: ${widget.attachment.transferName}",
+                        widget.file.path,
                       );
                     },
                     child: Icon(
@@ -230,14 +230,15 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarIconBrightness:
+            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
         backgroundColor: Colors.black,
         body: GestureDetector(
           onTap: () {
-            if (!this.mounted || !widget.showInteractions!) return;
+            if (!this.mounted || !widget.showInteractions) return;
 
             setState(() {
               showOverlay = !showOverlay;
@@ -274,8 +275,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                         }
                       },
                       errorBuilder: (context, object, stacktrace) => Center(
-                          child: Text("Failed to display image", style: TextStyle(fontSize: 16, color: Colors.white)))
-                    )
+                          child: Text("Failed to display image", style: TextStyle(fontSize: 16, color: Colors.white))))
                   : loader,
               overlay
             ],

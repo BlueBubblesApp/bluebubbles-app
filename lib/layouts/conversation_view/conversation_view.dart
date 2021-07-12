@@ -23,7 +23,6 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:keyboard_attachable/keyboard_attachable.dart';
 import 'package:slugify/slugify.dart';
 
@@ -90,7 +89,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       initCurrentChat(widget.chat!);
     }
 
-    isCreator = widget.isCreator ?? false;
+    isCreator = widget.isCreator;
     chat = widget.chat;
 
     if (widget.selected.isEmpty) {
@@ -118,7 +117,8 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
     SchedulerBinding.instance!.addPostFrameCallback((_) {
       if (widget.showSnackbar) {
-        showSnackbar('Warning', 'Support for creating chats is currently limited on MacOS 11 (Big Sur) and up due to limitations imposed by Apple');
+        showSnackbar('Warning',
+            'Support for creating chats is currently limited on MacOS 11 (Big Sur) and up due to limitations imposed by Apple');
       }
     });
   }
@@ -223,7 +223,8 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       );
     } else if (currentChat != null &&
         currentChat!.showScrollDown &&
-        (SettingsManager().settings.skin.value == Skins.Material || SettingsManager().settings.skin.value == Skins.Samsung)) {
+        (SettingsManager().settings.skin.value == Skins.Material ||
+            SettingsManager().settings.skin.value == Skins.Samsung)) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 55.0),
         child: FloatingActionButton(
@@ -235,7 +236,9 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
           backgroundColor: Theme.of(context).accentColor,
         ),
       );
-    } else if (currentChat != null && currentChat!.showScrollDown && SettingsManager().settings.skin.value == Skins.iOS) {
+    } else if (currentChat != null &&
+        currentChat!.showScrollDown &&
+        SettingsManager().settings.skin.value == Skins.iOS) {
       return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         Padding(
           padding: EdgeInsets.only(left: 25.0, bottom: 45),
@@ -311,13 +314,16 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarIconBrightness:
+            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
         extendBodyBehindAppBar: !isCreator!,
-        appBar: !isCreator! ? buildConversationViewHeader() as PreferredSizeWidget? : buildChatSelectorHeader() as PreferredSizeWidget?,
+        appBar: !isCreator!
+            ? buildConversationViewHeader() as PreferredSizeWidget?
+            : buildChatSelectorHeader() as PreferredSizeWidget?,
         resizeToAvoidBottomInset: wasCreator,
         body: FooterLayout(
           footer: KeyboardAttachable(
@@ -353,12 +359,12 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                     if (this.mounted) setState(() {});
                   },
                   onSelected: onSelected,
-                  isCreator: widget.isCreator ?? false,
+                  isCreator: widget.isCreator,
                   allContacts: contacts,
                   selectedContacts: selected,
                 ),
               Expanded(
-                child: (searchQuery!.length == 0 || !isCreator!) && chat != null
+                child: (searchQuery.length == 0 || !isCreator!) && chat != null
                     ? MessagesView(
                         key: new Key(chat?.guid ?? "unknown-chat"),
                         messageBloc: messageBloc,

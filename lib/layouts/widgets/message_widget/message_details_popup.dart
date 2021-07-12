@@ -72,11 +72,11 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
     currentChat = widget.currentChat;
 
     messageTopOffset = widget.childOffset.dy;
-    topMinimum = CupertinoNavigationBar().preferredSize.height + (widget.message!.hasReactions ? 110 : 50);
+    topMinimum = CupertinoNavigationBar().preferredSize.height + (widget.message.hasReactions ? 110 : 50);
 
     dmChat = ChatBloc().chats.firstWhereOrNull(
           (chat) =>
-              !chat.isGroup() && chat.participants.where((handle) => handle.id == widget.message!.handleId).length == 1,
+              !chat.isGroup() && chat.participants.where((handle) => handle.id == widget.message.handleId).length == 1,
         );
 
     fetchReactions();
@@ -118,7 +118,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
     fetchRequest = new Completer();
 
     // If there are no associated messages, return now
-    List<Message> reactions = widget.message!.getReactions();
+    List<Message> reactions = widget.message.getReactions();
     if (reactions.isEmpty) {
       return fetchRequest!.complete();
     }
@@ -157,7 +157,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
 
   @override
   Widget build(BuildContext context) {
-    bool isSent = !widget.message!.guid!.startsWith('temp') && !widget.message!.guid!.startsWith('error');
+    bool isSent = !widget.message.guid!.startsWith('temp') && !widget.message.guid!.startsWith('error');
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
@@ -255,7 +255,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
         .toDouble()
         .clamp(topMinimum, size.height - Get.mediaQuery.viewInsets.bottom - 120 - menuHeight);
     double leftOffset =
-        (widget.message!.isFromMe! ? size.width - maxMenuWidth - 25 : 25 + (currentChat!.chat.isGroup() ? 20 : 0))
+        (widget.message.isFromMe! ? size.width - maxMenuWidth - 25 : 25 + (currentChat!.chat.isGroup() ? 20 : 0))
             .toDouble();
     Color iconColor = Colors.white;
 
@@ -329,11 +329,11 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   }
 
   bool get showDownload =>
-      widget.message!.hasAttachments &&
-      widget.message!.attachments!.where((element) => element!.mimeStart != null).length > 0 &&
-      widget.message!.attachments!.where((element) => AttachmentHelper.getContent(element!) is File).length > 0;
+      widget.message.hasAttachments &&
+      widget.message.attachments!.where((element) => element!.mimeStart != null).length > 0 &&
+      widget.message.attachments!.where((element) => AttachmentHelper.getContent(element!) is File).length > 0;
 
-  bool get isSent => !widget.message!.guid!.startsWith('temp') && !widget.message!.guid!.startsWith('error');
+  bool get isSent => !widget.message.guid!.startsWith('temp') && !widget.message.guid!.startsWith('error');
 
   double? get detailsMenuHeight {
     return height;
@@ -351,7 +351,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
     double maxHeight = size.height - topMinimum - widget.childSize!.height;
 
     List<Widget> allActions = [
-      if (widget.currentChat!.chat.isGroup() && !widget.message!.isFromMe! && dmChat != null)
+      if (widget.currentChat!.chat.isGroup() && !widget.message.isFromMe! && dmChat != null)
         Material(
           color: Colors.transparent,
           child: InkWell(
@@ -379,7 +379,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             ),
           ),
         ),
-      if (widget.currentChat!.chat.isGroup() && !widget.message!.isFromMe! && dmChat == null)
+      if (widget.currentChat!.chat.isGroup() && !widget.message.isFromMe! && dmChat == null)
         Material(
           color: Colors.transparent,
           child: InkWell(
@@ -431,13 +431,13 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
               cupertino.CupertinoPageRoute(
                 builder: (BuildContext context) {
                   List<File> existingAttachments = [];
-                  if (!widget.message!.isUrlPreview()) {
+                  if (!widget.message.isUrlPreview()) {
                     existingAttachments =
-                        widget.message!.attachments!.map((attachment) => File(attachment!.getPath())).toList();
+                        widget.message.attachments!.map((attachment) => File(attachment!.getPath())).toList();
                   }
                   return ConversationView(
                     isCreator: true,
-                    existingText: widget.message!.text,
+                    existingText: widget.message.text,
                     existingAttachments: existingAttachments,
                     showSnackbar: shouldShowSnackbar,
                   );
@@ -461,8 +461,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
         color: Colors.transparent,
         child: InkWell(
           onTap: () async {
-            NewMessageManager().removeMessage(widget.currentChat!.chat, widget.message!.guid);
-            await Message.softDelete({"guid": widget.message!.guid});
+            NewMessageManager().removeMessage(widget.currentChat!.chat, widget.message.guid);
+            await Message.softDelete({"guid": widget.message.guid});
             Navigator.of(context).pop();
           },
           child: ListTile(
@@ -477,12 +477,12 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
           ),
         ),
       ),
-      if (!isEmptyString(widget.message!.fullText))
+      if (!isEmptyString(widget.message.fullText))
         Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: () {
-              Clipboard.setData(new ClipboardData(text: widget.message!.fullText));
+              Clipboard.setData(new ClipboardData(text: widget.message.fullText));
               showSnackbar("Copied", "Copied to clipboard!");
             },
             child: ListTile(
@@ -494,12 +494,12 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             ),
           ),
         ),
-      if (!isEmptyString(widget.message!.fullText))
+      if (!isEmptyString(widget.message.fullText))
         Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: () {
-              if (isEmptyString(widget.message!.fullText)) return;
+              if (isEmptyString(widget.message.fullText)) return;
               showDialog(
                   context: context,
                   builder: (_) {
@@ -514,7 +514,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                       child: SingleChildScrollView(
                         physics: ThemeSwitcher.getScrollPhysics(),
                         child: SelectableText(
-                          widget.message!.fullText!,
+                          widget.message.fullText!,
                           style: Theme.of(context).textTheme.bodyText1,
                         ),
                       ),
@@ -562,7 +562,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
           color: Colors.transparent,
           child: InkWell(
             onTap: () async {
-              for (Attachment? element in widget.message!.attachments!) {
+              for (Attachment? element in widget.message.attachments!) {
                 CurrentChat.of(context)?.clearImageData(element!);
                 await AttachmentHelper.redownloadAttachment(element!);
                 Navigator.pop(context);
@@ -586,7 +586,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
           color: Colors.transparent,
           child: InkWell(
             onTap: () async {
-              for (Attachment? element in widget.message!.attachments!) {
+              for (Attachment? element in widget.message.attachments!) {
                 dynamic content = AttachmentHelper.getContent(element!);
                 if (content is File) {
                   await AttachmentHelper.saveToGallery(context, content);
@@ -605,22 +605,22 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             ),
           ),
         ),
-      if (widget.message!.hasAttachments || widget.message!.text!.length > 0)
+      if (widget.message.hasAttachments || widget.message.text!.length > 0)
         Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: () {
-              if (widget.message!.hasAttachments && !widget.message!.isUrlPreview()) {
-                for (Attachment? element in widget.message!.attachments!) {
+              if (widget.message.hasAttachments && !widget.message.isUrlPreview()) {
+                for (Attachment? element in widget.message.attachments!) {
                   Share.file(
                     "${element!.mimeType!.split("/")[0].capitalizeFirst} shared from BlueBubbles: ${element.transferName}",
                     element.getPath(),
                   );
                 }
-              } else if (widget.message!.text!.length > 0) {
+              } else if (widget.message.text!.length > 0) {
                 Share.text(
                   "Text shared from BlueBubbles",
-                  widget.message!.text!,
+                  widget.message.text!,
                 );
               }
             },
@@ -715,7 +715,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
 
     double topOffset = (messageTopOffset + widget.childSize!.height).toDouble().clamp(topMinimum, upperLimit);
     double leftOffset =
-        (widget.message!.isFromMe! ? size.width - maxMenuWidth - 15 : 15 + (currentChat!.chat.isGroup() ? 35 : 0))
+        (widget.message.isFromMe! ? size.width - maxMenuWidth - 15 : 15 + (currentChat!.chat.isGroup() ? 35 : 0))
             .toDouble();
     return Positioned(
       top: topOffset + 5,

@@ -20,8 +20,8 @@ class _ThemingColorPickerPopupState extends State<ThemingColorPickerPopup> {
   @override
   void initState() {
     super.initState();
-    currentColor = widget.entry!.color;
-    if (widget.entry!.isFont!) currentFontSize = widget.entry!.fontSize;
+    currentColor = widget.entry.color;
+    if (widget.entry.isFont!) currentFontSize = widget.entry.fontSize;
   }
 
   @override
@@ -35,17 +35,17 @@ class _ThemingColorPickerPopupState extends State<ThemingColorPickerPopup> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ColorPicker(
-                pickerColor: widget.entry!.color!,
+                pickerColor: widget.entry.color!,
                 onColorChanged: (Color color) => currentColor = color,
                 showLabel: true,
                 pickerAreaHeightPercent: 0.8,
                 labelTextStyle: whiteLightTheme.textTheme.bodyText1!.apply(color: Colors.white)),
-            if (widget.entry!.isFont!)
+            if (widget.entry.isFont!)
               Text(
                 "Font Size",
                 style: whiteLightTheme.textTheme.bodyText1!.apply(color: Colors.white),
               ),
-            if (widget.entry!.isFont!)
+            if (widget.entry.isFont!)
               Slider(
                 onChanged: (double value) {
                   setState(() {
@@ -65,7 +65,7 @@ class _ThemingColorPickerPopupState extends State<ThemingColorPickerPopup> {
         TextButton(
           child: Text("OK", style: whiteLightTheme.textTheme.bodyText1!.apply(color: Colors.white)),
           onPressed: () {
-            widget.onSet!(currentColor, fontSize: currentFontSize);
+            widget.onSet(currentColor, fontSize: currentFontSize);
             Navigator.of(context).pop();
           },
         )

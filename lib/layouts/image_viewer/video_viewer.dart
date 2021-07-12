@@ -15,7 +15,8 @@ import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoViewer extends StatefulWidget {
-  VideoViewer({Key? key, required this.file, required this.attachment, required this.showInteractions}) : super(key: key);
+  VideoViewer({Key? key, required this.file, required this.attachment, required this.showInteractions})
+      : super(key: key);
   final File file;
   final Attachment attachment;
   final bool showInteractions;
@@ -36,9 +37,9 @@ class _VideoViewerState extends State<VideoViewer> {
   void initState() {
     super.initState();
     controller = new VideoPlayerController.file(widget.file);
-    controller!.setVolume(SettingsManager().settings.startVideosMutedFullscreen ? 0 : 1);
+    controller.setVolume(SettingsManager().settings.startVideosMutedFullscreen ? 0 : 1);
     this.createListener(controller);
-    showPlayPauseOverlay = !controller!.value.isPlaying;
+    showPlayPauseOverlay = !controller.value.isPlaying;
   }
 
   void setVideoProgress(double value) {
@@ -78,21 +79,21 @@ class _VideoViewerState extends State<VideoViewer> {
   @override
   void didChangeDependencies() async {
     super.didChangeDependencies();
-    await controller!.initialize();
+    await controller.initialize();
     if (this.mounted) setState(() {});
   }
 
   @override
   void dispose() {
     videoProgressStream.close();
-    controller!.dispose();
+    controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     List<Widget> interactives = [];
-    if (widget.showInteractions != null) {
+    if (widget.showInteractions) {
       interactives.addAll([
         Padding(
           padding: EdgeInsets.only(top: 50.0, right: 10),
@@ -133,7 +134,8 @@ class _VideoViewerState extends State<VideoViewer> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarIconBrightness:
+            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
@@ -164,10 +166,10 @@ class _VideoViewerState extends State<VideoViewer> {
                           maxWidth: context.width,
                         ),
                         child: AspectRatio(
-                          aspectRatio: controller!.value.aspectRatio,
+                          aspectRatio: controller.value.aspectRatio,
                           child: Stack(
                             children: <Widget>[
-                              VideoPlayer(controller!),
+                              VideoPlayer(controller),
                             ],
                           ),
                         ),
@@ -183,7 +185,7 @@ class _VideoViewerState extends State<VideoViewer> {
                         borderRadius: BorderRadius.circular(40),
                       ),
                       padding: EdgeInsets.all(10),
-                      child: controller!.value.isPlaying
+                      child: controller.value.isPlaying
                           ? GestureDetector(
                               child: Icon(
                                 Icons.pause,
@@ -191,7 +193,7 @@ class _VideoViewerState extends State<VideoViewer> {
                                 size: 45,
                               ),
                               onTap: () {
-                                controller!.pause();
+                                controller.pause();
                                 if (this.mounted) setState(() {});
                                 resetTimer();
                                 setTimer();
@@ -204,7 +206,7 @@ class _VideoViewerState extends State<VideoViewer> {
                                 size: 45,
                               ),
                               onTap: () {
-                                controller!.play();
+                                controller.play();
                                 resetTimer();
                                 setTimer();
                                 if (this.mounted) setState(() {});
@@ -231,30 +233,30 @@ class _VideoViewerState extends State<VideoViewer> {
                             height: context.height * 1 / 10,
                             child: Slider(
                               min: 0,
-                              max: controller!.value.duration.inMilliseconds.toDouble(),
+                              max: controller.value.duration.inMilliseconds.toDouble(),
                               onChangeStart: (value) {
-                                controller!.pause();
+                                controller.pause();
                                 videoProgressStream.sink.add(value);
-                                controller!.seekTo(Duration(milliseconds: value.toInt()));
+                                controller.seekTo(Duration(milliseconds: value.toInt()));
                                 resetTimer();
                               },
                               onChanged: (double value) async {
                                 // controller.pause();
                                 videoProgressStream.sink.add(value);
 
-                                if ((await controller!.position)!.inMilliseconds != value.toInt()) {
-                                  controller!.seekTo(Duration(milliseconds: value.toInt()));
+                                if ((await controller.position)!.inMilliseconds != value.toInt()) {
+                                  controller.seekTo(Duration(milliseconds: value.toInt()));
                                 }
                               },
                               onChangeEnd: (double value) {
-                                controller!.play();
+                                controller.play();
                                 videoProgressStream.sink.add(value);
 
-                                controller!.seekTo(Duration(milliseconds: value.toInt()));
+                                controller.seekTo(Duration(milliseconds: value.toInt()));
                                 setTimer();
                               },
                               value: (snapshot.hasData ? snapshot.data : 0.0)!
-                                  .clamp(0, controller!.value.duration.inMilliseconds)
+                                  .clamp(0, controller.value.duration.inMilliseconds)
                                   .toDouble(),
                             ),
                           ),
@@ -263,12 +265,12 @@ class _VideoViewerState extends State<VideoViewer> {
                           child: Padding(
                             padding: const EdgeInsets.only(right: 20.0),
                             child: Icon(
-                              controller!.value.volume == 0.0 ? Icons.volume_mute : Icons.volume_up,
+                              controller.value.volume == 0.0 ? Icons.volume_mute : Icons.volume_up,
                               color: Theme.of(context).primaryColor,
                             ),
                           ),
                           onTap: () {
-                            controller!.setVolume(controller!.value.volume != 0.0 ? 0.0 : 1.0);
+                            controller.setVolume(controller.value.volume != 0.0 ? 0.0 : 1.0);
                           },
                         ),
                       ],

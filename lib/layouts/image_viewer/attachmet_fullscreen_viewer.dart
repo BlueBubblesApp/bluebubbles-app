@@ -87,7 +87,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
   void getStartingIndex() {
     if (widget.currentChat == null) return;
     for (int i = 0; i < widget.currentChat!.chatAttachments.length; i++) {
-      if (widget.currentChat!.chatAttachments[i].guid == widget.attachment!.guid) {
+      if (widget.currentChat!.chatAttachments[i].guid == widget.attachment.guid) {
         startingIndex = i;
       }
     }
@@ -132,7 +132,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                 itemBuilder: (BuildContext context, int index) {
                   debugPrint("Showing index: " + index.toString());
                   Attachment attachment =
-                      widget.currentChat != null ? widget.currentChat!.chatAttachments[index] : widget.attachment!;
+                      widget.currentChat != null ? widget.currentChat!.chatAttachments[index] : widget.attachment;
                   String mimeType = attachment.mimeType!;
                   mimeType = mimeType.substring(0, mimeType.indexOf("/"));
                   dynamic content = AttachmentHelper.getContent(attachment,
@@ -178,7 +178,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                     );
                   } else if (content is AttachmentDownloader) {
                     content = content;
-                    if (widget.attachment!.mimeType == null) return Container();
+                    if (widget.attachment.mimeType == null) return Container();
                     content.stream.listen((event) {
                       if (event is File) {
                         content = event;
@@ -225,7 +225,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                                           backgroundColor: Colors.grey,
                                           valueColor: AlwaysStoppedAnimation(Colors.white),
                                         ),
-                                        ((content as AttachmentDownloader).attachment!.mimeType != null)
+                                        ((content as AttachmentDownloader).attachment.mimeType != null)
                                             ? Container(height: 5.0)
                                             : Container(),
                                         (content.attachment.mimeType != null)

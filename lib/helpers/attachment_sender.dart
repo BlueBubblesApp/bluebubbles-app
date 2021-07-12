@@ -161,12 +161,12 @@ class AttachmentSender {
 
     // Add the message to the chat.
     // This will save the message, attachments, and chat
-    await _chat!.addMessage(sentMessage!);
+    await _chat.addMessage(sentMessage!);
     NewMessageManager().addMessage(_chat, sentMessage!, outgoing: true);
 
     // If there is any text, save the text too
     if (messageWithText != null) {
-      await _chat!.addMessage(messageWithText!);
+      await _chat.addMessage(messageWithText!);
       NewMessageManager().addMessage(_chat, messageWithText!, outgoing: true);
     }
 

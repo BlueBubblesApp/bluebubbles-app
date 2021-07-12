@@ -32,7 +32,7 @@ class _LocationWidgetState extends State<LocationWidget> with AutomaticKeepAlive
   void loadLocation() {
     // If we already have location data, don't load it again
     if (location != null) return;
-    String _location = widget.file!.readAsStringSync();
+    String _location = widget.file.readAsStringSync();
     location = AttachmentHelper.parseAppleLocation(_location);
 
     if (location != null && this.mounted) {

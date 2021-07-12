@@ -33,7 +33,7 @@ class AttachmentDownloader {
       return;
     }
 
-    if (autoFetch) fetchAttachment(attachment!);
+    if (autoFetch) fetchAttachment(attachment);
   }
 
   getChunkRecursive(String guid, int index, int total, List<int> currentBytes, Function cb) {
@@ -79,7 +79,7 @@ class AttachmentDownloader {
         debugPrint("Finished fetching attachment");
         await cb.call();
       }
-    }, reason: "Attachment downloader " + attachment!.guid!, path: _attachment!.getPath());
+    }, reason: "Attachment downloader " + attachment.guid!, path: _attachment.getPath());
   }
 
   Future<void> fetchAttachment(Attachment attachment) async {

@@ -41,27 +41,27 @@ class _ConversationDetailsState extends State<ConversationDetails> {
   bool showNameField = false;
 
   bool get shouldShowMore {
-    return chat!.participants.length > maxPageSize;
+    return chat.participants.length > maxPageSize;
   }
 
   List<Handle> get participants {
     // If we are showing all, return everything
-    if (showMore) return chat!.participants;
+    if (showMore) return chat.participants;
 
     // If we aren't showing all, show the max we can show
-    return chat!.participants.length > maxPageSize ? chat!.participants.sublist(0, maxPageSize) : chat!.participants;
+    return chat.participants.length > maxPageSize ? chat.participants.sublist(0, maxPageSize) : chat.participants;
   }
 
   @override
   void initState() {
     super.initState();
     chat = widget.chat;
-    controller = new TextEditingController(text: chat!.displayName);
-    showNameField = chat!.displayName!.isNotEmpty;
+    controller = new TextEditingController(text: chat.displayName);
+    showNameField = chat.displayName!.isNotEmpty;
 
     fetchAttachments();
     ChatBloc().chatStream.listen((event) async {
-      Chat? _chat = await Chat.findOne({"guid": widget.chat!.guid});
+      Chat? _chat = await Chat.findOne({"guid": widget.chat.guid});
       if (_chat == null) return;
       await _chat.getParticipants();
       chat = _chat;
@@ -73,15 +73,15 @@ class _ConversationDetailsState extends State<ConversationDetails> {
   void didChangeDependencies() async {
     super.didChangeDependencies();
 
-    await chat!.getParticipants();
-    readOnly = !(chat!.participants.length > 1);
+    await chat.getParticipants();
+    readOnly = !(chat.participants.length > 1);
 
     debugPrint("updated readonly $readOnly");
     if (this.mounted) setState(() {});
   }
 
   void fetchAttachments() {
-    Chat.getAttachments(chat!).then((value) {
+    Chat.getAttachments(chat).then((value) {
       attachmentsForChat = value;
       if (this.mounted) setState(() {});
     });
@@ -92,13 +92,14 @@ class _ConversationDetailsState extends State<ConversationDetails> {
     final bool redactedMode = SettingsManager().settings.redactedMode;
     final bool hideInfo = redactedMode && (SettingsManager().settings.hideContactInfo);
     final bool generateName = redactedMode && (SettingsManager().settings.generateFakeContactNames);
-    if (generateName) controller!.text = "Group Chat";
+    if (generateName) controller.text = "Group Chat";
 
     final bool showGroupNameInfo = (showNameField && !hideInfo) || generateName;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarIconBrightness:
+            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
@@ -148,10 +149,10 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                 padding: const EdgeInsets.only(left: 16.0, right: 8.0, bottom: 8.0),
                                 child: TextField(
                                   cursorColor: Theme.of(context).primaryColor,
-                                  readOnly: !chat!.isGroup() || redactedMode,
+                                  readOnly: !chat.isGroup() || redactedMode,
                                   onSubmitted: (String newName) async {
-                                    await widget.chat!.changeName(newName);
-                                    await widget.chat!.getTitle();
+                                    await widget.chat.changeName(newName);
+                                    await widget.chat.getTitle();
                                     setState(() {
                                       showNameField = newName.isNotEmpty;
                                     });
@@ -162,13 +163,13 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                   autofocus: false,
                                   autocorrect: false,
                                   decoration: InputDecoration(
-                                      labelText: chat!.displayName!.isEmpty ? "SET NAME" : "NAME",
+                                      labelText: chat.displayName!.isEmpty ? "SET NAME" : "NAME",
                                       labelStyle: TextStyle(color: Theme.of(context).primaryColor),
                                       enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey))),
                                 ),
                               ),
                             ),
-                            if (showGroupNameInfo && chat!.displayName!.isNotEmpty)
+                            if (showGroupNameInfo && chat.displayName!.isNotEmpty)
                               Container(
                                   padding: EdgeInsets.only(right: 10),
                                   child: GestureDetector(
@@ -209,7 +210,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                         Icons.info_outline,
                                         color: Theme.of(context).primaryColor,
                                       ))),
-                            if (chat!.displayName!.isEmpty)
+                            if (chat.displayName!.isEmpty)
                               Padding(
                                 padding: const EdgeInsets.only(left: 8.0, right: 16.0, bottom: 8.0),
                                 child: ElevatedButton(
@@ -286,17 +287,17 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                   );
                 }
 
-                if (index >= chat!.participants.length) return Container();
+                if (index >= chat.participants.length) return Container();
 
                 return ContactTile(
-                  key: Key(chat!.participants[index].id.toString()),
-                  handle: chat!.participants[index],
+                  key: Key(chat.participants[index].id.toString()),
+                  handle: chat.participants[index],
                   chat: chat,
                   updateChat: (Chat newChat) {
                     chat = newChat;
                     if (this.mounted) setState(() {});
                   },
-                  canBeRemoved: chat!.participants.length > 1,
+                  canBeRemoved: chat.participants.length > 1,
                 );
               }, childCount: participants.length + 1),
             ),
@@ -411,16 +412,16 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                           color: Theme.of(context).primaryColor,
                         )),
                     trailing: Switch(
-                        value: widget.chat!.isPinned!,
+                        value: widget.chat.isPinned!,
                         activeColor: Theme.of(context).primaryColor,
                         activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
                         inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
                         inactiveThumbColor: Theme.of(context).accentColor,
                         onChanged: (value) async {
                           if (value) {
-                            await widget.chat!.pin();
+                            await widget.chat.pin();
                           } else {
-                            await widget.chat!.unpin();
+                            await widget.chat.unpin();
                           }
 
                           EventDispatcher().emit("refresh", null);
@@ -434,14 +435,14 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                           color: Theme.of(context).primaryColor,
                         )),
                     trailing: Switch(
-                        value: widget.chat!.isMuted!,
+                        value: widget.chat.isMuted!,
                         activeColor: Theme.of(context).primaryColor,
                         activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
                         inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
                         inactiveThumbColor: Theme.of(context).accentColor,
                         onChanged: (value) async {
-                          widget.chat!.isMuted = value;
-                          await widget.chat!.save(updateLocalVals: true);
+                          widget.chat.isMuted = value;
+                          await widget.chat.save(updateLocalVals: true);
                           EventDispatcher().emit("refresh", null);
 
                           if (this.mounted) setState(() {});
@@ -453,16 +454,16 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                           color: Theme.of(context).primaryColor,
                         )),
                     trailing: Switch(
-                        value: widget.chat!.isArchived!,
+                        value: widget.chat.isArchived!,
                         activeColor: Theme.of(context).primaryColor,
                         activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
                         inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
                         inactiveThumbColor: Theme.of(context).accentColor,
                         onChanged: (value) {
                           if (value) {
-                            ChatBloc().archiveChat(widget.chat!);
+                            ChatBloc().archiveChat(widget.chat);
                           } else {
-                            ChatBloc().unArchiveChat(widget.chat!);
+                            ChatBloc().unArchiveChat(widget.chat);
                           }
 
                           EventDispatcher().emit("refresh", null);
@@ -477,8 +478,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     });
 
                   try {
-                    await widget.chat!.clearTranscript();
-                    EventDispatcher().emit("refresh-messagebloc", {"chatGuid": widget.chat!.guid});
+                    await widget.chat.clearTranscript();
+                    EventDispatcher().emit("refresh-messagebloc", {"chatGuid": widget.chat.guid});
                     if (this.mounted)
                       setState(() {
                         isClearing = false;
@@ -546,7 +547,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
 }
 
 class SyncDialog extends StatefulWidget {
-  SyncDialog({Key? key, required this.chat, this.initialMessage, this.withOffset = false, this.limit = 100}) : super(key: key);
+  SyncDialog({Key? key, required this.chat, this.initialMessage, this.withOffset = false, this.limit = 100})
+      : super(key: key);
   final Chat chat;
   final String? initialMessage;
   final bool withOffset;

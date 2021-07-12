@@ -7,7 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
 class AvatarColorPickerPopup extends StatefulWidget {
-  AvatarColorPickerPopup({Key? key, required this.handle, required this.onSet, required this.onReset}) : super(key: key);
+  AvatarColorPickerPopup({Key? key, required this.handle, required this.onSet, required this.onReset})
+      : super(key: key);
   final Handle handle;
   final Function(Color? color) onSet;
   final Function() onReset;
@@ -22,10 +23,10 @@ class _AvatarColorPickerPopupState extends State<AvatarColorPickerPopup> {
   @override
   void initState() {
     super.initState();
-    if (widget.handle!.color != null) {
-      currentColor = HexColor(widget.handle!.color!);
+    if (widget.handle.color != null) {
+      currentColor = HexColor(widget.handle.color!);
     } else {
-      List gradient = toColorGradient(widget.handle?.address ?? "");
+      List gradient = toColorGradient(widget.handle.address ?? "");
       if (!isNullOrEmpty(gradient)!) {
         currentColor = gradient[0];
       }
@@ -44,7 +45,7 @@ class _AvatarColorPickerPopupState extends State<AvatarColorPickerPopup> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ColorPicker(
-                pickerColor: currentColor!,
+                pickerColor: currentColor,
                 onColorChanged: (Color color) => currentColor = color,
                 showLabel: true,
                 pickerAreaHeightPercent: 0.8,
@@ -56,14 +57,14 @@ class _AvatarColorPickerPopupState extends State<AvatarColorPickerPopup> {
         TextButton(
           child: Text("RESTORE", style: whiteLightTheme.textTheme.bodyText1!.apply(color: Colors.white)),
           onPressed: () {
-            widget.onReset!();
+            widget.onReset();
             Navigator.of(context).pop();
           },
         ),
         TextButton(
           child: Text("OK", style: whiteLightTheme.textTheme.bodyText1!.apply(color: Colors.white)),
           onPressed: () {
-            widget.onSet!(currentColor);
+            widget.onSet(currentColor);
             Navigator.of(context).pop();
           },
         )

@@ -51,16 +51,14 @@ class ThemeEntry {
         )
       : color;
 
-  Future<ThemeEntry> save(ThemeObject theme,
-      {bool updateIfAbsent = true}) async {
+  Future<ThemeEntry> save(ThemeObject theme, {bool updateIfAbsent = true}) async {
     final Database db = await DBProvider.db.database;
 
     assert(theme.id != null);
     this.themeId = theme.id;
 
     // Try to find an existing ConfigEntry before saving it
-    ThemeEntry? existing =
-        await ThemeEntry.findOne({"name": this.name, "themeId": this.themeId});
+    ThemeEntry? existing = await ThemeEntry.findOne({"name": this.name, "themeId": this.themeId});
     if (existing != null) {
       this.id = existing.id;
     }
@@ -71,14 +69,13 @@ class ThemeEntry {
       var map = this.toMap();
       map.remove("ROWID");
       try {
-        this.id = await db!.insert("theme_values", map);
+        this.id = await db.insert("theme_values", map);
       } catch (e) {
         this.id = null;
       }
 
       if (this.id != null && theme.id != null) {
-        await db!.insert(
-            "theme_value_join", {"themeValueId": this.id, "themeId": theme.id});
+        await db.insert("theme_value_join", {"themeValueId": this.id, "themeId": theme.id});
       }
     } else if (updateIfAbsent) {
       await this.update(theme);
@@ -92,7 +89,7 @@ class ThemeEntry {
 
     // If it already exists, update it
     if (this.id != null) {
-      await db!.update(
+      await db.update(
           "theme_values",
           {
             "name": this.name,
@@ -109,17 +106,14 @@ class ThemeEntry {
     return this;
   }
 
-  static Future<ThemeEntry?> findOne(Map<String, dynamic> filters,
-      {Database? database}) async {
-    final Database db =
-        database != null ? database : (await DBProvider.db.database)!;
+  static Future<ThemeEntry?> findOne(Map<String, dynamic> filters, {Database? database}) async {
+    final Database db = database != null ? database : await DBProvider.db.database;
 
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];
     filters.values.forEach((filter) => whereArgs.add(filter));
-    var res = await db.query("theme_values",
-        where: whereParams.join(" AND "), whereArgs: whereArgs, limit: 1);
+    var res = await db.query("theme_values", where: whereParams.join(" AND "), whereArgs: whereArgs, limit: 1);
 
     if (res.isEmpty) {
       return null;

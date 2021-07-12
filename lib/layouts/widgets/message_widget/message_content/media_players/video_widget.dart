@@ -45,17 +45,17 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
   void initState() {
     super.initState();
     muted = SettingsManager().settings.startVideosMuted;
-    Map<String, VideoPlayerController> controllers = CurrentChat.of(context)!.currentPlayingVideo ?? {};
-    showPlayPauseOverlay = !controllers.containsKey(widget.attachment!.guid) ||
-        !controllers[widget.attachment!.guid]!.value.isPlaying;
+    Map<String, VideoPlayerController> controllers = CurrentChat.of(context)!.currentPlayingVideo;
+    showPlayPauseOverlay =
+        !controllers.containsKey(widget.attachment.guid) || !controllers[widget.attachment.guid]!.value.isPlaying;
 
-    if (controllers.containsKey(widget.attachment!.guid)) {
-      createListener(controllers[widget.attachment!.guid]!);
+    if (controllers.containsKey(widget.attachment.guid)) {
+      createListener(controllers[widget.attachment.guid]!);
     }
   }
 
   void createListener(VideoPlayerController controller) {
-    if (controller == null || hasListener) return;
+    if (hasListener) return;
 
     controller.addListener(() async {
       // Get the current status
@@ -85,15 +85,15 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
   }
 
   void getThumbnail() async {
-    thumbnail = CurrentChat.of(context)!.getImageData(widget.attachment!);
+    thumbnail = CurrentChat.of(context)!.getImageData(widget.attachment);
     if (thumbnail != null) return;
     thumbnail = await VideoThumbnail.thumbnailData(
-      video: widget.file!.path,
+      video: widget.file.path,
       imageFormat: ImageFormat.JPEG,
-      quality: SettingsManager().compressionQuality!,
+      quality: SettingsManager().compressionQuality,
     );
     if (thumbnail == null) return;
-    CurrentChat.of(context)?.saveImageData(thumbnail!, widget.attachment!);
+    CurrentChat.of(context)?.saveImageData(thumbnail!, widget.attachment);
     if (this.mounted) this.setState(() {});
   }
 
@@ -102,8 +102,8 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
     VideoPlayerController? controller;
     Map<String, VideoPlayerController> controllers = CurrentChat.of(context)!.currentPlayingVideo;
     // If the currently playing video is this attachment guid
-    if (controllers.isNotEmpty && controllers.containsKey(widget.attachment!.guid)) {
-      controller = controllers[widget.attachment!.guid]!;
+    if (controllers.isNotEmpty && controllers.containsKey(widget.attachment.guid)) {
+      controller = controllers[widget.attachment.guid]!;
       this.createListener(controller);
     }
 
@@ -116,7 +116,7 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
             CurrentChat.of(context)?.changeCurrentPlayingVideo({});
           }
           if (SettingsManager().settings.lowMemoryMode) {
-            CurrentChat.of(context)?.clearImageData(widget.attachment!);
+            CurrentChat.of(context)?.clearImageData(widget.attachment);
           }
         } else if (!isVisible) {
           isVisible = true;
@@ -126,7 +126,7 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
         }
         if (this.mounted) setState(() {});
       },
-      key: Key(widget.attachment!.guid!),
+      key: Key(widget.attachment.guid!),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8.0),
         child: AnimatedSize(
@@ -168,109 +168,109 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
         },
         // ignore: unnecessary_null_comparison
         child: Container(
-                constraints: BoxConstraints(
-                  maxWidth: context.width / 2,
-                  maxHeight: context.height / 2,
-                ),
-                child: Hero(
-                  tag: widget.attachment!.guid!,
+          constraints: BoxConstraints(
+            maxWidth: context.width / 2,
+            maxHeight: context.height / 2,
+          ),
+          child: Hero(
+            tag: widget.attachment.guid!,
+            child: Stack(
+              alignment: Alignment.center,
+              children: <Widget>[
+                AspectRatio(
+                  aspectRatio: controller.value.aspectRatio,
                   child: Stack(
-                    alignment: Alignment.center,
                     children: <Widget>[
-                      AspectRatio(
-                        aspectRatio: controller.value.aspectRatio,
-                        child: Stack(
-                          children: <Widget>[
-                            VideoPlayer(controller),
-                          ],
-                        ),
-                      ),
-                      AnimatedOpacity(
+                      VideoPlayer(controller),
+                    ],
+                  ),
+                ),
+                AnimatedOpacity(
+                  opacity: showPlayPauseOverlay ? 1 : 0,
+                  duration: Duration(milliseconds: 250),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: HexColor('26262a').withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(40),
+                    ),
+                    padding: EdgeInsets.all(10),
+                    child: controller.value.isPlaying
+                        ? GestureDetector(
+                            child: Icon(
+                              Icons.pause,
+                              color: Colors.white,
+                              size: 45,
+                            ),
+                            onTap: () {
+                              controller.pause();
+                              setState(() {
+                                showPlayPauseOverlay = true;
+                              });
+                            },
+                          )
+                        : GestureDetector(
+                            child: Icon(
+                              Icons.play_arrow,
+                              color: Colors.white,
+                              size: 45,
+                            ),
+                            onTap: () {
+                              controller.play();
+                              setState(() {
+                                showPlayPauseOverlay = false;
+                              });
+                            },
+                          ),
+                  ),
+                ),
+                Positioned.fill(
+                  child: Align(
+                    alignment: Alignment.bottomRight,
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0, right: 8.0),
+                      child: AnimatedOpacity(
                         opacity: showPlayPauseOverlay ? 1 : 0,
                         duration: Duration(milliseconds: 250),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: HexColor('26262a').withOpacity(0.5),
-                            borderRadius: BorderRadius.circular(40),
-                          ),
-                          padding: EdgeInsets.all(10),
-                          child: controller.value.isPlaying
-                              ? GestureDetector(
-                                  child: Icon(
-                                    Icons.pause,
-                                    color: Colors.white,
-                                    size: 45,
-                                  ),
-                                  onTap: () {
-                                    controller.pause();
-                                    setState(() {
-                                      showPlayPauseOverlay = true;
-                                    });
-                                  },
-                                )
-                              : GestureDetector(
-                                  child: Icon(
-                                    Icons.play_arrow,
-                                    color: Colors.white,
-                                    size: 45,
-                                  ),
-                                  onTap: () {
-                                    controller.play();
-                                    setState(() {
-                                      showPlayPauseOverlay = false;
-                                    });
-                                  },
-                                ),
-                        ),
-                      ),
-                      Positioned.fill(
-                        child: Align(
-                          alignment: Alignment.bottomRight,
-                          child: Padding(
-                            padding: const EdgeInsets.only(bottom: 8.0, right: 8.0),
-                            child: AnimatedOpacity(
-                              opacity: showPlayPauseOverlay ? 1 : 0,
-                              duration: Duration(milliseconds: 250),
-                              child: AbsorbPointer(
-                                absorbing: !showPlayPauseOverlay,
-                                child: GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      muted = !muted;
-                                    });
-                                    controller.setVolume(muted ? 0.0 : 1.0);
-                                  },
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: HexColor('26262a').withOpacity(0.5),
-                                      borderRadius: BorderRadius.circular(40),
-                                    ),
-                                    padding: EdgeInsets.all(5),
-                                    child: Icon(
-                                      muted ? Icons.volume_mute : Icons.volume_up,
-                                      color: Colors.white,
-                                      size: 15,
-                                    ),
-                                  ),
-                                ),
+                        child: AbsorbPointer(
+                          absorbing: !showPlayPauseOverlay,
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                muted = !muted;
+                              });
+                              controller.setVolume(muted ? 0.0 : 1.0);
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: HexColor('26262a').withOpacity(0.5),
+                                borderRadius: BorderRadius.circular(40),
+                              ),
+                              padding: EdgeInsets.all(5),
+                              child: Icon(
+                                muted ? Icons.volume_mute : Icons.volume_up,
+                                color: Colors.white,
+                                size: 15,
                               ),
                             ),
                           ),
                         ),
                       ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
+              ],
+            ),
+          ),
+        ),
       );
 
   Widget buildPreview() => GestureDetector(
         onTap: () async {
-          VideoPlayerController controller = VideoPlayerController.file(widget.file!);
+          VideoPlayerController controller = VideoPlayerController.file(widget.file);
           await controller.initialize();
           controller.setVolume(muted ? 0.0 : 1.0);
           controller.play();
-          CurrentChat.of(context)!.changeCurrentPlayingVideo({widget.attachment!.guid!: controller});
+          CurrentChat.of(context)!.changeCurrentPlayingVideo({widget.attachment.guid!: controller});
         },
         child: Stack(
           children: [
@@ -331,12 +331,12 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
       );
 
   Widget buildPlaceHolder() {
-    if (widget.attachment!.hasValidSize) {
+    if (widget.attachment.hasValidSize) {
       return AspectRatio(
-        aspectRatio: widget.attachment!.width!.toDouble() / widget.attachment!.height!.toDouble(),
+        aspectRatio: widget.attachment.width!.toDouble() / widget.attachment.height!.toDouble(),
         child: Container(
-          width: widget.attachment!.width!.toDouble(),
-          height: widget.attachment!.height!.toDouble(),
+          width: widget.attachment.width!.toDouble(),
+          height: widget.attachment.height!.toDouble(),
         ),
       );
     } else {
