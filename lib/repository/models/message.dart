@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:crypto/crypto.dart' as crypto;
 
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
@@ -161,7 +162,7 @@ class Message {
       error: json.containsKey("error") ? json["error"] : 0,
       dateCreated: json.containsKey("dateCreated") ? parseDate(json["dateCreated"]) : null,
       dateRead: json.containsKey("dateRead") ? parseDate(json["dateRead"]) : null,
-      dateDelivered: json.containsKey("dateDelivered") ?parseDate(json["dateDelivered"]) : null,
+      dateDelivered: json.containsKey("dateDelivered") ? parseDate(json["dateDelivered"]) : null,
       isFromMe: (json["isFromMe"] is bool) ? json['isFromMe'] : ((json['isFromMe'] == 1) ? true : false),
       isDelayed: (json["isDelayed"] is bool) ? json['isDelayed'] : ((json['isDelayed'] == 1) ? true : false),
       isAutoReply: (json["isAutoReply"] is bool) ? json['isAutoReply'] : ((json['isAutoReply'] == 1) ? true : false),
@@ -186,8 +187,9 @@ class Message {
       associatedMessageGuid: associatedMessageGuid,
       associatedMessageType: json.containsKey("associatedMessageType") ? json["associatedMessageType"] : null,
       expressiveSendStyleId: json.containsKey("expressiveSendStyleId") ? json["expressiveSendStyleId"] : null,
-      timeExpressiveSendStyleId:
-          json.containsKey("timeExpressiveSendStyleId") ? DateTime.tryParse(json["timeExpressiveSendStyleId"].toString())?.toLocal() : null,
+      timeExpressiveSendStyleId: json.containsKey("timeExpressiveSendStyleId")
+          ? DateTime.tryParse(json["timeExpressiveSendStyleId"].toString())?.toLocal()
+          : null,
       handle: json.containsKey("handle") ? (json['handle'] != null ? Handle.fromMap(json['handle']) : null) : null,
       hasAttachments: hasAttachments,
       attachments: attachments,
@@ -537,6 +539,20 @@ class Message {
         .associatedMessages
         .where((item) => ReactionTypes.toList().contains(item.associatedMessageType))
         .toList();
+  }
+
+  void generateTempGuid() {
+    List<String> unique = [this.text ?? "", this.dateCreated?.millisecondsSinceEpoch.toString() ?? ""];
+
+    String preHashed;
+    if (unique.every((element) => element.trim().length == 0)) {
+      preHashed = randomString(8);
+    } else {
+      preHashed = unique.join(":");
+    }
+
+    String hashed = crypto.sha1.convert(utf8.encode(preHashed)).toString();
+    this.guid = "temp-$hashed";
   }
 
   static Future<int?> countForChat(Chat? chat) async {
