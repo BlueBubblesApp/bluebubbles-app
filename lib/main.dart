@@ -2,8 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
-import 'package:bluebubbles/helpers/themes.dart';
-import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/setup/failure_to_start.dart';
@@ -16,6 +14,7 @@ import 'package:bluebubbles/managers/navigator_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
+import 'package:bluebubbles/repository/models/theme_object.dart';
 // import 'package:sentry/sentry.dart';
 
 import 'package:bluebubbles/socket_manager.dart';
@@ -24,6 +23,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' hide Priority;
 import 'package:flutter/services.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
+import 'package:get/get.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
@@ -62,14 +62,14 @@ Future<Null> _reportError(dynamic error, dynamic stackTrace) async {
 
 Future<Null> main() async {
   // This captures errors reported by the Flutter framework.
-  FlutterError.onError = (FlutterErrorDetails details) async {
+  FlutterError.onError = (FlutterErrorDetails details) {
     if (isInDebugMode) {
       // In development mode simply print to console.
       FlutterError.dumpErrorToConsole(details);
     } else {
       // In production mode report to the application zone to report to
       // Sentry.
-      Zone.current.handleUncaughtError(details.exception, details.stack);
+      Zone.current.handleUncaughtError(details.exception, details.stack!);
     }
   };
 
@@ -78,19 +78,29 @@ Future<Null> main() async {
   try {
     await DBProvider.db.initDB();
     await initializeDateFormatting('fr_FR', null);
+    await SettingsManager().init();
+    await SettingsManager().getSavedSettings(headless: true);
   } catch (e) {
     exception = e;
   }
+
   if (exception == null) {
     runZonedGuarded<Future<Null>>(() async {
-      runApp(Main());
+      ThemeObject light = await ThemeObject.getLightTheme();
+      ThemeObject dark = await ThemeObject.getDarkTheme();
+
+      runApp(Main(
+        lightTheme: light.themeData,
+        darkTheme: dark.themeData,
+      ));
     }, (Object error, StackTrace stackTrace) async {
       // Whenever an error occurs, call the `_reportError` function. This sends
       // Dart errors to the dev console or Sentry depending on the environment.
       await _reportError(error, stackTrace);
     });
   } else {
-    runApp(FailureToStrt(e: exception));
+    runApp(FailureToStart(e: exception));
+    throw Exception(exception);
   }
 }
 
@@ -102,30 +112,32 @@ Future<Null> main() async {
 ///     - [NavgatorManager]
 ///     - [Home] widget
 class Main extends StatelessWidget with WidgetsBindingObserver {
-  const Main({Key key}) : super(key: key);
+  final ThemeData darkTheme;
+  final ThemeData lightTheme;
+  const Main({Key? key, required this.lightTheme, required this.darkTheme}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return AdaptiveTheme(
       /// These are the default white and dark themes.
       /// These will be changed by [SettingsManager] when you set a custom theme
-      light: whiteLightTheme,
-      dark: oledDarkTheme,
+      light: this.lightTheme,
+      dark: this.darkTheme,
 
       /// The default is that the dark and light themes will follow the system theme
       /// This will be changed by [SettingsManager]
       initial: AdaptiveThemeMode.system,
-      builder: (theme, darkTheme) => MaterialApp(
+      builder: (theme, darkTheme) => GetMaterialApp(
         /// Hide the debug banner in debug mode
         debugShowCheckedModeBanner: false,
 
         title: 'BlueBubbles',
 
         /// Set the light theme from the [AdaptiveTheme]
-        theme: theme,
+        theme: theme.copyWith(appBarTheme: theme.appBarTheme.copyWith(elevation: 0.0)),
 
         /// Set the dark theme from the [AdaptiveTheme]
-        darkTheme: darkTheme,
+        darkTheme: darkTheme.copyWith(appBarTheme: darkTheme.appBarTheme.copyWith(elevation: 0.0)),
 
         /// [NavigatorManager] is set as the navigator key so that we can control navigation from anywhere
         navigatorKey: NavigatorManager().navigatorKey,
@@ -144,7 +156,7 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
 /// The [LifeCycleManager] also is binded to the [WidgetsBindingObserver]
 /// so that it can know when the app is closed, paused, or resumed
 class Home extends StatefulWidget {
-  Home({Key key}) : super(key: key);
+  Home({Key? key}) : super(key: key);
 
   @override
   _HomeState createState() => _HomeState();
@@ -154,6 +166,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+
     // Initalize a bunch of managers
     SettingsManager().init();
     MethodChannelInterface().init();
@@ -166,20 +179,19 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
     // Get sharing media from files shared to the app from cold start
     // This one only handles files, not text
-    ReceiveSharingIntent.getInitialMedia()
-        .then((List<SharedMediaFile> value) async {
-      if (value == null) return;
+    ReceiveSharingIntent.getInitialMedia().then((List<SharedMediaFile> value) async {
+      if (value.isEmpty) return;
 
       // If we don't have storage permission, we can't do anything
       if (!await Permission.storage.request().isGranted) return;
 
       // Add the attached files to a list
       List<File> attachments = <File>[];
-      if (value != null) {
-        value.forEach((element) {
-          attachments.add(File(element.path));
-        });
-      }
+      value.forEach((element) {
+        attachments.add(File(element.path));
+      });
+
+      if (attachments.length == 0) return;
 
       // Go to the new chat creator, with all of our attachments
       Navigator.of(context).pushAndRemoveUntil(
@@ -194,7 +206,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     });
 
     // Same thing as [getInitialMedia] except for text
-    ReceiveSharingIntent.getInitialText().then((String text) {
+    ReceiveSharingIntent.getInitialText().then((String? text) {
       if (text == null) return;
 
       // Go to the new chat creator, with all of our text
@@ -233,18 +245,17 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     );
 
     // Get the saved settings from the settings manager after the first frame
-    SchedulerBinding.instance.addPostFrameCallback(
-        (_) => SettingsManager().getSavedSettings(context: context));
+    SchedulerBinding.instance!.addPostFrameCallback((_) => SettingsManager().getSavedSettings(context: context));
 
     // Bind the lifecycle events
-    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance!.addObserver(this);
   }
 
   @override
   void didChangeDependencies() async {
     Locale myLocale = Localizations.localeOf(context);
     SettingsManager().countryCode = myLocale.countryCode;
-
+    SettingsManager().settings.use24HrFormat = MediaQuery.of(Get.context!).alwaysUse24HourFormat;
     await FlutterLibphonenumber().init();
     super.didChangeDependencies();
   }
@@ -252,7 +263,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   @override
   void dispose() {
     // Clean up observer when app is fully closed
-    WidgetsBinding.instance.removeObserver(this);
+    WidgetsBinding.instance!.removeObserver(this);
     super.dispose();
   }
 
@@ -271,26 +282,27 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-      systemNavigationBarColor:
-          Theme.of(context).backgroundColor, // navigation bar color
-      systemNavigationBarIconBrightness: getBrightness(context),
+      systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+      systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       statusBarColor: Colors.transparent, // status bar color
     ));
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor,
+        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
         backgroundColor: Colors.black,
         // The stream builder connects to the [SocketManager] to check if the app has finished the setup or not
         body: StreamBuilder(
           stream: SocketManager().finishedSetup.stream,
-          builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
+          builder: (BuildContext context, AsyncSnapshot<bool?> snapshot) {
             if (snapshot.hasData) {
               // If the app has already gone through setup, show the convo list
               // Otherwise show the setup
-              if (snapshot.data) {
+              if (snapshot.data!) {
                 SystemChrome.setPreferredOrientations([
                   DeviceOrientation.landscapeRight,
                   DeviceOrientation.landscapeLeft,

@@ -9,7 +9,7 @@ extension MessageErrorExtension on MessageError {
     MessageError.SERVER_ERROR: 1002,
   };
 
-  int get code => codes[this];
+  int get code => codes[this]!;
 }
 
 abstract class ThemeColors {
@@ -39,7 +39,7 @@ abstract class ThemeColors {
 }
 
 enum Skins {
-  IOS,
+  iOS,
   Material,
   Samsung,
 }

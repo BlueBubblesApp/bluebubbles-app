@@ -2,47 +2,38 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
-import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/themes.dart';
+import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/theming/theming_color_options_list.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-class EditController {
-  StreamController controller = StreamController.broadcast();
-
-  Stream get stream => controller.stream;
-}
+import 'package:get/get.dart';
 
 class ThemingPanel extends StatefulWidget {
-  ThemingPanel({Key key}) : super(key: key);
+  ThemingPanel({Key? key}) : super(key: key);
 
   @override
   _ThemingPanelState createState() => _ThemingPanelState();
 }
 
 class _ThemingPanelState extends State<ThemingPanel> with TickerProviderStateMixin {
-  TabController controller;
-  EditController editController;
+  late TabController controller;
+  StreamController streamController = StreamController.broadcast();
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (AdaptiveTheme.of(context).mode.isDark) {
+    if (AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark) {
       controller = TabController(vsync: this, initialIndex: 1, length: 2);
     } else {
       controller = TabController(vsync: this, initialIndex: 0, length: 2);
-    }
-
-    if (editController == null) {
-      editController = new EditController();
     }
   }
 
   @override
   void dispose() {
+    streamController.close();
     super.dispose();
   }
 
@@ -50,26 +41,22 @@ class _ThemingPanelState extends State<ThemingPanel> with TickerProviderStateMix
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Colors.white,
+        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
         extendBody: true,
         backgroundColor: Colors.white,
         appBar: PreferredSize(
-          preferredSize: Size(MediaQuery.of(context).size.width, 80),
+          preferredSize: Size(context.width, 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
                 brightness: Brightness.light,
                 toolbarHeight: 100.0,
                 elevation: 0,
-                leading: IconButton(
-                  icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
-                      color: whiteLightTheme.primaryColor),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
+                leading: buildBackButton(context),
                 backgroundColor: whiteLightTheme.accentColor.withOpacity(0.5),
                 title: Text(
                   "Theming",
@@ -86,11 +73,11 @@ class _ThemingPanelState extends State<ThemingPanel> with TickerProviderStateMix
           children: <Widget>[
             ThemingColorOptionsList(
               isDarkMode: false,
-              controller: editController,
+              controller: streamController,
             ),
             ThemingColorOptionsList(
               isDarkMode: true,
-              controller: editController,
+              controller: streamController,
             )
           ],
         ),
@@ -99,7 +86,7 @@ class _ThemingPanelState extends State<ThemingPanel> with TickerProviderStateMix
           child: FloatingActionButton(
             backgroundColor: Colors.blue,
             onPressed: () {
-              editController.controller.sink.add(null);
+              streamController.sink.add(null);
             },
             child: Icon(
               Icons.edit,
@@ -121,13 +108,13 @@ class _ThemingPanelState extends State<ThemingPanel> with TickerProviderStateMix
             Tab(
               icon: Icon(
                 Icons.brightness_high,
-                color: whiteLightTheme.textTheme.bodyText1.color,
+                color: whiteLightTheme.textTheme.bodyText1!.color,
               ),
             ),
             Tab(
               icon: Icon(
                 Icons.brightness_3,
-                color: whiteLightTheme.textTheme.bodyText1.color,
+                color: whiteLightTheme.textTheme.bodyText1!.color,
               ),
             ),
           ],

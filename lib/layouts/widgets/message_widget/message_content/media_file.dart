@@ -1,3 +1,4 @@
+import 'package:bluebubbles/layouts/widgets/circle_progress_bar.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/socket_manager.dart';
@@ -6,9 +7,9 @@ import 'package:flutter/material.dart';
 
 class MediaFile extends StatefulWidget {
   MediaFile({
-    Key key,
-    @required this.child,
-    @required this.attachment,
+    Key? key,
+    required this.child,
+    required this.attachment,
   }) : super(key: key);
   final Widget child;
   final Attachment attachment;
@@ -47,15 +48,18 @@ class _MediaFileState extends State<MediaFile> {
                   style: Theme.of(context).textTheme.bodyText1,
                 );
               }
-              return CircularProgressIndicator(
-                backgroundColor: Colors.grey,
-                valueColor: AlwaysStoppedAnimation(Colors.white),
-                value: snapshot.hasData
-                    ? snapshot.data
-                    : SocketManager().attachmentSenders[widget.attachment.guid].progress,
-              );
+
+              return Container(
+                  height: 40,
+                  width: 40,
+                  child: CircleProgressBar(
+                      foregroundColor: Colors.white,
+                      backgroundColor: Colors.grey,
+                      value: snapshot.hasData
+                          ? snapshot.data!
+                          : SocketManager().attachmentSenders[widget.attachment.guid]!.progress));
             },
-            stream: SocketManager().attachmentSenders[widget.attachment.guid].stream,
+            stream: SocketManager().attachmentSenders[widget.attachment.guid]!.stream,
           ),
         ],
       );
@@ -88,7 +92,7 @@ class _MediaFileState extends State<MediaFile> {
             child: Container(
               alignment: Alignment.center,
               child: Text(
-                widget.attachment.mimeType,
+                widget.attachment.mimeType!,
                 textAlign: TextAlign.center,
               ),
             ),

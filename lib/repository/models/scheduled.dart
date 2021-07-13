@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:sqflite/sqflite.dart';
@@ -16,34 +17,29 @@ String scheduledToJson(ScheduledMessage data) {
 }
 
 class ScheduledMessage {
-  int id;
-  String chatGuid;
-  String message;
-  int epochTime;
-  bool completed;
+  int? id;
+  String? chatGuid;
+  String? message;
+  int? epochTime;
+  bool? completed;
 
-  ScheduledMessage(
-      {this.id, this.chatGuid, this.message, this.epochTime, this.completed});
+  ScheduledMessage({this.id, this.chatGuid, this.message, this.epochTime, this.completed});
 
   factory ScheduledMessage.fromMap(Map<String, dynamic> json) {
     return new ScheduledMessage(
-      id: json.containsKey("ROWID") ? json["ROWID"] : null,
-      chatGuid: json["chatGuid"],
-      message: json["message"],
-      epochTime: json["epochTime"],
-      completed: json["completed"] == 0 ? false : true
-    );
+        id: json.containsKey("ROWID") ? json["ROWID"] : null,
+        chatGuid: json["chatGuid"],
+        message: json["message"],
+        epochTime: json["epochTime"],
+        completed: json["completed"] == 0 ? false : true);
   }
 
   Future<ScheduledMessage> save([bool updateIfAbsent = false]) async {
     final Database db = await DBProvider.db.database;
 
     // Try to find an existing handle before saving it
-    ScheduledMessage existing = await ScheduledMessage.findOne({
-      "chatGuid": this.chatGuid,
-      "message": this.message,
-      "epochTime": this.epochTime
-    });
+    ScheduledMessage? existing = await ScheduledMessage.findOne(
+        {"chatGuid": this.chatGuid, "message": this.message, "epochTime": this.epochTime});
     if (existing != null) {
       this.id = existing.id;
     }
@@ -76,7 +72,7 @@ class ScheduledMessage {
             "chatGuid": this.chatGuid,
             "message": this.message,
             "epochTime": this.epochTime,
-            "completed": this.completed ? 1 : 0
+            "completed": this.completed! ? 1 : 0
           },
           where: "ROWID = ?",
           whereArgs: [this.id]);
@@ -87,15 +83,14 @@ class ScheduledMessage {
     return this;
   }
 
-  static Future<ScheduledMessage> findOne(Map<String, dynamic> filters) async {
+  static Future<ScheduledMessage?> findOne(Map<String, dynamic> filters) async {
     final Database db = await DBProvider.db.database;
 
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];
     filters.values.forEach((filter) => whereArgs.add(filter));
-    var res = await db.query("scheduled",
-        where: whereParams.join(" AND "), whereArgs: whereArgs, limit: 1);
+    var res = await db.query("scheduled", where: whereParams.join(" AND "), whereArgs: whereArgs, limit: 1);
 
     if (res.isEmpty) {
       return null;
@@ -104,8 +99,7 @@ class ScheduledMessage {
     return ScheduledMessage.fromMap(res.elementAt(0));
   }
 
-  static Future<List<ScheduledMessage>> find(
-      [Map<String, dynamic> filters = const {}]) async {
+  static Future<List<ScheduledMessage>> find([Map<String, dynamic> filters = const {}]) async {
     final Database db = await DBProvider.db.database;
 
     List<String> whereParams = [];
@@ -116,9 +110,7 @@ class ScheduledMessage {
         where: (whereParams.length > 0) ? whereParams.join(" AND ") : null,
         whereArgs: (whereArgs.length > 0) ? whereArgs : null);
 
-    return (res.isNotEmpty)
-        ? res.map((c) => ScheduledMessage.fromMap(c)).toList()
-        : [];
+    return (res.isNotEmpty) ? res.map((c) => ScheduledMessage.fromMap(c)).toList() : [];
   }
 
   static Future<List<ScheduledMessage>> getScheduledMessages(Chat chat) async {
@@ -135,9 +127,7 @@ class ScheduledMessage {
         " WHERE scheduled.chatGuid = ?;",
         [chat.guid]);
 
-    return (res.isNotEmpty)
-        ? res.map((c) => ScheduledMessage.fromMap(c)).toList()
-        : [];
+    return (res.isNotEmpty) ? res.map((c) => ScheduledMessage.fromMap(c)).toList() : [];
   }
 
   static flush() async {
@@ -145,11 +135,6 @@ class ScheduledMessage {
     await db.delete("scheduled");
   }
 
-  Map<String, dynamic> toMap() => {
-        "ROWID": id,
-        "chatGuid": chatGuid,
-        "message": message,
-        "epochTime": epochTime,
-        "completed": completed ? 1 : 0
-      };
+  Map<String, dynamic> toMap() =>
+      {"ROWID": id, "chatGuid": chatGuid, "message": message, "epochTime": epochTime, "completed": completed! ? 1 : 0};
 }

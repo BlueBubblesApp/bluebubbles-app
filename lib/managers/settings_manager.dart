@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
@@ -11,7 +12,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 /// [SettingsManager] is responsible for making the current settings accessible to other managers and for saving new settings
 ///
@@ -31,17 +31,18 @@ class SettingsManager {
 
   /// [appDocDir] is just a directory that is commonly used
   /// It cannot be accessed by the user, and is private to the app
-  Directory appDocDir;
+  late Directory appDocDir;
 
   /// [sharedFilesPath] is the path where most temporary files like those inserted from the keyboard or shared to the app are stored
   /// The getter simply is a helper to that path
   String get sharedFilesPath => "${appDocDir.path}/sharedFiles";
 
   /// [settings] is just an instance of the current settings that are saved
-  Settings settings;
-  FCMData fcmData;
-  List<ThemeObject> themes;
-  String countryCode;
+  late Settings settings;
+  FCMData? fcmData;
+  late List<ThemeObject> themes;
+  String? countryCode;
+  int? _macOSVersion;
 
   int get compressionQuality {
     if (settings.lowMemoryMode) {
@@ -50,9 +51,6 @@ class SettingsManager {
 
     return SettingsManager().settings.previewCompressionQuality;
   }
-
-  /// [sharedPreferences] is just an instance of [SharedPreferences] and it is stored here because it is commonly used
-  SharedPreferences sharedPreferences;
 
   /// [init] is run at start and fetches both the [appDocDir] and sets the [settings] to a default value
   Future<void> init() async {
@@ -67,29 +65,24 @@ class SettingsManager {
   ///
   /// @param [context] is an optional parameter to be used for setting the adaptive theme based on the settings.
   /// Setting to null will prevent the theme from being set and will be set to null in the background isolate
-  Future<void> getSavedSettings({bool headless = false, BuildContext context}) async {
+  Future<void> getSavedSettings({bool headless = false, BuildContext? context}) async {
     await DBProvider.setupConfigRows();
     settings = await Settings.getSettings();
+    _stream.sink.add(settings);
+
     fcmData = await FCMData.getFCM();
     // await DBProvider.setupDefaultPresetThemes(await DBProvider.db.database);
     themes = await ThemeObject.getThemes();
     for (ThemeObject theme in themes) {
       await theme.fetchData();
     }
-    // If [context] is null, then we can't set the theme, and we shouldn't anyway
-    if (context != null) {
-      // Set the theme to match those of the settings
-      ThemeObject light = await ThemeObject.getLightTheme();
-      ThemeObject dark = await ThemeObject.getDarkTheme();
-      AdaptiveTheme.of(context).setTheme(
-        light: light.themeData,
-        dark: dark.themeData,
-      );
-    }
+
+    // // If [context] is null, then we can't set the theme, and we shouldn't anyway
+    await loadTheme(context);
 
     try {
       // Set the [displayMode] to that saved in settings
-      await FlutterDisplayMode.setMode(await settings.getDisplayMode());
+      await FlutterDisplayMode.setPreferredMode(await settings.getDisplayMode());
     } catch (e) {}
 
     // Change the [finishedSetup] status to that of the settings
@@ -100,8 +93,10 @@ class SettingsManager {
 
     // If we aren't running in the background, then we should auto start the socket and authorize fcm just in case we haven't
     if (!headless) {
-      SocketManager().startSocketIO();
-      SocketManager().authFCM();
+      try {
+        SocketManager().startSocketIO();
+        SocketManager().authFCM();
+      } catch (e) {}
     }
   }
 
@@ -114,7 +109,7 @@ class SettingsManager {
     await settings.save();
     try {
       // Set the [displayMode] to that saved in settings
-      await FlutterDisplayMode.setMode(await settings.getDisplayMode());
+      await FlutterDisplayMode.setPreferredMode(await settings.getDisplayMode());
     } catch (e) {}
 
     _stream.sink.add(newSettings);
@@ -129,8 +124,8 @@ class SettingsManager {
   /// @param [context] is the [BuildContext] used to set the theme of the new settings
   Future<void> saveSelectedTheme(
     BuildContext context, {
-    ThemeObject selectedLightTheme,
-    ThemeObject selectedDarkTheme,
+    ThemeObject? selectedLightTheme,
+    ThemeObject? selectedDarkTheme,
   }) async {
     await selectedLightTheme?.save();
     await selectedDarkTheme?.save();
@@ -150,7 +145,7 @@ class SettingsManager {
   /// @param [data] is the [FCMData] to save
   Future<void> saveFCMData(FCMData data) async {
     fcmData = data;
-    await fcmData.save();
+    await fcmData!.save();
     SocketManager().authFCM();
   }
 
@@ -165,5 +160,13 @@ class SettingsManager {
 
   void dispose() {
     _stream.close();
+  }
+
+  FutureOr<int?> getMacOSVersion() async {
+    if (_macOSVersion == null) {
+      var res = await SocketManager().sendMessage("get-server-metadata", {}, (_) {});
+      _macOSVersion = int.tryParse(res['data']['os_version'].split(".")[0]);
+    }
+    return _macOSVersion;
   }
 }

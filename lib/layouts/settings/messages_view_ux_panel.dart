@@ -1,6 +1,7 @@
 import 'dart:ui';
 
-import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/reaction.dart';
+import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
@@ -9,21 +10,19 @@ import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 
 class ConvoSettings extends StatefulWidget {
-  ConvoSettings({Key key}) : super(key: key);
+  ConvoSettings({Key? key}) : super(key: key);
 
   @override
   _ConvoSettingsState createState() => _ConvoSettingsState();
 }
 
 class _ConvoSettingsState extends State<ConvoSettings> {
-  Settings _settingsCopy;
+  late Settings _settingsCopy;
   bool needToReconnect = false;
   bool showUrl = false;
-  Brightness brightness;
-  Color previousBackgroundColor;
-  bool gotBrightness = false;
 
   @override
   void initState() {
@@ -35,56 +34,31 @@ class _ConvoSettingsState extends State<ConvoSettings> {
       if (!event.containsKey("type")) return;
 
       if (event["type"] == 'theme-update' && this.mounted) {
-        setState(() {
-          gotBrightness = false;
-        });
+        setState(() {});
       }
     });
   }
 
-  void loadBrightness() {
-    Color now = Theme.of(context).backgroundColor;
-    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
-    if (!themeChanged && gotBrightness) return;
-
-    previousBackgroundColor = now;
-    if (this.context == null) {
-      brightness = Brightness.light;
-      gotBrightness = true;
-      return;
-    }
-
-    bool isDark = now.computeLuminance() < 0.179;
-    brightness = isDark ? Brightness.dark : Brightness.light;
-    gotBrightness = true;
-    if (this.mounted) setState(() {});
-  }
-
   @override
   Widget build(BuildContext context) {
-    loadBrightness();
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor,
+        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarIconBrightness:
+            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
         appBar: PreferredSize(
-          preferredSize: Size(MediaQuery.of(context).size.width, 80),
+          preferredSize: Size(context.width, 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
-                brightness: brightness,
+                brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
                 toolbarHeight: 100.0,
                 elevation: 0,
-                leading: IconButton(
-                  icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
-                      color: Theme.of(context).primaryColor),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
+                leading: buildBackButton(context),
                 backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
                 title: Text(
                   "Conversation Settings",
@@ -160,19 +134,61 @@ class _ConvoSettingsState extends State<ConvoSettings> {
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.doubleTapForDetails = val;
+                      _settingsCopy.alwaysShowAvatars = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.doubleTapForDetails,
-                    title: "Double-Tap Message for Details",
+                    initialVal: _settingsCopy.alwaysShowAvatars,
+                    title: "Show avatars in non-group chats",
                   ),
-                  // SettingsSwitch(
-                  //   onChanged: (bool val) {
-                  //     _settingsCopy.sendTypingIndicators = val;
-                  //   },
-                  //   initialVal: _settingsCopy.sendTypingIndicators,
-                  //   title: "Send typing indicators (BlueBubblesHelper ONLY)",
-                  // ),
+                  SwitchListTile(
+                    title: Text(
+                      "Double-Tap Message for Details",
+                      style: Theme.of(context).textTheme.bodyText1,
+                    ),
+                    value: _settingsCopy.doubleTapForDetails,
+                    activeColor: Theme.of(context).primaryColor,
+                    activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
+                    inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
+                    inactiveThumbColor: Theme.of(context).accentColor,
+                    onChanged: (bool val) {
+                      _settingsCopy.doubleTapForDetails = val;
+                      if (val && _settingsCopy.enableQuickTapback) {
+                        _settingsCopy.enableQuickTapback = false;
+                      }
+                      saveSettings();
+                      setState(() {});
+                    },
+                  ),
+                  SwitchListTile(
+                    title: Text(
+                      "Double-Tap Message for Quick Tapback",
+                      style: Theme.of(context).textTheme.bodyText1,
+                    ),
+                    value: _settingsCopy.enableQuickTapback,
+                    activeColor: Theme.of(context).primaryColor,
+                    activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
+                    inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
+                    inactiveThumbColor: Theme.of(context).accentColor,
+                    onChanged: (bool val) {
+                      _settingsCopy.enableQuickTapback = val;
+                      if (val && _settingsCopy.doubleTapForDetails) {
+                        _settingsCopy.doubleTapForDetails = false;
+                      }
+                      saveSettings();
+                      setState(() {});
+                    },
+                  ),
+                  if (_settingsCopy.enableQuickTapback)
+                    SettingsOptions<String>(
+                      title: "Quick Tapback",
+                      options: ReactionTypes.toList(),
+                      initial: _settingsCopy.quickTapbackType,
+                      textProcessing: (val) => val,
+                      onChanged: (val) {
+                        _settingsCopy.quickTapbackType = val;
+                        saveSettings();
+                      },
+                    ),
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.smartReply = val;
@@ -182,17 +198,6 @@ class _ConvoSettingsState extends State<ConvoSettings> {
                     initialVal: _settingsCopy.smartReply,
                     title: "Smart Replies",
                   ),
-                  if (_settingsCopy.smartReply)
-                    SettingsSlider(
-                        text: "Smart Reply Sample Size",
-                        startingVal: _settingsCopy.smartReplySampleSize.toDouble(),
-                        update: (double val) {
-                          _settingsCopy.smartReplySampleSize = val.toInt();
-                        },
-                        formatValue: ((double val) => val.toStringAsFixed(2)),
-                        min: 1,
-                        max: 10,
-                        divisions: 9),
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.sendWithReturn = val;
@@ -200,6 +205,14 @@ class _ConvoSettingsState extends State<ConvoSettings> {
                     },
                     initialVal: _settingsCopy.sendWithReturn,
                     title: "Send Message with Return Key",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.startVideosMuted = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.startVideosMuted,
+                    title: "Play Videos Muted by Default in Mini-Player",
                   ),
                 ],
               ),

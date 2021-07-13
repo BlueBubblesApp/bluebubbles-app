@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class FailedToConnectDialog extends StatelessWidget {
-  const FailedToConnectDialog({Key key, @required this.onDismiss}) : super(key: key);
+  const FailedToConnectDialog({Key? key, required this.onDismiss}) : super(key: key);
   final Function() onDismiss;
 
   @override
@@ -17,10 +17,10 @@ class FailedToConnectDialog extends StatelessWidget {
           "Please make sure you are connected to wifi and that your server is online!",
         ),
         actions: [
-          FlatButton(
+          TextButton(
             child: Text(
               "Ok",
-              style: Theme.of(context).textTheme.bodyText1.apply(color: Theme.of(context).primaryColor),
+              style: Theme.of(context).textTheme.bodyText1!.apply(color: Theme.of(context).primaryColor),
             ),
             onPressed: onDismiss,
           ),

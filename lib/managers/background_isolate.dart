@@ -11,7 +11,7 @@ import 'package:flutter/services.dart';
 abstract class BackgroundIsolateInterface {
   static void initialize() {
     CallbackHandle callbackHandle =
-        PluginUtilities.getCallbackHandle(callbackHandler);
+        PluginUtilities.getCallbackHandle(callbackHandler)!;
     MethodChannelInterface().invokeMethod("initialize-background-handle",
         {"handle": callbackHandle.toRawHandle()});
   }

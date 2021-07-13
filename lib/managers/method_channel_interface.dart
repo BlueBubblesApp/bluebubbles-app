@@ -34,7 +34,7 @@ class MethodChannelInterface {
   MethodChannelInterface._internal();
 
   /// [platform] is the actual channel which can be used to talk to native code
-  MethodChannel platform;
+  late MethodChannel platform;
 
   /// [headless] identifies if this MethodChannelInterface is used when the app is fully closed, in hich case some actions cannot be done
   bool headless = false;
@@ -42,7 +42,7 @@ class MethodChannelInterface {
   /// Initialize all of the platform channels
   ///
   /// @param [customChannel] an optional custom platform channel to use by the methodchannelinterface
-  void init({MethodChannel customChannel}) {
+  void init({MethodChannel? customChannel}) {
     // If a [customChannel] is set, then we should use that
     if (customChannel != null) {
       headless = true;
@@ -76,7 +76,7 @@ class MethodChannelInterface {
         String address = call.arguments.toString();
 
         // We remove the brackets from the formatting
-        address = getServerAddress(address: address.substring(1, address.length - 1));
+        address = getServerAddress(address: address.substring(1, address.length - 1))!;
 
         // And then tell the socket to set the new server address
         await SocketManager().newServer(address);
@@ -84,7 +84,7 @@ class MethodChannelInterface {
         return new Future.value("");
       case "new-message":
         // Retreive the data for this message as a json
-        Map<String, dynamic> data = jsonDecode(call.arguments);
+        Map<String, dynamic>? data = jsonDecode(call.arguments);
 
         // Add it to the queue with the data as the item
         IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_MESSAGE_EVENT, item: {"data": data}));
@@ -92,7 +92,7 @@ class MethodChannelInterface {
         return new Future.value("");
       case "updated-message":
         // Retreive the data for this message as a json
-        Map<String, dynamic> data = jsonDecode(call.arguments);
+        Map<String, dynamic>? data = jsonDecode(call.arguments);
 
         // Add it to the queue with the data as the item
         IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_UPDATE_MESSAGE, item: {"data": data}));
@@ -104,7 +104,7 @@ class MethodChannelInterface {
 
         return new Future.value("");
       case "socket-error-open":
-        NavigatorManager().navigatorKey.currentState.push(
+        NavigatorManager().navigatorKey.currentState!.push(
               ThemeSwitcher.buildPageRoute(
                 builder: (context) => ServerManagementPanel(),
               ),
@@ -112,7 +112,7 @@ class MethodChannelInterface {
         return new Future.value("");
       case "reply":
         // Find the chat to reply to
-        Chat chat = await Chat.findOne({"guid": call.arguments["chat"]});
+        Chat? chat = await Chat.findOne({"guid": call.arguments["chat"]});
 
         // If no chat is found, then we can't do anything
         if (chat == null) {
@@ -128,7 +128,7 @@ class MethodChannelInterface {
         return new Future.value("");
       case "markAsRead":
         // Find the chat to mark as read
-        Chat chat = await Chat.findOne({"guid": call.arguments["chat"]});
+        Chat? chat = await Chat.findOne({"guid": call.arguments["chat"]});
 
         // If no chat is found, then we can't do anything
         if (chat == null) {
@@ -167,20 +167,20 @@ class MethodChannelInterface {
         });
 
         // Get the handle if it is a direct shortcut
-        String guid = call.arguments["id"];
+        String? guid = call.arguments["id"];
 
         // If it is a direct shortcut, try and find the chat and navigate to it
         if (guid != null) {
-          List<Chat> chats = ChatBloc().chats.where((element) => element.guid == guid).toList();
+          List<Chat?> chats = ChatBloc().chats.where((element) => element.guid == guid).toList();
 
           // If we did find a chat matching the criteria
           if (chats.length != 0) {
             // Get the most recent of our results
             chats.sort(Chat.sort);
-            Chat chat = chats.first;
+            Chat chat = chats.first!;
 
             // Open the chat
-            openChat(chat.guid, existingAttachments: attachments);
+            openChat(chat.guid!, existingAttachments: attachments);
 
             // Nothing else to do
             return new Future.value("");
@@ -188,7 +188,7 @@ class MethodChannelInterface {
         }
 
         // Go to the new chat creator with all of these attachments to select a chat in case it wasn't a direct share
-        NavigatorManager().navigatorKey.currentState.pushAndRemoveUntil(
+        NavigatorManager().navigatorKey.currentState!.pushAndRemoveUntil(
               ThemeSwitcher.buildPageRoute(
                 builder: (context) => ConversationView(
                   existingAttachments: attachments,
@@ -203,30 +203,30 @@ class MethodChannelInterface {
       case "shareText":
 
         // Get the text that was shared to the app
-        String text = call.arguments["text"];
+        String? text = call.arguments["text"];
 
         // Get the handle if it is a direct shortcut
-        String guid = call.arguments["id"];
+        String? guid = call.arguments["id"];
 
         // If it is a direct shortcut, try and find the chat and navigate to it
         if (guid != null) {
-          List<Chat> chats = ChatBloc().chats.where((element) => element.guid == guid).toList();
+          List<Chat?> chats = ChatBloc().chats.where((element) => element.guid == guid).toList();
 
           // If we did find a chat matching the criteria
           if (chats.length != 0) {
             // Get the most recent of our results
             chats.sort(Chat.sort);
-            Chat chat = chats.first;
+            Chat chat = chats.first!;
 
             // Open the chat
-            openChat(chat.guid, existingText: text);
+            openChat(chat.guid!, existingText: text);
 
             // Nothing else to do
             return new Future.value("");
           }
         }
         // Navigate to the new chat creator with the specified text
-        NavigatorManager().navigatorKey.currentState.pushAndRemoveUntil(
+        NavigatorManager().navigatorKey.currentState!.pushAndRemoveUntil(
               ThemeSwitcher.buildPageRoute(
                 builder: (context) => ConversationView(
                   existingText: text,
@@ -256,13 +256,13 @@ class MethodChannelInterface {
     }
   }
 
-  Future<void> openChat(String id, {List<File> existingAttachments, String existingText}) async {
-    if (CurrentChat.activeChat?.chat?.guid == id) {
-      NotificationManager().switchChat(CurrentChat.activeChat.chat);
+  Future<void> openChat(String id, {List<File> existingAttachments = const [], String? existingText}) async {
+    if (CurrentChat.activeChat?.chat.guid == id) {
+      NotificationManager().switchChat(CurrentChat.activeChat!.chat);
       return;
     }
     // Try to find the specified chat to open
-    Chat openedChat = await Chat.findOne({"GUID": id});
+    Chat? openedChat = await Chat.findOne({"GUID": id});
 
     // If we did find one, then we can move on
     if (openedChat != null) {
@@ -277,7 +277,7 @@ class MethodChannelInterface {
 
       // if (!CurrentChat.isActive(openedChat.guid))
       // Actually navigate to the chat page
-      NavigatorManager().navigatorKey.currentState
+      NavigatorManager().navigatorKey.currentState!
         ..pushAndRemoveUntil(
           ThemeSwitcher.buildPageRoute(
             builder: (context) => ConversationView(

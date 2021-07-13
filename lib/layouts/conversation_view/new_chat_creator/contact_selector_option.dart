@@ -1,3 +1,4 @@
+import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
@@ -7,14 +8,17 @@ import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class ContactSelectorOption extends StatelessWidget {
-  const ContactSelectorOption({Key key, @required this.item, @required this.onSelected}) : super(key: key);
+  const ContactSelectorOption({Key? key, required this.item, required this.onSelected, required this.index})
+      : super(key: key);
   final UniqueContact item;
   final Function(UniqueContact item) onSelected;
+  final int index;
 
-  String getTypeStr(String type) {
-    if (isNullOrEmpty(type)) return "";
+  String getTypeStr(String? type) {
+    if (isNullOrEmpty(type)!) return "";
     return " ($type)";
   }
 
@@ -22,50 +26,106 @@ class ContactSelectorOption extends StatelessWidget {
     if (!item.isChat) return "";
 
     List<String> formatted = [];
-    for (var item in item.chat.participants) {
-      String contact = ContactManager().getCachedContactSync(item.address)?.displayName;
+    for (var item in item.chat!.participants) {
+      String? contact = ContactManager().getCachedContactSync(item.address ?? "")?.displayName;
       if (contact == null) {
-        contact = await formatPhoneNumber(item.address);
+        contact = await formatPhoneNumber(item);
       }
 
-      if (contact != null) {
-        formatted.add(contact);
-      }
+      formatted.add(contact);
     }
 
     return formatted.join(", ");
   }
 
+  FutureBuilder<String> formattedNumberFuture(dynamic item) {
+    String address = '';
+    if (item is String) {
+      address = item;
+    } else if (item is Handle) {
+      address = item.address ?? "";
+    }
+
+    return FutureBuilder<String>(
+        future: formatPhoneNumber(item),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return this.getTextWidget(context, address);
+          }
+
+          return this.getTextWidget(context, snapshot.data);
+        });
+  }
+
+  Widget getTextWidget(BuildContext context, String? text) {
+    return TextOneLine(
+      text!,
+      style: Theme.of(context).textTheme.subtitle1,
+      overflow: TextOverflow.ellipsis,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    var getTextWidget = (String text) {
-      return Text(
-        text,
-        style: Theme.of(context).textTheme.subtitle1,
-        overflow: TextOverflow.ellipsis,
+    final bool redactedMode = SettingsManager().settings.redactedMode;
+    final bool hideInfo = redactedMode && SettingsManager().settings.hideContactInfo;
+    final bool generateName = redactedMode && SettingsManager().settings.generateFakeContactNames;
+    String title = "";
+    if (generateName) {
+      if (item.isChat) {
+        title = item.chat!.fakeParticipants.length == 1 ? item.chat!.fakeParticipants[0] ?? "Unknown" : "Group Chat";
+      } else {
+        title = "Person ${index + 1}";
+      }
+    } else if (!hideInfo) {
+      if (item.isChat) {
+        title = item.chat!.title ?? "Group Chat";
+      } else {
+        title = "${item.displayName}${getTypeStr(item.label)}";
+      }
+    }
+
+    Widget subtitle;
+    if (redactedMode) {
+      subtitle = getTextWidget(context, "");
+    } else if (!item.isChat || item.chat!.participants.length == 1) {
+      if (item.address != null) {
+        if (!item.address!.isEmail) {
+          subtitle = formattedNumberFuture(item);
+        } else {
+          subtitle = getTextWidget(context, item.address);
+        }
+      } else if (item.chat != null &&
+          item.chat!.participants[0].address != null &&
+          !item.chat!.participants[0].address!.isEmail) {
+        subtitle = formattedNumberFuture(item.chat!.participants[0]);
+      } else if (item.chat!.participants[0].address!.isEmail) {
+        subtitle = getTextWidget(context, item.chat!.participants[0].address!);
+      } else {
+        subtitle = getTextWidget(context, "Person ${index + 1}");
+      }
+    } else {
+      subtitle = FutureBuilder<String>(
+        future: chatParticipants,
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return getTextWidget(context, item.displayName ?? item.address ?? "Person ${index + 1}");
+          }
+
+          return getTextWidget(context, snapshot.data);
+        },
       );
-    };
+    }
 
     return ListTile(
       key: new Key("chat-${item.displayName}"),
       onTap: () => onSelected(item),
       title: Text(
-        !item.isChat ? "${item.displayName}${getTypeStr(item.label)}" : item.chat.title ?? "Group Chat",
+        title,
         style: Theme.of(context).textTheme.bodyText1,
         overflow: TextOverflow.ellipsis,
       ),
-      subtitle: (!item.isChat || item.chat.participants.length == 1)
-          ? getTextWidget(item?.address ?? item.chat.participants[0]?.address ?? "Person")
-          : FutureBuilder(
-            future: chatParticipants,
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) {
-                return getTextWidget(item.displayName ?? item.address ?? "Person");
-              }
-
-              return getTextWidget(snapshot.data);
-            },
-          ),
+      subtitle: subtitle,
       leading: !item.isChat
           ? ContactAvatarWidget(
               handle: Handle(address: item.address),
@@ -73,13 +133,13 @@ class ContactSelectorOption extends StatelessWidget {
               editable: false,
             )
           : ContactAvatarGroupWidget(
-              chat: item.chat,
-              participants: item.chat.participants,
+              chat: item.chat!,
+              participants: item.chat!.participants,
               editable: false,
             ),
       trailing: item.isChat
           ? Icon(
-              SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
+              SettingsManager().settings.skin.value == Skins.iOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
               color: Theme.of(context).primaryColor,
             )
           : null,

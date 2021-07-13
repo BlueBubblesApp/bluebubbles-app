@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/attachment_downloader_widget.dart';
@@ -12,27 +13,24 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
 import 'package:bluebubbles/layouts/widgets/circle_progress_bar.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class MessageAttachment extends StatefulWidget {
   MessageAttachment({
-    Key key,
-    @required this.attachment,
-    @required this.updateAttachment,
-    @required this.message,
+    Key? key,
+    required this.attachment,
+    required this.updateAttachment,
   }) : super(key: key);
   final Attachment attachment;
   final Function() updateAttachment;
-  final Message message;
 
   @override
   _MessageAttachmentState createState() => _MessageAttachmentState();
 }
 
 class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKeepAliveClientMixin {
-  Widget attachmentWidget;
+  Widget? attachmentWidget;
   var content;
 
   @override
@@ -64,7 +62,7 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
       borderRadius: BorderRadius.circular(20),
       child: Container(
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 3 / 4,
+          maxWidth: context.width * 3 / 4,
           // maxHeight: 600,
         ),
         child: _buildAttachmentWidget(),
@@ -75,9 +73,9 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
   Widget _buildAttachmentWidget() {
     // If it's a file, it's already been downlaoded, so just display it
     if (content is File) {
-      String mimeType = widget.attachment.mimeType;
+      String? mimeType = widget.attachment.mimeType;
       if (mimeType != null) mimeType = mimeType.substring(0, mimeType.indexOf("/"));
-      if (mimeType == "image") {
+      if (mimeType == "image" && !widget.attachment.mimeType!.endsWith("tiff")) {
         return MediaFile(
           attachment: widget.attachment,
           child: ImageWidget(
@@ -93,7 +91,7 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
             file: content,
           ),
         );
-      } else if (mimeType == "audio" && !widget.attachment.mimeType.contains("caf")) {
+      } else if (mimeType == "audio" && !widget.attachment.mimeType!.contains("caf")) {
         return MediaFile(
           attachment: widget.attachment,
           child: AudioPlayerWiget(file: content, context: context, width: 250),
@@ -162,7 +160,7 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
             return _buildAttachmentWidget();
           }
 
-          double progress = 0.0;
+          double? progress = 0.0;
           if (snapshot.hasData) {
             progress = snapshot.data["progress"];
           } else {
@@ -183,7 +181,7 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
                           height: 40,
                           width: 40,
                           child: CircleProgressBar(
-                            value: progress == 1.0 ? null : (progress ?? 0),
+                            value: progress ?? 0,
                             backgroundColor: Colors.grey,
                             foregroundColor: Colors.white,
                           ),

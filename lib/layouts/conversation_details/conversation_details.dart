@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
@@ -22,16 +23,16 @@ class ConversationDetails extends StatefulWidget {
   final Chat chat;
   final MessageBloc messageBloc;
 
-  ConversationDetails({Key key, this.chat, this.messageBloc}) : super(key: key);
+  ConversationDetails({Key? key, required this.chat, required this.messageBloc}) : super(key: key);
 
   @override
   _ConversationDetailsState createState() => _ConversationDetailsState();
 }
 
 class _ConversationDetailsState extends State<ConversationDetails> {
-  TextEditingController controller;
+  late TextEditingController controller;
   bool readOnly = true;
-  Chat chat;
+  late Chat chat;
   List<Attachment> attachmentsForChat = <Attachment>[];
   bool isClearing = false;
   bool isCleared = false;
@@ -56,11 +57,11 @@ class _ConversationDetailsState extends State<ConversationDetails> {
     super.initState();
     chat = widget.chat;
     controller = new TextEditingController(text: chat.displayName);
-    showNameField = chat.displayName.isNotEmpty;
+    showNameField = chat.displayName!.isNotEmpty;
 
     fetchAttachments();
     ChatBloc().chatStream.listen((event) async {
-      Chat _chat = await Chat.findOne({"guid": widget.chat.guid});
+      Chat? _chat = await Chat.findOne({"guid": widget.chat.guid});
       if (_chat == null) return;
       await _chat.getParticipants();
       chat = _chat;
@@ -88,21 +89,25 @@ class _ConversationDetailsState extends State<ConversationDetails> {
 
   @override
   Widget build(BuildContext context) {
-    final bool redactedMode = SettingsManager()?.settings?.redactedMode ?? false;
-    final bool hideInfo = redactedMode && (SettingsManager()?.settings?.hideContactInfo ?? false);
-    final bool generateName = redactedMode && (SettingsManager()?.settings?.generateFakeContactNames ?? false);
+    final bool redactedMode = SettingsManager().settings.redactedMode;
+    final bool hideInfo = redactedMode && (SettingsManager().settings.hideContactInfo);
+    final bool generateName = redactedMode && (SettingsManager().settings.generateFakeContactNames);
     if (generateName) controller.text = "Group Chat";
 
     final bool showGroupNameInfo = (showNameField && !hideInfo) || generateName;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor,
+        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarIconBrightness:
+            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
-        appBar: SettingsManager().settings.skin == Skins.IOS
+        appBar: (SettingsManager().settings.skin.value == Skins.iOS
             ? CupertinoNavigationBar(
                 backgroundColor: Theme.of(context).accentColor.withAlpha(125),
+                leading: buildBackButton(context),
                 middle: Text(
                   "Details",
                   style: Theme.of(context).textTheme.headline1,
@@ -122,12 +127,12 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                   ),
                   preferredSize: Size.fromHeight(0.5),
                 ),
-              ),
-        extendBodyBehindAppBar: SettingsManager().settings.skin == Skins.IOS ? true : false,
+              )) as PreferredSizeWidget?,
+        extendBodyBehindAppBar: SettingsManager().settings.skin.value == Skins.iOS ? true : false,
         body: CustomScrollView(
           physics: ThemeSwitcher.getScrollPhysics(),
           slivers: <Widget>[
-            if (SettingsManager().settings.skin == Skins.IOS)
+            if (SettingsManager().settings.skin.value == Skins.iOS)
               SliverToBoxAdapter(
                 child: Container(
                   height: 100,
@@ -158,13 +163,13 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                   autofocus: false,
                                   autocorrect: false,
                                   decoration: InputDecoration(
-                                      labelText: chat.displayName.isEmpty ? "SET NAME" : "NAME",
+                                      labelText: chat.displayName!.isEmpty ? "SET NAME" : "NAME",
                                       labelStyle: TextStyle(color: Theme.of(context).primaryColor),
                                       enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey))),
                                 ),
                               ),
                             ),
-                            if (showGroupNameInfo && chat.displayName.isNotEmpty)
+                            if (showGroupNameInfo && chat.displayName!.isNotEmpty)
                               Container(
                                   padding: EdgeInsets.only(right: 10),
                                   child: GestureDetector(
@@ -176,7 +181,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                                 backgroundColor: Theme.of(context).accentColor,
                                                 title: new Text("Group Naming",
                                                     style:
-                                                        TextStyle(color: Theme.of(context).textTheme.bodyText1.color)),
+                                                        TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
                                                 content: Column(
                                                   mainAxisAlignment: MainAxisAlignment.center,
                                                   mainAxisSize: MainAxisSize.min,
@@ -188,11 +193,11 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                                   ],
                                                 ),
                                                 actions: <Widget>[
-                                                  FlatButton(
+                                                  TextButton(
                                                       child: Text("OK",
                                                           style: Theme.of(context)
                                                               .textTheme
-                                                              .subtitle1
+                                                              .subtitle1!
                                                               .apply(color: Theme.of(context).primaryColor)),
                                                       onPressed: () {
                                                         Navigator.of(context).pop();
@@ -205,24 +210,25 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                         Icons.info_outline,
                                         color: Theme.of(context).primaryColor,
                                       ))),
-                            if (chat.displayName.isEmpty)
+                            if (chat.displayName!.isEmpty)
                               Padding(
                                 padding: const EdgeInsets.only(left: 8.0, right: 16.0, bottom: 8.0),
-                                child: RaisedButton(
-                                  highlightColor: Colors.red,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(18),
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    primary: Theme.of(context).accentColor,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(18),
+                                    ),
                                   ),
                                   onPressed: () async {
                                     setState(() {
                                       showNameField = false;
                                     });
                                   },
-                                  color: Theme.of(context).accentColor,
                                   child: Text(
                                     "CANCEL",
                                     style: TextStyle(
-                                      color: Theme.of(context).textTheme.bodyText1.color,
+                                      color: Theme.of(context).textTheme.bodyText1!.color,
                                       fontSize: 13,
                                     ),
                                   ),
@@ -233,20 +239,22 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                       : !hideInfo
                           ? Padding(
                               padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 8.0),
-                              child: RaisedButton(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(18),
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  primary: Theme.of(context).accentColor,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(18),
+                                  ),
                                 ),
                                 onPressed: () async {
                                   setState(() {
                                     showNameField = true;
                                   });
                                 },
-                                color: Theme.of(context).accentColor,
                                 child: Text(
                                   "ADD NAME",
                                   style: TextStyle(
-                                    color: Theme.of(context).textTheme.bodyText1.color,
+                                    color: Theme.of(context).textTheme.bodyText1!.color,
                                     fontSize: 13,
                                   ),
                                 ),
@@ -404,20 +412,14 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                           color: Theme.of(context).primaryColor,
                         )),
                     trailing: Switch(
-                        value: widget.chat.isPinned,
+                        value: widget.chat.isPinned!,
                         activeColor: Theme.of(context).primaryColor,
                         activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
                         inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
                         inactiveThumbColor: Theme.of(context).accentColor,
                         onChanged: (value) async {
-                          if (value) {
-                            await widget.chat.pin();
-                          } else {
-                            await widget.chat.unpin();
-                          }
-
+                          await widget.chat.togglePin(!widget.chat.isPinned!);
                           EventDispatcher().emit("refresh", null);
-
                           if (this.mounted) setState(() {});
                         }))),
             SliverToBoxAdapter(
@@ -427,14 +429,13 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                           color: Theme.of(context).primaryColor,
                         )),
                     trailing: Switch(
-                        value: widget.chat.isMuted,
+                        value: widget.chat.isMuted!,
                         activeColor: Theme.of(context).primaryColor,
                         activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
                         inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
                         inactiveThumbColor: Theme.of(context).accentColor,
                         onChanged: (value) async {
-                          widget.chat.isMuted = value;
-                          await widget.chat.save(updateLocalVals: true);
+                          await widget.chat.toggleMute(value);
                           EventDispatcher().emit("refresh", null);
 
                           if (this.mounted) setState(() {});
@@ -446,7 +447,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                           color: Theme.of(context).primaryColor,
                         )),
                     trailing: Switch(
-                        value: widget.chat.isArchived,
+                        value: widget.chat.isArchived!,
                         activeColor: Theme.of(context).primaryColor,
                         activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
                         inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
@@ -539,9 +540,10 @@ class _ConversationDetailsState extends State<ConversationDetails> {
 }
 
 class SyncDialog extends StatefulWidget {
-  SyncDialog({Key key, this.chat, this.initialMessage, this.withOffset = false, this.limit = 100}) : super(key: key);
+  SyncDialog({Key? key, required this.chat, this.initialMessage, this.withOffset = false, this.limit = 100})
+      : super(key: key);
   final Chat chat;
-  final String initialMessage;
+  final String? initialMessage;
   final bool withOffset;
   final int limit;
 
@@ -550,10 +552,10 @@ class SyncDialog extends StatefulWidget {
 }
 
 class _SyncDialogState extends State<SyncDialog> {
-  String errorCode;
+  String? errorCode;
   bool finished = false;
-  String message;
-  double progress;
+  String? message;
+  double? progress;
 
   @override
   void initState() {
@@ -565,10 +567,10 @@ class _SyncDialogState extends State<SyncDialog> {
   void syncMessages() async {
     int offset = 0;
     if (widget.withOffset) {
-      offset = await Message.countForChat(widget.chat);
+      offset = await Message.countForChat(widget.chat) ?? 0;
     }
 
-    SocketManager().fetchMessages(widget.chat, offset: offset, limit: widget.limit).then((List<dynamic> messages) {
+    SocketManager().fetchMessages(widget.chat, offset: offset, limit: widget.limit)!.then((dynamic messages) {
       if (this.mounted) {
         setState(() {
           message = "Adding ${messages.length} messages...";
@@ -586,7 +588,9 @@ class _SyncDialogState extends State<SyncDialog> {
       }).then((List<Message> __) {
         onFinish(true);
       });
-    }).catchError((_) => onFinish(false));
+    }).catchError((_) {
+      onFinish(false);
+    });
   }
 
   void onFinish([bool success = true]) {
@@ -598,9 +602,9 @@ class _SyncDialogState extends State<SyncDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(errorCode != null ? "Error!" : message),
+      title: Text(errorCode != null ? "Error!" : message!),
       content: errorCode != null
-          ? Text(errorCode)
+          ? Text(errorCode!)
           : Container(
               height: 5,
               child: Center(
@@ -612,13 +616,13 @@ class _SyncDialogState extends State<SyncDialog> {
               ),
             ),
       actions: [
-        FlatButton(
+        TextButton(
           onPressed: () {
             Navigator.of(context).pop();
           },
           child: Text(
             "Ok",
-            style: Theme.of(context).textTheme.bodyText1.apply(
+            style: Theme.of(context).textTheme.bodyText1!.apply(
                   color: Theme.of(context).primaryColor,
                 ),
           ),

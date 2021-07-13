@@ -1,11 +1,11 @@
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:get/get.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
-import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
@@ -15,7 +15,7 @@ import 'package:flutter/services.dart';
 
 class SearchView extends StatefulWidget {
   SearchView({
-    Key key,
+    Key? key,
   }) : super(key: key);
 
   @override
@@ -29,15 +29,12 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
   final Duration animationDuration = Duration(milliseconds: 400);
   final TextEditingController textEditingController = new TextEditingController();
 
-  Brightness brightness;
-  Color previousBackgroundColor;
-  bool gotBrightness = false;
   bool isSearching = false;
   Map<String, Chat> chatCache = {};
   FocusNode _focusNode = new FocusNode();
   Map<String, int> resultCache = {};
   bool noResults = false;
-  String previousSearch;
+  String? previousSearch;
 
   @override
   void initState() {
@@ -47,9 +44,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
       if (!event.containsKey("type")) return;
       if (event["type"] == 'theme-update' && this.mounted) {
-        setState(() {
-          gotBrightness = false;
-        });
+        setState(() {});
       }
     });
 
@@ -65,26 +60,8 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
     _focusNode.requestFocus();
   }
 
-  void loadBrightness() {
-    Color now = Theme.of(context).backgroundColor;
-    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
-    if (!themeChanged && gotBrightness) return;
-
-    previousBackgroundColor = now;
-    if (this.context == null) {
-      brightness = Brightness.light;
-      gotBrightness = true;
-      return;
-    }
-
-    bool isDark = now.computeLuminance() < 0.179;
-    brightness = isDark ? Brightness.dark : Brightness.light;
-    gotBrightness = true;
-    if (this.mounted) setState(() {});
-  }
-
   Future<void> search(String term) async {
-    if (isSearching || isNullOrEmpty(term) || term.length < 3) return;
+    if (isSearching || isNullOrEmpty(term)! || term.length < 3) return;
     _focusNode.unfocus();
     noResults = false;
     previousSearch = term;
@@ -109,7 +86,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
         'args': {'term': "%${textEditingController.text}%"}
       },
       {'statement': 'message.associated_message_guid IS NULL', 'args': null}
-    ]);
+    ])!;
 
     List<dynamic> _results = [];
     for (dynamic item in results) {
@@ -142,7 +119,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
     _listKey = new GlobalKey<AnimatedListState>();
 
     // Let the animated list know it should update
-    _listKey?.currentState?.setState(() {});
+    _listKey.currentState?.setState(() {});
 
     // Add the cached result
     resultCache[term] = this.results.length;
@@ -158,30 +135,24 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    loadBrightness();
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor,
+        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
         // extendBodyBehindAppBar: true,
         backgroundColor: Theme.of(context).backgroundColor,
         appBar: PreferredSize(
-          preferredSize: Size(MediaQuery.of(context).size.width, 80),
+          preferredSize: Size(context.width, 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
-                brightness: brightness,
+                brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
                 toolbarHeight: 100.0,
                 elevation: 0,
-                leading: IconButton(
-                  icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
-                      color: Theme.of(context).primaryColor),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
+                leading: buildBackButton(context),
                 backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
                 title: Text(
                   "Search",
@@ -201,7 +172,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Icon(Icons.search, color: Theme.of(context).textTheme.bodyText1.color),
+                      Icon(Icons.search, color: Theme.of(context).textTheme.bodyText1!.color),
                       Container(padding: EdgeInsets.only(right: 5.0)),
                       Flexible(
                           fit: FlexFit.loose,
@@ -226,7 +197,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                           ? CupertinoButton(
                               padding: EdgeInsets.all(0),
                               child: Icon(Icons.arrow_forward,
-                                  color: Theme.of(context).textTheme.bodyText1.color, size: 30),
+                                  color: Theme.of(context).textTheme.bodyText1!.color, size: 30),
                               onPressed: () {
                                 search(textEditingController.text);
                               })
@@ -234,7 +205,9 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                               padding: const EdgeInsets.all(12.0),
                               child: Theme(
                                 data: ThemeData(
-                                  cupertinoOverrideTheme: CupertinoThemeData(brightness: brightness),
+                                  cupertinoOverrideTheme: CupertinoThemeData(
+                                      brightness:
+                                          ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor)),
                                 ),
                                 child: CupertinoActivityIndicator(),
                               ),
@@ -253,7 +226,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                           initialItemCount: results.length,
                           itemBuilder: (BuildContext context, int index, Animation<double> animation) {
                             Message message = results[index]['message'];
-                            Chat chat = results[index]['chat'];
+                            Chat? chat = results[index]['chat'];
 
                             // Create the textspans
                             List<InlineSpan> spans = [];
@@ -266,8 +239,8 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                             if (termIndex >= 0) {
                               // We only want a snippet of the text, so only get a 50x50 range
                               // of characters from the string, with the search term in the middle
-                              String subText = message.text.substring((termIndex - 50 >= 0) ? termIndex - 50 : 0,
-                                  (termEnd + 50 < message.text.length) ? termEnd + 50 : message.text.length);
+                              String subText = message.text!.substring((termIndex - 50 >= 0) ? termIndex - 50 : 0,
+                                  (termEnd + 50 < message.text!.length) ? termEnd + 50 : message.text!.length);
 
                               // Recarculate the term position in the snippet
                               termIndex = subText.toLowerCase().indexOf(textEditingController.text.toLowerCase());
@@ -283,7 +256,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                                   text: subText.substring(termIndex, termEnd),
                                   style: Theme.of(context)
                                       .textTheme
-                                      .subtitle1
+                                      .subtitle1!
                                       .apply(color: Theme.of(context).primaryColor, fontWeightDelta: 2)));
 
                               // Add the ending string
@@ -325,9 +298,9 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                                     mainAxisAlignment: MainAxisAlignment.start,
                                     children: [
                                       Text("${buildDate(message.dateCreated)}",
-                                          style: Theme.of(context).textTheme.subtitle1.apply(fontSizeDelta: -2)),
+                                          style: Theme.of(context).textTheme.subtitle1!.apply(fontSizeDelta: -2)),
                                       Container(height: 5.0),
-                                      Text(chat?.title, style: Theme.of(context).textTheme.bodyText1),
+                                      Text(chat?.title ?? "Unknown title", style: Theme.of(context).textTheme.bodyText1),
                                     ],
                                   ),
                                   subtitle: Padding(
@@ -338,7 +311,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                                   ),
                                   trailing: Icon(
                                     Icons.arrow_forward_ios,
-                                    color: Theme.of(context).textTheme.bodyText1.color,
+                                    color: Theme.of(context).textTheme.bodyText1!.color,
                                   ),
                                 ),
                                 Divider(color: Theme.of(context).accentColor)

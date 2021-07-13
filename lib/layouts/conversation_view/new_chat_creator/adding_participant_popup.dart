@@ -10,7 +10,7 @@ class AddingParticipantPopup extends StatefulWidget {
   final List<UniqueContact> contacts;
   final Chat chat;
 
-  AddingParticipantPopup({Key key, @required this.contacts, this.chat}) : super(key: key);
+  AddingParticipantPopup({Key? key, required this.contacts, required this.chat}) : super(key: key);
 
   @override
   _AddingParticipantPopupState createState() => _AddingParticipantPopupState();
@@ -18,7 +18,7 @@ class AddingParticipantPopup extends StatefulWidget {
 
 class _AddingParticipantPopupState extends State<AddingParticipantPopup> {
   int index = 0;
-  String title;
+  late String title;
 
   @override
   void initState() {
@@ -33,7 +33,7 @@ class _AddingParticipantPopupState extends State<AddingParticipantPopup> {
 
     Map<String, dynamic> params = {};
     params["identifier"] = widget.chat.guid;
-    params["address"] = cleansePhoneNumber(widget.contacts[i].address);
+    params["address"] = cleansePhoneNumber(widget.contacts[i].address!);
     SocketManager().sendMessage("add-participant", params, (data) async {
       if (data['status'] != 200) {
         if (this.mounted)

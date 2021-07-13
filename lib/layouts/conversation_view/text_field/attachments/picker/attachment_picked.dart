@@ -7,7 +7,7 @@ import 'package:mime_type/mime_type.dart';
 import 'package:photo_manager/photo_manager.dart';
 
 class AttachmentPicked extends StatefulWidget {
-  AttachmentPicked({Key key, @required this.onTap, @required this.data}) : super(key: key);
+  AttachmentPicked({Key? key, required this.onTap, required this.data}) : super(key: key);
   final AssetEntity data;
   final Function onTap;
 
@@ -16,8 +16,8 @@ class AttachmentPicked extends StatefulWidget {
 }
 
 class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepAliveClientMixin {
-  Uint8List image;
-  String path;
+  Uint8List? image;
+  String? path;
 
   @override
   void initState() {
@@ -28,19 +28,19 @@ class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepA
   @override
   void didChangeDependencies() async {
     super.didChangeDependencies();
-    path = (await widget.data.file).path;
-    BlueBubblesTextField.of(context).stream.listen((event) {
+    path = (await widget.data.file)!.path;
+    BlueBubblesTextField.of(context)!.stream.listen((event) {
       if (this.mounted) setState(() {});
     });
   }
 
   Future<void> load() async {
-    image = await widget.data.thumbDataWithSize(800, 800, quality: 20);
+    image = await widget.data.thumbDataWithSize(800, 800, quality: SettingsManager().compressionQuality);
     if (this.mounted) setState(() {});
   }
 
   bool get containsThis =>
-      BlueBubblesTextField.of(context).pickedImages.where((element) => element.path == path).length > 0;
+      BlueBubblesTextField.of(context)!.pickedImages.where((element) => element.path == path).length > 0;
 
   @override
   Widget build(BuildContext context) {
@@ -56,11 +56,11 @@ class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepA
               alignment: Alignment.bottomRight,
               children: <Widget>[
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(10),
                   child: Stack(
                     children: <Widget>[
                       Image.memory(
-                        image,
+                        image!,
                         fit: BoxFit.cover,
                         width: 150,
                         height: 150,
@@ -76,7 +76,7 @@ class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepA
                           child: Container(
                             alignment: Alignment.center,
                             child: Text(
-                              mime(path),
+                              mime(path)!,
                               textAlign: TextAlign.center,
                             ),
                           ),

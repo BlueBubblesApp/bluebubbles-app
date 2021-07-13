@@ -24,7 +24,7 @@ class LifeCycleManager {
   bool get isAlive => _isAlive;
 
   StreamController<bool> _stream = new StreamController.broadcast();
-  Stream get stream => _stream.stream;
+  Stream<bool> get stream => _stream.stream;
 
   LifeCycleManager._internal() {
     // Listen to the socket processes that are updated
@@ -41,7 +41,7 @@ class LifeCycleManager {
     // If the app is not alive (was previously closed) and the curent chat is not null (a chat is already open)
     // Then mark the current chat as read.
     if (!_isAlive && CurrentChat.activeChat != null) {
-      NotificationManager().switchChat(CurrentChat.activeChat.chat);
+      NotificationManager().switchChat(CurrentChat.activeChat!.chat);
     }
 
     // Set the app as open and start the socket
@@ -79,7 +79,7 @@ class LifeCycleManager {
     }
   }
 
-  dipose() {
+  dispose() {
     _stream.close();
   }
 }

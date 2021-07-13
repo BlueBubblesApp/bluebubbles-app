@@ -20,18 +20,18 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter_smart_reply/flutter_smart_reply.dart';
+import 'package:google_ml_kit/google_ml_kit.dart';
 
 class MessagesView extends StatefulWidget {
-  final MessageBloc messageBloc;
+  final MessageBloc? messageBloc;
   final bool showHandle;
-  final Chat chat;
-  final Function initComplete;
+  final Chat? chat;
+  final Function? initComplete;
 
   MessagesView({
-    Key key,
+    Key? key,
     this.messageBloc,
-    this.showHandle,
+    required this.showHandle,
     this.chat,
     this.initComplete,
   }) : super(key: key);
@@ -41,32 +41,30 @@ class MessagesView extends StatefulWidget {
 }
 
 class MessagesViewState extends State<MessagesView> with TickerProviderStateMixin {
-  Completer<LoadMessageResult> loader;
+  Completer<LoadMessageResult>? loader;
   bool noMoreMessages = false;
   bool noMoreLocalMessages = false;
   List<Message> _messages = <Message>[];
 
-  GlobalKey<SliverAnimatedListState> _listKey;
+  GlobalKey<SliverAnimatedListState>? _listKey;
   final Duration animationDuration = Duration(milliseconds: 400);
+  final smartReply = GoogleMlKit.nlp.smartReply();
   bool initializedList = false;
   List<int> loadedPages = [];
-  CurrentChat currentChat;
+  CurrentChat? currentChat;
   bool keyboardOpen = false;
 
-  List<TextMessage> currentMessages = [];
-  List<String> replies = [];
+  List<Message> currentMessages = [];
+  List<String?> replies = [];
 
-  StreamController<List<String>> smartReplyController;
+  late StreamController<List<String?>> smartReplyController;
 
-  bool get showScrollDown => currentChat?.showScrollDown;
+  bool get showScrollDown => currentChat?.showScrollDown ?? false;
 
-  ScrollController get scrollController {
+  ScrollController? get scrollController {
     if (currentChat == null) return null;
-    if (currentChat.scrollController == null) {
-      currentChat.scrollController = ScrollController();
-    }
 
-    return currentChat.scrollController;
+    return currentChat!.scrollController;
   }
 
   bool get showSmartReplies =>
@@ -78,13 +76,13 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     super.initState();
 
     currentChat = CurrentChat.of(context);
-    widget.messageBloc?.stream?.listen(handleNewMessage);
+    widget.messageBloc?.stream.listen(handleNewMessage);
 
     // See if we need to load anything from the message bloc
-    if (_messages.isEmpty && widget.messageBloc.messages.isEmpty) {
-      widget.messageBloc.getMessages();
-    } else if (_messages.isEmpty && widget.messageBloc.messages.isNotEmpty) {
-      widget.messageBloc.emitLoaded();
+    if (_messages.isEmpty && widget.messageBloc!.messages.isEmpty) {
+      widget.messageBloc!.getMessages();
+    } else if (_messages.isEmpty && widget.messageBloc!.messages.isNotEmpty) {
+      widget.messageBloc!.emitLoaded();
     }
 
     smartReplyController = StreamController<List<String>>.broadcast();
@@ -95,8 +93,8 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
 
       if (event["type"] == "refresh-messagebloc" && event["data"].containsKey("chatGuid")) {
         // Handle event's that require a matching guid
-        String chatGuid = event["data"]["chatGuid"];
-        if (widget.chat.guid == chatGuid) {
+        String? chatGuid = event["data"]["chatGuid"];
+        if (widget.chat!.guid == chatGuid) {
           if (event["type"] == "refresh-messagebloc") {
             // Clear state items
             noMoreLocalMessages = false;
@@ -105,7 +103,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
             loadedPages = [];
 
             // Reload the state after refreshing
-            widget.messageBloc.refresh().then((_) {
+            widget.messageBloc!.refresh().then((_) {
               if (this.mounted) {
                 setState(() {});
               }
@@ -115,7 +113,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
       }
     });
 
-    if (widget.initComplete != null) widget.initComplete();
+    if (widget.initComplete != null) widget.initComplete!();
   }
 
   void resetReplies() {
@@ -126,45 +124,21 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
 
   void updateReplies() async {
     // If there are no messages or the latest message is from me, reset the replies
-    if (isNullOrEmpty(_messages)) return resetReplies();
-    if (_messages.first.isFromMe) return resetReplies();
+    if (isNullOrEmpty(_messages)!) return resetReplies();
+    if (_messages.first.isFromMe!) return resetReplies();
 
-    Iterable<Message> filtered = _messages
-        .where((item) => !isNullOrEmpty(item.fullText, trimString: true) && item.associatedMessageGuid == null);
+    debugPrint("Getting smart replies...");
+    Map<String, dynamic> results = await smartReply.suggestReplies();
 
-    if (isNullOrEmpty(filtered)) return resetReplies();
-
-    // Calculate the max amount of items
-    int max = SettingsManager().settings.smartReplySampleSize;
-    if (max > filtered.length) {
-      max = filtered.length;
+    if (results.containsKey('suggestions')) {
+      List<SmartReplySuggestion> suggestions = results['suggestions'];
+      debugPrint("Smart Replies found: ${suggestions.length}");
+      replies = suggestions.map((e) => e.getText()).toList().toSet().toList();
+      debugPrint(replies.toString());
     }
-
-    // Get the first 'x' messages
-    List<Message> msgs = filtered.toList().sublist(0, max);
-    List<TextMessage> texts = [];
-    for (var msg in msgs) {
-      // Skip empty messages
-      if (isEmptyString(msg.fullText, stripWhitespace: true)) continue;
-
-      // Add to list based on who sent the message
-      if (msg.isFromMe) {
-        texts.add(TextMessage.createForLocalUser(msg.fullText, msg.dateCreated.millisecondsSinceEpoch));
-      } else {
-        texts.add(TextMessage.createForRemoteUser(msg.fullText, msg.dateCreated.millisecondsSinceEpoch));
-      }
-    }
-
-    debugPrint("Getting smart replies for ${texts.length} texts");
-    replies = await FlutterSmartReply.getSmartReplies(texts.reversed.toList());
-    if (replies == null) return;
-
-    // De-duplicate the list
-    replies = replies.toSet().toList();
-    debugPrint("Smart Replies found: $replies");
 
     // If there is nothing in the list, get out
-    if (isNullOrEmpty(replies)) {
+    if (isNullOrEmpty(replies)!) {
       resetReplies();
       return;
     }
@@ -173,13 +147,13 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     if (!smartReplyController.isClosed) smartReplyController.sink.add(replies);
   }
 
-  Future<void> loadNextChunk() {
+  Future<void>? loadNextChunk() {
     if (noMoreMessages || loadedPages.contains(_messages.length)) return null;
     int messageCount = _messages.length;
 
     // If we already are loading a chunk, don't load again
-    if (loader != null && !loader.isCompleted) {
-      return loader.future;
+    if (loader != null && !loader!.isCompleted) {
+      return loader!.future;
     }
 
     // Create a new completer
@@ -187,7 +161,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     loadedPages.add(messageCount);
 
     // Start loading the next chunk of messages
-    widget.messageBloc
+    widget.messageBloc!
         .loadMessageChunk(_messages.length, checkLocal: !noMoreLocalMessages)
         .then((LoadMessageResult val) {
       if (val != LoadMessageResult.FAILED_TO_RETREIVE) {
@@ -201,17 +175,17 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
       }
 
       // Complete the future
-      loader.complete(val);
+      loader!.complete(val);
 
       // Only update the state if there are messages that were added
       if (val != LoadMessageResult.FAILED_TO_RETREIVE) {
         if (this.mounted) setState(() {});
       }
     }).catchError((ex) {
-      loader.complete(LoadMessageResult.FAILED_TO_RETREIVE);
+      loader!.complete(LoadMessageResult.FAILED_TO_RETREIVE);
     });
 
-    return loader.future;
+    return loader!.future;
   }
 
   void handleNewMessage(MessageBlocEvent event) async {
@@ -219,48 +193,47 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     if (currentChat == null) return;
 
     // Skip deleted messages
-    if (event.message != null && event.message.dateDeleted != null) return;
-    if (!isNullOrEmpty(event.messages)) {
+    if (event.message != null && event.message!.dateDeleted != null) return;
+    if (!isNullOrEmpty(event.messages)!) {
       event.messages = event.messages.where((element) => element.dateDeleted == null).toList();
     }
 
     if (event.type == MessageBlocEventType.insert) {
-      if (this.mounted && LifeCycleManager().isAlive && context != null) {
+      if (this.mounted && LifeCycleManager().isAlive) {
         NotificationManager().switchChat(CurrentChat.of(context)?.chat);
       }
-      currentChat.getAttachmentsForMessage(event.message);
+      currentChat!.getAttachmentsForMessage(event.message);
       if (event.outGoing) {
-        currentChat.sentMessages.add(event.message);
+        currentChat!.sentMessages.add(event.message);
         Future.delayed(SendWidget.SEND_DURATION * 2, () {
-          currentChat.sentMessages.removeWhere((element) => element.guid == event.message.guid);
+          currentChat!.sentMessages.removeWhere((element) => element!.guid == event.message!.guid);
         });
 
-        if (context != null)
-          Navigator.of(context).push(
-            SendPageBuilder(
-              builder: (context) {
-                return SendWidget(
-                  text: event.message.text,
-                  tag: "first",
-                  currentChat: currentChat,
-                );
-              },
-            ),
-          );
+        Navigator.of(context).push(
+          SendPageBuilder(
+            builder: (context) {
+              return SendWidget(
+                text: event.message!.text,
+                tag: "first",
+                currentChat: currentChat,
+              );
+            },
+          ),
+        );
       }
 
       bool isNewMessage = true;
-      for (Message message in _messages) {
-        if (message.guid == event.message.guid) {
+      for (Message? message in _messages) {
+        if (message!.guid == event.message!.guid) {
           isNewMessage = false;
           break;
         }
       }
 
       _messages = event.messages;
-      if (_listKey != null && _listKey.currentState != null) {
-        _listKey.currentState.insertItem(
-          event.index != null ? event.index : 0,
+      if (_listKey != null && _listKey!.currentState != null) {
+        _listKey!.currentState!.insertItem(
+          event.index != null ? event.index! : 0,
           duration: isNewMessage
               ? event.outGoing
                   ? Duration(milliseconds: 500)
@@ -269,8 +242,8 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
         );
       }
 
-      if (event.message.hasAttachments) {
-        await currentChat.updateChatAttachments();
+      if (event.message!.hasAttachments) {
+        await currentChat!.updateChatAttachments();
         if (this.mounted) setState(() {});
       }
 
@@ -279,15 +252,32 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
       }
     } else if (event.type == MessageBlocEventType.remove) {
       for (int i = 0; i < _messages.length; i++) {
-        if (_messages[i].guid == event.remove && _listKey.currentState != null) {
+        if (_messages[i].guid == event.remove && _listKey!.currentState != null) {
           _messages.removeAt(i);
-          _listKey.currentState.removeItem(i, (context, animation) => Container());
+          _listKey!.currentState!.removeItem(i, (context, animation) => Container());
         }
       }
     } else {
       int originalMessageLength = _messages.length;
       _messages = event.messages;
-      _messages.forEach((message) => currentChat.getAttachmentsForMessage(message));
+      _messages.forEach((message) {
+        currentChat?.getAttachmentsForMessage(message);
+        currentChat?.messageMarkers.updateMessageMarkers(message);
+      });
+
+      // This needs to be in reverse so that the oldest message gets added first
+      // We also only want to grab the last 5, so long as there are at least 5 results
+      List<Message> reversed = _messages.reversed.toList();
+      int sampleSize = (_messages.length > 5) ? 5 : _messages.length;
+      reversed.sublist(reversed.length - sampleSize).forEach((message) {
+        if (!isEmptyString(message.fullText, stripWhitespace: true)) {
+          if (message.isFromMe ?? false) {
+            smartReply.addConversationForLocalUser(message.fullText!);
+          } else {
+            smartReply.addConversationForRemoteUser(message.fullText!, message.handle?.address ?? "participant");
+          }
+        }
+      });
 
       // We only want to update smart replies on the intial message fetch
       if (originalMessageLength == 0) {
@@ -299,14 +289,14 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
 
       if (originalMessageLength < _messages.length) {
         for (int i = originalMessageLength; i < _messages.length; i++) {
-          if (_listKey != null && _listKey.currentState != null)
-            _listKey.currentState.insertItem(i, duration: Duration(milliseconds: 0));
+          if (_listKey != null && _listKey!.currentState != null)
+            _listKey!.currentState!.insertItem(i, duration: Duration(milliseconds: 0));
         }
       } else if (originalMessageLength > _messages.length) {
         for (int i = originalMessageLength; i >= _messages.length; i--) {
-          if (_listKey != null && _listKey.currentState != null) {
+          if (_listKey != null && _listKey!.currentState != null) {
             try {
-              _listKey.currentState
+              _listKey!.currentState!
                   .removeItem(i, (context, animation) => Container(), duration: Duration(milliseconds: 0));
             } catch (ex) {
               debugPrint("Error removing item animation");
@@ -321,17 +311,17 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
   }
 
   /// All message update events are handled within the message widgets, to prevent top level setstates
-  Message onUpdateMessage(NewMessageEvent event) {
+  Message? onUpdateMessage(NewMessageEvent event) {
     if (event.type != NewMessageType.UPDATE) return null;
-    currentChat.updateExistingAttachments(event);
+    currentChat!.updateExistingAttachments(event);
 
-    String oldGuid = event.event["oldGuid"];
-    Message message = event.event["message"];
+    String? oldGuid = event.event["oldGuid"];
+    Message? message = event.event["message"];
 
     bool updatedAMessage = false;
     for (int i = 0; i < _messages.length; i++) {
       if (_messages[i].guid == oldGuid) {
-        debugPrint("(Message status) Update message: [${message.text}] - [${message.guid}] - [$oldGuid]");
+        debugPrint("(Message status) Update message: [${message!.text}] - [${message.guid}] - [$oldGuid]");
         _messages[i] = message;
         updatedAMessage = true;
         break;
@@ -339,7 +329,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     }
     if (!updatedAMessage) {
       debugPrint(
-          "(Message status) Message not updated (not found): [${message.text}] - [${message.guid}] - [$oldGuid]");
+          "(Message status) Message not updated (not found): [${message!.text}] - [${message.guid}] - [$oldGuid]");
     }
 
     return message;
@@ -360,7 +350,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
             borderRadius: BorderRadius.circular(19),
           ),
           onTap: () {
-            ActionHandler.sendMessage(currentChat.chat, text);
+            ActionHandler.sendMessage(currentChat!.chat, text);
           },
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 13.0),
@@ -378,14 +368,14 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
       behavior: HitTestBehavior.deferToChild,
       onHorizontalDragStart: (details) {},
       onHorizontalDragUpdate: (details) {
-        if (SettingsManager().settings.skin != Skins.Samsung)
-          CurrentChat.of(context).timeStampOffset += details.delta.dx * 0.3;
+        if (SettingsManager().settings.skin.value != Skins.Samsung)
+          CurrentChat.of(context)!.timeStampOffset += details.delta.dx * 0.3;
       },
       onHorizontalDragEnd: (details) {
-        if (SettingsManager().settings.skin != Skins.Samsung) CurrentChat.of(context).timeStampOffset = 0;
+        if (SettingsManager().settings.skin.value != Skins.Samsung) CurrentChat.of(context)!.timeStampOffset = 0;
       },
       onHorizontalDragCancel: () {
-        if (SettingsManager().settings.skin != Skins.Samsung) CurrentChat.of(context).timeStampOffset = 0;
+        if (SettingsManager().settings.skin.value != Skins.Samsung) CurrentChat.of(context)!.timeStampOffset = 0;
       },
       child: Stack(
         alignment: AlignmentDirectional.bottomCenter,
@@ -396,18 +386,18 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
             physics: ThemeSwitcher.getScrollPhysics(),
             slivers: <Widget>[
               if (this.showSmartReplies)
-                StreamBuilder<List<String>>(
+                StreamBuilder<List<String?>>(
                   stream: smartReplyController.stream,
                   builder: (context, snapshot) {
                     return SliverToBoxAdapter(
                       child: AnimatedSize(
-                        duration: Duration(milliseconds: 500),
+                        duration: Duration(milliseconds: 250),
                         vsync: this,
                         child: Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: replies
                                 .map(
-                                  (e) => _buildReply(e),
+                                  (e) => _buildReply(e!),
                                 )
                                 .toList()),
                       ),
@@ -419,7 +409,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                     child: Padding(
                   padding: EdgeInsets.only(top: 5),
                   child: TypingIndicator(
-                    visible: currentChat.showTypingIndicator,
+                    visible: currentChat!.showTypingIndicator,
                   ),
                 )),
               _listKey != null
@@ -431,7 +421,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                         // and we have more messages to load
                         if (index == _messages.length) {
                           if (!noMoreMessages &&
-                              (loader == null || !loader.isCompleted || !loadedPages.contains(_messages.length))) {
+                              (loader == null || !loader!.isCompleted || !loadedPages.contains(_messages.length))) {
                             loadNextChunk();
                             return NewMessageLoader();
                           }
@@ -441,8 +431,8 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                           return Container();
                         }
 
-                        Message olderMessage;
-                        Message newerMessage;
+                        Message? olderMessage;
+                        Message? newerMessage;
                         if (index + 1 >= 0 && index + 1 < _messages.length) {
                           olderMessage = _messages[index + 1];
                         }
@@ -455,12 +445,12 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                         Widget messageWidget = Padding(
                             padding: EdgeInsets.only(left: 5.0, right: 5.0),
                             child: MessageWidget(
-                              key: Key(_messages[index].guid),
+                              key: Key(_messages[index].guid!),
                               message: _messages[index],
                               olderMessage: olderMessage,
                               newerMessage: newerMessage,
                               showHandle: widget.showHandle,
-                              isFirstSentMessage: widget.messageBloc.firstSentMessage == _messages[index].guid,
+                              isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages[index].guid,
                               showHero: fullAnimation,
                               onUpdate: (event) => onUpdateMessage(event),
                             ));
@@ -505,6 +495,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
   @override
   void dispose() {
     if (!smartReplyController.isClosed) smartReplyController.close();
+    smartReply.close();
     super.dispose();
   }
 }

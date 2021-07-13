@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
@@ -10,9 +11,7 @@ import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/search/search_view.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
@@ -21,10 +20,9 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_displaymode/flutter_displaymode.dart';
 
 class ConversationList extends StatefulWidget {
-  ConversationList({Key key, this.showArchivedChats}) : super(key: key);
+  ConversationList({Key? key, required this.showArchivedChats}) : super(key: key);
 
   final bool showArchivedChats;
 
@@ -40,20 +38,15 @@ class _ConversationListState extends State<ConversationList> {
   bool showSyncIndicator = false;
   bool moveChatCreatorButton = false;
 
-  Brightness brightness = Brightness.light;
-  Color previousBackgroundColor;
-
-  Color currentHeaderColor;
-  bool gotBrightness = false;
-  bool hasPinnedChata = false;
+  Color? currentHeaderColor;
+  bool hasPinnedChats = false;
 
   // ignore: close_sinks
-  StreamController<Color> headerColorStream = StreamController<Color>.broadcast();
+  StreamController<Color?> headerColorStream = StreamController<Color?>.broadcast();
 
-  String model;
   int pinnedChats = 0;
-  ScrollController scrollController;
-  Skins skinSet;
+  late ScrollController scrollController;
+  late Skins skinSet;
   bool swipableTiles = false;
 
   @override
@@ -69,7 +62,7 @@ class _ConversationListState extends State<ConversationList> {
     super.dispose();
 
     // Remove the scroll listener from the state
-    if (scrollController != null) scrollController.removeListener(scrollListener);
+    scrollController.removeListener(scrollListener);
   }
 
   @override
@@ -77,7 +70,7 @@ class _ConversationListState extends State<ConversationList> {
     super.initState();
     if (!widget.showArchivedChats) {
       ChatBloc().chatStream.listen((List<Chat> chats) {
-        if (chats == null || chats.length == 0) return;
+        if (chats.length == 0) return;
         this.chats = chats;
         if (this.mounted) setState(() {});
       });
@@ -85,7 +78,7 @@ class _ConversationListState extends State<ConversationList> {
       ChatBloc().refreshChats();
     } else {
       ChatBloc().archivedChatStream.listen((List<Chat> chats) {
-        if (chats == null || chats.length == 0) return;
+        if (chats.length == 0) return;
         this.chats = chats;
         if (this.mounted) setState(() {});
       });
@@ -98,39 +91,38 @@ class _ConversationListState extends State<ConversationList> {
     showSyncIndicator = SettingsManager().settings.showSyncIndicator;
     moveChatCreatorButton = SettingsManager().settings.moveChatCreatorToHeader;
     swipableTiles = SettingsManager().settings.swipableConversationTiles;
-    skinSet = SettingsManager().settings.skin;
+    skinSet = SettingsManager().settings.skin.value;
 
-    SettingsManager().stream.listen((Settings newSettings) {
-      if (!this.mounted) return;
-      if (newSettings.colorfulAvatars != colorfulAvatars) {
-        setState(() {
-          colorfulAvatars = newSettings.colorfulAvatars;
-        });
-      } else if (newSettings.reducedForehead != reducedForehead) {
-        setState(() {
-          reducedForehead = newSettings.reducedForehead;
-        });
-      } else if (newSettings.showConnectionIndicator != showIndicator) {
-        setState(() {
-          showIndicator = newSettings.showConnectionIndicator;
-        });
-      } else if (newSettings.moveChatCreatorToHeader != moveChatCreatorButton) {
-        setState(() {
-          moveChatCreatorButton = newSettings.moveChatCreatorToHeader;
-        });
-      } else if (newSettings.swipableConversationTiles != swipableTiles) {
-        setState(() {
-          swipableTiles = newSettings.swipableConversationTiles;
-        });
-      } else if (newSettings.skin != skinSet) {
-        setState(() {
-          skinSet = newSettings.skin;
-        });
-      } else if (newSettings.showSyncIndicator != showSyncIndicator) {
-        setState(() {
-          showSyncIndicator = newSettings.showSyncIndicator;
-        });
+    SettingsManager().stream.listen((Settings? newSettings) {
+      if (newSettings!.colorfulAvatars != colorfulAvatars) {
+        colorfulAvatars = newSettings.colorfulAvatars;
       }
+
+      if (newSettings.reducedForehead != reducedForehead) {
+        reducedForehead = newSettings.reducedForehead;
+      }
+
+      if (newSettings.showConnectionIndicator != showIndicator) {
+        showIndicator = newSettings.showConnectionIndicator;
+      }
+
+      if (newSettings.moveChatCreatorToHeader != moveChatCreatorButton) {
+        moveChatCreatorButton = newSettings.moveChatCreatorToHeader;
+      }
+
+      if (newSettings.swipableConversationTiles != swipableTiles) {
+        swipableTiles = newSettings.swipableConversationTiles;
+      }
+
+      if (newSettings.skin.value != skinSet) {
+        skinSet = newSettings.skin.value;
+      }
+
+      if (newSettings.showSyncIndicator != showSyncIndicator) {
+        showSyncIndicator = newSettings.showSyncIndicator;
+      }
+
+      if (this.mounted) setState(() {});
     });
 
     scrollController = ScrollController()..addListener(scrollListener);
@@ -139,25 +131,17 @@ class _ConversationListState extends State<ConversationList> {
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
       if (!event.containsKey("type")) return;
 
-      if (event["type"] == 'show-snackbar') {
-        // Make sure that the app is open and the conversation list is present
-        if (!LifeCycleManager().isAlive || CurrentChat.activeChat != null || context == null) return;
-        final snackBar = SnackBar(content: Text(event["data"]["text"]));
-        Scaffold.of(context).hideCurrentSnackBar();
-        Scaffold.of(context).showSnackBar(snackBar);
-      } else if (event["type"] == 'refresh' && this.mounted) {
+      if (event["type"] == 'refresh' && this.mounted) {
         setState(() {});
       } else if (event["type"] == 'theme-update' && this.mounted) {
-        setState(() {
-          gotBrightness = false;
-        });
+        setState(() {});
       }
     });
   }
 
-  Color get theme => currentHeaderColor;
+  Color? get theme => currentHeaderColor;
 
-  set theme(Color color) {
+  set theme(Color? color) {
     if (currentHeaderColor == color) return;
     currentHeaderColor = color;
     if (!headerColorStream.isClosed) headerColorStream.sink.add(currentHeaderColor);
@@ -167,31 +151,13 @@ class _ConversationListState extends State<ConversationList> {
     !_isAppBarExpanded ? theme = Colors.transparent : theme = Theme.of(context).accentColor.withOpacity(0.5);
   }
 
-  void loadBrightness() {
-    Color now = Theme.of(context).backgroundColor;
-    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
-    if (!themeChanged && gotBrightness) return;
-
-    previousBackgroundColor = now;
-    if (this.context == null) {
-      brightness = Brightness.light;
-      gotBrightness = true;
-      return;
-    }
-
-    bool isDark = now.computeLuminance() < 0.179;
-    brightness = isDark ? Brightness.dark : Brightness.light;
-    gotBrightness = true;
-    if (this.mounted) setState(() {});
-  }
-
   bool get _isAppBarExpanded {
-    return scrollController != null && scrollController.hasClients && scrollController.offset > (125 - kToolbarHeight);
+    return scrollController.hasClients && scrollController.offset > (125 - kToolbarHeight);
   }
 
-  List<Widget> getHeaderTextWidgets({double size}) {
-    TextStyle style = Theme.of(context).textTheme.headline1;
-    if (size != null) style = style.copyWith(fontSize: size);
+  List<Widget> getHeaderTextWidgets({double? size}) {
+    TextStyle? style = Theme.of(context).textTheme.headline1;
+    if (size != null) style = style!.copyWith(fontSize: size);
 
     return [Text(widget.showArchivedChats ? "Archive" : "Messages", style: style), Container(width: 10)];
   }
@@ -200,16 +166,17 @@ class _ConversationListState extends State<ConversationList> {
     if (!showSyncIndicator) return [];
 
     return [
-      StreamBuilder(
+      StreamBuilder<SetupData>(
         stream: SocketManager().setup.stream,
         initialData: SetupData(0, []),
         builder: (context, snapshot) {
-          if (!snapshot.hasData || snapshot.data.progress < 1 || snapshot.data.progress >= 100) return Container();
+          if (!snapshot.hasData || snapshot.data!.progress < 1 || snapshot.data!.progress >= 100) return Container();
 
-          if (skinSet == Skins.IOS) {
+          if (skinSet == Skins.iOS) {
             return Theme(
               data: ThemeData(
-                cupertinoOverrideTheme: CupertinoThemeData(brightness: brightness),
+                cupertinoOverrideTheme: CupertinoThemeData(
+                    brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor)),
               ),
               child: CupertinoActivityIndicator(
                 radius: 6.5,
@@ -228,12 +195,14 @@ class _ConversationListState extends State<ConversationList> {
     ];
   }
 
-  void openNewChatCreator() {
+  void openNewChatCreator() async {
+    bool shouldShowSnackbar = (await SettingsManager().getMacOSVersion())! >= 11;
     Navigator.of(context).push(
       CupertinoPageRoute(
         builder: (BuildContext context) {
           return ConversationView(
             isCreator: true,
+            showSnackbar: shouldShowSnackbar,
           );
         },
       ),
@@ -242,19 +211,19 @@ class _ConversationListState extends State<ConversationList> {
 
   void sortChats() {
     chats.sort((a, b) {
-      if (!a.isPinned && b.isPinned) return 1;
-      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned! && b.isPinned!) return 1;
+      if (a.isPinned! && !b.isPinned!) return -1;
       if (a.latestMessageDate == null && b.latestMessageDate == null) return 0;
       if (a.latestMessageDate == null) return 1;
       if (b.latestMessageDate == null) return -1;
-      return -a.latestMessageDate.compareTo(b.latestMessageDate);
+      return -a.latestMessageDate!.compareTo(b.latestMessageDate!);
     });
   }
 
   Widget buildSettingsButton() => !widget.showArchivedChats
       ? PopupMenuButton(
           color: Theme.of(context).accentColor,
-          onSelected: (value) {
+          onSelected: (dynamic value) {
             if (value == 0) {
               ChatBloc().markAllAsRead();
             } else if (value == 1) {
@@ -316,12 +285,12 @@ class _ConversationListState extends State<ConversationList> {
             ),
             materialSkin: Icon(
               Icons.more_vert,
-              color: Theme.of(context).textTheme.bodyText1.color,
+              color: Theme.of(context).textTheme.bodyText1!.color,
               size: 25,
             ),
             samsungSkin: Icon(
               Icons.more_vert,
-              color: Theme.of(context).textTheme.bodyText1.color,
+              color: Theme.of(context).textTheme.bodyText1!.color,
               size: 25,
             ),
           ),
@@ -341,10 +310,11 @@ class _ConversationListState extends State<ConversationList> {
     return [
       StreamBuilder(
           stream: SocketManager().connectionStateStream,
+          initialData: SocketManager().state,
           builder: (context, AsyncSnapshot<SocketState> snapshot) {
-            SocketState connectionStatus;
+            late SocketState connectionStatus;
             if (snapshot.hasData) {
-              connectionStatus = snapshot.data;
+              connectionStatus = snapshot.data!;
             } else {
               connectionStatus = SocketManager().state;
             }
@@ -357,7 +327,6 @@ class _ConversationListState extends State<ConversationList> {
 
   @override
   Widget build(BuildContext context) {
-    loadBrightness();
     return ThemeSwitcher(
       iOSSkin: _Cupertino(parent: this),
       materialSkin: _Material(parent: this),
@@ -367,26 +336,30 @@ class _ConversationListState extends State<ConversationList> {
 }
 
 class _Cupertino extends StatelessWidget {
-  const _Cupertino({Key key, @required this.parent}) : super(key: key);
+  const _Cupertino({Key? key, required this.parent}) : super(key: key);
 
   final _ConversationListState parent;
 
   @override
   Widget build(BuildContext context) {
+    Brightness brightness = ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor);
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor,
+        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarIconBrightness:
+            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
         appBar: PreferredSize(
           preferredSize: Size(
-            MediaQuery.of(context).size.width,
+            context.width,
             parent.reducedForehead ? 10 : 40,
           ),
           child: ClipRRect(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-              child: StreamBuilder<Color>(
+              child: StreamBuilder<Color?>(
                   stream: parent.headerColorStream.stream,
                   builder: (context, snapshot) {
                     return AnimatedCrossFade(
@@ -398,7 +371,7 @@ class _Cupertino extends StatelessWidget {
                         elevation: 0,
                         backgroundColor: parent.theme,
                         centerTitle: true,
-                        brightness: parent.brightness,
+                        brightness: brightness,
                         title: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: <Widget>[
@@ -412,7 +385,7 @@ class _Cupertino extends StatelessWidget {
                       firstChild: AppBar(
                         leading: new Container(),
                         elevation: 0,
-                        brightness: parent.brightness,
+                        brightness: brightness,
                         backgroundColor: Theme.of(context).backgroundColor,
                       ),
                     );
@@ -427,13 +400,13 @@ class _Cupertino extends StatelessWidget {
           physics: ThemeManager().scrollPhysics,
           slivers: <Widget>[
             SliverAppBar(
-              leading: ((SettingsManager().settings.skin == Skins.IOS && parent.widget.showArchivedChats) ||
-                      (SettingsManager().settings.skin == Skins.Material ||
-                              SettingsManager().settings.skin == Skins.Samsung) &&
+              leading: ((SettingsManager().settings.skin.value == Skins.iOS && parent.widget.showArchivedChats) ||
+                      (SettingsManager().settings.skin.value == Skins.Material ||
+                              SettingsManager().settings.skin.value == Skins.Samsung) &&
                           !parent.widget.showArchivedChats)
                   ? IconButton(
                       icon: Icon(
-                          (SettingsManager().settings.skin == Skins.IOS && parent.widget.showArchivedChats)
+                          (SettingsManager().settings.skin.value == Skins.iOS && parent.widget.showArchivedChats)
                               ? Icons.arrow_back_ios
                               : Icons.arrow_back,
                           color: Theme.of(context).primaryColor),
@@ -443,9 +416,6 @@ class _Cupertino extends StatelessWidget {
                     )
                   : new Container(),
               stretch: true,
-              onStretchTrigger: () {
-                return null;
-              },
               expandedHeight: (!parent.widget.showArchivedChats) ? 80 : 50,
               backgroundColor: Colors.transparent,
               pinned: false,
@@ -539,7 +509,7 @@ class _Cupertino extends StatelessWidget {
             // ),
             StreamBuilder(
               stream: ChatBloc().chatStream,
-              builder: (BuildContext context, AsyncSnapshot<List<Chat>> snapshot) {
+              builder: (BuildContext context, AsyncSnapshot<List<Chat?>> snapshot) {
                 if (snapshot.hasData || parent.widget.showArchivedChats) {
                   parent.chats.sort(Chat.sort);
                   if (parent.chats.isEmpty) {
@@ -548,9 +518,7 @@ class _Cupertino extends StatelessWidget {
                         child: Container(
                           padding: EdgeInsets.only(top: 50.0),
                           child: Text(
-                            (parent.widget.showArchivedChats)
-                                ? "You have no archived chats :("
-                                : "You have no chats :(",
+                            parent.widget.showArchivedChats ? "You have no archived chats :(" : "You have no chats :(",
                             style: Theme.of(context).textTheme.subtitle1,
                           ),
                         ),
@@ -561,14 +529,14 @@ class _Cupertino extends StatelessWidget {
                   return SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
-                        if (!parent.widget.showArchivedChats && parent.chats[index].isArchived) return Container();
-                        if (parent.widget.showArchivedChats && !parent.chats[index].isArchived) return Container();
+                        if (!parent.widget.showArchivedChats && parent.chats[index].isArchived!) return Container();
+                        if (parent.widget.showArchivedChats && !parent.chats[index].isArchived!) return Container();
                         return ConversationTile(
                           key: Key(parent.chats[index].guid.toString()),
                           chat: parent.chats[index],
                         );
                       },
-                      childCount: parent.chats?.length ?? 0,
+                      childCount: parent.chats.length,
                     ),
                   );
                 } else {
@@ -585,7 +553,7 @@ class _Cupertino extends StatelessWidget {
 }
 
 class _Material extends StatefulWidget {
-  _Material({Key key, @required this.parent}) : super(key: key);
+  _Material({Key? key, required this.parent}) : super(key: key);
 
   final _ConversationListState parent;
 
@@ -594,35 +562,12 @@ class _Material extends StatefulWidget {
 }
 
 class __MaterialState extends State<_Material> {
-  Brightness brightness;
-  DisplayMode currentMode;
-  bool gotBrightness = false;
-  List<DisplayMode> modes;
-  Color previousBackgroundColor;
   List<Chat> selected = [];
-
-  void loadBrightness() {
-    Color now = Theme.of(context).backgroundColor;
-    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
-    if (!themeChanged && gotBrightness) return;
-
-    previousBackgroundColor = now;
-    if (this.context == null) {
-      brightness = Brightness.light;
-      gotBrightness = true;
-      return;
-    }
-
-    bool isDark = now.computeLuminance() < 0.179;
-    brightness = isDark ? Brightness.dark : Brightness.light;
-    gotBrightness = true;
-    if (this.mounted) setState(() {});
-  }
 
   bool hasPinnedChat() {
     for (var i = 0; i < widget.parent.chats.length; i++) {
-      if (widget.parent.chats[i].isPinned) {
-        widget.parent.hasPinnedChata = true;
+      if (widget.parent.chats[i].isPinned!) {
+        widget.parent.hasPinnedChats = true;
         return true;
       } else {
         return false;
@@ -634,7 +579,7 @@ class __MaterialState extends State<_Material> {
   bool hasNormalChats() {
     int counter = 0;
     for (var i = 0; i < widget.parent.chats.length; i++) {
-      if (widget.parent.chats[i].isPinned) {
+      if (widget.parent.chats[i].isPinned!) {
         counter++;
       } else {}
     }
@@ -764,11 +709,13 @@ class __MaterialState extends State<_Material> {
   @override
   Widget build(BuildContext context) {
     hasPinnedChat();
-    loadBrightness();
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor,
+        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarIconBrightness:
+            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
         appBar: PreferredSize(
@@ -778,7 +725,7 @@ class __MaterialState extends State<_Material> {
             child: selected.isEmpty
                 ? AppBar(
                     iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
-                    brightness: brightness,
+                    brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
                     bottom: PreferredSize(
                       child: Container(
                         color: Theme.of(context).dividerColor,
@@ -809,7 +756,7 @@ class __MaterialState extends State<_Material> {
                                 padding: const EdgeInsets.all(8.0),
                                 child: Icon(
                                   Icons.search,
-                                  color: Theme.of(context).textTheme.bodyText1.color,
+                                  color: Theme.of(context).textTheme.bodyText1!.color,
                                 ),
                               ),
                             )
@@ -831,7 +778,7 @@ class __MaterialState extends State<_Material> {
                                 padding: const EdgeInsets.all(8.0),
                                 child: Icon(
                                   Icons.create,
-                                  color: Theme.of(context).textTheme.bodyText1.color,
+                                  color: Theme.of(context).textTheme.bodyText1!.color,
                                 ),
                               ),
                             )
@@ -858,12 +805,12 @@ class __MaterialState extends State<_Material> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            if (selected.length <= 1)
+                            if (([0, selected.length])
+                                .contains(selected.where((element) => element.hasUnreadMessage!).length))
                               GestureDetector(
                                 onTap: () {
                                   selected.forEach((element) async {
-                                    element.isMuted = !element.isMuted;
-                                    await element.save(updateLocalVals: true);
+                                    await element.toggleHasUnread(!element.hasUnreadMessage!);
                                   });
                                   if (this.mounted) setState(() {});
                                   selected = [];
@@ -872,15 +819,50 @@ class __MaterialState extends State<_Material> {
                                 child: Padding(
                                   padding: const EdgeInsets.all(8.0),
                                   child: Icon(
-                                    Icons.notifications_off,
-                                    color: Theme.of(context).textTheme.bodyText1.color,
+                                    selected[0].hasUnreadMessage! ? Icons.mark_chat_read : Icons.mark_chat_unread,
+                                    color: Theme.of(context).textTheme.bodyText1!.color,
+                                  ),
+                                ),
+                              ),
+                            if (([0, selected.length]).contains(selected.where((element) => element.isMuted!).length))
+                              GestureDetector(
+                                onTap: () {
+                                  selected.forEach((element) async {
+                                    await element.toggleMute(!element.isMuted!);
+                                  });
+                                  if (this.mounted) setState(() {});
+                                  selected = [];
+                                  setState(() {});
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Icon(
+                                    selected[0].isMuted! ? Icons.notifications_active : Icons.notifications_off,
+                                    color: Theme.of(context).textTheme.bodyText1!.color,
+                                  ),
+                                ),
+                              ),
+                            if (([0, selected.length]).contains(selected.where((element) => element.isPinned!).length))
+                              GestureDetector(
+                                onTap: () {
+                                  selected.forEach((element) {
+                                    element.togglePin(!element.isPinned!);
+                                  });
+                                  selected = [];
+                                  setState(() {});
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Icon(
+                                    selected[0].isPinned! ? Icons.star_outline : Icons.star,
+                                    color: Theme.of(context).textTheme.bodyText1!.color,
                                   ),
                                 ),
                               ),
                             GestureDetector(
                               onTap: () {
                                 selected.forEach((element) {
-                                  if (element.isArchived) {
+                                  if (element.isArchived!) {
                                     ChatBloc().unArchiveChat(element);
                                   } else {
                                     ChatBloc().archiveChat(element);
@@ -893,30 +875,28 @@ class __MaterialState extends State<_Material> {
                                 padding: const EdgeInsets.all(8.0),
                                 child: Icon(
                                   widget.parent.widget.showArchivedChats ? Icons.restore_from_trash : Icons.delete,
-                                  color: Theme.of(context).textTheme.bodyText1.color,
+                                  color: Theme.of(context).textTheme.bodyText1!.color,
                                 ),
                               ),
                             ),
-                            GestureDetector(
-                              onTap: () {
-                                selected.forEach((element) {
-                                  if (element.isPinned) {
-                                    element.unpin();
-                                  } else {
-                                    element.pin();
-                                  }
-                                });
-                                selected = [];
-                                setState(() {});
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Icon(
-                                  Icons.star,
-                                  color: Theme.of(context).textTheme.bodyText1.color,
+                            if (selected[0].isArchived!)
+                              GestureDetector(
+                                onTap: () {
+                                  selected.forEach((element) {
+                                    ChatBloc().deleteChat(element);
+                                    Chat.deleteChat(element);
+                                  });
+                                  selected = [];
+                                  setState(() {});
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Icon(
+                                    Icons.delete_forever,
+                                    color: Theme.of(context).textTheme.bodyText1!.color,
+                                  ),
                                 ),
                               ),
-                            ),
                           ],
                         ),
                       ],
@@ -946,7 +926,7 @@ class __MaterialState extends State<_Material> {
                   itemBuilder: (context, index) {
                     if (widget.parent.swipableTiles) {
                       return Dismissible(
-                          background: (widget.parent.chats[index].isPinned)
+                          background: widget.parent.chats[index].isPinned!
                               ? slideRightBackgroundPinned()
                               : slideRightBackground(),
                           secondaryBackground: (!widget.parent.widget.showArchivedChats)
@@ -959,10 +939,10 @@ class __MaterialState extends State<_Material> {
                           // what to do after an item has been swiped away.
                           onDismissed: (direction) {
                             if (direction == DismissDirection.endToStart) {
-                              if (!widget.parent.widget.showArchivedChats) widget.parent.chats[index].unpin();
+                              if (!widget.parent.widget.showArchivedChats) widget.parent.chats[index].togglePin(false);
 
                               setState(() {
-                                Scaffold.of(context).hideCurrentSnackBar();
+                                ScaffoldMessenger.of(context).hideCurrentSnackBar();
                                 (!widget.parent.widget.showArchivedChats)
                                     ? ChatBloc().archiveChat(widget.parent.chats[index])
                                     : ChatBloc().unArchiveChat(widget.parent.chats[index]);
@@ -970,20 +950,14 @@ class __MaterialState extends State<_Material> {
                               });
                             } else {
                               setState(() {
-                                Scaffold.of(context).hideCurrentSnackBar();
-                                if (widget.parent.chats[index].isPinned) {
-                                  widget.parent.chats[index].unpin();
-                                  widget.parent.chats.remove(index);
-                                } else {
-                                  widget.parent.chats[index].pin();
-                                  widget.parent.chats.remove(index);
-                                }
+                                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                                widget.parent.chats[index].togglePin(!widget.parent.chats[index].isPinned!);
                               });
                             }
                           },
-                          child: (!widget.parent.widget.showArchivedChats && widget.parent.chats[index].isArchived)
+                          child: (!widget.parent.widget.showArchivedChats && widget.parent.chats[index].isArchived!)
                               ? Container()
-                              : (widget.parent.widget.showArchivedChats && !widget.parent.chats[index].isArchived)
+                              : (widget.parent.widget.showArchivedChats && !widget.parent.chats[index].isArchived!)
                                   ? Container()
                                   : ConversationTile(
                                       key: UniqueKey(),
@@ -1002,9 +976,9 @@ class __MaterialState extends State<_Material> {
                                       },
                                     ));
                     } else {
-                      if (!widget.parent.widget.showArchivedChats && widget.parent.chats[index].isArchived)
+                      if (!widget.parent.widget.showArchivedChats && widget.parent.chats[index].isArchived!)
                         return Container();
-                      if (widget.parent.widget.showArchivedChats && !widget.parent.chats[index].isArchived)
+                      if (widget.parent.widget.showArchivedChats && !widget.parent.chats[index].isArchived!)
                         return Container();
                       return ConversationTile(
                         key: UniqueKey(),
@@ -1023,7 +997,7 @@ class __MaterialState extends State<_Material> {
                       );
                     }
                   },
-                  itemCount: widget.parent.chats?.length ?? 0);
+                  itemCount: widget.parent.chats.length);
             } else {
               return Container();
             }
@@ -1038,7 +1012,7 @@ class __MaterialState extends State<_Material> {
 }
 
 class _Samsung extends StatefulWidget {
-  _Samsung({Key key, @required this.parent}) : super(key: key);
+  _Samsung({Key? key, required this.parent}) : super(key: key);
 
   final _ConversationListState parent;
 
@@ -1047,35 +1021,12 @@ class _Samsung extends StatefulWidget {
 }
 
 class _SamsungState extends State<_Samsung> {
-  Brightness brightness;
-  DisplayMode currentMode;
-  bool gotBrightness = false;
-  List<DisplayMode> modes;
-  Color previousBackgroundColor;
   List<Chat> selected = [];
-
-  void loadBrightness() {
-    Color now = Theme.of(context).backgroundColor;
-    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
-    if (!themeChanged && gotBrightness) return;
-
-    previousBackgroundColor = now;
-    if (this.context == null) {
-      brightness = Brightness.light;
-      gotBrightness = true;
-      return;
-    }
-
-    bool isDark = now.computeLuminance() < 0.179;
-    brightness = isDark ? Brightness.dark : Brightness.light;
-    gotBrightness = true;
-    if (this.mounted) setState(() {});
-  }
 
   bool hasPinnedChat() {
     for (var i = 0; i < widget.parent.chats.length; i++) {
-      if (widget.parent.chats[i].isPinned) {
-        widget.parent.hasPinnedChata = true;
+      if (widget.parent.chats[i].isPinned!) {
+        widget.parent.hasPinnedChats = true;
         return true;
       } else {
         return false;
@@ -1087,7 +1038,7 @@ class _SamsungState extends State<_Samsung> {
   bool hasNormalChats() {
     int counter = 0;
     for (var i = 0; i < widget.parent.chats.length; i++) {
-      if (widget.parent.chats[i].isPinned) {
+      if (widget.parent.chats[i].isPinned!) {
         counter++;
       } else {}
     }
@@ -1216,10 +1167,12 @@ class _SamsungState extends State<_Samsung> {
 
   @override
   Widget build(BuildContext context) {
-    loadBrightness();
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor,
+        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarIconBrightness:
+            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
         appBar: PreferredSize(
@@ -1230,7 +1183,7 @@ class _SamsungState extends State<_Samsung> {
                 ? AppBar(
                     shadowColor: Colors.transparent,
                     iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
-                    brightness: brightness,
+                    brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
                     bottom: PreferredSize(
                       child: Container(
                         color: Theme.of(context).dividerColor,
@@ -1260,7 +1213,7 @@ class _SamsungState extends State<_Samsung> {
                                 padding: const EdgeInsets.all(8.0),
                                 child: Icon(
                                   Icons.search,
-                                  color: Theme.of(context).textTheme.bodyText1.color,
+                                  color: Theme.of(context).textTheme.bodyText1!.color,
                                 ),
                               ),
                             )
@@ -1282,7 +1235,7 @@ class _SamsungState extends State<_Samsung> {
                                 padding: const EdgeInsets.all(8.0),
                                 child: Icon(
                                   Icons.create,
-                                  color: Theme.of(context).textTheme.bodyText1.color,
+                                  color: Theme.of(context).textTheme.bodyText1!.color,
                                 ),
                               ),
                             )
@@ -1313,25 +1266,24 @@ class _SamsungState extends State<_Samsung> {
                               GestureDetector(
                                 onTap: () {
                                   selected.forEach((element) async {
-                                    element.isMuted = !element.isMuted;
-                                    await element.save(updateLocalVals: true);
+                                    await element.toggleMute(!element.isMuted!);
                                   });
-                                  if (this.mounted) setState(() {});
+
                                   selected = [];
-                                  setState(() {});
+                                  if (this.mounted) setState(() {});
                                 },
                                 child: Padding(
                                   padding: const EdgeInsets.all(8.0),
                                   child: Icon(
                                     Icons.notifications_off,
-                                    color: Theme.of(context).textTheme.bodyText1.color,
+                                    color: Theme.of(context).textTheme.bodyText1!.color,
                                   ),
                                 ),
                               ),
                             GestureDetector(
                               onTap: () {
                                 selected.forEach((element) {
-                                  if (element.isArchived) {
+                                  if (element.isArchived!) {
                                     ChatBloc().unArchiveChat(element);
                                   } else {
                                     ChatBloc().archiveChat(element);
@@ -1344,27 +1296,24 @@ class _SamsungState extends State<_Samsung> {
                                 padding: const EdgeInsets.all(8.0),
                                 child: Icon(
                                   widget.parent.widget.showArchivedChats ? Icons.restore_from_trash : Icons.delete,
-                                  color: Theme.of(context).textTheme.bodyText1.color,
+                                  color: Theme.of(context).textTheme.bodyText1!.color,
                                 ),
                               ),
                             ),
                             GestureDetector(
                               onTap: () {
-                                selected.forEach((element) {
-                                  if (element.isPinned) {
-                                    element.unpin();
-                                  } else {
-                                    element.pin();
-                                  }
+                                selected.forEach((element) async {
+                                  await element.togglePin(!element.isPinned!);
                                 });
+
                                 selected = [];
-                                setState(() {});
+                                if (this.mounted) setState(() {});
                               },
                               child: Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: Icon(
                                   Icons.star,
-                                  color: Theme.of(context).textTheme.bodyText1.color,
+                                  color: Theme.of(context).textTheme.bodyText1!.color,
                                 ),
                               ),
                             ),
@@ -1431,9 +1380,10 @@ class _SamsungState extends State<_Samsung> {
                                 // what to do after an item has been swiped away.
                                 onDismissed: (direction) {
                                   if (direction == DismissDirection.endToStart) {
-                                    if (!widget.parent.widget.showArchivedChats) widget.parent.chats[index].unpin();
+                                    if (!widget.parent.widget.showArchivedChats)
+                                      widget.parent.chats[index].togglePin(false);
                                     setState(() {
-                                      Scaffold.of(context).hideCurrentSnackBar();
+                                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
                                       (!widget.parent.widget.showArchivedChats)
                                           ? ChatBloc().archiveChat(widget.parent.chats[index])
                                           : ChatBloc().unArchiveChat(widget.parent.chats[index]);
@@ -1442,17 +1392,18 @@ class _SamsungState extends State<_Samsung> {
                                     });
                                   } else {
                                     setState(() {
-                                      Scaffold.of(context).hideCurrentSnackBar();
-                                      widget.parent.chats[index].unpin();
+                                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                                      widget.parent.chats[index].togglePin(false);
                                     });
                                   }
                                 },
                                 child: (!widget.parent.widget.showArchivedChats &&
-                                        widget.parent.chats[index].isArchived)
+                                        widget.parent.chats[index].isArchived!)
                                     ? Container()
-                                    : (widget.parent.widget.showArchivedChats && !widget.parent.chats[index].isArchived)
+                                    : (widget.parent.widget.showArchivedChats &&
+                                            !widget.parent.chats[index].isArchived!)
                                         ? Container()
-                                        : (widget.parent.chats[index].isPinned)
+                                        : widget.parent.chats[index].isPinned!
                                             ? ConversationTile(
                                                 key: UniqueKey(),
                                                 chat: widget.parent.chats[index],
@@ -1472,11 +1423,11 @@ class _SamsungState extends State<_Samsung> {
                                             : Container(),
                               );
                             } else {
-                              if (!widget.parent.widget.showArchivedChats && widget.parent.chats[index].isArchived)
+                              if (!widget.parent.widget.showArchivedChats && widget.parent.chats[index].isArchived!)
                                 return Container();
-                              if (widget.parent.widget.showArchivedChats && !widget.parent.chats[index].isArchived)
+                              if (widget.parent.widget.showArchivedChats && !widget.parent.chats[index].isArchived!)
                                 return Container();
-                              if (widget.parent.chats[index].isPinned) {
+                              if (widget.parent.chats[index].isPinned!) {
                                 return ConversationTile(
                                   key: UniqueKey(),
                                   chat: widget.parent.chats[index],
@@ -1498,7 +1449,7 @@ class _SamsungState extends State<_Samsung> {
                               return Container();
                             }
                           },
-                          itemCount: widget.parent.chats?.length ?? 0,
+                          itemCount: widget.parent.chats.length,
                         ),
                       ),
                     if (hasNormalChats())
@@ -1538,9 +1489,10 @@ class _SamsungState extends State<_Samsung> {
                                 // what to do after an item has been swiped away.
                                 onDismissed: (direction) {
                                   if (direction == DismissDirection.endToStart) {
-                                    if (!widget.parent.widget.showArchivedChats) widget.parent.chats[index].unpin();
+                                    if (!widget.parent.widget.showArchivedChats)
+                                      widget.parent.chats[index].togglePin(false);
                                     setState(() {
-                                      Scaffold.of(context).hideCurrentSnackBar();
+                                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
                                       (!widget.parent.widget.showArchivedChats)
                                           ? ChatBloc().archiveChat(widget.parent.chats[index])
                                           : ChatBloc().unArchiveChat(widget.parent.chats[index]);
@@ -1548,17 +1500,18 @@ class _SamsungState extends State<_Samsung> {
                                     });
                                   } else {
                                     setState(() {
-                                      Scaffold.of(context).hideCurrentSnackBar();
-                                      widget.parent.chats[index].pin();
+                                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                                      widget.parent.chats[index].togglePin(true);
                                     });
                                   }
                                 },
                                 child: (!widget.parent.widget.showArchivedChats &&
-                                        widget.parent.chats[index].isArchived)
+                                        widget.parent.chats[index].isArchived!)
                                     ? Container()
-                                    : (widget.parent.widget.showArchivedChats && !widget.parent.chats[index].isArchived)
+                                    : (widget.parent.widget.showArchivedChats &&
+                                            !widget.parent.chats[index].isArchived!)
                                         ? Container()
-                                        : (!widget.parent.chats[index].isPinned)
+                                        : (!widget.parent.chats[index].isPinned!)
                                             ? ConversationTile(
                                                 key: UniqueKey(),
                                                 chat: widget.parent.chats[index],
@@ -1578,11 +1531,11 @@ class _SamsungState extends State<_Samsung> {
                                             : Container(),
                               );
                             } else {
-                              if (!widget.parent.widget.showArchivedChats && widget.parent.chats[index].isArchived)
+                              if (!widget.parent.widget.showArchivedChats && widget.parent.chats[index].isArchived!)
                                 return Container();
-                              if (widget.parent.widget.showArchivedChats && !widget.parent.chats[index].isArchived)
+                              if (widget.parent.widget.showArchivedChats && !widget.parent.chats[index].isArchived!)
                                 return Container();
-                              if (!widget.parent.chats[index].isPinned) {
+                              if (!widget.parent.chats[index].isPinned!) {
                                 return ConversationTile(
                                   key: UniqueKey(),
                                   chat: widget.parent.chats[index],
@@ -1604,7 +1557,7 @@ class _SamsungState extends State<_Samsung> {
                               return Container();
                             }
                           },
-                          itemCount: widget.parent.chats?.length ?? 0,
+                          itemCount: widget.parent.chats.length,
                         ),
                       )
                   ],

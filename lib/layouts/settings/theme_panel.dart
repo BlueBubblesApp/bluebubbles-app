@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/settings/custom_avatar_panel.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
@@ -15,21 +16,19 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
+import 'package:get/get.dart';
 
 class ThemePanel extends StatefulWidget {
-  ThemePanel({Key key}) : super(key: key);
+  ThemePanel({Key? key}) : super(key: key);
 
   @override
   _ThemePanelState createState() => _ThemePanelState();
 }
 
 class _ThemePanelState extends State<ThemePanel> {
-  Settings _settingsCopy;
-  List<DisplayMode> modes;
-  DisplayMode currentMode;
-  Brightness brightness;
-  Color previousBackgroundColor;
-  bool gotBrightness = false;
+  late Settings _settingsCopy;
+  List<DisplayMode>? modes;
+  DisplayMode? currentMode;
 
   @override
   void initState() {
@@ -41,9 +40,7 @@ class _ThemePanelState extends State<ThemePanel> {
       if (!event.containsKey("type")) return;
 
       if (event["type"] == 'theme-update' && this.mounted) {
-        setState(() {
-          gotBrightness = false;
-        });
+        setState(() {});
       }
     });
   }
@@ -56,49 +53,25 @@ class _ThemePanelState extends State<ThemePanel> {
     setState(() {});
   }
 
-  void loadBrightness() {
-    Color now = Theme.of(context).backgroundColor;
-    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
-    if (!themeChanged && gotBrightness) return;
-
-    previousBackgroundColor = now;
-    if (this.context == null) {
-      brightness = Brightness.light;
-      gotBrightness = true;
-      return;
-    }
-
-    bool isDark = now.computeLuminance() < 0.179;
-    brightness = isDark ? Brightness.dark : Brightness.light;
-    gotBrightness = true;
-    if (this.mounted) setState(() {});
-  }
-
   @override
   Widget build(BuildContext context) {
-    loadBrightness();
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor,
+        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
         appBar: PreferredSize(
-          preferredSize: Size(MediaQuery.of(context).size.width, 80),
+          preferredSize: Size(context.width, 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
-                brightness: brightness,
+                brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
                 toolbarHeight: 100.0,
                 elevation: 0,
-                leading: IconButton(
-                  icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
-                      color: Theme.of(context).primaryColor),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
+                leading: buildBackButton(context),
                 backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
                 title: Text(
                   "Theming & Styles",
@@ -122,17 +95,19 @@ class _ThemePanelState extends State<ThemePanel> {
                       AdaptiveTheme.of(context).setThemeMode(val);
 
                       // This needs to be on a delay so the background color has time to change
-                      Timer(Duration(seconds: 1), () => EventDispatcher().emit('theme-update', null));
+                      Timer(Duration(seconds: 1), () {
+                        EventDispatcher().emit('theme-update', null);
+                      });
                     },
                     options: AdaptiveThemeMode.values,
-                    textProcessing: (dynamic val) => val.toString().split(".").last,
+                    textProcessing: (val) => val.toString().split(".").last,
                     title: "App Theme",
                     showDivider: false,
                   ),
                   SettingsTile(
                     title: "Theming",
                     trailing: Icon(
-                        SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
+                        SettingsManager().settings.skin.value == Skins.iOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
                         color: Theme.of(context).primaryColor),
                     onTap: () async {
                       Navigator.of(context).push(
@@ -143,9 +118,9 @@ class _ThemePanelState extends State<ThemePanel> {
                     },
                   ),
                   SettingsOptions<Skins>(
-                    initial: _settingsCopy.skin,
+                    initial: _settingsCopy.skin.value,
                     onChanged: (val) {
-                      _settingsCopy.skin = val;
+                      _settingsCopy.skin.value = val;
                       if (val == Skins.Material) {
                         _settingsCopy.hideDividers = true;
                       } else if (val == Skins.Samsung) {
@@ -157,7 +132,8 @@ class _ThemePanelState extends State<ThemePanel> {
                       setState(() {});
                     },
                     options: Skins.values.where((item) => item != Skins.Samsung).toList(),
-                    textProcessing: (dynamic val) => val.toString().split(".").last,
+                    textProcessing: (val) => val.toString().split(".").last,
+                    capitalize: false,
                     title: "App Skin",
                     showDivider: false,
                   ),
@@ -180,7 +156,7 @@ class _ThemePanelState extends State<ThemePanel> {
                   SettingsTile(
                     title: "Custom Avatar Colors",
                     trailing: Icon(
-                        SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
+                        SettingsManager().settings.skin.value == Skins.iOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
                         color: Theme.of(context).primaryColor),
                     onTap: () async {
                       Navigator.of(context).push(
@@ -190,7 +166,7 @@ class _ThemePanelState extends State<ThemePanel> {
                       );
                     },
                   ),
-                  if (SettingsManager().settings.skin != Skins.Samsung)
+                  if (SettingsManager().settings.skin.value != Skins.Samsung)
                     SettingsSwitch(
                       onChanged: (bool val) {
                         _settingsCopy.hideDividers = val;
@@ -207,7 +183,7 @@ class _ThemePanelState extends State<ThemePanel> {
                     initialVal: _settingsCopy.denseChatTiles,
                     title: "Dense Conversation Tiles",
                   ),
-                  if (SettingsManager().settings.skin == Skins.IOS)
+                  if (SettingsManager().settings.skin.value == Skins.iOS)
                     SettingsSwitch(
                       onChanged: (bool val) {
                         _settingsCopy.reducedForehead = val;
@@ -220,14 +196,14 @@ class _ThemePanelState extends State<ThemePanel> {
                   // For whatever fucking reason, this needs to be down here, otherwise all of the switch values are false
                   if (currentMode != null && modes != null)
                     SettingsOptions<DisplayMode>(
-                      initial: currentMode,
+                      initial: currentMode ?? DisplayMode.auto,
                       showDivider: false,
                       onChanged: (val) async {
                         currentMode = val;
-                        _settingsCopy.displayMode = currentMode.id;
+                        _settingsCopy.displayMode = currentMode!.id;
                       },
-                      options: modes,
-                      textProcessing: (dynamic val) => val.toString(),
+                      options: modes!,
+                      textProcessing: (val) => val == DisplayMode.auto ? "Automatic" : val.toString(),
                       title: "Display",
                     ),
                   // SettingsOptions<String>(

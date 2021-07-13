@@ -3,7 +3,7 @@ import 'package:clipboard/clipboard.dart';
 import 'package:flutter/material.dart';
 
 class FailedToScan extends StatelessWidget {
-  const FailedToScan({Key key, @required this.exception, @required this.title, this.showCopy = true}) : super(key: key);
+  const FailedToScan({Key? key, required this.exception, required this.title, this.showCopy = true}) : super(key: key);
   final exception;
   final String title;
   final bool showCopy;
@@ -24,18 +24,18 @@ class FailedToScan extends StatelessWidget {
         ),
       ),
       actions: [
-        FlatButton(
+        TextButton(
           child: Text(
             "Ok",
-            style: Theme.of(context).textTheme.bodyText1.apply(color: Theme.of(context).primaryColor),
+            style: Theme.of(context).textTheme.bodyText1!.apply(color: Theme.of(context).primaryColor),
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         if (showCopy)
-          FlatButton(
+          TextButton(
             child: Text(
               "Copy",
-              style: Theme.of(context).textTheme.bodyText1.apply(color: Theme.of(context).primaryColor),
+              style: Theme.of(context).textTheme.bodyText1!.apply(color: Theme.of(context).primaryColor),
             ),
             onPressed: () {
               FlutterClipboard.copy(exception);

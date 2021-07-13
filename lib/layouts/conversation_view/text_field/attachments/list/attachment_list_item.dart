@@ -13,9 +13,9 @@ import 'package:video_thumbnail/video_thumbnail.dart';
 
 class AttachmentListItem extends StatefulWidget {
   AttachmentListItem({
-    Key key,
-    this.file,
-    this.onRemove,
+    Key? key,
+    required this.file,
+    required this.onRemove,
   }) : super(key: key);
   final File file;
   final Function() onRemove;
@@ -25,8 +25,8 @@ class AttachmentListItem extends StatefulWidget {
 }
 
 class _AttachmentListItemState extends State<AttachmentListItem> {
-  Uint8List preview;
-  String mimeType;
+  Uint8List? preview;
+  String? mimeType;
 
   @override
   void initState() {
@@ -36,7 +36,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
   }
 
   Future<void> loadPreview() async {
-    String mimeType = mime(widget.file.path);
+    String? mimeType = mime(widget.file.path);
     if (mimeType != null && mimeType.startsWith("video/")) {
       preview = await VideoThumbnail.thumbnailData(
         video: widget.file.path,
@@ -64,7 +64,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
       return Stack(children: <Widget>[
         InkWell(
           child: Image.memory(
-            preview,
+            preview!,
             height: 100,
             width: 100,
             fit: BoxFit.cover,
@@ -95,14 +95,14 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
             child: Container(
               alignment: Alignment.center,
               child: Text(
-                mimeType,
+                mimeType!,
                 textAlign: TextAlign.center,
               ),
             ),
           ),
       ]);
     } else {
-      if (mimeType == null || mimeType.startsWith("video/") || mimeType.startsWith("image/")) {
+      if (mimeType == null || mimeType!.startsWith("video/") || mimeType!.startsWith("image/")) {
         // If the preview is null and the mimetype is video or image,
         // then that means that we are in the process of loading things
         return Container(
@@ -131,8 +131,8 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                AttachmentHelper.getIcon(mimeType),
-                color: Theme.of(context).textTheme.bodyText1.color,
+                AttachmentHelper.getIcon(mimeType ?? ""),
+                color: Theme.of(context).textTheme.bodyText1!.color,
               ),
               Align(
                 alignment: Alignment.bottomCenter,
@@ -140,7 +140,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
                   padding: const EdgeInsets.fromLTRB(8, 0, 8, 10),
                   child: Text(
                     name,
-                    style: Theme.of(context).textTheme.bodyText1.apply(fontSizeDelta: -2),
+                    style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeDelta: -2),
                     textAlign: TextAlign.center,
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
@@ -157,11 +157,11 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(15),
+      borderRadius: BorderRadius.circular(10),
       child: Stack(
         children: <Widget>[
           getThumbnail(),
-          if (mimeType != null && mimeType.startsWith("video/"))
+          if (mimeType != null && mimeType!.startsWith("video/"))
             Align(
               alignment: Alignment.bottomRight,
               child: Icon(
@@ -169,17 +169,17 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
                 color: Colors.white,
               ),
             ),
-          Align(
-            alignment: Alignment.topRight,
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(80),
-                color: Colors.black,
-              ),
-              width: 25,
-              height: 25,
-              child: GestureDetector(
-                onTap: widget.onRemove,
+          GestureDetector(
+            onTap: widget.onRemove,
+            child: Align(
+              alignment: Alignment.topRight,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(80),
+                  color: Colors.black,
+                ),
+                width: 25,
+                height: 25,
                 child: Icon(
                   Icons.close,
                   color: Colors.white,

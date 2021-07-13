@@ -26,7 +26,7 @@ class EventDispatcher {
     });
   }
 
-  dispose() {
+  void dispose() {
     _stream.close();
   }
 }

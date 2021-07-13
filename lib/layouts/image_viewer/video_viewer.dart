@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/share.dart';
@@ -13,7 +15,8 @@ import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoViewer extends StatefulWidget {
-  VideoViewer({Key key, @required this.file, @required this.attachment, this.showInteractions}) : super(key: key);
+  VideoViewer({Key? key, required this.file, required this.attachment, required this.showInteractions})
+      : super(key: key);
   final File file;
   final Attachment attachment;
   final bool showInteractions;
@@ -25,8 +28,8 @@ class VideoViewer extends StatefulWidget {
 class _VideoViewerState extends State<VideoViewer> {
   StreamController<double> videoProgressStream = StreamController();
   bool showPlayPauseOverlay = false;
-  Timer hideOverlayTimer;
-  VideoPlayerController controller;
+  Timer? hideOverlayTimer;
+  late VideoPlayerController controller;
   PlayerStatus status = PlayerStatus.NONE;
   bool hasListener = false;
 
@@ -34,7 +37,7 @@ class _VideoViewerState extends State<VideoViewer> {
   void initState() {
     super.initState();
     controller = new VideoPlayerController.file(widget.file);
-    controller.setVolume(1);
+    controller.setVolume(SettingsManager().settings.startVideosMutedFullscreen ? 0 : 1);
     this.createListener(controller);
     showPlayPauseOverlay = !controller.value.isPlaying;
   }
@@ -43,22 +46,16 @@ class _VideoViewerState extends State<VideoViewer> {
     if (!videoProgressStream.isClosed) videoProgressStream.sink.add(value);
   }
 
-  void createListener(VideoPlayerController controller) {
+  void createListener(VideoPlayerController? controller) {
     if (controller == null || hasListener) return;
 
     controller.addListener(() async {
-      if (controller == null) return;
-
       // Get the current status
       PlayerStatus currentStatus = await getControllerStatus(controller);
-      if (controller == null) return;
-
       // If we are playing, update the video progress
       if (this.status == PlayerStatus.PLAYING) {
         Duration pos = controller.value.position;
-        if (pos != null) {
-          this.setVideoProgress(pos.inMilliseconds.toDouble());
-        }
+        this.setVideoProgress(pos.inMilliseconds.toDouble());
       }
 
       // If the status hasn't changed, don't do anything
@@ -96,7 +93,7 @@ class _VideoViewerState extends State<VideoViewer> {
   @override
   Widget build(BuildContext context) {
     List<Widget> interactives = [];
-    if (widget.showInteractions != null) {
+    if (widget.showInteractions) {
       interactives.addAll([
         Padding(
           padding: EdgeInsets.only(top: 50.0, right: 10),
@@ -118,13 +115,11 @@ class _VideoViewerState extends State<VideoViewer> {
           child: Align(
             alignment: Alignment.topRight,
             child: CupertinoButton(
-              onPressed: () async {
+              onPressed: () {
                 // final Uint8List bytes = await widget.file.readAsBytes();
-                await Share.file(
-                  "Shared ${widget.attachment.mimeType.split("/")[0]} from BlueBubbles: ${widget.attachment.transferName}",
-                  widget.attachment.transferName,
+                Share.file(
+                  "Shared ${widget.attachment.mimeType!.split("/")[0]} from BlueBubbles: ${widget.attachment.transferName}",
                   widget.file.path,
-                  widget.attachment.mimeType,
                 );
               },
               child: Icon(
@@ -138,7 +133,10 @@ class _VideoViewerState extends State<VideoViewer> {
     }
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor,
+        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarIconBrightness:
+            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
@@ -164,8 +162,8 @@ class _VideoViewerState extends State<VideoViewer> {
                     children: <Widget>[
                       Container(
                         constraints: BoxConstraints(
-                          maxHeight: MediaQuery.of(context).size.height,
-                          maxWidth: MediaQuery.of(context).size.width,
+                          maxHeight: context.height,
+                          maxWidth: context.width,
                         ),
                         child: AspectRatio(
                           aspectRatio: controller.value.aspectRatio,
@@ -220,69 +218,67 @@ class _VideoViewerState extends State<VideoViewer> {
               ),
             ),
             ...interactives,
-            controller.value.duration != null
-                ? StreamBuilder(
-                    stream: videoProgressStream.stream,
-                    builder: (context, AsyncSnapshot<double> snapshot) {
-                      return AbsorbPointer(
-                        absorbing: !showPlayPauseOverlay,
-                        child: AnimatedOpacity(
-                          opacity: showPlayPauseOverlay ? 1 : 0,
-                          duration: Duration(milliseconds: 500),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: SizedBox(
-                                  height: MediaQuery.of(context).size.height * 1 / 10,
-                                  child: Slider(
-                                    min: 0,
-                                    max: controller.value.duration.inMilliseconds.toDouble(),
-                                    onChangeStart: (value) {
-                                      controller.pause();
-                                      videoProgressStream.sink.add(value);
-                                      controller.seekTo(Duration(milliseconds: value.toInt()));
-                                      resetTimer();
-                                    },
-                                    onChanged: (double value) async {
-                                      // controller.pause();
-                                      videoProgressStream.sink.add(value);
+            StreamBuilder(
+              stream: videoProgressStream.stream,
+              builder: (context, AsyncSnapshot<double> snapshot) {
+                return AbsorbPointer(
+                  absorbing: !showPlayPauseOverlay,
+                  child: AnimatedOpacity(
+                    opacity: showPlayPauseOverlay ? 1 : 0,
+                    duration: Duration(milliseconds: 500),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: SizedBox(
+                            height: context.height * 1 / 10,
+                            child: Slider(
+                              min: 0,
+                              max: controller.value.duration.inMilliseconds.toDouble(),
+                              onChangeStart: (value) {
+                                controller.pause();
+                                videoProgressStream.sink.add(value);
+                                controller.seekTo(Duration(milliseconds: value.toInt()));
+                                resetTimer();
+                              },
+                              onChanged: (double value) async {
+                                // controller.pause();
+                                videoProgressStream.sink.add(value);
 
-                                      if ((await controller.position).inMilliseconds != value.toInt()) {
-                                        controller.seekTo(Duration(milliseconds: value.toInt()));
-                                      }
-                                    },
-                                    onChangeEnd: (double value) {
-                                      controller.play();
-                                      videoProgressStream.sink.add(value);
+                                if ((await controller.position)!.inMilliseconds != value.toInt()) {
+                                  controller.seekTo(Duration(milliseconds: value.toInt()));
+                                }
+                              },
+                              onChangeEnd: (double value) {
+                                controller.play();
+                                videoProgressStream.sink.add(value);
 
-                                      controller.seekTo(Duration(milliseconds: value.toInt()));
-                                      setTimer();
-                                    },
-                                    value: (snapshot.hasData ? snapshot.data : 0.0)
-                                        .clamp(0, controller.value.duration.inMilliseconds)
-                                        .toDouble(),
-                                  ),
-                                ),
-                              ),
-                              GestureDetector(
-                                child: Padding(
-                                  padding: const EdgeInsets.only(right: 20.0),
-                                  child: Icon(
-                                    controller.value.volume == 0.0 ? Icons.volume_mute : Icons.volume_up,
-                                    color: Theme.of(context).primaryColor,
-                                  ),
-                                ),
-                                onTap: () {
-                                  controller.setVolume(controller.value.volume != 0.0 ? 0.0 : 1.0);
-                                },
-                              ),
-                            ],
+                                controller.seekTo(Duration(milliseconds: value.toInt()));
+                                setTimer();
+                              },
+                              value: (snapshot.hasData ? snapshot.data : 0.0)!
+                                  .clamp(0, controller.value.duration.inMilliseconds)
+                                  .toDouble(),
+                            ),
                           ),
                         ),
-                      );
-                    },
-                  )
-                : Container()
+                        GestureDetector(
+                          child: Padding(
+                            padding: const EdgeInsets.only(right: 20.0),
+                            child: Icon(
+                              controller.value.volume == 0.0 ? Icons.volume_mute : Icons.volume_up,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                          ),
+                          onTap: () {
+                            controller.setVolume(controller.value.volume != 0.0 ? 0.0 : 1.0);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            )
           ],
         ),
       ),
@@ -290,7 +286,7 @@ class _VideoViewerState extends State<VideoViewer> {
   }
 
   void resetTimer() {
-    if (hideOverlayTimer != null) hideOverlayTimer.cancel();
+    if (hideOverlayTimer != null) hideOverlayTimer!.cancel();
   }
 
   void setTimer() {

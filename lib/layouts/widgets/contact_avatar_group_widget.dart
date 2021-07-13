@@ -6,27 +6,26 @@ import 'package:flutter/material.dart';
 
 class ContactAvatarGroupWidget extends StatefulWidget {
   ContactAvatarGroupWidget(
-      {Key key,
-      @required this.participants,
+      {Key? key,
+      required this.participants,
       this.width,
       this.height,
       this.editable = true,
       this.onTap,
-      @required this.chat})
+      required this.chat})
       : super(key: key);
   final List<Handle> participants;
   final Chat chat;
-  final double width;
-  final double height;
+  final double? width;
+  final double? height;
   final bool editable;
-  final Function() onTap;
+  final Function()? onTap;
 
   @override
   _ContactAvatarGroupWidgetState createState() => _ContactAvatarGroupWidgetState();
 }
 
 class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
-  List<dynamic> icons;
   List<Handle> participants = [];
 
   @override

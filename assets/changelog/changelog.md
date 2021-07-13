@@ -2,6 +2,46 @@
 
 Below are the last few BlueBubbles App release changelogs
 
+## v1.3.0
+
+* Feature: Typing indicators can now show inside the chat list
+* Feature: Videos now have a mute/unmute button in their previews (muted by default)
+* Feature: You can now choose multiple files via the share menu
+* Feature: You can now choose over apps to load files from via the share menu
+* Feature: Adds ability to share text via the message details popup
+* UX: Variable animation speeds for progress circles
+* UX: Warning message now shows when trying to start a new chat when the server is running on Big Sur
+* UX: New snackbar style
+* UX: Adaptive Icon support
+* UX: Improves hitbox for the remove attachment button in the share preview
+* UX: Improves animation when opening the share menu
+* UX: Adds Battery Optimization page to the setup
+* Bug Fix: TIFF Images now get handled using the regular file opener widget
+* Bug Fix: Fixes issue where some messages would show up as a link preview
+* Bug Fix: Fixes issues with initializing the camera after taking a picture
+* Bug Fix: Fixes issue with syncing business chats (they are ignored now)
+* Bug Fix: Marking all chats as read now removes the notifications as well
+* Optimization: Better support for sharing text & audio attachments
+* Optimization: Migrated to new Socket IO plugin
+* Optimization: Migrated to using the GetX package for Flutter
+
+## v1.2.0
+
+* UX: Adds `%` symbol to the attachment preview quality slider
+* UX: Attachment preview quality slider now increments in steps of 5 instead of 10
+* UX: Message details popup menu is now re-organized a bit for better user-experience
+* UX: Adds better support for .heic images (at partial quality)
+* UX: Sets the priority of notifications to `high` in effort to fix notification issues
+* New Feature: Ability to start a new conversation within message details popup
+* New Feature: Ability to forward a message within message details popup
+* New Feature: Ability to rename a conversation (locally on Android only)
+* New Feature: Ability to mute/unmute videos from the preview
+* New Feature: Redacted mode is now honored in the conversation details page
+* New Feature: Settings toggle to enable/disable filtered chats (leave this disabled if you don't have issues)
+* Bug Fix: Fixes issue where not all chats would load into your chat list (only top 10)
+* Bug Fix: Removes copy options for messages without text (or images)
+* Bug Fix: Fixes issue where the recipient's avatar would show for your reactions
+
 ## v1.1.1
 
 * Bug Fix: Fixes grey screen when creating a new chat

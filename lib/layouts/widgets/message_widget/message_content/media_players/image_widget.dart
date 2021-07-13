@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
@@ -13,9 +14,9 @@ import 'package:visibility_detector/visibility_detector.dart';
 
 class ImageWidget extends StatefulWidget {
   ImageWidget({
-    Key key,
-    this.file,
-    this.attachment,
+    Key? key,
+    required this.file,
+    required this.attachment,
   }) : super(key: key);
   final File file;
   final Attachment attachment;
@@ -27,7 +28,7 @@ class ImageWidget extends StatefulWidget {
 class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   bool navigated = false;
   bool visible = true;
-  Uint8List data;
+  Uint8List? data;
   bool initGate = false;
 
   void _initializeBytes({runForcefully: false}) async {
@@ -37,7 +38,7 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
     initGate = true;
 
     // Try to get the image data from the "cache"
-    data = CurrentChat.of(context).getImageData(widget.attachment);
+    data = CurrentChat.of(context)!.getImageData(widget.attachment);
     if (data == null) {
       // If it's an image, compress the image when loading it
       if (AttachmentHelper.canCompress(widget.attachment)) {
@@ -48,8 +49,8 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
       } else {
         data = await widget.file.readAsBytes();
       }
-
-      CurrentChat.of(context)?.saveImageData(data, widget.attachment);
+      if (data == null) return;
+      CurrentChat.of(context)?.saveImageData(data!, widget.attachment);
       if (this.mounted) setState(() {});
     }
   }
@@ -60,7 +61,7 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
     _initializeBytes();
 
     return VisibilityDetector(
-      key: Key(widget.attachment.guid),
+      key: Key(widget.attachment.guid!),
       onVisibilityChanged: (info) {
         if (!SettingsManager().settings.lowMemoryMode) return;
         if (info.visibleFraction == 0 && visible && !navigated) {
@@ -76,8 +77,8 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
         children: <Widget>[
           Container(
             constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width / 2,
-              maxHeight: MediaQuery.of(context).size.height / 2,
+              maxWidth: context.width / 2,
+              maxHeight: context.height / 2,
             ),
             child: buildSwitcher(),
           ),
@@ -90,7 +91,7 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
 
                   navigated = true;
 
-                  CurrentChat currentChat = CurrentChat.of(context);
+                  CurrentChat? currentChat = CurrentChat.of(context);
                   await Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (context) => AttachmentFullscreenViewer(
@@ -115,7 +116,7 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
         duration: Duration(milliseconds: 150),
         child: data != null
             ? Image.memory(
-                data,
+                data!,
                 //width: widget.attachment.width.toDouble(),
                 //height: widget.attachment.height.toDouble(),
                 frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
@@ -138,10 +139,10 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
   Widget buildPlaceHolder() {
     if (widget.attachment.hasValidSize) {
       return AspectRatio(
-        aspectRatio: widget.attachment.width.toDouble() / widget.attachment.height.toDouble(),
+        aspectRatio: widget.attachment.width!.toDouble() / widget.attachment.height!.toDouble(),
         child: Container(
-            width: widget.attachment.width.toDouble(),
-            height: widget.attachment.height.toDouble(),
+            width: widget.attachment.width!.toDouble(),
+            height: widget.attachment.height!.toDouble(),
             color: Theme.of(context).accentColor,
             child: Center(
                 child: CircularProgressIndicator(
