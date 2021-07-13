@@ -1,18 +1,17 @@
 import 'dart:io';
 
-import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong/latlong.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:map_launcher/map_launcher.dart' as ML;
 
 class LocationWidget extends StatefulWidget {
   LocationWidget({
-    Key key,
-    this.file,
-    this.attachment,
+    Key? key,
+    required this.file,
+    required this.attachment,
   }) : super(key: key);
   final File file;
   final Attachment attachment;
@@ -22,7 +21,7 @@ class LocationWidget extends StatefulWidget {
 }
 
 class _LocationWidgetState extends State<LocationWidget> with AutomaticKeepAliveClientMixin {
-  Map<String, dynamic> location;
+  AppleLocation? location;
 
   @override
   void initState() {
@@ -46,7 +45,7 @@ class _LocationWidgetState extends State<LocationWidget> with AutomaticKeepAlive
     final availableMaps = await ML.MapLauncher.installedMaps;
 
     await availableMaps.first.showMarker(
-      coords: ML.Coords(location["longitude"], location["latitude"]),
+      coords: ML.Coords(location!.longitude!, location!.latitude!),
       title: "Shared Location",
     );
   }
@@ -56,9 +55,9 @@ class _LocationWidgetState extends State<LocationWidget> with AutomaticKeepAlive
     super.build(context);
 
     if (location != null &&
-        location["longitude"] != null &&
-        location["longitude"].abs() < 90 &&
-        location["latitude"] != null) {
+        location!.longitude != null &&
+        location!.longitude!.abs() < 90 &&
+        location!.latitude != null) {
       return GestureDetector(
           onTap: openMaps,
           child: Container(
@@ -73,7 +72,7 @@ class _LocationWidgetState extends State<LocationWidget> with AutomaticKeepAlive
                         height: 200,
                         child: FlutterMap(
                           options: MapOptions(
-                            center: LatLng(location["longitude"], location["latitude"]),
+                            center: LatLng(location!.longitude!, location!.latitude!),
                             zoom: 14.0,
                           ),
                           layers: [
@@ -87,7 +86,7 @@ class _LocationWidgetState extends State<LocationWidget> with AutomaticKeepAlive
                                 new Marker(
                                   width: 40.0,
                                   height: 40.0,
-                                  point: new LatLng(location["longitude"], location["latitude"]),
+                                  point: new LatLng(location!.longitude!, location!.latitude!),
                                   builder: (ctx) => new Container(
                                     child: Icon(Icons.pin_drop, color: Colors.red, size: 45),
                                   ),

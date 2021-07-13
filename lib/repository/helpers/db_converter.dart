@@ -7,17 +7,15 @@ class DBConverter {
     String: "string",
   };
 
-  static Type getType(String type) {
-    return types.containsValue(type)
-        ? types.keys.firstWhere((key) => types[key] == type)
-        : null;
+  static Type? getType(String type) {
+    return types.containsValue(type) ? types.keys.firstWhere((key) => types[key] == type) : null;
   }
 
-  static String getStringType(Type type) {
-    return types.containsKey(type) ? types[type] : null;
+  static String? getStringType(Type? type) {
+    return types.containsKey(type) ? types[type!] : null;
   }
 
-  static String getString(dynamic value) {
+  static String? getString(dynamic value) {
     if (value.runtimeType == bool) {
       return value ? "1" : "0";
     } else if (value.runtimeType == double) {

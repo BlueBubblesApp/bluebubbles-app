@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/config_entry.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
+import 'package:get/get.dart';
 import 'package:sqflite/sqflite.dart';
 
 class Settings {
@@ -31,7 +35,7 @@ class Settings {
   bool preCachePreviewImages = true;
   bool showConnectionIndicator = false;
   bool showSyncIndicator = true;
-  int sendDelay;
+  int? sendDelay;
   bool recipientAsPlaceholder = false;
   bool hideKeyboardOnScroll = false;
   bool moveChatCreatorToHeader = false;
@@ -39,11 +43,14 @@ class Settings {
   bool swipeToOpenKeyboard = false;
   bool openKeyboardOnSTB = false;
   bool swipableConversationTiles = false;
-  int smartReplySampleSize = 2;
   bool colorblindMode = false;
   bool showDeliveryTimestamps = false;
   int previewCompressionQuality = 25;
   bool filteredChatList = false;
+  bool startVideosMuted = false;
+  bool startVideosMutedFullscreen = false;
+  bool use24HrFormat = false;
+  bool alwaysShowAvatars = false;
 
   // String emojiFontFamily;
 
@@ -58,6 +65,7 @@ class Settings {
   bool hideMessageContent = true;
   bool hideReactions = false;
   bool hideAttachments = true;
+  bool hideEmojis = false;
   bool hideAttachmentTypes = false;
   bool hideContactPhotos = true;
   bool hideContactInfo = true;
@@ -65,7 +73,11 @@ class Settings {
   bool generateFakeContactNames = false;
   bool generateFakeMessageContent = false;
 
-  Skins skin = Skins.iOS;
+  // Quick tapback settings
+  bool enableQuickTapback = false;
+  String quickTapbackType = ReactionTypes.toList()[0]; // The 'love' reaction
+
+  Rx<Skins> skin = Skins.iOS.obs;
   ThemeMode theme = ThemeMode.system;
 
   Settings();
@@ -106,7 +118,7 @@ class Settings {
       } else if (entry.name == "theme") {
         settings.theme = ThemeMode.values[entry.value];
       } else if (entry.name == "skin") {
-        settings.skin = Skins.values[entry.value];
+        settings.skin.value = Skins.values[entry.value];
       } else if (entry.name == "sendTypingIndicators") {
         settings.sendTypingIndicators = entry.value;
       } else if (entry.name == "scrollVelocity") {
@@ -147,8 +159,6 @@ class Settings {
         settings.enablePrivateAPI = entry.value;
       } else if (entry.name == "privateSendTypingIndicators") {
         settings.privateSendTypingIndicators = entry.value;
-      } else if (entry.name == "smartReplySampleSize") {
-        settings.smartReplySampleSize = entry.value;
       } else if (entry.name == "colorblindMode") {
         settings.colorblindMode = entry.value;
       } else if (entry.name == "privateMarkChatAsRead") {
@@ -183,6 +193,18 @@ class Settings {
         settings.previewCompressionQuality = entry.value;
       } else if (entry.name == "filteredChatList") {
         settings.filteredChatList = entry.value;
+      } else if (entry.name == "startVideosMuted") {
+        settings.startVideosMuted = entry.value;
+      } else if (entry.name == "startVideosMutedFullscreen") {
+        settings.startVideosMutedFullscreen = entry.value;
+      } else if (entry.name == "use24HrFormat") {
+        settings.use24HrFormat = entry.value;
+      } else if (entry.name == "enableQuickTapback") {
+        settings.enableQuickTapback = entry.value;
+      } else if (entry.name == "quickTapbackType") {
+        settings.quickTapbackType = entry.value;
+      } else if (entry.name == "alwaysShowAvatars") {
+        settings.alwaysShowAvatars = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -194,14 +216,12 @@ class Settings {
   }
 
   Future<DisplayMode> getDisplayMode() async {
-    if (displayMode == null) return FlutterDisplayMode.current;
-
     List<DisplayMode> modes = await FlutterDisplayMode.supported;
     modes = modes.where((element) => element.id == displayMode).toList();
 
     DisplayMode mode;
     if (modes.isEmpty) {
-      mode = await FlutterDisplayMode.current;
+      mode = await FlutterDisplayMode.active;
     } else {
       mode = modes.first;
     }
@@ -217,7 +237,7 @@ class Settings {
   }
 
   static Future<Settings> getSettings() async {
-    Database db = await DBProvider.db.database;
+    Database? db = await DBProvider.db.database;
 
     List<Map<String, dynamic>> result = await db.query("config");
     if (result.isEmpty) return new Settings();
@@ -311,8 +331,8 @@ class Settings {
         ),
         ConfigEntry(
           name: "skin",
-          value: this.skin.index,
-          type: this.skin.index.runtimeType,
+          value: this.skin.value.index,
+          type: this.skin.value.index.runtimeType,
         ),
         ConfigEntry(
           name: "sendTypingIndicators",
@@ -410,11 +430,6 @@ class Settings {
           type: this.privateSendTypingIndicators.runtimeType,
         ),
         ConfigEntry(
-          name: "smartReplySampleSize",
-          value: this.smartReplySampleSize,
-          type: this.smartReplySampleSize.runtimeType,
-        ),
-        ConfigEntry(
           name: "colorblindMode",
           value: this.colorblindMode,
           type: this.colorblindMode.runtimeType,
@@ -493,6 +508,36 @@ class Settings {
           name: "filteredChatList",
           value: this.filteredChatList,
           type: this.filteredChatList.runtimeType,
+        ),
+        ConfigEntry(
+          name: "startVideosMuted",
+          value: this.startVideosMuted,
+          type: this.startVideosMuted.runtimeType,
+        ),
+        ConfigEntry(
+          name: "startVideosMutedFullscreen",
+          value: this.startVideosMutedFullscreen,
+          type: this.startVideosMutedFullscreen.runtimeType,
+        ),
+        ConfigEntry(
+          name: "use24HrFormat",
+          value: this.use24HrFormat,
+          type: this.use24HrFormat.runtimeType,
+        ),
+        ConfigEntry(
+          name: "enableQuickTapback",
+          value: this.enableQuickTapback,
+          type: this.enableQuickTapback.runtimeType,
+        ),
+        ConfigEntry(
+          name: "quickTapbackType",
+          value: this.quickTapbackType,
+          type: this.quickTapbackType.runtimeType,
+        ),
+        ConfigEntry(
+          name: "alwaysShowAvatars",
+          value: this.alwaysShowAvatars,
+          type: this.alwaysShowAvatars.runtimeType,
         ),
         // ConfigEntry(
         //     name: "emojiFontFamily",

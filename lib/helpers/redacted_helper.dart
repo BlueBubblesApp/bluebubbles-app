@@ -3,16 +3,16 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:flutter/widgets.dart';
 
-String getContactName(BuildContext context, String contactTitle, String contactAddress, {Chat currentChat}) {
-  final bool redactedMode = SettingsManager()?.settings?.redactedMode ?? false;
-  final bool hideInfo = redactedMode && (SettingsManager()?.settings?.hideContactInfo ?? false);
-  final bool generateName = redactedMode && (SettingsManager()?.settings?.generateFakeContactNames ?? false);
+String? getContactName(BuildContext context, String? contactTitle, String? contactAddress, {Chat? currentChat}) {
+  final bool redactedMode = SettingsManager().settings.redactedMode;
+  final bool hideInfo = redactedMode && SettingsManager().settings.hideContactInfo;
+  final bool generateName = redactedMode && SettingsManager().settings.generateFakeContactNames;
 
-  String contactName = contactTitle;
+  String? contactName = contactTitle;
   if (hideInfo) {
     currentChat = CurrentChat.of(context)?.chat ?? currentChat;
     int index = (currentChat?.participants ?? []).indexWhere((h) => h.address == contactAddress);
-    List<String> fakeNames = currentChat?.fakeParticipants ?? [];
+    List<String?> fakeNames = currentChat?.fakeParticipants ?? [];
     if (generateName) {
       if (index >= 0 && index < fakeNames.length) {
         contactName = currentChat?.fakeParticipants[index];

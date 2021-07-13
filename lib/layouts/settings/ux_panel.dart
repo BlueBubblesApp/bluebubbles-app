@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -14,14 +15,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class UXPanel extends StatefulWidget {
-  UXPanel({Key key}) : super(key: key);
+  UXPanel({Key? key}) : super(key: key);
 
   @override
   _UXPanelState createState() => _UXPanelState();
 }
 
 class _UXPanelState extends State<UXPanel> {
-  Settings _settingsCopy;
+  late Settings _settingsCopy;
   bool needToReconnect = false;
   bool showUrl = false;
 
@@ -44,25 +45,21 @@ class _UXPanelState extends State<UXPanel> {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor,
+        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
         appBar: PreferredSize(
-          preferredSize: Size(Get.mediaQuery.size.width, 80),
+          preferredSize: Size(context.width, 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
                 brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
                 toolbarHeight: 100.0,
                 elevation: 0,
-                leading: IconButton(
-                  icon: Icon(SettingsManager().settings.skin == Skins.iOS ? Icons.arrow_back_ios : Icons.arrow_back,
-                      color: Theme.of(context).primaryColor),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
+                leading: buildBackButton(context),
                 backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
                 title: Text(
                   "User Experience",
@@ -90,7 +87,7 @@ class _UXPanelState extends State<UXPanel> {
                       );
                     },
                     trailing: Icon(
-                      SettingsManager().settings.skin == Skins.iOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
+                      SettingsManager().settings.skin.value == Skins.iOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
                       color: Theme.of(context).primaryColor,
                     ),
                   ),
@@ -126,8 +123,8 @@ class _UXPanelState extends State<UXPanel> {
                     initialVal: _settingsCopy.filteredChatList,
                     title: "Filtered Chat List",
                   ),
-                  if (SettingsManager().settings.skin == Skins.Samsung ||
-                      SettingsManager().settings.skin == Skins.Material)
+                  if (SettingsManager().settings.skin.value == Skins.Samsung ||
+                      SettingsManager().settings.skin.value == Skins.Material)
                     SettingsSwitch(
                       onChanged: (bool val) {
                         _settingsCopy.swipableConversationTiles = val;
@@ -176,7 +173,7 @@ class _UXPanelState extends State<UXPanel> {
                     initialVal: _settingsCopy.showIncrementalSync,
                     title: "Notify when incremental sync complete",
                   ),
-                  if (SettingsManager().settings.skin == Skins.iOS)
+                  if (SettingsManager().settings.skin.value == Skins.iOS)
                     SettingsSlider(
                         text: "Scroll Speed Multiplier",
                         startingVal: _settingsCopy.scrollVelocity,
@@ -199,7 +196,7 @@ class _UXPanelState extends State<UXPanel> {
                   if (!isNullOrZero(SettingsManager().settings.sendDelay))
                     SettingsSlider(
                         text: "Send Delay (Seconds)",
-                        startingVal: _settingsCopy.sendDelay.toDouble(),
+                        startingVal: _settingsCopy.sendDelay!.toDouble(),
                         update: (double val) {
                           _settingsCopy.sendDelay = val.toInt();
                         },
@@ -207,6 +204,22 @@ class _UXPanelState extends State<UXPanel> {
                         min: 1,
                         max: 10,
                         divisions: 9),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.startVideosMutedFullscreen = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.startVideosMutedFullscreen,
+                    title: "Play Videos Muted by Default in Fullscreen Player",
+                  ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.use24HrFormat = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.use24HrFormat,
+                    title: "Use 24 Hour Format for Times",
+                  ),
                 ],
               ),
             ),

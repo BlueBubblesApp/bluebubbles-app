@@ -1,9 +1,9 @@
 import 'dart:io';
 
-import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
@@ -13,9 +13,9 @@ import 'package:path/path.dart';
 
 class ContactWidget extends StatefulWidget {
   ContactWidget({
-    Key key,
-    this.file,
-    this.attachment,
+    Key? key,
+    required this.file,
+    required this.attachment,
   }) : super(key: key);
   final File file;
   final Attachment attachment;
@@ -25,7 +25,7 @@ class ContactWidget extends StatefulWidget {
 }
 
 class _ContactWidgetState extends State<ContactWidget> {
-  Contact contact;
+  late Contact contact;
 
   @override
   void initState() {
@@ -56,7 +56,7 @@ class _ContactWidgetState extends State<ContactWidget> {
               MethodChannelInterface().invokeMethod(
                 "open_file",
                 {
-                  "path": "/attachments/" + widget.attachment.guid + "/" + basename(widget.file.path),
+                  "path": "/attachments/" + widget.attachment.guid! + "/" + basename(widget.file.path),
                   "mimeType": "text/x-vcard",
                 },
               );
@@ -77,7 +77,7 @@ class _ContactWidgetState extends State<ContactWidget> {
                             style: Theme.of(context).textTheme.subtitle2,
                           ),
                           Text(
-                            contact?.displayName ?? "No Name",
+                            contact.displayName ?? "No Name",
                             style: Theme.of(context).textTheme.bodyText1,
                             overflow: TextOverflow.ellipsis,
                             maxLines: 2,
@@ -99,7 +99,7 @@ class _ContactWidgetState extends State<ContactWidget> {
                         ),
                         child: Container(
                           child: Text(
-                            contact?.initials() ?? "?",
+                            getInitials(contact),
                             style: Theme.of(context).textTheme.headline1,
                           ),
                           alignment: AlignmentDirectional.center,
@@ -108,7 +108,9 @@ class _ContactWidgetState extends State<ContactWidget> {
                       Padding(
                         padding: EdgeInsets.only(left: 5.0),
                         child: Icon(
-                          SettingsManager().settings.skin == Skins.iOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
+                          SettingsManager().settings.skin.value == Skins.iOS
+                              ? Icons.arrow_forward_ios
+                              : Icons.arrow_forward,
                           color: Colors.grey,
                           size: 15,
                         ),

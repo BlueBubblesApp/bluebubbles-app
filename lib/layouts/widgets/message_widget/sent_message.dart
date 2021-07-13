@@ -23,24 +23,23 @@ import 'package:flutter/material.dart';
 
 class SentMessageHelper {
   static Widget buildMessageWithTail(
-      BuildContext context, Message message, bool showTail, bool hasReactions, bool bigEmoji,
-      {Widget customContent,
-      Message olderMessage,
-      CurrentChat currentChat,
-      Color customColor,
+      BuildContext context, Message? message, bool showTail, bool hasReactions, bool bigEmoji,
+      {Widget? customContent,
+      Message? olderMessage,
+      CurrentChat? currentChat,
+      Color? customColor,
       bool padding = true,
       bool margin = true}) {
     Color bubbleColor;
-    bubbleColor = message == null || message.guid.startsWith("temp")
-        ? darken(Theme.of(context).primaryColor, 0.2)
+    bubbleColor = message == null || message.guid!.startsWith("temp")
+        ? Theme.of(context).primaryColor.darkenAmount(0.2)
         : Theme.of(context).primaryColor;
 
-    final bool hideContent = SettingsManager().settings.redactedMode && SettingsManager().settings.hideMessageContent;
-    final bool hideType = SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachmentTypes;
+    final bool hideContent = SettingsManager().settings.redactedMode && SettingsManager().settings.hideEmojis;
 
     Widget msg;
-    bool hasReactions = (message?.getReactions() ?? []).length > 0 ?? false;
-    Skins currentSkin = SettingsManager().settings.skin;
+    bool hasReactions = (message?.getReactions() ?? []).length > 0;
+    Skins currentSkin = SettingsManager().settings.skin.value;
 
     if (message?.isBigEmoji() ?? false) {
       msg = Padding(
@@ -49,40 +48,33 @@ class SentMessageHelper {
           top: (hasReactions) ? 15.0 : 0.0,
           right: 5,
         ),
-        child: Stack(
-          children: <Widget>[
-            Text(
-              message.text,
-              style: Theme.of(context).textTheme.bodyText2.apply(fontSizeFactor: 4),
-            ),
-            if (hideContent)
-              Positioned.fill(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(25.0),
-                  child: Container(color: Theme.of(context).accentColor),
-                ),
-              ),
-            if (hideContent && !hideType)
-              Positioned.fill(
+        child: hideContent
+            ? ClipRRect(
+                borderRadius: BorderRadius.circular(25.0),
                 child: Container(
-                  alignment: Alignment.center,
-                  child: Text(
-                    "emoji",
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyText1,
-                  ),
-                ),
+                    width: 70,
+                    height: 70,
+                    color: Theme.of(context).accentColor,
+                    child: Center(
+                      child: Text(
+                        "emoji",
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyText1,
+                      ),
+                    )),
+              )
+            : Text(
+                message!.text!,
+                style: Theme.of(context).textTheme.bodyText2!.apply(fontSizeFactor: 4),
               ),
-          ],
-        ),
       );
     } else {
       msg = Stack(
         alignment: AlignmentDirectional.bottomEnd,
         children: [
-          if (showTail && currentSkin == Skins.iOS)
+          if (showTail && currentSkin == Skins.iOS && message != null)
             MessageTail(
-              message: message,
+              isFromMe: true,
               color: customColor ?? bubbleColor,
             ),
           Container(
@@ -92,7 +84,7 @@ class SentMessageHelper {
               right: margin ? 10 : 0,
             ),
             constraints: BoxConstraints(
-              maxWidth: Get.mediaQuery.size.width * MessageWidgetMixin.MAX_SIZE + (!padding ? 100 : 0),
+              maxWidth: context.width * MessageWidgetMixin.MAX_SIZE + (!padding ? 100 : 0),
             ),
             padding: EdgeInsets.symmetric(
               vertical: padding ? 8 : 0,
@@ -109,7 +101,7 @@ class SentMessageHelper {
                   : (currentSkin == Skins.Material)
                       ? BorderRadius.only(
                           topLeft: Radius.circular(20),
-                          topRight: olderMessage == null || MessageHelper.getShowTail(olderMessage, message)
+                          topRight: olderMessage == null || MessageHelper.getShowTail(context, olderMessage, message)
                               ? Radius.circular(20)
                               : Radius.circular(5),
                           bottomLeft: Radius.circular(20),
@@ -129,7 +121,7 @@ class SentMessageHelper {
                 ? RichText(
                     text: TextSpan(
                       children: MessageWidgetMixin.buildMessageSpans(context, message),
-                      style: Theme.of(context).textTheme.bodyText1.apply(color: Colors.white),
+                      style: Theme.of(context).textTheme.bodyText1!.apply(color: Colors.white),
                     ),
                   )
                 : customContent,
@@ -153,14 +145,14 @@ class SentMessageHelper {
     );
   }
 
-  static Widget getErrorWidget(BuildContext context, Message message, Chat chat, {double rightPadding = 8.0}) {
-    if (message != null && message.error > 0) {
-      int errorCode = message != null ? message.error : 0;
+  static Widget getErrorWidget(BuildContext context, Message? message, Chat? chat, {double rightPadding = 8.0}) {
+    if (message != null && message.error! > 0) {
+      int? errorCode = message.error != null ? message.error : 0;
       String errorText = "Server Error. Contact Support.";
       if (errorCode == 22) {
         errorText = "The recipient is not registered with iMessage!";
-      } else if (message != null && message.guid.startsWith("error-")) {
-        errorText = message.guid.split('-')[1];
+      } else if (message.guid!.startsWith("error-")) {
+        errorText = message.guid!.split('-')[1];
       }
 
       return Padding(
@@ -174,7 +166,7 @@ class SentMessageHelper {
                   title: new Text("Message failed to send", style: TextStyle(color: Colors.black)),
                   content: new Text("Error ($errorCode): $errorText"),
                   actions: <Widget>[
-                    new FlatButton(
+                    new TextButton(
                       child: new Text("Retry"),
                       onPressed: () {
                         // Remove the OG alert dialog
@@ -183,7 +175,7 @@ class SentMessageHelper {
                       },
                     ),
                     if (chat != null)
-                      new FlatButton(
+                      new TextButton(
                         child: new Text("Remove"),
                         onPressed: () async {
                           Navigator.of(context).pop();
@@ -195,15 +187,14 @@ class SentMessageHelper {
 
                           // Get the "new" latest info
                           List<Message> latest = await Chat.getMessages(chat, limit: 1);
-                          chat.latestMessageDate = latest.first != null ? latest.first.dateCreated : null;
-                          chat.latestMessageText =
-                              latest.first != null ? await MessageHelper.getNotificationText(latest.first) : null;
+                          chat.latestMessageDate = latest.first.dateCreated;
+                          chat.latestMessageText = await MessageHelper.getNotificationText(latest.first);
 
                           // Update it in the Bloc
                           await ChatBloc().updateChatPosition(chat);
                         },
                       ),
-                    new FlatButton(
+                    new TextButton(
                       child: new Text("Cancel"),
                       onPressed: () {
                         Navigator.of(context).pop();
@@ -225,8 +216,8 @@ class SentMessageHelper {
 class SentMessage extends StatefulWidget {
   final bool showTail;
   final Message message;
-  final Message olderMessage;
-  final Message newerMessage;
+  final Message? olderMessage;
+  final Message? newerMessage;
   final bool showHero;
   final bool shouldFadeIn;
   final bool showDeliveredReceipt;
@@ -238,20 +229,20 @@ class SentMessage extends StatefulWidget {
   final Widget urlPreviewWidget;
 
   SentMessage({
-    Key key,
-    @required this.showTail,
-    @required this.olderMessage,
-    @required this.newerMessage,
-    @required this.message,
-    @required this.showHero,
-    @required this.showDeliveredReceipt,
-    @required this.shouldFadeIn,
+    Key? key,
+    required this.showTail,
+    required this.olderMessage,
+    required this.newerMessage,
+    required this.message,
+    required this.showHero,
+    required this.showDeliveredReceipt,
+    required this.shouldFadeIn,
 
     // Sub-widgets
-    @required this.stickersWidget,
-    @required this.attachmentsWidget,
-    @required this.reactionsWidget,
-    @required this.urlPreviewWidget,
+    required this.stickersWidget,
+    required this.attachmentsWidget,
+    required this.reactionsWidget,
+    required this.urlPreviewWidget,
   }) : super(key: key);
 
   @override
@@ -267,8 +258,6 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
 
   @override
   Widget build(BuildContext context) {
-    if (widget.message == null) return Container();
-
     // The column that holds all the "messages"
     List<Widget> messageColumn = [];
 
@@ -279,7 +268,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
           message: addReactionsToWidget(
               messageWidget: widget.attachmentsWidget, reactions: widget.reactionsWidget, message: widget.message),
           stickers: widget.stickersWidget,
-          isFromMe: widget.message.isFromMe,
+          isFromMe: widget.message.isFromMe!,
         ),
       );
     } else {
@@ -287,7 +276,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
     }
 
     // Third, let's add the message or URL preview
-    Widget message;
+    Widget? message;
     if (widget.message.isUrlPreview()) {
       message = Padding(
         padding: EdgeInsets.only(left: 10.0),
@@ -298,7 +287,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
       message = BalloonBundleWidget(message: widget.message);
     } else if (!isEmptyString(widget.message.text)) {
       message = SentMessageHelper.buildMessageWithTail(
-          context, widget.message, widget.showTail, widget.message.hasReactions, widget.message.bigEmoji,
+          context, widget.message, widget.showTail, widget.message.hasReactions, widget.message.bigEmoji ?? false,
           olderMessage: widget.olderMessage);
       if (widget.showHero) {
         message = Hero(
@@ -323,7 +312,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
               reactions: widget.reactionsWidget,
               message: widget.message),
           stickers: widget.stickersWidget,
-          isFromMe: widget.message.isFromMe,
+          isFromMe: widget.message.isFromMe!,
         ),
       );
     }
@@ -345,15 +334,15 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
       Padding(
         // Padding to shift the bubble up a bit, relative to the avatar
         padding: EdgeInsets.only(
-            top: (SettingsManager().settings.skin != Skins.iOS &&
-                    widget.message?.isFromMe == widget.olderMessage?.isFromMe)
-                ? (SettingsManager().settings.skin != Skins.iOS)
+            top: (SettingsManager().settings.skin.value != Skins.iOS &&
+                    widget.message.isFromMe == widget.olderMessage?.isFromMe)
+                ? (SettingsManager().settings.skin.value != Skins.iOS)
                     ? 0
                     : 3
-                : (SettingsManager().settings.skin == Skins.iOS)
+                : (SettingsManager().settings.skin.value == Skins.iOS)
                     ? 0.0
                     : 10,
-            bottom: (SettingsManager().settings.skin == Skins.iOS &&
+            bottom: (SettingsManager().settings.skin.value == Skins.iOS &&
                     widget.showTail &&
                     !isEmptyString(widget.message.fullText))
                 ? 5.0
@@ -372,9 +361,10 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
       mainAxisSize: MainAxisSize.max,
       mainAxisAlignment: MainAxisAlignment.end,
       crossAxisAlignment:
-          (SettingsManager().settings.skin == Skins.iOS) ? CrossAxisAlignment.center : CrossAxisAlignment.end,
+          (SettingsManager().settings.skin.value == Skins.iOS) ? CrossAxisAlignment.center : CrossAxisAlignment.end,
       children: [
-        if (SettingsManager().settings.skin == Skins.iOS || SettingsManager().settings.skin == Skins.Material)
+        if (SettingsManager().settings.skin.value == Skins.iOS ||
+            SettingsManager().settings.skin.value == Skins.Material)
           MessagePopupHolder(
             message: widget.message,
             child: Row(
@@ -384,7 +374,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
               children: msgRow,
             ),
           ),
-        if (SettingsManager().settings.skin == Skins.Samsung)
+        if (SettingsManager().settings.skin.value == Skins.Samsung)
           MessagePopupHolder(
             message: widget.message,
             child: Row(
@@ -394,7 +384,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
               children: msgRow,
             ),
           ),
-        if (SettingsManager().settings.skin != Skins.Samsung && widget.message?.guid != widget.olderMessage?.guid)
+        if (SettingsManager().settings.skin.value != Skins.Samsung && widget.message.guid != widget.olderMessage?.guid)
           MessageTimeStamp(
             message: widget.message,
           )

@@ -1,11 +1,10 @@
-import 'package:get/get.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class PrepareToDownload extends StatefulWidget {
-  PrepareToDownload({Key key, @required this.controller}) : super(key: key);
+  PrepareToDownload({Key? key, required this.controller}) : super(key: key);
   final PageController controller;
 
   @override
@@ -21,7 +20,9 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor,
+        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
         backgroundColor: Theme.of(context).accentColor,
@@ -33,7 +34,7 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                 padding: EdgeInsets.symmetric(horizontal: 20.0),
                 child: Text(
                   "For the final step, BlueBubbles will download the first 25 messages for each of your chats.",
-                  style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
+                  style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -42,7 +43,7 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                 padding: EdgeInsets.symmetric(horizontal: 20.0),
                 child: Text(
                   "Don't worry, you can see your chat history by scrolling up in a chat.",
-                  style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
+                  style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -120,7 +121,7 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                       activeColor: Theme.of(context).primaryColor,
                       activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
                       inactiveTrackColor: Theme.of(context).primaryColor.withAlpha(75),
-                      inactiveThumbColor: Theme.of(context).textTheme.bodyText1.color,
+                      inactiveThumbColor: Theme.of(context).textTheme.bodyText1!.color,
                       onChanged: (bool value) {
                         if (!this.mounted) return;
 

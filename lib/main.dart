@@ -62,14 +62,14 @@ Future<Null> _reportError(dynamic error, dynamic stackTrace) async {
 
 Future<Null> main() async {
   // This captures errors reported by the Flutter framework.
-  FlutterError.onError = (FlutterErrorDetails details) async {
+  FlutterError.onError = (FlutterErrorDetails details) {
     if (isInDebugMode) {
       // In development mode simply print to console.
       FlutterError.dumpErrorToConsole(details);
     } else {
       // In production mode report to the application zone to report to
       // Sentry.
-      Zone.current.handleUncaughtError(details.exception, details.stack);
+      Zone.current.handleUncaughtError(details.exception, details.stack!);
     }
   };
 
@@ -99,7 +99,8 @@ Future<Null> main() async {
       await _reportError(error, stackTrace);
     });
   } else {
-    runApp(FailureToStrt(e: exception));
+    runApp(FailureToStart(e: exception));
+    throw Exception(exception);
   }
 }
 
@@ -113,7 +114,7 @@ Future<Null> main() async {
 class Main extends StatelessWidget with WidgetsBindingObserver {
   final ThemeData darkTheme;
   final ThemeData lightTheme;
-  const Main({Key key, @required this.lightTheme, @required this.darkTheme}) : super(key: key);
+  const Main({Key? key, required this.lightTheme, required this.darkTheme}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -133,10 +134,10 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
         title: 'BlueBubbles',
 
         /// Set the light theme from the [AdaptiveTheme]
-        theme: theme,
+        theme: theme.copyWith(appBarTheme: theme.appBarTheme.copyWith(elevation: 0.0)),
 
         /// Set the dark theme from the [AdaptiveTheme]
-        darkTheme: darkTheme,
+        darkTheme: darkTheme.copyWith(appBarTheme: darkTheme.appBarTheme.copyWith(elevation: 0.0)),
 
         /// [NavigatorManager] is set as the navigator key so that we can control navigation from anywhere
         navigatorKey: NavigatorManager().navigatorKey,
@@ -155,7 +156,7 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
 /// The [LifeCycleManager] also is binded to the [WidgetsBindingObserver]
 /// so that it can know when the app is closed, paused, or resumed
 class Home extends StatefulWidget {
-  Home({Key key}) : super(key: key);
+  Home({Key? key}) : super(key: key);
 
   @override
   _HomeState createState() => _HomeState();
@@ -179,18 +180,18 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     // Get sharing media from files shared to the app from cold start
     // This one only handles files, not text
     ReceiveSharingIntent.getInitialMedia().then((List<SharedMediaFile> value) async {
-      if (value == null) return;
+      if (value.isEmpty) return;
 
       // If we don't have storage permission, we can't do anything
       if (!await Permission.storage.request().isGranted) return;
 
       // Add the attached files to a list
       List<File> attachments = <File>[];
-      if (value != null) {
-        value.forEach((element) {
-          attachments.add(File(element.path));
-        });
-      }
+      value.forEach((element) {
+        attachments.add(File(element.path));
+      });
+
+      if (attachments.length == 0) return;
 
       // Go to the new chat creator, with all of our attachments
       Navigator.of(context).pushAndRemoveUntil(
@@ -205,7 +206,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     });
 
     // Same thing as [getInitialMedia] except for text
-    ReceiveSharingIntent.getInitialText().then((String text) {
+    ReceiveSharingIntent.getInitialText().then((String? text) {
       if (text == null) return;
 
       // Go to the new chat creator, with all of our text
@@ -244,17 +245,17 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     );
 
     // Get the saved settings from the settings manager after the first frame
-    SchedulerBinding.instance.addPostFrameCallback((_) => SettingsManager().getSavedSettings(context: context));
+    SchedulerBinding.instance!.addPostFrameCallback((_) => SettingsManager().getSavedSettings(context: context));
 
     // Bind the lifecycle events
-    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance!.addObserver(this);
   }
 
   @override
   void didChangeDependencies() async {
     Locale myLocale = Localizations.localeOf(context);
     SettingsManager().countryCode = myLocale.countryCode;
-
+    SettingsManager().settings.use24HrFormat = MediaQuery.of(Get.context!).alwaysUse24HourFormat;
     await FlutterLibphonenumber().init();
     super.didChangeDependencies();
   }
@@ -262,7 +263,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   @override
   void dispose() {
     // Clean up observer when app is fully closed
-    WidgetsBinding.instance.removeObserver(this);
+    WidgetsBinding.instance!.removeObserver(this);
     super.dispose();
   }
 
@@ -282,21 +283,26 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+      systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       statusBarColor: Colors.transparent, // status bar color
     ));
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle(systemNavigationBarColor: Theme.of(context).backgroundColor),
+      value: SystemUiOverlayStyle(
+        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarColor: Colors.transparent, // status bar color
+      ),
       child: Scaffold(
         backgroundColor: Colors.black,
         // The stream builder connects to the [SocketManager] to check if the app has finished the setup or not
         body: StreamBuilder(
           stream: SocketManager().finishedSetup.stream,
-          builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
+          builder: (BuildContext context, AsyncSnapshot<bool?> snapshot) {
             if (snapshot.hasData) {
               // If the app has already gone through setup, show the convo list
               // Otherwise show the setup
-              if (snapshot.data) {
+              if (snapshot.data!) {
                 SystemChrome.setPreferredOrientations([
                   DeviceOrientation.landscapeRight,
                   DeviceOrientation.landscapeLeft,

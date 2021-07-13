@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -10,6 +11,15 @@ import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
+
+class NotificationVisibility {
+  // ignore: non_constant_identifier_names
+  static const SECRET = -1;
+  // ignore: non_constant_identifier_names
+  static const PRIVATE = 0;
+  // ignore: non_constant_identifier_names
+  static const PUBLIC = 1;
+}
 
 /// [NotificationManager] holds data relating to the current chat, and manages things such as
 class NotificationManager {
@@ -28,8 +38,8 @@ class NotificationManager {
   List<String> processedItems = <String>[];
 
   /// [defaultAvatar] is the avatar that is used if there is no contact icon
-  Uint8List defaultAvatar;
-  Uint8List defaultMultiUserAvatar;
+  Uint8List? defaultAvatar;
+  Uint8List? defaultMultiUserAvatar;
 
   /// Checks if a [guid] has been marked as processed
   bool hasProcessed(String guid) {
@@ -51,36 +61,31 @@ class NotificationManager {
   /// Sets the currently active [chat]. As a result,
   /// the chat will be marked as read, and the notifications
   /// for the chat will be cleared
-  Future<void> switchChat(Chat chat) async {
+  Future<void> switchChat(Chat? chat) async {
     if (chat == null) {
       // CurrentChat.getCurrentChat(chat)?.dispose();
       return;
     }
 
     CurrentChat.getCurrentChat(chat)?.isAlive = true;
-    await chat.setUnreadStatus(false);
+    await chat.toggleHasUnread(false);
 
     if (SettingsManager().settings.enablePrivateAPI) {
       if (SettingsManager().settings.privateMarkChatAsRead) {
-        SocketManager()
-            .sendMessage("mark-chat-read", {"chatGuid": chat.guid}, (data) {});
+        SocketManager().sendMessage("mark-chat-read", {"chatGuid": chat.guid}, (data) {});
       }
 
-      if (!MethodChannelInterface().headless &&
-          SettingsManager().settings.sendTypingIndicators) {
-        SocketManager().sendMessage(
-            "update-typing-status", {"chatGuid": chat.guid}, (data) {});
+      if (!MethodChannelInterface().headless && SettingsManager().settings.sendTypingIndicators) {
+        SocketManager().sendMessage("update-typing-status", {"chatGuid": chat.guid}, (data) {});
       }
     }
-
-    MethodChannelInterface()
-        .invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
+    ChatBloc().updateUnreads();
+    MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
   }
 
   /// Creates notification channel for android
   /// This is done through native code and all of this data is hard coded for now
-  Future<void> createNotificationChannel(
-      String channelID, String channelName, String channelDescription) async {
+  Future<void> createNotificationChannel(String channelID, String channelName, String channelDescription) async {
     await MethodChannelInterface().invokeMethod("create-notif-channel", {
       "channel_name": channelName,
       "channel_description": channelDescription,
@@ -113,22 +118,23 @@ class NotificationManager {
   /// @param [contact] optional parameter of the contact of the message
   void createNewNotification(
       String contentTitle,
-      String contentText,
-      String group,
+      String? contentText,
+      String? group,
       Chat chat,
       int id,
-      int summaryId,
+      int? summaryId,
       int timeStamp,
-      String senderName,
+      String? senderName,
       bool groupConversation,
-      Handle handle,
-      Contact contact) async {
-    Uint8List contactIcon;
+      Handle? handle,
+      Contact? contact,
+      int visibility) async {
+    Uint8List? contactIcon;
 
     try {
       // If there is a contact specified, we can use it's avatar
       if (contact != null) {
-        if (contact.avatar.length > 0) contactIcon = contact.avatar;
+        if (contact.avatar!.length > 0) contactIcon = contact.avatar;
         // Otherwise if there isn't, we use the [defaultAvatar]
       } else {
         // If [defaultAvatar] is not loaded, load it from assets
@@ -157,14 +163,13 @@ class NotificationManager {
       "name": senderName,
       "groupConversation": groupConversation,
       "contactIcon": contactIcon,
+      "visibility": visibility
     });
   }
 
   /// Creates a notification for when the socket is disconnected
   void createSocketWarningNotification() {
-    MethodChannelInterface()
-        .platform
-        .invokeMethod("create-socket-issue-warning", {
+    MethodChannelInterface().platform.invokeMethod("create-socket-issue-warning", {
       "CHANNEL_ID": SOCKET_ERROR_CHANNEL,
     });
   }

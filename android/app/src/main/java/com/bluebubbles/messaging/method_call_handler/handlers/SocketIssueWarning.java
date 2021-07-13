@@ -37,7 +37,7 @@ public class SocketIssueWarning implements Handler {
                 new Intent(context, MainActivity.class).setType(TYPE),
                 Intent.FILL_IN_ACTION);
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, call.argument("CHANNEL_ID"))
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, (String) call.argument("CHANNEL_ID"))
                 .setSmallIcon(R.mipmap.ic_stat_icon)
                 .setContentTitle("Could not connect")
                 .setContentText("Your server may be offline")

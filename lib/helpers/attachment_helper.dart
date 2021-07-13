@@ -2,6 +2,8 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/simple_vcard_parser.dart';
+import 'package:contacts_service/contacts_service.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -9,16 +11,19 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:connectivity/connectivity.dart';
-import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:image_size_getter/image_size_getter.dart' as IMG;
 import 'package:permission_handler/permission_handler.dart';
-import 'package:vcard_parser/vcard_parser.dart';
+
+class AppleLocation {
+  double? longitude;
+  double? latitude;
+  AppleLocation({required this.latitude, required this.longitude});
+}
 
 class AttachmentHelper {
-  static String createAppleLocation(double longitude, double latitude, {iosVersion = "13.4.1"}) {
+  static String createAppleLocation(double? longitude, double? latitude, {iosVersion = "13.4.1"}) {
     List<String> lines = [
       "BEGIN:VCARD",
       "VERSION:3.0",
@@ -34,21 +39,20 @@ class AttachmentHelper {
     return lines.join("\n");
   }
 
-  static Map<String, double> parseAppleLocation(String appleLocation) {
+  static AppleLocation parseAppleLocation(String appleLocation) {
     List<String> lines = appleLocation.split("\n");
-    var emptyLocation = {'longitude': null, 'latitude': null};
 
     try {
-      String url;
+      String? url;
       for (var i in lines) {
         if (i.contains("URL:") || i.contains("URL;")) {
           url = i;
         }
       }
 
-      if (url == null) return emptyLocation;
+      if (url == null) return AppleLocation(latitude: null, longitude: null);
 
-      String query;
+      String? query;
       List<String> opts = ["&q=", "&ll="];
       for (var i in opts) {
         if (url.contains(i)) {
@@ -59,76 +63,84 @@ class AttachmentHelper {
         }
       }
 
-      if (query == null) return emptyLocation;
+      if (query == null) return AppleLocation(latitude: null, longitude: null);
       if (query.contains("&")) {
         query = query.split("&").first;
       }
 
       if (query.contains("\\")) {
-        return {
-          "longitude": double.tryParse((query.split("\\,")[0])),
-          "latitude": double.tryParse(query.split("\\,")[1])
-        };
+        return AppleLocation(
+            latitude: double.tryParse(query.split("\\,")[1]),
+            longitude: double.tryParse(query.split("\\,")[0])
+        );
       } else {
-        return {"longitude": double.tryParse((query.split(",")[0])), "latitude": double.tryParse(query.split(",")[1])};
+        return AppleLocation(
+            latitude: double.tryParse(query.split(",")[1]),
+            longitude: double.tryParse(query.split(",")[0])
+        );
       }
     } catch (ex) {
-      debugPrint("Faled to parse location!");
+      debugPrint("Failed to parse location!");
       debugPrint(ex.toString());
-      return emptyLocation;
+      return AppleLocation(latitude: null, longitude: null);
     }
   }
 
   static Contact parseAppleContact(String appleContact) {
-    Map<String, dynamic> _contact = VcardParser(appleContact).parse();
-    debugPrint(_contact.toString());
+    VCard _contact = VCard(appleContact);
+    _contact.printLines();
 
     Contact contact = Contact();
-    if (_contact.containsKey("N") && _contact["N"].toString().isNotEmpty) {
-      String firstName = (_contact["N"] + " ").split(";")[1];
-      String lastName = _contact["N"].split(";")[0];
-      contact.displayName = firstName + " " + lastName;
-    } else if (_contact.containsKey("FN")) {
-      contact.displayName = _contact["FN"];
-    }
+    contact.displayName = _contact.formattedName;
 
     List<Item> emails = <Item>[];
     List<Item> phones = <Item>[];
-    _contact.keys.forEach((String key) {
-      if (key.contains("EMAIL")) {
-        String label = 'HOME';
+    List<PostalAddress> addresses = <PostalAddress>[];
 
-        // Try to parse out the type of email
-        if (key.contains('type=')) {
-          List<String> splitData = key.split('type=');
-          if (splitData.length >= 2) {
-            label = splitData[2].replaceAll(';', '');
-          }
-        }
-
-        emails.add(
-          Item(
-            value: (_contact[key] as Map<String, dynamic>)["value"],
-            label: label,
-          ),
-        );
-      } else if (key.contains("TEL")) {
-        phones.add(
-          Item(
-            label: "HOME",
-            value: (_contact[key] as Map<String, dynamic>)["value"],
-          ),
-        );
+    // Parse emails from results
+    for (dynamic email in _contact.typedEmail) {
+      String label = "HOME";
+      if (email.length > 1 && email[1].length > 0 && email[1][1] != null) {
+        label = email[1][1] ?? label;
       }
-    });
-    contact.emails = emails;
+
+      emails.add(new Item(value: email[0], label: label));
+    }
+
+    // Parse phone numbers from results
+    for (dynamic phone in _contact.typedTelephone) {
+      String label = "HOME";
+      if (phone.length > 1 && phone[1].length > 0 && phone[1][1] != null) {
+        label = phone[1][1] ?? label;
+      }
+
+      phones.add(new Item(value: phone[0], label: label));
+    }
+
+    // Parse addresses numbers from results
+    for (dynamic address in _contact.typedAddress) {
+      String street = address[0].length > 0 ? address[0][0] : '';
+      String city = address[0].length > 1 ? address[0][1] : '';
+      String state = address[0].length > 2 ? address[0][2] : '';
+      String country = address[0].length > 3 ? address[0][3] : '';
+
+      String label = "HOME";
+      if (address.length > 1 && address[1].length > 0 && address[1][1] != null) {
+        label = address[1][1] ?? label;
+      }
+
+      addresses.add(new PostalAddress(label: label, street: street, city: city, region: state, country: country));
+    }
+
     contact.phones = phones;
+    contact.postalAddresses = addresses;
+    contact.emails = emails;
 
     return contact;
   }
 
   static String getPreviewPath(Attachment attachment) {
-    String fileName = attachment.transferName;
+    String fileName = attachment.transferName ?? randomString(8);
     String appDocPath = SettingsManager().appDocDir.path;
     String pathName = AttachmentHelper.getAttachmentPath(attachment);
 
@@ -152,47 +164,17 @@ class AttachmentHelper {
     double width = attachment.width?.toDouble() ?? 0.0;
     double factor = attachment.height?.toDouble() ?? 0.0;
     if (attachment.width == null || attachment.width == 0 || attachment.height == null || attachment.height == 0) {
-      width = Get.mediaQuery.size.width;
+      width = context.width;
       factor = 2;
     }
 
     return (width / factor) / width;
   }
 
-  static Future<void> saveToGallery(BuildContext context, File file) async {
+  static Future<void> saveToGallery(BuildContext context, File? file) async {
     if (await Permission.storage.request().isGranted) {
-      await ImageGallerySaver.saveFile(file.absolute.path);
-      FlutterToast(context).showToast(
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(25.0),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(25.0),
-                color: Theme.of(context).accentColor.withOpacity(0.1),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.check,
-                    color: Theme.of(context).textTheme.bodyText1.color,
-                  ),
-                  SizedBox(
-                    width: 12.0,
-                  ),
-                  Text(
-                    "Saved to gallery",
-                    style: Theme.of(context).textTheme.bodyText1,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
+      await ImageGallerySaver.saveFile(file!.absolute.path);
+      showSnackbar('Success', 'Saved to gallery!');
     }
   }
 
@@ -202,7 +184,7 @@ class AttachmentHelper {
   }
 
   static String getAttachmentPath(Attachment attachment) {
-    String fileName = attachment.transferName;
+    String fileName = attachment.transferName ?? randomString(8);
     return "${getBaseAttachmentsPath()}/${attachment.guid}/$fileName";
   }
 
@@ -212,7 +194,7 @@ class AttachmentHelper {
     return !(FileSystemEntity.typeSync(pathName) == FileSystemEntityType.notFound);
   }
 
-  static dynamic getContent(Attachment attachment, {String path}) {
+  static dynamic getContent(Attachment attachment, {String? path}) {
     String appDocPath = SettingsManager().appDocDir.path;
     String pathName = path ?? "$appDocPath/attachments/${attachment.guid}/${attachment.transferName}";
 
@@ -220,7 +202,7 @@ class AttachmentHelper {
       return SocketManager().attachmentDownloaders[attachment.guid];
     } else if (FileSystemEntity.typeSync(pathName) != FileSystemEntityType.notFound) {
       return File(pathName);
-    } else if (attachment.mimeType == null || attachment.mimeType.startsWith("text/")) {
+    } else if (attachment.mimeType == null || attachment.mimeType!.startsWith("text/")) {
       return AttachmentDownloader(attachment);
     } else {
       return attachment;
@@ -228,7 +210,7 @@ class AttachmentHelper {
   }
 
   static IconData getIcon(String mimeType) {
-    if (mimeType == null) return Icons.open_in_new;
+    if (mimeType.isEmpty) return Icons.open_in_new;
     if (mimeType == "application/pdf") {
       return Icons.picture_as_pdf;
     } else if (mimeType == "application/zip") {
@@ -256,30 +238,30 @@ class AttachmentHelper {
             (SettingsManager().settings.onlyWifiDownload && status == ConnectivityResult.wifi)));
   }
 
-  static Future<void> setDimensions(Attachment attachment, {Uint8List data}) async {
+  static Future<void> setDimensions(Attachment attachment, {Uint8List? data}) async {
     // Handle break cases
     if (attachment.width != null && attachment.height != null && attachment.height != 0 && attachment.width != 0)
       return;
     if (attachment.mimeType == null) return;
 
     // Make sure the attachment is an image or video
-    String mimeStart = attachment.mimeType.split("/").first;
+    String mimeStart = attachment.mimeType!.split("/").first;
     if (!["image", "video"].contains(mimeStart)) return;
 
-    Uint8List previewData = data;
+    Uint8List? previewData = data;
     if (data == null) {
       previewData = new File(AttachmentHelper.getAttachmentPath(attachment)).readAsBytesSync();
     }
 
     if (attachment.mimeType == "image/gif") {
-      Size size = getGifDimensions(previewData);
+      Size size = getGifDimensions(previewData!);
 
       if (size.width != 0 && size.height != 0) {
         attachment.width = size.width.toInt();
         attachment.height = size.height.toInt();
       }
     } else if (mimeStart == "image") {
-      IMG.Size size = IMG.ImageSizeGetter.getSize(IMG.MemoryInput(previewData));
+      IMG.Size size = IMG.ImageSizeGetter.getSize(IMG.MemoryInput(previewData!));
       if (size.width != 0 && size.height != 0) {
         attachment.width = size.width;
         attachment.height = size.height;
@@ -293,7 +275,7 @@ class AttachmentHelper {
     }
   }
 
-  static Future<void> redownloadAttachment(Attachment attachment, {Function() onComplete, Function() onError}) async {
+  static Future<void> redownloadAttachment(Attachment attachment, {Function()? onComplete, Function()? onError}) async {
     // 1. Delete the old file
     File file = new File(attachment.getPath());
     if (!file.existsSync()) return;

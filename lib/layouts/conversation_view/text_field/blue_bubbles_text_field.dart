@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 import 'dart:ui';
 
-import 'package:get/get.dart';
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -16,6 +16,7 @@ import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:camera/camera.dart';
 import 'package:contacts_service/contacts_service.dart';
@@ -28,24 +29,25 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:record/record.dart';
 
+enum CameraState { INACTIVE, STARTING, ACTIVE, DISPOSING }
+
 class BlueBubblesTextField extends StatefulWidget {
-  final List<File> existingAttachments;
-  final String existingText;
-  final bool isCreator;
+  final List<File>? existingAttachments;
+  final String? existingText;
+  final bool? isCreator;
   final bool wasCreator;
   final Future<bool> Function(List<File> attachments, String text) onSend;
 
   BlueBubblesTextField({
-    Key key,
+    Key? key,
     this.existingAttachments,
     this.existingText,
-    @required this.isCreator,
-    @required this.wasCreator,
-    @required this.onSend,
+    required this.isCreator,
+    required this.wasCreator,
+    required this.onSend,
   }) : super(key: key);
 
-  static BlueBubblesTextFieldState of(BuildContext context) {
-    assert(context != null);
+  static BlueBubblesTextFieldState? of(BuildContext context) {
     return context.findAncestorStateOfType<BlueBubblesTextFieldState>();
   }
 
@@ -54,28 +56,31 @@ class BlueBubblesTextField extends StatefulWidget {
 }
 
 class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerProviderStateMixin {
-  TextEditingController controller;
-  FocusNode focusNode;
+  TextEditingController? controller;
+  FocusNode? focusNode;
   bool showImagePicker = false;
   List<File> pickedImages = <File>[];
   bool isRecording = false;
-  TextFieldData textFieldData;
+  TextFieldData? textFieldData;
   StreamController _streamController = new StreamController.broadcast();
-  CurrentChat safeChat;
+  CurrentChat? safeChat;
+
+  // Camera Vars
+  CameraState cameraState = CameraState.INACTIVE;
+  CameraController? cameraController;
+  int cameraIndex = 0;
+  List<CameraDescription> cameras = [];
 
   bool selfTyping = false;
-  CameraController cameraController;
-  int cameraIndex = 0;
-  List<CameraDescription> cameras;
-  int sendCountdown;
-  bool stopSending;
+  int? sendCountdown;
+  bool? stopSending;
   String placeholder = "BlueBubbles";
 
   // bool selfTyping = false;
 
   Stream get stream => _streamController.stream;
 
-  bool get canRecord => controller.text.isEmpty && pickedImages.isEmpty;
+  bool get canRecord => controller!.text.isEmpty && pickedImages.isEmpty;
 
   final GlobalKey<FormFieldState<String>> _searchFormKey = GlobalKey<FormFieldState<String>>();
 
@@ -85,60 +90,60 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     getPlaceholder();
 
     if (CurrentChat.of(context)?.chat != null) {
-      textFieldData = TextFieldBloc().getTextField(CurrentChat.of(context).chat.guid);
+      textFieldData = TextFieldBloc().getTextField(CurrentChat.of(context)!.chat.guid!);
     }
 
-    controller = textFieldData != null ? textFieldData.controller : new TextEditingController();
+    controller = textFieldData != null ? textFieldData!.controller : new TextEditingController();
 
     // Add the text listener to detect when we should send the typing indicators
-    controller.addListener(() {
-      if (CurrentChat.of(context)?.chat == null) return;
+    controller!.addListener(() {
+      if (!mounted || CurrentChat.of(context)?.chat == null) return;
 
       // If the private API features are disabled, or sending the indicators is disabled, return
       if (!SettingsManager().settings.enablePrivateAPI || !SettingsManager().settings.sendTypingIndicators) {
-        if (this.mounted) setState(() {});
+        if (mounted) setState(() {});
         return;
       }
 
-      if (controller.text.length == 0 && pickedImages.length == 0 && selfTyping) {
+      if (controller!.text.length == 0 && pickedImages.length == 0 && selfTyping) {
         selfTyping = false;
-        SocketManager().sendMessage("stopped-typing", {"chatGuid": CurrentChat.of(context).chat.guid}, (data) {});
-      } else if (!selfTyping && (controller.text.length > 0 || pickedImages.length > 0)) {
+        SocketManager().sendMessage("stopped-typing", {"chatGuid": CurrentChat.of(context)!.chat.guid}, (data) {});
+      } else if (!selfTyping && (controller!.text.length > 0 || pickedImages.length > 0)) {
         selfTyping = true;
         if (SettingsManager().settings.sendTypingIndicators)
-          SocketManager().sendMessage("started-typing", {"chatGuid": CurrentChat.of(context).chat.guid}, (data) {});
+          SocketManager().sendMessage("started-typing", {"chatGuid": CurrentChat.of(context)!.chat.guid}, (data) {});
       }
 
-      if (this.mounted) setState(() {});
+      if (mounted) setState(() {});
     });
 
     // Create the focus node and then add a an event emitter whenever
     // the focus changes
     focusNode = new FocusNode();
-    focusNode.addListener(() {
-      if (focusNode.hasFocus && this.mounted) {
+    focusNode!.addListener(() {
+      if (focusNode!.hasFocus && this.mounted) {
         showImagePicker = false;
         setState(() {});
       }
 
-      EventDispatcher().emit("keyboard-status", focusNode.hasFocus);
+      EventDispatcher().emit("keyboard-status", focusNode!.hasFocus);
     });
 
     EventDispatcher().stream.listen((event) {
       if (!event.containsKey("type")) return;
-      if (event["type"] == "unfocus-keyboard" && focusNode.hasFocus) {
-        focusNode.unfocus();
-      } else if (event["type"] == "focus-keyboard" && !focusNode.hasFocus) {
-        focusNode.requestFocus();
+      if (event["type"] == "unfocus-keyboard" && focusNode!.hasFocus) {
+        focusNode!.unfocus();
+      } else if (event["type"] == "focus-keyboard" && !focusNode!.hasFocus) {
+        focusNode!.requestFocus();
       }
     });
 
     if (widget.existingText != null) {
-      controller.text = widget.existingText;
+      controller!.text = widget.existingText!;
     }
 
     if (widget.existingAttachments != null) {
-      this.addAttachments(widget.existingAttachments);
+      this.addAttachments(widget.existingAttachments!);
       updateTextFieldAttachments();
     }
 
@@ -155,7 +160,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
   void updateTextFieldAttachments() {
     if (textFieldData != null) {
-      textFieldData.attachments = pickedImages.where((element) => mime(element.path) != null).toList();
+      textFieldData!.attachments = pickedImages.where((element) => mime(element.path) != null).toList();
       _streamController.sink.add(null);
     }
   }
@@ -168,10 +173,11 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
   @override
   void dispose() {
-    focusNode.dispose();
+    focusNode!.dispose();
     _streamController.close();
-    cameraController?.dispose();
-    if (safeChat?.chat == null) controller.dispose();
+    this.disposeCameras();
+
+    if (safeChat?.chat == null) controller!.dispose();
 
     String dir = SettingsManager().appDocDir.path;
     Directory tempAssets = Directory("$dir/tempAssets");
@@ -184,24 +190,27 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     super.dispose();
   }
 
-  void onContentCommit(Map<String, Object> content) async {
+  void onContentCommit(CommittedContent content) async {
     // Add some debugging logs
     debugPrint("[Content Commit] Keyboard received content");
-    debugPrint("  -> Content Type: ${content['mimeType']}");
-    debugPrint("  -> URI: ${content['uri']}");
-    debugPrint("  -> Content Length: ${content['data'] != null ? (content['data'] as List<dynamic>).length : "null"}");
+    debugPrint("  -> Content Type: ${content.mimeType}");
+    debugPrint("  -> URI: ${content.uri}");
+    debugPrint("  -> Content Length: ${content.hasData ? content.data!.length : "null"}");
 
     // Parse the filename from the URI and read the data as a List<int>
-    String filename = uriToFilename(content['uri'], content['mimeType']);
-    List<int> data = (content['data'] as List)?.map((e) => e as int)?.toList();
+    String filename = uriToFilename(content.uri, content.mimeType);
 
     // Save the data to a location and add it to the file picker
-    File file = await _saveData(data, filename);
-    this.addAttachments([file]);
+    if (content.hasData) {
+      File file = await _saveData(content.data!, filename);
+      this.addAttachments([file]);
 
-    // Update the state
-    updateTextFieldAttachments();
-    if (this.mounted) setState(() {});
+      // Update the state
+      updateTextFieldAttachments();
+      if (this.mounted) setState(() {});
+    } else {
+      showSnackbar('Insertion Failed', 'Attachment has no data!');
+    }
   }
 
   Future<void> reviewAudio(BuildContext originalContext, File file) async {
@@ -224,11 +233,11 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             ],
           ),
           actions: <Widget>[
-            new FlatButton(
+            new TextButton(
                 child: new Text("Discard", style: Theme.of(context).textTheme.subtitle1),
                 onPressed: () {
                   // Dispose of the audio controller
-                  CurrentChat.of(originalContext)?.audioPlayers?.removeWhere((key, _) => key == file.path);
+                  CurrentChat.of(originalContext)?.audioPlayers.removeWhere((key, _) => key == file.path);
 
                   // Delete the file
                   file.delete();
@@ -236,7 +245,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   // Remove the OG alert dialog
                   Navigator.of(originalContext).pop();
                 }),
-            new FlatButton(
+            new TextButton(
               child: new Text(
                 "Send",
                 style: Theme.of(context).textTheme.bodyText1,
@@ -245,7 +254,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 widget.onSend([file], "");
 
                 // Dispose of the audio controller
-                CurrentChat.of(originalContext)?.audioPlayers?.removeWhere((key, _) => key == file.path);
+                CurrentChat.of(originalContext)?.audioPlayers.removeWhere((key, _) => key == file.path);
 
                 // Remove the OG alert dialog
                 Navigator.of(originalContext).pop();
@@ -258,23 +267,48 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   }
 
   Future<void> initializeCameraController() async {
-    // If we are already initialized, don't do anything
-    bool alreadyInit = cameraController?.value?.isInitialized ?? false;
-    if (alreadyInit) {
-      await cameraController.dispose();
+    // If the state is active, we need to close it
+    if (cameraState == CameraState.ACTIVE) {
+      await this.disposeCameras();
     }
 
-    // Enumerate the cameras
-    cameras = await availableCameras();
+    debugPrint("[Camera Preview] -> Initializing camera preview");
 
+    // Enumerate the cameras (if we don't have them)
+    // We only need to do this once... it's not like it's gonna change very often
+    if (cameras.length == 0) {
+      cameras = await availableCameras();
+    }
+
+    if (cameras.length == 0) {
+      debugPrint("[Camera Preview] -> No available cameras!");
+      return;
+    }
+
+    // Update the camera state
+    cameraState = CameraState.STARTING;
+
+    // Re-initialize the camera controller
     // Disable audio so that background music doesn't stop playing
     cameraController = CameraController(cameras[cameraIndex], ResolutionPreset.max, enableAudio: false);
 
-    // Initialize the camera, then update the state
-    if (!cameraController.value.isInitialized) {
-      await cameraController.initialize();
+    // Initialize the camera (if not done already), then update the state
+    if (!cameraController!.value.isInitialized) {
+      await cameraController?.initialize();
     }
+
+    cameraState = CameraState.ACTIVE;
     if (this.mounted) setState(() {});
+    debugPrint("[Camera Preview] -> Finished initializing camera preview");
+  }
+
+  Future<void> disposeCameras() async {
+    debugPrint("[Camera Preview] -> Disposing camera preview");
+    cameraState = CameraState.DISPOSING;
+    await cameraController?.dispose();
+    cameraController = null;
+    cameraState = CameraState.INACTIVE;
+    debugPrint("[Camera Preview] -> Finished disposing camera preview");
   }
 
   Future<void> toggleShareMenu() async {
@@ -285,26 +319,17 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       if (this.mounted) setState(() {});
       return;
     }
+
+    // If we are closing, dispose the camera
+    if (showImagePicker) {
+      this.disposeCameras();
+    }
+
     showImagePicker = !showImagePicker;
     if (this.mounted) setState(() {});
   }
 
-  Future<File> _downloadFile(String url, String filename) async {
-    HttpClient httpClient = HttpClient();
-    var request = await httpClient.getUrl(Uri.parse(url));
-    var response = await request.close();
-    var bytes = await consolidateHttpClientResponseBytes(response);
-    String dir = SettingsManager().appDocDir.path;
-    Directory tempAssets = Directory("$dir/tempAssets");
-    if (!await tempAssets.exists()) {
-      await tempAssets.create();
-    }
-    File file = new File('$dir/tempAssets/$filename');
-    await file.writeAsBytes(bytes);
-    return file;
-  }
-
-  Future<File> _saveData(List<int> data, String filename) async {
+  Future<File> _saveData(Uint8List data, String filename) async {
     String dir = SettingsManager().appDocDir.path;
     Directory tempAssets = Directory("$dir/tempAssets");
     if (!await tempAssets.exists()) {
@@ -337,7 +362,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           children: [
             Expanded(
               child: Container(
-                padding: EdgeInsets.all(5),
+                padding: EdgeInsets.only(left: 5, top: 5, bottom: 5, right: 8),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
@@ -371,14 +396,14 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       children: <Widget>[
         buildShareButton(),
         buildActualTextField(),
-        if (SettingsManager().settings.skin == Skins.Material || SettingsManager().settings.skin == Skins.Samsung)
+        if (SettingsManager().settings.skin.value == Skins.Material || SettingsManager().settings.skin.value == Skins.Samsung)
           buildSendButton(canRecord),
       ],
     );
   }
 
   Widget buildShareButton() {
-    double size = SettingsManager().settings.skin == Skins.iOS ? 35 : 40;
+    double size = SettingsManager().settings.skin.value == Skins.iOS ? 35 : 40;
     return Container(
       height: size,
       width: size,
@@ -414,28 +439,28 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             SettingsManager().settings.redactedMode && SettingsManager().settings.generateFakeContactNames;
 
         // If it's a group chat, get the title of the chat
-        if (CurrentChat.of(context)?.chat?.isGroup() ?? false) {
+        if (CurrentChat.of(context)?.chat.isGroup() ?? false) {
           if (generateNames) {
             placeholder = "Group Chat";
           } else if (hideInfo) {
             placeholder = "BlueBubbles";
           } else {
-            String title = await CurrentChat.of(context)?.chat?.getTitle();
-            if (!isNullOrEmpty(title)) {
-              placeholder = title;
+            String? title = await CurrentChat.of(context)?.chat.getTitle();
+            if (!isNullOrEmpty(title)!) {
+              placeholder = title!;
             }
           }
-        } else if (!isNullOrEmpty(CurrentChat.of(context)?.chat?.participants)) {
+        } else if (!isNullOrEmpty(CurrentChat.of(context)?.chat.participants)!) {
           if (generateNames) {
-            placeholder = CurrentChat.of(context).chat.fakeParticipants[0];
+            placeholder = CurrentChat.of(context)!.chat.fakeParticipants[0] ?? "BlueBubbles";
           } else if (hideInfo) {
             placeholder = "BlueBubbles";
           } else {
             // If it's not a group chat, get the participant's contact info
-            String address = CurrentChat.of(context)?.chat?.participants[0].address;
-            Contact contact = ContactManager().getCachedContactSync(address);
+            Handle? handle = CurrentChat.of(context)?.chat.participants[0];
+            Contact? contact = ContactManager().getCachedContactSync(handle?.address ?? "");
             if (contact == null) {
-              placeholder = await formatPhoneNumber(address);
+              placeholder = await formatPhoneNumber(handle);
             } else {
               placeholder = contact.displayName ?? "BlueBubbles";
             }
@@ -493,18 +518,18 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     }
                   },
                   onSubmitted: (String value) async {
-                    if (!SettingsManager().settings.sendWithReturn || isNullOrEmpty(value)) return;
+                    if (!SettingsManager().settings.sendWithReturn || isNullOrEmpty(value)!) return;
 
                     // If send delay is enabled, delay the sending
                     if (!isNullOrZero(SettingsManager().settings.sendDelay)) {
                       // Break the delay into 1 second intervals
-                      for (var i = 0; i < SettingsManager().settings.sendDelay; i++) {
+                      for (var i = 0; i < SettingsManager().settings.sendDelay!; i++) {
                         if (i != 0 && sendCountdown == null) break;
 
                         // Update UI with new state information
                         if (this.mounted) {
                           setState(() {
-                            sendCountdown = SettingsManager().settings.sendDelay - i;
+                            sendCountdown = SettingsManager().settings.sendDelay! - i;
                           });
                         }
 
@@ -518,26 +543,26 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       });
                     }
 
-                    if (stopSending != null && stopSending) {
+                    if (stopSending != null && stopSending!) {
                       stopSending = null;
                       return;
                     }
 
                     if (await widget.onSend(pickedImages, value)) {
-                      controller.text = "";
+                      controller!.text = "";
                       pickedImages = <File>[];
                       updateTextFieldAttachments();
                     }
 
                     if (this.mounted) setState(() {});
                   },
-                  onContentCommited: onContentCommit,
+                  onContentCommitted: onContentCommit,
                   textCapitalization: TextCapitalization.sentences,
                   focusNode: focusNode,
                   autocorrect: true,
                   controller: controller,
                   scrollPhysics: CustomBouncingScrollPhysics(),
-                  style: Theme.of(context).textTheme.bodyText1.apply(
+                  style: Theme.of(context).textTheme.bodyText1!.apply(
                         color:
                             ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.light
                                 ? Colors.black
@@ -568,14 +593,14 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   autofocus: SettingsManager().settings.autoOpenKeyboard,
                   cursorColor: Theme.of(context).primaryColor,
                   key: _searchFormKey,
-                  style: Theme.of(context).textTheme.bodyText1.apply(
+                  style: Theme.of(context).textTheme.bodyText1!.apply(
                         color:
                             ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.light
                                 ? Colors.black
                                 : Colors.white,
                         fontSizeDelta: -0.25,
                       ),
-                  onContentCommited: onContentCommit,
+                  onContentCommitted: onContentCommit,
                   decoration: InputDecoration(
                     isDense: true,
                     enabledBorder: OutlineInputBorder(
@@ -623,14 +648,14 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   autofocus: SettingsManager().settings.autoOpenKeyboard,
                   cursorColor: Theme.of(context).primaryColor,
                   key: _searchFormKey,
-                  style: Theme.of(context).textTheme.bodyText1.apply(
+                  style: Theme.of(context).textTheme.bodyText1!.apply(
                         color:
                             ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.light
                                 ? Colors.black
                                 : Colors.white,
                         fontSizeDelta: -0.25,
                       ),
-                  onContentCommited: onContentCommit,
+                  onContentCommitted: onContentCommit,
                   decoration: InputDecoration(
                     isDense: true,
                     enabledBorder: OutlineInputBorder(
@@ -669,7 +694,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 ),
               ),
             ),
-            if (SettingsManager().settings.skin == Skins.iOS) buildSendButton(canRecord),
+            if (SettingsManager().settings.skin.value == Skins.iOS) buildSendButton(canRecord),
           ],
         ),
       ),
@@ -688,7 +713,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     if (file.existsSync()) file.deleteSync();
 
     if (!isRecording) {
-      await Record.start(
+      await Record().start(
         path: pathName, // required
         encoder: AudioEncoder.AAC, // by default
         bitRate: 196000, // by default
@@ -707,7 +732,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     HapticFeedback.lightImpact();
 
     if (isRecording) {
-      await Record.stop();
+      await Record().stop();
 
       if (this.mounted) {
         setState(() {
@@ -734,13 +759,13 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       // If send delay is enabled, delay the sending
       if (!isNullOrZero(SettingsManager().settings.sendDelay)) {
         // Break the delay into 1 second intervals
-        for (var i = 0; i < SettingsManager().settings.sendDelay; i++) {
+        for (var i = 0; i < SettingsManager().settings.sendDelay!; i++) {
           if (i != 0 && sendCountdown == null) break;
 
           // Update UI with new state information
           if (this.mounted) {
             setState(() {
-              sendCountdown = SettingsManager().settings.sendDelay - i;
+              sendCountdown = SettingsManager().settings.sendDelay! - i;
             });
           }
 
@@ -754,13 +779,13 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         });
       }
 
-      if (stopSending != null && stopSending) {
+      if (stopSending != null && stopSending!) {
         stopSending = null;
         return;
       }
 
-      if (await widget.onSend(pickedImages, controller.text)) {
-        controller.text = "";
+      if (await widget.onSend(pickedImages, controller!.text)) {
+        controller!.text = "";
         pickedImages = <File>[];
         updateTextFieldAttachments();
       }
@@ -773,53 +798,59 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         alignment: Alignment.bottomRight,
         child: Row(mainAxisAlignment: MainAxisAlignment.end, crossAxisAlignment: CrossAxisAlignment.center, children: [
           if (sendCountdown != null) Text(sendCountdown.toString()),
-          (SettingsManager().settings.skin == Skins.iOS)
-              ? ButtonTheme(
-                  minWidth: 30,
-                  height: 30,
-                  child: RaisedButton(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 0,
-                    ),
-                    color: Theme.of(context).primaryColor,
-                    onPressed: sendAction,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        AnimatedOpacity(
-                          opacity: sendCountdown == null && controller.text.isEmpty && pickedImages.isEmpty ? 1.0 : 0.0,
-                          duration: Duration(milliseconds: 150),
-                          child: Icon(
-                            Icons.mic,
-                            color: (isRecording) ? Colors.red : Colors.white,
-                            size: 20,
-                          ),
+          (SettingsManager().settings.skin.value == Skins.iOS)
+              ? Container(
+                  constraints: BoxConstraints(maxWidth: 38, maxHeight: 37),
+                  padding: EdgeInsets.only(right: 4, top: 2, bottom: 2),
+                  child: ButtonTheme(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.only(
+                          right: 0,
                         ),
-                        AnimatedOpacity(
-                          opacity: (sendCountdown == null && (controller.text.isNotEmpty || pickedImages.length > 0)) &&
-                                  !isRecording
-                              ? 1.0
-                              : 0.0,
-                          duration: Duration(milliseconds: 150),
-                          child: Icon(
-                            Icons.arrow_upward,
-                            color: Colors.white,
-                            size: 20,
-                          ),
+                        primary: Theme.of(context).primaryColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(40),
                         ),
-                        AnimatedOpacity(
-                          opacity: sendCountdown != null ? 1.0 : 0.0,
-                          duration: Duration(milliseconds: 50),
-                          child: Icon(
-                            Icons.cancel_outlined,
-                            color: Colors.red,
-                            size: 20,
+                      ),
+                      onPressed: sendAction,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          AnimatedOpacity(
+                            opacity:
+                                sendCountdown == null && controller!.text.isEmpty && pickedImages.isEmpty ? 1.0 : 0.0,
+                            duration: Duration(milliseconds: 150),
+                            child: Icon(
+                              Icons.mic,
+                              color: (isRecording) ? Colors.red : Colors.white,
+                              size: 20,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(40),
+                          AnimatedOpacity(
+                            opacity:
+                                (sendCountdown == null && (controller!.text.isNotEmpty || pickedImages.length > 0)) &&
+                                        !isRecording
+                                    ? 1.0
+                                    : 0.0,
+                            duration: Duration(milliseconds: 150),
+                            child: Icon(
+                              Icons.arrow_upward,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                          AnimatedOpacity(
+                            opacity: sendCountdown != null ? 1.0 : 0.0,
+                            duration: Duration(milliseconds: 50),
+                            child: Icon(
+                              Icons.cancel_outlined,
+                              color: Colors.red,
+                              size: 20,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 )
@@ -835,18 +866,23 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   child: ButtonTheme(
                     minWidth: 40,
                     height: 40,
-                    child: RaisedButton(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 0,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 0,
+                        ),
+                        primary: Theme.of(context).primaryColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(40),
+                        ),
                       ),
-                      color: Theme.of(context).primaryColor,
                       onPressed: sendAction,
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
                           AnimatedOpacity(
                             opacity:
-                                sendCountdown == null && controller.text.isEmpty && pickedImages.isEmpty ? 1.0 : 0.0,
+                                sendCountdown == null && controller!.text.isEmpty && pickedImages.isEmpty ? 1.0 : 0.0,
                             duration: Duration(milliseconds: 150),
                             child: Icon(
                               Icons.mic,
@@ -856,7 +892,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                           ),
                           AnimatedOpacity(
                             opacity:
-                                (sendCountdown == null && (controller.text.isNotEmpty || pickedImages.length > 0)) &&
+                                (sendCountdown == null && (controller!.text.isNotEmpty || pickedImages.length > 0)) &&
                                         !isRecording
                                     ? 1.0
                                     : 0.0,
@@ -878,9 +914,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                           ),
                         ],
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(40),
-                      ),
                     ),
                   ),
                 ),
@@ -889,7 +922,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
   Widget buildAttachmentPicker() => TextFieldAttachmentPicker(
         visible: showImagePicker,
-        onAddAttachment: (File file) {
+        onAddAttachment: (File? file) {
           if (file == null) return;
           bool exists = file.existsSync();
           if (!exists) return;

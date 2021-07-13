@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class SyncingMessages extends StatefulWidget {
-  SyncingMessages({Key key, @required this.controller}) : super(key: key);
+  SyncingMessages({Key? key, required this.controller}) : super(key: key);
   final PageController controller;
 
   @override
@@ -19,7 +19,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
   @override
   void initState() {
     super.initState();
-    StreamSubscription subscription;
+    late StreamSubscription subscription;
     subscription = SocketManager().setup.stream.listen((event) async {
       if (event.progress == -1) {
         subscription.cancel();
@@ -57,7 +57,9 @@ class _SyncingMessagesState extends State<SyncingMessages> {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).accentColor,
+        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
         backgroundColor: Theme.of(context).accentColor,
@@ -65,8 +67,8 @@ class _SyncingMessagesState extends State<SyncingMessages> {
           stream: SocketManager().setup.stream,
           builder: (BuildContext context, AsyncSnapshot<SetupData> snapshot) {
             double progress = SocketManager().setup.progress;
-            if (snapshot.hasData && snapshot.data.progress >= 0) {
-              progress = snapshot.data.progress;
+            if (snapshot.hasData && snapshot.data!.progress >= 0) {
+              progress = snapshot.data!.progress;
               return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -76,13 +78,13 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                     ),
                     Text(
                       "${progress.floor()}%",
-                      style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
+                      style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
                     ),
                     Spacer(
                       flex: 5,
                     ),
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: Get.mediaQuery.size.width / 4),
+                      padding: EdgeInsets.symmetric(horizontal: context.width / 4),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(20),
                         child: LinearProgressIndicator(
@@ -96,8 +98,8 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                       flex: 20,
                     ),
                     SizedBox(
-                      width: Get.mediaQuery.size.width * 4 / 5,
-                      height: Get.mediaQuery.size.height * 1 / 3,
+                      width: context.width * 4 / 5,
+                      height: context.height * 1 / 3,
                       child: Container(
                         decoration: BoxDecoration(
                           color: Colors.black,
@@ -107,7 +109,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                         child: ListView.builder(
                           physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                           itemBuilder: (context, index) {
-                            SetupOutputData data = snapshot.data.output.reversed.toList()[index];
+                            SetupOutputData data = snapshot.data!.output.reversed.toList()[index];
                             return Text(
                               data.text,
                               style: TextStyle(
@@ -116,7 +118,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                               ),
                             );
                           },
-                          itemCount: snapshot?.data?.output?.length ?? 0,
+                          itemCount: snapshot.data?.output.length ?? 0,
                         ),
                       ),
                     ),
@@ -129,7 +131,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
             } else {
               return Center(
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: Get.mediaQuery.size.width / 4),
+                  padding: EdgeInsets.symmetric(horizontal: context.width / 4),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[

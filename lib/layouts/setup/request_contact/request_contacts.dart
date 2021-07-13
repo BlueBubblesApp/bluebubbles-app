@@ -1,10 +1,9 @@
-import 'package:get/get.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class RequestContacts extends StatefulWidget {
-  RequestContacts({Key key, @required this.controller}) : super(key: key);
+  RequestContacts({Key? key, required this.controller}) : super(key: key);
   final PageController controller;
 
   @override
@@ -16,7 +15,9 @@ class _RequestContactsState extends State<RequestContacts> {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).accentColor,
+        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
         backgroundColor: Theme.of(context).accentColor,
@@ -27,7 +28,7 @@ class _RequestContactsState extends State<RequestContacts> {
               padding: EdgeInsets.symmetric(horizontal: 20.0),
               child: Text(
                 "BlueBubbles needs to access contacts. Tap the check to allow the permission.",
-                style: Theme.of(context).textTheme.bodyText1.apply(fontSizeFactor: 1.5),
+                style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -38,7 +39,7 @@ class _RequestContactsState extends State<RequestContacts> {
                 child: InkWell(
                   child: SizedBox(width: 60, height: 60, child: Icon(Icons.check, color: Colors.white)),
                   onTap: () async {
-                    if (!await ContactManager().getContacts()) {
+                    if (!(await ContactManager().getContacts())) {
                       bool result = await showDialog(
                         context: context,
                         builder: (context) => ContactPermissionWarningDialog(),
@@ -66,7 +67,7 @@ class _RequestContactsState extends State<RequestContacts> {
 }
 
 class ContactPermissionWarningDialog extends StatefulWidget {
-  ContactPermissionWarningDialog({Key key}) : super(key: key);
+  ContactPermissionWarningDialog({Key? key}) : super(key: key);
 
   @override
   _ContactPermissionWarningDialogState createState() => _ContactPermissionWarningDialogState();
@@ -77,19 +78,19 @@ class _ContactPermissionWarningDialogState extends State<ContactPermissionWarnin
   Widget build(BuildContext context) {
     return AlertDialog(
       actions: [
-        FlatButton(
+        TextButton(
           child: Text(
             "Accept",
-            style: Theme.of(context).textTheme.bodyText1.apply(color: Theme.of(context).primaryColor),
+            style: Theme.of(context).textTheme.bodyText1!.apply(color: Theme.of(context).primaryColor),
           ),
           onPressed: () {
             Navigator.of(context).pop(true);
           },
         ),
-        FlatButton(
+        TextButton(
           child: Text(
             "Cancel",
-            style: Theme.of(context).textTheme.bodyText1.apply(color: Theme.of(context).primaryColor),
+            style: Theme.of(context).textTheme.bodyText1!.apply(color: Theme.of(context).primaryColor),
           ),
           onPressed: () {
             Navigator.of(context).pop(false);

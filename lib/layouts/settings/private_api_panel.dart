@@ -1,7 +1,7 @@
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:get/get.dart';
-import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
@@ -13,14 +13,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class PrivateAPIPanel extends StatefulWidget {
-  PrivateAPIPanel({Key key}) : super(key: key);
+  PrivateAPIPanel({Key? key}) : super(key: key);
 
   @override
   _PrivateAPIPanelState createState() => _PrivateAPIPanelState();
 }
 
 class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
-  Settings _settingsCopy;
+  late Settings _settingsCopy;
   bool enablePrivateAPI = false;
 
   @override
@@ -74,25 +74,22 @@ class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor,
+        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarIconBrightness:
+            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
         appBar: PreferredSize(
-          preferredSize: Size(Get.mediaQuery.size.width, 80),
+          preferredSize: Size(context.width, 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
                 brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
                 toolbarHeight: 100.0,
                 elevation: 0,
-                leading: IconButton(
-                  icon: Icon(SettingsManager().settings.skin == Skins.iOS ? Icons.arrow_back_ios : Icons.arrow_back,
-                      color: Theme.of(context).primaryColor),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
+                leading: buildBackButton(context),
                 backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
                 title: Text(
                   "Private API Features",

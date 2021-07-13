@@ -20,6 +20,11 @@ class Themes {
       ];
 }
 
+bool isEqual(ThemeData one, ThemeData two) {
+  return one.accentColor == two.accentColor
+      && one.backgroundColor == two.backgroundColor;
+}
+
 ThemeData oledDarkTheme = ThemeData(
   primarySwatch: Colors.blue,
   splashFactory: InkRipple.splashFactory,
@@ -144,7 +149,7 @@ ThemeData whiteLightTheme = ThemeData(
   backgroundColor: Colors.white,
 );
 
-Future<void> loadTheme(BuildContext context, {ThemeObject lightOverride, ThemeObject darkOverride}) async {
+Future<void> loadTheme(BuildContext? context, {ThemeObject? lightOverride, ThemeObject? darkOverride}) async {
   if (context == null) return;
 
   // Set the theme to match those of the settings

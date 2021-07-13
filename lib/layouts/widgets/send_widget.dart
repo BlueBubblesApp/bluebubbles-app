@@ -28,14 +28,14 @@ class SendWidget extends StatefulWidget {
   static const Duration SEND_DURATION = Duration(milliseconds: 300);
 
   SendWidget({
-    Key key,
+    Key? key,
     this.text,
-    this.tag,
+    required this.tag,
     this.currentChat,
   }) : super(key: key);
-  final String text;
+  final String? text;
   final String tag;
-  final CurrentChat currentChat;
+  final CurrentChat? currentChat;
 
   @override
   _SendWidgetState createState() => _SendWidgetState();
@@ -47,7 +47,7 @@ class _SendWidgetState extends State<SendWidget> {
     super.initState();
 
     // We need to pop the "invisible" after the first frame renders
-    SchedulerBinding.instance.addPostFrameCallback((_) {
+    SchedulerBinding.instance!.addPostFrameCallback((_) {
       Navigator.of(context).pop();
     });
   }
@@ -66,7 +66,7 @@ class _SendWidgetState extends State<SendWidget> {
         children: [
           Container(
             constraints: BoxConstraints(
-              minWidth: Get.mediaQuery.size.width * 3 / 37,
+              minWidth: context.width * 3 / 37,
             ),
             child: SentMessageHelper.buildMessageWithTail(
               context,
@@ -80,7 +80,7 @@ class _SendWidgetState extends State<SendWidget> {
               customContent: RichText(
                 text: TextSpan(
                   text: widget.text,
-                  style: Theme.of(context).textTheme.bodyText2.apply(color: Colors.white),
+                  style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
                 ),
               ),
             ),
@@ -92,7 +92,10 @@ class _SendWidgetState extends State<SendWidget> {
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor,
+        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarIconBrightness:
+            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -145,7 +148,7 @@ class _SendWidgetState extends State<SendWidget> {
   Widget buildAnimation(flightContext, _animation, flightDirection, fromHeroContext, toHeroContext) {
     Animation<double> animation = _animation.drive(
       Tween<double>(
-        end: Get.mediaQuery.size.width * 3 / 4 + 37,
+        end: context.width * 3 / 4 + 37,
         begin: 0,
       ),
     );
@@ -173,8 +176,8 @@ class _SendWidgetState extends State<SendWidget> {
                     constraints: BoxConstraints(
                       minWidth: animation.value,
                       maxWidth: animation.value.clamp(
-                        Get.mediaQuery.size.width * MessageWidgetMixin.MAX_SIZE,
-                        Get.mediaQuery.size.width * 3 / 4 + 37,
+                        context.width * MessageWidgetMixin.MAX_SIZE,
+                        context.width * 3 / 4 + 37,
                       ),
                     ),
                     child: child,
@@ -194,7 +197,7 @@ class _SendWidgetState extends State<SendWidget> {
               customContent: RichText(
                 text: TextSpan(
                   text: widget.text,
-                  style: Theme.of(context).textTheme.bodyText2.apply(color: Colors.white),
+                  style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
                 ),
               ),
             ),
@@ -208,10 +211,9 @@ class _SendWidgetState extends State<SendWidget> {
 
 class SendPageBuilder extends PageRoute<void> {
   SendPageBuilder({
-    @required this.builder,
-    RouteSettings settings,
-  })  : assert(builder != null),
-        super(settings: settings, fullscreenDialog: false);
+    required this.builder,
+    RouteSettings? settings,
+  }) : super(settings: settings, fullscreenDialog: false);
 
   final WidgetBuilder builder;
 
@@ -219,10 +221,10 @@ class SendPageBuilder extends PageRoute<void> {
   bool get opaque => false;
 
   @override
-  Color get barrierColor => null;
+  Color? get barrierColor => null;
 
   @override
-  String get barrierLabel => null;
+  String? get barrierLabel => null;
 
   @override
   Widget buildPage(BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation) {

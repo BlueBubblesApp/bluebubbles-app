@@ -34,14 +34,14 @@ class ActionHandler {
   /// sendMessage(chatObject, 'Hello world!')
   /// ```
   static Future<void> sendMessage(Chat chat, String text,
-      {MessageBloc messageBloc, List<Attachment> attachments = const []}) async {
-    if (isNullOrEmpty(text, trimString: true)) return;
+      {MessageBloc? messageBloc, List<Attachment> attachments = const []}) async {
+    if (isNullOrEmpty(text, trimString: true)!) return;
 
     List<Message> messages = <Message>[];
 
     // Check for URLs
-    RegExpMatch linkMatch;
-    String linkMsg;
+    RegExpMatch? linkMatch;
+    late String linkMsg;
     List<RegExpMatch> matches = parseLinks(text);
 
     // Get the first match (if it exists)
@@ -54,22 +54,27 @@ class ActionHandler {
 
     // Create the main message
     Message mainMsg = Message(
-      guid: "temp-${randomString(8)}",
       text: (!shouldSplit) ? text : text.substring(0, linkMatch.start),
       dateCreated: DateTime.now(),
       hasAttachments: attachments.length > 0 ? true : false,
     );
 
-    if (mainMsg.text.trim().length > 0) messages.add(mainMsg);
+    // Generate a Temp GUID
+    mainMsg.generateTempGuid();
+
+    if (mainMsg.text!.trim().length > 0) messages.add(mainMsg);
 
     // If there is a link, build the link message
     if (shouldSplit) {
-      messages.add(Message(
-        guid: "temp-${randomString(8)}",
+      Message secondaryMessage = Message(
         text: text.substring(linkMatch.start, linkMatch.end),
         dateCreated: DateTime.now(),
         hasAttachments: false,
-      ));
+      );
+
+      // Generate a Temp GUID
+      secondaryMessage.generateTempGuid();
+      messages.add(secondaryMessage);
     }
 
     // Make sure to save the chat
@@ -103,15 +108,15 @@ class ActionHandler {
     params["tempGuid"] = message.guid;
 
     SocketManager().sendMessage("send-message", params, (response) async {
-      String tempGuid = message.guid;
+      String? tempGuid = message.guid;
 
       // If there is an error, replace the temp value with an error
       if (response['status'] != 200) {
-        message.guid = message.guid.replaceAll("temp", "error-${response['error']['message']}");
+        message.guid = message.guid!.replaceAll("temp", "error-${response['error']['message']}");
         message.error = response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
 
         await Message.replaceMessage(tempGuid, message);
-        NewMessageManager().updateMessage(chat, tempGuid, message);
+        NewMessageManager().updateMessage(chat, tempGuid!, message);
       }
 
       completer.complete();
@@ -120,7 +125,7 @@ class ActionHandler {
     return completer.future;
   }
 
-  static Future<void> sendReaction(Chat chat, Message message, String reaction) async {
+  static Future<void> sendReaction(Chat chat, Message? message, String reaction) async {
     // Create params for the queue item
     Map<String, dynamic> params = {"chat": chat, "message": message, "reaction": reaction};
 
@@ -132,7 +137,8 @@ class ActionHandler {
     Completer<void> completer = new Completer<void>();
     Map<String, dynamic> params = new Map();
 
-    String text = !isEmptyString(message.text) ? message.text : "Some stupid ass text";
+    String? text = !isEmptyString(message.text) ? message.text : "A text";
+
     params["chatGuid"] = chat.guid;
     params["messageGuid"] = "temp-${randomString(8)}";
     params["messageText"] = text;
@@ -163,13 +169,14 @@ class ActionHandler {
     if (message.error == 0) return;
 
     // Get message's chat
-    Chat chat = await Message.getChat(message);
+    Chat? chat = await Message.getChat(message);
     if (chat == null) throw ("Could not find chat!");
 
     await message.fetchAttachments();
-    for (int i = 0; i < message.attachments.length; i++) {
+    for (int i = 0; i < message.attachments!.length; i++) {
       String appDocPath = SettingsManager().appDocDir.path;
-      String pathName = "$appDocPath/attachments/${message.attachments[i].guid}/${message.attachments[i].transferName}";
+      String pathName =
+          "$appDocPath/attachments/${message.attachments![i]!.guid}/${message.attachments![i]!.transferName}";
       File file = File(pathName);
 
       OutgoingQueue().add(
@@ -178,21 +185,31 @@ class ActionHandler {
           item: new AttachmentSender(
             file,
             chat,
-            i == message.attachments.length - 1 ? message.text : "",
+            i == message.attachments!.length - 1 ? message.text ?? "" : "",
           ),
         ),
       );
     }
 
     // If we sent attachments, return because we finished sending
-    if (message.attachments.length > 0) return;
+    if (message.attachments!.length > 0) return;
+
+    // Generate the temp GUID for the message to be used
+    message.generateTempGuid();
 
     // Build request parameters
     Map<String, dynamic> params = new Map();
     params["guid"] = chat.guid;
-    params["message"] = message.text.trim();
-    String tempGuid = "temp-${randomString(8)}";
-    String oldGuid = message.guid;
+    params["message"] = message.text!.trim();
+
+    // Pull the Old GUID (substring so we "make a copy")
+    String? oldGuid = (message.guid ?? "").substring(0);
+
+    // Generate new GUID
+    message.generateTempGuid();
+
+    // Update the new GUID
+    String tempGuid = message.guid!;
     params["tempGuid"] = tempGuid;
 
     // Reset error, guid, and send date
@@ -214,7 +231,7 @@ class ActionHandler {
       // If there is an error, replace the temp value with an error
       if (response['status'] != 200) {
         NewMessageManager().removeMessage(chat, message.guid);
-        message.guid = message.guid.replaceAll("temp", "error-${response['error']['message']}");
+        message.guid = message.guid!.replaceAll("temp", "error-${response['error']['message']}");
         message.error = response['status'] == 400 ? 1001 : 1002;
         await Message.replaceMessage(tempGuid, message);
         NewMessageManager().addMessage(chat, message);
@@ -244,7 +261,7 @@ class ActionHandler {
 
     // If there are no messages, return
     debugPrint("Deleting ${items.length} messages");
-    if (isNullOrEmpty(items)) return;
+    if (isNullOrEmpty(items)!) return;
 
     Batch batch = db.batch();
     for (Map<String, dynamic> message in items) {
@@ -289,22 +306,21 @@ class ActionHandler {
   static Future<void> handleUpdatedMessage(Map<String, dynamic> data, {bool headless = false}) async {
     Message updatedMessage = new Message.fromMap(data);
 
-    if (updatedMessage.isFromMe) {
+    if (updatedMessage.isFromMe!) {
       await Future.delayed(Duration(milliseconds: 200));
-      debugPrint("(Message status) -> handleUpdatedMessage: " + updatedMessage.text);
+      debugPrint("(Message status) -> handleUpdatedMessage: " + updatedMessage.text!);
     }
 
-    updatedMessage = await Message.replaceMessage(updatedMessage.guid, updatedMessage);
+    updatedMessage = await Message.replaceMessage(updatedMessage.guid, updatedMessage) ?? updatedMessage;
 
-    Chat chat;
-    if (data["chats"] == null && updatedMessage != null && updatedMessage.id != null) {
+    Chat? chat;
+    if (data["chats"] == null && updatedMessage.id != null) {
       chat = await Message.getChat(updatedMessage);
     } else if (data["chats"] != null) {
       chat = Chat.fromMap(data["chats"][0]);
     }
 
-    if (!headless && updatedMessage != null)
-      NewMessageManager().updateMessage(chat, updatedMessage.guid, updatedMessage);
+    if (!headless && chat != null) NewMessageManager().updateMessage(chat, updatedMessage.guid!, updatedMessage);
   }
 
   /// Handles marking a chat by [chatGuid], with a new [status] of read or unread.
@@ -312,13 +328,13 @@ class ActionHandler {
   /// ```dart
   /// handleChatStatusChange(chatGuid, status)
   /// ```
-  static Future<void> handleChatStatusChange(String chatGuid, bool status) async {
+  static Future<void> handleChatStatusChange(String? chatGuid, bool? status) async {
     if (chatGuid == null) return;
 
-    Chat chat = await Chat.findOne({"guid": chatGuid});
+    Chat? chat = await Chat.findOne({"guid": chatGuid});
     if (chat == null) return;
 
-    await chat.setUnreadStatus(status);
+    await chat.toggleHasUnread(status!);
     ChatBloc().updateChat(chat);
   }
 
@@ -332,10 +348,10 @@ class ActionHandler {
   /// handleChat(chat: chatObject, checkIfExists: true)
   /// ```
   static Future<void> handleChat(
-      {Map<String, dynamic> chatData, Chat chat, bool checkIfExists = false, bool isHeadless = false}) async {
-    Chat currentChat;
-    Chat newChat = chat;
-    if (chatData != null && newChat == null) {
+      {Map<String, dynamic>? chatData, required Chat chat, bool checkIfExists = false, bool isHeadless = false}) async {
+    Chat? currentChat;
+    Chat? newChat = chat;
+    if (chatData != null) {
       newChat = Chat.fromMap(chatData);
     }
 
@@ -354,10 +370,8 @@ class ActionHandler {
     if (currentChat != null) return;
 
     // Fetch chat data from server
-    newChat = await SocketManager().fetchChat(newChat.guid);
-    if (newChat != null) {
-      await ChatBloc().updateChatPosition(newChat);
-    }
+    newChat = await SocketManager().fetchChat(newChat.guid!);
+    await ChatBloc().updateChatPosition(newChat);
   }
 
   /// Handles the ingestion of a 'new-message' event from the server.
@@ -377,7 +391,7 @@ class ActionHandler {
     // Handle message differently depending on if there is a temp GUID match
     if (data.containsKey("tempGuid")) {
       // Check if the GUID exists
-      Message existing = await Message.findOne({'guid': data['guid']});
+      Message? existing = await Message.findOne({'guid': data['guid']});
 
       // If the GUID exists already, delete the temporary entry
       // Otherwise, replace the temp message
@@ -396,7 +410,7 @@ class ActionHandler {
           } catch (ex) {
             debugPrint("Attachment's Old GUID doesn't exist. Skipping");
           }
-          message.attachments.add(file);
+          message.attachments!.add(file);
         }
         debugPrint("(Message status) -> Message match: [${data["text"]}] - ${data["guid"]} - ${data["tempGuid"]}");
 
@@ -405,10 +419,10 @@ class ActionHandler {
     } else if (forceProcess || !NotificationManager().hasProcessed(data["guid"])) {
       // Add the message to the chats
       for (int i = 0; i < chats.length; i++) {
-        debugPrint("Client received new message " + chats[i].guid);
+        debugPrint("Client received new message " + chats[i].guid!);
 
         // Gets the chat from the chat bloc
-        Chat chat = await ChatBloc().getChat(chats[i].guid);
+        Chat? chat = await ChatBloc().getChat(chats[i].guid);
         if (chat == null) {
           await ActionHandler.handleChat(chat: chats[i], checkIfExists: true, isHeadless: isHeadless);
           chat = chats[i];

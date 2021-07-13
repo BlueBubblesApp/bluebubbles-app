@@ -10,45 +10,43 @@ Map<String, IconData> iconMap = {
 
 class BalloonBundleWidget extends StatefulWidget {
   BalloonBundleWidget({
-    Key key,
-    @required this.message,
+    Key? key,
+    required this.message,
   }) : super(key: key);
-  final Message message;
+  final Message? message;
 
   @override
   _BalloonBubbleState createState() => _BalloonBubbleState();
 }
 
 class _BalloonBubbleState extends State<BalloonBundleWidget> {
-  String bundleName;
-  IconData bundleIcon;
+  late String bundleName;
+  late IconData bundleIcon;
 
   @override
   void initState() {
     super.initState();
 
-    bundleName = MessageHelper.getInteractiveText(widget.message);
+    bundleName = MessageHelper.getInteractiveText(widget.message!);
     bundleIcon = getIcon();
   }
 
   @override
   void didChangeDependencies() {
-    if (bundleName == null) {
-      super.didChangeDependencies();
-      setState(() {
-        bundleName = MessageHelper.getInteractiveText(widget.message);
-        bundleIcon = getIcon();
-      });
-    }
+    super.didChangeDependencies();
+    setState(() {
+      bundleName = MessageHelper.getInteractiveText(widget.message!);
+      bundleIcon = getIcon();
+    });
   }
 
   IconData getIcon() {
-    if (widget.message.balloonBundleId == null) return Icons.device_unknown;
-    if (nameMap.containsKey(widget.message.balloonBundleId)) {
-      return iconMap[widget.message.balloonBundleId];
+    if (widget.message!.balloonBundleId == null) return Icons.device_unknown;
+    if (nameMap.containsKey(widget.message!.balloonBundleId)) {
+      return iconMap[widget.message!.balloonBundleId!]!;
     }
 
-    String val = widget.message.balloonBundleId.toLowerCase();
+    String val = widget.message!.balloonBundleId!.toLowerCase();
     if (val.contains("gamepigeon")) {
       return Icons.games;
     } else if (val.contains("contextoptional")) {
@@ -68,7 +66,7 @@ class _BalloonBubbleState extends State<BalloonBundleWidget> {
       borderRadius: BorderRadius.circular(20),
       child: Container(
           constraints: BoxConstraints(
-            maxWidth: Get.mediaQuery.size.width * 3 / 4,
+            maxWidth: context.width * 3 / 4,
           ),
           child: Container(
             width: 200,
@@ -78,7 +76,7 @@ class _BalloonBubbleState extends State<BalloonBundleWidget> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  Text(bundleName ?? "Unknown Balloon Bundle",
+                  Text(bundleName,
                       textAlign: TextAlign.center,
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
@@ -86,7 +84,7 @@ class _BalloonBubbleState extends State<BalloonBundleWidget> {
                   Text("Interactive Message",
                       textAlign: TextAlign.center, maxLines: 1, style: Theme.of(context).textTheme.subtitle1),
                   Container(height: 10.0),
-                  Icon(bundleIcon, color: Theme.of(context).textTheme.bodyText1.color, size: 48),
+                  Icon(bundleIcon, color: Theme.of(context).textTheme.bodyText1!.color, size: 48),
                   Container(height: 10.0),
                   Text("(Cannot open on Android)",
                       textAlign: TextAlign.center, maxLines: 1, style: Theme.of(context).textTheme.subtitle2),

@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class StickersWidget extends StatefulWidget {
-  StickersWidget({Key key, @required this.messages}) : super(key: key);
+  StickersWidget({Key? key, required this.messages}) : super(key: key);
   final List<Message> messages;
 
   @override
@@ -20,7 +20,7 @@ class _StickersWidgetState extends State<StickersWidget> {
   bool _visible = true;
   List<Attachment> stickers = [];
   List<String> loaded = [];
-  Completer request;
+  Completer? request;
 
   @override
   void initState() {
@@ -43,8 +43,8 @@ class _StickersWidgetState extends State<StickersWidget> {
 
   Future<void> loadStickers() async {
     // If we are already trying to load the stickers, don't try again
-    if (request != null && !request.isCompleted) {
-      return request;
+    if (request != null && !request!.isCompleted) {
+      return;
     }
 
     request = new Completer();
@@ -56,11 +56,11 @@ class _StickersWidgetState extends State<StickersWidget> {
 
       // Get the associated attachments
       await msg.fetchAttachments();
-      for (Attachment attachment in msg.attachments) {
+      for (Attachment? attachment in msg.attachments!) {
         // If we've already loaded it, don't try again
-        if (loaded.contains(attachment.guid)) continue;
+        if (loaded.contains(attachment!.guid)) continue;
 
-        loaded.add(attachment.guid);
+        loaded.add(attachment.guid!);
         String pathName = AttachmentHelper.getAttachmentPath(attachment);
 
         // Check if the attachment exists
@@ -82,7 +82,7 @@ class _StickersWidgetState extends State<StickersWidget> {
 
     // Fulfill/Complete any outstanding requests
     if (this.mounted) setState(() {});
-    request.complete();
+    request!.complete();
   }
 
   @override
@@ -92,14 +92,13 @@ class _StickersWidgetState extends State<StickersWidget> {
     // Turn the attachments into Image Widgets
     List<Widget> stickers = this.stickers.map((item) {
       String pathName = AttachmentHelper.getAttachmentPath(item);
-      return Image.file(new File(pathName),
-          width: Get.mediaQuery.size.width * 2 / 3, height: Get.mediaQuery.size.width * 2 / 4);
+      return Image.file(new File(pathName), width: context.width * 2 / 3, height: context.width * 2 / 4);
     }).toList();
 
     return GestureDetector(
         onTap: toggleShow,
         child: Opacity(
-            key: new Key(this.stickers.first.guid),
+            key: new Key(this.stickers.first.guid!),
             opacity: _visible ? 1.0 : 0.25,
             child: Stack(children: stickers, alignment: Alignment.center)));
   }
