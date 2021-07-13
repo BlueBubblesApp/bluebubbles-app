@@ -23,6 +23,7 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:socket_io_client/socket_io_client.dart';
 
@@ -182,7 +183,7 @@ class SocketManager {
         state = SocketState.DISCONNECTED;
         Timer t;
         t = Timer(const Duration(seconds: 5), () {
-          if (state == SocketState.DISCONNECTED && LifeCycleManager().isAlive) {
+          if (state == SocketState.DISCONNECTED && LifeCycleManager().isAlive && !Get.isSnackbarOpen!) {
             showSnackbar('Socket Disconnected', 'You are not longer connected to the socket 🔌');
           }
         });
@@ -191,7 +192,7 @@ class SocketManager {
             t.cancel();
           } else {
             t = Timer(const Duration(seconds: 5), () {
-              if (state == SocketState.DISCONNECTED && LifeCycleManager().isAlive) {
+              if (state == SocketState.DISCONNECTED && LifeCycleManager().isAlive && !Get.isSnackbarOpen!) {
                 showSnackbar('Socket Disconnected', 'You are not longer connected to the socket 🔌');
               }
             });
