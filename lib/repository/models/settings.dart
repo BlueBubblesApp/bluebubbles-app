@@ -50,6 +50,7 @@ class Settings {
   bool startVideosMuted = false;
   bool startVideosMutedFullscreen = false;
   bool use24HrFormat = false;
+  bool alwaysShowAvatars = false;
 
   // String emojiFontFamily;
 
@@ -202,6 +203,8 @@ class Settings {
         settings.enableQuickTapback = entry.value;
       } else if (entry.name == "quickTapbackType") {
         settings.quickTapbackType = entry.value;
+      } else if (entry.name == "alwaysShowAvatars") {
+        settings.alwaysShowAvatars = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -530,6 +533,11 @@ class Settings {
           name: "quickTapbackType",
           value: this.quickTapbackType,
           type: this.quickTapbackType.runtimeType,
+        ),
+        ConfigEntry(
+          name: "alwaysShowAvatars",
+          value: this.alwaysShowAvatars,
+          type: this.alwaysShowAvatars.runtimeType,
         ),
         // ConfigEntry(
         //     name: "emojiFontFamily",

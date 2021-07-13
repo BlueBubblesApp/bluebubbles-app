@@ -1,4 +1,3 @@
-import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
@@ -15,6 +14,7 @@ import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class ReceivedMessage extends StatefulWidget {
   final bool showTail;
@@ -206,6 +206,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
 
     // First, add the message sender (if applicable)
     bool isGroup = CurrentChat.of(context)?.chat.isGroup() ?? false;
+    bool showSender = SettingsManager().settings.alwaysShowAvatars || isGroup;
     if (isGroup &&
         (!sameSender(widget.message, widget.olderMessage) ||
             !widget.message.dateCreated!.isWithin(widget.olderMessage!.dateCreated!, minutes: 30))) {
@@ -265,11 +266,11 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     // -> Contact avatar
     // -> Message
     List<Widget> msgRow = [];
-    if (widget.showTail && (isGroup || SettingsManager().settings.skin.value == Skins.Samsung)) {
+    if (widget.showTail && (showSender || SettingsManager().settings.skin.value == Skins.Samsung)) {
       double topPadding = (isGroup) ? 5 : 0;
       if (SettingsManager().settings.skin.value == Skins.Samsung) {
         topPadding = 5.0;
-        if (isGroup) topPadding += 18;
+        if (showSender) topPadding += 18;
         if (widget.message.hasReactions) topPadding += 20;
       }
 
@@ -307,7 +308,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                   widget.message.isFromMe == widget.olderMessage?.isFromMe)
               ? 3.0
               : 0.0,
-          left: (!widget.showTail && (isGroup || SettingsManager().settings.skin.value == Skins.Samsung)) ? 35.0 : 0.0,
+          left: (!widget.showTail && (showSender || SettingsManager().settings.skin.value == Skins.Samsung)) ? 35.0 : 0.0,
           bottom: (widget.showTail && SettingsManager().settings.skin.value == Skins.iOS) ? 10.0 : 0.0),
       child: Row(
         mainAxisSize: MainAxisSize.max,

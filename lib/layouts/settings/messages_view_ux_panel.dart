@@ -132,6 +132,14 @@ class _ConvoSettingsState extends State<ConvoSettings> {
                     initialVal: _settingsCopy.recipientAsPlaceholder,
                     title: "Show Recipient (or Group Name) as Placeholder",
                   ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.alwaysShowAvatars = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.alwaysShowAvatars,
+                    title: "Show avatars in non-group chats",
+                  ),
                   SwitchListTile(
                     title: Text(
                       "Double-Tap Message for Details",
@@ -145,7 +153,7 @@ class _ConvoSettingsState extends State<ConvoSettings> {
                     onChanged: (bool val) {
                       _settingsCopy.doubleTapForDetails = val;
                       if (val && _settingsCopy.enableQuickTapback) {
-                          _settingsCopy.enableQuickTapback = false;
+                        _settingsCopy.enableQuickTapback = false;
                       }
                       saveSettings();
                       setState(() {});
@@ -164,7 +172,7 @@ class _ConvoSettingsState extends State<ConvoSettings> {
                     onChanged: (bool val) {
                       _settingsCopy.enableQuickTapback = val;
                       if (val && _settingsCopy.doubleTapForDetails) {
-                          _settingsCopy.doubleTapForDetails = false;
+                        _settingsCopy.doubleTapForDetails = false;
                       }
                       saveSettings();
                       setState(() {});
