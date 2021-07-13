@@ -150,7 +150,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                         } else {
                           connectionStatus = SocketManager().state;
                         }
-
+                        bool redact = SettingsManager().settings.redactedMode;
                         return Container(
                             color: tileColor,
                             child: Padding(
@@ -161,8 +161,15 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                                       TextSpan(text: "Connection Status: "),
                                       TextSpan(text: describeEnum(connectionStatus), style: TextStyle(color: getIndicatorColor(connectionStatus))),
                                       TextSpan(text: "\n\n"),
-                                      TextSpan(text: "Server URL: ${_settingsCopy.serverAddress}\n\nLatency: ${latency ?? "N/A"} ms\n\nServer Version: ${serverVersion ?? "N/A"}\n\nmacOS Version: ${macOSVersion ?? "N/A"}"),
-                                      TextSpan(text: "\n\nTap to update values...", style: TextStyle(fontStyle: FontStyle.italic)),
+                                      TextSpan(text: "Server URL: ${redact ? "Redacted" : _settingsCopy.serverAddress}"),
+                                      TextSpan(text: "\n\n"),
+                                      TextSpan(text: "Latency: ${redact ? "Redacted" : ((latency ?? "N/A").toString() + " ms")}"),
+                                      TextSpan(text: "\n\n"),
+                                      TextSpan(text: "Server Version: ${redact ? "Redacted" : (serverVersion ?? "N/A")}"),
+                                      TextSpan(text: "\n\n"),
+                                      TextSpan(text: "macOS Version: ${redact ? "Redacted" : (macOSVersion ?? "N/A")}"),
+                                      TextSpan(text: "\n\n"),
+                                      TextSpan(text: "Tap to update values...", style: TextStyle(fontStyle: FontStyle.italic)),
                                     ]
                                   ),
                                 onTap: () {
