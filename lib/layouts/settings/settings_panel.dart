@@ -18,7 +18,6 @@ import 'package:bluebubbles/layouts/widgets/CustomCupertinoTextField.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
@@ -26,8 +25,6 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 
 List disconnectedStates = [SocketState.DISCONNECTED, SocketState.ERROR, SocketState.FAILED];
@@ -136,6 +133,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         child: Text("Server Management".psCapitalize, style: SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
                       )
                   ),
+                  Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
                   StreamBuilder(
                       stream: SocketManager().connectionStateStream,
                       builder: (context, AsyncSnapshot<SocketState> snapshot) {
@@ -379,6 +377,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   SettingsTile(
                     backgroundColor: tileColor,
                     title: "About & Links",
+                    subTitle: "Donate, Rate, Changelog, & More",
                     onTap: () {
                       Navigator.of(context).push(
                         CupertinoPageRoute(
@@ -392,75 +391,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       iosIcon: CupertinoIcons.info_circle,
                       materialIcon: Icons.info,
                     ),
-                  ),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
-                    ),
-                  ),
-                  SettingsTile(
-                    backgroundColor: tileColor,
-                    title: "Rate",
-                    onTap: () async {
-                      launch("market://details?id=com.bluebubbles.messaging");
-                    },
-                    leading: SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.star,
-                      materialIcon: Icons.star,
-                    ),
-                    showDivider: false,
-                  ),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
-                    ),
-                  ),
-                  SettingsTile(
-                    backgroundColor: tileColor,
-                    title: "Join Our Discord",
-                    onTap: () {
-                      MethodChannelInterface().invokeMethod("open-link", {"link": "https://discord.gg/hbx7EhNFjp"});
-                    },
-                    leading: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 32,
-                          height: 32,
-                          alignment: Alignment.center,
-                          child: SvgPicture.asset(
-                            "assets/icon/discord.svg",
-                            color: HexColor("#7289DA"),
-                            alignment: Alignment.centerRight,
-                            width: 32,
-                          )
-                        ),
-                      ],
-                    ),
-                    showDivider: false,
-                  ),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
-                    ),
-                  ),
-                  SettingsTile(
-                    backgroundColor: tileColor,
-                    title: "Support Us",
-                    onTap: () {
-                      MethodChannelInterface().invokeMethod("open-link", {"link": "https://bluebubbles.app/donate/"});
-                    },
-                    leading: SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.money_dollar_circle,
-                      materialIcon: Icons.attach_money,
-                    ),
-                    showDivider: false,
                   ),
                   SettingsHeader(
                       headerColor: headerColor,
@@ -574,31 +504,35 @@ class SettingsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: <Widget>[
-        ListTile(
-          onLongPress: this.onLongPress as void Function()?,
-          tileColor: backgroundColor,
-          onTap: this.onTap as void Function()?,
-          leading: leading,
-          title: Text(
-            this.title!,
-            style: Theme.of(context).textTheme.bodyText1,
+    //todo remove Column and Container once settings is fully done
+    return Container(
+      color: backgroundColor,
+      child: Column(
+        children: <Widget>[
+          ListTile(
+            onLongPress: this.onLongPress as void Function()?,
+            tileColor: backgroundColor,
+            onTap: this.onTap as void Function()?,
+            leading: leading,
+            title: Text(
+              this.title!,
+              style: Theme.of(context).textTheme.bodyText1,
+            ),
+            trailing: this.trailing,
+            subtitle: subTitle != null
+                ? Text(
+                    subTitle!,
+                    style: Theme.of(context).textTheme.subtitle1,
+                  )
+                : null,
           ),
-          trailing: this.trailing,
-          subtitle: subTitle != null
-              ? Text(
-                  subTitle!,
-                  style: Theme.of(context).textTheme.subtitle1,
-                )
-              : null,
-        ),
-        if (showDivider)
-          Divider(
-            color: Theme.of(context).accentColor.withOpacity(0.5),
-            thickness: 1,
-          ),
-      ],
+          if (showDivider)
+            Divider(
+              color: Theme.of(context).accentColor.withOpacity(0.5),
+              thickness: 1,
+            ),
+        ],
+      ),
     );
   }
 }
