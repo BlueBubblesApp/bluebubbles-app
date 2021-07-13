@@ -157,7 +157,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(15),
+      borderRadius: BorderRadius.circular(10),
       child: Stack(
         children: <Widget>[
           getThumbnail(),
