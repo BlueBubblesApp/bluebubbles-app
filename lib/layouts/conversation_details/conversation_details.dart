@@ -418,14 +418,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                         inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
                         inactiveThumbColor: Theme.of(context).accentColor,
                         onChanged: (value) async {
-                          if (value) {
-                            await widget.chat.pin();
-                          } else {
-                            await widget.chat.unpin();
-                          }
-
+                          await widget.chat.togglePin(!widget.chat.isPinned!);
                           EventDispatcher().emit("refresh", null);
-
                           if (this.mounted) setState(() {});
                         }))),
             SliverToBoxAdapter(
@@ -441,8 +435,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                         inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
                         inactiveThumbColor: Theme.of(context).accentColor,
                         onChanged: (value) async {
-                          widget.chat.isMuted = value;
-                          await widget.chat.save(updateLocalVals: true);
+                          await widget.chat.toggleMute(value);
                           EventDispatcher().emit("refresh", null);
 
                           if (this.mounted) setState(() {});

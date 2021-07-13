@@ -334,7 +334,7 @@ class ActionHandler {
     Chat? chat = await Chat.findOne({"guid": chatGuid});
     if (chat == null) return;
 
-    await chat.setUnreadStatus(status!);
+    await chat.toggleHasUnread(status!);
     ChatBloc().updateChat(chat);
   }
 

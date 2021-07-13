@@ -68,7 +68,7 @@ class NotificationManager {
     }
 
     CurrentChat.getCurrentChat(chat)?.isAlive = true;
-    await chat.setUnreadStatus(false);
+    await chat.toggleHasUnread(false);
 
     if (SettingsManager().settings.enablePrivateAPI) {
       if (SettingsManager().settings.privateMarkChatAsRead) {

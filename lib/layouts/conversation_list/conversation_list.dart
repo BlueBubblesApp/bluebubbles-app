@@ -810,8 +810,7 @@ class __MaterialState extends State<_Material> {
                               GestureDetector(
                                 onTap: () {
                                   selected.forEach((element) async {
-                                    element.hasUnreadMessage = !element.hasUnreadMessage!;
-                                    await element.save(updateLocalVals: true);
+                                    await element.toggleHasUnread(!element.hasUnreadMessage!);
                                   });
                                   if (this.mounted) setState(() {});
                                   selected = [];
@@ -829,8 +828,7 @@ class __MaterialState extends State<_Material> {
                               GestureDetector(
                                 onTap: () {
                                   selected.forEach((element) async {
-                                    element.isMuted = !element.isMuted!;
-                                    await element.save(updateLocalVals: true);
+                                    await element.toggleMute(!element.isMuted!);
                                   });
                                   if (this.mounted) setState(() {});
                                   selected = [];
@@ -848,11 +846,7 @@ class __MaterialState extends State<_Material> {
                               GestureDetector(
                                 onTap: () {
                                   selected.forEach((element) {
-                                    if (element.isPinned!) {
-                                      element.unpin();
-                                    } else {
-                                      element.pin();
-                                    }
+                                    element.togglePin(!element.isPinned!);
                                   });
                                   selected = [];
                                   setState(() {});
@@ -945,7 +939,7 @@ class __MaterialState extends State<_Material> {
                           // what to do after an item has been swiped away.
                           onDismissed: (direction) {
                             if (direction == DismissDirection.endToStart) {
-                              if (!widget.parent.widget.showArchivedChats) widget.parent.chats[index].unpin();
+                              if (!widget.parent.widget.showArchivedChats) widget.parent.chats[index].togglePin(false);
 
                               setState(() {
                                 ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -957,13 +951,7 @@ class __MaterialState extends State<_Material> {
                             } else {
                               setState(() {
                                 ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                                if (widget.parent.chats[index].isPinned!) {
-                                  widget.parent.chats[index].unpin();
-                                  widget.parent.chats.remove(index);
-                                } else {
-                                  widget.parent.chats[index].pin();
-                                  widget.parent.chats.remove(index);
-                                }
+                                widget.parent.chats[index].togglePin(!widget.parent.chats[index].isPinned!);
                               });
                             }
                           },
@@ -1278,12 +1266,11 @@ class _SamsungState extends State<_Samsung> {
                               GestureDetector(
                                 onTap: () {
                                   selected.forEach((element) async {
-                                    element.isMuted = !element.isMuted!;
-                                    await element.save(updateLocalVals: true);
+                                    await element.toggleMute(!element.isMuted!);
                                   });
-                                  if (this.mounted) setState(() {});
+
                                   selected = [];
-                                  setState(() {});
+                                  if (this.mounted) setState(() {});
                                 },
                                 child: Padding(
                                   padding: const EdgeInsets.all(8.0),
@@ -1315,15 +1302,12 @@ class _SamsungState extends State<_Samsung> {
                             ),
                             GestureDetector(
                               onTap: () {
-                                selected.forEach((element) {
-                                  if (element.isPinned!) {
-                                    element.unpin();
-                                  } else {
-                                    element.pin();
-                                  }
+                                selected.forEach((element) async {
+                                  await element.togglePin(!element.isPinned!);
                                 });
+
                                 selected = [];
-                                setState(() {});
+                                if (this.mounted) setState(() {});
                               },
                               child: Padding(
                                 padding: const EdgeInsets.all(8.0),
@@ -1396,7 +1380,8 @@ class _SamsungState extends State<_Samsung> {
                                 // what to do after an item has been swiped away.
                                 onDismissed: (direction) {
                                   if (direction == DismissDirection.endToStart) {
-                                    if (!widget.parent.widget.showArchivedChats) widget.parent.chats[index].unpin();
+                                    if (!widget.parent.widget.showArchivedChats)
+                                      widget.parent.chats[index].togglePin(false);
                                     setState(() {
                                       ScaffoldMessenger.of(context).hideCurrentSnackBar();
                                       (!widget.parent.widget.showArchivedChats)
@@ -1408,7 +1393,7 @@ class _SamsungState extends State<_Samsung> {
                                   } else {
                                     setState(() {
                                       ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                                      widget.parent.chats[index].unpin();
+                                      widget.parent.chats[index].togglePin(false);
                                     });
                                   }
                                 },
@@ -1504,7 +1489,8 @@ class _SamsungState extends State<_Samsung> {
                                 // what to do after an item has been swiped away.
                                 onDismissed: (direction) {
                                   if (direction == DismissDirection.endToStart) {
-                                    if (!widget.parent.widget.showArchivedChats) widget.parent.chats[index].unpin();
+                                    if (!widget.parent.widget.showArchivedChats)
+                                      widget.parent.chats[index].togglePin(false);
                                     setState(() {
                                       ScaffoldMessenger.of(context).hideCurrentSnackBar();
                                       (!widget.parent.widget.showArchivedChats)
@@ -1515,7 +1501,7 @@ class _SamsungState extends State<_Samsung> {
                                   } else {
                                     setState(() {
                                       ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                                      widget.parent.chats[index].pin();
+                                      widget.parent.chats[index].togglePin(true);
                                     });
                                   }
                                 },

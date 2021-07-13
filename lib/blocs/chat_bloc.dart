@@ -41,10 +41,7 @@ class ChatBloc {
   bool get hasChats => _hasChats;
 
   void updateUnreads() {
-    _unreads.value = chats
-        .where((element) => element.hasUnreadMessage ?? false)
-        .map((e) => e.guid)
-        .toList().length;
+    _unreads.value = chats.where((element) => element.hasUnreadMessage ?? false).map((e) => e.guid).toList().length;
   }
 
   // Remove duplicates when this gets accessed
@@ -176,7 +173,7 @@ class ChatBloc {
 
     // Mark them as unread
     for (Chat chat in unread) {
-      await chat.setUnreadStatus(false);
+      await chat.toggleHasUnread(false);
 
       // Remove from notification shade
       MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
@@ -188,8 +185,8 @@ class ChatBloc {
     }
   }
 
-  void markRead(Chat chat) async {
-    await chat.setUnreadStatus(false);
+  Future<void> toggleChatUnread(Chat chat, bool isUnread) async {
+    await chat.toggleHasUnread(isUnread);
 
     // Remove from notification shade
     MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
@@ -346,8 +343,7 @@ class ChatBloc {
   void archiveChat(Chat chat) async {
     _chats.removeWhere((element) => element.guid == chat.guid);
     _archivedChats.add(chat);
-    chat.isArchived = true;
-    await chat.save(updateLocalVals: true);
+    await chat.toggleArchived(true);
     initTileValsForChat(chat);
     await this.addToSink(this.chats);
     _archivedChatController.sink.add(_archivedChats);
@@ -355,8 +351,7 @@ class ChatBloc {
 
   void unArchiveChat(Chat chat) async {
     _archivedChats.removeWhere((element) => element.guid == chat.guid);
-    chat.isArchived = false;
-    await chat.save(updateLocalVals: true);
+    await chat.toggleArchived(false);
     await initTileValsForChat(chat);
     _chats.add(chat);
     _archivedChatController.sink.add(_archivedChats);
