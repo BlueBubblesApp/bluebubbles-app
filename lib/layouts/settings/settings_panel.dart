@@ -327,7 +327,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   SettingsTile(
                     backgroundColor: tileColor,
                     title: "Redacted Mode",
-                    subTitle: "Redacted Mode ${SettingsManager().settings.redactedMode ? "Enabled" : "Disabled"}",
+                    subTitle: "Redacted Mode ${SettingsManager().settings.redactedMode.value ? "Enabled" : "Disabled"}",
                     trailing: nextIcon,
                     onTap: () async {
                       Navigator.of(context).push(
@@ -340,7 +340,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     leading: SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.wand_stars,
                       materialIcon: Icons.auto_fix_high,
-                      containerColor: getIndicatorColor(SettingsManager().settings.redactedMode ? SocketState.CONNECTED : SocketState.CONNECTING),
+                      containerColor: getIndicatorColor(SettingsManager().settings.redactedMode.value ? SocketState.CONNECTED : SocketState.CONNECTING),
                     ),
                   ),
                   // SettingsTile(
@@ -628,10 +628,14 @@ class SettingsSwitch extends StatefulWidget {
     required this.initialVal,
     this.onChanged,
     required this.title,
+    this.backgroundColor,
+    this.subtitle,
   }) : super(key: key);
   final bool initialVal;
   final Function(bool)? onChanged;
   final String title;
+  final Color? backgroundColor;
+  final String? subtitle;
 
   @override
   _SettingsSwitchState createState() => _SettingsSwitchState();
@@ -649,10 +653,15 @@ class _SettingsSwitchState extends State<SettingsSwitch> {
   @override
   Widget build(BuildContext context) {
     return SwitchListTile(
+      tileColor: widget.backgroundColor,
       title: Text(
         widget.title,
         style: Theme.of(context).textTheme.bodyText1,
       ),
+      subtitle: widget.subtitle != null ? Text(
+        widget.subtitle!,
+        style: Theme.of(context).textTheme.subtitle1,
+      ) : null,
       value: _value!,
       activeColor: Theme.of(context).primaryColor,
       activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),

@@ -61,17 +61,17 @@ class Settings {
   bool privateManualMarkAsRead = false;
 
   // Redacted Mode Settings
-  bool redactedMode = false;
-  bool hideMessageContent = true;
-  bool hideReactions = false;
-  bool hideAttachments = true;
-  bool hideEmojis = false;
-  bool hideAttachmentTypes = false;
-  bool hideContactPhotos = true;
-  bool hideContactInfo = true;
-  bool removeLetterAvatars = true;
-  bool generateFakeContactNames = false;
-  bool generateFakeMessageContent = false;
+  RxBool redactedMode = false.obs;
+  RxBool hideMessageContent = true.obs;
+  RxBool hideReactions = false.obs;
+  RxBool hideAttachments = true.obs;
+  RxBool hideEmojis = false.obs;
+  RxBool hideAttachmentTypes = false.obs;
+  RxBool hideContactPhotos = true.obs;
+  RxBool hideContactInfo = true.obs;
+  RxBool removeLetterAvatars = true.obs;
+  RxBool generateFakeContactNames = false.obs;
+  RxBool generateFakeMessageContent = false.obs;
 
   // Quick tapback settings
   bool enableQuickTapback = false;
@@ -170,25 +170,25 @@ class Settings {
       } else if (entry.name == "showDeliveryTimestamps") {
         settings.showDeliveryTimestamps = entry.value;
       } else if (entry.name == "redactedMode") {
-        settings.redactedMode = entry.value;
+        settings.redactedMode.value = entry.value;
       } else if (entry.name == "hideMessageContent") {
-        settings.hideMessageContent = entry.value;
+        settings.hideMessageContent.value = entry.value;
       } else if (entry.name == "hideReactions") {
-        settings.hideReactions = entry.value;
+        settings.hideReactions.value = entry.value;
       } else if (entry.name == "hideAttachments") {
-        settings.hideAttachments = entry.value;
+        settings.hideAttachments.value = entry.value;
       } else if (entry.name == "hideAttachmentTypes") {
-        settings.hideAttachmentTypes = entry.value;
+        settings.hideAttachmentTypes.value = entry.value;
       } else if (entry.name == "hideContactPhotos") {
-        settings.hideContactPhotos = entry.value;
+        settings.hideContactPhotos.value = entry.value;
       } else if (entry.name == "hideContactInfo") {
-        settings.hideContactInfo = entry.value;
+        settings.hideContactInfo.value = entry.value;
       } else if (entry.name == "removeLetterAvatars") {
-        settings.removeLetterAvatars = entry.value;
+        settings.removeLetterAvatars.value = entry.value;
       } else if (entry.name == "generateFakeContactNames") {
-        settings.generateFakeContactNames = entry.value;
+        settings.generateFakeContactNames.value = entry.value;
       } else if (entry.name == "generateFakeMessageContent") {
-        settings.generateFakeMessageContent = entry.value;
+        settings.generateFakeMessageContent.value = entry.value;
       } else if (entry.name == "previewCompressionQuality") {
         settings.previewCompressionQuality = entry.value;
       } else if (entry.name == "filteredChatList") {
@@ -456,47 +456,52 @@ class Settings {
         ),
         ConfigEntry(
           name: "redactedMode",
-          value: this.redactedMode,
+          value: this.redactedMode.value,
           type: this.redactedMode.runtimeType,
         ),
         ConfigEntry(
           name: "hideMessageContent",
-          value: this.hideMessageContent,
+          value: this.hideMessageContent.value,
           type: this.hideMessageContent.runtimeType,
         ),
         ConfigEntry(
+          name: "hideReactions",
+          value: this.hideReactions.value,
+          type: this.hideReactions.runtimeType,
+        ),
+        ConfigEntry(
           name: "hideAttachments",
-          value: this.hideAttachments,
+          value: this.hideAttachments.value,
           type: this.hideAttachments.runtimeType,
         ),
         ConfigEntry(
           name: "hideAttachmentTypes",
-          value: this.hideAttachmentTypes,
+          value: this.hideAttachmentTypes.value,
           type: this.hideAttachmentTypes.runtimeType,
         ),
         ConfigEntry(
           name: "hideContactPhotos",
-          value: this.hideContactPhotos,
+          value: this.hideContactPhotos.value,
           type: this.hideContactPhotos.runtimeType,
         ),
         ConfigEntry(
           name: "hideContactInfo",
-          value: this.hideContactInfo,
+          value: this.hideContactInfo.value,
           type: this.hideContactInfo.runtimeType,
         ),
         ConfigEntry(
           name: "removeLetterAvatars",
-          value: this.removeLetterAvatars,
+          value: this.removeLetterAvatars.value,
           type: this.removeLetterAvatars.runtimeType,
         ),
         ConfigEntry(
           name: "generateFakeContactNames",
-          value: this.generateFakeContactNames,
+          value: this.generateFakeContactNames.value,
           type: this.generateFakeContactNames.runtimeType,
         ),
         ConfigEntry(
           name: "generateFakeMessageContent",
-          value: this.generateFakeMessageContent,
+          value: this.generateFakeMessageContent.value,
           type: this.generateFakeMessageContent.runtimeType,
         ),
         ConfigEntry(

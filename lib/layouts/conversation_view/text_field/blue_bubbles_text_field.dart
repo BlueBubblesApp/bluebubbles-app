@@ -434,9 +434,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       // Don't do anything if this setting isn't enabled
       if (SettingsManager().settings.recipientAsPlaceholder) {
         // Redacted mode stuff
-        final bool hideInfo = SettingsManager().settings.redactedMode && SettingsManager().settings.hideContactInfo;
+        final bool hideInfo = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactInfo.value;
         final bool generateNames =
-            SettingsManager().settings.redactedMode && SettingsManager().settings.generateFakeContactNames;
+            SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeContactNames.value;
 
         // If it's a group chat, get the title of the chat
         if (CurrentChat.of(context)?.chat.isGroup() ?? false) {

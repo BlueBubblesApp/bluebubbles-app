@@ -24,7 +24,7 @@ class _ReactionsWidgetState extends State<ReactionsWidget> with TickerProviderSt
     List<Message> reactions =
         widget.associatedMessages.where((item) => ReactionTypes.toList().contains(item.associatedMessageType)).toList();
 
-    final bool hideReactions = SettingsManager().settings.redactedMode && SettingsManager().settings.hideReactions;
+    final bool hideReactions = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideReactions.value;
 
     // If the reactions are empty, return nothing
     if (reactions.isEmpty || hideReactions) {

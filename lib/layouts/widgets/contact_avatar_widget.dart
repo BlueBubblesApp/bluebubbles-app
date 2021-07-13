@@ -194,8 +194,8 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
     }
 
     final bool hideLetterAvatars =
-        SettingsManager().settings.redactedMode && SettingsManager().settings.removeLetterAvatars;
-    final bool hideAvatars = SettingsManager().settings.redactedMode && SettingsManager().settings.hideContactPhotos;
+        SettingsManager().settings.redactedMode.value && SettingsManager().settings.removeLetterAvatars.value;
+    final bool hideAvatars = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactPhotos.value;
 
     return GestureDetector(
         onTap: onAvatarTap,

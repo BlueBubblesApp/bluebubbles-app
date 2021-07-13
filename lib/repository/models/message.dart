@@ -105,6 +105,7 @@ class Message {
       this.hasAttachments = false,
       this.hasReactions = false,
       this.attachments = const [],
+      this.associatedMessages = const [],
       this.dateDeleted,
       this.metadata});
 
@@ -405,6 +406,12 @@ class Message {
   }
 
   Future<Message> fetchAssociatedMessages() async {
+    if (this.associatedMessages.isNotEmpty
+        && this.associatedMessages.length == 1
+        && this.associatedMessages[0].guid == this.guid
+    ) {
+      return this;
+    }
     associatedMessages = await Message.find({"associatedMessageGuid": this.guid});
     associatedMessages.sort((a, b) => a.originalROWID!.compareTo(b.originalROWID!));
     associatedMessages = MessageHelper.normalizedAssociatedMessages(associatedMessages);
