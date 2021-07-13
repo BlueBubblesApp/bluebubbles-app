@@ -35,7 +35,7 @@ class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepA
   }
 
   Future<void> load() async {
-    image = await widget.data.thumbDataWithSize(800, 800, quality: 20);
+    image = await widget.data.thumbDataWithSize(800, 800, quality: SettingsManager().compressionQuality);
     if (this.mounted) setState(() {});
   }
 
@@ -56,7 +56,7 @@ class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepA
               alignment: Alignment.bottomRight,
               children: <Widget>[
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(10),
                   child: Stack(
                     children: <Widget>[
                       Image.memory(
