@@ -262,12 +262,15 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
       _messages = event.messages;
       _messages.forEach((message) {
         currentChat?.getAttachmentsForMessage(message);
+        currentChat?.messageMarkers.updateMessageMarkers(message);
       });
 
       // This needs to be in reverse so that the oldest message gets added first
-      _messages.reversed.forEach((message) {
-        currentChat?.messageMarkers.updateMessageMarkers(message);
-
+      // We also only want to grab the last 5, so long as there are at least 5 results
+      List<Message> reversed = _messages.reversed.toList();
+      int sampleSize = (_messages.length > 5) ? 5 : _messages.length;
+      reversed.sublist(reversed.length - sampleSize).forEach((message) {
+        print("HERE");
         if (!isEmptyString(message.fullText, stripWhitespace: true)) {
           if (message.isFromMe ?? false) {
             smartReply.addConversationForLocalUser(message.fullText!);
