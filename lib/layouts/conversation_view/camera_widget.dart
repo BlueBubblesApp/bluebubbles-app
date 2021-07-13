@@ -95,12 +95,9 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
 
   Widget cameraPlaceholder() {
     return Positioned.fill(
-      child: Padding(
-        padding: EdgeInsets.all(5),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: Container(color: Theme.of(context).accentColor),
-        ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Container(color: Theme.of(context).accentColor),
       ),
     );
   }
@@ -134,29 +131,25 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
     return AnimatedOpacity(
         opacity: camerasAvailable ? 1 : 0.2, // 0.2 because then you can see the placeholder box a bit
         duration: Duration(milliseconds: 300), // 300 because I found that looked nice (in debug mode)
-        child: AspectRatio(
-          aspectRatio: aspectRatio,
-          child: Stack(
-            alignment: Alignment.topRight,
-            children: cameraWidgets,
-          ),
-        ));
+        child: ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: AspectRatio(
+              aspectRatio: aspectRatio,
+              child: Stack(
+                alignment: Alignment.topRight,
+                children: cameraWidgets,
+              ),
+            )));
   }
 
   List<Widget> _buildCameraStack(BuildContext context) {
     if (SettingsManager().settings.redactedMode.value)
       return [
         Positioned.fill(
-          child: Padding(
-            padding: EdgeInsets.all(5),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: Container(
-                color: Theme.of(context).accentColor,
-                child: Center(
-                  child: Text("Camera"),
-                ),
-              ),
+          child: Container(
+            color: Theme.of(context).accentColor,
+            child: Center(
+              child: Text("Camera"),
             ),
           ),
         ),
