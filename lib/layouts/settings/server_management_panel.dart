@@ -3,11 +3,17 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/themes.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/setup/connecting_alert/connecting_alert.dart';
 import 'package:bluebubbles/layouts/setup/qr_code_scanner.dart';
+import 'package:bluebubbles/layouts/setup/qr_scan/failed_to_scan_dialog.dart';
 import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/share.dart';
@@ -31,6 +37,8 @@ class ServerManagementPanel extends StatefulWidget {
 class _ServerManagementPanelState extends State<ServerManagementPanel> {
   int? latency;
   String? fetchStatus;
+  String? serverVersion;
+  String? macOSVersion;
 
   // Restart trackers
   int? lastRestart;
@@ -45,31 +53,67 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
   void initState() {
     _settingsCopy = SettingsManager().settings;
     _fcmDataCopy = SettingsManager().fcmData;
+    if (SocketManager().state == SocketState.CONNECTED) {
+      int now = DateTime.now().toUtc().millisecondsSinceEpoch;
+      SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
+        int later = DateTime.now().toUtc().millisecondsSinceEpoch;
+        if (this.mounted) {
+          setState(() {
+            latency = later - now;
+          });
+        }
+      });
+      SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
+        if (mounted) {
+          setState(() {
+            macOSVersion = res['data']['os_version'];
+            serverVersion = res['data']['server_version'];
+          });
+        }
+      });
+    }
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
+    final iosSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
+    final materialSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
+    Color headerColor;
+    Color tileColor;
+    if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance()
+        || SettingsManager().settings.skin.value != Skins.iOS) {
+      headerColor = Theme.of(context).accentColor;
+      tileColor = Theme.of(context).backgroundColor;
+    } else {
+      headerColor = Theme.of(context).backgroundColor;
+      tileColor = Theme.of(context).accentColor;
+    }
+    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
+      tileColor = headerColor;
+    }
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarColor: headerColor, // navigation bar color
+        systemNavigationBarIconBrightness:
+        headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
-        backgroundColor: Theme.of(context).backgroundColor,
+        backgroundColor: SettingsManager().settings.skin.value != Skins.iOS ? tileColor : headerColor,
         appBar: PreferredSize(
           preferredSize: Size(context.width, 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
-                brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
+                brightness: ThemeData.estimateBrightnessForColor(headerColor),
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: buildBackButton(context),
-                backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
+                backgroundColor: headerColor.withOpacity(0.5),
                 title: Text(
-                  "Server Management",
+                  "Connection & Server Management",
                   style: Theme.of(context).textTheme.headline1,
                 ),
               ),
@@ -83,10 +127,86 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
             SliverList(
               delegate: SliverChildListDelegate(
                 <Widget>[
-                  Container(padding: EdgeInsets.only(top: 5.0)),
+                  Container(
+                      height: SettingsManager().settings.skin.value == Skins.iOS ? 30 : 40,
+                      alignment: Alignment.bottomLeft,
+                      decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
+                        color: headerColor,
+                        border: Border(
+                            bottom: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
+                        ),
+                      ) : BoxDecoration(
+                        color: tileColor,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0, left: 15),
+                        child: Text("Connection & Server Details".psCapitalize, style: SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
+                      )
+                  ),
+                  StreamBuilder(
+                      stream: SocketManager().connectionStateStream,
+                      builder: (context, AsyncSnapshot<SocketState> snapshot) {
+                        SocketState connectionStatus;
+                        if (snapshot.hasData) {
+                          connectionStatus = snapshot.data!;
+                        } else {
+                          connectionStatus = SocketManager().state;
+                        }
+
+                        return Container(
+                            color: tileColor,
+                            child: Padding(
+                              padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
+                              child: SelectableText.rich(
+                                  TextSpan(
+                                    children: [
+                                      TextSpan(text: "Connection Status: "),
+                                      TextSpan(text: describeEnum(connectionStatus), style: TextStyle(color: getIndicatorColor(connectionStatus))),
+                                      TextSpan(text: "\n\n"),
+                                      TextSpan(text: "Server URL: ${_settingsCopy.serverAddress}\n\nLatency: ${latency ?? "N/A"} ms\n\nServer Version: ${serverVersion ?? "N/A"}\n\nmacOS Version: ${macOSVersion ?? "N/A"}"),
+                                      TextSpan(text: "\n\nTap to update values...", style: TextStyle(fontStyle: FontStyle.italic)),
+                                    ]
+                                  ),
+                                onTap: () {
+                                  if (connectionStatus != SocketState.CONNECTED) return;
+
+                                  int now = DateTime.now().toUtc().millisecondsSinceEpoch;
+                                  SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
+                                    int later = DateTime.now().toUtc().millisecondsSinceEpoch;
+                                    if (this.mounted) {
+                                      setState(() {
+                                        latency = later - now;
+                                      });
+                                    }
+                                  });
+                                  SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
+                                    if (mounted) {
+                                      setState(() {
+                                        macOSVersion = res['data']['os_version'];
+                                        serverVersion = res['data']['server_version'];
+                                      });
+                                    }
+                                  });
+                                },
+                              ),
+                            )
+                        );
+                      }),
+                  SettingsHeader(
+                      headerColor: headerColor,
+                      tileColor: tileColor,
+                      iosSubtitle: iosSubtitle,
+                      materialSubtitle: materialSubtitle,
+                      text: "Connection & Sync"
+                  ),
                   SettingsTile(
-                    title: "Re-configure with MacOS Server",
-                    trailing: Icon(Icons.camera, color: Theme.of(context).primaryColor.withAlpha(200)),
+                    title: "Re-configure with BlueBubbles Server",
+                    subTitle: "Scan QR code",
+                    leading: SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.gear,
+                      materialIcon: Icons.room_preferences,
+                    ),
+                    backgroundColor: tileColor,
                     onTap: () async {
                       var fcmData;
                       try {
@@ -119,6 +239,14 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                         SocketManager().authFCM();
                       }
                     },
+                    showDivider: false,
+                  ),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
+                    ),
                   ),
                   StreamBuilder(
                       stream: SocketManager().connectionStateStream,
@@ -133,53 +261,21 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
 
                         switch (connectionStatus) {
                           case SocketState.CONNECTED:
-                            subtitle = "Connected (Tap to test latency)";
+                            subtitle = "Tap to sync messages";
                             break;
                           default:
-                            subtitle = "Disconnected (Nothing to do)";
-                        }
-
-                        return SettingsTile(
-                          title: "Test Latency",
-                          subTitle: subtitle,
-                          onTap: () async {
-                            if (![SocketState.CONNECTED].contains(connectionStatus)) return;
-
-                            int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-                            SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
-                              int later = DateTime.now().toUtc().millisecondsSinceEpoch;
-                              if (this.mounted) {
-                                setState(() {
-                                  latency = later - now;
-                                });
-                              }
-                            });
-                          },
-                          trailing: Text((latency == null) ? "N/A" : "$latency ms"),
-                        );
-                      }),
-                  StreamBuilder(
-                      stream: SocketManager().connectionStateStream,
-                      builder: (context, AsyncSnapshot<SocketState> snapshot) {
-                        SocketState? connectionStatus;
-                        if (snapshot.hasData) {
-                          connectionStatus = snapshot.data;
-                        } else {
-                          connectionStatus = SocketManager().state;
-                        }
-                        String subtitle;
-
-                        switch (connectionStatus) {
-                          case SocketState.CONNECTED:
-                            subtitle = "Tap to manually sync messages";
-                            break;
-                          default:
-                            subtitle = "Disconnected (Nothing to do)";
+                            subtitle = "Disconnected, cannot sync";
                         }
 
                         return SettingsTile(
                             title: "Manually Sync Messages",
                             subTitle: subtitle,
+                            showDivider: false,
+                            backgroundColor: tileColor,
+                            leading: SettingsLeadingIcon(
+                              iosIcon: CupertinoIcons.arrow_2_circlepath,
+                              materialIcon: Icons.sync,
+                            ),
                             onTap: () async {
                               showDialog(
                                 context: context,
@@ -187,6 +283,13 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                               );
                             });
                       }),
+                  SettingsHeader(
+                      headerColor: headerColor,
+                      tileColor: tileColor,
+                      iosSubtitle: iosSubtitle,
+                      materialSubtitle: materialSubtitle,
+                      text: "Server Actions"
+                  ),
                   StreamBuilder(
                       stream: SocketManager().connectionStateStream,
                       builder: (context, AsyncSnapshot<SocketState> snapshot) {
@@ -201,18 +304,24 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                         if (fetchStatus == null) {
                           switch (connectionStatus) {
                             case SocketState.CONNECTED:
-                              subtitle = "Connected (Tap to fetch logs)";
+                              subtitle = "Tap to fetch logs";
                               break;
                             default:
-                              subtitle = "Disconnected (Nothing to do)";
+                              subtitle = "Disconnected, cannot fetch logs";
                           }
                         } else {
                           subtitle = fetchStatus;
                         }
 
                         return SettingsTile(
-                          title: "Fetch Server Logs & Share",
+                          title: "Fetch & Share Server Logs",
                           subTitle: subtitle,
+                          backgroundColor: tileColor,
+                          leading: SettingsLeadingIcon(
+                            iosIcon: CupertinoIcons.doc_plaintext,
+                            materialIcon: Icons.article,
+                          ),
+                          showDivider: false,
                           onTap: () {
                             if (![SocketState.CONNECTED].contains(connectionStatus)) return;
 
@@ -261,6 +370,13 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                           },
                         );
                       }),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
+                    ),
+                  ),
                   StreamBuilder(
                       stream: SocketManager().connectionStateStream,
                       builder: (context, AsyncSnapshot<SocketState> snapshot) {
@@ -272,23 +388,25 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                         }
                         String? subtitle;
 
-                        if (fetchStatus == null) {
-                          switch (connectionStatus) {
-                            case SocketState.CONNECTED:
-                              subtitle = (isRestartingMessages)
-                                  ? "Restart in progress..."
-                                  : "Instruct the server to restart the iMessage app.";
-                              break;
-                            default:
-                              subtitle = "Disconnected (Nothing to do)";
-                          }
-                        } else {
-                          subtitle = fetchStatus;
+                        switch (connectionStatus) {
+                          case SocketState.CONNECTED:
+                            subtitle = (isRestartingMessages)
+                                ? "Restart in progress..."
+                                : "Restart the iMessage app";
+                            break;
+                          default:
+                            subtitle = "Disconnected, cannot restart";
                         }
 
                         return SettingsTile(
                             title: "Restart iMessage",
                             subTitle: subtitle,
+                            backgroundColor: tileColor,
+                            leading: SettingsLeadingIcon(
+                              iosIcon: CupertinoIcons.chat_bubble,
+                              materialIcon: Icons.sms,
+                            ),
+                            showDivider: false,
                             onTap: () async {
                               if (![SocketState.CONNECTED].contains(connectionStatus) || isRestartingMessages) return;
 
@@ -326,7 +444,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                               }
                             },
                             trailing: (!isRestartingMessages)
-                                ? Icon(Icons.refresh, color: Theme.of(context).primaryColor)
+                                ? Icon(Icons.refresh, color: Colors.grey)
                                 : Container(
                                     constraints: BoxConstraints(
                                       maxHeight: 20,
@@ -337,11 +455,24 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                                       valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
                                     )));
                       }),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
+                    ),
+                  ),
                   SettingsTile(
-                      title: "Restart Server",
+                      title: "Restart BlueBubbles Server",
                       subTitle: (isRestarting)
                           ? "Restart in progress..."
-                          : "Instruct the server to restart. This will disconnect you briefly.",
+                          : "This will briefly disconnect you",
+                      backgroundColor: tileColor,
+                      leading: SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.desktopcomputer,
+                        materialIcon: Icons.dvr,
+                      ),
+                      showDivider: false,
                       onTap: () async {
                         if (isRestarting) return;
 
@@ -379,7 +510,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                         });
                       },
                       trailing: (!isRestarting)
-                          ? Icon(Icons.refresh, color: Theme.of(context).primaryColor)
+                          ? Icon(Icons.refresh, color: Colors.grey)
                           : Container(
                               constraints: BoxConstraints(
                                 maxHeight: 20,
@@ -389,91 +520,16 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                                 strokeWidth: 3,
                                 valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
                               ))),
-                  StreamBuilder(
-                      stream: SocketManager().connectionStateStream,
-                      builder: (context, AsyncSnapshot<SocketState> snapshot) {
-                        SocketState? connectionStatus;
-                        if (snapshot.hasData) {
-                          connectionStatus = snapshot.data;
-                        } else {
-                          connectionStatus = SocketManager().state;
-                        }
-                        String subtitle;
-
-                        switch (connectionStatus) {
-                          case SocketState.CONNECTED:
-                            subtitle = "Fetch server version & OS";
-                            break;
-                          default:
-                            subtitle = "Disconnected (cannot fetch data)";
-                        }
-
-                        return SettingsTile(
-                            title: "Server Info",
-                            subTitle: subtitle,
-                            onTap: () async {
-                              if (connectionStatus != SocketState.CONNECTED) return;
-
-                              SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
-                                List<Widget> metaWidgets = [
-                                  RichText(
-                                      text: TextSpan(children: [
-                                        TextSpan(
-                                            text: "MacOS Version: ",
-                                            style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2)),
-                                        TextSpan(text: res['data']['os_version'], style: Theme.of(context).textTheme.bodyText1)
-                                      ])),
-                                  RichText(
-                                      text: TextSpan(children: [
-                                        TextSpan(
-                                            text: "BlueBubbles Server Version: ",
-                                            style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2)),
-                                        TextSpan(
-                                            text: res['data']['server_version'], style: Theme.of(context).textTheme.bodyText1)
-                                      ]))
-                                ];
-                                showDialog(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    title: Text(
-                                      "Metadata",
-                                      style: Theme.of(context).textTheme.headline1,
-                                      textAlign: TextAlign.center,
-                                    ),
-                                    backgroundColor: Theme.of(context).accentColor,
-                                    content: SizedBox(
-                                      width: context.width * 3 / 5,
-                                      height: context.height * 1 / 4,
-                                      child: Container(
-                                        padding: EdgeInsets.all(10.0),
-                                        decoration: BoxDecoration(
-                                            color: Theme.of(context).backgroundColor,
-                                            borderRadius: BorderRadius.all(Radius.circular(10))),
-                                        child: ListView(
-                                          physics: AlwaysScrollableScrollPhysics(
-                                            parent: BouncingScrollPhysics(),
-                                          ),
-                                          children: metaWidgets,
-                                        ),
-                                      ),
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        child: Text(
-                                          "Close",
-                                          style: Theme.of(context).textTheme.bodyText1!.copyWith(
-                                            color: Theme.of(context).primaryColor,
-                                          ),
-                                        ),
-                                        onPressed: () => Navigator.of(context).pop(),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              });
-                            },
-                            trailing: Icon(Icons.info, color: Theme.of(context).primaryColor));
-                      }),
+                  Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
+                  Container(
+                    height: 30,
+                    decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
+                      color: headerColor,
+                      border: Border(
+                          top: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
+                      ),
+                    ) : null,
+                  ),
                 ],
               ),
             ),
