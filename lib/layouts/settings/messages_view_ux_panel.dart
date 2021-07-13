@@ -1,7 +1,7 @@
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
-import 'package:get/get.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
@@ -10,6 +10,7 @@ import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 
 class ConvoSettings extends StatefulWidget {
   ConvoSettings({Key? key}) : super(key: key);
@@ -43,7 +44,8 @@ class _ConvoSettingsState extends State<ConvoSettings> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarIconBrightness:
+            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
@@ -130,21 +132,55 @@ class _ConvoSettingsState extends State<ConvoSettings> {
                     initialVal: _settingsCopy.recipientAsPlaceholder,
                     title: "Show Recipient (or Group Name) as Placeholder",
                   ),
-                  SettingsSwitch(
+                  SwitchListTile(
+                    title: Text(
+                      "Double-Tap Message for Details",
+                      style: Theme.of(context).textTheme.bodyText1,
+                    ),
+                    value: _settingsCopy.doubleTapForDetails,
+                    activeColor: Theme.of(context).primaryColor,
+                    activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
+                    inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
+                    inactiveThumbColor: Theme.of(context).accentColor,
                     onChanged: (bool val) {
                       _settingsCopy.doubleTapForDetails = val;
+                      if (val && _settingsCopy.enableQuickTapback) {
+                          _settingsCopy.enableQuickTapback = false;
+                      }
                       saveSettings();
+                      setState(() {});
                     },
-                    initialVal: _settingsCopy.doubleTapForDetails,
-                    title: "Double-Tap Message for Details",
                   ),
-                  // SettingsSwitch(
-                  //   onChanged: (bool val) {
-                  //     _settingsCopy.sendTypingIndicators = val;
-                  //   },
-                  //   initialVal: _settingsCopy.sendTypingIndicators,
-                  //   title: "Send typing indicators (BlueBubblesHelper ONLY)",
-                  // ),
+                  SwitchListTile(
+                    title: Text(
+                      "Double-Tap Message for Quick Tapback",
+                      style: Theme.of(context).textTheme.bodyText1,
+                    ),
+                    value: _settingsCopy.enableQuickTapback,
+                    activeColor: Theme.of(context).primaryColor,
+                    activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
+                    inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
+                    inactiveThumbColor: Theme.of(context).accentColor,
+                    onChanged: (bool val) {
+                      _settingsCopy.enableQuickTapback = val;
+                      if (val && _settingsCopy.doubleTapForDetails) {
+                          _settingsCopy.doubleTapForDetails = false;
+                      }
+                      saveSettings();
+                      setState(() {});
+                    },
+                  ),
+                  if (_settingsCopy.enableQuickTapback)
+                    SettingsOptions<String>(
+                      title: "Quick Tapback",
+                      options: ReactionTypes.toList(),
+                      initial: _settingsCopy.quickTapbackType,
+                      textProcessing: (val) => val,
+                      onChanged: (val) {
+                        _settingsCopy.quickTapbackType = val;
+                        saveSettings();
+                      },
+                    ),
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.smartReply = val;

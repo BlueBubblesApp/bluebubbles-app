@@ -238,12 +238,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
           foregroundColor: Theme.of(context).textTheme.bodyText1!.color,
           icon: widget.chat.isPinned! ? Icons.star_outline : Icons.star,
           onTap: () async {
-            if (widget.chat.isPinned!) {
-              await widget.chat.unpin();
-            } else {
-              await widget.chat.pin();
-            }
-
+            await widget.chat.togglePin(!widget.chat.isPinned!);
             EventDispatcher().emit("refresh", null);
             if (this.mounted) setState(() {});
           },
@@ -256,8 +251,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
             color: Colors.purple[700],
             icon: widget.chat.isMuted! ? Icons.notifications_active : Icons.notifications_off,
             onTap: () async {
-              widget.chat.isMuted = !widget.chat.isMuted!;
-              await widget.chat.save(updateLocalVals: true);
+              await widget.chat.toggleMute(!widget.chat.isMuted!);
               if (this.mounted) setState(() {});
             },
           ),
@@ -276,7 +270,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
           color: Colors.blue,
           icon: widget.chat.hasUnreadMessage! ? Icons.mark_chat_read : Icons.mark_chat_unread,
           onTap: () {
-            ChatBloc().markRead(widget.chat);
+            ChatBloc().toggleChatUnread(widget.chat, !widget.chat.hasUnreadMessage!);
           },
         ),
         IconSlideAction(
@@ -510,10 +504,7 @@ class __CupertinoState extends State<_Cupertino> {
           },
           onLongPress: () async {
             HapticFeedback.mediumImpact();
-            if (widget.parent.widget.chat.hasUnreadMessage!) {
-              ChatBloc().markRead(widget.parent.widget.chat);
-            }
-            await widget.parent.widget.chat.setUnreadStatus(!widget.parent.widget.chat.hasUnreadMessage!);
+            await ChatBloc().toggleChatUnread(widget.parent.widget.chat, !widget.parent.widget.chat.hasUnreadMessage!);
             if (this.mounted) setState(() {});
           },
           child: Stack(

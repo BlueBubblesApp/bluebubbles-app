@@ -1,3 +1,4 @@
+import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_details_popup.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -74,13 +75,23 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
     }
   }
 
+  void sendReaction(String type) {
+    debugPrint("Sending reaction type: " + type);
+    ActionHandler.sendReaction(CurrentChat.of(context)!.chat, widget.message, type);
+    Navigator.of(context).pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       key: containerKey,
       onDoubleTap: SettingsManager().settings.doubleTapForDetails && !widget.message.guid!.startsWith('temp')
           ? this.openMessageDetails
-          : null,
+          : SettingsManager().settings.enableQuickTapback
+              ? () {
+                  this.sendReaction(SettingsManager().settings.quickTapbackType);
+                }
+              : null,
       onLongPress: this.openMessageDetails,
       child: Opacity(
         child: widget.child,

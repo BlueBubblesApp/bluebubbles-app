@@ -44,7 +44,7 @@ class SocketManager {
   SocketManager._internal();
 
   Future<void> removeChatNotification(Chat chat) async {
-    await chat.setUnreadStatus(false);
+    await chat.toggleHasUnread(false);
     ChatBloc().updateChat(chat);
   }
 

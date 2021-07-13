@@ -190,6 +190,7 @@ class Chat {
       this.id = existing.id;
       if (!updateLocalVals) {
         this.isMuted = existing.isMuted;
+        this.isPinned = existing.isPinned;
         this.isArchived = existing.isArchived;
         this.hasUnreadMessage = existing.hasUnreadMessage;
       }
@@ -238,11 +239,8 @@ class Chat {
   Future<Chat> update() async {
     final Database db = await DBProvider.db.database;
 
-    Map<String, dynamic> params = {
-      "isArchived": this.isArchived! ? 1 : 0,
-      "isMuted": this.isMuted! ? 1 : 0,
-      "isFiltered": this.isFiltered! ? 1 : 0
-    };
+    // isArchived, isMuted, and isPinned should only be updated by using the helper methods
+    Map<String, dynamic> params = {"isFiltered": this.isFiltered! ? 1 : 0};
 
     if (this.originalROWID != null) {
       params["originalROWID"] = this.originalROWID;
@@ -283,14 +281,15 @@ class Chat {
     await db.delete("chat_message_join", where: "chatId = ?", whereArgs: [chat.id]);
   }
 
-  Future<Chat> setUnreadStatus(bool hasUnreadMessage) async {
+  Future<Chat> toggleHasUnread(bool hasUnread) async {
     final Database db = await DBProvider.db.database;
-    if (hasUnreadMessage) {
+    if (hasUnread) {
       if (CurrentChat.isActive(this.guid!)) {
         return this;
       }
     }
-    this.hasUnreadMessage = hasUnreadMessage;
+
+    this.hasUnreadMessage = hasUnread;
     Map<String, dynamic> params = {
       "hasUnreadMessage": this.hasUnreadMessage! ? 1 : 0,
     };
@@ -298,14 +297,14 @@ class Chat {
     // If it already exists, update it
     if (this.id != null) {
       await db.update("chat", params, where: "ROWID = ?", whereArgs: [this.id]);
-    } else {
-      await this.save(updateIfAbsent: false);
     }
-    if (hasUnreadMessage) {
+
+    if (hasUnread) {
       EventDispatcher().emit("add-unread-chat", {"chatGuid": this.guid});
     } else {
       EventDispatcher().emit("remove-unread-chat", {"chatGuid": this.guid});
     }
+
     ChatBloc().updateUnreads();
     return this;
   }
@@ -365,9 +364,9 @@ class Chat {
       // If the message is from me, mark it unread
       // If the message is not from the same chat as the current chat, mark unread
       if (message.isFromMe!) {
-        await this.setUnreadStatus(false);
+        await this.toggleHasUnread(false);
       } else if (!CurrentChat.isActive(this.guid!)) {
-        await this.setUnreadStatus(true);
+        await this.toggleHasUnread(true);
       }
     }
 
@@ -716,23 +715,34 @@ class Chat {
     this.participants.retainWhere((element) => ids.remove(element.address));
   }
 
-  Future<Chat> pin() async {
+  Future<Chat> togglePin(bool isPinned) async {
     final Database db = await DBProvider.db.database;
     if (this.id == null) return this;
 
-    this.isPinned = true;
-    await db.update("chat", {"isPinned": 1}, where: "ROWID = ?", whereArgs: [this.id]);
+    this.isPinned = isPinned;
+    await db.update("chat", {"isPinned": isPinned ? 1 : 0}, where: "ROWID = ?", whereArgs: [this.id]);
 
     ChatBloc().updateChat(this);
     return this;
   }
 
-  Future<Chat> unpin() async {
+  Future<Chat> toggleMute(bool isMuted) async {
     final Database db = await DBProvider.db.database;
     if (this.id == null) return this;
 
-    this.isPinned = false;
-    await db.update("chat", {"isPinned": 0}, where: "ROWID = ?", whereArgs: [this.id]);
+    this.isMuted = isMuted;
+    await db.update("chat", {"isMuted": isMuted ? 1 : 0}, where: "ROWID = ?", whereArgs: [this.id]);
+
+    ChatBloc().updateChat(this);
+    return this;
+  }
+
+  Future<Chat> toggleArchived(bool isArchived) async {
+    final Database db = await DBProvider.db.database;
+    if (this.id == null) return this;
+
+    this.isArchived = isArchived;
+    await db.update("chat", {"isArchived": isArchived ? 1 : 0}, where: "ROWID = ?", whereArgs: [this.id]);
 
     ChatBloc().updateChat(this);
     return this;
