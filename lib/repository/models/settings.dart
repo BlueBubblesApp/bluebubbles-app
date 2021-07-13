@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/config_entry.dart';
 import 'package:flutter/material.dart';
@@ -70,6 +71,10 @@ class Settings {
   bool removeLetterAvatars = true;
   bool generateFakeContactNames = false;
   bool generateFakeMessageContent = false;
+
+  // Quick tapback settings
+  bool enableQuickTapback = false;
+  String quickTapbackType = ReactionTypes.toList()[0]; // The 'love' reaction
 
   Rx<Skins> skin = Skins.iOS.obs;
   ThemeMode theme = ThemeMode.system;
@@ -193,6 +198,10 @@ class Settings {
         settings.startVideosMutedFullscreen = entry.value;
       } else if (entry.name == "use24HrFormat") {
         settings.use24HrFormat = entry.value;
+      } else if (entry.name == "enableQuickTapback") {
+        settings.enableQuickTapback = entry.value;
+      } else if (entry.name == "quickTapbackType") {
+        settings.quickTapbackType = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -511,6 +520,16 @@ class Settings {
           name: "use24HrFormat",
           value: this.use24HrFormat,
           type: this.use24HrFormat.runtimeType,
+        ),
+        ConfigEntry(
+          name: "enableQuickTapback",
+          value: this.enableQuickTapback,
+          type: this.enableQuickTapback.runtimeType,
+        ),
+        ConfigEntry(
+          name: "quickTapbackType",
+          value: this.quickTapbackType,
+          type: this.quickTapbackType.runtimeType,
         ),
         // ConfigEntry(
         //     name: "emojiFontFamily",
