@@ -270,7 +270,6 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
       List<Message> reversed = _messages.reversed.toList();
       int sampleSize = (_messages.length > 5) ? 5 : _messages.length;
       reversed.sublist(reversed.length - sampleSize).forEach((message) {
-        print("HERE");
         if (!isEmptyString(message.fullText, stripWhitespace: true)) {
           if (message.isFromMe ?? false) {
             smartReply.addConversationForLocalUser(message.fullText!);
