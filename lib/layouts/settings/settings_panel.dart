@@ -1,10 +1,8 @@
-import 'dart:convert';
 import 'dart:ui';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
-import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
@@ -16,7 +14,6 @@ import 'package:bluebubbles/layouts/settings/redacted_mode_panel.dart';
 import 'package:bluebubbles/layouts/settings/server_management_panel.dart';
 import 'package:bluebubbles/layouts/settings/theme_panel.dart';
 import 'package:bluebubbles/layouts/settings/ux_panel.dart';
-import 'package:bluebubbles/layouts/setup/qr_code_scanner.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoTextField.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
@@ -24,7 +21,6 @@ import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
-import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
@@ -33,7 +29,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../setup/qr_code_scanner.dart';
 
 List disconnectedStates = [SocketState.DISCONNECTED, SocketState.ERROR, SocketState.FAILED];
 
@@ -46,7 +41,6 @@ class SettingsPanel extends StatefulWidget {
 
 class _SettingsPanelState extends State<SettingsPanel> {
   late Settings _settingsCopy;
-  FCMData? _fcmDataCopy;
   bool needToReconnect = false;
   int? lastRestart;
 
@@ -54,7 +48,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
   void initState() {
     super.initState();
     _settingsCopy = SettingsManager().settings;
-    _fcmDataCopy = SettingsManager().fcmData;
 
     // Listen for any incoming events
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
