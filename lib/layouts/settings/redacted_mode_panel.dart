@@ -111,7 +111,12 @@ class _RedactedModePanelState extends State<RedactedModePanel> with TickerProvid
                       )
                   ),
                   Container(
-                      color: tileColor,
+                      decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
+                        color: tileColor,
+                        border: Border(
+                            bottom: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
+                        ),
+                      ) : null,
                       child: Padding(
                         padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
                         child: Text(
@@ -152,11 +157,22 @@ class _RedactedModePanelState extends State<RedactedModePanel> with TickerProvid
                               originalROWID: Random.secure().nextInt(10000),
                               transferName: "assets/icon/icon.png",
                               mimeType: "image/png",
+                              width: 100,
+                              height: 100,
                             )
                           ],
                       ),
                     ),
                   ),
+                  Container(
+                    decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
+                      color: headerColor,
+                      border: Border(
+                          top: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
+                      ),
+                    ) : null,
+                  ),
+                  Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
                   SettingsSwitch(
                     onChanged: (bool val) {
                       SettingsManager().settings.redactedMode.value = val;
@@ -170,6 +186,7 @@ class _RedactedModePanelState extends State<RedactedModePanel> with TickerProvid
                     },
                     initialVal: SettingsManager().settings.redactedMode.value,
                     title: "Enable Redacted Mode",
+                    backgroundColor: tileColor,
                   ),
                   if (SettingsManager().settings.redactedMode.value)
                     ...[

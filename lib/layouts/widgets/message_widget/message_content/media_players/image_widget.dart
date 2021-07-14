@@ -82,8 +82,8 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
         children: <Widget>[
           Container(
             constraints: BoxConstraints(
-              maxWidth: context.width / 2,
-              maxHeight: context.height / 2,
+              maxWidth: widget.attachment.guid == "redacted-mode-demo-attachment" ? widget.attachment.width!.toDouble() : context.width / 2,
+              maxHeight: widget.attachment.guid == "redacted-mode-demo-attachment" ? widget.attachment.height!.toDouble() : context.height / 2,
             ),
             child: buildSwitcher(),
           ),

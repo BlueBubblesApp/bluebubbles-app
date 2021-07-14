@@ -652,30 +652,35 @@ class _SettingsSwitchState extends State<SettingsSwitch> {
 
   @override
   Widget build(BuildContext context) {
-    return SwitchListTile(
-      tileColor: widget.backgroundColor,
-      title: Text(
-        widget.title,
-        style: Theme.of(context).textTheme.bodyText1,
+    return Container(
+      color: widget.backgroundColor,
+      child: SwitchListTile(
+        tileColor: widget.backgroundColor,
+        title: Text(
+          widget.title,
+          style: Theme.of(context).textTheme.bodyText1,
+        ),
+        subtitle: widget.subtitle != null ? Text(
+          widget.subtitle!,
+          style: Theme.of(context).textTheme.subtitle1,
+        ) : null,
+        value: _value!,
+        activeColor: Theme.of(context).primaryColor,
+        activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
+        inactiveTrackColor: widget.backgroundColor == Theme.of(context).accentColor
+            ? Theme.of(context).backgroundColor.withOpacity(0.6) : Theme.of(context).accentColor.withOpacity(0.6),
+        inactiveThumbColor: widget.backgroundColor == Theme.of(context).accentColor
+            ? Theme.of(context).backgroundColor : Theme.of(context).accentColor,
+        onChanged: (bool val) {
+          widget.onChanged!(val);
+
+          if (!this.mounted) return;
+
+          setState(() {
+            _value = val;
+          });
+        },
       ),
-      subtitle: widget.subtitle != null ? Text(
-        widget.subtitle!,
-        style: Theme.of(context).textTheme.subtitle1,
-      ) : null,
-      value: _value!,
-      activeColor: Theme.of(context).primaryColor,
-      activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
-      inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
-      inactiveThumbColor: Theme.of(context).accentColor,
-      onChanged: (bool val) {
-        widget.onChanged!(val);
-
-        if (!this.mounted) return;
-
-        setState(() {
-          _value = val;
-        });
-      },
     );
   }
 }
