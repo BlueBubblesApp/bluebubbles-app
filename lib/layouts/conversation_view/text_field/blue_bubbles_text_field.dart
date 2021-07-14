@@ -100,7 +100,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       if (!mounted || CurrentChat.of(context)?.chat == null) return;
 
       // If the private API features are disabled, or sending the indicators is disabled, return
-      if (!SettingsManager().settings.enablePrivateAPI || !SettingsManager().settings.sendTypingIndicators) {
+      if (!SettingsManager().settings.enablePrivateAPI.value || !SettingsManager().settings.privateSendTypingIndicators.value) {
         if (mounted) setState(() {});
         return;
       }
@@ -110,7 +110,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         SocketManager().sendMessage("stopped-typing", {"chatGuid": CurrentChat.of(context)!.chat.guid}, (data) {});
       } else if (!selfTyping && (controller!.text.length > 0 || pickedImages.length > 0)) {
         selfTyping = true;
-        if (SettingsManager().settings.sendTypingIndicators)
+        if (SettingsManager().settings.privateSendTypingIndicators.value)
           SocketManager().sendMessage("started-typing", {"chatGuid": CurrentChat.of(context)!.chat.guid}, (data) {});
       }
 

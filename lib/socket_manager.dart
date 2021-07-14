@@ -218,7 +218,7 @@ class SocketManager {
   }
 
   Future<String> handleChatStatusChange(_data) async {
-    if (!SettingsManager().settings.enablePrivateAPI) return new Future.value("");
+    if (!SettingsManager().settings.enablePrivateAPI.value) return new Future.value("");
 
     Map<String, dynamic>? data = _data;
     IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_CHAT_STATUS_CHANGE, item: {"data": data}));
@@ -313,7 +313,7 @@ class SocketManager {
        */
       _manager.socket!.on("chat-read-status-changed", handleChatStatusChange);
       _manager.socket!.on("typing-indicator", (_data) {
-        if (!SettingsManager().settings.enablePrivateAPI) return;
+        if (!SettingsManager().settings.enablePrivateAPI.value) return;
 
         Map<String, dynamic> data = _data;
         CurrentChat? currentChat = AttachmentInfoBloc().getCurrentChat(data["guid"]);

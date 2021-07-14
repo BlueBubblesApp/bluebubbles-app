@@ -404,7 +404,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                     );
                   },
                 ),
-              if (SettingsManager().settings.enablePrivateAPI)
+              if (SettingsManager().settings.enablePrivateAPI.value)
                 SliverToBoxAdapter(
                     child: Padding(
                   padding: EdgeInsets.only(top: 5),
