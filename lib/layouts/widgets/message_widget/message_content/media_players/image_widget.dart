@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
@@ -38,15 +39,19 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
     initGate = true;
 
     // Try to get the image data from the "cache"
-    data = CurrentChat.of(context)!.getImageData(widget.attachment);
+    data = CurrentChat.of(context)?.getImageData(widget.attachment);
     if (data == null) {
       // If it's an image, compress the image when loading it
-      if (AttachmentHelper.canCompress(widget.attachment)) {
+      if (AttachmentHelper.canCompress(widget.attachment) && widget.attachment.guid != "redacted-mode-demo-attachment") {
         data = await FlutterImageCompress.compressWithFile(widget.file.absolute.path,
             quality: SettingsManager().compressionQuality);
 
         // All other attachments can be held in memory as bytes
       } else {
+        if (widget.attachment.guid == "redacted-mode-demo-attachment") {
+          data = (await rootBundle.load(widget.file.path)).buffer.asUint8List();
+          return;
+        }
         data = await widget.file.readAsBytes();
       }
       if (data == null) return;
@@ -125,7 +130,7 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
                   return Stack(children: [
                     buildPlaceHolder(),
                     AnimatedOpacity(
-                      opacity: (frame == null) ? 0 : 1,
+                      opacity: (frame == null && widget.attachment.guid != "redacted-mode-demo-attachment") ? 0 : 1,
                       child: child,
                       duration: const Duration(milliseconds: 250),
                       curve: Curves.easeInOut,

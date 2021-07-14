@@ -7,6 +7,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
+import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:get/get.dart';
@@ -131,6 +132,7 @@ class _RedactedModePanelState extends State<RedactedModePanel> with TickerProvid
                           dateDelivered: DateTime.now().toLocal(),
                           isFromMe: false,
                           hasReactions: true,
+                          hasAttachments: true,
                           text: "This is a preview of Redacted Mode settings.",
                           handle: Handle(
                             id: Random.secure().nextInt(10000),
@@ -143,7 +145,15 @@ class _RedactedModePanelState extends State<RedactedModePanel> with TickerProvid
                               associatedMessageType: "like",
                               isFromMe: true,
                             ),
-                          ]
+                          ],
+                          attachments: [
+                            Attachment(
+                              guid: "redacted-mode-demo-attachment",
+                              originalROWID: Random.secure().nextInt(10000),
+                              transferName: "assets/icon/icon.png",
+                              mimeType: "image/png",
+                            )
+                          ],
                       ),
                     ),
                   ),

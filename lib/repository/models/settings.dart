@@ -47,8 +47,8 @@ class Settings {
   bool showDeliveryTimestamps = false;
   int previewCompressionQuality = 25;
   bool filteredChatList = false;
-  bool startVideosMuted = false;
-  bool startVideosMutedFullscreen = false;
+  bool startVideosMuted = true;
+  bool startVideosMutedFullscreen = true;
   bool use24HrFormat = false;
   bool alwaysShowAvatars = false;
 

@@ -13,14 +13,16 @@ String? getContactName(BuildContext context, String? contactTitle, String? conta
     currentChat = CurrentChat.of(context)?.chat ?? currentChat;
     int index = (currentChat?.participants ?? []).indexWhere((h) => h.address == contactAddress);
     List<String?> fakeNames = currentChat?.fakeParticipants ?? [];
-    if (generateName) {
+    if (generateName && fakeNames.isNotEmpty) {
       if (index >= 0 && index < fakeNames.length) {
         contactName = currentChat?.fakeParticipants[index];
       }
+    } else if (generateName) {
+      contactName = "Fake Name";
     }
 
     // If the contact name still equals the contact title, override it
-    if (index == -1 || contactName == contactTitle) {
+    if ((index == -1 && contactName != "Fake Name") || contactName == contactTitle) {
       index = (index < 0) ? 0 : index;
       contactName = "Participant ${index + 1}";
     }

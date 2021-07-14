@@ -206,10 +206,10 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
 
     // First, add the message sender (if applicable)
     bool isGroup = CurrentChat.of(context)?.chat.isGroup() ?? false;
-    bool showSender = SettingsManager().settings.alwaysShowAvatars || isGroup;
-    if (isGroup &&
+    bool showSender = SettingsManager().settings.alwaysShowAvatars || isGroup || widget.message.guid == "redacted-mode-demo";
+    if (widget.message.guid == "redacted-mode-demo" || (isGroup &&
         (!sameSender(widget.message, widget.olderMessage) ||
-            !widget.message.dateCreated!.isWithin(widget.olderMessage!.dateCreated!, minutes: 30))) {
+            !widget.message.dateCreated!.isWithin(widget.olderMessage!.dateCreated!, minutes: 30)))) {
       messageColumn.add(
         Padding(
           padding: EdgeInsets.only(left: 15.0, top: 5.0, bottom: widget.message.getReactions().length > 0 ? 0.0 : 3.0),
