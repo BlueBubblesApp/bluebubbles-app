@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/repository/models/message.dart';
@@ -233,6 +234,9 @@ class MetadataHelper {
           }
         }
       }
+    } on HandshakeException catch (ex) {
+      meta.title = 'Invalid SSL Certificate';
+      meta.description = ex.message;
     } catch (ex) {
       debugPrint('Failed to manually get metadata: ${ex.toString()}');
     }
