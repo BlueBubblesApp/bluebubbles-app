@@ -78,7 +78,6 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
   void sendReaction(String type) {
     debugPrint("Sending reaction type: " + type);
     ActionHandler.sendReaction(CurrentChat.of(context)!.chat, widget.message, type);
-    Navigator.of(context).pop();
   }
 
   @override
