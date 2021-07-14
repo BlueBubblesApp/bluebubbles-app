@@ -483,6 +483,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
           child: InkWell(
             onTap: () {
               Clipboard.setData(new ClipboardData(text: widget.message.fullText));
+              Navigator.of(context, rootNavigator: true).pop();
               showSnackbar("Copied", "Copied to clipboard!");
             },
             child: ListTile(
