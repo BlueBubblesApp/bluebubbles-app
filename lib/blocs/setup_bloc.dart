@@ -223,7 +223,7 @@ class SetupBloc {
     await ContactManager().getContacts(force: true);
     await ChatBloc().refreshChats(force: true);
 
-    SocketManager().finishSetup();
+    SocketManager().toggleSetupFinished(true, applyToDb: true);
     closeSync();
   }
 

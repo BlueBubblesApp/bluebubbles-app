@@ -698,8 +698,13 @@ class SocketManager {
     return completer.future;
   }
 
-  void finishSetup() {
-    finishedSetup.sink.add(true);
+  void toggleSetupFinished(bool isFinished, {bool applyToDb = true}) {
+    finishedSetup.sink.add(isFinished);
+
+    if (SettingsManager().settings.finishedSetup != isFinished) {
+      SettingsManager().settings.finishedSetup = isFinished;
+      SettingsManager().saveSettings(SettingsManager().settings);
+    }
   }
 
   /// Updates and saves a new server address and then forces a new reconnection to the socket with this address

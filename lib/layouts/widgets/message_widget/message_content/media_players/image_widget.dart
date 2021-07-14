@@ -42,8 +42,28 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
     if (data == null) {
       // If it's an image, compress the image when loading it
       if (AttachmentHelper.canCompress(widget.attachment)) {
+        int minWidth =
+            (widget.attachment.width != null && widget.attachment.width! > 0) ? widget.attachment.width! : 1920;
+        int minHeight =
+            (widget.attachment.height != null && widget.attachment.height! > 0) ? widget.attachment.height! : 1080;
+
+        CompressFormat format = CompressFormat.png;
+        if (widget.attachment.transferName!.endsWith(".heic")) {
+          format = CompressFormat.heic;
+        } else if (widget.attachment.transferName!.endsWith(".jpg") ||
+            widget.attachment.transferName!.endsWith(".jpeg")) {
+          format = CompressFormat.jpeg;
+        } else if (widget.attachment.transferName!.endsWith(".webp")) {
+          format = CompressFormat.webp;
+        }
+
         data = await FlutterImageCompress.compressWithFile(widget.file.absolute.path,
-            quality: SettingsManager().compressionQuality);
+            quality: SettingsManager().compressionQuality,
+            format: format,
+            keepExif: true,
+            autoCorrectionAngle: false,
+            minHeight: minHeight,
+            minWidth: minWidth);
 
         // All other attachments can be held in memory as bytes
       } else {
