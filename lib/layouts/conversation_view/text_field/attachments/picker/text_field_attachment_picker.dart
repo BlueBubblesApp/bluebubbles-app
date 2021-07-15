@@ -58,166 +58,177 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
       curve: Curves.easeInOut,
       child: widget.visible
           ? SizedBox(
-              child: CustomScrollView(
-                physics: ThemeSwitcher.getScrollPhysics(),
-                scrollDirection: Axis.horizontal,
-                slivers: <Widget>[
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: EdgeInsets.only(left: 5, right: 10, top: 5, bottom: 5),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: <Widget>[
-                          Flexible(
-                            fit: FlexFit.loose,
-                            child: ConstrainedBox(
-                              constraints: BoxConstraints(
-                                minWidth: 90,
-                              ),
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  primary: Theme.of(context).accentColor,
-                                ),
-                                onPressed: () async {
-                                  List<dynamic>? res = await MethodChannelInterface().invokeMethod("pick-file");
-                                  if (res == null || res.isEmpty) return;
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  getAttachments();
+                },
+                child: SingleChildScrollView(
+                  physics: AlwaysScrollableScrollPhysics(),
+                  child: SizedBox(
+                    height: 300,
+                    child: CustomScrollView(
+                      physics: ThemeSwitcher.getScrollPhysics(),
+                      scrollDirection: Axis.horizontal,
+                      slivers: <Widget>[
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: EdgeInsets.only(left: 5, right: 10, top: 5, bottom: 5),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: <Widget>[
+                                Flexible(
+                                  fit: FlexFit.loose,
+                                  child: ConstrainedBox(
+                                    constraints: BoxConstraints(
+                                      minWidth: 90,
+                                    ),
+                                    child: ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        primary: Theme.of(context).accentColor,
+                                      ),
+                                      onPressed: () async {
+                                        List<dynamic>? res = await MethodChannelInterface().invokeMethod("pick-file");
+                                        if (res == null || res.isEmpty) return;
 
-                                  for (dynamic path in res) {
-                                    widget.onAddAttachment(File(path.toString()));
-                                  }
-                                },
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: <Widget>[
-                                    Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Icon(
-                                        Icons.video_library,
-                                        color: Theme.of(context).textTheme.bodyText1!.color,
+                                        for (dynamic path in res) {
+                                          widget.onAddAttachment(File(path.toString()));
+                                        }
+                                      },
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: <Widget>[
+                                          Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: Icon(
+                                              Icons.video_library,
+                                              color: Theme.of(context).textTheme.bodyText1!.color,
+                                            ),
+                                          ),
+                                          Text(
+                                            "Files",
+                                            style: TextStyle(
+                                              color: Theme.of(context).textTheme.bodyText1!.color,
+                                              fontSize: 13,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                    Text(
-                                      "Files",
-                                      style: TextStyle(
-                                        color: Theme.of(context).textTheme.bodyText1!.color,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          Container(height: 10),
-                          Flexible(
-                            fit: FlexFit.loose,
-                            child: ConstrainedBox(
-                              constraints: BoxConstraints(
-                                minWidth: 90,
-                              ),
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
                                   ),
-                                  primary: Theme.of(context).accentColor,
                                 ),
-                                onPressed: () async {
-                                  showDialog(
-                                    context: context,
-                                    builder: (buildContext) => AlertDialog(
-                                      backgroundColor: Theme.of(context).accentColor,
-                                      title: Text(
-                                        "Send Current Location?",
-                                        style: Theme.of(context).textTheme.headline1,
-                                      ),
-                                      actions: <Widget>[
-                                        TextButton(
-                                          style: TextButton.styleFrom(
-                                            backgroundColor: Colors.blue[600],
-                                          ),
-                                          child: Text(
-                                            "Send",
-                                            style: Theme.of(context).textTheme.bodyText1,
-                                          ),
-                                          onPressed: () async {
-                                            Share.location(CurrentChat.of(context)!.chat);
-                                            Navigator.of(context).pop();
-                                          },
+                                Container(height: 10),
+                                Flexible(
+                                  fit: FlexFit.loose,
+                                  child: ConstrainedBox(
+                                    constraints: BoxConstraints(
+                                      minWidth: 90,
+                                    ),
+                                    child: ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(10),
                                         ),
-                                        TextButton(
-                                          style: TextButton.styleFrom(
-                                            backgroundColor: Colors.red,
+                                        primary: Theme.of(context).accentColor,
+                                      ),
+                                      onPressed: () async {
+                                        showDialog(
+                                          context: context,
+                                          builder: (buildContext) => AlertDialog(
+                                            backgroundColor: Theme.of(context).accentColor,
+                                            title: Text(
+                                              "Send Current Location?",
+                                              style: Theme.of(context).textTheme.headline1,
+                                            ),
+                                            actions: <Widget>[
+                                              TextButton(
+                                                style: TextButton.styleFrom(
+                                                  backgroundColor: Colors.blue[600],
+                                                ),
+                                                child: Text(
+                                                  "Send",
+                                                  style: Theme.of(context).textTheme.bodyText1,
+                                                ),
+                                                onPressed: () async {
+                                                  Share.location(CurrentChat.of(context)!.chat);
+                                                  Navigator.of(context).pop();
+                                                },
+                                              ),
+                                              TextButton(
+                                                style: TextButton.styleFrom(
+                                                  backgroundColor: Colors.red,
+                                                ),
+                                                child: Text(
+                                                  "Cancel",
+                                                  style: Theme.of(context).textTheme.bodyText1,
+                                                ),
+                                                onPressed: () {
+                                                  Navigator.of(context).pop();
+                                                },
+                                              ),
+                                            ],
                                           ),
-                                          child: Text(
-                                            "Cancel",
-                                            style: Theme.of(context).textTheme.bodyText1,
+                                        );
+                                      },
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: <Widget>[
+                                          Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: Icon(
+                                              Icons.location_on,
+                                              color: Theme.of(context).textTheme.bodyText1!.color,
+                                            ),
                                           ),
-                                          onPressed: () {
-                                            Navigator.of(context).pop();
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: <Widget>[
-                                    Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Icon(
-                                        Icons.location_on,
-                                        color: Theme.of(context).textTheme.bodyText1!.color,
+                                          Text(
+                                            "Location",
+                                            style: TextStyle(
+                                              color: Theme.of(context).textTheme.bodyText1!.color,
+                                              fontSize: 13,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                    Text(
-                                      "Location",
-                                      style: TextStyle(
-                                        color: Theme.of(context).textTheme.bodyText1!.color,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                  ],
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                        SliverToBoxAdapter(
+                          child: Padding(
+                              padding: EdgeInsets.only(top: 5, bottom: 5, right: 5),
+                              child: CameraWidget(
+                                addAttachment: (File attachment) {
+                                  widget.onAddAttachment(attachment);
+                                },
+                              )),
+                        ),
+                        SliverGrid(
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                          ),
+                          delegate: SliverChildBuilderDelegate(
+                                (context, index) {
+                              AssetEntity element = _images[index];
+                              return AttachmentPicked(
+                                key: Key("attachmentPicked" + _images[index].id),
+                                data: element,
+                                onTap: () async {
+                                  widget.onAddAttachment(await element.file);
+                                },
+                              );
+                            },
+                            childCount: _images.length,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  SliverToBoxAdapter(
-                    child: Padding(
-                        padding: EdgeInsets.only(top: 5, bottom: 5, right: 5),
-                        child: CameraWidget(
-                          addAttachment: (File attachment) {
-                            widget.onAddAttachment(attachment);
-                          },
-                        )),
-                  ),
-                  SliverGrid(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                    ),
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        AssetEntity element = _images[index];
-                        return AttachmentPicked(
-                          key: Key("attachmentPicked" + _images[index].id),
-                          data: element,
-                          onTap: () async {
-                            widget.onAddAttachment(await element.file);
-                          },
-                        );
-                      },
-                      childCount: _images.length,
-                    ),
-                  ),
-                ],
+                  )
+                ),
               ),
               height: 300,
             )
