@@ -252,7 +252,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   ),
                   SettingsTile(
                     backgroundColor: tileColor,
-                    title: "Attachment Settings",
+                    title: "Media Settings",
                     onTap: () {
                       Navigator.of(context).push(
                         CupertinoPageRoute(
@@ -490,7 +490,9 @@ class SettingsTile extends StatelessWidget {
       this.leading,
       this.subTitle,
       this.showDivider = true,
-      this.backgroundColor})
+      this.backgroundColor,
+      this.isThreeLine = false,
+      })
       : super(key: key);
 
   final Function? onTap;
@@ -501,6 +503,7 @@ class SettingsTile extends StatelessWidget {
   final Widget? leading;
   final bool showDivider;
   final Color? backgroundColor;
+  final bool isThreeLine;
 
   @override
   Widget build(BuildContext context) {
@@ -525,6 +528,7 @@ class SettingsTile extends StatelessWidget {
                     style: Theme.of(context).textTheme.subtitle1,
                   )
                 : null,
+            isThreeLine: isThreeLine,
           ),
           if (showDivider)
             Divider(
@@ -809,6 +813,9 @@ class SettingsSlider extends StatefulWidget {
       required this.min,
       required this.max,
       required this.divisions,
+      this.showDivider = false,
+      this.leading,
+      this.backgroundColor,
       Key? key})
       : super(key: key);
 
@@ -819,6 +826,9 @@ class SettingsSlider extends StatefulWidget {
   final double min;
   final double max;
   final int divisions;
+  final bool showDivider;
+  final Widget? leading;
+  final Color? backgroundColor;
 
   @override
   _SettingsSliderState createState() => _SettingsSliderState();
@@ -842,36 +852,55 @@ class _SettingsSliderState extends State<SettingsSlider> {
       value = widget.formatValue!(currentVal);
     }
 
-    return Column(
-      children: <Widget>[
-        ListTile(
-          title: Text(
-            "${widget.text}: $value",
-            style: Theme.of(context).textTheme.bodyText1,
-          ),
-          subtitle: Slider(
-            activeColor: Theme.of(context).primaryColor,
-            inactiveColor: Theme.of(context).primaryColor.withOpacity(0.2),
-            value: currentVal,
-            onChanged: (double value) {
-              if (!this.mounted) return;
+    return Container(
+      color: widget.backgroundColor,
+      child: Column(
+        children: <Widget>[
+          ListTile(
+            tileColor: widget.backgroundColor,
+            leading: widget.leading,
+            trailing: Text(value),
+            title: SettingsManager().settings.skin.value == Skins.iOS ? CupertinoSlider(
+              activeColor: Theme.of(context).primaryColor,
+              //inactiveColor: Theme.of(context).primaryColor.withOpacity(0.2),
+              value: currentVal,
+              onChanged: (double value) {
+                if (!this.mounted) return;
 
-              setState(() {
-                currentVal = value;
-                widget.update!(currentVal);
-              });
-            },
-            label: value,
-            divisions: widget.divisions,
-            min: widget.min,
-            max: widget.max,
+                setState(() {
+                  currentVal = value;
+                  widget.update!(currentVal);
+                });
+              },
+              //label: value,
+              divisions: widget.divisions,
+              min: widget.min,
+              max: widget.max,
+            ) : Slider(
+              activeColor: Theme.of(context).primaryColor,
+              inactiveColor: Theme.of(context).primaryColor.withOpacity(0.2),
+              value: currentVal,
+              onChanged: (double value) {
+                if (!this.mounted) return;
+
+                setState(() {
+                  currentVal = value;
+                  widget.update!(currentVal);
+                });
+              },
+              label: value,
+              divisions: widget.divisions,
+              min: widget.min,
+              max: widget.max,
+            ),
           ),
-        ),
-        Divider(
-          color: Theme.of(context).accentColor.withOpacity(0.5),
-          thickness: 1,
-        ),
-      ],
+          if (widget.showDivider)
+            Divider(
+              color: Theme.of(context).accentColor.withOpacity(0.5),
+              thickness: 1,
+            ),
+        ],
+      ),
     );
   }
 }
