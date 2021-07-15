@@ -93,56 +93,6 @@ class _UXPanelState extends State<UXPanel> {
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.showConnectionIndicator = val;
-                      saveSettings();
-                    },
-                    initialVal: _settingsCopy.showConnectionIndicator,
-                    title: "Show Connection Indicator",
-                  ),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.showSyncIndicator = val;
-                      saveSettings();
-                    },
-                    initialVal: _settingsCopy.showSyncIndicator,
-                    title: "Show Sync Indicator in Chat List",
-                  ),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.colorblindMode = val;
-                      saveSettings();
-                    },
-                    initialVal: _settingsCopy.colorblindMode,
-                    title: "Colorblind Mode",
-                  ),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.filteredChatList = val;
-                      saveSettings();
-                    },
-                    initialVal: _settingsCopy.filteredChatList,
-                    title: "Filtered Chat List",
-                  ),
-                  if (SettingsManager().settings.skin.value == Skins.Samsung ||
-                      SettingsManager().settings.skin.value == Skins.Material)
-                    SettingsSwitch(
-                      onChanged: (bool val) {
-                        _settingsCopy.swipableConversationTiles = val;
-                        saveSettings();
-                      },
-                      initialVal: _settingsCopy.swipableConversationTiles,
-                      title: "Swipe Actions for Conversation Tiles",
-                    ),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.moveChatCreatorToHeader = val;
-                      saveSettings();
-                    },
-                    initialVal: _settingsCopy.moveChatCreatorToHeader,
-                    title: "Move Chat Creator Button to Header",
-                  ),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
                       _settingsCopy.hideTextPreviews = val;
                       saveSettings();
                     },
