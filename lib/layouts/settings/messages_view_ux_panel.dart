@@ -206,14 +206,6 @@ class _ConvoSettingsState extends State<ConvoSettings> {
                     initialVal: _settingsCopy.sendWithReturn,
                     title: "Send Message with Return Key",
                   ),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.startVideosMuted = val;
-                      saveSettings();
-                    },
-                    initialVal: _settingsCopy.startVideosMuted,
-                    title: "Play Videos Muted by Default in Mini-Player",
-                  ),
                 ],
               ),
             ),

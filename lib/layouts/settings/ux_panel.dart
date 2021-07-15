@@ -151,14 +151,6 @@ class _UXPanelState extends State<UXPanel> {
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.preCachePreviewImages = val;
-                      saveSettings();
-                    },
-                    initialVal: _settingsCopy.preCachePreviewImages,
-                    title: "Pre-Cache Preview Images",
-                  ),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
                       _settingsCopy.lowMemoryMode = val;
                       saveSettings();
                     },
@@ -204,14 +196,6 @@ class _UXPanelState extends State<UXPanel> {
                         min: 1,
                         max: 10,
                         divisions: 9),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.startVideosMutedFullscreen = val;
-                      saveSettings();
-                    },
-                    initialVal: _settingsCopy.startVideosMutedFullscreen,
-                    title: "Play Videos Muted by Default in Fullscreen Player",
-                  ),
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.use24HrFormat = val;
