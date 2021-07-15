@@ -106,7 +106,9 @@ class ContactManager {
     await this.matchHandles();
 
     debugPrint("[ContactManager] -> Finished fetching contacts (${handleToContact.length})");
-    getContactsFuture!.complete(true);
+    if (getContactsFuture != null && !getContactsFuture!.isCompleted) {
+      getContactsFuture!.complete(true);
+    }
 
     // Lazy load thumbnails after rendering initial contacts.
     getAvatars();
