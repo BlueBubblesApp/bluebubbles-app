@@ -41,7 +41,7 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
 
   void updateContent() async {
     // Ge the current attachment content (status)
-    content = AttachmentHelper.getContent(widget.attachment);
+    content = AttachmentHelper.getContent(widget.attachment, path: widget.attachment.guid == "redacted-mode-demo-attachment" ? widget.attachment.transferName : null);
 
     // If we can download it, do so
     if (await AttachmentHelper.canAutoDownload() && content is Attachment) {

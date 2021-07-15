@@ -327,7 +327,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   SettingsTile(
                     backgroundColor: tileColor,
                     title: "Redacted Mode",
-                    subTitle: "Redacted Mode ${SettingsManager().settings.redactedMode ? "Enabled" : "Disabled"}",
+                    subTitle: "Redacted Mode ${SettingsManager().settings.redactedMode.value ? "Enabled" : "Disabled"}",
                     trailing: nextIcon,
                     onTap: () async {
                       Navigator.of(context).push(
@@ -340,7 +340,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     leading: SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.wand_stars,
                       materialIcon: Icons.auto_fix_high,
-                      containerColor: getIndicatorColor(SettingsManager().settings.redactedMode ? SocketState.CONNECTED : SocketState.CONNECTING),
+                      containerColor: getIndicatorColor(SettingsManager().settings.redactedMode.value ? SocketState.CONNECTED : SocketState.CONNECTING),
                     ),
                   ),
                   // SettingsTile(
@@ -628,10 +628,14 @@ class SettingsSwitch extends StatefulWidget {
     required this.initialVal,
     this.onChanged,
     required this.title,
+    this.backgroundColor,
+    this.subtitle,
   }) : super(key: key);
   final bool initialVal;
   final Function(bool)? onChanged;
   final String title;
+  final Color? backgroundColor;
+  final String? subtitle;
 
   @override
   _SettingsSwitchState createState() => _SettingsSwitchState();
@@ -648,25 +652,35 @@ class _SettingsSwitchState extends State<SettingsSwitch> {
 
   @override
   Widget build(BuildContext context) {
-    return SwitchListTile(
-      title: Text(
-        widget.title,
-        style: Theme.of(context).textTheme.bodyText1,
+    return Container(
+      color: widget.backgroundColor,
+      child: SwitchListTile(
+        tileColor: widget.backgroundColor,
+        title: Text(
+          widget.title,
+          style: Theme.of(context).textTheme.bodyText1,
+        ),
+        subtitle: widget.subtitle != null ? Text(
+          widget.subtitle!,
+          style: Theme.of(context).textTheme.subtitle1,
+        ) : null,
+        value: _value!,
+        activeColor: Theme.of(context).primaryColor,
+        activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
+        inactiveTrackColor: widget.backgroundColor == Theme.of(context).accentColor
+            ? Theme.of(context).backgroundColor.withOpacity(0.6) : Theme.of(context).accentColor.withOpacity(0.6),
+        inactiveThumbColor: widget.backgroundColor == Theme.of(context).accentColor
+            ? Theme.of(context).backgroundColor : Theme.of(context).accentColor,
+        onChanged: (bool val) {
+          widget.onChanged!(val);
+
+          if (!this.mounted) return;
+
+          setState(() {
+            _value = val;
+          });
+        },
       ),
-      value: _value!,
-      activeColor: Theme.of(context).primaryColor,
-      activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
-      inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
-      inactiveThumbColor: Theme.of(context).accentColor,
-      onChanged: (bool val) {
-        widget.onChanged!(val);
-
-        if (!this.mounted) return;
-
-        setState(() {
-          _value = val;
-        });
-      },
     );
   }
 }

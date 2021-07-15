@@ -98,13 +98,13 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
 
     hideDividers = SettingsManager().settings.hideDividers;
     denseTiles = SettingsManager().settings.denseChatTiles;
-    redactedMode = SettingsManager().settings.redactedMode;
-    hideMessageContent = SettingsManager().settings.hideMessageContent;
-    hideContactPhotos = SettingsManager().settings.hideContactPhotos;
-    hideContactInfo = SettingsManager().settings.hideContactInfo;
-    removeLetterAvatars = SettingsManager().settings.removeLetterAvatars;
-    generateFakeContactNames = SettingsManager().settings.generateFakeContactNames;
-    generateFakeMessageContent = SettingsManager().settings.generateFakeMessageContent;
+    redactedMode = SettingsManager().settings.redactedMode.value;
+    hideMessageContent = SettingsManager().settings.hideMessageContent.value;
+    hideContactPhotos = SettingsManager().settings.hideContactPhotos.value;
+    hideContactInfo = SettingsManager().settings.hideContactInfo.value;
+    removeLetterAvatars = SettingsManager().settings.removeLetterAvatars.value;
+    generateFakeContactNames = SettingsManager().settings.generateFakeContactNames.value;
+    generateFakeMessageContent = SettingsManager().settings.generateFakeMessageContent.value;
     SettingsManager().stream.listen((Settings? newSettings) {
       if (newSettings!.hideDividers != hideDividers) {
         hideDividers = newSettings.hideDividers;
@@ -114,32 +114,32 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
         denseTiles = newSettings.denseChatTiles;
       }
 
-      if (newSettings.redactedMode != redactedMode) {
-        redactedMode = newSettings.redactedMode;
+      if (newSettings.redactedMode.value != redactedMode) {
+        redactedMode = newSettings.redactedMode.value;
       }
 
-      if (newSettings.hideMessageContent != hideMessageContent) {
-        hideMessageContent = newSettings.hideMessageContent;
+      if (newSettings.hideMessageContent.value != hideMessageContent) {
+        hideMessageContent = newSettings.hideMessageContent.value;
       }
 
-      if (newSettings.hideContactPhotos != hideContactPhotos) {
-        hideContactPhotos = newSettings.hideContactPhotos;
+      if (newSettings.hideContactPhotos.value != hideContactPhotos) {
+        hideContactPhotos = newSettings.hideContactPhotos.value;
       }
 
-      if (newSettings.hideContactInfo != hideContactInfo) {
-        hideContactInfo = newSettings.hideContactInfo;
+      if (newSettings.hideContactInfo.value != hideContactInfo) {
+        hideContactInfo = newSettings.hideContactInfo.value;
       }
 
-      if (newSettings.removeLetterAvatars != removeLetterAvatars) {
-        removeLetterAvatars = newSettings.removeLetterAvatars;
+      if (newSettings.removeLetterAvatars.value != removeLetterAvatars) {
+        removeLetterAvatars = newSettings.removeLetterAvatars.value;
       }
 
-      if (newSettings.generateFakeContactNames != generateFakeContactNames) {
-        generateFakeContactNames = newSettings.generateFakeContactNames;
+      if (newSettings.generateFakeContactNames.value != generateFakeContactNames) {
+        generateFakeContactNames = newSettings.generateFakeContactNames.value;
       }
 
-      if (newSettings.generateFakeMessageContent != generateFakeMessageContent) {
-        generateFakeMessageContent = newSettings.generateFakeMessageContent;
+      if (newSettings.generateFakeMessageContent.value != generateFakeMessageContent) {
+        generateFakeMessageContent = newSettings.generateFakeMessageContent.value;
       }
 
       if (this.mounted) setState(() {});

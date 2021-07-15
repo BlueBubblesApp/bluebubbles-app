@@ -69,7 +69,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
 
   bool get showSmartReplies =>
       SettingsManager().settings.smartReply &&
-      (!SettingsManager().settings.redactedMode || !SettingsManager().settings.hideMessageContent);
+      (!SettingsManager().settings.redactedMode.value || !SettingsManager().settings.hideMessageContent.value);
 
   @override
   void initState() {

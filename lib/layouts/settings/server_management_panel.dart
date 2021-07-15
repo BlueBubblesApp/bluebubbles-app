@@ -150,7 +150,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                         } else {
                           connectionStatus = SocketManager().state;
                         }
-                        bool redact = SettingsManager().settings.redactedMode;
+                        bool redact = SettingsManager().settings.redactedMode.value;
                         return Container(
                             color: tileColor,
                             child: Padding(

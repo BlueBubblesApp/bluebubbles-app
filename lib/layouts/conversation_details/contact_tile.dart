@@ -108,9 +108,9 @@ class _ContactTileState extends State<ContactTile> {
   }
 
   Widget _buildContactTile() {
-    final bool redactedMode = SettingsManager().settings.redactedMode;
-    final bool hideInfo = redactedMode && (SettingsManager().settings.hideContactInfo);
-    final bool generateName = redactedMode && (SettingsManager().settings.generateFakeContactNames);
+    final bool redactedMode = SettingsManager().settings.redactedMode.value;
+    final bool hideInfo = redactedMode && SettingsManager().settings.hideContactInfo.value;
+    final bool generateName = redactedMode && SettingsManager().settings.generateFakeContactNames.value;
     final bool isEmail = widget.handle.address?.isEmail ?? false;
     return InkWell(
       onLongPress: () {

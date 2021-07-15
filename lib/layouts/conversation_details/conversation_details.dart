@@ -89,9 +89,9 @@ class _ConversationDetailsState extends State<ConversationDetails> {
 
   @override
   Widget build(BuildContext context) {
-    final bool redactedMode = SettingsManager().settings.redactedMode;
-    final bool hideInfo = redactedMode && (SettingsManager().settings.hideContactInfo);
-    final bool generateName = redactedMode && (SettingsManager().settings.generateFakeContactNames);
+    final bool redactedMode = SettingsManager().settings.redactedMode.value;
+    final bool hideInfo = redactedMode && SettingsManager().settings.hideContactInfo.value;
+    final bool generateName = redactedMode && SettingsManager().settings.generateFakeContactNames.value;
     if (generateName) controller.text = "Group Chat";
 
     final bool showGroupNameInfo = (showNameField && !hideInfo) || generateName;

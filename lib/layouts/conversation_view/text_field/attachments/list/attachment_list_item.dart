@@ -55,9 +55,9 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
   Widget getThumbnail() {
     if (preview != null) {
       final bool hideAttachments =
-          SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachments;
+          SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachments.value;
       final bool hideAttachmentTypes =
-          SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachmentTypes;
+          SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachmentTypes.value;
 
       final mimeType = mime(widget.file.path);
 

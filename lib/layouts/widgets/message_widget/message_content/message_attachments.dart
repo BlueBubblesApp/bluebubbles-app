@@ -76,8 +76,12 @@ class _MessageAttachmentsState extends State<MessageAttachments> with TickerProv
 
   List<Widget> _buildAttachments() {
     List<Widget> content = <Widget>[];
-
-    var items = CurrentChat.of(context)?.getAttachmentsForMessage(widget.message) ?? [];
+    var items;
+    if (widget.message?.guid == "redacted-mode-demo") {
+      items = widget.message!.attachments;
+    } else {
+      items = CurrentChat.of(context)?.getAttachmentsForMessage(widget.message) ?? [];
+    }
     for (Attachment? attachment in items) {
       if (attachment!.mimeType != null) {
         Widget attachmentWidget = MessageAttachment(
