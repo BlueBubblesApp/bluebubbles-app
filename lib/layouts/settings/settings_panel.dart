@@ -301,7 +301,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   SettingsTile(
                     backgroundColor: tileColor,
                     title: "Private API Features",
-                    subTitle: "Private API ${SettingsManager().settings.enablePrivateAPI ? "Enabled" : "Disabled"}",
+                    subTitle: "Private API ${SettingsManager().settings.enablePrivateAPI.value ? "Enabled" : "Disabled"}",
                     trailing: nextIcon,
                     onTap: () async {
                       Navigator.of(context).push(
@@ -314,7 +314,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     leading: SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.exclamationmark_shield,
                       materialIcon: Icons.gpp_maybe,
-                      containerColor: getIndicatorColor(SettingsManager().settings.enablePrivateAPI ? SocketState.CONNECTED : SocketState.CONNECTING),
+                      containerColor: getIndicatorColor(SettingsManager().settings.enablePrivateAPI.value ? SocketState.CONNECTED : SocketState.CONNECTING),
                     ),
                   ),
                   Container(

@@ -25,7 +25,6 @@ class Settings {
   bool colorfulAvatars = false;
   bool colorfulBubbles = false;
   bool hideDividers = false;
-  bool sendTypingIndicators = false;
   double scrollVelocity = 1.00;
   bool sendWithReturn = false;
   bool doubleTapForDetails = false;
@@ -55,10 +54,10 @@ class Settings {
   // String emojiFontFamily;
 
   // Private API features
-  bool enablePrivateAPI = false;
-  bool privateSendTypingIndicators = false;
-  bool privateMarkChatAsRead = false;
-  bool privateManualMarkAsRead = false;
+  RxBool enablePrivateAPI = false.obs;
+  RxBool privateSendTypingIndicators = false.obs;
+  RxBool privateMarkChatAsRead = false.obs;
+  RxBool privateManualMarkAsRead = false.obs;
 
   // Redacted Mode Settings
   RxBool redactedMode = false.obs;
@@ -119,8 +118,6 @@ class Settings {
         settings.theme = ThemeMode.values[entry.value];
       } else if (entry.name == "skin") {
         settings.skin.value = Skins.values[entry.value];
-      } else if (entry.name == "sendTypingIndicators") {
-        settings.sendTypingIndicators = entry.value;
       } else if (entry.name == "scrollVelocity") {
         settings.scrollVelocity = entry.value;
       } else if (entry.name == "sendWithReturn") {
@@ -156,15 +153,15 @@ class Settings {
       } else if (entry.name == "swipableConversationTiles") {
         settings.swipableConversationTiles = entry.value;
       } else if (entry.name == "enablePrivateAPI") {
-        settings.enablePrivateAPI = entry.value;
+        settings.enablePrivateAPI.value = entry.value;
       } else if (entry.name == "privateSendTypingIndicators") {
-        settings.privateSendTypingIndicators = entry.value;
+        settings.privateSendTypingIndicators.value = entry.value;
       } else if (entry.name == "colorblindMode") {
         settings.colorblindMode = entry.value;
       } else if (entry.name == "privateMarkChatAsRead") {
-        settings.privateMarkChatAsRead = entry.value;
+        settings.privateMarkChatAsRead.value = entry.value;
       } else if (entry.name == "privateManualMarkAsRead") {
-        settings.privateManualMarkAsRead = entry.value;
+        settings.privateManualMarkAsRead.value = entry.value;
       } else if (entry.name == "showSyncIndicator") {
         settings.showSyncIndicator = entry.value;
       } else if (entry.name == "showDeliveryTimestamps") {
@@ -335,11 +332,6 @@ class Settings {
           type: this.skin.value.index.runtimeType,
         ),
         ConfigEntry(
-          name: "sendTypingIndicators",
-          value: this.sendTypingIndicators,
-          type: this.sendTypingIndicators.runtimeType,
-        ),
-        ConfigEntry(
           name: "scrollVelocity",
           value: this.scrollVelocity,
           type: this.scrollVelocity.runtimeType,
@@ -421,12 +413,12 @@ class Settings {
         ),
         ConfigEntry(
           name: "enablePrivateAPI",
-          value: this.enablePrivateAPI,
+          value: this.enablePrivateAPI.value,
           type: this.enablePrivateAPI.runtimeType,
         ),
         ConfigEntry(
           name: "privateSendTypingIndicators",
-          value: this.privateSendTypingIndicators,
+          value: this.privateSendTypingIndicators.value,
           type: this.privateSendTypingIndicators.runtimeType,
         ),
         ConfigEntry(
@@ -436,12 +428,12 @@ class Settings {
         ),
         ConfigEntry(
           name: "privateMarkChatAsRead",
-          value: this.privateMarkChatAsRead,
+          value: this.privateMarkChatAsRead.value,
           type: this.privateMarkChatAsRead.runtimeType,
         ),
         ConfigEntry(
           name: "privateManualMarkAsRead",
-          value: this.privateManualMarkAsRead,
+          value: this.privateManualMarkAsRead.value,
           type: this.privateManualMarkAsRead.runtimeType,
         ),
         ConfigEntry(name: "showSyncIndicator", value: this.showSyncIndicator, type: this.showSyncIndicator.runtimeType),

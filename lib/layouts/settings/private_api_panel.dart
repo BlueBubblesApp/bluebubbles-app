@@ -1,6 +1,11 @@
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/socket_manager.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
@@ -21,13 +26,13 @@ class PrivateAPIPanel extends StatefulWidget {
 
 class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
   late Settings _settingsCopy;
-  bool enablePrivateAPI = false;
+  int? macOSVersionNumber;
+  String? macOSVersion;
 
   @override
   void initState() {
     super.initState();
     _settingsCopy = SettingsManager().settings;
-    enablePrivateAPI = _settingsCopy.enablePrivateAPI;
 
     // Listen for any incoming events
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
@@ -37,60 +42,54 @@ class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
         setState(() {});
       }
     });
+
+    SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
+      if (mounted) {
+        setState(() {
+          macOSVersionNumber = int.tryParse(res['data']['os_version'].toString().split(".")[0]);
+          macOSVersion = res['data']['os_version'];
+        });
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    List<Widget> privateWidgets = [];
-    if (enablePrivateAPI) {
-      privateWidgets.addAll([
-        SettingsSwitch(
-          onChanged: (bool val) {
-            _settingsCopy.sendTypingIndicators = val;
-            saveSettings();
-          },
-          initialVal: _settingsCopy.sendTypingIndicators,
-          title: "Send Typing Indicators",
-        ),
-        SettingsSwitch(
-          onChanged: (bool val) {
-            _settingsCopy.privateMarkChatAsRead = val;
-            saveSettings(updateState: true);
-          },
-          initialVal: _settingsCopy.privateMarkChatAsRead,
-          title: "Mark Chats as Read / Send Read Receipts",
-        ),
-        if (!_settingsCopy.privateMarkChatAsRead)
-          SettingsSwitch(
-            onChanged: (bool val) {
-              _settingsCopy.privateManualMarkAsRead = val;
-              saveSettings();
-            },
-            initialVal: _settingsCopy.privateManualMarkAsRead,
-            title: "Show Manually Mark Chat as Read Button",
-          ),
-      ]);
+    final iosSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
+    final materialSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
+    Color headerColor;
+    Color tileColor;
+    if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance()
+        || SettingsManager().settings.skin.value != Skins.iOS) {
+      headerColor = Theme.of(context).accentColor;
+      tileColor = Theme.of(context).backgroundColor;
+    } else {
+      headerColor = Theme.of(context).backgroundColor;
+      tileColor = Theme.of(context).accentColor;
+    }
+    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
+      tileColor = headerColor;
     }
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarColor: headerColor, // navigation bar color
         systemNavigationBarIconBrightness:
-            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
-        backgroundColor: Theme.of(context).backgroundColor,
+        backgroundColor: SettingsManager().settings.skin.value != Skins.iOS ? tileColor : headerColor,
         appBar: PreferredSize(
           preferredSize: Size(context.width, 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
-                brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
+                brightness: ThemeData.estimateBrightnessForColor(headerColor),
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: buildBackButton(context),
-                backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
+                backgroundColor: headerColor.withOpacity(0.5),
                 title: Text(
                   "Private API Features",
                   style: Theme.of(context).textTheme.headline1,
@@ -103,46 +102,157 @@ class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
         body: CustomScrollView(
           physics: ThemeSwitcher.getScrollPhysics(),
           slivers: <Widget>[
-            SliverList(
+            Obx(() => SliverList(
               delegate: SliverChildListDelegate(
                 <Widget>[
+                  Container(
+                      height: SettingsManager().settings.skin.value == Skins.iOS ? 30 : 40,
+                      alignment: Alignment.bottomLeft,
+                      decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
+                        color: headerColor,
+                        border: Border(
+                            bottom: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
+                        ),
+                      ) : BoxDecoration(
+                        color: tileColor,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0, left: 15),
+                        child: Text("Private API".psCapitalize, style: SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
+                      )
+                  ),
+                  Container(
+                      decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
+                        color: tileColor,
+                        border: Border(
+                            bottom: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
+                        ),
+                      ) : BoxDecoration(
+                        color: tileColor,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
+                        child: RichText(
+                          text: TextSpan(
+                            children: [
+                              TextSpan(text: "Private API features give you the ability to send tapbacks, send read receipts, and see typing indicators."),
+                              TextSpan(text: "\n\n"),
+                              TextSpan(text: "These features are only available to those running the nightly version of the server on Mac OS 10.15 and under."),
+                              TextSpan(text: "\n\n"),
+                              TextSpan(text: "Please note that servers running Mac OS 11+ "),
+                              TextSpan(text: "are not supported.", style: TextStyle(fontStyle: FontStyle.italic)),
+                              TextSpan(text: "\n\n"),
+                              TextSpan(text: "You must be using the nightly version of the server for these features to function, regardless of whether you enable them here."),
+                            ]
+                          ),
+                        ),
+                      )
+                  ),
                   SettingsTile(
-                      title: "",
-                      subTitle: ("Private API features give you the ability to send tapbacks, send read receipts, and receive typing indicators. " +
-                          "These features are only available to those running the nightly version of the Server. " +
-                          "If you are not running the nightly version of the Server, you will not be able to utilize these features, " +
-                          "even if you have it enabled here. If you would like to find out how to setup these features, please visit " +
-                          "the link below")),
-                  SettingsTile(
-                    title: "How to setup Private API features",
-                    onTap: () {
+                    backgroundColor: tileColor,
+                    title: "Set up Private API Features",
+                    subTitle: "View instructions on how to set up these features",
+                    onTap: () async {
                       MethodChannelInterface().invokeMethod("open-link", {
                         "link": "https://github.com/BlueBubblesApp/BlueBubbles-Server/wiki/Using-Private-API-Features"
                       });
                     },
-                    trailing: Icon(
-                      Icons.privacy_tip_rounded,
-                      color: Theme.of(context).primaryColor,
+                    showDivider: false,
+                    leading: SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.checkmark_shield,
+                      materialIcon: Icons.privacy_tip,
                     ),
                   ),
-                  SettingsSwitch(
+                  ((macOSVersionNumber ??10) < 11) ?
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
+                    ) : Container(),
+                  (macOSVersionNumber ?? 10) < 11 ? SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.enablePrivateAPI = val;
-                      if (this.mounted) {
-                        setState(() {
-                          enablePrivateAPI = val;
-                        });
-                      }
-
+                      _settingsCopy.enablePrivateAPI.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.enablePrivateAPI,
+                    initialVal: _settingsCopy.enablePrivateAPI.value,
                     title: "Enable Private API Features",
+                  ) : Container(
+                      decoration: BoxDecoration(
+                        color: tileColor,
+                        border: Border(
+                            top: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
+                        child: RichText(
+                          text: TextSpan(
+                              children: [
+                                TextSpan(text: "Private API features are not supported on your server's macOS Version."),
+                                TextSpan(text: "\n\n"),
+                                TextSpan(text: "Current: ${macOSVersion ?? "Unknown"}"),
+                                TextSpan(text: "\n\n"),
+                                TextSpan(text: "Required: 10.15.7 and under"),
+                              ]
+                          ),
+                        ),
+                      )
                   ),
-                  ...privateWidgets
+                  if (SettingsManager().settings.enablePrivateAPI.value)
+                    ...[
+                      SettingsHeader(
+                          headerColor: headerColor,
+                          tileColor: tileColor,
+                          iosSubtitle: iosSubtitle,
+                          materialSubtitle: materialSubtitle,
+                          text: "Private API Settings"
+                      ),
+                      SettingsSwitch(
+                        onChanged: (bool val) {
+                          _settingsCopy.privateSendTypingIndicators.value = val;
+                          saveSettings();
+                        },
+                        initialVal: _settingsCopy.privateSendTypingIndicators.value,
+                        title: "Send Typing Indicators",
+                        subtitle: "Sends typing indicators to other iMessage users",
+                        backgroundColor: tileColor,
+                      ),
+                      SettingsSwitch(
+                        onChanged: (bool val) {
+                          _settingsCopy.privateMarkChatAsRead.value = val;
+                          saveSettings(updateState: true);
+                        },
+                        initialVal: _settingsCopy.privateMarkChatAsRead.value,
+                        title: "Mark Chats as Read / Send Read Receipts",
+                        subtitle: "Marks chats read in the iMessage app on your server and sends read receipts to other iMessage users",
+                        backgroundColor: tileColor,
+                      ),
+                      if (!_settingsCopy.privateMarkChatAsRead.value)
+                        SettingsSwitch(
+                          onChanged: (bool val) {
+                            _settingsCopy.privateManualMarkAsRead.value = val;
+                            saveSettings();
+                          },
+                          initialVal: _settingsCopy.privateManualMarkAsRead.value,
+                          title: "Show Manually Mark Chat as Read Button",
+                          backgroundColor: tileColor,
+                        ),
+                    ],
+                  Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
+                  Container(
+                    height: 30,
+                    decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
+                      color: headerColor,
+                      border: Border(
+                          top: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
+                      ),
+                    ) : null,
+                  ),
                 ],
               ),
-            ),
+            )),
             SliverList(
               delegate: SliverChildListDelegate(
                 <Widget>[],
