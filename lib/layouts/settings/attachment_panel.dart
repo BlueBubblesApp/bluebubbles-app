@@ -182,17 +182,43 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                   ),
                   SettingsSlider(
                       text: "Attachment Preview Quality",
-                      startingVal: _settingsCopy.previewCompressionQuality.toDouble(),
+                      startingVal: _settingsCopy.previewCompressionQuality.value.toDouble(),
                       update: (double val) {
-                        _settingsCopy.previewCompressionQuality = val.toInt();
+                        _settingsCopy.previewCompressionQuality.value = val.toInt();
                       },
                       formatValue: ((double val) => val.toInt().toString() + "%"),
                       backgroundColor: tileColor,
                       showDivider: false,
-                      leading: SettingsLeadingIcon(
-                        iosIcon: CupertinoIcons.sparkles,
-                        materialIcon: Icons.auto_awesome,
-                      ),
+                      leading: Obx(() => Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(5),
+                            child: ImageFiltered(
+                              imageFilter: ImageFilter.blur(
+                                sigmaX: (1 - _settingsCopy.previewCompressionQuality.value / 100),
+                                sigmaY: (1 - _settingsCopy.previewCompressionQuality.value / 100),
+                              ),
+                              child: Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  color: SettingsManager().settings.skin.value == Skins.iOS ?
+                                  Colors.grey : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(5),
+                                ),
+                                alignment: Alignment.center,
+                                child: Icon(SettingsManager().settings.skin.value == Skins.iOS
+                                    ? CupertinoIcons.sparkles : Icons.auto_awesome,
+                                    color: SettingsManager().settings.skin.value == Skins.iOS ?
+                                    Colors.white : Colors.grey,
+                                    size: SettingsManager().settings.skin.value == Skins.iOS ? 23 : 30
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      )),
                       min: 10,
                       max: 100,
                       divisions: 18),
@@ -212,17 +238,21 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                   ),
                   SettingsSlider(
                       text: "Attachment Chunk Size",
-                      startingVal: _settingsCopy.chunkSize.toDouble(),
+                      startingVal: _settingsCopy.chunkSize.value.toDouble(),
                       update: (double val) {
-                        _settingsCopy.chunkSize = val.floor();
+                        _settingsCopy.chunkSize.value = val.floor();
                       },
                       formatValue: ((double val) => getSizeString(val)),
                       backgroundColor: tileColor,
                       showDivider: false,
-                      leading: SettingsLeadingIcon(
-                        iosIcon: CupertinoIcons.square_grid_2x2,
-                        materialIcon: Icons.photo_size_select_small,
-                      ),
+                      leading: Obx(() => SettingsLeadingIcon(
+                        iosIcon: _settingsCopy.chunkSize.value < 1000
+                            ? CupertinoIcons.square_grid_3x2 : _settingsCopy.chunkSize.value < 2000
+                            ? CupertinoIcons.square_grid_2x2 : CupertinoIcons.square,
+                        materialIcon: _settingsCopy.chunkSize.value < 1000
+                            ? Icons.photo_size_select_small : _settingsCopy.chunkSize.value < 2000
+                            ? Icons.photo_size_select_large : Icons.photo_size_select_actual,
+                      )),
                       min: 100,
                       max: 3000,
                       divisions: 29),

@@ -46,7 +46,7 @@ class AttachmentSender {
     String text,
   ) {
     // Set default chunk size to what is set in the settings
-    _chunkSize = SettingsManager().settings.chunkSize * 1024;
+    _chunkSize = SettingsManager().settings.chunkSize.value * 1024;
     _chat = chat;
     _attachmentGuid = "temp-${randomString(8)}";
     _text = text;
