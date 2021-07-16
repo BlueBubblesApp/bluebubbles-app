@@ -4,6 +4,9 @@ import 'dart:ui';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/settings/custom_avatar_panel.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
@@ -27,8 +30,9 @@ class ThemePanel extends StatefulWidget {
 
 class _ThemePanelState extends State<ThemePanel> {
   late Settings _settingsCopy;
-  List<DisplayMode>? modes;
-  DisplayMode? currentMode;
+  List<DisplayMode> modes = [];
+  List<int> refreshRates = [];
+  int currentMode = 0;
 
   @override
   void initState() {
@@ -49,30 +53,54 @@ class _ThemePanelState extends State<ThemePanel> {
   void didChangeDependencies() async {
     super.didChangeDependencies();
     modes = await FlutterDisplayMode.supported;
-    currentMode = await _settingsCopy.getDisplayMode();
+    refreshRates.addAll(modes.map((e) => e.refreshRate.round()).toSet().toList());
+    print(refreshRates);
+    currentMode = (await _settingsCopy.getDisplayMode()).refreshRate.round();
     setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
+    Widget nextIcon = Obx(() => Icon(
+      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.chevron_right : Icons.arrow_forward,
+      color: Colors.grey,
+    ));
+
+    final iosSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
+    final materialSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
+    Color headerColor;
+    Color tileColor;
+    if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance()
+        || SettingsManager().settings.skin.value != Skins.iOS) {
+      headerColor = Theme.of(context).accentColor;
+      tileColor = Theme.of(context).backgroundColor;
+    } else {
+      headerColor = Theme.of(context).backgroundColor;
+      tileColor = Theme.of(context).accentColor;
+    }
+    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
+      tileColor = headerColor;
+    }
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarColor: headerColor, // navigation bar color
+        systemNavigationBarIconBrightness:
+        headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
-        backgroundColor: Theme.of(context).backgroundColor,
+        backgroundColor: SettingsManager().settings.skin.value != Skins.iOS ? tileColor : headerColor,
         appBar: PreferredSize(
           preferredSize: Size(context.width, 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
-                brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
+                brightness: ThemeData.estimateBrightnessForColor(headerColor),
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: buildBackButton(context),
-                backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
+                backgroundColor: headerColor.withOpacity(0.5),
                 title: Text(
                   "Theming & Styles",
                   style: Theme.of(context).textTheme.headline1,
@@ -88,7 +116,22 @@ class _ThemePanelState extends State<ThemePanel> {
             SliverList(
               delegate: SliverChildListDelegate(
                 <Widget>[
-                  Container(padding: EdgeInsets.only(top: 5.0)),
+                  Container(
+                      height: SettingsManager().settings.skin.value == Skins.iOS ? 30 : 40,
+                      alignment: Alignment.bottomLeft,
+                      decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
+                        color: headerColor,
+                        border: Border(
+                            bottom: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
+                        ),
+                      ) : BoxDecoration(
+                        color: tileColor,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0, left: 15),
+                        child: Text("Theme".psCapitalize, style: SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
+                      )
+                  ),
                   SettingsOptions<AdaptiveThemeMode>(
                     initial: AdaptiveTheme.of(context).mode,
                     onChanged: (val) {
@@ -102,13 +145,20 @@ class _ThemePanelState extends State<ThemePanel> {
                     options: AdaptiveThemeMode.values,
                     textProcessing: (val) => val.toString().split(".").last,
                     title: "App Theme",
-                    showDivider: false,
+                    backgroundColor: tileColor,
+                    secondaryColor: headerColor,
+                  ),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
+                    ),
                   ),
                   SettingsTile(
                     title: "Theming",
-                    trailing: Icon(
-                        SettingsManager().settings.skin.value == Skins.iOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
-                        color: Theme.of(context).primaryColor),
+                    subtitle: "Edit existing themes and create custom themes",
+                    trailing: nextIcon,
                     onTap: () async {
                       Navigator.of(context).push(
                         CupertinoPageRoute(
@@ -116,6 +166,14 @@ class _ThemePanelState extends State<ThemePanel> {
                         ),
                       );
                     },
+                    backgroundColor: tileColor,
+                  ),
+                  SettingsHeader(
+                      headerColor: headerColor,
+                      tileColor: tileColor,
+                      iosSubtitle: iosSubtitle,
+                      materialSubtitle: materialSubtitle,
+                      text: "Skin"
                   ),
                   SettingsOptions<Skins>(
                     initial: _settingsCopy.skin.value,
@@ -135,7 +193,15 @@ class _ThemePanelState extends State<ThemePanel> {
                     textProcessing: (val) => val.toString().split(".").last,
                     capitalize: false,
                     title: "App Skin",
-                    showDivider: false,
+                    backgroundColor: tileColor,
+                    secondaryColor: headerColor,
+                  ),
+                  SettingsHeader(
+                      headerColor: headerColor,
+                      tileColor: tileColor,
+                      iosSubtitle: iosSubtitle,
+                      materialSubtitle: materialSubtitle,
+                      text: "Colors"
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
@@ -144,6 +210,15 @@ class _ThemePanelState extends State<ThemePanel> {
                     },
                     initialVal: _settingsCopy.colorfulAvatars,
                     title: "Colorful Avatars",
+                    backgroundColor: tileColor,
+                    subtitle: "Gives letter avatars a splash of color",
+                  ),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
+                    ),
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
@@ -152,12 +227,19 @@ class _ThemePanelState extends State<ThemePanel> {
                     },
                     initialVal: _settingsCopy.colorfulBubbles,
                     title: "Colorful Bubbles",
+                    backgroundColor: tileColor,
+                    subtitle: "Gives received message bubbles a splash of color",
+                  ),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
+                    ),
                   ),
                   SettingsTile(
                     title: "Custom Avatar Colors",
-                    trailing: Icon(
-                        SettingsManager().settings.skin.value == Skins.iOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
-                        color: Theme.of(context).primaryColor),
+                    trailing: nextIcon,
                     onTap: () async {
                       Navigator.of(context).push(
                         CupertinoPageRoute(
@@ -165,46 +247,28 @@ class _ThemePanelState extends State<ThemePanel> {
                         ),
                       );
                     },
+                    backgroundColor: tileColor,
+                    subtitle: "Customize the color for different avatars",
                   ),
-                  if (SettingsManager().settings.skin.value != Skins.Samsung)
-                    SettingsSwitch(
-                      onChanged: (bool val) {
-                        _settingsCopy.hideDividers = val;
-                        saveSettings();
-                      },
-                      initialVal: _settingsCopy.hideDividers,
-                      title: "Hide Dividers",
-                    ),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.denseChatTiles = val;
-                      saveSettings();
-                    },
-                    initialVal: _settingsCopy.denseChatTiles,
-                    title: "Dense Conversation Tiles",
+                  SettingsHeader(
+                      headerColor: headerColor,
+                      tileColor: tileColor,
+                      iosSubtitle: iosSubtitle,
+                      materialSubtitle: materialSubtitle,
+                      text: "Refresh Rate"
                   ),
-                  if (SettingsManager().settings.skin.value == Skins.iOS)
-                    SettingsSwitch(
-                      onChanged: (bool val) {
-                        _settingsCopy.reducedForehead = val;
-                        saveSettings();
-                      },
-                      initialVal: _settingsCopy.reducedForehead,
-                      title: "Reduced Forehead",
-                    ),
-
-                  // For whatever fucking reason, this needs to be down here, otherwise all of the switch values are false
-                  if (currentMode != null && modes != null)
-                    SettingsOptions<DisplayMode>(
-                      initial: currentMode ?? DisplayMode.auto,
-                      showDivider: false,
+                  if (refreshRates.isNotEmpty)
+                    SettingsOptions<int>(
+                      initial: currentMode,
                       onChanged: (val) async {
                         currentMode = val;
-                        _settingsCopy.displayMode = currentMode!.id;
+                        _settingsCopy.refreshRate = currentMode;
                       },
-                      options: modes!,
-                      textProcessing: (val) => val == DisplayMode.auto ? "Automatic" : val.toString(),
+                      options: refreshRates,
+                      textProcessing: (val) => val == 0 ? "Automatic" : val.toString() + " Hz",
                       title: "Display",
+                      backgroundColor: tileColor,
+                      secondaryColor: headerColor,
                     ),
                   // SettingsOptions<String>(
                   //   initial: _settingsCopy.emojiFontFamily == null
@@ -218,6 +282,16 @@ class _ThemePanelState extends State<ThemePanel> {
                   //   title: "Emoji Style",
                   //   showDivider: false,
                   // ),
+                  Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
+                  Container(
+                    height: 30,
+                    decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
+                      color: headerColor,
+                      border: Border(
+                          top: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
+                      ),
+                    ) : null,
+                  ),
                 ],
               ),
             ),

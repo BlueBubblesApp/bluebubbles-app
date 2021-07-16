@@ -13,7 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
-List<dynamic> timeOptions = [
+List<List<dynamic>> timeOptions = [
   [300, "5 Minutes"],
   [1800, "30 Minutes"],
   [3600, "1 Hour"],
@@ -136,12 +136,12 @@ class _SchedulePanelState extends State<SchedulePanel> {
                   (_chat != null)
                       ? SettingsTile(
                           title: "Selected chat",
-                          subTitle: title,
+                          subtitle: title,
                           trailing: Icon(Icons.timer, color: Theme.of(context).primaryColor.withAlpha(200)),
                         )
                       : SettingsTile(
                           title: "Select a chat to schedule a message for",
-                          subTitle: 'Tap here',
+                          subtitle: 'Tap here',
                           trailing: Icon(Icons.chat_bubble, color: Theme.of(context).primaryColor.withAlpha(200)),
                           onTap: () async {
                             Navigator.of(context).push(
@@ -167,7 +167,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
                           },
                         ),
                   SettingsTextField(title: "Enter a message", controller: this.messageController),
-                  SettingsOptions<dynamic>(
+                  SettingsOptions<List<dynamic>>(
                     initial: timeOptions.first,
                     subtitle: getTimeText(context),
                     onChanged: (val) async {
@@ -190,7 +190,6 @@ class _SchedulePanelState extends State<SchedulePanel> {
                     options: timeOptions,
                     textProcessing: (val) => val[1],
                     title: "When should we send it?",
-                    showDivider: (scheduleSeconds != -1),
                   ),
                   Center(
                       child: Text(

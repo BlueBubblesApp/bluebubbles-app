@@ -58,7 +58,7 @@ class _CustomAvatarPanelState extends State<CustomAvatarPanel> {
     for (var item in handles) {
       items.add(SettingsTile(
         title: ContactManager().getCachedContactSync(item.address ?? "")?.displayName ?? await formatPhoneNumber(item),
-        subTitle: "Tap avatar to change color",
+        subtitle: "Tap avatar to change color",
         trailing: ContactAvatarWidget(handle: item),
       ));
     }

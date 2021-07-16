@@ -166,8 +166,7 @@ class _MiscPanelState extends State<MiscPanel> {
                   if (SettingsManager().settings.skin.value == Skins.iOS)
                     SettingsTile(
                       title: "Scroll Speed Multiplier",
-                      subTitle: "Controls how fast scrolling occurs",
-                      showDivider: false,
+                      subtitle: "Controls how fast scrolling occurs",
                       backgroundColor: tileColor,
                     ),
                   if (SettingsManager().settings.skin.value == Skins.iOS)

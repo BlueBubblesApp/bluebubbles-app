@@ -188,7 +188,6 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                       },
                       formatValue: ((double val) => val.toInt().toString() + "%"),
                       backgroundColor: tileColor,
-                      showDivider: false,
                       leading: Obx(() => Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -231,8 +230,7 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                   ),
                   SettingsTile(
                     title: "Attachment Chunk Size",
-                    subTitle: "Controls the amount of data the app gets from the server on each network request",
-                    showDivider: false,
+                    subtitle: "Controls the amount of data the app gets from the server on each network request",
                     backgroundColor: tileColor,
                     isThreeLine: true,
                   ),
@@ -244,7 +242,6 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                       },
                       formatValue: ((double val) => getSizeString(val)),
                       backgroundColor: tileColor,
-                      showDivider: false,
                       leading: Obx(() => SettingsLeadingIcon(
                         iosIcon: _settingsCopy.chunkSize.value < 1000
                             ? CupertinoIcons.square_grid_3x2 : _settingsCopy.chunkSize.value < 2000
