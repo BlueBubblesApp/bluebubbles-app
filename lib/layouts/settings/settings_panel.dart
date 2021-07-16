@@ -4,6 +4,7 @@ import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/settings/chat_list_panel.dart';
+import 'package:bluebubbles/layouts/settings/conversation_panel.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
@@ -286,6 +287,30 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       iosIcon: CupertinoIcons.square_list,
                       materialIcon: Icons.list,
                     ),
+                    trailing: nextIcon,
+                  ),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
+                    ),
+                  ),
+                  SettingsTile(
+                    backgroundColor: tileColor,
+                    title: "Conversation Settings",
+                    onTap: () {
+                      Navigator.of(context).push(
+                        CupertinoPageRoute(
+                          builder: (context) => ConversationPanel(),
+                        ),
+                      );
+                    },
+                    leading: SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.chat_bubble,
+                      materialIcon: Icons.sms,
+                    ),
+                    showDivider: false,
                     trailing: nextIcon,
                   ),
                   Container(
@@ -815,7 +840,7 @@ class _SettingsOptionsState<T extends Object> extends State<SettingsOptions<T>> 
                     onChanged: (T? val) {
                       widget.onChanged(val);
 
-                      if (!this.mounted || val == null) return;
+                        if (!this.mounted || val == null) return;
 
                       setState(() {
                         currentVal = val;
