@@ -88,7 +88,7 @@ class Reaction {
     this.messages.add(message);
   }
 
-  Widget? getSmallWidget(BuildContext context, {Message? message, bool leftPadding = true}) {
+  Widget? getSmallWidget(BuildContext context, {Message? message, bool isReactionPicker = true}) {
     if (this.messages.isEmpty && message == null) return null;
     if (this.messages.isEmpty && message != null) this.messages = [message];
 
@@ -103,7 +103,7 @@ class Reaction {
       reactionList.add(
         Padding(
           padding: EdgeInsets.fromLTRB(
-            (this.messages[i].isFromMe! && leftPadding ? 5.0 : 0.0) + i.toDouble() * 10.0,
+            (this.messages[i].isFromMe! && isReactionPicker ? 5.0 : 0.0) + i.toDouble() * 10.0,
             1.0,
             0,
             0,
@@ -114,7 +114,7 @@ class Reaction {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(100),
               color: this.messages[i].isFromMe! ? Colors.blue : Theme.of(context).accentColor,
-              boxShadow: [
+              boxShadow: isReactionPicker ? null : [
                 new BoxShadow(
                   blurRadius: 1.0,
                   color: Colors.black.withOpacity(0.8),

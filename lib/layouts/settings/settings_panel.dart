@@ -782,7 +782,7 @@ class _SettingsOptionsState<T extends Object> extends State<SettingsOptions<T>> 
   @override
   Widget build(BuildContext context) {
     if (SettingsManager().settings.skin.value == Skins.iOS) {
-      final texts = widget.options.map((e) => Text(e.toString()));
+      final texts = widget.options.map((e) => Text(widget.capitalize ? widget.textProcessing!(e).capitalize! : widget.textProcessing!(e)));
       final map = Map<T, Widget>.fromIterables(widget.options, widget.cupertinoCustomWidgets ?? texts);
       return Container(
         color: widget.backgroundColor,
