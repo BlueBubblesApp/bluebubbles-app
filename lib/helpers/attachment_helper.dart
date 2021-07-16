@@ -5,7 +5,7 @@ import 'dart:ui';
 import 'package:bluebubbles/helpers/simple_vcard_parser.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:exif/exif.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:flutter_native_image/flutter_native_image.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -17,7 +17,6 @@ import 'package:flutter/material.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:image_size_getter/image_size_getter.dart' as IMG;
 import 'package:permission_handler/permission_handler.dart';
-import 'package:photo_manager/photo_manager.dart';
 
 class AppleLocation {
   double? longitude;
@@ -288,36 +287,43 @@ class AttachmentHelper {
   static Future<Uint8List?> compressAttachment(Attachment attachment, String filePath, {int? qualityOverride}) async {
     int quality = qualityOverride ?? SettingsManager().compressionQuality;
 
-    // Check if the file exists
-    File compressedFile = new File("$filePath.${quality.toString()}.compressed");
-    if (compressedFile.existsSync()) {
-      return compressedFile.readAsBytes();
+    // Check if the compressed file exists
+    File cachedFile = new File("$filePath.${quality.toString()}.compressed");
+    if (cachedFile.existsSync()) {
+      return cachedFile.readAsBytes();
     }
 
-    int minWidth = (attachment.width != null && attachment.width! > 0) ? attachment.width! : 1920;
-    int minHeight = (attachment.height != null && attachment.height! > 0) ? attachment.height! : 1080;
-
-    CompressFormat format = CompressFormat.png;
-    if (attachment.transferName!.endsWith(".heic")) {
-      format = CompressFormat.heic;
-    } else if (attachment.transferName!.endsWith(".jpg") || attachment.transferName!.endsWith(".jpeg")) {
-      format = CompressFormat.jpeg;
-    } else if (attachment.transferName!.endsWith(".webp")) {
-      format = CompressFormat.webp;
+    // Read the image properties using FlutterNativeImage
+    ImageProperties properties = await FlutterNativeImage.getImageProperties(filePath);
+    if (properties.height != 0 && properties.width != 0) {
+      // Save the new height in the attachment
+      attachment.height = properties.height;
+      attachment.width = properties.width;
     }
 
-    Uint8List? data = await FlutterImageCompress.compressWithFile(filePath,
-        quality: quality,
-        format: format,
-        keepExif: true,
-        autoCorrectionAngle: false,
-        minHeight: minHeight,
-        minWidth: minWidth);
-
-    if (data != null) {
-      compressedFile.writeAsBytes(data);
+    // If we have no metadata, fetch it from the file
+    if (attachment.metadata == null) {
+      attachment.metadata = {};
     }
 
+    // Map the EXIF to the metadata
+    Map<String, IfdTag> exif = await readExifFromFile(new File(filePath));
+    for (var item in exif.entries) {
+      attachment.metadata![item.key] = item.value.printable;
+    }
+
+    // Compress the file
+    File compressedFile = await FlutterNativeImage.compressImage(filePath,
+        quality: quality, percentage: 100, targetWidth: attachment.width!, targetHeight: attachment.height!);
+
+    // Read the compressed data, then cache it
+    Uint8List data = await compressedFile.readAsBytes();
+    cachedFile.writeAsBytes(data);
+
+    // If we should update the attachment data, do it right before we return, no awaiting
+    attachment.update();
+
+    // Return the bytes
     return data;
   }
 }

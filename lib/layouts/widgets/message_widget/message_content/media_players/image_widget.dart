@@ -53,7 +53,7 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
         data = await widget.file.readAsBytes();
       }
 
-      if (data == null) return;
+      if (data == null || CurrentChat.of(context) == null) return;
       CurrentChat.of(context)?.saveImageData(data!, widget.attachment);
       if (this.mounted) setState(() {});
     }
@@ -125,8 +125,6 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
         child: data != null
             ? Image.memory(
                 data!,
-                //width: widget.attachment.width.toDouble(),
-                //height: widget.attachment.height.toDouble(),
                 frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
                   if (wasSynchronouslyLoaded) return child;
                   if (data == null) return buildPlaceHolder();
