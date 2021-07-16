@@ -13,7 +13,7 @@ class Settings {
   String guidAuthKey = "";
   String serverAddress = "";
   bool finishedSetup = false;
-  int chunkSize = 500;
+  RxInt chunkSize = 500.obs;
   bool autoDownload = true;
   bool onlyWifiDownload = false;
   bool autoOpenKeyboard = true;
@@ -44,7 +44,7 @@ class Settings {
   bool swipableConversationTiles = false;
   bool colorblindMode = false;
   bool showDeliveryTimestamps = false;
-  int previewCompressionQuality = 25;
+  RxInt previewCompressionQuality = 25.obs;
   bool filteredChatList = false;
   bool startVideosMuted = true;
   bool startVideosMutedFullscreen = true;
@@ -91,7 +91,7 @@ class Settings {
       } else if (entry.name == "finishedSetup") {
         settings.finishedSetup = entry.value;
       } else if (entry.name == "chunkSize") {
-        settings.chunkSize = entry.value;
+        settings.chunkSize.value = entry.value;
       } else if (entry.name == "autoOpenKeyboard") {
         settings.autoOpenKeyboard = entry.value;
       } else if (entry.name == "autoDownload") {
@@ -187,7 +187,7 @@ class Settings {
       } else if (entry.name == "generateFakeMessageContent") {
         settings.generateFakeMessageContent.value = entry.value;
       } else if (entry.name == "previewCompressionQuality") {
-        settings.previewCompressionQuality = entry.value;
+        settings.previewCompressionQuality.value = entry.value;
       } else if (entry.name == "filteredChatList") {
         settings.filteredChatList = entry.value;
       } else if (entry.name == "startVideosMuted") {
@@ -263,7 +263,7 @@ class Settings {
         ),
         ConfigEntry(
           name: "chunkSize",
-          value: this.chunkSize,
+          value: this.chunkSize.value,
           type: this.chunkSize.runtimeType,
         ),
         ConfigEntry(
@@ -498,7 +498,7 @@ class Settings {
         ),
         ConfigEntry(
           name: "previewCompressionQuality",
-          value: this.previewCompressionQuality,
+          value: this.previewCompressionQuality.value,
           type: this.previewCompressionQuality.runtimeType,
         ),
         ConfigEntry(

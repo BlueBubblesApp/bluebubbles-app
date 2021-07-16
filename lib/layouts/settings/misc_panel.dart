@@ -1,10 +1,10 @@
 import 'dart:ui';
 
-import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:get/get.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
@@ -15,15 +15,17 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class AttachmentPanel extends StatefulWidget {
-  AttachmentPanel({Key? key}) : super(key: key);
+class MiscPanel extends StatefulWidget {
+  MiscPanel({Key? key}) : super(key: key);
 
   @override
-  _AttachmentPanelState createState() => _AttachmentPanelState();
+  _MiscPanelState createState() => _MiscPanelState();
 }
 
-class _AttachmentPanelState extends State<AttachmentPanel> {
+class _MiscPanelState extends State<MiscPanel> {
   late Settings _settingsCopy;
+  bool needToReconnect = false;
+  bool showUrl = false;
 
   @override
   void initState() {
@@ -78,7 +80,7 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                 leading: buildBackButton(context),
                 backgroundColor: headerColor.withOpacity(0.5),
                 title: Text(
-                  "Media Settings",
+                  "Miscellaneous",
                   style: Theme.of(context).textTheme.headline1,
                 ),
               ),
@@ -105,16 +107,18 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                       ),
                       child: Padding(
                         padding: const EdgeInsets.only(bottom: 8.0, left: 15),
-                        child: Text("Auto-download".psCapitalize, style: SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
+                        child: Text("Notifications".psCapitalize, style: SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
                       )
                   ),
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
                   SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.autoDownload = val;
+                      _settingsCopy.hideTextPreviews = val;
+                      saveSettings();
                     },
-                    initialVal: _settingsCopy.autoDownload,
-                    title: "Auto-download Attachments",
+                    initialVal: _settingsCopy.hideTextPreviews,
+                    title: "Hide Message Text",
+                    subtitle: "Replaces message text with 'iMessage' in notifications",
                     backgroundColor: tileColor,
                   ),
                   Container(
@@ -126,10 +130,12 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.onlyWifiDownload = val;
+                      _settingsCopy.showIncrementalSync = val;
+                      saveSettings();
                     },
-                    initialVal: _settingsCopy.onlyWifiDownload,
-                    title: "Only Auto-download Attachments on WiFi",
+                    initialVal: _settingsCopy.showIncrementalSync,
+                    title: "Notify when incremental sync complete",
+                    subtitle: "Show a snackbar whenever a message sync is completed",
                     backgroundColor: tileColor,
                   ),
                   SettingsHeader(
@@ -137,125 +143,74 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                       tileColor: tileColor,
                       iosSubtitle: iosSubtitle,
                       materialSubtitle: materialSubtitle,
-                      text: "Video Mute Behavior"
+                      text: "Speed & Responsiveness"
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.startVideosMuted = val;
+                      _settingsCopy.lowMemoryMode = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.startVideosMuted,
-                    title: "Mute Videos by Default in Attachment Preview",
+                    initialVal: _settingsCopy.lowMemoryMode,
+                    title: "Low Memory Mode",
+                    subtitle: "Reduces background processes and deletes cached storage items to improve performance on lower-end devices",
                     backgroundColor: tileColor,
                   ),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
-                    ),
-                  ),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.startVideosMutedFullscreen = val;
-                      saveSettings();
-                    },
-                    initialVal: _settingsCopy.startVideosMutedFullscreen,
-                    title: "Mute Videos by Default in Fullscreen Player",
-                    backgroundColor: tileColor,
-                  ),
-                  SettingsHeader(
-                      headerColor: headerColor,
-                      tileColor: tileColor,
-                      iosSubtitle: iosSubtitle,
-                      materialSubtitle: materialSubtitle,
-                      text: "Attachment Preview Quality"
-                  ),
-                  Container(
+                  if (SettingsManager().settings.skin.value == Skins.iOS)
+                    Container(
                       color: tileColor,
                       child: Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
-                        child: Text(
-                          "Controls the resolution of attachment previews in the message screen. A higher value will make attachments show in better quality at the cost of longer load times."
-                        ),
-                      )
-                  ),
-                  SettingsSlider(
-                      text: "Attachment Preview Quality",
-                      startingVal: _settingsCopy.previewCompressionQuality.value.toDouble(),
-                      update: (double val) {
-                        _settingsCopy.previewCompressionQuality.value = val.toInt();
-                      },
-                      formatValue: ((double val) => val.toInt().toString() + "%"),
-                      backgroundColor: tileColor,
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
+                    ),
+                  if (SettingsManager().settings.skin.value == Skins.iOS)
+                    SettingsTile(
+                      title: "Scroll Speed Multiplier",
+                      subTitle: "Controls how fast scrolling occurs",
                       showDivider: false,
-                      leading: Obx(() => Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(5),
-                            child: ImageFiltered(
-                              imageFilter: ImageFilter.blur(
-                                sigmaX: (1 - _settingsCopy.previewCompressionQuality.value / 100),
-                                sigmaY: (1 - _settingsCopy.previewCompressionQuality.value / 100),
-                              ),
-                              child: Container(
-                                width: 32,
-                                height: 32,
-                                decoration: BoxDecoration(
-                                  color: SettingsManager().settings.skin.value == Skins.iOS ?
-                                  Colors.grey : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(5),
-                                ),
-                                alignment: Alignment.center,
-                                child: Icon(SettingsManager().settings.skin.value == Skins.iOS
-                                    ? CupertinoIcons.sparkles : Icons.auto_awesome,
-                                    color: SettingsManager().settings.skin.value == Skins.iOS ?
-                                    Colors.white : Colors.grey,
-                                    size: SettingsManager().settings.skin.value == Skins.iOS ? 23 : 30
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      )),
-                      min: 10,
-                      max: 100,
-                      divisions: 18),
+                      backgroundColor: tileColor,
+                    ),
+                  if (SettingsManager().settings.skin.value == Skins.iOS)
+                    SettingsSlider(
+                        text: "Scroll Speed Multiplier",
+                        startingVal: _settingsCopy.scrollVelocity,
+                        update: (double val) {
+                          _settingsCopy.scrollVelocity = double.parse(val.toStringAsFixed(2));
+                        },
+                        formatValue: ((double val) => val.toStringAsFixed(2)),
+                        backgroundColor: tileColor,
+                        min: 0.20,
+                        max: 1,
+                        divisions: 8),
                   SettingsHeader(
                       headerColor: headerColor,
                       tileColor: tileColor,
                       iosSubtitle: iosSubtitle,
                       materialSubtitle: materialSubtitle,
-                      text: "Advanced"
+                      text: "Other"
                   ),
-                  SettingsTile(
-                    title: "Attachment Chunk Size",
-                    subTitle: "Controls the amount of data the app gets from the server on each network request",
-                    showDivider: false,
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.sendDelay = val ? 3 : 0;
+                      saveSettings();
+                      setState(() {});
+                    },
+                    initialVal: !isNullOrZero(_settingsCopy.sendDelay),
+                    title: "Send Delay",
                     backgroundColor: tileColor,
-                    isThreeLine: true,
                   ),
-                  SettingsSlider(
-                      text: "Attachment Chunk Size",
-                      startingVal: _settingsCopy.chunkSize.value.toDouble(),
-                      update: (double val) {
-                        _settingsCopy.chunkSize.value = val.floor();
-                      },
-                      formatValue: ((double val) => getSizeString(val)),
-                      backgroundColor: tileColor,
-                      showDivider: false,
-                      leading: Obx(() => SettingsLeadingIcon(
-                        iosIcon: _settingsCopy.chunkSize.value < 1000
-                            ? CupertinoIcons.square_grid_3x2 : _settingsCopy.chunkSize.value < 2000
-                            ? CupertinoIcons.square_grid_2x2 : CupertinoIcons.square,
-                        materialIcon: _settingsCopy.chunkSize.value < 1000
-                            ? Icons.photo_size_select_small : _settingsCopy.chunkSize.value < 2000
-                            ? Icons.photo_size_select_large : Icons.photo_size_select_actual,
-                      )),
-                      min: 100,
-                      max: 3000,
-                      divisions: 29),
+                  if (!isNullOrZero(SettingsManager().settings.sendDelay))
+                    SettingsSlider(
+                        text: "Set send delay",
+                        startingVal: _settingsCopy.sendDelay!.toDouble(),
+                        update: (double val) {
+                          _settingsCopy.sendDelay = val.toInt();
+                        },
+                        formatValue: ((double val) => val.toStringAsFixed(0) + " sec"),
+                        backgroundColor: tileColor,
+                        min: 1,
+                        max: 10,
+                        divisions: 9),
                   Container(
                     color: tileColor,
                     child: Padding(
@@ -265,12 +220,11 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.preCachePreviewImages = val;
+                      _settingsCopy.use24HrFormat = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.preCachePreviewImages,
-                    title: "Cache Preview Images",
-                    subtitle: "Caches URL preview images for faster load times",
+                    initialVal: _settingsCopy.use24HrFormat,
+                    title: "Use 24 Hour Format for Times",
                     backgroundColor: tileColor,
                   ),
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),

@@ -200,6 +200,7 @@ void showSnackbar(String title, String message) {
     backgroundColor: Get.theme.accentColor,
     margin: EdgeInsets.only(bottom: 10),
     maxWidth: Get.width - 20,
+    isDismissible: false,
   );
 }
 

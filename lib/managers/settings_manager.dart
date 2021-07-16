@@ -49,7 +49,7 @@ class SettingsManager {
       return 10;
     }
 
-    return SettingsManager().settings.previewCompressionQuality;
+    return SettingsManager().settings.previewCompressionQuality.value;
   }
 
   /// [init] is run at start and fetches both the [appDocDir] and sets the [settings] to a default value

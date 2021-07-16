@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/layouts/settings/chat_list_panel.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
@@ -13,7 +14,7 @@ import 'package:bluebubbles/layouts/settings/private_api_panel.dart';
 import 'package:bluebubbles/layouts/settings/redacted_mode_panel.dart';
 import 'package:bluebubbles/layouts/settings/server_management_panel.dart';
 import 'package:bluebubbles/layouts/settings/theme_panel.dart';
-import 'package:bluebubbles/layouts/settings/ux_panel.dart';
+import 'package:bluebubbles/layouts/settings/misc_panel.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoTextField.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
@@ -276,17 +277,41 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   ),
                   SettingsTile(
                     backgroundColor: tileColor,
-                    title: "User Experience Settings",
+                    title: "Chat List Settings",
                     onTap: () {
                       Navigator.of(context).push(
                         CupertinoPageRoute(
-                          builder: (context) => UXPanel(),
+                          builder: (context) => ChatListPanel(),
                         ),
                       );
                     },
                     leading: SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.person_alt,
-                      materialIcon: Icons.manage_accounts,
+                      iosIcon: CupertinoIcons.square_list,
+                      materialIcon: Icons.list,
+                    ),
+                    showDivider: false,
+                    trailing: nextIcon,
+                  ),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
+                    ),
+                  ),
+                  SettingsTile(
+                    backgroundColor: tileColor,
+                    title: "Miscellaneous Settings",
+                    onTap: () {
+                      Navigator.of(context).push(
+                        CupertinoPageRoute(
+                          builder: (context) => MiscPanel(),
+                        ),
+                      );
+                    },
+                    leading: SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.ellipsis_circle,
+                      materialIcon: Icons.more_vert,
                     ),
                     showDivider: false,
                     trailing: nextIcon,

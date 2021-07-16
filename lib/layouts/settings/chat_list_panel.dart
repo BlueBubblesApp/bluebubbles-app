@@ -1,9 +1,9 @@
 import 'dart:ui';
 
-import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:get/get.dart';
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
@@ -15,14 +15,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class AttachmentPanel extends StatefulWidget {
-  AttachmentPanel({Key? key}) : super(key: key);
+class ChatListPanel extends StatefulWidget {
+  ChatListPanel({Key? key}) : super(key: key);
 
   @override
-  _AttachmentPanelState createState() => _AttachmentPanelState();
+  _ChatListPanelState createState() => _ChatListPanelState();
 }
 
-class _AttachmentPanelState extends State<AttachmentPanel> {
+class _ChatListPanelState extends State<ChatListPanel> {
   late Settings _settingsCopy;
 
   @override
@@ -78,7 +78,7 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                 leading: buildBackButton(context),
                 backgroundColor: headerColor.withOpacity(0.5),
                 title: Text(
-                  "Media Settings",
+                  "Chat List",
                   style: Theme.of(context).textTheme.headline1,
                 ),
               ),
@@ -105,16 +105,18 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                       ),
                       child: Padding(
                         padding: const EdgeInsets.only(bottom: 8.0, left: 15),
-                        child: Text("Auto-download".psCapitalize, style: SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
+                        child: Text("Indicators".psCapitalize, style: SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
                       )
                   ),
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
                   SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.autoDownload = val;
+                      _settingsCopy.showConnectionIndicator = val;
+                      saveSettings();
                     },
-                    initialVal: _settingsCopy.autoDownload,
-                    title: "Auto-download Attachments",
+                    initialVal: _settingsCopy.showConnectionIndicator,
+                    title: "Show Connection Indicator",
+                    subtitle: "Enables a connection status indicator at the top left",
                     backgroundColor: tileColor,
                   ),
                   Container(
@@ -126,26 +128,12 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.onlyWifiDownload = val;
-                    },
-                    initialVal: _settingsCopy.onlyWifiDownload,
-                    title: "Only Auto-download Attachments on WiFi",
-                    backgroundColor: tileColor,
-                  ),
-                  SettingsHeader(
-                      headerColor: headerColor,
-                      tileColor: tileColor,
-                      iosSubtitle: iosSubtitle,
-                      materialSubtitle: materialSubtitle,
-                      text: "Video Mute Behavior"
-                  ),
-                  SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.startVideosMuted = val;
+                      _settingsCopy.showSyncIndicator = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.startVideosMuted,
-                    title: "Mute Videos by Default in Attachment Preview",
+                    initialVal: _settingsCopy.showSyncIndicator,
+                    title: "Show Sync Indicator in Chat List",
+                    subtitle: "Enables a small indicator at the top left to show when the app is syncing messages",
                     backgroundColor: tileColor,
                   ),
                   Container(
@@ -157,11 +145,12 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.startVideosMutedFullscreen = val;
+                      _settingsCopy.colorblindMode = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.startVideosMutedFullscreen,
-                    title: "Mute Videos by Default in Fullscreen Player",
+                    initialVal: _settingsCopy.colorblindMode,
+                    title: "Colorblind Mode",
+                    subtitle: "Replaces the colored connection indicator with icons to aid accessibility",
                     backgroundColor: tileColor,
                   ),
                   SettingsHeader(
@@ -169,108 +158,54 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                       tileColor: tileColor,
                       iosSubtitle: iosSubtitle,
                       materialSubtitle: materialSubtitle,
-                      text: "Attachment Preview Quality"
+                      text: "Chat List"
                   ),
-                  Container(
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.filteredChatList = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.filteredChatList,
+                    title: "Filtered Chat List",
+                    subtitle: "Filters the chat list based on parameters set in iMessage (usually this removes old, inactive chats)",
+                    backgroundColor: tileColor,
+                  ),
+                  if (SettingsManager().settings.skin.value == Skins.Samsung ||
+                      SettingsManager().settings.skin.value == Skins.Material)
+                    Container(
                       color: tileColor,
                       child: Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
-                        child: Text(
-                          "Controls the resolution of attachment previews in the message screen. A higher value will make attachments show in better quality at the cost of longer load times."
-                        ),
-                      )
-                  ),
-                  SettingsSlider(
-                      text: "Attachment Preview Quality",
-                      startingVal: _settingsCopy.previewCompressionQuality.value.toDouble(),
-                      update: (double val) {
-                        _settingsCopy.previewCompressionQuality.value = val.toInt();
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
+                    ),
+                  if (SettingsManager().settings.skin.value == Skins.Samsung ||
+                      SettingsManager().settings.skin.value == Skins.Material)
+                    SettingsSwitch(
+                      onChanged: (bool val) {
+                        _settingsCopy.swipableConversationTiles = val;
+                        saveSettings();
                       },
-                      formatValue: ((double val) => val.toInt().toString() + "%"),
+                      initialVal: _settingsCopy.swipableConversationTiles,
+                      title: "Swipe Actions for Conversation Tiles",
+                      subtitle: "Enables swipe actions, such as pinning and deleting, for conversation tiles when using Material theme",
                       backgroundColor: tileColor,
-                      showDivider: false,
-                      leading: Obx(() => Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(5),
-                            child: ImageFiltered(
-                              imageFilter: ImageFilter.blur(
-                                sigmaX: (1 - _settingsCopy.previewCompressionQuality.value / 100),
-                                sigmaY: (1 - _settingsCopy.previewCompressionQuality.value / 100),
-                              ),
-                              child: Container(
-                                width: 32,
-                                height: 32,
-                                decoration: BoxDecoration(
-                                  color: SettingsManager().settings.skin.value == Skins.iOS ?
-                                  Colors.grey : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(5),
-                                ),
-                                alignment: Alignment.center,
-                                child: Icon(SettingsManager().settings.skin.value == Skins.iOS
-                                    ? CupertinoIcons.sparkles : Icons.auto_awesome,
-                                    color: SettingsManager().settings.skin.value == Skins.iOS ?
-                                    Colors.white : Colors.grey,
-                                    size: SettingsManager().settings.skin.value == Skins.iOS ? 23 : 30
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      )),
-                      min: 10,
-                      max: 100,
-                      divisions: 18),
+                    ),
                   SettingsHeader(
                       headerColor: headerColor,
                       tileColor: tileColor,
                       iosSubtitle: iosSubtitle,
                       materialSubtitle: materialSubtitle,
-                      text: "Advanced"
-                  ),
-                  SettingsTile(
-                    title: "Attachment Chunk Size",
-                    subTitle: "Controls the amount of data the app gets from the server on each network request",
-                    showDivider: false,
-                    backgroundColor: tileColor,
-                    isThreeLine: true,
-                  ),
-                  SettingsSlider(
-                      text: "Attachment Chunk Size",
-                      startingVal: _settingsCopy.chunkSize.value.toDouble(),
-                      update: (double val) {
-                        _settingsCopy.chunkSize.value = val.floor();
-                      },
-                      formatValue: ((double val) => getSizeString(val)),
-                      backgroundColor: tileColor,
-                      showDivider: false,
-                      leading: Obx(() => SettingsLeadingIcon(
-                        iosIcon: _settingsCopy.chunkSize.value < 1000
-                            ? CupertinoIcons.square_grid_3x2 : _settingsCopy.chunkSize.value < 2000
-                            ? CupertinoIcons.square_grid_2x2 : CupertinoIcons.square,
-                        materialIcon: _settingsCopy.chunkSize.value < 1000
-                            ? Icons.photo_size_select_small : _settingsCopy.chunkSize.value < 2000
-                            ? Icons.photo_size_select_large : Icons.photo_size_select_actual,
-                      )),
-                      min: 100,
-                      max: 3000,
-                      divisions: 29),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
-                    ),
+                      text: "Misc"
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.preCachePreviewImages = val;
+                      _settingsCopy.moveChatCreatorToHeader = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.preCachePreviewImages,
-                    title: "Cache Preview Images",
-                    subtitle: "Caches URL preview images for faster load times",
+                    initialVal: _settingsCopy.moveChatCreatorToHeader,
+                    title: "Move Chat Creator Button to Header",
+                    subtitle: "Replaces the floating button at the bottom to a fixed button at the top",
                     backgroundColor: tileColor,
                   ),
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
