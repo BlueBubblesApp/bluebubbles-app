@@ -22,6 +22,8 @@ dependencies:
     sdk: flutter
   get: ^4.1.4
   cupertino_icons: ^1.0.3
+  exif: ^3.0.0
+  flutter_native_image: ^0.0.6+1
   shared_preferences: ^2.0.6
   socket_io_client: ^1.0.1
   url_launcher: ^6.0.8
@@ -62,7 +64,6 @@ dependencies:
   # Pinned to 0.4.0 for now because Flutter 2 stable doesn't support the stuff in 0.5.0 yet
   flutter_colorpicker: ^0.4.0
   image_gallery_saver: ^1.6.9
-  flutter_image_compress: ^1.0.0
   visibility_detector: ^0.2.0
   flutter_displaymode: ^0.3.2
   flutter_libphonenumber: ^1.1.0
