@@ -53,7 +53,8 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
 
   Future<void> initBytes() async {
     if (widget.attachment.mimeType == "image/heic") {
-      bytes = await FlutterImageCompress.compressWithFile(widget.file.absolute.path, quality: 100);
+      bytes =
+          await AttachmentHelper.compressAttachment(widget.attachment, widget.file.absolute.path, qualityOverride: 100);
     } else {
       bytes = await widget.file.readAsBytes();
     }

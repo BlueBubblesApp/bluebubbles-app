@@ -4,6 +4,8 @@ import 'dart:ui';
 
 import 'package:bluebubbles/helpers/simple_vcard_parser.dart';
 import 'package:contacts_service/contacts_service.dart';
+import 'package:exif/exif.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -15,6 +17,7 @@ import 'package:flutter/material.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:image_size_getter/image_size_getter.dart' as IMG;
 import 'package:permission_handler/permission_handler.dart';
+import 'package:photo_manager/photo_manager.dart';
 
 class AppleLocation {
   double? longitude;
@@ -70,14 +73,10 @@ class AttachmentHelper {
 
       if (query.contains("\\")) {
         return AppleLocation(
-            latitude: double.tryParse(query.split("\\,")[1]),
-            longitude: double.tryParse(query.split("\\,")[0])
-        );
+            latitude: double.tryParse(query.split("\\,")[1]), longitude: double.tryParse(query.split("\\,")[0]));
       } else {
         return AppleLocation(
-            latitude: double.tryParse(query.split(",")[1]),
-            longitude: double.tryParse(query.split(",")[0])
-        );
+            latitude: double.tryParse(query.split(",")[1]), longitude: double.tryParse(query.split(",")[0]));
       }
     } catch (ex) {
       debugPrint("Failed to parse location!");
@@ -200,7 +199,8 @@ class AttachmentHelper {
 
     if (SocketManager().attachmentDownloaders.containsKey(attachment.guid)) {
       return SocketManager().attachmentDownloaders[attachment.guid];
-    } else if (FileSystemEntity.typeSync(pathName) != FileSystemEntityType.notFound || attachment.guid == "redacted-mode-demo-attachment") {
+    } else if (FileSystemEntity.typeSync(pathName) != FileSystemEntityType.notFound ||
+        attachment.guid == "redacted-mode-demo-attachment") {
       return File(pathName);
     } else if (attachment.mimeType == null || attachment.mimeType!.startsWith("text/")) {
       return AttachmentDownloader(attachment);
@@ -283,5 +283,41 @@ class AttachmentHelper {
 
     // 2. Redownload the attachment
     AttachmentDownloader(attachment, onComplete: onComplete, onError: onError);
+  }
+
+  static Future<Uint8List?> compressAttachment(Attachment attachment, String filePath, {int? qualityOverride}) async {
+    int quality = qualityOverride ?? SettingsManager().compressionQuality;
+
+    // Check if the file exists
+    File compressedFile = new File("$filePath.${quality.toString()}.compressed");
+    if (compressedFile.existsSync()) {
+      return compressedFile.readAsBytes();
+    }
+
+    int minWidth = (attachment.width != null && attachment.width! > 0) ? attachment.width! : 1920;
+    int minHeight = (attachment.height != null && attachment.height! > 0) ? attachment.height! : 1080;
+
+    CompressFormat format = CompressFormat.png;
+    if (attachment.transferName!.endsWith(".heic")) {
+      format = CompressFormat.heic;
+    } else if (attachment.transferName!.endsWith(".jpg") || attachment.transferName!.endsWith(".jpeg")) {
+      format = CompressFormat.jpeg;
+    } else if (attachment.transferName!.endsWith(".webp")) {
+      format = CompressFormat.webp;
+    }
+
+    Uint8List? data = await FlutterImageCompress.compressWithFile(filePath,
+        quality: quality,
+        format: format,
+        keepExif: true,
+        autoCorrectionAngle: false,
+        minHeight: minHeight,
+        minWidth: minWidth);
+
+    if (data != null) {
+      compressedFile.writeAsBytes(data);
+    }
+
+    return data;
   }
 }

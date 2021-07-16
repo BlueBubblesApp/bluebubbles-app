@@ -46,8 +46,10 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
       );
       if (this.mounted) setState(() {});
     } else if (mimeType == null || mimeType.startsWith("image/")) {
-      preview = await FlutterImageCompress.compressWithFile(widget.file.absolute.path,
-          quality: SettingsManager().compressionQuality);
+      // Compress the file, using a dummy attachment object
+      preview = await AttachmentHelper.compressAttachment(
+          new Attachment(mimeType: mimeType, transferName: widget.file.absolute.path, width: 100, height: 100),
+          widget.file.absolute.path);
       if (this.mounted) setState(() {});
     }
   }

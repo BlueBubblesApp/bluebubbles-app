@@ -60,12 +60,11 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
 
   void getCompressedImage() {
     String path = AttachmentHelper.getAttachmentPath(widget.attachment);
-    FlutterImageCompress.compressWithFile(path, quality: SettingsManager().compressionQuality).then((data) {
-      if (this.mounted) {
-        setState(() {
-          previewImage = data;
-        });
-      }
+    AttachmentHelper.compressAttachment(widget.attachment, path).then((data) {
+      if (!this.mounted) return;
+      setState(() {
+        previewImage = data;
+      });
     });
   }
 
@@ -75,7 +74,8 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
     File file = new File(
       "${SettingsManager().appDocDir.path}/attachments/${attachment.guid}/${attachment.transferName}",
     );
-    final bool hideAttachments = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachments.value;
+    final bool hideAttachments =
+        SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachments.value;
     final bool hideAttachmentTypes =
         SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachmentTypes.value;
     if (hideAttachments && !hideAttachmentTypes)
