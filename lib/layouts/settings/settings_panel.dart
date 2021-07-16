@@ -14,7 +14,7 @@ import 'package:bluebubbles/layouts/settings/private_api_panel.dart';
 import 'package:bluebubbles/layouts/settings/redacted_mode_panel.dart';
 import 'package:bluebubbles/layouts/settings/server_management_panel.dart';
 import 'package:bluebubbles/layouts/settings/theme_panel.dart';
-import 'package:bluebubbles/layouts/settings/ux_panel.dart';
+import 'package:bluebubbles/layouts/settings/misc_panel.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoTextField.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
@@ -301,17 +301,17 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   ),
                   SettingsTile(
                     backgroundColor: tileColor,
-                    title: "User Experience Settings",
+                    title: "Miscellaneous Settings",
                     onTap: () {
                       Navigator.of(context).push(
                         CupertinoPageRoute(
-                          builder: (context) => UXPanel(),
+                          builder: (context) => MiscPanel(),
                         ),
                       );
                     },
                     leading: SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.person_alt,
-                      materialIcon: Icons.manage_accounts,
+                      iosIcon: CupertinoIcons.ellipsis_circle,
+                      materialIcon: Icons.more_vert,
                     ),
                     showDivider: false,
                     trailing: nextIcon,
