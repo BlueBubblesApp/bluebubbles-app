@@ -250,14 +250,15 @@ class _ThemePanelState extends State<ThemePanel> {
                     backgroundColor: tileColor,
                     subtitle: "Customize the color for different avatars",
                   ),
-                  SettingsHeader(
-                      headerColor: headerColor,
-                      tileColor: tileColor,
-                      iosSubtitle: iosSubtitle,
-                      materialSubtitle: materialSubtitle,
-                      text: "Refresh Rate"
-                  ),
-                  if (refreshRates.isNotEmpty)
+                  if (refreshRates.length > 2)
+                    SettingsHeader(
+                        headerColor: headerColor,
+                        tileColor: tileColor,
+                        iosSubtitle: iosSubtitle,
+                        materialSubtitle: materialSubtitle,
+                        text: "Refresh Rate"
+                    ),
+                  if (refreshRates.length > 2)
                     SettingsOptions<int>(
                       initial: currentMode,
                       onChanged: (val) async {

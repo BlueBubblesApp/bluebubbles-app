@@ -78,7 +78,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
 
   String getTimeText(BuildContext context) {
     String output = "Unknown";
-    for (List item in timeOptions as Iterable<List<dynamic>>) {
+    for (List item in timeOptions) {
       if (item[0] == scheduleSeconds) {
         output = item[1];
         break;

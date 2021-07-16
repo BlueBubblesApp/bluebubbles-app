@@ -355,7 +355,6 @@ class _ConversationPanelState extends State<ConversationPanel> {
                         _settingsCopy.quickTapbackType = val;
                         saveSettings();
                       },
-                      showDivider: false,
                       backgroundColor: tileColor,
                       secondaryColor: headerColor,
                     ),

@@ -310,7 +310,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       iosIcon: CupertinoIcons.chat_bubble,
                       materialIcon: Icons.sms,
                     ),
-                    showDivider: false,
                     trailing: nextIcon,
                   ),
                   Container(
@@ -546,7 +545,6 @@ class SettingsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    //todo remove Column and Container once settings is fully done
     return Container(
       color: backgroundColor,
       child: ListTile(
@@ -764,7 +762,7 @@ class _SettingsOptionsState<T extends Object> extends State<SettingsOptions<T>> 
       final map = Map<T, Widget>.fromIterables(widget.options, widget.cupertinoCustomWidgets ?? texts);
       return Container(
         color: widget.backgroundColor,
-        padding: EdgeInsets.symmetric(horizontal: 15),
+        padding: EdgeInsets.symmetric(horizontal: 13),
         height: 50,
         child: CupertinoSlidingSegmentedControl<T>(
           children: map,
