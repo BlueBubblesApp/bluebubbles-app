@@ -88,8 +88,9 @@ class Reaction {
     this.messages.add(message);
   }
 
-  Widget? getSmallWidget(BuildContext context) {
-    if (this.messages.isEmpty) return null;
+  Widget? getSmallWidget(BuildContext context, {Message? message, bool leftPadding = true}) {
+    if (this.messages.isEmpty && message == null) return null;
+    if (this.messages.isEmpty && message != null) this.messages = [message];
 
     List<Widget> reactionList = [];
 
@@ -102,7 +103,7 @@ class Reaction {
       reactionList.add(
         Padding(
           padding: EdgeInsets.fromLTRB(
-            (this.messages[i].isFromMe! ? 5.0 : 0.0) + i.toDouble() * 10.0,
+            (this.messages[i].isFromMe! && leftPadding ? 5.0 : 0.0) + i.toDouble() * 10.0,
             1.0,
             0,
             0,

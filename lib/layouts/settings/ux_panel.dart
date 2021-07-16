@@ -4,7 +4,6 @@ import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/settings/messages_view_ux_panel.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
@@ -77,20 +76,6 @@ class _UXPanelState extends State<UXPanel> {
               delegate: SliverChildListDelegate(
                 <Widget>[
                   Container(padding: EdgeInsets.only(top: 5.0)),
-                  SettingsTile(
-                    title: "Conversation Settings",
-                    onTap: () {
-                      Navigator.of(context).push(
-                        CupertinoPageRoute(
-                          builder: (context) => ConvoSettings(),
-                        ),
-                      );
-                    },
-                    trailing: Icon(
-                      SettingsManager().settings.skin.value == Skins.iOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
-                      color: Theme.of(context).primaryColor,
-                    ),
-                  ),
                   SettingsSwitch(
                     onChanged: (bool val) {
                       _settingsCopy.hideTextPreviews = val;

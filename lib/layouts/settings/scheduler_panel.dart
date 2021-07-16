@@ -13,7 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
-List<dynamic> timeOptions = [
+List<List<dynamic>> timeOptions = [
   [300, "5 Minutes"],
   [1800, "30 Minutes"],
   [3600, "1 Hour"],
@@ -167,7 +167,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
                           },
                         ),
                   SettingsTextField(title: "Enter a message", controller: this.messageController),
-                  SettingsOptions<dynamic>(
+                  SettingsOptions<List<dynamic>>(
                     initial: timeOptions.first,
                     subtitle: getTimeText(context),
                     onChanged: (val) async {

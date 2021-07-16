@@ -4,6 +4,7 @@ import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/settings/chat_list_panel.dart';
+import 'package:bluebubbles/layouts/settings/conversation_panel.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
@@ -288,6 +289,30 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     leading: SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.square_list,
                       materialIcon: Icons.list,
+                    ),
+                    showDivider: false,
+                    trailing: nextIcon,
+                  ),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
+                    ),
+                  ),
+                  SettingsTile(
+                    backgroundColor: tileColor,
+                    title: "Conversation Settings",
+                    onTap: () {
+                      Navigator.of(context).push(
+                        CupertinoPageRoute(
+                          builder: (context) => ConversationPanel(),
+                        ),
+                      );
+                    },
+                    leading: SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.chat_bubble,
+                      materialIcon: Icons.sms,
                     ),
                     showDivider: false,
                     trailing: nextIcon,
@@ -714,32 +739,38 @@ class _SettingsSwitchState extends State<SettingsSwitch> {
   }
 }
 
-class SettingsOptions<T> extends StatefulWidget {
+class SettingsOptions<T extends Object> extends StatefulWidget {
   SettingsOptions({
     Key? key,
     required this.onChanged,
     required this.options,
+    this.cupertinoCustomWidgets,
     required this.initial,
     this.textProcessing,
     required this.title,
     this.subtitle,
     this.showDivider = true,
     this.capitalize = true,
+    this.backgroundColor,
+    this.secondaryColor,
   }) : super(key: key);
   final String title;
   final Function(dynamic) onChanged;
   final List<T> options;
+  final Iterable<Widget>? cupertinoCustomWidgets;
   final T initial;
   final String Function(dynamic)? textProcessing;
   final bool showDivider;
   final String? subtitle;
   final bool capitalize;
+  final Color? backgroundColor;
+  final Color? secondaryColor;
 
   @override
-  _SettingsOptionsState createState() => _SettingsOptionsState();
+  _SettingsOptionsState createState() => _SettingsOptionsState<T>();
 }
 
-class _SettingsOptionsState<T> extends State<SettingsOptions<T>> {
+class _SettingsOptionsState<T extends Object> extends State<SettingsOptions<T>> {
   late T currentVal;
 
   @override
@@ -750,82 +781,109 @@ class _SettingsOptionsState<T> extends State<SettingsOptions<T>> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(children: [
-      Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    child: Text(
-                      widget.title,
-                      style: Theme.of(context).textTheme.bodyText1,
+    if (SettingsManager().settings.skin.value == Skins.iOS) {
+      final texts = widget.options.map((e) => Text(e.toString()));
+      final map = Map<T, Widget>.fromIterables(widget.options, widget.cupertinoCustomWidgets ?? texts);
+      return Container(
+        color: widget.backgroundColor,
+        height: 50,
+        child: CupertinoSlidingSegmentedControl<T>(
+          children: map,
+          groupValue: currentVal,
+          thumbColor: widget.secondaryColor != null && widget.secondaryColor == widget.backgroundColor
+              ? widget.secondaryColor!.lightenOrDarken(20) : widget.secondaryColor ?? Colors.white,
+          backgroundColor: widget.backgroundColor ?? CupertinoColors.tertiarySystemFill,
+          onValueChanged: (T? val) {
+            widget.onChanged(val);
+
+            if (!this.mounted && val != null) return;
+
+            setState(() {
+              currentVal = val!;
+            });
+          },
+        ),
+      );
+    }
+    return Container(
+      color: widget.backgroundColor,
+      child: Column(children: [
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      child: Text(
+                        widget.title,
+                        style: Theme.of(context).textTheme.bodyText1,
+                      ),
                     ),
-                  ),
-                  (widget.subtitle != null)
-                      ? Container(
-                          child: Padding(
-                            padding: EdgeInsets.only(top: 3.0),
-                            child: Text(
-                              widget.subtitle ?? "",
-                              style: Theme.of(context).textTheme.subtitle1,
+                    (widget.subtitle != null)
+                        ? Container(
+                            child: Padding(
+                              padding: EdgeInsets.only(top: 3.0),
+                              child: Text(
+                                widget.subtitle ?? "",
+                                style: Theme.of(context).textTheme.subtitle1,
+                              ),
                             ),
+                          )
+                        : Container(),
+                  ]),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 9),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  color: Theme.of(context).accentColor,
+                ),
+                child: Center(
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<T>(
+                      dropdownColor: Theme.of(context).accentColor,
+                      icon: Icon(
+                        Icons.arrow_drop_down,
+                        color: Theme.of(context).textTheme.bodyText1!.color,
+                      ),
+                      value: currentVal,
+                      items: widget.options.map<DropdownMenuItem<T>>((e) {
+                        return DropdownMenuItem(
+                          value: e,
+                          child: Text(
+                            widget.capitalize ? widget.textProcessing!(e).capitalize! : widget.textProcessing!(e),
+                            style: Theme.of(context).textTheme.bodyText1,
                           ),
-                        )
-                      : Container(),
-                ]),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 9),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                color: Theme.of(context).accentColor,
-              ),
-              child: Center(
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<T>(
-                    dropdownColor: Theme.of(context).accentColor,
-                    icon: Icon(
-                      Icons.arrow_drop_down,
-                      color: Theme.of(context).textTheme.bodyText1!.color,
+                        );
+                      }).toList(),
+                      onChanged: (T? val) {
+                        widget.onChanged(val);
+
+                        if (!this.mounted || val == null) return;
+
+                        setState(() {
+                          currentVal = val;
+                        });
+                        //
+                      },
                     ),
-                    value: currentVal,
-                    items: widget.options.map<DropdownMenuItem<T>>((e) {
-                      return DropdownMenuItem(
-                        value: e,
-                        child: Text(
-                          widget.capitalize ? widget.textProcessing!(e).capitalize! : widget.textProcessing!(e),
-                          style: Theme.of(context).textTheme.bodyText1,
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (T? val) {
-                      widget.onChanged(val);
-
-                      if (!this.mounted || val == null) return;
-
-                      setState(() {
-                        currentVal = val;
-                      });
-                      //
-                    },
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-      (widget.showDivider)
-          ? Divider(
-              color: Theme.of(context).accentColor.withOpacity(0.5),
-              thickness: 1,
-            )
-          : Container()
-    ]);
+        (widget.showDivider)
+            ? Divider(
+                color: Theme.of(context).accentColor.withOpacity(0.5),
+                thickness: 1,
+              )
+            : Container()
+      ]),
+    );
   }
 }
 
