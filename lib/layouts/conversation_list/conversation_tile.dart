@@ -19,13 +19,13 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
-import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get.dart';
 
 class ConversationTile extends StatefulWidget {
   final Chat chat;
@@ -54,21 +54,10 @@ class ConversationTile extends StatefulWidget {
 }
 
 class _ConversationTileState extends State<ConversationTile> with AutomaticKeepAliveClientMixin {
-  bool hideDividers = false;
   bool isFetching = false;
-  bool denseTiles = false;
   Brightness? brightness;
   Color? previousBackgroundColor;
   bool gotBrightness = false;
-
-  // Redacted Mode stuff that's visible on this screen (to detect and respond to changes)
-  bool redactedMode = false;
-  bool hideMessageContent = true;
-  bool hideContactPhotos = true;
-  bool hideContactInfo = true;
-  bool removeLetterAvatars = true;
-  bool generateFakeContactNames = false;
-  bool generateFakeMessageContent = false;
 
   // Typing indicator
   bool showTypingIndicator = false;
@@ -95,56 +84,6 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
   void initState() {
     super.initState();
     fetchParticipants();
-
-    hideDividers = SettingsManager().settings.hideDividers;
-    denseTiles = SettingsManager().settings.denseChatTiles;
-    redactedMode = SettingsManager().settings.redactedMode.value;
-    hideMessageContent = SettingsManager().settings.hideMessageContent.value;
-    hideContactPhotos = SettingsManager().settings.hideContactPhotos.value;
-    hideContactInfo = SettingsManager().settings.hideContactInfo.value;
-    removeLetterAvatars = SettingsManager().settings.removeLetterAvatars.value;
-    generateFakeContactNames = SettingsManager().settings.generateFakeContactNames.value;
-    generateFakeMessageContent = SettingsManager().settings.generateFakeMessageContent.value;
-    SettingsManager().stream.listen((Settings? newSettings) {
-      if (newSettings!.hideDividers != hideDividers) {
-        hideDividers = newSettings.hideDividers;
-      }
-
-      if (newSettings.denseChatTiles != denseTiles) {
-        denseTiles = newSettings.denseChatTiles;
-      }
-
-      if (newSettings.redactedMode.value != redactedMode) {
-        redactedMode = newSettings.redactedMode.value;
-      }
-
-      if (newSettings.hideMessageContent.value != hideMessageContent) {
-        hideMessageContent = newSettings.hideMessageContent.value;
-      }
-
-      if (newSettings.hideContactPhotos.value != hideContactPhotos) {
-        hideContactPhotos = newSettings.hideContactPhotos.value;
-      }
-
-      if (newSettings.hideContactInfo.value != hideContactInfo) {
-        hideContactInfo = newSettings.hideContactInfo.value;
-      }
-
-      if (newSettings.removeLetterAvatars.value != removeLetterAvatars) {
-        removeLetterAvatars = newSettings.removeLetterAvatars.value;
-      }
-
-      if (newSettings.generateFakeContactNames.value != generateFakeContactNames) {
-        generateFakeContactNames = newSettings.generateFakeContactNames.value;
-      }
-
-      if (newSettings.generateFakeMessageContent.value != generateFakeMessageContent) {
-        generateFakeMessageContent = newSettings.generateFakeMessageContent.value;
-      }
-
-      if (this.mounted) setState(() {});
-    });
-
     // Listen for changes in the group
     NewMessageManager().stream.listen((NewMessageEvent event) async {
       // Make sure we have the required data to qualify for this tile
@@ -291,8 +230,8 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
   }
 
   Widget buildTitle() {
-    final hideInfo = redactedMode && hideContactInfo;
-    final generateNames = redactedMode && generateFakeContactNames;
+    final hideInfo = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactInfo.value;
+    final generateNames = SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeContactNames.value;
 
     TextStyle? style = Theme.of(context).textTheme.bodyText1;
     String? title = widget.chat.title != null ? widget.chat.title : "";
@@ -334,8 +273,8 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
           );
         }
 
-        final hideContent = redactedMode && hideMessageContent;
-        final generateContent = redactedMode && generateFakeMessageContent;
+        final hideContent = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value;
+        final generateContent = SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeMessageContent.value;
 
         TextStyle style = Theme.of(context).textTheme.subtitle1!.apply(
               color: Theme.of(context).textTheme.subtitle1!.color!.withOpacity(
@@ -356,19 +295,16 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
   }
 
   Widget buildLeading() {
-    Widget avatar;
-
-    if (!selected) {
-      avatar = ContactAvatarGroupWidget(
+    return Padding(
+        padding: EdgeInsets.only(top: 2, right: 2),
+        child: !selected ? ContactAvatarGroupWidget(
         participants: widget.chat.participants,
         chat: widget.chat,
         width: 40,
         height: 40,
         editable: false,
         onTap: this.onTapUpBypass,
-      );
-    } else {
-      avatar = Container(
+      ) : Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(30),
           color: Theme.of(context).primaryColor,
@@ -382,10 +318,8 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
             size: 20,
           ),
         ),
-      );
-    }
-
-    return Padding(padding: EdgeInsets.only(top: 2, right: 2), child: avatar);
+      )
+    );
   }
 
   Widget _buildDate() => ConstrainedBox(
@@ -512,9 +446,9 @@ class __CupertinoState extends State<_Cupertino> {
             children: <Widget>[
               Padding(
                 padding: const EdgeInsets.only(left: 20.0),
-                child: Container(
+                child: Obx(() => Container(
                   decoration: BoxDecoration(
-                    border: (!widget.parent.hideDividers)
+                    border: (!SettingsManager().settings.hideDividers.value)
                         ? Border(
                             top: BorderSide(
                               color: Theme.of(context).dividerColor,
@@ -524,7 +458,7 @@ class __CupertinoState extends State<_Cupertino> {
                         : null,
                   ),
                   child: ListTile(
-                    dense: widget.parent.denseTiles,
+                    dense: SettingsManager().settings.denseChatTiles.value,
                     contentPadding: EdgeInsets.only(left: 0),
                     title: widget.parent.buildTitle(),
                     subtitle: widget.parent.buildSubtitle(),
@@ -553,7 +487,7 @@ class __CupertinoState extends State<_Cupertino> {
                       ),
                     ),
                   ),
-                ),
+                )),
               ),
               Padding(
                 padding: const EdgeInsets.only(left: 6.0),
@@ -631,9 +565,9 @@ class _Material extends StatelessWidget {
         onLongPress: () {
           parent.onSelect();
         },
-        child: Container(
+        child: Obx(() => Container(
           decoration: BoxDecoration(
-            border: (!parent.hideDividers)
+            border: (!SettingsManager().settings.hideDividers.value)
                 ? Border(
                     top: BorderSide(
                       color: Theme.of(context).dividerColor,
@@ -643,7 +577,7 @@ class _Material extends StatelessWidget {
                 : null,
           ),
           child: ListTile(
-            dense: parent.denseTiles,
+            dense: SettingsManager().settings.denseChatTiles.value,
             title: parent.buildTitle(),
             subtitle: parent.buildSubtitle(),
             leading: Stack(
@@ -687,7 +621,7 @@ class _Material extends StatelessWidget {
               ),
             ),
           ),
-        ),
+        )),
       ),
     );
   }
@@ -718,10 +652,10 @@ class _Samsung extends StatelessWidget {
         onLongPress: () {
           parent.onSelect();
         },
-        child: Container(
+        child: Obx(() => Container(
           decoration: BoxDecoration(
             color: Theme.of(context).accentColor,
-            border: (!parent.hideDividers)
+            border: (!SettingsManager().settings.hideDividers.value)
                 ? Border(
                     top: BorderSide(
                       //
@@ -732,7 +666,7 @@ class _Samsung extends StatelessWidget {
                 : null,
           ),
           child: ListTile(
-            dense: parent.denseTiles,
+            dense: SettingsManager().settings.denseChatTiles.value,
             title: parent.buildTitle(),
             subtitle: parent.buildSubtitle(),
             leading: Stack(
@@ -774,7 +708,7 @@ class _Samsung extends StatelessWidget {
               ),
             ),
           ),
-        ),
+        )),
       ),
     );
   }

@@ -255,7 +255,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   void didChangeDependencies() async {
     Locale myLocale = Localizations.localeOf(context);
     SettingsManager().countryCode = myLocale.countryCode;
-    SettingsManager().settings.use24HrFormat = MediaQuery.of(Get.context!).alwaysUse24HourFormat;
+    SettingsManager().settings.use24HrFormat.value = MediaQuery.of(Get.context!).alwaysUse24HourFormat;
     await FlutterLibphonenumber().init();
     super.didChangeDependencies();
   }

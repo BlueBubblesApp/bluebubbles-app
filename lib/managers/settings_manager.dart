@@ -26,9 +26,6 @@ class SettingsManager {
 
   SettingsManager._internal();
 
-  StreamController<Settings> _stream = new StreamController.broadcast();
-  Stream<Settings> get stream => _stream.stream;
-
   /// [appDocDir] is just a directory that is commonly used
   /// It cannot be accessed by the user, and is private to the app
   late Directory appDocDir;
@@ -45,7 +42,7 @@ class SettingsManager {
   int? _macOSVersion;
 
   int get compressionQuality {
-    if (settings.lowMemoryMode) {
+    if (settings.lowMemoryMode.value) {
       return 10;
     }
 
@@ -68,7 +65,6 @@ class SettingsManager {
   Future<void> getSavedSettings({bool headless = false, BuildContext? context}) async {
     await DBProvider.setupConfigRows();
     settings = await Settings.getSettings();
-    _stream.sink.add(settings);
 
     fcmData = await FCMData.getFCM();
     // await DBProvider.setupDefaultPresetThemes(await DBProvider.db.database);
@@ -86,10 +82,10 @@ class SettingsManager {
     } catch (e) {}
 
     // Change the [finishedSetup] status to that of the settings
-    if (!settings.finishedSetup) {
+    if (!settings.finishedSetup.value) {
       await DBProvider.deleteDB();
     }
-    SocketManager().finishedSetup.sink.add(settings.finishedSetup);
+    SocketManager().finishedSetup.sink.add(settings.finishedSetup.value);
 
     // If we aren't running in the background, then we should auto start the socket and authorize fcm just in case we haven't
     if (!headless) {
@@ -111,8 +107,6 @@ class SettingsManager {
       // Set the [displayMode] to that saved in settings
       await FlutterDisplayMode.setPreferredMode(await settings.getDisplayMode());
     } catch (e) {}
-
-    _stream.sink.add(newSettings);
   }
 
   /// Updates the selected theme for the app
@@ -151,15 +145,11 @@ class SettingsManager {
 
   Future<void> resetConnection() async {
     Settings temp = this.settings;
-    temp.finishedSetup = false;
-    temp.guidAuthKey = "";
-    temp.serverAddress = "";
-    temp.lastIncrementalSync = 0;
+    temp.finishedSetup.value = false;
+    temp.guidAuthKey.value = "";
+    temp.serverAddress.value = "";
+    temp.lastIncrementalSync.value = 0;
     await this.saveSettings(temp);
-  }
-
-  void dispose() {
-    _stream.close();
   }
 
   FutureOr<int?> getMacOSVersion() async {

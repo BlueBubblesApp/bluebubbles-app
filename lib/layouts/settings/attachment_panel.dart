@@ -109,14 +109,14 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                       )
                   ),
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.autoDownload = val;
+                      _settingsCopy.autoDownload.value = val;
                     },
-                    initialVal: _settingsCopy.autoDownload,
+                    initialVal: _settingsCopy.autoDownload.value,
                     title: "Auto-download Attachments",
                     backgroundColor: tileColor,
-                  ),
+                  )),
                   Container(
                     color: tileColor,
                     child: Padding(
@@ -124,14 +124,14 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                       child: SettingsDivider(color: headerColor),
                     ),
                   ),
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.onlyWifiDownload = val;
+                      _settingsCopy.onlyWifiDownload.value = val;
                     },
-                    initialVal: _settingsCopy.onlyWifiDownload,
+                    initialVal: _settingsCopy.onlyWifiDownload.value,
                     title: "Only Auto-download Attachments on WiFi",
                     backgroundColor: tileColor,
-                  ),
+                  )),
                   SettingsHeader(
                       headerColor: headerColor,
                       tileColor: tileColor,
@@ -139,15 +139,15 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                       materialSubtitle: materialSubtitle,
                       text: "Video Mute Behavior"
                   ),
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.startVideosMuted = val;
+                      _settingsCopy.startVideosMuted.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.startVideosMuted,
+                    initialVal: _settingsCopy.startVideosMuted.value,
                     title: "Mute Videos by Default in Attachment Preview",
                     backgroundColor: tileColor,
-                  ),
+                  )),
                   Container(
                     color: tileColor,
                     child: Padding(
@@ -155,15 +155,15 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                       child: SettingsDivider(color: headerColor),
                     ),
                   ),
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.startVideosMutedFullscreen = val;
+                      _settingsCopy.startVideosMutedFullscreen.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.startVideosMutedFullscreen,
+                    initialVal: _settingsCopy.startVideosMutedFullscreen.value,
                     title: "Mute Videos by Default in Fullscreen Player",
                     backgroundColor: tileColor,
-                  ),
+                  )),
                   SettingsHeader(
                       headerColor: headerColor,
                       tileColor: tileColor,
@@ -260,16 +260,16 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                       child: SettingsDivider(color: headerColor),
                     ),
                   ),
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.preCachePreviewImages = val;
+                      _settingsCopy.preCachePreviewImages.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.preCachePreviewImages,
+                    initialVal: _settingsCopy.preCachePreviewImages.value,
                     title: "Cache Preview Images",
                     subtitle: "Caches URL preview images for faster load times",
                     backgroundColor: tileColor,
-                  ),
+                  )),
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
                   Container(
                     height: 30,

@@ -15,7 +15,6 @@ import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -32,11 +31,6 @@ class ConversationList extends StatefulWidget {
 
 class _ConversationListState extends State<ConversationList> {
   List<Chat> chats = [];
-  bool colorfulAvatars = false;
-  bool reducedForehead = false;
-  bool showIndicator = false;
-  bool showSyncIndicator = false;
-  bool moveChatCreatorButton = false;
 
   Color? currentHeaderColor;
   bool hasPinnedChats = false;
@@ -46,8 +40,6 @@ class _ConversationListState extends State<ConversationList> {
 
   int pinnedChats = 0;
   late ScrollController scrollController;
-  late Skins skinSet;
-  bool swipableTiles = false;
 
   @override
   void didChangeDependencies() {
@@ -84,46 +76,6 @@ class _ConversationListState extends State<ConversationList> {
       });
       this.chats = ChatBloc().archivedChats;
     }
-
-    colorfulAvatars = SettingsManager().settings.colorfulAvatars;
-    reducedForehead = SettingsManager().settings.reducedForehead;
-    showIndicator = SettingsManager().settings.showConnectionIndicator;
-    showSyncIndicator = SettingsManager().settings.showSyncIndicator;
-    moveChatCreatorButton = SettingsManager().settings.moveChatCreatorToHeader;
-    swipableTiles = SettingsManager().settings.swipableConversationTiles;
-    skinSet = SettingsManager().settings.skin.value;
-
-    SettingsManager().stream.listen((Settings? newSettings) {
-      if (newSettings!.colorfulAvatars != colorfulAvatars) {
-        colorfulAvatars = newSettings.colorfulAvatars;
-      }
-
-      if (newSettings.reducedForehead != reducedForehead) {
-        reducedForehead = newSettings.reducedForehead;
-      }
-
-      if (newSettings.showConnectionIndicator != showIndicator) {
-        showIndicator = newSettings.showConnectionIndicator;
-      }
-
-      if (newSettings.moveChatCreatorToHeader != moveChatCreatorButton) {
-        moveChatCreatorButton = newSettings.moveChatCreatorToHeader;
-      }
-
-      if (newSettings.swipableConversationTiles != swipableTiles) {
-        swipableTiles = newSettings.swipableConversationTiles;
-      }
-
-      if (newSettings.skin.value != skinSet) {
-        skinSet = newSettings.skin.value;
-      }
-
-      if (newSettings.showSyncIndicator != showSyncIndicator) {
-        showSyncIndicator = newSettings.showSyncIndicator;
-      }
-
-      if (this.mounted) setState(() {});
-    });
 
     scrollController = ScrollController()..addListener(scrollListener);
 
@@ -163,7 +115,7 @@ class _ConversationListState extends State<ConversationList> {
   }
 
   List<Widget> getSyncIndicatorWidgets() {
-    if (!showSyncIndicator) return [];
+    if (!SettingsManager().settings.showSyncIndicator.value) return [];
 
     return [
       StreamBuilder<SetupData>(
@@ -172,7 +124,7 @@ class _ConversationListState extends State<ConversationList> {
         builder: (context, snapshot) {
           if (!snapshot.hasData || snapshot.data!.progress < 1 || snapshot.data!.progress >= 100) return Container();
 
-          if (skinSet == Skins.iOS) {
+          if (SettingsManager().settings.skin.value == Skins.iOS) {
             return Theme(
               data: ThemeData(
                 cupertinoOverrideTheme: CupertinoThemeData(
@@ -305,7 +257,7 @@ class _ConversationListState extends State<ConversationList> {
   }
 
   List<Widget> getConnectionIndicatorWidgets() {
-    if (!showIndicator) return [];
+    if (!SettingsManager().settings.showConnectionIndicator.value) return [];
 
     return [
       StreamBuilder(
@@ -350,11 +302,11 @@ class _Cupertino extends StatelessWidget {
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
-      child: Scaffold(
+      child: Obx(() => Scaffold(
         appBar: PreferredSize(
           preferredSize: Size(
             context.width,
-            parent.reducedForehead ? 10 : 40,
+            SettingsManager().settings.reducedForehead.value ? 10 : 40,
           ),
           child: ClipRRect(
             child: BackdropFilter(
@@ -466,7 +418,7 @@ class _Cupertino extends StatelessWidget {
                               ),
                             ),
                           if (!parent.widget.showArchivedChats) Container(width: 10.0),
-                          if (parent.moveChatCreatorButton && !parent.widget.showArchivedChats)
+                          if (SettingsManager().settings.moveChatCreatorToHeader.value && !parent.widget.showArchivedChats)
                             ClipOval(
                               child: Material(
                                 color: Theme.of(context).accentColor, // button color
@@ -478,7 +430,7 @@ class _Cupertino extends StatelessWidget {
                                     onTap: this.parent.openNewChatCreator),
                               ),
                             ),
-                          if (parent.moveChatCreatorButton) Container(width: 10.0),
+                          if (SettingsManager().settings.moveChatCreatorToHeader.value) Container(width: 10.0),
                           parent.buildSettingsButton(),
                           Spacer(
                             flex: 3,
@@ -528,7 +480,7 @@ class _Cupertino extends StatelessWidget {
 
                   return SliverList(
                     delegate: SliverChildBuilderDelegate(
-                      (context, index) {
+                          (context, index) {
                         if (!parent.widget.showArchivedChats && parent.chats[index].isArchived!) return Container();
                         if (parent.widget.showArchivedChats && !parent.chats[index].isArchived!) return Container();
                         return ConversationTile(
@@ -546,8 +498,8 @@ class _Cupertino extends StatelessWidget {
             ),
           ],
         ),
-        floatingActionButton: !parent.moveChatCreatorButton ? parent.buildFloatinActionButton() : null,
-      ),
+        floatingActionButton: !SettingsManager().settings.moveChatCreatorToHeader.value ? parent.buildFloatinActionButton() : null,
+      )),
     );
   }
 }
@@ -717,7 +669,7 @@ class __MaterialState extends State<_Material> {
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
-      child: Scaffold(
+      child: Obx(() => Scaffold(
         appBar: PreferredSize(
           preferredSize: Size.fromHeight(60),
           child: AnimatedSwitcher(
@@ -761,7 +713,7 @@ class __MaterialState extends State<_Material> {
                               ),
                             )
                           : Container(),
-                      (SettingsManager().settings.moveChatCreatorToHeader && !widget.parent.widget.showArchivedChats)
+                      (SettingsManager().settings.moveChatCreatorToHeader.value && !widget.parent.widget.showArchivedChats)
                           ? GestureDetector(
                               onTap: () {
                                 Navigator.of(context).push(
@@ -924,7 +876,7 @@ class __MaterialState extends State<_Material> {
               return ListView.builder(
                   physics: ThemeSwitcher.getScrollPhysics(),
                   itemBuilder: (context, index) {
-                    if (widget.parent.swipableTiles) {
+                    if (SettingsManager().settings.swipableConversationTiles.value) {
                       return Dismissible(
                           background: widget.parent.chats[index].isPinned!
                               ? slideRightBackgroundPinned()
@@ -1003,10 +955,10 @@ class __MaterialState extends State<_Material> {
             }
           },
         ),
-        floatingActionButton: selected.isEmpty && !SettingsManager().settings.moveChatCreatorToHeader
+        floatingActionButton: selected.isEmpty && !SettingsManager().settings.moveChatCreatorToHeader.value
             ? widget.parent.buildFloatinActionButton()
             : null,
-      ),
+      )),
     );
   }
 }
@@ -1174,7 +1126,7 @@ class _SamsungState extends State<_Samsung> {
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
-      child: Scaffold(
+      child: Obx(() => Scaffold(
         appBar: PreferredSize(
           preferredSize: Size.fromHeight(60),
           child: AnimatedSwitcher(
@@ -1218,7 +1170,7 @@ class _SamsungState extends State<_Samsung> {
                               ),
                             )
                           : Container(),
-                      (SettingsManager().settings.moveChatCreatorToHeader && !widget.parent.widget.showArchivedChats)
+                      (SettingsManager().settings.moveChatCreatorToHeader.value && !widget.parent.widget.showArchivedChats)
                           ? GestureDetector(
                               onTap: () {
                                 Navigator.of(context).push(
@@ -1367,7 +1319,7 @@ class _SamsungState extends State<_Samsung> {
                           shrinkWrap: true,
                           physics: NeverScrollableScrollPhysics(),
                           itemBuilder: (context, index) {
-                            if (widget.parent.swipableTiles) {
+                            if (SettingsManager().settings.swipableConversationTiles.value) {
                               return Dismissible(
                                 background: slideRightBackgroundPinned(),
                                 secondaryBackground: (!widget.parent.widget.showArchivedChats)
@@ -1398,7 +1350,7 @@ class _SamsungState extends State<_Samsung> {
                                   }
                                 },
                                 child: (!widget.parent.widget.showArchivedChats &&
-                                        widget.parent.chats[index].isArchived!)
+                                    widget.parent.chats[index].isArchived!)
                                     ? Container()
                                     : (widget.parent.widget.showArchivedChats &&
                                             !widget.parent.chats[index].isArchived!)
@@ -1476,7 +1428,7 @@ class _SamsungState extends State<_Samsung> {
                           shrinkWrap: true,
                           physics: NeverScrollableScrollPhysics(),
                           itemBuilder: (context, index) {
-                            if (widget.parent.swipableTiles) {
+                            if (SettingsManager().settings.swipableConversationTiles.value) {
                               return Dismissible(
                                 background: slideRightBackground(),
                                 secondaryBackground: (!widget.parent.widget.showArchivedChats)
@@ -1568,10 +1520,10 @@ class _SamsungState extends State<_Samsung> {
             }
           },
         ),
-        floatingActionButton: selected.isEmpty && !SettingsManager().settings.moveChatCreatorToHeader
+        floatingActionButton: selected.isEmpty && !SettingsManager().settings.moveChatCreatorToHeader.value
             ? widget.parent.buildFloatinActionButton()
             : null,
-      ),
+      )),
     );
   }
 }

@@ -162,7 +162,7 @@ class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
                       materialIcon: Icons.privacy_tip,
                     ),
                   ),
-                  ((macOSVersionNumber ??10) < 11) ?
+                  ((macOSVersionNumber ?? 10) < 11) ?
                     Container(
                       color: tileColor,
                       child: Padding(

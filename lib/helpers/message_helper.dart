@@ -207,7 +207,7 @@ class MessageHelper {
     NotificationManager().addProcessed(message.guid!);
 
     // Handle all the cases that would mean we don't show the notification
-    if (!SettingsManager().settings.finishedSetup) return; // Don't notify if not fully setup
+    if (!SettingsManager().settings.finishedSetup.value) return; // Don't notify if not fully setup
     if (existingMessage != null) return;
     if (chat.isMuted!) return; // Don''t notify if the chat is muted
     if (message.isFromMe! || message.handle == null) return; // Don't notify if the text is from me
@@ -223,7 +223,7 @@ class MessageHelper {
     Contact? contact = await ContactManager().getCachedContact(message.handle);
     String title = await getFullChatTitle(chat);
     String? notification = await MessageHelper.getNotificationText(message);
-    if (SettingsManager().settings.hideTextPreviews) {
+    if (SettingsManager().settings.hideTextPreviews.value) {
       notification = "iMessage";
     }
     NotificationManager().createNewNotification(

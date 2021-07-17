@@ -67,7 +67,7 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
     return VisibilityDetector(
       key: Key(widget.attachment.guid!),
       onVisibilityChanged: (info) {
-        if (!SettingsManager().settings.lowMemoryMode) return;
+        if (!SettingsManager().settings.lowMemoryMode.value) return;
         if (info.visibleFraction == 0 && visible && !navigated) {
           visible = false;
           CurrentChat.of(context)?.clearImageData(widget.attachment);

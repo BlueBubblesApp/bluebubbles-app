@@ -84,11 +84,11 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
   Widget build(BuildContext context) {
     return GestureDetector(
       key: containerKey,
-      onDoubleTap: SettingsManager().settings.doubleTapForDetails && !widget.message.guid!.startsWith('temp')
+      onDoubleTap: SettingsManager().settings.doubleTapForDetails.value && !widget.message.guid!.startsWith('temp')
           ? this.openMessageDetails
-          : SettingsManager().settings.enableQuickTapback
+          : SettingsManager().settings.enableQuickTapback.value
               ? () {
-                  this.sendReaction(SettingsManager().settings.quickTapbackType);
+                  this.sendReaction(SettingsManager().settings.quickTapbackType.value);
                 }
               : null,
       onLongPress: this.openMessageDetails,

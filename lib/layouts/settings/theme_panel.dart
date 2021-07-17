@@ -174,16 +174,16 @@ class _ThemePanelState extends State<ThemePanel> {
                       materialSubtitle: materialSubtitle,
                       text: "Skin"
                   ),
-                  SettingsOptions<Skins>(
+                  Obx(() => SettingsOptions<Skins>(
                     initial: _settingsCopy.skin.value,
                     onChanged: (val) {
                       _settingsCopy.skin.value = val;
                       if (val == Skins.Material) {
-                        _settingsCopy.hideDividers = true;
+                        _settingsCopy.hideDividers.value = true;
                       } else if (val == Skins.Samsung) {
-                        _settingsCopy.hideDividers = true;
+                        _settingsCopy.hideDividers.value = true;
                       } else {
-                        _settingsCopy.hideDividers = false;
+                        _settingsCopy.hideDividers.value = false;
                       }
                       ChatBloc().refreshChats();
                       setState(() {});
@@ -194,7 +194,7 @@ class _ThemePanelState extends State<ThemePanel> {
                     title: "App Skin",
                     backgroundColor: tileColor,
                     secondaryColor: headerColor,
-                  ),
+                  )),
                   SettingsHeader(
                       headerColor: headerColor,
                       tileColor: tileColor,
@@ -202,16 +202,16 @@ class _ThemePanelState extends State<ThemePanel> {
                       materialSubtitle: materialSubtitle,
                       text: "Colors"
                   ),
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.colorfulAvatars = val;
+                      _settingsCopy.colorfulAvatars.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.colorfulAvatars,
+                    initialVal: _settingsCopy.colorfulAvatars.value,
                     title: "Colorful Avatars",
                     backgroundColor: tileColor,
                     subtitle: "Gives letter avatars a splash of color",
-                  ),
+                  )),
                   Container(
                     color: tileColor,
                     child: Padding(
@@ -219,16 +219,16 @@ class _ThemePanelState extends State<ThemePanel> {
                       child: SettingsDivider(color: headerColor),
                     ),
                   ),
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.colorfulBubbles = val;
+                      _settingsCopy.colorfulBubbles.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.colorfulBubbles,
+                    initialVal: _settingsCopy.colorfulBubbles.value,
                     title: "Colorful Bubbles",
                     backgroundColor: tileColor,
                     subtitle: "Gives received message bubbles a splash of color",
-                  ),
+                  )),
                   Container(
                     color: tileColor,
                     child: Padding(
@@ -262,7 +262,7 @@ class _ThemePanelState extends State<ThemePanel> {
                       initial: currentMode,
                       onChanged: (val) async {
                         currentMode = val;
-                        _settingsCopy.refreshRate = currentMode;
+                        _settingsCopy.refreshRate.value = currentMode;
                       },
                       options: refreshRates,
                       textProcessing: (val) => val == 0 ? "Automatic" : val.toString() + " Hz",

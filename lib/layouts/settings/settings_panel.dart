@@ -47,19 +47,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
   void initState() {
     super.initState();
     _settingsCopy = SettingsManager().settings;
-
-    // Listen for any incoming events
-    EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (!event.containsKey("type")) return;
-
-      if (event["type"] == 'theme-update' && this.mounted) {
-        setState(() {});
-      }
-    });
-
-    SettingsManager().stream.listen((_) {
-      if (mounted) setState(() {});
-    });
   }
 
   @override
@@ -92,7 +79,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
           headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
-      child: Scaffold(
+      child: Obx(() => Scaffold(
         backgroundColor: SettingsManager().settings.skin.value != Skins.iOS ? tileColor : headerColor,
         appBar: PreferredSize(
           preferredSize: Size(context.width, 80),
@@ -113,7 +100,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
             ),
           ),
         ),
-        body: Obx(() => CustomScrollView(
+        body: CustomScrollView(
           physics: ThemeSwitcher.getScrollPhysics(),
           slivers: <Widget>[
             SliverList(
@@ -125,7 +112,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
                         color: headerColor,
                         border: Border(
-                          bottom: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
+                            bottom: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
                         ),
                       ) : BoxDecoration(
                         color: tileColor,
@@ -180,7 +167,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                             );
                           },
                           onLongPress: () {
-                            Clipboard.setData(new ClipboardData(text: _settingsCopy.serverAddress));
+                            Clipboard.setData(new ClipboardData(text: _settingsCopy.serverAddress.value));
                             showSnackbar('Copied', "Address copied to clipboard");
                           },
                           leading: Column(
@@ -199,9 +186,9 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                     children: [
                                       Icon(SettingsManager().settings.skin.value == Skins.iOS
                                           ? CupertinoIcons.antenna_radiowaves_left_right : Icons.router,
-                                          color: SettingsManager().settings.skin.value == Skins.iOS ?
-                                          Colors.white : Colors.grey,
-                                          size: SettingsManager().settings.skin.value == Skins.iOS ? 23 : 30,
+                                        color: SettingsManager().settings.skin.value == Skins.iOS ?
+                                        Colors.white : Colors.grey,
+                                        size: SettingsManager().settings.skin.value == Skins.iOS ? 23 : 30,
                                       ),
                                       if (SettingsManager().settings.skin.value != Skins.iOS)
                                         Positioned.fill(
@@ -219,11 +206,11 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         );
                       }),
                   SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
-                    iosSubtitle: iosSubtitle,
-                    materialSubtitle: materialSubtitle,
-                    text: "Appearance"
+                      headerColor: headerColor,
+                      tileColor: tileColor,
+                      iosSubtitle: iosSubtitle,
+                      materialSubtitle: materialSubtitle,
+                      text: "Appearance"
                   ),
                   SettingsTile(
                     backgroundColor: tileColor,
@@ -484,13 +471,13 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   ),
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
                   Container(
-                      height: 30,
-                      decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
-                        color: headerColor,
-                        border: Border(
-                            top: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
-                        ),
-                      ) : null,
+                    height: 30,
+                    decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
+                      color: headerColor,
+                      border: Border(
+                          top: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
+                      ),
+                    ) : null,
                   ),
                 ],
               ),
@@ -501,8 +488,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
               ),
             )
           ],
-        )),
-      ),
+        ),
+      )),
     );
   }
 
@@ -631,7 +618,7 @@ class SettingsTextField extends StatelessWidget {
                   placeholder: placeholder ?? "Enter your text here",
                   padding: EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
                   placeholderStyle: Theme.of(context).textTheme.subtitle1,
-                  autofocus: SettingsManager().settings.autoOpenKeyboard,
+                  autofocus: SettingsManager().settings.autoOpenKeyboard.value,
                   decoration: BoxDecoration(
                     color: Theme.of(context).backgroundColor,
                     border: Border.all(
@@ -732,11 +719,11 @@ class SettingsOptions<T extends Object> extends StatefulWidget {
     this.secondaryColor,
   }) : super(key: key);
   final String title;
-  final Function(dynamic) onChanged;
+  final Function(T) onChanged;
   final List<T> options;
   final Iterable<Widget>? cupertinoCustomWidgets;
   final T initial;
-  final String Function(dynamic)? textProcessing;
+  final String Function(T)? textProcessing;
   final String? subtitle;
   final bool capitalize;
   final Color? backgroundColor;
@@ -771,12 +758,10 @@ class _SettingsOptionsState<T extends Object> extends State<SettingsOptions<T>> 
               ? widget.secondaryColor!.lightenOrDarken(20) : widget.secondaryColor ?? Colors.white,
           backgroundColor: widget.backgroundColor ?? CupertinoColors.tertiarySystemFill,
           onValueChanged: (T? val) {
+            if (!this.mounted || val == null) return;
             widget.onChanged(val);
-
-            if (!this.mounted && val != null) return;
-
             setState(() {
-              currentVal = val!;
+              currentVal = val;
             });
           },
         ),
@@ -836,10 +821,8 @@ class _SettingsOptionsState<T extends Object> extends State<SettingsOptions<T>> 
                       );
                     }).toList(),
                     onChanged: (T? val) {
+                      if (!this.mounted || val == null) return;
                       widget.onChanged(val);
-
-                        if (!this.mounted || val == null) return;
-
                       setState(() {
                         currentVal = val;
                       });

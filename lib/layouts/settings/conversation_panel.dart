@@ -111,15 +111,15 @@ class _ConversationPanelState extends State<ConversationPanel> {
                       )
                   ),
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.showDeliveryTimestamps = val;
+                      _settingsCopy.showDeliveryTimestamps.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.showDeliveryTimestamps,
+                    initialVal: _settingsCopy.showDeliveryTimestamps.value,
                     title: "Show Delivery Timestamps",
                     backgroundColor: tileColor,
-                  ),
+                  )),
                   Container(
                     color: tileColor,
                     child: Padding(
@@ -127,16 +127,16 @@ class _ConversationPanelState extends State<ConversationPanel> {
                       child: SettingsDivider(color: headerColor),
                     ),
                   ),
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.recipientAsPlaceholder = val;
+                      _settingsCopy.recipientAsPlaceholder.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.recipientAsPlaceholder,
+                    initialVal: _settingsCopy.recipientAsPlaceholder.value,
                     title: "Show Recipient (or Group Name) as Placeholder",
                     subtitle: "Changes the 'BlueBubbles' text in the message box to display the recipient name",
                     backgroundColor: tileColor,
-                  ),
+                  )),
                   Container(
                     color: tileColor,
                     child: Padding(
@@ -144,16 +144,16 @@ class _ConversationPanelState extends State<ConversationPanel> {
                       child: SettingsDivider(color: headerColor),
                     ),
                   ),
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.alwaysShowAvatars = val;
+                      _settingsCopy.alwaysShowAvatars.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.alwaysShowAvatars,
+                    initialVal: _settingsCopy.alwaysShowAvatars.value,
                     title: "Show avatars in non-group chats",
                     subtitle: "Shows contact avatars in direct messages rather than just in group messages",
                     backgroundColor: tileColor,
-                  ),
+                  )),
                   Container(
                     color: tileColor,
                     child: Padding(
@@ -161,17 +161,17 @@ class _ConversationPanelState extends State<ConversationPanel> {
                       child: SettingsDivider(color: headerColor),
                     ),
                   ),
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.smartReply = val;
+                      _settingsCopy.smartReply.value = val;
                       saveSettings();
                       setState(() {});
                     },
-                    initialVal: _settingsCopy.smartReply,
+                    initialVal: _settingsCopy.smartReply.value,
                     title: "Show Smart Replies",
                     subtitle: "Shows smart reply suggestions above the message box",
                     backgroundColor: tileColor,
-                  ),
+                  )),
                   SettingsHeader(
                       headerColor: headerColor,
                       tileColor: tileColor,
@@ -179,16 +179,16 @@ class _ConversationPanelState extends State<ConversationPanel> {
                       materialSubtitle: materialSubtitle,
                       text: "Gestures"
                   ),
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.autoOpenKeyboard = val;
+                      _settingsCopy.autoOpenKeyboard.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.autoOpenKeyboard,
+                    initialVal: _settingsCopy.autoOpenKeyboard.value,
                     title: "Auto-open Keyboard",
                     subtitle: "Automatically open the keyboard when entering a chat",
                     backgroundColor: tileColor,
-                  ),
+                  )),
                   Container(
                     color: tileColor,
                     child: Padding(
@@ -196,16 +196,16 @@ class _ConversationPanelState extends State<ConversationPanel> {
                       child: SettingsDivider(color: headerColor),
                     ),
                   ),
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.swipeToCloseKeyboard = val;
+                      _settingsCopy.swipeToCloseKeyboard.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.swipeToCloseKeyboard,
+                    initialVal: _settingsCopy.swipeToCloseKeyboard.value,
                     title: "Swipe Message Box to Close Keyboard",
                     subtitle: "Swipe down on the message box to hide the keyboard",
                     backgroundColor: tileColor,
-                  ),
+                  )),
                   Container(
                     color: tileColor,
                     child: Padding(
@@ -213,16 +213,16 @@ class _ConversationPanelState extends State<ConversationPanel> {
                       child: SettingsDivider(color: headerColor),
                     ),
                   ),
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.swipeToOpenKeyboard = val;
+                      _settingsCopy.swipeToOpenKeyboard.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.swipeToOpenKeyboard,
+                    initialVal: _settingsCopy.swipeToOpenKeyboard.value,
                     title: "Swipe Message Box to Open Keyboard",
                     subtitle: "Swipe up on the message box to show the keyboard",
                     backgroundColor: tileColor,
-                  ),
+                  )),
                   Container(
                     color: tileColor,
                     child: Padding(
@@ -230,15 +230,15 @@ class _ConversationPanelState extends State<ConversationPanel> {
                       child: SettingsDivider(color: headerColor),
                     ),
                   ),
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.hideKeyboardOnScroll = val;
+                      _settingsCopy.hideKeyboardOnScroll.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.hideKeyboardOnScroll,
+                    initialVal: _settingsCopy.hideKeyboardOnScroll.value,
                     title: "Hide Keyboard When Scrolling",
                     backgroundColor: tileColor,
-                  ),
+                  )),
                   Container(
                     color: tileColor,
                     child: Padding(
@@ -246,16 +246,16 @@ class _ConversationPanelState extends State<ConversationPanel> {
                       child: SettingsDivider(color: headerColor),
                     ),
                   ),
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.openKeyboardOnSTB = val;
+                      _settingsCopy.openKeyboardOnSTB.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.openKeyboardOnSTB,
+                    initialVal: _settingsCopy.openKeyboardOnSTB.value,
                     title: "Open Keyboard After Tapping Scroll To Bottom",
                     subtitle: "Opens the keyboard after tapping the 'scroll to bottom' button",
                     backgroundColor: tileColor,
-                  ),
+                  )),
                   Container(
                     color: tileColor,
                     child: Padding(
@@ -265,12 +265,12 @@ class _ConversationPanelState extends State<ConversationPanel> {
                   ),
                   Container(
                     color: tileColor,
-                    child: SwitchListTile(
+                    child: Obx(() => SwitchListTile(
                       title: Text(
                         "Double-Tap Message for Details",
                         style: Theme.of(context).textTheme.bodyText1,
                       ),
-                      value: _settingsCopy.doubleTapForDetails,
+                      value: _settingsCopy.doubleTapForDetails.value,
                       activeColor: Theme.of(context).primaryColor,
                       activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
                       inactiveTrackColor: tileColor == Theme.of(context).accentColor
@@ -278,16 +278,15 @@ class _ConversationPanelState extends State<ConversationPanel> {
                       inactiveThumbColor: tileColor == Theme.of(context).accentColor
                           ? Theme.of(context).backgroundColor : Theme.of(context).accentColor,
                       onChanged: (bool val) {
-                        _settingsCopy.doubleTapForDetails = val;
-                        if (val && _settingsCopy.enableQuickTapback) {
-                          _settingsCopy.enableQuickTapback = false;
+                        _settingsCopy.doubleTapForDetails.value = val;
+                        if (val && _settingsCopy.enableQuickTapback.value) {
+                          _settingsCopy.enableQuickTapback.value = false;
                         }
                         saveSettings();
-                        setState(() {});
                       },
                       subtitle: Text("Opens the message details popup when double tapping a message", style: Theme.of(context).textTheme.subtitle1),
                       tileColor: tileColor,
-                    ),
+                    )),
                   ),
                   Container(
                     color: tileColor,
@@ -298,12 +297,12 @@ class _ConversationPanelState extends State<ConversationPanel> {
                   ),
                   Container(
                     color: tileColor,
-                    child: SwitchListTile(
+                    child: Obx(() => SwitchListTile(
                       title: Text(
                         "Double-Tap Message for Quick Tapback",
                         style: Theme.of(context).textTheme.bodyText1,
                       ),
-                      value: _settingsCopy.enableQuickTapback,
+                      value: _settingsCopy.enableQuickTapback.value,
                       activeColor: Theme.of(context).primaryColor,
                       activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
                       inactiveTrackColor: tileColor == Theme.of(context).accentColor
@@ -311,16 +310,15 @@ class _ConversationPanelState extends State<ConversationPanel> {
                       inactiveThumbColor: tileColor == Theme.of(context).accentColor
                           ? Theme.of(context).backgroundColor : Theme.of(context).accentColor,
                       onChanged: (bool val) {
-                        _settingsCopy.enableQuickTapback = val;
-                        if (val && _settingsCopy.doubleTapForDetails) {
-                          _settingsCopy.doubleTapForDetails = false;
+                        _settingsCopy.enableQuickTapback.value = val;
+                        if (val && _settingsCopy.doubleTapForDetails.value) {
+                          _settingsCopy.doubleTapForDetails.value = false;
                         }
                         saveSettings();
-                        setState(() {});
                       },
                       subtitle: Text("Send a tapback of your choosing when double tapping a message", style: Theme.of(context).textTheme.subtitle1),
                       tileColor: tileColor,
-                    ),
+                    )),
                   ),
                   Container(
                     color: tileColor,
@@ -329,53 +327,62 @@ class _ConversationPanelState extends State<ConversationPanel> {
                       child: SettingsDivider(color: headerColor),
                     ),
                   ),
-                  if (_settingsCopy.enableQuickTapback && _settingsCopy.skin.value == Skins.iOS)
-                    Container(
-                      decoration: BoxDecoration(
+                  Obx(() {
+                    if (_settingsCopy.enableQuickTapback.value && _settingsCopy.skin.value == Skins.iOS)
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: tileColor,
+                        ),
+                        padding: EdgeInsets.only(left: 15),
+                        child: Text("Select Quick Tapback"),
+                      );
+                    else return SizedBox.shrink();
+                  }),
+                  Obx(() {
+                    if (_settingsCopy.enableQuickTapback.value)
+                      return SettingsOptions<String>(
+                        title: "Quick Tapback",
+                        options: ReactionTypes.toList(),
+                        cupertinoCustomWidgets: [
+                          Reaction(reactionType: ReactionTypes.LOVE).getSmallWidget(context, message: Message(isFromMe: true), isReactionPicker: true)!,
+                          Reaction(reactionType: ReactionTypes.LIKE).getSmallWidget(context, message: Message(isFromMe: true), isReactionPicker: true)!,
+                          Reaction(reactionType: ReactionTypes.DISLIKE).getSmallWidget(context, message: Message(isFromMe: true), isReactionPicker: true)!,
+                          Reaction(reactionType: ReactionTypes.LAUGH).getSmallWidget(context, message: Message(isFromMe: true), isReactionPicker: true)!,
+                          Reaction(reactionType: ReactionTypes.EMPHASIZE).getSmallWidget(context, message: Message(isFromMe: true), isReactionPicker: true)!,
+                          Reaction(reactionType: ReactionTypes.QUESTION).getSmallWidget(context, message: Message(isFromMe: true), isReactionPicker: true)!,
+                        ],
+                        initial: _settingsCopy.quickTapbackType.value,
+                        textProcessing: (val) => val,
+                        onChanged: (val) {
+                          _settingsCopy.quickTapbackType.value = val;
+                          saveSettings();
+                        },
+                        backgroundColor: tileColor,
+                        secondaryColor: headerColor,
+                      );
+                    else return SizedBox.shrink();
+                  }),
+                  Obx(() {
+                    if (_settingsCopy.enableQuickTapback.value)
+                      return Container(
                         color: tileColor,
-                      ),
-                      padding: EdgeInsets.only(left: 15),
-                      child: Text("Select Quick Tapback"),
-                    ),
-                  if (_settingsCopy.enableQuickTapback)
-                    SettingsOptions<String>(
-                      title: "Quick Tapback",
-                      options: ReactionTypes.toList(),
-                      cupertinoCustomWidgets: [
-                        Reaction(reactionType: ReactionTypes.LOVE).getSmallWidget(context, message: Message(isFromMe: true), isReactionPicker: true)!,
-                        Reaction(reactionType: ReactionTypes.LIKE).getSmallWidget(context, message: Message(isFromMe: true), isReactionPicker: true)!,
-                        Reaction(reactionType: ReactionTypes.DISLIKE).getSmallWidget(context, message: Message(isFromMe: true), isReactionPicker: true)!,
-                        Reaction(reactionType: ReactionTypes.LAUGH).getSmallWidget(context, message: Message(isFromMe: true), isReactionPicker: true)!,
-                        Reaction(reactionType: ReactionTypes.EMPHASIZE).getSmallWidget(context, message: Message(isFromMe: true), isReactionPicker: true)!,
-                        Reaction(reactionType: ReactionTypes.QUESTION).getSmallWidget(context, message: Message(isFromMe: true), isReactionPicker: true)!,
-                      ],
-                      initial: _settingsCopy.quickTapbackType,
-                      textProcessing: (val) => val,
-                      onChanged: (val) {
-                        _settingsCopy.quickTapbackType = val;
-                        saveSettings();
-                      },
-                      backgroundColor: tileColor,
-                      secondaryColor: headerColor,
-                    ),
-                  if (_settingsCopy.enableQuickTapback)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
-                      ),
-                    ),
-                  SettingsSwitch(
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 65.0),
+                          child: SettingsDivider(color: headerColor),
+                        ),
+                      );
+                    else return SizedBox.shrink();
+                  }),
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.sendWithReturn = val;
+                      _settingsCopy.sendWithReturn.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.sendWithReturn,
+                    initialVal: _settingsCopy.sendWithReturn.value,
                     title: "Send Message with Return Key",
                     subtitle: "Use the enter key as a send button",
                     backgroundColor: tileColor,
-                  ),
+                  )),
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
                   Container(
                     height: 30,

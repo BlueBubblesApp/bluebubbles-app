@@ -49,14 +49,14 @@ class LifeCycleManager {
     SocketManager().startSocketIO();
 
     // Refresh all the chats assuming that the app has already finished setup
-    if (SettingsManager().settings.finishedSetup) {
+    if (SettingsManager().settings.finishedSetup.value) {
       ChatBloc().refreshChats();
     }
   }
 
   /// Public method called from [Home] when the app is closed or paused
   close() {
-    if (SettingsManager().settings.finishedSetup) {
+    if (SettingsManager().settings.finishedSetup.value) {
       // Close the socket and set the isAlive to false
       //
       // NOTE: [closeSocket] does not necessarily close the socket, it simply requests the SocketManager to attempt to do so

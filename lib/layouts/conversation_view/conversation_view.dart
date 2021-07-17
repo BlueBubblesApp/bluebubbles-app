@@ -23,6 +23,7 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:keyboard_attachable/keyboard_attachable.dart';
 import 'package:slugify/slugify.dart';
 
@@ -327,19 +328,24 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         resizeToAvoidBottomInset: wasCreator,
         body: FooterLayout(
           footer: KeyboardAttachable(
-            child: widget.onSelect == null
-                ? SettingsManager().settings.swipeToCloseKeyboard
-                    ? GestureDetector(
-                        onPanUpdate: (details) {
-                          if (details.delta.dy > 0 && (currentChat?.keyboardOpen ?? false)) {
-                            EventDispatcher().emit("unfocus-keyboard", null);
-                          } else if (details.delta.dy < 0 && !(currentChat?.keyboardOpen ?? false)) {
-                            EventDispatcher().emit("focus-keyboard", null);
-                          }
-                        },
-                        child: textField)
-                    : textField
-                : Container(),
+            child: Obx(() {
+              if (widget.onSelect == null) {
+                if (SettingsManager().settings.swipeToCloseKeyboard.value) {
+                  return GestureDetector(
+                      onPanUpdate: (details) {
+                        if (details.delta.dy > 0 && (currentChat?.keyboardOpen ?? false)) {
+                          EventDispatcher().emit("unfocus-keyboard", null);
+                        } else if (details.delta.dy < 0 && !(currentChat?.keyboardOpen ?? false)) {
+                          EventDispatcher().emit("focus-keyboard", null);
+                        }
+                      },
+                      child: textField
+                  );
+                }
+                return textField;
+              }
+              return Container();
+            }),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.end,

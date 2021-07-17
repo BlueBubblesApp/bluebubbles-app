@@ -160,7 +160,7 @@ class ContactManager {
       Contact? contact = handleToContact[address];
       if (handleToContact[address] == null) continue;
 
-      ContactsService.getAvatar(contact!, photoHighRes: !SettingsManager().settings.lowMemoryMode).then((avatar) {
+      ContactsService.getAvatar(contact!, photoHighRes: !SettingsManager().settings.lowMemoryMode.value).then((avatar) {
         if (avatar == null) return;
 
         contact.avatar = avatar;
@@ -225,7 +225,7 @@ class ContactManager {
 
     if (fetchAvatar) {
       Uint8List? avatar =
-          await ContactsService.getAvatar(contact!, photoHighRes: !SettingsManager().settings.lowMemoryMode);
+          await ContactsService.getAvatar(contact!, photoHighRes: !SettingsManager().settings.lowMemoryMode.value);
       contact.avatar = avatar;
     }
 

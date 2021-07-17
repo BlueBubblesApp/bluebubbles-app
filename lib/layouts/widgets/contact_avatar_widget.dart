@@ -110,7 +110,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
         contact = contactRes.first;
         if (isNullOrEmpty(contact.avatar)!) {
           contact.avatar =
-              await ContactsService.getAvatar(contact, photoHighRes: !SettingsManager().settings.lowMemoryMode);
+              await ContactsService.getAvatar(contact, photoHighRes: !SettingsManager().settings.lowMemoryMode.value);
         }
       }
     }
@@ -149,7 +149,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
 
   void onAvatarTap() {
     if (widget.onTap != null) widget.onTap!();
-    if (!widget.editable || !SettingsManager().settings.colorfulAvatars || widget.handle == null) return;
+    if (!widget.editable || !SettingsManager().settings.colorfulAvatars.value || widget.handle == null) return;
     showDialog(
       context: context,
       builder: (context) => AvatarColorPickerPopup(
@@ -188,14 +188,10 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
 
     Color? color1 = colors.length > 0 ? colors[0] : null;
     Color? color2 = colors.length > 0 ? colors[1] : null;
-    if (color1 == null || color2 == null || !SettingsManager().settings.colorfulAvatars) {
+    if (color1 == null || color2 == null || !SettingsManager().settings.colorfulAvatars.value) {
       color1 = HexColor("686868");
       color2 = HexColor("928E8E");
     }
-
-    final bool hideLetterAvatars =
-        SettingsManager().settings.redactedMode.value && SettingsManager().settings.removeLetterAvatars.value;
-    final bool hideAvatars = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactPhotos.value;
 
     return GestureDetector(
         onTap: onAvatarTap,
@@ -210,7 +206,8 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
           ),
           child: CircleAvatar(
             radius: (widget.size != null) ? widget.size! / 2 : 20,
-            child: state!.contactImage == null || hideAvatars
+            child: state!.contactImage == null ||
+                (SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactPhotos.value)
                 ? Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -220,7 +217,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
                       borderRadius: BorderRadius.circular(30),
                     ),
                     child: Container(
-                      child: state!.initials == null || hideLetterAvatars
+                      child: Obx(() => (SettingsManager().settings.redactedMode.value && SettingsManager().settings.removeLetterAvatars.value) || state!.initials == null
                           ? Icon(
                               Icons.person,
                               size: (widget.size ?? 40) / 2,
@@ -231,7 +228,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
                                 fontSize: (widget.fontSize == null) ? 18 : widget.fontSize,
                               ),
                               textAlign: TextAlign.center,
-                            ),
+                            )),
                       alignment: AlignmentDirectional.center,
                     ),
                   )
