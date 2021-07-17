@@ -78,7 +78,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
 
   String getTimeText(BuildContext context) {
     String output = "Unknown";
-    for (List item in timeOptions as Iterable<List<dynamic>>) {
+    for (List item in timeOptions) {
       if (item[0] == scheduleSeconds) {
         output = item[1];
         break;
@@ -136,12 +136,12 @@ class _SchedulePanelState extends State<SchedulePanel> {
                   (_chat != null)
                       ? SettingsTile(
                           title: "Selected chat",
-                          subTitle: title,
+                          subtitle: title,
                           trailing: Icon(Icons.timer, color: Theme.of(context).primaryColor.withAlpha(200)),
                         )
                       : SettingsTile(
                           title: "Select a chat to schedule a message for",
-                          subTitle: 'Tap here',
+                          subtitle: 'Tap here',
                           trailing: Icon(Icons.chat_bubble, color: Theme.of(context).primaryColor.withAlpha(200)),
                           onTap: () async {
                             Navigator.of(context).push(
@@ -190,7 +190,6 @@ class _SchedulePanelState extends State<SchedulePanel> {
                     options: timeOptions,
                     textProcessing: (val) => val[1],
                     title: "When should we send it?",
-                    showDivider: (scheduleSeconds != -1),
                   ),
                   Center(
                       child: Text(

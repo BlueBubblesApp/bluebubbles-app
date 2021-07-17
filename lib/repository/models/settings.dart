@@ -21,7 +21,7 @@ class Settings {
   bool showIncrementalSync = false;
   bool lowMemoryMode = false;
   int lastIncrementalSync = 0;
-  int displayMode = 0;
+  int refreshRate = 0;
   bool colorfulAvatars = false;
   bool colorfulBubbles = false;
   bool hideDividers = false;
@@ -107,7 +107,7 @@ class Settings {
       } else if (entry.name == "lastIncrementalSync") {
         settings.lastIncrementalSync = entry.value;
       } else if (entry.name == "displayMode") {
-        settings.displayMode = entry.value;
+        settings.refreshRate = entry.value;
       } else if (entry.name == "rainbowBubbles") {
         settings.colorfulAvatars = entry.value;
       } else if (entry.name == "colorfulBubbles") {
@@ -214,7 +214,7 @@ class Settings {
 
   Future<DisplayMode> getDisplayMode() async {
     List<DisplayMode> modes = await FlutterDisplayMode.supported;
-    modes = modes.where((element) => element.id == displayMode).toList();
+    modes = modes.where((element) => element.refreshRate == refreshRate).toList();
 
     DisplayMode mode;
     if (modes.isEmpty) {
@@ -303,8 +303,8 @@ class Settings {
         ),
         ConfigEntry(
           name: "displayMode",
-          value: this.displayMode,
-          type: this.displayMode.runtimeType,
+          value: this.refreshRate,
+          type: this.refreshRate.runtimeType,
         ),
         ConfigEntry(
           name: "rainbowBubbles",

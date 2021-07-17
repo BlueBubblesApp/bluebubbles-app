@@ -158,7 +158,7 @@ class _ChatListPanelState extends State<ChatListPanel> {
                       tileColor: tileColor,
                       iosSubtitle: iosSubtitle,
                       materialSubtitle: materialSubtitle,
-                      text: "Chat List"
+                      text: "Filtering"
                   ),
                   SettingsSwitch(
                     onChanged: (bool val) {
@@ -170,6 +170,61 @@ class _ChatListPanelState extends State<ChatListPanel> {
                     subtitle: "Filters the chat list based on parameters set in iMessage (usually this removes old, inactive chats)",
                     backgroundColor: tileColor,
                   ),
+                  SettingsHeader(
+                      headerColor: headerColor,
+                      tileColor: tileColor,
+                      iosSubtitle: iosSubtitle,
+                      materialSubtitle: materialSubtitle,
+                      text: "Appearance"
+                  ),
+                  if (SettingsManager().settings.skin.value != Skins.Samsung)
+                    SettingsSwitch(
+                      onChanged: (bool val) {
+                        _settingsCopy.hideDividers = val;
+                        saveSettings();
+                      },
+                      initialVal: _settingsCopy.hideDividers,
+                      title: "Hide Dividers",
+                      backgroundColor: tileColor,
+                      subtitle: "Hides dividers between tiles",
+                    ),
+                  if (SettingsManager().settings.skin.value != Skins.Samsung)
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
+                    ),
+                  SettingsSwitch(
+                    onChanged: (bool val) {
+                      _settingsCopy.denseChatTiles = val;
+                      saveSettings();
+                    },
+                    initialVal: _settingsCopy.denseChatTiles,
+                    title: "Dense Conversation Tiles",
+                    backgroundColor: tileColor,
+                    subtitle: "Compresses chat tile size on the conversation list page",
+                  ),
+                  if (SettingsManager().settings.skin.value == Skins.iOS)
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
+                    ),
+                  if (SettingsManager().settings.skin.value == Skins.iOS)
+                    SettingsSwitch(
+                      onChanged: (bool val) {
+                        _settingsCopy.reducedForehead = val;
+                        saveSettings();
+                      },
+                      initialVal: _settingsCopy.reducedForehead,
+                      title: "Reduced Forehead",
+                      backgroundColor: tileColor,
+                      subtitle: "Reduces the appbar size on conversation pages",
+                    ),
                   if (SettingsManager().settings.skin.value == Skins.Samsung ||
                       SettingsManager().settings.skin.value == Skins.Material)
                     Container(

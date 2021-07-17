@@ -58,7 +58,7 @@ class _CustomAvatarPanelState extends State<CustomAvatarPanel> {
     for (var item in handles) {
       items.add(SettingsTile(
         title: ContactManager().getCachedContactSync(item.address ?? "")?.displayName ?? await formatPhoneNumber(item),
-        subTitle: "Tap avatar to change color",
+        subtitle: "Tap avatar to change color",
         trailing: ContactAvatarWidget(handle: item),
       ));
     }
@@ -113,8 +113,8 @@ class _CustomAvatarPanelState extends State<CustomAvatarPanel> {
                     Container(
                         padding: EdgeInsets.all(30),
                         child: Text(
-                          "No avatars have been customized! To get started, tap an avatar.",
-                          style: Theme.of(context).textTheme.subtitle1,
+                          "No avatars have been customized! To get started, turn on colorful avatars and tap an avatar in the conversation details page.",
+                          style: Theme.of(context).textTheme.subtitle1?.copyWith(height: 1.5),
                           textAlign: TextAlign.center,
                         )),
                   for (Widget handleWidget in this.handleWidgets) handleWidget

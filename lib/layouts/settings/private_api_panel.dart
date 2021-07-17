@@ -151,13 +151,12 @@ class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
                   SettingsTile(
                     backgroundColor: tileColor,
                     title: "Set up Private API Features",
-                    subTitle: "View instructions on how to set up these features",
+                    subtitle: "View instructions on how to set up these features",
                     onTap: () async {
                       MethodChannelInterface().invokeMethod("open-link", {
                         "link": "https://github.com/BlueBubblesApp/BlueBubbles-Server/wiki/Using-Private-API-Features"
                       });
                     },
-                    showDivider: false,
                     leading: SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.checkmark_shield,
                       materialIcon: Icons.privacy_tip,

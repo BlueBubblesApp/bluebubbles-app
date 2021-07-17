@@ -206,7 +206,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                   ),
                   SettingsTile(
                     title: "Re-configure with BlueBubbles Server",
-                    subTitle: "Scan QR code",
+                    subtitle: "Scan QR code",
                     leading: SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.gear,
                       materialIcon: Icons.room_preferences,
@@ -244,7 +244,6 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                         SocketManager().authFCM();
                       }
                     },
-                    showDivider: false,
                   ),
                   Container(
                     color: tileColor,
@@ -274,8 +273,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
 
                         return SettingsTile(
                             title: "Manually Sync Messages",
-                            subTitle: subtitle,
-                            showDivider: false,
+                            subtitle: subtitle,
                             backgroundColor: tileColor,
                             leading: SettingsLeadingIcon(
                               iosIcon: CupertinoIcons.arrow_2_circlepath,
@@ -320,13 +318,12 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
 
                         return SettingsTile(
                           title: "Fetch & Share Server Logs",
-                          subTitle: subtitle,
+                          subtitle: subtitle,
                           backgroundColor: tileColor,
                           leading: SettingsLeadingIcon(
                             iosIcon: CupertinoIcons.doc_plaintext,
                             materialIcon: Icons.article,
                           ),
-                          showDivider: false,
                           onTap: () {
                             if (![SocketState.CONNECTED].contains(connectionStatus)) return;
 
@@ -405,13 +402,12 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
 
                         return SettingsTile(
                             title: "Restart iMessage",
-                            subTitle: subtitle,
+                            subtitle: subtitle,
                             backgroundColor: tileColor,
                             leading: SettingsLeadingIcon(
                               iosIcon: CupertinoIcons.chat_bubble,
                               materialIcon: Icons.sms,
                             ),
-                            showDivider: false,
                             onTap: () async {
                               if (![SocketState.CONNECTED].contains(connectionStatus) || isRestartingMessages) return;
 
@@ -469,7 +465,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                   ),
                   SettingsTile(
                       title: "Restart BlueBubbles Server",
-                      subTitle: (isRestarting)
+                      subtitle: (isRestarting)
                           ? "Restart in progress..."
                           : "This will briefly disconnect you",
                       backgroundColor: tileColor,
@@ -477,7 +473,6 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                         iosIcon: CupertinoIcons.desktopcomputer,
                         materialIcon: Icons.dvr,
                       ),
-                      showDivider: false,
                       onTap: () async {
                         if (isRestarting) return;
 
