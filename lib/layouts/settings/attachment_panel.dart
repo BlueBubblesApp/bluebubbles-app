@@ -15,30 +15,32 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class AttachmentPanel extends StatefulWidget {
-  AttachmentPanel({Key? key}) : super(key: key);
-
+class AttachmentPanelBinding implements Bindings {
   @override
-  _AttachmentPanelState createState() => _AttachmentPanelState();
+  void dependencies() {
+    Get.lazyPut<AttachmentPanelController>(() => AttachmentPanelController());
+  }
 }
 
-class _AttachmentPanelState extends State<AttachmentPanel> {
+/// controller to manage the view
+class AttachmentPanelController extends GetxController {
   late Settings _settingsCopy;
 
   @override
-  void initState() {
-    super.initState();
+  void onInit() {
+    super.onInit();
     _settingsCopy = SettingsManager().settings;
-
-    // Listen for any incoming events
-    EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (!event.containsKey("type")) return;
-
-      if (event["type"] == 'theme-update' && this.mounted) {
-        setState(() {});
-      }
-    });
   }
+
+  /// save our settings when disposed
+  @override
+  void dispose() {
+    SettingsManager().saveSettings(_settingsCopy);
+    super.dispose();
+  }
+}
+
+class AttachmentPanel extends GetView<AttachmentPanelController> {
 
   @override
   Widget build(BuildContext context) {
@@ -111,9 +113,9 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
                   Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.autoDownload.value = val;
+                      controller._settingsCopy.autoDownload.value = val;
                     },
-                    initialVal: _settingsCopy.autoDownload.value,
+                    initialVal: controller._settingsCopy.autoDownload.value,
                     title: "Auto-download Attachments",
                     backgroundColor: tileColor,
                   )),
@@ -126,9 +128,9 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                   ),
                   Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.onlyWifiDownload.value = val;
+                      controller._settingsCopy.onlyWifiDownload.value = val;
                     },
-                    initialVal: _settingsCopy.onlyWifiDownload.value,
+                    initialVal: controller._settingsCopy.onlyWifiDownload.value,
                     title: "Only Auto-download Attachments on WiFi",
                     backgroundColor: tileColor,
                   )),
@@ -141,10 +143,10 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                   ),
                   Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.startVideosMuted.value = val;
+                      controller._settingsCopy.startVideosMuted.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.startVideosMuted.value,
+                    initialVal: controller._settingsCopy.startVideosMuted.value,
                     title: "Mute Videos by Default in Attachment Preview",
                     backgroundColor: tileColor,
                   )),
@@ -157,10 +159,10 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                   ),
                   Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.startVideosMutedFullscreen.value = val;
+                      controller._settingsCopy.startVideosMutedFullscreen.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.startVideosMutedFullscreen.value,
+                    initialVal: controller._settingsCopy.startVideosMutedFullscreen.value,
                     title: "Mute Videos by Default in Fullscreen Player",
                     backgroundColor: tileColor,
                   )),
@@ -180,11 +182,11 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                         ),
                       )
                   ),
-                  SettingsSlider(
+                  Obx(() => SettingsSlider(
                       text: "Attachment Preview Quality",
-                      startingVal: _settingsCopy.previewCompressionQuality.value.toDouble(),
+                      startingVal: controller._settingsCopy.previewCompressionQuality.value.toDouble(),
                       update: (double val) {
-                        _settingsCopy.previewCompressionQuality.value = val.toInt();
+                        controller._settingsCopy.previewCompressionQuality.value = val.toInt();
                       },
                       formatValue: ((double val) => val.toInt().toString() + "%"),
                       backgroundColor: tileColor,
@@ -195,8 +197,8 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                             borderRadius: BorderRadius.circular(5),
                             child: ImageFiltered(
                               imageFilter: ImageFilter.blur(
-                                sigmaX: (1 - _settingsCopy.previewCompressionQuality.value / 100),
-                                sigmaY: (1 - _settingsCopy.previewCompressionQuality.value / 100),
+                                sigmaX: (1 - controller._settingsCopy.previewCompressionQuality.value / 100),
+                                sigmaY: (1 - controller._settingsCopy.previewCompressionQuality.value / 100),
                               ),
                               child: Container(
                                 width: 32,
@@ -220,7 +222,8 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                       )),
                       min: 10,
                       max: 100,
-                      divisions: 18),
+                      divisions: 18
+                  )),
                   SettingsHeader(
                       headerColor: headerColor,
                       tileColor: tileColor,
@@ -234,25 +237,26 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                     backgroundColor: tileColor,
                     isThreeLine: true,
                   ),
-                  SettingsSlider(
+                  Obx(() => SettingsSlider(
                       text: "Attachment Chunk Size",
-                      startingVal: _settingsCopy.chunkSize.value.toDouble(),
+                      startingVal: controller._settingsCopy.chunkSize.value.toDouble(),
                       update: (double val) {
-                        _settingsCopy.chunkSize.value = val.floor();
+                        controller._settingsCopy.chunkSize.value = val.floor();
                       },
                       formatValue: ((double val) => getSizeString(val)),
                       backgroundColor: tileColor,
                       leading: Obx(() => SettingsLeadingIcon(
-                        iosIcon: _settingsCopy.chunkSize.value < 1000
-                            ? CupertinoIcons.square_grid_3x2 : _settingsCopy.chunkSize.value < 2000
+                        iosIcon: controller._settingsCopy.chunkSize.value < 1000
+                            ? CupertinoIcons.square_grid_3x2 : controller._settingsCopy.chunkSize.value < 2000
                             ? CupertinoIcons.square_grid_2x2 : CupertinoIcons.square,
-                        materialIcon: _settingsCopy.chunkSize.value < 1000
-                            ? Icons.photo_size_select_small : _settingsCopy.chunkSize.value < 2000
+                        materialIcon: controller._settingsCopy.chunkSize.value < 1000
+                            ? Icons.photo_size_select_small : controller._settingsCopy.chunkSize.value < 2000
                             ? Icons.photo_size_select_large : Icons.photo_size_select_actual,
                       )),
                       min: 100,
                       max: 3000,
-                      divisions: 29),
+                      divisions: 29
+                  )),
                   Container(
                     color: tileColor,
                     child: Padding(
@@ -262,10 +266,10 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                   ),
                   Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.preCachePreviewImages.value = val;
+                      controller._settingsCopy.preCachePreviewImages.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.preCachePreviewImages.value,
+                    initialVal: controller._settingsCopy.preCachePreviewImages.value,
                     title: "Cache Preview Images",
                     subtitle: "Caches URL preview images for faster load times",
                     backgroundColor: tileColor,
@@ -295,12 +299,6 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
   }
 
   void saveSettings() {
-    SettingsManager().saveSettings(_settingsCopy);
-  }
-
-  @override
-  void dispose() {
-    saveSettings();
-    super.dispose();
+    SettingsManager().saveSettings(controller._settingsCopy);
   }
 }

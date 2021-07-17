@@ -240,11 +240,7 @@ class _ThemePanelState extends State<ThemePanel> {
                     title: "Custom Avatar Colors",
                     trailing: nextIcon,
                     onTap: () async {
-                      Navigator.of(context).push(
-                        CupertinoPageRoute(
-                          builder: (context) => CustomAvatarPanel(),
-                        ),
-                      );
+                      Get.toNamed("/settings/custom-avatar-panel");
                     },
                     backgroundColor: tileColor,
                     subtitle: "Customize the color for different avatars",

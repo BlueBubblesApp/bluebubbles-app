@@ -4,6 +4,11 @@ import 'dart:io';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
+import 'package:bluebubbles/layouts/settings/about_panel.dart';
+import 'package:bluebubbles/layouts/settings/attachment_panel.dart';
+import 'package:bluebubbles/layouts/settings/custom_avatar_panel.dart';
+import 'package:bluebubbles/layouts/settings/private_api_panel.dart';
+import 'package:bluebubbles/layouts/settings/redacted_mode_panel.dart';
 import 'package:bluebubbles/layouts/setup/failure_to_start.dart';
 import 'package:bluebubbles/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
@@ -144,6 +149,16 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
 
         /// [Home] is the starting widget for the app
         home: Home(),
+
+        defaultTransition: Transition.cupertino,
+
+        getPages: [
+          GetPage(page: () => AboutPanel(), name: "/settings/about-panel"),
+          GetPage(page: () => AttachmentPanel(), name: "/settings/attachment-panel", binding: AttachmentPanelBinding()),
+          GetPage(page: () => CustomAvatarPanel(), name: "/settings/custom-avatar-panel", binding: CustomAvatarPanelBinding()),
+          GetPage(page: () => PrivateAPIPanel(), name: "/settings/private-api-panel", binding: PrivateAPIPanelBinding()),
+          GetPage(page: () => RedactedModePanel(), name: "/settings/redacted-mode-panel", binding: RedactedModePanelBinding()),
+        ],
       ),
     );
   }

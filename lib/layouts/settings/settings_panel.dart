@@ -28,7 +28,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-
 List disconnectedStates = [SocketState.DISCONNECTED, SocketState.ERROR, SocketState.FAILED];
 
 class SettingsPanel extends StatefulWidget {
@@ -241,11 +240,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     backgroundColor: tileColor,
                     title: "Media Settings",
                     onTap: () {
-                      Navigator.of(context).push(
-                        CupertinoPageRoute(
-                          builder: (context) => AttachmentPanel(),
-                        ),
-                      );
+                      Get.toNamed("/settings/attachment-panel");
                     },
                     leading: SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.paperclip,
@@ -335,11 +330,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     subtitle: "Private API ${SettingsManager().settings.enablePrivateAPI.value ? "Enabled" : "Disabled"}",
                     trailing: nextIcon,
                     onTap: () async {
-                      Navigator.of(context).push(
-                        CupertinoPageRoute(
-                          builder: (context) => PrivateAPIPanel(),
-                        ),
-                      );
+                      Get.toNamed("/settings/private-api-panel");
                     },
                     leading: SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.exclamationmark_shield,
@@ -360,11 +351,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     subtitle: "Redacted Mode ${SettingsManager().settings.redactedMode.value ? "Enabled" : "Disabled"}",
                     trailing: nextIcon,
                     onTap: () async {
-                      Navigator.of(context).push(
-                        CupertinoPageRoute(
-                          builder: (context) => RedactedModePanel(),
-                        ),
-                      );
+                      Get.toNamed("/settings/redacted-mode-panel");
                     },
                     leading: SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.wand_stars,
@@ -408,11 +395,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     title: "About & Links",
                     subtitle: "Donate, Rate, Changelog, & More",
                     onTap: () {
-                      Navigator.of(context).push(
-                        CupertinoPageRoute(
-                          builder: (context) => AboutPanel(),
-                        ),
-                      );
+                      Get.toNamed("/settings/about-panel");
                     },
                     trailing: nextIcon,
                     leading: SettingsLeadingIcon(
@@ -641,69 +624,49 @@ class SettingsTextField extends StatelessWidget {
   }
 }
 
-class SettingsSwitch extends StatefulWidget {
+class SettingsSwitch extends StatelessWidget {
   SettingsSwitch({
     Key? key,
     required this.initialVal,
-    this.onChanged,
+    required this.onChanged,
     required this.title,
     this.backgroundColor,
     this.subtitle,
   }) : super(key: key);
   final bool initialVal;
-  final Function(bool)? onChanged;
+  final Function(bool) onChanged;
   final String title;
   final Color? backgroundColor;
   final String? subtitle;
 
   @override
-  _SettingsSwitchState createState() => _SettingsSwitchState();
-}
-
-class _SettingsSwitchState extends State<SettingsSwitch> {
-  bool? _value;
-
-  @override
-  void initState() {
-    super.initState();
-    _value = widget.initialVal;
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Container(
-      color: widget.backgroundColor,
+      color: backgroundColor,
       child: SwitchListTile(
-        tileColor: widget.backgroundColor,
+        tileColor: backgroundColor,
         title: Text(
-          widget.title,
+          title,
           style: Theme.of(context).textTheme.bodyText1,
         ),
-        subtitle: widget.subtitle != null ? Text(
-          widget.subtitle!,
+        subtitle: subtitle != null ? Text(
+          subtitle!,
           style: Theme.of(context).textTheme.subtitle1,
         ) : null,
-        value: _value!,
+        value: initialVal,
         activeColor: Theme.of(context).primaryColor,
         activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
-        inactiveTrackColor: widget.backgroundColor == Theme.of(context).accentColor
+        inactiveTrackColor: backgroundColor == Theme.of(context).accentColor
             ? Theme.of(context).backgroundColor.withOpacity(0.6) : Theme.of(context).accentColor.withOpacity(0.6),
-        inactiveThumbColor: widget.backgroundColor == Theme.of(context).accentColor
+        inactiveThumbColor: backgroundColor == Theme.of(context).accentColor
             ? Theme.of(context).backgroundColor : Theme.of(context).accentColor,
-        onChanged: (bool val) {
-          widget.onChanged!(val);
-
-          if (!this.mounted) return;
-
-          setState(() {
-            _value = val;
-          });
-        },
+        onChanged: onChanged,
       ),
     );
   }
 }
 
+//todo stateless
 class SettingsOptions<T extends Object> extends StatefulWidget {
   SettingsOptions({
     Key? key,
@@ -839,19 +802,19 @@ class _SettingsOptionsState<T extends Object> extends State<SettingsOptions<T>> 
   }
 }
 
-class SettingsSlider extends StatefulWidget {
-  SettingsSlider(
-      {required this.startingVal,
-      this.update,
-      required this.text,
-      this.formatValue,
-      required this.min,
-      required this.max,
-      required this.divisions,
-      this.leading,
-      this.backgroundColor,
-      Key? key})
-      : super(key: key);
+class SettingsSlider extends StatelessWidget {
+  SettingsSlider({
+    required this.startingVal,
+    this.update,
+    required this.text,
+    this.formatValue,
+    required this.min,
+    required this.max,
+    required this.divisions,
+    this.leading,
+    this.backgroundColor,
+    Key? key
+  }) : super(key: key);
 
   final double startingVal;
   final Function(double val)? update;
@@ -864,65 +827,34 @@ class SettingsSlider extends StatefulWidget {
   final Color? backgroundColor;
 
   @override
-  _SettingsSliderState createState() => _SettingsSliderState();
-}
-
-class _SettingsSliderState extends State<SettingsSlider> {
-  double currentVal = 500;
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.startingVal > 0 && widget.startingVal < 5000) {
-      currentVal = widget.startingVal;
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    String value = currentVal.toString();
-    if (widget.formatValue != null) {
-      value = widget.formatValue!(currentVal);
+    String value = startingVal.toString();
+    if (formatValue != null) {
+      value = formatValue!(startingVal);
     }
 
     return Container(
-      color: widget.backgroundColor,
+      color: backgroundColor,
       child: ListTile(
-        tileColor: widget.backgroundColor,
-        leading: widget.leading,
+        tileColor: backgroundColor,
+        leading: leading,
         trailing: Text(value),
         title: SettingsManager().settings.skin.value == Skins.iOS ? CupertinoSlider(
           activeColor: Theme.of(context).primaryColor,
-          //inactiveColor: Theme.of(context).primaryColor.withOpacity(0.2),
-          value: currentVal,
-          onChanged: (double value) {
-            if (!this.mounted) return;
-
-            setState(() {
-              currentVal = value;
-              widget.update!(currentVal);
-            });
-          },
-          //label: value,
-          divisions: widget.divisions,
-          min: widget.min,
-          max: widget.max,
+          value: startingVal,
+          onChanged: update,
+          divisions: divisions,
+          min: min,
+          max: max,
         ) : Slider(
           activeColor: Theme.of(context).primaryColor,
           inactiveColor: Theme.of(context).primaryColor.withOpacity(0.2),
-          value: currentVal,
-          onChanged: (double value) {
-            if (!this.mounted) return;
-
-            setState(() {
-              currentVal = value;
-              widget.update!(currentVal);
-            });
-          },
+          value: startingVal,
+          onChanged: update,
           label: value,
-          divisions: widget.divisions,
-          min: widget.min,
-          max: widget.max,
+          divisions: divisions,
+          min: min,
+          max: max,
         ),
       ),
     );
