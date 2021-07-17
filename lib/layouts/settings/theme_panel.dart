@@ -53,8 +53,7 @@ class _ThemePanelState extends State<ThemePanel> {
   void didChangeDependencies() async {
     super.didChangeDependencies();
     modes = await FlutterDisplayMode.supported;
-    refreshRates.addAll(modes.map((e) => e.refreshRate.round()).toSet().toList());
-    print(refreshRates);
+    refreshRates = modes.map((e) => e.refreshRate.round()).toSet().toList();
     currentMode = (await _settingsCopy.getDisplayMode()).refreshRate.round();
     setState(() {});
   }

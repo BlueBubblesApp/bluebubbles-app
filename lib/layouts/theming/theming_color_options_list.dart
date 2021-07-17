@@ -8,6 +8,7 @@ import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/theme_object.dart';
+import 'package:get/get.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -80,6 +81,19 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
   @override
   Widget build(BuildContext context) {
     editable = currentTheme != null && !currentTheme!.isPreset;
+    Color headerColor;
+    Color tileColor;
+    if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance()
+        || SettingsManager().settings.skin.value != Skins.iOS) {
+      headerColor = Theme.of(context).accentColor;
+      tileColor = Theme.of(context).backgroundColor;
+    } else {
+      headerColor = Theme.of(context).backgroundColor;
+      tileColor = Theme.of(context).accentColor;
+    }
+    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
+      tileColor = headerColor;
+    }
     return currentTheme != null
         ? CustomScrollView(
             physics: ThemeSwitcher.getScrollPhysics(),
@@ -90,7 +104,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                   child: Container(
                     child: Text(
                       widget.isDarkMode ? "Dark Theme" : "Light Theme",
-                      style: whiteLightTheme.textTheme.headline1,
+                      style: Theme.of(context).textTheme.headline1,
                     ),
                   ),
                 ),
@@ -101,38 +115,48 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                   children: [
                     Padding(
                       padding: const EdgeInsets.all(8.0),
-                      child: DropdownButton<ThemeObject>(
-                        isExpanded: false,
-                        dropdownColor: whiteLightTheme.accentColor,
-                        items: allThemes
-                            .map(
-                              (e) => DropdownMenuItem(
-                                child: Text(
-                                  e.name!.toUpperCase().replaceAll("_", " "),
-                                ),
-                                value: e,
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (value) async {
-                          value!.data = value.themeData;
-                          await value.save();
+                      child: Container(
+                        width: context.width - 16,
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(5.0),
+                            color: headerColor,
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<ThemeObject>(
+                            dropdownColor: tileColor,
+                            items: allThemes
+                                .map(
+                                  (e) => DropdownMenuItem(
+                                    child: Text(
+                                      e.name!.toUpperCase().replaceAll("_", " "),
+                                      style: Theme.of(context).textTheme.bodyText1,
+                                    ),
+                                    value: e,
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (value) async {
+                              value!.data = value.themeData;
+                              await value.save();
 
-                          if (widget.isDarkMode) {
-                            SettingsManager().saveSelectedTheme(context, selectedDarkTheme: value);
-                          } else {
-                            SettingsManager().saveSelectedTheme(context, selectedLightTheme: value);
-                          }
-                          currentTheme = value;
-                          editable = currentTheme != null && !currentTheme!.isPreset;
-                          setState(() {});
+                              if (widget.isDarkMode) {
+                                SettingsManager().saveSelectedTheme(context, selectedDarkTheme: value);
+                              } else {
+                                SettingsManager().saveSelectedTheme(context, selectedLightTheme: value);
+                              }
+                              currentTheme = value;
+                              editable = currentTheme != null && !currentTheme!.isPreset;
+                              setState(() {});
 
-                          EventDispatcher().emit('theme-update', null);
-                        },
-                        value: currentTheme,
-                        hint: Text(
-                          "Preset",
-                          style: whiteLightTheme.textTheme.bodyText1,
+                              EventDispatcher().emit('theme-update', null);
+                            },
+                            value: currentTheme,
+                            hint: Text(
+                              "Preset",
+                              style: Theme.of(context).textTheme.bodyText1,
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -158,7 +182,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                 SliverToBoxAdapter(
                   child: TextButton(
                     style: TextButton.styleFrom(
-                      backgroundColor: whiteLightTheme.accentColor,
+                      backgroundColor: Theme.of(context).accentColor,
                     ),
                     child: Text(
                       "Delete",
