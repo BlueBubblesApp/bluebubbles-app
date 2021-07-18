@@ -271,38 +271,46 @@ class ConversationPanel extends StatelessWidget {
                   ),
                   Container(
                     color: tileColor,
-                    child: Obx(() => SwitchListTile(
-                      title: Text(
-                        "Double-Tap Message for Quick Tapback",
-                        style: Theme.of(context).textTheme.bodyText1,
-                      ),
-                      value: SettingsManager().settings.enableQuickTapback.value,
-                      activeColor: Theme.of(context).primaryColor,
-                      activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
-                      inactiveTrackColor: tileColor == Theme.of(context).accentColor
-                          ? Theme.of(context).backgroundColor.withOpacity(0.6) : Theme.of(context).accentColor.withOpacity(0.6),
-                      inactiveThumbColor: tileColor == Theme.of(context).accentColor
-                          ? Theme.of(context).backgroundColor : Theme.of(context).accentColor,
-                      onChanged: (bool val) {
-                        SettingsManager().settings.enableQuickTapback.value = val;
-                        if (val && SettingsManager().settings.doubleTapForDetails.value) {
-                          SettingsManager().settings.doubleTapForDetails.value = false;
-                        }
-                        saveSettings();
-                      },
-                      subtitle: Text("Send a tapback of your choosing when double tapping a message", style: Theme.of(context).textTheme.subtitle1),
-                      tileColor: tileColor,
-                    )),
-                  ),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
-                    ),
+                    child: Obx(() {
+                      if (SettingsManager().settings.enablePrivateAPI.value)
+                        return SwitchListTile(
+                          title: Text(
+                            "Double-Tap Message for Quick Tapback",
+                            style: Theme.of(context).textTheme.bodyText1,
+                          ),
+                          value: SettingsManager().settings.enableQuickTapback.value,
+                          activeColor: Theme.of(context).primaryColor,
+                          activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
+                          inactiveTrackColor: tileColor == Theme.of(context).accentColor
+                              ? Theme.of(context).backgroundColor.withOpacity(0.6) : Theme.of(context).accentColor.withOpacity(0.6),
+                          inactiveThumbColor: tileColor == Theme.of(context).accentColor
+                              ? Theme.of(context).backgroundColor : Theme.of(context).accentColor,
+                          onChanged: (bool val) {
+                            SettingsManager().settings.enableQuickTapback.value = val;
+                            if (val && SettingsManager().settings.doubleTapForDetails.value) {
+                              SettingsManager().settings.doubleTapForDetails.value = false;
+                            }
+                            saveSettings();
+                          },
+                          subtitle: Text("Send a tapback of your choosing when double tapping a message", style: Theme.of(context).textTheme.subtitle1),
+                          tileColor: tileColor,
+                        );
+                      else return SizedBox.shrink();
+                    }),
                   ),
                   Obx(() {
-                    if (SettingsManager().settings.enableQuickTapback.value && SettingsManager().settings.skin.value == Skins.iOS)
+                    if (SettingsManager().settings.enablePrivateAPI.value)
+                      return Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 65.0),
+                          child: SettingsDivider(color: headerColor),
+                        ),
+                      );
+                    else return SizedBox.shrink();
+                  }),
+                  Obx(() {
+                    if (SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.enableQuickTapback.value && SettingsManager().settings.skin.value == Skins.iOS)
                       return Container(
                         decoration: BoxDecoration(
                           color: tileColor,
@@ -313,7 +321,7 @@ class ConversationPanel extends StatelessWidget {
                     else return SizedBox.shrink();
                   }),
                   Obx(() {
-                    if (SettingsManager().settings.enableQuickTapback.value)
+                    if (SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.enableQuickTapback.value)
                       return SettingsOptions<String>(
                         title: "Quick Tapback",
                         options: ReactionTypes.toList(),
@@ -338,7 +346,7 @@ class ConversationPanel extends StatelessWidget {
                     else return SizedBox.shrink();
                   }),
                   Obx(() {
-                    if (SettingsManager().settings.enableQuickTapback.value)
+                    if (SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.enableQuickTapback.value)
                       return Container(
                         color: tileColor,
                         child: Padding(
