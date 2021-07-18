@@ -165,6 +165,7 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
           GetPage(page: () => PrivateAPIPanel(), name: "/settings/private-api-panel", binding: PrivateAPIPanelBinding()),
           GetPage(page: () => RedactedModePanel(), name: "/settings/redacted-mode-panel"),
           GetPage(page: () => ServerManagementPanel(), name: "/settings/server-management-panel", binding: ServerManagementPanelBinding()),
+          GetPage(page: () => ThemePanel(), name: "/settings/theme-panel", binding: ThemePanelBinding()),
         ],
       ),
     );

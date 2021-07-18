@@ -171,6 +171,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
                     initial: timeOptions.first,
                     subtitle: getTimeText(context),
                     onChanged: (val) async {
+                      if (val == null) return;
                       scheduleSeconds = val[0];
 
                       if (val[0] == -1) {

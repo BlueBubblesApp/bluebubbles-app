@@ -21,42 +21,41 @@ import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:get/get.dart';
 
-class ThemePanel extends StatefulWidget {
-  ThemePanel({Key? key}) : super(key: key);
-
+class ThemePanelBinding extends Bindings {
   @override
-  _ThemePanelState createState() => _ThemePanelState();
+  void dependencies() {
+    Get.lazyPut<ThemePanelController>(() => ThemePanelController());
+  }
 }
 
-class _ThemePanelState extends State<ThemePanel> {
+class ThemePanelController extends GetxController {
   late Settings _settingsCopy;
-  List<DisplayMode> modes = [];
-  List<int> refreshRates = [];
-  int currentMode = 0;
+  RxList<DisplayMode> modes = <DisplayMode>[].obs;
+  RxList<int> refreshRates = <int>[].obs;
+  RxInt currentMode = 0.obs;
 
   @override
-  void initState() {
-    super.initState();
+  void onInit() {
+    super.onInit();
     _settingsCopy = SettingsManager().settings;
-
-    // Listen for any incoming events
-    EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (!event.containsKey("type")) return;
-
-      if (event["type"] == 'theme-update' && this.mounted) {
-        setState(() {});
-      }
-    });
   }
 
   @override
-  void didChangeDependencies() async {
-    super.didChangeDependencies();
-    modes = await FlutterDisplayMode.supported;
-    refreshRates = modes.map((e) => e.refreshRate.round()).toSet().toList();
-    currentMode = (await _settingsCopy.getDisplayMode()).refreshRate.round();
-    setState(() {});
+  void onReady() async {
+    modes.value = await FlutterDisplayMode.supported;
+    refreshRates.value = modes.map((e) => e.refreshRate.round()).toSet().toList();
+    currentMode.value = (await _settingsCopy.getDisplayMode()).refreshRate.round();
+    super.onReady();
   }
+
+  @override
+  void dispose() async {
+    await SettingsManager().saveSettings(_settingsCopy);
+    super.dispose();
+  }
+}
+
+class ThemePanel extends GetView<ThemePanelController> {
 
   @override
   Widget build(BuildContext context) {
@@ -65,250 +64,253 @@ class _ThemePanelState extends State<ThemePanel> {
       color: Colors.grey,
     ));
 
-    final iosSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
-    final materialSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
-    Color headerColor;
-    Color tileColor;
-    if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance()
-        || SettingsManager().settings.skin.value != Skins.iOS) {
-      headerColor = Theme.of(context).accentColor;
-      tileColor = Theme.of(context).backgroundColor;
-    } else {
-      headerColor = Theme.of(context).backgroundColor;
-      tileColor = Theme.of(context).accentColor;
-    }
-    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
-      tileColor = headerColor;
-    }
+    /// for some reason we need a [GetBuilder] here otherwise the theme switching refuses to work right
+    return GetBuilder<ThemePanelController>(builder: (_) {
+      final iosSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
+      final materialSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
+      Color headerColor;
+      Color tileColor;
+      if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance()
+          || SettingsManager().settings.skin.value != Skins.iOS) {
+        headerColor = Theme.of(context).accentColor;
+        tileColor = Theme.of(context).backgroundColor;
+      } else {
+        headerColor = Theme.of(context).backgroundColor;
+        tileColor = Theme.of(context).accentColor;
+      }
+      if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
+        tileColor = headerColor;
+      }
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle(
-        systemNavigationBarColor: headerColor, // navigation bar color
-        systemNavigationBarIconBrightness:
-        headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
-        statusBarColor: Colors.transparent, // status bar color
-      ),
-      child: Scaffold(
-        backgroundColor: SettingsManager().settings.skin.value != Skins.iOS ? tileColor : headerColor,
-        appBar: PreferredSize(
-          preferredSize: Size(context.width, 80),
-          child: ClipRRect(
-            child: BackdropFilter(
-              child: AppBar(
-                brightness: ThemeData.estimateBrightnessForColor(headerColor),
-                toolbarHeight: 100.0,
-                elevation: 0,
-                leading: buildBackButton(context),
-                backgroundColor: headerColor.withOpacity(0.5),
-                title: Text(
-                  "Theming & Styles",
-                  style: Theme.of(context).textTheme.headline1,
+      return AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle(
+          systemNavigationBarColor: headerColor, // navigation bar color
+          systemNavigationBarIconBrightness:
+          headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+          statusBarColor: Colors.transparent, // status bar color
+        ),
+        child: Scaffold(
+          backgroundColor: SettingsManager().settings.skin.value != Skins.iOS ? tileColor : headerColor,
+          appBar: PreferredSize(
+            preferredSize: Size(context.width, 80),
+            child: ClipRRect(
+              child: BackdropFilter(
+                child: AppBar(
+                  brightness: ThemeData.estimateBrightnessForColor(headerColor),
+                  toolbarHeight: 100.0,
+                  elevation: 0,
+                  leading: buildBackButton(context),
+                  backgroundColor: headerColor.withOpacity(0.5),
+                  title: Text(
+                    "Theming & Styles",
+                    style: Theme.of(context).textTheme.headline1,
+                  ),
                 ),
+                filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
               ),
-              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
             ),
           ),
-        ),
-        body: CustomScrollView(
-          physics: ThemeSwitcher.getScrollPhysics(),
-          slivers: <Widget>[
-            SliverList(
-              delegate: SliverChildListDelegate(
-                <Widget>[
-                  Container(
-                      height: SettingsManager().settings.skin.value == Skins.iOS ? 30 : 40,
-                      alignment: Alignment.bottomLeft,
-                      decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
-                        color: headerColor,
-                        border: Border(
-                            bottom: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
+          body: CustomScrollView(
+            physics: ThemeSwitcher.getScrollPhysics(),
+            slivers: <Widget>[
+              SliverList(
+                delegate: SliverChildListDelegate(
+                  <Widget>[
+                    Container(
+                        height: SettingsManager().settings.skin.value == Skins.iOS ? 30 : 40,
+                        alignment: Alignment.bottomLeft,
+                        decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
+                          color: headerColor,
+                          border: Border(
+                              bottom: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
+                          ),
+                        ) : BoxDecoration(
+                          color: tileColor,
                         ),
-                      ) : BoxDecoration(
-                        color: tileColor,
-                      ),
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0, left: 15),
+                          child: Text("Theme".psCapitalize, style: SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
+                        )
+                    ),
+                    SettingsOptions<AdaptiveThemeMode>(
+                      initial: AdaptiveTheme.of(context).mode,
+                      onChanged: (val) {
+                        if (val == null) return;
+                        AdaptiveTheme.of(context).setThemeMode(val);
+                      },
+                      options: AdaptiveThemeMode.values,
+                      textProcessing: (val) => val.toString().split(".").last,
+                      title: "App Theme",
+                      backgroundColor: tileColor,
+                      secondaryColor: headerColor,
+                    ),
+                    Container(
+                      color: tileColor,
                       child: Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0, left: 15),
-                        child: Text("Theme".psCapitalize, style: SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
-                      )
-                  ),
-                  SettingsOptions<AdaptiveThemeMode>(
-                    initial: AdaptiveTheme.of(context).mode,
-                    onChanged: (val) {
-                      AdaptiveTheme.of(context).setThemeMode(val);
-
-                      // This needs to be on a delay so the background color has time to change
-                      Timer(Duration(seconds: 1), () {
-                        EventDispatcher().emit('theme-update', null);
-                      });
-                    },
-                    options: AdaptiveThemeMode.values,
-                    textProcessing: (val) => val.toString().split(".").last,
-                    title: "App Theme",
-                    backgroundColor: tileColor,
-                    secondaryColor: headerColor,
-                  ),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
                     ),
-                  ),
-                  SettingsTile(
-                    title: "Theming",
-                    subtitle: "Edit existing themes and create custom themes",
-                    trailing: nextIcon,
-                    onTap: () async {
-                      Navigator.of(context).push(
-                        CupertinoPageRoute(
-                          builder: (context) => ThemingPanel(),
-                        ),
-                      );
-                    },
-                    backgroundColor: tileColor,
-                  ),
-                  SettingsHeader(
-                      headerColor: headerColor,
-                      tileColor: tileColor,
-                      iosSubtitle: iosSubtitle,
-                      materialSubtitle: materialSubtitle,
-                      text: "Skin"
-                  ),
-                  Obx(() => SettingsOptions<Skins>(
-                    initial: _settingsCopy.skin.value,
-                    onChanged: (val) {
-                      _settingsCopy.skin.value = val;
-                      if (val == Skins.Material) {
-                        _settingsCopy.hideDividers.value = true;
-                      } else if (val == Skins.Samsung) {
-                        _settingsCopy.hideDividers.value = true;
-                      } else {
-                        _settingsCopy.hideDividers.value = false;
-                      }
-                      ChatBloc().refreshChats();
-                      setState(() {});
-                    },
-                    options: Skins.values.where((item) => item != Skins.Samsung).toList(),
-                    textProcessing: (val) => val.toString().split(".").last,
-                    capitalize: false,
-                    title: "App Skin",
-                    backgroundColor: tileColor,
-                    secondaryColor: headerColor,
-                  )),
-                  SettingsHeader(
-                      headerColor: headerColor,
-                      tileColor: tileColor,
-                      iosSubtitle: iosSubtitle,
-                      materialSubtitle: materialSubtitle,
-                      text: "Colors"
-                  ),
-                  Obx(() => SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.colorfulAvatars.value = val;
-                      saveSettings();
-                    },
-                    initialVal: _settingsCopy.colorfulAvatars.value,
-                    title: "Colorful Avatars",
-                    backgroundColor: tileColor,
-                    subtitle: "Gives letter avatars a splash of color",
-                  )),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
+                    SettingsTile(
+                      title: "Theming",
+                      subtitle: "Edit existing themes and create custom themes",
+                      trailing: nextIcon,
+                      onTap: () async {
+                        Navigator.of(context).push(
+                          CupertinoPageRoute(
+                            builder: (context) => ThemingPanel(),
+                          ),
+                        );
+                      },
+                      backgroundColor: tileColor,
                     ),
-                  ),
-                  Obx(() => SettingsSwitch(
-                    onChanged: (bool val) {
-                      _settingsCopy.colorfulBubbles.value = val;
-                      saveSettings();
-                    },
-                    initialVal: _settingsCopy.colorfulBubbles.value,
-                    title: "Colorful Bubbles",
-                    backgroundColor: tileColor,
-                    subtitle: "Gives received message bubbles a splash of color",
-                  )),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
-                    ),
-                  ),
-                  SettingsTile(
-                    title: "Custom Avatar Colors",
-                    trailing: nextIcon,
-                    onTap: () async {
-                      Get.toNamed("/settings/custom-avatar-panel");
-                    },
-                    backgroundColor: tileColor,
-                    subtitle: "Customize the color for different avatars",
-                  ),
-                  if (refreshRates.length > 2)
                     SettingsHeader(
                         headerColor: headerColor,
                         tileColor: tileColor,
                         iosSubtitle: iosSubtitle,
                         materialSubtitle: materialSubtitle,
-                        text: "Refresh Rate"
+                        text: "Skin"
                     ),
-                  if (refreshRates.length > 2)
-                    SettingsOptions<int>(
-                      initial: currentMode,
-                      onChanged: (val) async {
-                        currentMode = val;
-                        _settingsCopy.refreshRate.value = currentMode;
+                    Obx(() => SettingsOptions<Skins>(
+                      initial: controller._settingsCopy.skin.value,
+                      onChanged: (val) {
+                        if (val == null) return;
+                        controller._settingsCopy.skin.value = val;
+                        if (val == Skins.Material) {
+                          controller._settingsCopy.hideDividers.value = true;
+                        } else if (val == Skins.Samsung) {
+                          controller._settingsCopy.hideDividers.value = true;
+                        } else {
+                          controller._settingsCopy.hideDividers.value = false;
+                        }
+                        ChatBloc().refreshChats();
+                        saveSettings();
+                        controller.update();
                       },
-                      options: refreshRates,
-                      textProcessing: (val) => val == 0 ? "Automatic" : val.toString() + " Hz",
-                      title: "Display",
+                      options: Skins.values.where((item) => item != Skins.Samsung).toList(),
+                      textProcessing: (val) => val.toString().split(".").last,
+                      capitalize: false,
+                      title: "App Skin",
                       backgroundColor: tileColor,
                       secondaryColor: headerColor,
+                    )),
+                    SettingsHeader(
+                        headerColor: headerColor,
+                        tileColor: tileColor,
+                        iosSubtitle: iosSubtitle,
+                        materialSubtitle: materialSubtitle,
+                        text: "Colors"
                     ),
-                  // SettingsOptions<String>(
-                  //   initial: _settingsCopy.emojiFontFamily == null
-                  //       ? "System"
-                  //       : fontFamilyToString[_settingsCopy.emojiFontFamily],
-                  //   onChanged: (val) {
-                  //     _settingsCopy.emojiFontFamily = stringToFontFamily[val];
-                  //   },
-                  //   options: stringToFontFamily.keys.toList(),
-                  //   textProcessing: (dynamic val) => val,
-                  //   title: "Emoji Style",
-                  //   showDivider: false,
-                  // ),
-                  Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
-                  Container(
-                    height: 30,
-                    decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
-                      color: headerColor,
-                      border: Border(
-                          top: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
+                    Obx(() => SettingsSwitch(
+                      onChanged: (bool val) {
+                        controller._settingsCopy.colorfulAvatars.value = val;
+                        saveSettings();
+                      },
+                      initialVal: controller._settingsCopy.colorfulAvatars.value,
+                      title: "Colorful Avatars",
+                      backgroundColor: tileColor,
+                      subtitle: "Gives letter avatars a splash of color",
+                    )),
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
                       ),
-                    ) : null,
-                  ),
-                ],
+                    ),
+                    Obx(() => SettingsSwitch(
+                      onChanged: (bool val) {
+                        controller._settingsCopy.colorfulBubbles.value = val;
+                        saveSettings();
+                      },
+                      initialVal: controller._settingsCopy.colorfulBubbles.value,
+                      title: "Colorful Bubbles",
+                      backgroundColor: tileColor,
+                      subtitle: "Gives received message bubbles a splash of color",
+                    )),
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
+                    ),
+                    SettingsTile(
+                      title: "Custom Avatar Colors",
+                      trailing: nextIcon,
+                      onTap: () async {
+                        Get.toNamed("/settings/custom-avatar-panel");
+                      },
+                      backgroundColor: tileColor,
+                      subtitle: "Customize the color for different avatars",
+                    ),
+                    Obx(() {
+                      if (controller.refreshRates.length > 2)
+                        return SettingsHeader(
+                            headerColor: headerColor,
+                            tileColor: tileColor,
+                            iosSubtitle: iosSubtitle,
+                            materialSubtitle: materialSubtitle,
+                            text: "Refresh Rate"
+                        );
+                      else return SizedBox.shrink();
+                    }),
+                    Obx(() {
+                      if (controller.refreshRates.length > 2)
+                        return SettingsOptions<int>(
+                          initial: controller.currentMode.value,
+                          onChanged: (val) async {
+                            if (val == null) return;
+                            controller.currentMode.value = val;
+                            controller._settingsCopy.refreshRate.value = controller.currentMode.value;
+                            saveSettings();
+                          },
+                          options: controller.refreshRates,
+                          textProcessing: (val) => val == 0 ? "Automatic" : val.toString() + " Hz",
+                          title: "Display",
+                          backgroundColor: tileColor,
+                          secondaryColor: headerColor,
+                        );
+                      else return SizedBox.shrink();
+                    }),
+                    // SettingsOptions<String>(
+                    //   initial: controller._settingsCopy.emojiFontFamily == null
+                    //       ? "System"
+                    //       : fontFamilyToString[controller._settingsCopy.emojiFontFamily],
+                    //   onChanged: (val) {
+                    //     controller._settingsCopy.emojiFontFamily = stringToFontFamily[val];
+                    //   },
+                    //   options: stringToFontFamily.keys.toList(),
+                    //   textProcessing: (dynamic val) => val,
+                    //   title: "Emoji Style",
+                    //   showDivider: false,
+                    // ),
+                    Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
+                    Container(
+                      height: 30,
+                      decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
+                        color: headerColor,
+                        border: Border(
+                            top: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
+                        ),
+                      ) : null,
+                    ),
+                  ],
+                ),
               ),
-            ),
-            SliverList(
-              delegate: SliverChildListDelegate(
-                <Widget>[],
-              ),
-            )
-          ],
+              SliverList(
+                delegate: SliverChildListDelegate(
+                  <Widget>[],
+                ),
+              )
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 
   void saveSettings() {
-    SettingsManager().saveSettings(_settingsCopy);
-  }
-
-  @override
-  void dispose() {
-    saveSettings();
-    super.dispose();
+    SettingsManager().saveSettings(controller._settingsCopy);
   }
 }

@@ -213,11 +213,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     subtitle: SettingsManager().settings.skin.value.toString().split(".").last
                         + "   |   " + AdaptiveTheme.of(context).mode.toString().split(".").last.capitalizeFirst! + " Mode",
                     onTap: () {
-                      Navigator.of(context).push(
-                        CupertinoPageRoute(
-                          builder: (context) => ThemePanel(),
-                        ),
-                      );
+                      Get.toNamed("/settings/theme-panel");
                     },
                     trailing: nextIcon,
                     leading: SettingsLeadingIcon(
@@ -654,8 +650,7 @@ class SettingsSwitch extends StatelessWidget {
   }
 }
 
-//todo stateless
-class SettingsOptions<T extends Object> extends StatefulWidget {
+class SettingsOptions<T extends Object> extends StatelessWidget {
   SettingsOptions({
     Key? key,
     required this.onChanged,
@@ -670,7 +665,7 @@ class SettingsOptions<T extends Object> extends StatefulWidget {
     this.secondaryColor,
   }) : super(key: key);
   final String title;
-  final Function(T) onChanged;
+  final void Function(T?) onChanged;
   final List<T> options;
   final Iterable<Widget>? cupertinoCustomWidgets;
   final T initial;
@@ -681,45 +676,26 @@ class SettingsOptions<T extends Object> extends StatefulWidget {
   final Color? secondaryColor;
 
   @override
-  _SettingsOptionsState createState() => _SettingsOptionsState<T>();
-}
-
-class _SettingsOptionsState<T extends Object> extends State<SettingsOptions<T>> {
-  late T currentVal;
-
-  @override
-  void initState() {
-    super.initState();
-    currentVal = widget.initial;
-  }
-
-  @override
   Widget build(BuildContext context) {
     if (SettingsManager().settings.skin.value == Skins.iOS) {
-      final texts = widget.options.map((e) => Text(widget.capitalize ? widget.textProcessing!(e).capitalize! : widget.textProcessing!(e)));
-      final map = Map<T, Widget>.fromIterables(widget.options, widget.cupertinoCustomWidgets ?? texts);
+      final texts = options.map((e) => Text(capitalize ? textProcessing!(e).capitalize! : textProcessing!(e)));
+      final map = Map<T, Widget>.fromIterables(options, cupertinoCustomWidgets ?? texts);
       return Container(
-        color: widget.backgroundColor,
+        color: backgroundColor,
         padding: EdgeInsets.symmetric(horizontal: 13),
         height: 50,
         child: CupertinoSlidingSegmentedControl<T>(
           children: map,
-          groupValue: currentVal,
-          thumbColor: widget.secondaryColor != null && widget.secondaryColor == widget.backgroundColor
-              ? widget.secondaryColor!.lightenOrDarken(20) : widget.secondaryColor ?? Colors.white,
-          backgroundColor: widget.backgroundColor ?? CupertinoColors.tertiarySystemFill,
-          onValueChanged: (T? val) {
-            if (!this.mounted || val == null) return;
-            widget.onChanged(val);
-            setState(() {
-              currentVal = val;
-            });
-          },
+          groupValue: initial,
+          thumbColor: secondaryColor != null && secondaryColor == backgroundColor
+              ? secondaryColor!.lightenOrDarken(20) : secondaryColor ?? Colors.white,
+          backgroundColor: backgroundColor ?? CupertinoColors.tertiarySystemFill,
+          onValueChanged: onChanged,
         ),
       );
     }
     return Container(
-      color: widget.backgroundColor,
+      color: backgroundColor,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Row(
@@ -731,21 +707,20 @@ class _SettingsOptionsState<T extends Object> extends State<SettingsOptions<T>> 
                 children: [
                   Container(
                     child: Text(
-                      widget.title,
+                      title,
                       style: Theme.of(context).textTheme.bodyText1,
                     ),
                   ),
-                  (widget.subtitle != null)
+                  (subtitle != null)
                       ? Container(
-                    child: Padding(
-                      padding: EdgeInsets.only(top: 3.0),
-                      child: Text(
-                        widget.subtitle ?? "",
-                        style: Theme.of(context).textTheme.subtitle1,
-                      ),
-                    ),
-                  )
-                      : Container(),
+                        child: Padding(
+                          padding: EdgeInsets.only(top: 3.0),
+                          child: Text(
+                            subtitle ?? "",
+                            style: Theme.of(context).textTheme.subtitle1,
+                          ),
+                        ),
+                      ) : Container(),
                 ]),
             Container(
               padding: EdgeInsets.symmetric(horizontal: 9),
@@ -761,24 +736,17 @@ class _SettingsOptionsState<T extends Object> extends State<SettingsOptions<T>> 
                       Icons.arrow_drop_down,
                       color: Theme.of(context).textTheme.bodyText1!.color,
                     ),
-                    value: currentVal,
-                    items: widget.options.map<DropdownMenuItem<T>>((e) {
+                    value: initial,
+                    items: options.map<DropdownMenuItem<T>>((e) {
                       return DropdownMenuItem(
                         value: e,
                         child: Text(
-                          widget.capitalize ? widget.textProcessing!(e).capitalize! : widget.textProcessing!(e),
+                          capitalize ? textProcessing!(e).capitalize! : textProcessing!(e),
                           style: Theme.of(context).textTheme.bodyText1,
                         ),
                       );
                     }).toList(),
-                    onChanged: (T? val) {
-                      if (!this.mounted || val == null) return;
-                      widget.onChanged(val);
-                      setState(() {
-                        currentVal = val;
-                      });
-                      //
-                    },
+                    onChanged: onChanged,
                   ),
                 ),
               ),

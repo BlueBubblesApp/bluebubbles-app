@@ -330,6 +330,7 @@ class ConversationPanel extends StatelessWidget {
                         initial: SettingsManager().settings.quickTapbackType.value,
                         textProcessing: (val) => val,
                         onChanged: (val) {
+                          if (val == null) return;
                           SettingsManager().settings.quickTapbackType.value = val;
                           saveSettings();
                         },

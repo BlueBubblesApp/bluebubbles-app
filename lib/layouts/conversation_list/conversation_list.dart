@@ -85,8 +85,6 @@ class _ConversationListState extends State<ConversationList> {
 
       if (event["type"] == 'refresh' && this.mounted) {
         setState(() {});
-      } else if (event["type"] == 'theme-update' && this.mounted) {
-        setState(() {});
       }
     });
   }
