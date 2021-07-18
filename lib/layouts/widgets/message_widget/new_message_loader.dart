@@ -1,3 +1,5 @@
+import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -15,12 +17,12 @@ class NewMessageLoader extends StatelessWidget {
         ),
         Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Theme(
+          child: SettingsManager().settings.skin.value == Skins.iOS ? Theme(
             data: ThemeData(
               cupertinoOverrideTheme: CupertinoThemeData(brightness: Brightness.dark),
             ),
             child: CupertinoActivityIndicator(),
-          ),
+          ) : Container(height: 20, width: 20, child: Center(child: CircularProgressIndicator(strokeWidth: 2,))),
         ),
       ],
     );
