@@ -159,11 +159,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           title: "Connection & Server",
                           subtitle: subtitle,
                           onTap: () async {
-                            Navigator.of(context).push(
-                              CupertinoPageRoute(
-                                builder: (context) => ServerManagementPanel(),
-                              ),
-                            );
+                            Get.toNamed("/settings/server-management-panel");
                           },
                           onLongPress: () {
                             Clipboard.setData(new ClipboardData(text: _settingsCopy.serverAddress.value));
@@ -259,11 +255,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     backgroundColor: tileColor,
                     title: "Chat List Settings",
                     onTap: () {
-                      Navigator.of(context).push(
-                        CupertinoPageRoute(
-                          builder: (context) => ChatListPanel(),
-                        ),
-                      );
+                      Get.toNamed("/settings/chat-list-panel");
                     },
                     leading: SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.square_list,
@@ -282,11 +274,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     backgroundColor: tileColor,
                     title: "Conversation Settings",
                     onTap: () {
-                      Navigator.of(context).push(
-                        CupertinoPageRoute(
-                          builder: (context) => ConversationPanel(),
-                        ),
-                      );
+                      Get.toNamed("/settings/conversation-panel");
                     },
                     leading: SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.chat_bubble,

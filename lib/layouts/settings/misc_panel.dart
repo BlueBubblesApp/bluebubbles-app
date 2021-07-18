@@ -15,32 +15,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class MiscPanel extends StatefulWidget {
-  MiscPanel({Key? key}) : super(key: key);
-
-  @override
-  _MiscPanelState createState() => _MiscPanelState();
-}
-
-class _MiscPanelState extends State<MiscPanel> {
-  late Settings _settingsCopy;
-  bool needToReconnect = false;
-  bool showUrl = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _settingsCopy = SettingsManager().settings;
-
-    // Listen for any incoming events
-    EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (!event.containsKey("type")) return;
-
-      if (event["type"] == 'theme-update' && this.mounted) {
-        setState(() {});
-      }
-    });
-  }
+class MiscPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
@@ -113,10 +88,10 @@ class _MiscPanelState extends State<MiscPanel> {
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
                   Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.hideTextPreviews.value = val;
+                      SettingsManager().settings.hideTextPreviews.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.hideTextPreviews.value,
+                    initialVal: SettingsManager().settings.hideTextPreviews.value,
                     title: "Hide Message Text",
                     subtitle: "Replaces message text with 'iMessage' in notifications",
                     backgroundColor: tileColor,
@@ -130,10 +105,10 @@ class _MiscPanelState extends State<MiscPanel> {
                   ),
                   Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.showIncrementalSync.value = val;
+                      SettingsManager().settings.showIncrementalSync.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.showIncrementalSync.value,
+                    initialVal: SettingsManager().settings.showIncrementalSync.value,
                     title: "Notify when incremental sync complete",
                     subtitle: "Show a snackbar whenever a message sync is completed",
                     backgroundColor: tileColor,
@@ -147,10 +122,10 @@ class _MiscPanelState extends State<MiscPanel> {
                   ),
                   Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.lowMemoryMode.value = val;
+                      SettingsManager().settings.lowMemoryMode.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.lowMemoryMode.value,
+                    initialVal: SettingsManager().settings.lowMemoryMode.value,
                     title: "Low Memory Mode",
                     subtitle: "Reduces background processes and deletes cached storage items to improve performance on lower-end devices",
                     backgroundColor: tileColor,
@@ -179,9 +154,10 @@ class _MiscPanelState extends State<MiscPanel> {
                     if (SettingsManager().settings.skin.value == Skins.iOS)
                       return SettingsSlider(
                           text: "Scroll Speed Multiplier",
-                          startingVal: _settingsCopy.scrollVelocity.value,
+                          startingVal: SettingsManager().settings.scrollVelocity.value,
                           update: (double val) {
-                            _settingsCopy.scrollVelocity.value = double.parse(val.toStringAsFixed(2));
+                            SettingsManager().settings.scrollVelocity.value = double.parse(val.toStringAsFixed(2));
+                            saveSettings();
                           },
                           formatValue: ((double val) => val.toStringAsFixed(2)),
                           backgroundColor: tileColor,
@@ -200,11 +176,10 @@ class _MiscPanelState extends State<MiscPanel> {
                   ),
                   Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.sendDelay.value = val ? 3 : 0;
+                      SettingsManager().settings.sendDelay.value = val ? 3 : 0;
                       saveSettings();
-                      setState(() {});
                     },
-                    initialVal: !isNullOrZero(_settingsCopy.sendDelay.value),
+                    initialVal: !isNullOrZero(SettingsManager().settings.sendDelay.value),
                     title: "Send Delay",
                     backgroundColor: tileColor,
                   )),
@@ -212,9 +187,10 @@ class _MiscPanelState extends State<MiscPanel> {
                     if (!isNullOrZero(SettingsManager().settings.sendDelay.value))
                       return SettingsSlider(
                           text: "Set send delay",
-                          startingVal: _settingsCopy.sendDelay.toDouble(),
+                          startingVal: SettingsManager().settings.sendDelay.toDouble(),
                           update: (double val) {
-                            _settingsCopy.sendDelay.value = val.toInt();
+                            SettingsManager().settings.sendDelay.value = val.toInt();
+                            saveSettings();
                           },
                           formatValue: ((double val) => val.toStringAsFixed(0) + " sec"),
                           backgroundColor: tileColor,
@@ -233,10 +209,10 @@ class _MiscPanelState extends State<MiscPanel> {
                   ),
                   Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.use24HrFormat.value = val;
+                      SettingsManager().settings.use24HrFormat.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.use24HrFormat.value,
+                    initialVal: SettingsManager().settings.use24HrFormat.value,
                     title: "Use 24 Hour Format for Times",
                     backgroundColor: tileColor,
                   )),
@@ -265,12 +241,6 @@ class _MiscPanelState extends State<MiscPanel> {
   }
 
   void saveSettings() {
-    SettingsManager().saveSettings(_settingsCopy);
-  }
-
-  @override
-  void dispose() {
-    saveSettings();
-    super.dispose();
+    SettingsManager().saveSettings(SettingsManager().settings);
   }
 }

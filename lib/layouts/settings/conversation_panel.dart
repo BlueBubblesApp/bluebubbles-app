@@ -17,30 +17,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class ConversationPanel extends StatefulWidget {
-  ConversationPanel({Key? key}) : super(key: key);
-
-  @override
-  _ConversationPanelState createState() => _ConversationPanelState();
-}
-
-class _ConversationPanelState extends State<ConversationPanel> {
-  late Settings _settingsCopy;
-
-  @override
-  void initState() {
-    super.initState();
-    _settingsCopy = SettingsManager().settings;
-
-    // Listen for any incoming events
-    EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (!event.containsKey("type")) return;
-
-      if (event["type"] == 'theme-update' && this.mounted) {
-        setState(() {});
-      }
-    });
-  }
+class ConversationPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
@@ -113,10 +90,10 @@ class _ConversationPanelState extends State<ConversationPanel> {
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
                   Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.showDeliveryTimestamps.value = val;
+                      SettingsManager().settings.showDeliveryTimestamps.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.showDeliveryTimestamps.value,
+                    initialVal: SettingsManager().settings.showDeliveryTimestamps.value,
                     title: "Show Delivery Timestamps",
                     backgroundColor: tileColor,
                   )),
@@ -129,10 +106,10 @@ class _ConversationPanelState extends State<ConversationPanel> {
                   ),
                   Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.recipientAsPlaceholder.value = val;
+                      SettingsManager().settings.recipientAsPlaceholder.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.recipientAsPlaceholder.value,
+                    initialVal: SettingsManager().settings.recipientAsPlaceholder.value,
                     title: "Show Recipient (or Group Name) as Placeholder",
                     subtitle: "Changes the 'BlueBubbles' text in the message box to display the recipient name",
                     backgroundColor: tileColor,
@@ -146,10 +123,10 @@ class _ConversationPanelState extends State<ConversationPanel> {
                   ),
                   Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.alwaysShowAvatars.value = val;
+                      SettingsManager().settings.alwaysShowAvatars.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.alwaysShowAvatars.value,
+                    initialVal: SettingsManager().settings.alwaysShowAvatars.value,
                     title: "Show avatars in non-group chats",
                     subtitle: "Shows contact avatars in direct messages rather than just in group messages",
                     backgroundColor: tileColor,
@@ -163,11 +140,10 @@ class _ConversationPanelState extends State<ConversationPanel> {
                   ),
                   Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.smartReply.value = val;
+                      SettingsManager().settings.smartReply.value = val;
                       saveSettings();
-                      setState(() {});
                     },
-                    initialVal: _settingsCopy.smartReply.value,
+                    initialVal: SettingsManager().settings.smartReply.value,
                     title: "Show Smart Replies",
                     subtitle: "Shows smart reply suggestions above the message box",
                     backgroundColor: tileColor,
@@ -181,10 +157,10 @@ class _ConversationPanelState extends State<ConversationPanel> {
                   ),
                   Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.autoOpenKeyboard.value = val;
+                      SettingsManager().settings.autoOpenKeyboard.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.autoOpenKeyboard.value,
+                    initialVal: SettingsManager().settings.autoOpenKeyboard.value,
                     title: "Auto-open Keyboard",
                     subtitle: "Automatically open the keyboard when entering a chat",
                     backgroundColor: tileColor,
@@ -198,10 +174,10 @@ class _ConversationPanelState extends State<ConversationPanel> {
                   ),
                   Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.swipeToCloseKeyboard.value = val;
+                      SettingsManager().settings.swipeToCloseKeyboard.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.swipeToCloseKeyboard.value,
+                    initialVal: SettingsManager().settings.swipeToCloseKeyboard.value,
                     title: "Swipe Message Box to Close Keyboard",
                     subtitle: "Swipe down on the message box to hide the keyboard",
                     backgroundColor: tileColor,
@@ -215,10 +191,10 @@ class _ConversationPanelState extends State<ConversationPanel> {
                   ),
                   Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.swipeToOpenKeyboard.value = val;
+                      SettingsManager().settings.swipeToOpenKeyboard.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.swipeToOpenKeyboard.value,
+                    initialVal: SettingsManager().settings.swipeToOpenKeyboard.value,
                     title: "Swipe Message Box to Open Keyboard",
                     subtitle: "Swipe up on the message box to show the keyboard",
                     backgroundColor: tileColor,
@@ -232,10 +208,10 @@ class _ConversationPanelState extends State<ConversationPanel> {
                   ),
                   Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.hideKeyboardOnScroll.value = val;
+                      SettingsManager().settings.hideKeyboardOnScroll.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.hideKeyboardOnScroll.value,
+                    initialVal: SettingsManager().settings.hideKeyboardOnScroll.value,
                     title: "Hide Keyboard When Scrolling",
                     backgroundColor: tileColor,
                   )),
@@ -248,10 +224,10 @@ class _ConversationPanelState extends State<ConversationPanel> {
                   ),
                   Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.openKeyboardOnSTB.value = val;
+                      SettingsManager().settings.openKeyboardOnSTB.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.openKeyboardOnSTB.value,
+                    initialVal: SettingsManager().settings.openKeyboardOnSTB.value,
                     title: "Open Keyboard After Tapping Scroll To Bottom",
                     subtitle: "Opens the keyboard after tapping the 'scroll to bottom' button",
                     backgroundColor: tileColor,
@@ -270,7 +246,7 @@ class _ConversationPanelState extends State<ConversationPanel> {
                         "Double-Tap Message for Details",
                         style: Theme.of(context).textTheme.bodyText1,
                       ),
-                      value: _settingsCopy.doubleTapForDetails.value,
+                      value: SettingsManager().settings.doubleTapForDetails.value,
                       activeColor: Theme.of(context).primaryColor,
                       activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
                       inactiveTrackColor: tileColor == Theme.of(context).accentColor
@@ -278,9 +254,9 @@ class _ConversationPanelState extends State<ConversationPanel> {
                       inactiveThumbColor: tileColor == Theme.of(context).accentColor
                           ? Theme.of(context).backgroundColor : Theme.of(context).accentColor,
                       onChanged: (bool val) {
-                        _settingsCopy.doubleTapForDetails.value = val;
-                        if (val && _settingsCopy.enableQuickTapback.value) {
-                          _settingsCopy.enableQuickTapback.value = false;
+                        SettingsManager().settings.doubleTapForDetails.value = val;
+                        if (val && SettingsManager().settings.enableQuickTapback.value) {
+                          SettingsManager().settings.enableQuickTapback.value = false;
                         }
                         saveSettings();
                       },
@@ -302,7 +278,7 @@ class _ConversationPanelState extends State<ConversationPanel> {
                         "Double-Tap Message for Quick Tapback",
                         style: Theme.of(context).textTheme.bodyText1,
                       ),
-                      value: _settingsCopy.enableQuickTapback.value,
+                      value: SettingsManager().settings.enableQuickTapback.value,
                       activeColor: Theme.of(context).primaryColor,
                       activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
                       inactiveTrackColor: tileColor == Theme.of(context).accentColor
@@ -310,9 +286,9 @@ class _ConversationPanelState extends State<ConversationPanel> {
                       inactiveThumbColor: tileColor == Theme.of(context).accentColor
                           ? Theme.of(context).backgroundColor : Theme.of(context).accentColor,
                       onChanged: (bool val) {
-                        _settingsCopy.enableQuickTapback.value = val;
-                        if (val && _settingsCopy.doubleTapForDetails.value) {
-                          _settingsCopy.doubleTapForDetails.value = false;
+                        SettingsManager().settings.enableQuickTapback.value = val;
+                        if (val && SettingsManager().settings.doubleTapForDetails.value) {
+                          SettingsManager().settings.doubleTapForDetails.value = false;
                         }
                         saveSettings();
                       },
@@ -328,7 +304,7 @@ class _ConversationPanelState extends State<ConversationPanel> {
                     ),
                   ),
                   Obx(() {
-                    if (_settingsCopy.enableQuickTapback.value && _settingsCopy.skin.value == Skins.iOS)
+                    if (SettingsManager().settings.enableQuickTapback.value && SettingsManager().settings.skin.value == Skins.iOS)
                       return Container(
                         decoration: BoxDecoration(
                           color: tileColor,
@@ -339,7 +315,7 @@ class _ConversationPanelState extends State<ConversationPanel> {
                     else return SizedBox.shrink();
                   }),
                   Obx(() {
-                    if (_settingsCopy.enableQuickTapback.value)
+                    if (SettingsManager().settings.enableQuickTapback.value)
                       return SettingsOptions<String>(
                         title: "Quick Tapback",
                         options: ReactionTypes.toList(),
@@ -351,10 +327,10 @@ class _ConversationPanelState extends State<ConversationPanel> {
                           Reaction(reactionType: ReactionTypes.EMPHASIZE).getSmallWidget(context, message: Message(isFromMe: true), isReactionPicker: true)!,
                           Reaction(reactionType: ReactionTypes.QUESTION).getSmallWidget(context, message: Message(isFromMe: true), isReactionPicker: true)!,
                         ],
-                        initial: _settingsCopy.quickTapbackType.value,
+                        initial: SettingsManager().settings.quickTapbackType.value,
                         textProcessing: (val) => val,
                         onChanged: (val) {
-                          _settingsCopy.quickTapbackType.value = val;
+                          SettingsManager().settings.quickTapbackType.value = val;
                           saveSettings();
                         },
                         backgroundColor: tileColor,
@@ -363,7 +339,7 @@ class _ConversationPanelState extends State<ConversationPanel> {
                     else return SizedBox.shrink();
                   }),
                   Obx(() {
-                    if (_settingsCopy.enableQuickTapback.value)
+                    if (SettingsManager().settings.enableQuickTapback.value)
                       return Container(
                         color: tileColor,
                         child: Padding(
@@ -375,10 +351,10 @@ class _ConversationPanelState extends State<ConversationPanel> {
                   }),
                   Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.sendWithReturn.value = val;
+                      SettingsManager().settings.sendWithReturn.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.sendWithReturn.value,
+                    initialVal: SettingsManager().settings.sendWithReturn.value,
                     title: "Send Message with Return Key",
                     subtitle: "Use the enter key as a send button",
                     backgroundColor: tileColor,
@@ -408,12 +384,6 @@ class _ConversationPanelState extends State<ConversationPanel> {
   }
 
   void saveSettings() {
-    SettingsManager().saveSettings(_settingsCopy);
-  }
-
-  @override
-  void dispose() {
-    saveSettings();
-    super.dispose();
+    SettingsManager().saveSettings(SettingsManager().settings);
   }
 }

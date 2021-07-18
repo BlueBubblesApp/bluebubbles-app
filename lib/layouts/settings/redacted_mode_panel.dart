@@ -19,31 +19,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class RedactedModePanelBinding extends Bindings {
-  @override
-  void dependencies() {
-    Get.lazyPut<RedactedModePanelController>(() => RedactedModePanelController());
-  }
-}
-
-class RedactedModePanelController extends GetxController {
-  @override
-  void onInit() {
-    super.onInit();
-  }
-
-  void saveSettings() {
-    SettingsManager().saveSettings(SettingsManager().settings);
-  }
-
-  @override
-  void dispose() {
-    saveSettings();
-    super.dispose();
-  }
-}
-
-class RedactedModePanel extends GetView<RedactedModePanelController> {
+class RedactedModePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
