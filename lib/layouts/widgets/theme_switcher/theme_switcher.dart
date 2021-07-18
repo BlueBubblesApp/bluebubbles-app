@@ -3,6 +3,7 @@ import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scrol
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class ThemeSwitcher extends StatefulWidget {
   ThemeSwitcher({Key? key, required this.iOSSkin, required this.materialSkin, required this.samsungSkin})
@@ -50,34 +51,25 @@ class ThemeSwitcher extends StatefulWidget {
 }
 
 class _ThemeSwitcherState extends State<ThemeSwitcher> {
-  Skins? skin;
 
   @override
   void initState() {
     super.initState();
-    skin = SettingsManager().settings.skin.value;
-
-    SettingsManager().stream.listen((event) {
-      if (!this.mounted) return;
-
-      if (event.skin.value != skin) {
-        skin = event.skin.value;
-        setState(() {});
-      }
-    });
   }
 
   @override
   Widget build(BuildContext context) {
-    switch (skin) {
-      case Skins.iOS:
-        return widget.iOSSkin;
-      case Skins.Material:
-        return widget.materialSkin;
-      case Skins.Samsung:
-        return widget.samsungSkin;
-      default:
-        return widget.iOSSkin;
-    }
+    return Obx(() {
+      switch (SettingsManager().settings.skin.value) {
+        case Skins.iOS:
+          return widget.iOSSkin;
+        case Skins.Material:
+          return widget.materialSkin;
+        case Skins.Samsung:
+          return widget.samsungSkin;
+        default:
+          return widget.iOSSkin;
+      }
+    });
   }
 }

@@ -8,39 +8,12 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class MiscPanel extends StatefulWidget {
-  MiscPanel({Key? key}) : super(key: key);
-
-  @override
-  _MiscPanelState createState() => _MiscPanelState();
-}
-
-class _MiscPanelState extends State<MiscPanel> {
-  late Settings _settingsCopy;
-  bool needToReconnect = false;
-  bool showUrl = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _settingsCopy = SettingsManager().settings;
-
-    // Listen for any incoming events
-    EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (!event.containsKey("type")) return;
-
-      if (event["type"] == 'theme-update' && this.mounted) {
-        setState(() {});
-      }
-    });
-  }
+class MiscPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
@@ -111,16 +84,16 @@ class _MiscPanelState extends State<MiscPanel> {
                       )
                   ),
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.hideTextPreviews = val;
+                      SettingsManager().settings.hideTextPreviews.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.hideTextPreviews,
+                    initialVal: SettingsManager().settings.hideTextPreviews.value,
                     title: "Hide Message Text",
                     subtitle: "Replaces message text with 'iMessage' in notifications",
                     backgroundColor: tileColor,
-                  ),
+                  )),
                   Container(
                     color: tileColor,
                     child: Padding(
@@ -128,16 +101,16 @@ class _MiscPanelState extends State<MiscPanel> {
                       child: SettingsDivider(color: headerColor),
                     ),
                   ),
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.showIncrementalSync = val;
+                      SettingsManager().settings.showIncrementalSync.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.showIncrementalSync,
+                    initialVal: SettingsManager().settings.showIncrementalSync.value,
                     title: "Notify when incremental sync complete",
                     subtitle: "Show a snackbar whenever a message sync is completed",
                     backgroundColor: tileColor,
-                  ),
+                  )),
                   SettingsHeader(
                       headerColor: headerColor,
                       tileColor: tileColor,
@@ -145,42 +118,53 @@ class _MiscPanelState extends State<MiscPanel> {
                       materialSubtitle: materialSubtitle,
                       text: "Speed & Responsiveness"
                   ),
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.lowMemoryMode = val;
+                      SettingsManager().settings.lowMemoryMode.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.lowMemoryMode,
+                    initialVal: SettingsManager().settings.lowMemoryMode.value,
                     title: "Low Memory Mode",
                     subtitle: "Reduces background processes and deletes cached storage items to improve performance on lower-end devices",
                     backgroundColor: tileColor,
-                  ),
-                  if (SettingsManager().settings.skin.value == Skins.iOS)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
-                      ),
-                    ),
-                  if (SettingsManager().settings.skin.value == Skins.iOS)
-                    SettingsTile(
-                      title: "Scroll Speed Multiplier",
-                      subtitle: "Controls how fast scrolling occurs",
-                      backgroundColor: tileColor,
-                    ),
-                  if (SettingsManager().settings.skin.value == Skins.iOS)
-                    SettingsSlider(
-                        text: "Scroll Speed Multiplier",
-                        startingVal: _settingsCopy.scrollVelocity,
-                        update: (double val) {
-                          _settingsCopy.scrollVelocity = double.parse(val.toStringAsFixed(2));
-                        },
-                        formatValue: ((double val) => val.toStringAsFixed(2)),
+                  )),
+                  Obx(() {
+                    if (SettingsManager().settings.skin.value == Skins.iOS)
+                      return Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 65.0),
+                          child: SettingsDivider(color: headerColor),
+                        ),
+                      );
+                    else return SizedBox.shrink();
+                  }),
+                  Obx(() {
+                    if (SettingsManager().settings.skin.value == Skins.iOS)
+                      return SettingsTile(
+                        title: "Scroll Speed Multiplier",
+                        subtitle: "Controls how fast scrolling occurs",
                         backgroundColor: tileColor,
-                        min: 0.20,
-                        max: 1,
-                        divisions: 8),
+                      );
+                    else return SizedBox.shrink();
+                  }),
+                  Obx(() {
+                    if (SettingsManager().settings.skin.value == Skins.iOS)
+                      return SettingsSlider(
+                          text: "Scroll Speed Multiplier",
+                          startingVal: SettingsManager().settings.scrollVelocity.value,
+                          update: (double val) {
+                            SettingsManager().settings.scrollVelocity.value = double.parse(val.toStringAsFixed(2));
+                            saveSettings();
+                          },
+                          formatValue: ((double val) => val.toStringAsFixed(2)),
+                          backgroundColor: tileColor,
+                          min: 0.20,
+                          max: 1,
+                          divisions: 8
+                      );
+                    else return SizedBox.shrink();
+                  }),
                   SettingsHeader(
                       headerColor: headerColor,
                       tileColor: tileColor,
@@ -188,28 +172,32 @@ class _MiscPanelState extends State<MiscPanel> {
                       materialSubtitle: materialSubtitle,
                       text: "Other"
                   ),
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.sendDelay = val ? 3 : 0;
+                      SettingsManager().settings.sendDelay.value = val ? 3 : 0;
                       saveSettings();
-                      setState(() {});
                     },
-                    initialVal: !isNullOrZero(_settingsCopy.sendDelay),
+                    initialVal: !isNullOrZero(SettingsManager().settings.sendDelay.value),
                     title: "Send Delay",
                     backgroundColor: tileColor,
-                  ),
-                  if (!isNullOrZero(SettingsManager().settings.sendDelay))
-                    SettingsSlider(
-                        text: "Set send delay",
-                        startingVal: _settingsCopy.sendDelay!.toDouble(),
-                        update: (double val) {
-                          _settingsCopy.sendDelay = val.toInt();
-                        },
-                        formatValue: ((double val) => val.toStringAsFixed(0) + " sec"),
-                        backgroundColor: tileColor,
-                        min: 1,
-                        max: 10,
-                        divisions: 9),
+                  )),
+                  Obx(() {
+                    if (!isNullOrZero(SettingsManager().settings.sendDelay.value))
+                      return SettingsSlider(
+                          text: "Set send delay",
+                          startingVal: SettingsManager().settings.sendDelay.toDouble(),
+                          update: (double val) {
+                            SettingsManager().settings.sendDelay.value = val.toInt();
+                            saveSettings();
+                          },
+                          formatValue: ((double val) => val.toStringAsFixed(0) + " sec"),
+                          backgroundColor: tileColor,
+                          min: 1,
+                          max: 10,
+                          divisions: 9
+                      );
+                    else return SizedBox.shrink();
+                  }),
                   Container(
                     color: tileColor,
                     child: Padding(
@@ -217,15 +205,15 @@ class _MiscPanelState extends State<MiscPanel> {
                       child: SettingsDivider(color: headerColor),
                     ),
                   ),
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.use24HrFormat = val;
+                      SettingsManager().settings.use24HrFormat.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.use24HrFormat,
+                    initialVal: SettingsManager().settings.use24HrFormat.value,
                     title: "Use 24 Hour Format for Times",
                     backgroundColor: tileColor,
-                  ),
+                  )),
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
                   Container(
                     height: 30,
@@ -251,12 +239,6 @@ class _MiscPanelState extends State<MiscPanel> {
   }
 
   void saveSettings() {
-    SettingsManager().saveSettings(_settingsCopy);
-  }
-
-  @override
-  void dispose() {
-    saveSettings();
-    super.dispose();
+    SettingsManager().saveSettings(SettingsManager().settings);
   }
 }

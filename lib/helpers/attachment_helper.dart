@@ -232,9 +232,9 @@ class AttachmentHelper {
     // If auto-download is enabled
     // and (only wifi download is disabled or
     // only wifi download enabled, and we have wifi)
-    return (SettingsManager().settings.autoDownload &&
-        (!SettingsManager().settings.onlyWifiDownload ||
-            (SettingsManager().settings.onlyWifiDownload && status == ConnectivityResult.wifi)));
+    return (SettingsManager().settings.autoDownload.value &&
+        (!SettingsManager().settings.onlyWifiDownload.value ||
+            (SettingsManager().settings.onlyWifiDownload.value && status == ConnectivityResult.wifi)));
   }
 
   static Future<void> setDimensions(Attachment attachment, {Uint8List? data}) async {

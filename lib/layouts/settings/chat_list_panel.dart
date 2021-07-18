@@ -8,37 +8,12 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class ChatListPanel extends StatefulWidget {
-  ChatListPanel({Key? key}) : super(key: key);
-
-  @override
-  _ChatListPanelState createState() => _ChatListPanelState();
-}
-
-class _ChatListPanelState extends State<ChatListPanel> {
-  late Settings _settingsCopy;
-
-  @override
-  void initState() {
-    super.initState();
-    _settingsCopy = SettingsManager().settings;
-
-    // Listen for any incoming events
-    EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (!event.containsKey("type")) return;
-
-      if (event["type"] == 'theme-update' && this.mounted) {
-        setState(() {});
-      }
-    });
-  }
+class ChatListPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
@@ -109,16 +84,16 @@ class _ChatListPanelState extends State<ChatListPanel> {
                       )
                   ),
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.showConnectionIndicator = val;
+                      SettingsManager().settings.showConnectionIndicator.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.showConnectionIndicator,
+                    initialVal: SettingsManager().settings.showConnectionIndicator.value,
                     title: "Show Connection Indicator",
                     subtitle: "Enables a connection status indicator at the top left",
                     backgroundColor: tileColor,
-                  ),
+                  )),
                   Container(
                     color: tileColor,
                     child: Padding(
@@ -126,16 +101,16 @@ class _ChatListPanelState extends State<ChatListPanel> {
                       child: SettingsDivider(color: headerColor),
                     ),
                   ),
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.showSyncIndicator = val;
+                      SettingsManager().settings.showSyncIndicator.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.showSyncIndicator,
+                    initialVal: SettingsManager().settings.showSyncIndicator.value,
                     title: "Show Sync Indicator in Chat List",
                     subtitle: "Enables a small indicator at the top left to show when the app is syncing messages",
                     backgroundColor: tileColor,
-                  ),
+                  )),
                   Container(
                     color: tileColor,
                     child: Padding(
@@ -143,16 +118,16 @@ class _ChatListPanelState extends State<ChatListPanel> {
                       child: SettingsDivider(color: headerColor),
                     ),
                   ),
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.colorblindMode = val;
+                      SettingsManager().settings.colorblindMode.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.colorblindMode,
+                    initialVal: SettingsManager().settings.colorblindMode.value,
                     title: "Colorblind Mode",
                     subtitle: "Replaces the colored connection indicator with icons to aid accessibility",
                     backgroundColor: tileColor,
-                  ),
+                  )),
                   SettingsHeader(
                       headerColor: headerColor,
                       tileColor: tileColor,
@@ -160,16 +135,16 @@ class _ChatListPanelState extends State<ChatListPanel> {
                       materialSubtitle: materialSubtitle,
                       text: "Filtering"
                   ),
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.filteredChatList = val;
+                      SettingsManager().settings.filteredChatList.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.filteredChatList,
+                    initialVal: SettingsManager().settings.filteredChatList.value,
                     title: "Filtered Chat List",
                     subtitle: "Filters the chat list based on parameters set in iMessage (usually this removes old, inactive chats)",
                     backgroundColor: tileColor,
-                  ),
+                  )),
                   SettingsHeader(
                       headerColor: headerColor,
                       tileColor: tileColor,
@@ -177,75 +152,93 @@ class _ChatListPanelState extends State<ChatListPanel> {
                       materialSubtitle: materialSubtitle,
                       text: "Appearance"
                   ),
-                  if (SettingsManager().settings.skin.value != Skins.Samsung)
-                    SettingsSwitch(
-                      onChanged: (bool val) {
-                        _settingsCopy.hideDividers = val;
-                        saveSettings();
-                      },
-                      initialVal: _settingsCopy.hideDividers,
-                      title: "Hide Dividers",
-                      backgroundColor: tileColor,
-                      subtitle: "Hides dividers between tiles",
-                    ),
-                  if (SettingsManager().settings.skin.value != Skins.Samsung)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
-                      ),
-                    ),
-                  SettingsSwitch(
+                  Obx(() {
+                    if (SettingsManager().settings.skin.value != Skins.Samsung)
+                      return SettingsSwitch(
+                        onChanged: (bool val) {
+                          SettingsManager().settings.hideDividers.value = val;
+                          saveSettings();
+                        },
+                        initialVal: SettingsManager().settings.hideDividers.value,
+                        title: "Hide Dividers",
+                        backgroundColor: tileColor,
+                        subtitle: "Hides dividers between tiles",
+                      );
+                    else return SizedBox.shrink();
+                  }),
+                  Obx(() {
+                    if (SettingsManager().settings.skin.value != Skins.Samsung)
+                      return Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 65.0),
+                          child: SettingsDivider(color: headerColor),
+                        ),
+                      );
+                    else return SizedBox.shrink();
+                  }),
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.denseChatTiles = val;
+                      SettingsManager().settings.denseChatTiles.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.denseChatTiles,
+                    initialVal: SettingsManager().settings.denseChatTiles.value,
                     title: "Dense Conversation Tiles",
                     backgroundColor: tileColor,
                     subtitle: "Compresses chat tile size on the conversation list page",
-                  ),
-                  if (SettingsManager().settings.skin.value == Skins.iOS)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
-                      ),
-                    ),
-                  if (SettingsManager().settings.skin.value == Skins.iOS)
-                    SettingsSwitch(
-                      onChanged: (bool val) {
-                        _settingsCopy.reducedForehead = val;
-                        saveSettings();
-                      },
-                      initialVal: _settingsCopy.reducedForehead,
-                      title: "Reduced Forehead",
-                      backgroundColor: tileColor,
-                      subtitle: "Reduces the appbar size on conversation pages",
-                    ),
-                  if (SettingsManager().settings.skin.value == Skins.Samsung ||
-                      SettingsManager().settings.skin.value == Skins.Material)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
-                      ),
-                    ),
-                  if (SettingsManager().settings.skin.value == Skins.Samsung ||
-                      SettingsManager().settings.skin.value == Skins.Material)
-                    SettingsSwitch(
-                      onChanged: (bool val) {
-                        _settingsCopy.swipableConversationTiles = val;
-                        saveSettings();
-                      },
-                      initialVal: _settingsCopy.swipableConversationTiles,
-                      title: "Swipe Actions for Conversation Tiles",
-                      subtitle: "Enables swipe actions, such as pinning and deleting, for conversation tiles when using Material theme",
-                      backgroundColor: tileColor,
-                    ),
+                  )),
+                  Obx(() {
+                    if (SettingsManager().settings.skin.value == Skins.iOS)
+                      return Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 65.0),
+                          child: SettingsDivider(color: headerColor),
+                        ),
+                      );
+                    else return SizedBox.shrink();
+                  }),
+                  Obx(() {
+                    if (SettingsManager().settings.skin.value == Skins.iOS)
+                      return SettingsSwitch(
+                        onChanged: (bool val) {
+                          SettingsManager().settings.reducedForehead.value = val;
+                          saveSettings();
+                        },
+                        initialVal: SettingsManager().settings.reducedForehead.value,
+                        title: "Reduced Forehead",
+                        backgroundColor: tileColor,
+                        subtitle: "Reduces the appbar size on conversation pages",
+                      );
+                    else return SizedBox.shrink();
+                  }),
+                  Obx(() {
+                    if (SettingsManager().settings.skin.value == Skins.Samsung ||
+                        SettingsManager().settings.skin.value == Skins.Material)
+                      return Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 65.0),
+                          child: SettingsDivider(color: headerColor),
+                        ),
+                      );
+                    else return SizedBox.shrink();
+                  }),
+                  Obx(() {
+                    if (SettingsManager().settings.skin.value == Skins.Samsung ||
+                        SettingsManager().settings.skin.value == Skins.Material)
+                      return SettingsSwitch(
+                        onChanged: (bool val) {
+                          SettingsManager().settings.swipableConversationTiles.value = val;
+                          saveSettings();
+                        },
+                        initialVal: SettingsManager().settings.swipableConversationTiles.value,
+                        title: "Swipe Actions for Conversation Tiles",
+                        subtitle: "Enables swipe actions, such as pinning and deleting, for conversation tiles when using Material theme",
+                        backgroundColor: tileColor,
+                      );
+                    else return SizedBox.shrink();
+                  }),
                   SettingsHeader(
                       headerColor: headerColor,
                       tileColor: tileColor,
@@ -253,16 +246,16 @@ class _ChatListPanelState extends State<ChatListPanel> {
                       materialSubtitle: materialSubtitle,
                       text: "Misc"
                   ),
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.moveChatCreatorToHeader = val;
+                      SettingsManager().settings.moveChatCreatorToHeader.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.moveChatCreatorToHeader,
+                    initialVal: SettingsManager().settings.moveChatCreatorToHeader.value,
                     title: "Move Chat Creator Button to Header",
                     subtitle: "Replaces the floating button at the bottom to a fixed button at the top",
                     backgroundColor: tileColor,
-                  ),
+                  )),
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
                   Container(
                     height: 30,
@@ -288,12 +281,6 @@ class _ChatListPanelState extends State<ChatListPanel> {
   }
 
   void saveSettings() {
-    SettingsManager().saveSettings(_settingsCopy);
-  }
-
-  @override
-  void dispose() {
-    saveSettings();
-    super.dispose();
+    SettingsManager().saveSettings(SettingsManager().settings);
   }
 }

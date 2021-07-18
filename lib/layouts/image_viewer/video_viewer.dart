@@ -37,7 +37,7 @@ class _VideoViewerState extends State<VideoViewer> {
   void initState() {
     super.initState();
     controller = new VideoPlayerController.file(widget.file);
-    controller.setVolume(SettingsManager().settings.startVideosMutedFullscreen ? 0 : 1);
+    controller.setVolume(SettingsManager().settings.startVideosMutedFullscreen.value ? 0 : 1);
     this.createListener(controller);
     showPlayPauseOverlay = !controller.value.isPlaying;
   }

@@ -13,34 +13,12 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class RedactedModePanel extends StatefulWidget {
-  RedactedModePanel({Key? key}) : super(key: key);
-
-  @override
-  _RedactedModePanelState createState() => _RedactedModePanelState();
-}
-
-class _RedactedModePanelState extends State<RedactedModePanel> with TickerProviderStateMixin {
-
-  @override
-  void initState() {
-    super.initState();
-
-    // Listen for any incoming events
-    EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (!event.containsKey("type")) return;
-
-      if (event["type"] == 'theme-update' && this.mounted) {
-        setState(() {});
-      }
-    });
-  }
+class RedactedModePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
@@ -126,41 +104,44 @@ class _RedactedModePanelState extends State<RedactedModePanel> with TickerProvid
                   ),
                   AbsorbPointer(
                     absorbing: true,
-                    child: MessageWidget(
-                      newerMessage: null,
-                      olderMessage: null,
-                      isFirstSentMessage: false,
-                      showHandle: true,
-                      showHero: false,
-                      message: Message(
-                          guid: "redacted-mode-demo",
-                          dateDelivered: DateTime.now().toLocal(),
-                          isFromMe: false,
-                          hasReactions: true,
-                          hasAttachments: true,
-                          text: "This is a preview of Redacted Mode settings.",
-                          handle: Handle(
-                            id: Random.secure().nextInt(10000),
-                            address: "John Doe",
-                          ),
-                          associatedMessages: [
-                            Message(
-                              guid: "redacted-mode-demo",
-                              text: "Jane Doe liked a message you sent",
-                              associatedMessageType: "like",
-                              isFromMe: true,
+                    child: Container(
+                      color: headerColor == Theme.of(context).accentColor ? tileColor : headerColor,
+                      child: MessageWidget(
+                        newerMessage: null,
+                        olderMessage: null,
+                        isFirstSentMessage: false,
+                        showHandle: true,
+                        showHero: false,
+                        message: Message(
+                            guid: "redacted-mode-demo",
+                            dateDelivered: DateTime.now().toLocal(),
+                            isFromMe: false,
+                            hasReactions: true,
+                            hasAttachments: true,
+                            text: "This is a preview of Redacted Mode settings.",
+                            handle: Handle(
+                              id: Random.secure().nextInt(10000),
+                              address: "John Doe",
                             ),
-                          ],
-                          attachments: [
-                            Attachment(
-                              guid: "redacted-mode-demo-attachment",
-                              originalROWID: Random.secure().nextInt(10000),
-                              transferName: "assets/icon/icon.png",
-                              mimeType: "image/png",
-                              width: 100,
-                              height: 100,
-                            )
-                          ],
+                            associatedMessages: [
+                              Message(
+                                guid: "redacted-mode-demo",
+                                text: "Jane Doe liked a message you sent",
+                                associatedMessageType: "like",
+                                isFromMe: true,
+                              ),
+                            ],
+                            attachments: [
+                              Attachment(
+                                guid: "redacted-mode-demo-attachment",
+                                originalROWID: Random.secure().nextInt(10000),
+                                transferName: "assets/icon/icon.png",
+                                mimeType: "image/png",
+                                width: 100,
+                                height: 100,
+                              )
+                            ],
+                        ),
                       ),
                     ),
                   ),
@@ -176,12 +157,6 @@ class _RedactedModePanelState extends State<RedactedModePanel> with TickerProvid
                   SettingsSwitch(
                     onChanged: (bool val) {
                       SettingsManager().settings.redactedMode.value = val;
-                      if (this.mounted) {
-                        setState(() {
-                          SettingsManager().settings.redactedMode.value = val;
-                        });
-                      }
-
                       saveSettings();
                     },
                     initialVal: SettingsManager().settings.redactedMode.value,
@@ -345,11 +320,5 @@ class _RedactedModePanelState extends State<RedactedModePanel> with TickerProvid
 
   void saveSettings() {
     SettingsManager().saveSettings(SettingsManager().settings);
-  }
-
-  @override
-  void dispose() {
-    saveSettings();
-    super.dispose();
   }
 }

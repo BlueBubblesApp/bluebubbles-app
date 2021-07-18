@@ -8,37 +8,12 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class AttachmentPanel extends StatefulWidget {
-  AttachmentPanel({Key? key}) : super(key: key);
-
-  @override
-  _AttachmentPanelState createState() => _AttachmentPanelState();
-}
-
-class _AttachmentPanelState extends State<AttachmentPanel> {
-  late Settings _settingsCopy;
-
-  @override
-  void initState() {
-    super.initState();
-    _settingsCopy = SettingsManager().settings;
-
-    // Listen for any incoming events
-    EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (!event.containsKey("type")) return;
-
-      if (event["type"] == 'theme-update' && this.mounted) {
-        setState(() {});
-      }
-    });
-  }
+class AttachmentPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
@@ -109,14 +84,15 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                       )
                   ),
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.autoDownload = val;
+                      SettingsManager().settings.autoDownload.value = val;
+                      saveSettings();
                     },
-                    initialVal: _settingsCopy.autoDownload,
+                    initialVal: SettingsManager().settings.autoDownload.value,
                     title: "Auto-download Attachments",
                     backgroundColor: tileColor,
-                  ),
+                  )),
                   Container(
                     color: tileColor,
                     child: Padding(
@@ -124,14 +100,15 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                       child: SettingsDivider(color: headerColor),
                     ),
                   ),
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.onlyWifiDownload = val;
+                      SettingsManager().settings.onlyWifiDownload.value = val;
+                      saveSettings();
                     },
-                    initialVal: _settingsCopy.onlyWifiDownload,
+                    initialVal: SettingsManager().settings.onlyWifiDownload.value,
                     title: "Only Auto-download Attachments on WiFi",
                     backgroundColor: tileColor,
-                  ),
+                  )),
                   SettingsHeader(
                       headerColor: headerColor,
                       tileColor: tileColor,
@@ -139,15 +116,15 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                       materialSubtitle: materialSubtitle,
                       text: "Video Mute Behavior"
                   ),
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.startVideosMuted = val;
+                      SettingsManager().settings.startVideosMuted.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.startVideosMuted,
+                    initialVal: SettingsManager().settings.startVideosMuted.value,
                     title: "Mute Videos by Default in Attachment Preview",
                     backgroundColor: tileColor,
-                  ),
+                  )),
                   Container(
                     color: tileColor,
                     child: Padding(
@@ -155,15 +132,15 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                       child: SettingsDivider(color: headerColor),
                     ),
                   ),
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.startVideosMutedFullscreen = val;
+                      SettingsManager().settings.startVideosMutedFullscreen.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.startVideosMutedFullscreen,
+                    initialVal: SettingsManager().settings.startVideosMutedFullscreen.value,
                     title: "Mute Videos by Default in Fullscreen Player",
                     backgroundColor: tileColor,
-                  ),
+                  )),
                   SettingsHeader(
                       headerColor: headerColor,
                       tileColor: tileColor,
@@ -180,11 +157,12 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                         ),
                       )
                   ),
-                  SettingsSlider(
+                  Obx(() => SettingsSlider(
                       text: "Attachment Preview Quality",
-                      startingVal: _settingsCopy.previewCompressionQuality.value.toDouble(),
+                      startingVal: SettingsManager().settings.previewCompressionQuality.value.toDouble(),
                       update: (double val) {
-                        _settingsCopy.previewCompressionQuality.value = val.toInt();
+                        SettingsManager().settings.previewCompressionQuality.value = val.toInt();
+                        saveSettings();
                       },
                       formatValue: ((double val) => val.toInt().toString() + "%"),
                       backgroundColor: tileColor,
@@ -195,8 +173,8 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                             borderRadius: BorderRadius.circular(5),
                             child: ImageFiltered(
                               imageFilter: ImageFilter.blur(
-                                sigmaX: (1 - _settingsCopy.previewCompressionQuality.value / 100),
-                                sigmaY: (1 - _settingsCopy.previewCompressionQuality.value / 100),
+                                sigmaX: (1 - SettingsManager().settings.previewCompressionQuality.value / 100),
+                                sigmaY: (1 - SettingsManager().settings.previewCompressionQuality.value / 100),
                               ),
                               child: Container(
                                 width: 32,
@@ -220,7 +198,8 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                       )),
                       min: 10,
                       max: 100,
-                      divisions: 18),
+                      divisions: 18
+                  )),
                   SettingsHeader(
                       headerColor: headerColor,
                       tileColor: tileColor,
@@ -234,25 +213,27 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                     backgroundColor: tileColor,
                     isThreeLine: true,
                   ),
-                  SettingsSlider(
+                  Obx(() => SettingsSlider(
                       text: "Attachment Chunk Size",
-                      startingVal: _settingsCopy.chunkSize.value.toDouble(),
+                      startingVal: SettingsManager().settings.chunkSize.value.toDouble(),
                       update: (double val) {
-                        _settingsCopy.chunkSize.value = val.floor();
+                        SettingsManager().settings.chunkSize.value = val.floor();
+                        saveSettings();
                       },
                       formatValue: ((double val) => getSizeString(val)),
                       backgroundColor: tileColor,
                       leading: Obx(() => SettingsLeadingIcon(
-                        iosIcon: _settingsCopy.chunkSize.value < 1000
-                            ? CupertinoIcons.square_grid_3x2 : _settingsCopy.chunkSize.value < 2000
+                        iosIcon: SettingsManager().settings.chunkSize.value < 1000
+                            ? CupertinoIcons.square_grid_3x2 : SettingsManager().settings.chunkSize.value < 2000
                             ? CupertinoIcons.square_grid_2x2 : CupertinoIcons.square,
-                        materialIcon: _settingsCopy.chunkSize.value < 1000
-                            ? Icons.photo_size_select_small : _settingsCopy.chunkSize.value < 2000
+                        materialIcon: SettingsManager().settings.chunkSize.value < 1000
+                            ? Icons.photo_size_select_small : SettingsManager().settings.chunkSize.value < 2000
                             ? Icons.photo_size_select_large : Icons.photo_size_select_actual,
                       )),
                       min: 100,
                       max: 3000,
-                      divisions: 29),
+                      divisions: 29
+                  )),
                   Container(
                     color: tileColor,
                     child: Padding(
@@ -260,16 +241,16 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
                       child: SettingsDivider(color: headerColor),
                     ),
                   ),
-                  SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.preCachePreviewImages = val;
+                      SettingsManager().settings.preCachePreviewImages.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.preCachePreviewImages,
+                    initialVal: SettingsManager().settings.preCachePreviewImages.value,
                     title: "Cache Preview Images",
                     subtitle: "Caches URL preview images for faster load times",
                     backgroundColor: tileColor,
-                  ),
+                  )),
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
                   Container(
                     height: 30,
@@ -295,12 +276,6 @@ class _AttachmentPanelState extends State<AttachmentPanel> {
   }
 
   void saveSettings() {
-    SettingsManager().saveSettings(_settingsCopy);
-  }
-
-  @override
-  void dispose() {
-    saveSettings();
-    super.dispose();
+    SettingsManager().saveSettings(SettingsManager().settings);
   }
 }

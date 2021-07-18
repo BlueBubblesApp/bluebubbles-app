@@ -17,14 +17,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-class AboutPanel extends StatefulWidget {
-  AboutPanel({Key? key}) : super(key: key);
-
-  @override
-  _AboutPanelState createState() => _AboutPanelState();
-}
-
-class _AboutPanelState extends State<AboutPanel> {
+class AboutPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {

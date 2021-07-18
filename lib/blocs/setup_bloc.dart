@@ -53,13 +53,13 @@ class SetupBloc {
 
   Future<void> connectToServer(FCMData data, String serverURL, String password) async {
     Settings settingsCopy = SettingsManager().settings;
-    if (SocketManager().state == SocketState.CONNECTED && settingsCopy.serverAddress == serverURL) {
+    if (SocketManager().state == SocketState.CONNECTED && settingsCopy.serverAddress.value == serverURL) {
       debugPrint("Not reconnecting to server we are already connected to!");
       return;
     }
 
-    settingsCopy.serverAddress = getServerAddress(address: serverURL) ?? settingsCopy.serverAddress;
-    settingsCopy.guidAuthKey = password;
+    settingsCopy.serverAddress.value = getServerAddress(address: serverURL) ?? settingsCopy.serverAddress.value;
+    settingsCopy.guidAuthKey.value = password;
 
     await SettingsManager().saveSettings(settingsCopy);
     await SettingsManager().saveFCMData(data);
@@ -113,7 +113,7 @@ class SetupBloc {
     // Set the last sync date (for incremental, even though this isn't incremental)
     // We won't try an incremental sync until the last (full) sync date is set
     Settings _settingsCopy = SettingsManager().settings;
-    _settingsCopy.lastIncrementalSync = DateTime.now().millisecondsSinceEpoch;
+    _settingsCopy.lastIncrementalSync.value = DateTime.now().millisecondsSinceEpoch;
     await SettingsManager().saveSettings(_settingsCopy);
 
     // Some safetly logging
@@ -216,7 +216,7 @@ class SetupBloc {
   void finishSetup() async {
     addOutput("Finished Setup! Cleaning up...", SetupOutputType.LOG);
     Settings _settingsCopy = SettingsManager().settings;
-    _settingsCopy.finishedSetup = true;
+    _settingsCopy.finishedSetup.value = true;
     await SettingsManager().saveSettings(_settingsCopy);
 
     ContactManager().contacts = [];
@@ -237,7 +237,7 @@ class SetupBloc {
       {String? chatGuid, bool saveDate = true, Function? onConnectionError, Function? onComplete}) async {
     // If we are already syncing, don't sync again
     // Or, if we haven't finished setup, or we aren't connected, don't sync
-    if (isSyncing || !settings.finishedSetup || SocketManager().state != SocketState.CONNECTED) return;
+    if (isSyncing || !settings.finishedSetup.value || SocketManager().state != SocketState.CONNECTED) return;
 
     // Reset the progress
     _progress = 0;
@@ -261,7 +261,7 @@ class SetupBloc {
 
     params["withBlurhash"] = false; // Maybe we want it?
     params["limit"] = 1000; // This is arbitrary, hopefully there aren't more messages
-    params["after"] = settings.lastIncrementalSync; // Get everything since the last sync
+    params["after"] = settings.lastIncrementalSync.value; // Get everything since the last sync
     params["withChats"] = true; // We want the chats too so we can save them correctly
     params["withAttachments"] = true; // We want the attachment data
     params["withHandle"] = true; // We want to know who sent it
@@ -297,11 +297,11 @@ class SetupBloc {
       addOutput("Saving last sync date: $syncStart", SetupOutputType.LOG);
 
       Settings _settingsCopy = SettingsManager().settings;
-      _settingsCopy.lastIncrementalSync = syncStart;
+      _settingsCopy.lastIncrementalSync.value = syncStart;
       SettingsManager().saveSettings(_settingsCopy);
     }
 
-    if (SettingsManager().settings.showIncrementalSync)
+    if (SettingsManager().settings.showIncrementalSync.value)
       // Show a nice lil toast/snackbar
       showSnackbar('Success', '🔄 Incremental sync complete 🔄');
 

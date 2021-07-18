@@ -119,7 +119,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     }
 
     List<Color> bubbleColors = [Theme.of(context).accentColor, Theme.of(context).accentColor];
-    if (SettingsManager().settings.colorfulBubbles) {
+    if (SettingsManager().settings.colorfulBubbles.value) {
       if (message.handle?.color == null) {
         bubbleColors = toColorGradient(message.handle?.address);
       } else {
@@ -206,7 +206,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
 
     // First, add the message sender (if applicable)
     bool isGroup = CurrentChat.of(context)?.chat.isGroup() ?? false;
-    bool showSender = SettingsManager().settings.alwaysShowAvatars || isGroup || widget.message.guid == "redacted-mode-demo";
+    bool showSender = SettingsManager().settings.alwaysShowAvatars.value || isGroup || widget.message.guid == "redacted-mode-demo";
     if (widget.message.guid == "redacted-mode-demo" || (isGroup &&
         (!sameSender(widget.message, widget.olderMessage) ||
             !widget.message.dateCreated!.isWithin(widget.olderMessage!.dateCreated!, minutes: 30)))) {

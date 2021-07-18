@@ -75,7 +75,7 @@ abstract class MessageWidgetMixin {
 
       TextStyle? textStyle = Theme.of(context).textTheme.bodyText2;
       if (!message.isFromMe!) {
-        if (SettingsManager().settings.colorfulBubbles) {
+        if (SettingsManager().settings.colorfulBubbles.value) {
           if (!isNullOrEmpty(colors)!) {
             bool dark = colors![0].computeLuminance() < 0.179;
             if (!dark) {

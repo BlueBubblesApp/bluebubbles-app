@@ -432,7 +432,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
     try {
       // Don't do anything if this setting isn't enabled
-      if (SettingsManager().settings.recipientAsPlaceholder) {
+      if (SettingsManager().settings.recipientAsPlaceholder.value) {
         // Redacted mode stuff
         final bool hideInfo = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactInfo.value;
         final bool generateNames =
@@ -497,7 +497,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 iOSSkin: CustomCupertinoTextField(
                   enabled: sendCountdown == null,
                   textInputAction:
-                      SettingsManager().settings.sendWithReturn ? TextInputAction.send : TextInputAction.newline,
+                      SettingsManager().settings.sendWithReturn.value ? TextInputAction.send : TextInputAction.newline,
                   cursorColor: Theme.of(context).primaryColor,
                   onLongPressStart: () {
                     Feedback.forLongPress(context);
@@ -518,18 +518,18 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     }
                   },
                   onSubmitted: (String value) async {
-                    if (!SettingsManager().settings.sendWithReturn || isNullOrEmpty(value)!) return;
+                    if (!SettingsManager().settings.sendWithReturn.value || isNullOrEmpty(value)!) return;
 
                     // If send delay is enabled, delay the sending
-                    if (!isNullOrZero(SettingsManager().settings.sendDelay)) {
+                    if (!isNullOrZero(SettingsManager().settings.sendDelay.value)) {
                       // Break the delay into 1 second intervals
-                      for (var i = 0; i < SettingsManager().settings.sendDelay!; i++) {
+                      for (var i = 0; i < SettingsManager().settings.sendDelay.value; i++) {
                         if (i != 0 && sendCountdown == null) break;
 
                         // Update UI with new state information
                         if (this.mounted) {
                           setState(() {
-                            sendCountdown = SettingsManager().settings.sendDelay! - i;
+                            sendCountdown = SettingsManager().settings.sendDelay.value - i;
                           });
                         }
 
@@ -572,10 +572,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   keyboardType: TextInputType.multiline,
                   maxLines: 14,
                   minLines: 1,
-                  placeholder: SettingsManager().settings.recipientAsPlaceholder == true ? placeholder : "BlueBubbles",
+                  placeholder: SettingsManager().settings.recipientAsPlaceholder.value == true ? placeholder : "BlueBubbles",
                   padding: EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
                   placeholderStyle: Theme.of(context).textTheme.subtitle1,
-                  autofocus: SettingsManager().settings.autoOpenKeyboard,
+                  autofocus: SettingsManager().settings.autoOpenKeyboard.value,
                   decoration: BoxDecoration(
                     color: Theme.of(context).backgroundColor,
                     border: Border.all(
@@ -590,7 +590,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   focusNode: focusNode,
                   textCapitalization: TextCapitalization.sentences,
                   autocorrect: true,
-                  autofocus: SettingsManager().settings.autoOpenKeyboard,
+                  autofocus: SettingsManager().settings.autoOpenKeyboard.value,
                   cursorColor: Theme.of(context).primaryColor,
                   key: _searchFormKey,
                   style: Theme.of(context).textTheme.bodyText1!.apply(
@@ -627,7 +627,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       ),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    hintText: SettingsManager().settings.recipientAsPlaceholder == true ? placeholder : "BlueBubbles",
+                    hintText: SettingsManager().settings.recipientAsPlaceholder.value == true ? placeholder : "BlueBubbles",
                     hintStyle: Theme.of(context).textTheme.subtitle1,
                     contentPadding: EdgeInsets.only(
                       left: 10,
@@ -645,7 +645,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   focusNode: focusNode,
                   textCapitalization: TextCapitalization.sentences,
                   autocorrect: true,
-                  autofocus: SettingsManager().settings.autoOpenKeyboard,
+                  autofocus: SettingsManager().settings.autoOpenKeyboard.value,
                   cursorColor: Theme.of(context).primaryColor,
                   key: _searchFormKey,
                   style: Theme.of(context).textTheme.bodyText1!.apply(
@@ -682,7 +682,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       ),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    hintText: SettingsManager().settings.recipientAsPlaceholder == true ? placeholder : "BlueBubbles",
+                    hintText: SettingsManager().settings.recipientAsPlaceholder.value == true ? placeholder : "BlueBubbles",
                     hintStyle: Theme.of(context).textTheme.subtitle1,
                     contentPadding: EdgeInsets.only(
                       left: 10,
@@ -757,15 +757,15 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       await startRecording();
     } else {
       // If send delay is enabled, delay the sending
-      if (!isNullOrZero(SettingsManager().settings.sendDelay)) {
+      if (!isNullOrZero(SettingsManager().settings.sendDelay.value)) {
         // Break the delay into 1 second intervals
-        for (var i = 0; i < SettingsManager().settings.sendDelay!; i++) {
+        for (var i = 0; i < SettingsManager().settings.sendDelay.value; i++) {
           if (i != 0 && sendCountdown == null) break;
 
           // Update UI with new state information
           if (this.mounted) {
             setState(() {
-              sendCountdown = SettingsManager().settings.sendDelay! - i;
+              sendCountdown = SettingsManager().settings.sendDelay.value - i;
             });
           }
 

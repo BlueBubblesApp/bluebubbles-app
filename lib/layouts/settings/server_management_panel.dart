@@ -25,53 +25,58 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class ServerManagementPanel extends StatefulWidget {
-  ServerManagementPanel({Key? key}) : super(key: key);
-
+class ServerManagementPanelBinding extends Bindings {
   @override
-  _ServerManagementPanelState createState() => _ServerManagementPanelState();
+  void dependencies() {
+    Get.lazyPut<ServerManagementPanelController>(() => ServerManagementPanelController());
+  }
 }
 
-class _ServerManagementPanelState extends State<ServerManagementPanel> {
-  int? latency;
-  String? fetchStatus;
-  String? serverVersion;
-  String? macOSVersion;
+class ServerManagementPanelController extends GetxController {
+  RxnInt latency = RxnInt();
+  RxnString fetchStatus = RxnString();
+  RxnString serverVersion = RxnString();
+  RxnString macOSVersion = RxnString();
 
   // Restart trackers
   int? lastRestart;
   int? lastRestartMessages;
-  bool isRestarting = false;
-  bool isRestartingMessages = false;
+  RxBool isRestarting = false.obs;
+  RxBool isRestartingMessages = false.obs;
 
   late Settings _settingsCopy;
   FCMData? _fcmDataCopy;
 
   @override
-  void initState() {
+  void onInit() {
     _settingsCopy = SettingsManager().settings;
     _fcmDataCopy = SettingsManager().fcmData;
     if (SocketManager().state == SocketState.CONNECTED) {
       int now = DateTime.now().toUtc().millisecondsSinceEpoch;
       SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
         int later = DateTime.now().toUtc().millisecondsSinceEpoch;
-        if (this.mounted) {
-          setState(() {
-            latency = later - now;
-          });
-        }
+        latency.value = later - now;
       });
       SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
-        if (mounted) {
-          setState(() {
-            macOSVersion = res['data']['os_version'];
-            serverVersion = res['data']['server_version'];
-          });
-        }
+        macOSVersion.value = res['data']['os_version'];
+        serverVersion.value = res['data']['server_version'];
       });
     }
-    super.initState();
+    super.onInit();
   }
+
+  void saveSettings() async {
+    await SettingsManager().saveSettings(_settingsCopy);
+  }
+
+  @override
+  void dispose() {
+    saveSettings();
+    super.dispose();
+  }
+}
+
+class ServerManagementPanel extends GetView<ServerManagementPanelController> {
 
   @override
   Widget build(BuildContext context) {
@@ -155,45 +160,37 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                             color: tileColor,
                             child: Padding(
                               padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
-                              child: SelectableText.rich(
-                                  TextSpan(
+                              child: Obx(() => SelectableText.rich(
+                                TextSpan(
                                     children: [
                                       TextSpan(text: "Connection Status: "),
                                       TextSpan(text: describeEnum(connectionStatus), style: TextStyle(color: getIndicatorColor(connectionStatus))),
                                       TextSpan(text: "\n\n"),
-                                      TextSpan(text: "Server URL: ${redact ? "Redacted" : _settingsCopy.serverAddress}"),
+                                      TextSpan(text: "Server URL: ${redact ? "Redacted" : controller._settingsCopy.serverAddress}"),
                                       TextSpan(text: "\n\n"),
-                                      TextSpan(text: "Latency: ${redact ? "Redacted" : ((latency ?? "N/A").toString() + " ms")}"),
+                                      TextSpan(text: "Latency: ${redact ? "Redacted" : ((controller.latency.value ?? "N/A").toString() + " ms")}"),
                                       TextSpan(text: "\n\n"),
-                                      TextSpan(text: "Server Version: ${redact ? "Redacted" : (serverVersion ?? "N/A")}"),
+                                      TextSpan(text: "Server Version: ${redact ? "Redacted" : (controller.serverVersion.value ?? "N/A")}"),
                                       TextSpan(text: "\n\n"),
-                                      TextSpan(text: "macOS Version: ${redact ? "Redacted" : (macOSVersion ?? "N/A")}"),
+                                      TextSpan(text: "macOS Version: ${redact ? "Redacted" : (controller.macOSVersion.value ?? "N/A")}"),
                                       TextSpan(text: "\n\n"),
                                       TextSpan(text: "Tap to update values...", style: TextStyle(fontStyle: FontStyle.italic)),
                                     ]
-                                  ),
+                                ),
                                 onTap: () {
                                   if (connectionStatus != SocketState.CONNECTED) return;
 
                                   int now = DateTime.now().toUtc().millisecondsSinceEpoch;
                                   SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
                                     int later = DateTime.now().toUtc().millisecondsSinceEpoch;
-                                    if (this.mounted) {
-                                      setState(() {
-                                        latency = later - now;
-                                      });
-                                    }
+                                    controller.latency.value = later - now;
                                   });
                                   SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
-                                    if (mounted) {
-                                      setState(() {
-                                        macOSVersion = res['data']['os_version'];
-                                        serverVersion = res['data']['server_version'];
-                                      });
-                                    }
+                                    controller.macOSVersion.value = res['data']['os_version'];
+                                    controller.serverVersion.value = res['data']['server_version'];
                                   });
                                 },
-                              ),
+                              )),
                             )
                         );
                       }),
@@ -228,7 +225,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                         return;
                       }
                       if (fcmData != null && fcmData[0] != null && getServerAddress(address: fcmData[1]) != null) {
-                        _fcmDataCopy = FCMData(
+                        controller._fcmDataCopy = FCMData(
                           projectID: fcmData[2],
                           storageBucket: fcmData[3],
                           apiKey: fcmData[4],
@@ -236,11 +233,11 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                           clientID: fcmData[6],
                           applicationID: fcmData[7],
                         );
-                        _settingsCopy.guidAuthKey = fcmData[0];
-                        _settingsCopy.serverAddress = getServerAddress(address: fcmData[1])!;
+                        controller._settingsCopy.guidAuthKey = fcmData[0];
+                        controller._settingsCopy.serverAddress.value = getServerAddress(address: fcmData[1])!;
 
-                        SettingsManager().saveSettings(_settingsCopy);
-                        SettingsManager().saveFCMData(_fcmDataCopy!);
+                        SettingsManager().saveSettings(controller._settingsCopy);
+                        SettingsManager().saveFCMData(controller._fcmDataCopy!);
                         SocketManager().authFCM();
                       }
                     },
@@ -302,23 +299,11 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                         } else {
                           connectionStatus = SocketManager().state;
                         }
-                        String? subtitle;
 
-                        if (fetchStatus == null) {
-                          switch (connectionStatus) {
-                            case SocketState.CONNECTED:
-                              subtitle = "Tap to fetch logs";
-                              break;
-                            default:
-                              subtitle = "Disconnected, cannot fetch logs";
-                          }
-                        } else {
-                          subtitle = fetchStatus;
-                        }
-
-                        return SettingsTile(
+                        return Obx(() => SettingsTile(
                           title: "Fetch & Share Server Logs",
-                          subtitle: subtitle,
+                          subtitle: controller.fetchStatus.value
+                              ?? (connectionStatus == SocketState.CONNECTED ? "Tap to fetch logs" : "Disconnected, cannot fetch logs"),
                           backgroundColor: tileColor,
                           leading: SettingsLeadingIcon(
                             iosIcon: CupertinoIcons.doc_plaintext,
@@ -327,19 +312,11 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                           onTap: () {
                             if (![SocketState.CONNECTED].contains(connectionStatus)) return;
 
-                            if (this.mounted) {
-                              setState(() {
-                                fetchStatus = "Fetching logs, please wait...";
-                              });
-                            }
+                            controller.fetchStatus.value = "Fetching logs, please wait...";
 
                             SocketManager().sendMessage("get-logs", {"count": 500}, (Map<String, dynamic> res) {
                               if (res['status'] != 200) {
-                                if (this.mounted) {
-                                  setState(() {
-                                    fetchStatus = "Failed to fetch logs!";
-                                  });
-                                }
+                                controller.fetchStatus.value = "Failed to fetch logs!";
 
                                 return;
                               }
@@ -355,22 +332,13 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
 
                               try {
                                 Share.file("BlueBubbles Server Log", logFile.absolute.path);
-
-                                if (this.mounted) {
-                                  setState(() {
-                                    fetchStatus = null;
-                                  });
-                                }
+                                controller.fetchStatus.value = null;
                               } catch (ex) {
-                                if (this.mounted) {
-                                  setState(() {
-                                    fetchStatus = "Failed to share file! ${ex.toString()}";
-                                  });
-                                }
+                                controller.fetchStatus.value = "Failed to share file! ${ex.toString()}";
                               }
                             });
                           },
-                        );
+                        ));
                       }),
                   Container(
                     color: tileColor,
@@ -388,48 +356,31 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                         } else {
                           connectionStatus = SocketManager().state;
                         }
-                        String? subtitle;
 
-                        switch (connectionStatus) {
-                          case SocketState.CONNECTED:
-                            subtitle = (isRestartingMessages)
-                                ? "Restart in progress..."
-                                : "Restart the iMessage app";
-                            break;
-                          default:
-                            subtitle = "Disconnected, cannot restart";
-                        }
-
-                        return SettingsTile(
+                        return Obx(() => SettingsTile(
                             title: "Restart iMessage",
-                            subtitle: subtitle,
+                            subtitle: controller.isRestartingMessages.value && connectionStatus == SocketState.CONNECTED
+                                ? "Restart in progress..." : connectionStatus == SocketState.CONNECTED ? "Restart the iMessage app" : "Disconnected, cannot restart",
                             backgroundColor: tileColor,
                             leading: SettingsLeadingIcon(
                               iosIcon: CupertinoIcons.chat_bubble,
                               materialIcon: Icons.sms,
                             ),
                             onTap: () async {
-                              if (![SocketState.CONNECTED].contains(connectionStatus) || isRestartingMessages) return;
+                              if (![SocketState.CONNECTED].contains(connectionStatus) || controller.isRestartingMessages.value) return;
 
-                              if (this.mounted && !isRestartingMessages)
-                                setState(() {
-                                  isRestartingMessages = true;
-                                });
+                              controller.isRestartingMessages.value = true;
 
                               // Prevent restarting more than once every 30 seconds
                               int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-                              if (lastRestartMessages != null && now - lastRestartMessages! < 1000 * 30) return;
+                              if (controller.lastRestartMessages != null && now - controller.lastRestartMessages! < 1000 * 30) return;
 
                               // Save the last time we restarted
-                              lastRestartMessages = now;
+                              controller.lastRestartMessages = now;
 
                               // Create a temporary functon so we can call it easily
                               Function stopRestarting = () {
-                                if (this.mounted && isRestartingMessages) {
-                                  setState(() {
-                                    isRestartingMessages = false;
-                                  });
-                                }
+                                controller.isRestartingMessages.value = false;
                               };
 
                               // Execute the restart
@@ -444,7 +395,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                                 stopRestarting();
                               }
                             },
-                            trailing: (!isRestartingMessages)
+                            trailing: (!controller.isRestartingMessages.value)
                                 ? Icon(Icons.refresh, color: Colors.grey)
                                 : Container(
                                     constraints: BoxConstraints(
@@ -454,7 +405,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                                     child: CircularProgressIndicator(
                                       strokeWidth: 3,
                                       valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
-                                    )));
+                                    ))));
                       }),
                   Container(
                     color: tileColor,
@@ -463,9 +414,9 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                       child: SettingsDivider(color: headerColor),
                     ),
                   ),
-                  SettingsTile(
+                  Obx(() => SettingsTile(
                       title: "Restart BlueBubbles Server",
-                      subtitle: (isRestarting)
+                      subtitle: (controller.isRestarting.value)
                           ? "Restart in progress..."
                           : "This will briefly disconnect you",
                       backgroundColor: tileColor,
@@ -474,26 +425,19 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                         materialIcon: Icons.dvr,
                       ),
                       onTap: () async {
-                        if (isRestarting) return;
+                        if (controller.isRestarting.value) return;
 
-                        if (this.mounted && !isRestarting)
-                          setState(() {
-                            isRestarting = true;
-                          });
+                        controller.isRestarting.value = true;
 
                         // Prevent restarting more than once every 30 seconds
                         int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-                        if (lastRestart != null && now - lastRestart! < 1000 * 30) return;
+                        if (controller.lastRestart != null && now - controller.lastRestart! < 1000 * 30) return;
 
                         // Save the last time we restarted
-                        lastRestart = now;
+                        controller.lastRestart = now;
 
                         Function stopRestarting = () {
-                          if (this.mounted && isRestarting) {
-                            setState(() {
-                              isRestarting = false;
-                            });
-                          }
+                          controller.isRestarting.value = false;
                         };
 
                         // Perform the restart
@@ -509,7 +453,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                           stopRestarting();
                         });
                       },
-                      trailing: (!isRestarting)
+                      trailing: (!controller.isRestarting.value)
                           ? Icon(Icons.refresh, color: Colors.grey)
                           : Container(
                               constraints: BoxConstraints(
@@ -519,7 +463,7 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                               child: CircularProgressIndicator(
                                 strokeWidth: 3,
                                 valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
-                              ))),
+                              )))),
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
                   Container(
                     height: 30,

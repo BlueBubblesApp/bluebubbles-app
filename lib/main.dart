@@ -4,6 +4,15 @@ import 'dart:io';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
+import 'package:bluebubbles/layouts/settings/about_panel.dart';
+import 'package:bluebubbles/layouts/settings/attachment_panel.dart';
+import 'package:bluebubbles/layouts/settings/chat_list_panel.dart';
+import 'package:bluebubbles/layouts/settings/conversation_panel.dart';
+import 'package:bluebubbles/layouts/settings/custom_avatar_panel.dart';
+import 'package:bluebubbles/layouts/settings/private_api_panel.dart';
+import 'package:bluebubbles/layouts/settings/redacted_mode_panel.dart';
+import 'package:bluebubbles/layouts/settings/server_management_panel.dart';
+import 'package:bluebubbles/layouts/settings/theme_panel.dart';
 import 'package:bluebubbles/layouts/setup/failure_to_start.dart';
 import 'package:bluebubbles/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
@@ -144,6 +153,20 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
 
         /// [Home] is the starting widget for the app
         home: Home(),
+
+        defaultTransition: Transition.cupertino,
+
+        getPages: [
+          GetPage(page: () => AboutPanel(), name: "/settings/about-panel"),
+          GetPage(page: () => AttachmentPanel(), name: "/settings/attachment-panel"),
+          GetPage(page: () => ChatListPanel(), name: "/settings/chat-list-panel"),
+          GetPage(page: () => ConversationPanel(), name: "/settings/conversation-panel"),
+          GetPage(page: () => CustomAvatarPanel(), name: "/settings/custom-avatar-panel", binding: CustomAvatarPanelBinding()),
+          GetPage(page: () => PrivateAPIPanel(), name: "/settings/private-api-panel", binding: PrivateAPIPanelBinding()),
+          GetPage(page: () => RedactedModePanel(), name: "/settings/redacted-mode-panel"),
+          GetPage(page: () => ServerManagementPanel(), name: "/settings/server-management-panel", binding: ServerManagementPanelBinding()),
+          GetPage(page: () => ThemePanel(), name: "/settings/theme-panel", binding: ThemePanelBinding()),
+        ],
       ),
     );
   }
@@ -255,7 +278,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   void didChangeDependencies() async {
     Locale myLocale = Localizations.localeOf(context);
     SettingsManager().countryCode = myLocale.countryCode;
-    SettingsManager().settings.use24HrFormat = MediaQuery.of(Get.context!).alwaysUse24HourFormat;
+    SettingsManager().settings.use24HrFormat.value = MediaQuery.of(Get.context!).alwaysUse24HourFormat;
     await FlutterLibphonenumber().init();
     super.didChangeDependencies();
   }

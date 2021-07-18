@@ -9,7 +9,6 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
@@ -17,41 +16,41 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class PrivateAPIPanel extends StatefulWidget {
-  PrivateAPIPanel({Key? key}) : super(key: key);
-
+class PrivateAPIPanelBinding extends Bindings {
   @override
-  _PrivateAPIPanelState createState() => _PrivateAPIPanelState();
+  void dependencies() {
+    Get.lazyPut<PrivateAPIPanelController>(() => PrivateAPIPanelController());
+  }
 }
 
-class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
+class PrivateAPIPanelController extends GetxController {
   late Settings _settingsCopy;
-  int? macOSVersionNumber;
-  String? macOSVersion;
+  RxnInt macOSVersionNumber = RxnInt();
+  RxnString macOSVersion = RxnString();
 
   @override
-  void initState() {
-    super.initState();
+  void onInit() {
+    super.onInit();
     _settingsCopy = SettingsManager().settings;
-
-    // Listen for any incoming events
-    EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (!event.containsKey("type")) return;
-
-      if (event["type"] == 'theme-update' && this.mounted) {
-        setState(() {});
-      }
-    });
-
     SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
-      if (mounted) {
-        setState(() {
-          macOSVersionNumber = int.tryParse(res['data']['os_version'].toString().split(".")[0]);
-          macOSVersion = res['data']['os_version'];
-        });
-      }
+      macOSVersionNumber.value = int.tryParse(res['data']['os_version'].toString().split(".")[0]);
+      macOSVersion.value = res['data']['os_version'];
+      if ((macOSVersionNumber.value ?? 10) < 11) _settingsCopy.enablePrivateAPI.value = false;
     });
   }
+
+  void saveSettings() async {
+    await SettingsManager().saveSettings(_settingsCopy);
+  }
+
+  @override
+  void dispose() {
+    saveSettings();
+    super.dispose();
+  }
+}
+
+class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
 
   @override
   Widget build(BuildContext context) {
@@ -143,7 +142,8 @@ class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
                               TextSpan(text: "are not supported.", style: TextStyle(fontStyle: FontStyle.italic)),
                               TextSpan(text: "\n\n"),
                               TextSpan(text: "You must be using the nightly version of the server for these features to function, regardless of whether you enable them here."),
-                            ]
+                            ],
+                            style: Theme.of(context).textTheme.bodyText1,
                           ),
                         ),
                       )
@@ -162,7 +162,7 @@ class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
                       materialIcon: Icons.privacy_tip,
                     ),
                   ),
-                  ((macOSVersionNumber ??10) < 11) ?
+                  ((controller.macOSVersionNumber.value ?? 10) < 11) ?
                     Container(
                       color: tileColor,
                       child: Padding(
@@ -170,12 +170,12 @@ class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
                         child: SettingsDivider(color: headerColor),
                       ),
                     ) : Container(),
-                  (macOSVersionNumber ?? 10) < 11 ? SettingsSwitch(
+                  (controller.macOSVersionNumber.value ?? 10) < 11 ? SettingsSwitch(
                     onChanged: (bool val) {
-                      _settingsCopy.enablePrivateAPI.value = val;
+                     controller._settingsCopy.enablePrivateAPI.value = val;
                       saveSettings();
                     },
-                    initialVal: _settingsCopy.enablePrivateAPI.value,
+                    initialVal: controller._settingsCopy.enablePrivateAPI.value,
                     title: "Enable Private API Features",
                   ) : Container(
                       decoration: BoxDecoration(
@@ -191,15 +191,16 @@ class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
                               children: [
                                 TextSpan(text: "Private API features are not supported on your server's macOS Version."),
                                 TextSpan(text: "\n\n"),
-                                TextSpan(text: "Current: ${macOSVersion ?? "Unknown"}"),
+                                TextSpan(text: "Current: ${controller.macOSVersion.value ?? "Unknown"}"),
                                 TextSpan(text: "\n\n"),
                                 TextSpan(text: "Required: 10.15.7 and under"),
-                              ]
+                              ],
+                            style: Theme.of(context).textTheme.bodyText1,
                           ),
                         ),
                       )
                   ),
-                  if (SettingsManager().settings.enablePrivateAPI.value)
+                  if (SettingsManager().settings.enablePrivateAPI.value && (controller.macOSVersionNumber.value ?? 10) < 11)
                     ...[
                       SettingsHeader(
                           headerColor: headerColor,
@@ -210,31 +211,31 @@ class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
                       ),
                       SettingsSwitch(
                         onChanged: (bool val) {
-                          _settingsCopy.privateSendTypingIndicators.value = val;
+                         controller._settingsCopy.privateSendTypingIndicators.value = val;
                           saveSettings();
                         },
-                        initialVal: _settingsCopy.privateSendTypingIndicators.value,
+                        initialVal:controller._settingsCopy.privateSendTypingIndicators.value,
                         title: "Send Typing Indicators",
                         subtitle: "Sends typing indicators to other iMessage users",
                         backgroundColor: tileColor,
                       ),
                       SettingsSwitch(
                         onChanged: (bool val) {
-                          _settingsCopy.privateMarkChatAsRead.value = val;
-                          saveSettings(updateState: true);
+                         controller._settingsCopy.privateMarkChatAsRead.value = val;
+                          saveSettings();
                         },
-                        initialVal: _settingsCopy.privateMarkChatAsRead.value,
+                        initialVal:controller._settingsCopy.privateMarkChatAsRead.value,
                         title: "Mark Chats as Read / Send Read Receipts",
                         subtitle: "Marks chats read in the iMessage app on your server and sends read receipts to other iMessage users",
                         backgroundColor: tileColor,
                       ),
-                      if (!_settingsCopy.privateMarkChatAsRead.value)
+                      if (!controller._settingsCopy.privateMarkChatAsRead.value)
                         SettingsSwitch(
                           onChanged: (bool val) {
-                            _settingsCopy.privateManualMarkAsRead.value = val;
+                           controller._settingsCopy.privateManualMarkAsRead.value = val;
                             saveSettings();
                           },
-                          initialVal: _settingsCopy.privateManualMarkAsRead.value,
+                          initialVal:controller._settingsCopy.privateManualMarkAsRead.value,
                           title: "Show Manually Mark Chat as Read Button",
                           backgroundColor: tileColor,
                         ),
@@ -263,16 +264,7 @@ class _PrivateAPIPanelState extends State<PrivateAPIPanel> {
     );
   }
 
-  void saveSettings({bool updateState = false}) async {
-    await SettingsManager().saveSettings(_settingsCopy);
-    if (updateState && this.mounted) {
-      this.setState(() {});
-    }
-  }
-
-  @override
-  void dispose() {
-    saveSettings();
-    super.dispose();
+  void saveSettings() async {
+    await SettingsManager().saveSettings(controller._settingsCopy);
   }
 }
