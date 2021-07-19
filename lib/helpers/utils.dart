@@ -200,6 +200,7 @@ void showSnackbar(String title, String message) {
     backgroundColor: Get.theme.accentColor,
     margin: EdgeInsets.only(bottom: 10),
     maxWidth: Get.width - 20,
+    isDismissible: false,
   );
 }
 
@@ -214,7 +215,7 @@ bool sameSender(Message? first, Message? second) {
 
 String buildDate(DateTime? dateTime) {
   if (dateTime == null || dateTime.millisecondsSinceEpoch == 0) return "";
-  String time = SettingsManager().settings.use24HrFormat
+  String time = SettingsManager().settings.use24HrFormat.value
       ? intl.DateFormat.Hm().format(dateTime)
       : new intl.DateFormat.jm().format(dateTime);
   String date;
@@ -231,9 +232,9 @@ String buildDate(DateTime? dateTime) {
 }
 
 String buildTime(DateTime? dateTime) {
-  SettingsManager().settings.use24HrFormat = MediaQuery.of(Get.context!).alwaysUse24HourFormat;
+  SettingsManager().settings.use24HrFormat.value = MediaQuery.of(Get.context!).alwaysUse24HourFormat;
   if (dateTime == null || dateTime.millisecondsSinceEpoch == 0) return "";
-  String time = SettingsManager().settings.use24HrFormat
+  String time = SettingsManager().settings.use24HrFormat.value
       ? intl.DateFormat.Hm().format(dateTime)
       : new intl.DateFormat.jm().format(dateTime);
   return time;
@@ -328,7 +329,7 @@ Future<String> getGroupEventText(Message message) async {
     }
   }
 
-  final bool hideNames = SettingsManager().settings.redactedMode && SettingsManager().settings.hideContactInfo;
+  final bool hideNames = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactInfo.value;
   if (hideNames) {
     handle = "Someone";
     other = "someone";
@@ -472,7 +473,7 @@ Brightness getBrightness(BuildContext context) {
 /// Take the passed [address] or serverAddress from Settings
 /// and sanitize it, making sure it includes an http schema
 String? getServerAddress({String? address}) {
-  String serverAddress = address ?? SettingsManager().settings.serverAddress;
+  String serverAddress = address ?? SettingsManager().settings.serverAddress.value;
 
   String sanitized = serverAddress.replaceAll("https://", "").replaceAll("http://", "").trim();
   if (sanitized.isEmpty) return null;
@@ -557,28 +558,26 @@ Future<File?> saveImageFromUrl(String guid, String url) async {
   }
 }
 
-Icon getIndicatorIcon(SocketState socketState, {double size = 24, bool showAlpha = true}) {
-  Icon icon;
-
-  if (SettingsManager().settings.colorblindMode) {
-    if (socketState == SocketState.CONNECTING) {
-      icon = Icon(Icons.cloud_upload, color: HexColor('ffd500').withAlpha(showAlpha ? 200 : 255), size: size);
-    } else if (socketState == SocketState.CONNECTED) {
-      icon = Icon(Icons.cloud_done, color: HexColor('32CD32').withAlpha(showAlpha ? 200 : 255), size: size);
+Widget getIndicatorIcon(SocketState socketState, {double size = 24, bool showAlpha = true}) {
+  return Obx(() {
+    if (SettingsManager().settings.colorblindMode.value) {
+      if (socketState == SocketState.CONNECTING) {
+        return Icon(Icons.cloud_upload, color: HexColor('ffd500').withAlpha(showAlpha ? 200 : 255), size: size);
+      } else if (socketState == SocketState.CONNECTED) {
+        return Icon(Icons.cloud_done, color: HexColor('32CD32').withAlpha(showAlpha ? 200 : 255), size: size);
+      } else {
+        return Icon(Icons.cloud_off, color: HexColor('DC143C').withAlpha(showAlpha ? 200 : 255), size: size);
+      }
     } else {
-      icon = Icon(Icons.cloud_off, color: HexColor('DC143C').withAlpha(showAlpha ? 200 : 255), size: size);
+      if (socketState == SocketState.CONNECTING) {
+        return Icon(Icons.fiber_manual_record, color: HexColor('ffd500').withAlpha(showAlpha ? 200 : 255), size: size);
+      } else if (socketState == SocketState.CONNECTED) {
+        return Icon(Icons.fiber_manual_record, color: HexColor('32CD32').withAlpha(showAlpha ? 200 : 255), size: size);
+      } else {
+        return Icon(Icons.fiber_manual_record, color: HexColor('DC143C').withAlpha(showAlpha ? 200 : 255), size: size);
+      }
     }
-  } else {
-    if (socketState == SocketState.CONNECTING) {
-      icon = Icon(Icons.fiber_manual_record, color: HexColor('ffd500').withAlpha(showAlpha ? 200 : 255), size: size);
-    } else if (socketState == SocketState.CONNECTED) {
-      icon = Icon(Icons.fiber_manual_record, color: HexColor('32CD32').withAlpha(showAlpha ? 200 : 255), size: size);
-    } else {
-      icon = Icon(Icons.fiber_manual_record, color: HexColor('DC143C').withAlpha(showAlpha ? 200 : 255), size: size);
-    }
-  }
-
-  return icon;
+  });
 }
 
 Color getIndicatorColor(SocketState socketState) {

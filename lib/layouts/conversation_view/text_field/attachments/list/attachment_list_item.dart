@@ -6,7 +6,6 @@ import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dar
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:path/path.dart' as path;
 import 'package:video_thumbnail/video_thumbnail.dart';
@@ -46,8 +45,10 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
       );
       if (this.mounted) setState(() {});
     } else if (mimeType == null || mimeType.startsWith("image/")) {
-      preview = await FlutterImageCompress.compressWithFile(widget.file.absolute.path,
-          quality: SettingsManager().compressionQuality);
+      // Compress the file, using a dummy attachment object
+      preview = await AttachmentHelper.compressAttachment(
+          new Attachment(mimeType: mimeType, transferName: widget.file.absolute.path, width: 100, height: 100),
+          widget.file.absolute.path);
       if (this.mounted) setState(() {});
     }
   }
@@ -55,9 +56,9 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
   Widget getThumbnail() {
     if (preview != null) {
       final bool hideAttachments =
-          SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachments;
+          SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachments.value;
       final bool hideAttachmentTypes =
-          SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachmentTypes;
+          SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachmentTypes.value;
 
       final mimeType = mime(widget.file.path);
 

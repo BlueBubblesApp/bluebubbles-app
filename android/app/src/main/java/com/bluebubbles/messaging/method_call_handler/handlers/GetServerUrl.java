@@ -29,13 +29,36 @@ public class GetServerUrl implements Handler{
 
     @Override
     public void Handle() {
+        // If we don't have an app yet, don't do anything
+        if (app == null) {
+            result.success(null);
+            return;
+        }
+
         // Get the server URL from Firebase
-        DatabaseReference database = FirebaseDatabase.getInstance(app).getReference("config");
+        FirebaseDatabase database = FirebaseDatabase.getInstance(app);
+        if (database == null) {
+            result.success(null);
+            return;
+        }
+
+        // Pull the config DB ref
+        DatabaseReference config = database.getReference("config");
+    
+        // Create the listener
         ValueEventListener listener = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                String url = (String) dataSnapshot.child("serverUrl").getValue();
-                result.success(url);
+                if (dataSnapshot == null) {
+                    result.success(null);
+                } else {
+                    try {
+                        String url = (String) dataSnapshot.child("serverUrl").getValue();
+                        result.success(url);
+                    } catch (Exception ex) {
+                        result.success(null);
+                    }
+                }
             }
 
             @Override
@@ -44,6 +67,7 @@ public class GetServerUrl implements Handler{
             }
         };
 
-        database.addListenerForSingleValueEvent(listener);
+        // Add the listener
+        config.addListenerForSingleValueEvent(listener);
     }
 }

@@ -14,7 +14,6 @@ import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:photo_view/photo_view.dart';
 
 class ImageViewer extends StatefulWidget {
@@ -53,7 +52,8 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
 
   Future<void> initBytes() async {
     if (widget.attachment.mimeType == "image/heic") {
-      bytes = await FlutterImageCompress.compressWithFile(widget.file.absolute.path, quality: 100);
+      bytes =
+          await AttachmentHelper.compressAttachment(widget.attachment, widget.file.absolute.path, qualityOverride: 100);
     } else {
       bytes = await widget.file.readAsBytes();
     }

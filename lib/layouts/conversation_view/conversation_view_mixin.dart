@@ -246,12 +246,12 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
   Widget buildCupertinoTrailing() {
     Color? fontColor = Theme.of(context).textTheme.headline1!.color;
-    bool manualMark = SettingsManager().settings.enablePrivateAPI && SettingsManager().settings.privateManualMarkAsRead;
-    bool showManual = !SettingsManager().settings.privateMarkChatAsRead && !(widget.chat?.isGroup() ?? false);
+    bool manualMark = SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateManualMarkAsRead.value;
+    bool showManual = !SettingsManager().settings.privateMarkChatAsRead.value && !(widget.chat?.isGroup() ?? false);
     List<Widget> items = [
       if (showManual && manualMark && markingAsRead)
         Padding(
-            padding: EdgeInsets.only(right: SettingsManager().settings.colorblindMode ? 15.0 : 10.0),
+            padding: EdgeInsets.only(right: SettingsManager().settings.colorblindMode.value ? 15.0 : 10.0),
             child: Theme(
               data: ThemeData(
                 cupertinoOverrideTheme: Cupertino.CupertinoThemeData(
@@ -264,7 +264,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             )),
       if (showManual && manualMark && !markingAsRead)
         Padding(
-          padding: EdgeInsets.only(right: SettingsManager().settings.colorblindMode ? 10.0 : 5.0),
+          padding: EdgeInsets.only(right: SettingsManager().settings.colorblindMode.value ? 10.0 : 5.0),
           child: GestureDetector(
             child: Icon(
               (markedAsRead) ? Icons.check_circle : Icons.check_circle_outline,
@@ -275,7 +275,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         ),
     ];
 
-    if (SettingsManager().settings.showConnectionIndicator) {
+    if (SettingsManager().settings.showConnectionIndicator.value) {
       items.add(StreamBuilder(
           stream: SocketManager().connectionStateStream,
           builder: (context, AsyncSnapshot<SocketState> snapshot) {
@@ -295,7 +295,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     }
 
     return Stack(
-      alignment: (!SettingsManager().settings.showConnectionIndicator || !manualMark)
+      alignment: (!SettingsManager().settings.showConnectionIndicator.value || !manualMark)
           ? AlignmentDirectional.center
           : AlignmentDirectional.topEnd,
       children: items,
@@ -307,9 +307,9 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     Color? fontColor = Theme.of(context).textTheme.headline1!.color;
     String? title = chat!.title;
 
-    final hideTitle = SettingsManager().settings.redactedMode && SettingsManager().settings.hideContactInfo;
+    final hideTitle = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactInfo.value;
     final generateTitle =
-        SettingsManager().settings.redactedMode && SettingsManager().settings.generateFakeContactNames;
+        SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeContactNames.value;
 
     if (generateTitle)
       title = chat!.fakeParticipants.length > 1 ? "Group Chat" : chat!.fakeParticipants[0];
@@ -334,42 +334,51 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         actionsIconTheme: IconThemeData(color: Theme.of(context).primaryColor),
         iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
         actions: [
-          if (SettingsManager().settings.showConnectionIndicator)
-            StreamBuilder(
-                stream: SocketManager().connectionStateStream,
-                builder: (context, AsyncSnapshot<SocketState> snapshot) {
-                  late SocketState connectionStatus;
-                  if (snapshot.hasData) {
-                    connectionStatus = snapshot.data!;
-                  } else {
-                    connectionStatus = SocketManager().state;
-                  }
+          Obx(() {
+            if (SettingsManager().settings.showConnectionIndicator.value)
+              return StreamBuilder(
+                  stream: SocketManager().connectionStateStream,
+                  builder: (context, AsyncSnapshot<SocketState> snapshot) {
+                    late SocketState connectionStatus;
+                    if (snapshot.hasData) {
+                      connectionStatus = snapshot.data!;
+                    } else {
+                      connectionStatus = SocketManager().state;
+                    }
 
-                  return getIndicatorIcon(connectionStatus, size: 12);
-                }),
-          if (SettingsManager().settings.privateManualMarkAsRead && markingAsRead)
-            Padding(
+                    return getIndicatorIcon(connectionStatus, size: 12);
+                  });
+            else return SizedBox.shrink();
+          }),
+          Obx(() {
+            if (SettingsManager().settings.privateManualMarkAsRead.value && markingAsRead)
+              return Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: Center(
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor)),
+                      )));
+            else return SizedBox.shrink();
+          }),
+          Obx(() {
+            if (SettingsManager().settings.enablePrivateAPI.value &&
+                SettingsManager().settings.privateManualMarkAsRead.value &&
+                !markingAsRead)
+              return Padding(
                 padding: const EdgeInsets.only(right: 8.0),
-                child: Center(
-                    child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor)),
-                ))),
-          if (SettingsManager().settings.enablePrivateAPI &&
-              SettingsManager().settings.privateManualMarkAsRead &&
-              !markingAsRead)
-            Padding(
-              padding: const EdgeInsets.only(right: 8.0),
-              child: GestureDetector(
-                child: Icon(
-                  (markedAsRead) ? Icons.check_circle : Icons.check_circle_outline,
-                  color: (markedAsRead) ? HexColor('32CD32').withAlpha(200) : fontColor,
+                child: GestureDetector(
+                  child: Icon(
+                    (markedAsRead) ? Icons.check_circle : Icons.check_circle_outline,
+                    color: (markedAsRead) ? HexColor('32CD32').withAlpha(200) : fontColor,
+                  ),
+                  onTap: markChatAsRead,
                 ),
-                onTap: markChatAsRead,
-              ),
-            ),
+              );
+            else return SizedBox.shrink();
+          }),
           Padding(
             padding: const EdgeInsets.only(right: 8.0),
             child: GestureDetector(
@@ -500,25 +509,25 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           onTap: () {
             Navigator.of(context).pop();
           },
-          child: Obx(() => Row(
-                mainAxisSize: Cupertino.MainAxisSize.min,
-                mainAxisAlignment: Cupertino.MainAxisAlignment.start,
-                children: [
-                  buildBackButton(context),
-                  if (ChatBloc().unreads.value > 0)
-                    Container(
-                      width: 25.0,
-                      height: 20.0,
-                      decoration: BoxDecoration(
-                          color: Theme.of(context).primaryColor,
-                          shape: BoxShape.rectangle,
-                          borderRadius: BorderRadius.circular(10)),
-                      child: Center(
-                          child: Text(ChatBloc().unreads.value.toString(),
-                              textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 12.0))),
-                    ),
-                ],
-              )),
+          child: Row(
+            mainAxisSize: Cupertino.MainAxisSize.min,
+            mainAxisAlignment: Cupertino.MainAxisAlignment.start,
+            children: [
+              buildBackButton(context),
+              if (ChatBloc().unreads.value > 0)
+                Container(
+                  width: 25.0,
+                  height: 20.0,
+                  decoration: BoxDecoration(
+                      color: Theme.of(context).primaryColor,
+                      shape: BoxShape.rectangle,
+                      borderRadius: BorderRadius.circular(10)),
+                  child: Center(
+                      child: Text(ChatBloc().unreads.value.toString(),
+                          textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 12.0))),
+                ),
+            ],
+          ),
         ),
         middle: ListView(
           physics: Cupertino.NeverScrollableScrollPhysics(),
@@ -581,7 +590,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             ),
           ],
         ),
-        trailing: this.buildCupertinoTrailing());
+        trailing: Obx(() => buildCupertinoTrailing()));
   }
 
   /// Chat selector methods

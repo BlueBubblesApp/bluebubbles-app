@@ -69,7 +69,7 @@ class _DeliveredReceiptState extends State<DeliveredReceipt> with TickerProvider
     String text = "Delivered";
     if (widget.message.dateRead != null) {
       text = "Read " + buildDate(widget.message.dateRead);
-    } else if (SettingsManager().settings.showDeliveryTimestamps && widget.message.dateDelivered != null) {
+    } else if (SettingsManager().settings.showDeliveryTimestamps.value && widget.message.dateDelivered != null) {
       text = "Delivered " + buildDate(widget.message.dateDelivered);
     }
 

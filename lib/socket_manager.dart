@@ -140,7 +140,7 @@ class SocketManager {
         _manager.socketProcesses.values.forEach((element) {
           element();
         });
-        if (SettingsManager().settings.finishedSetup)
+        if (SettingsManager().settings.finishedSetup.value)
           setup.startIncrementalSync(SettingsManager().settings, onConnectionError: (String err) {
             debugPrint("(SYNC) Error performing incremental sync. Not saving last sync date.");
             debugPrint(err);
@@ -158,7 +158,7 @@ class SocketManager {
             debugPrint("[Socket] -> Unable to connect");
 
             // Only show the notification if setup is finished
-            if (SettingsManager().settings.finishedSetup) {
+            if (SettingsManager().settings.finishedSetup.value) {
               NotificationManager().createSocketWarningNotification();
             }
 
@@ -218,7 +218,7 @@ class SocketManager {
   }
 
   Future<String> handleChatStatusChange(_data) async {
-    if (!SettingsManager().settings.enablePrivateAPI) return new Future.value("");
+    if (!SettingsManager().settings.enablePrivateAPI.value) return new Future.value("");
 
     Map<String, dynamic>? data = _data;
     IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_CHAT_STATUS_CHANGE, item: {"data": data}));
@@ -256,7 +256,7 @@ class SocketManager {
       _manager.socket = IO.io(
           serverAddress,
           OptionBuilder()
-              .setQuery({"guid": encodeUri(SettingsManager().settings.guidAuthKey)})
+              .setQuery({"guid": encodeUri(SettingsManager().settings.guidAuthKey.value)})
               .setTransports(['websocket'])
               .enableAutoConnect()
               .disableForceNewConnection()
@@ -313,7 +313,7 @@ class SocketManager {
        */
       _manager.socket!.on("chat-read-status-changed", handleChatStatusChange);
       _manager.socket!.on("typing-indicator", (_data) {
-        if (!SettingsManager().settings.enablePrivateAPI) return;
+        if (!SettingsManager().settings.enablePrivateAPI.value) return;
 
         Map<String, dynamic> data = _data;
         CurrentChat? currentChat = AttachmentInfoBloc().getCurrentChat(data["guid"]);
@@ -663,9 +663,9 @@ class SocketManager {
             if (response.containsKey('encrypted') && response['encrypted']) {
               try {
                 response['data'] =
-                    jsonDecode(decryptAESCryptoJS(response['data'], SettingsManager().settings.guidAuthKey));
+                    jsonDecode(decryptAESCryptoJS(response['data'], SettingsManager().settings.guidAuthKey.value));
               } catch (ex) {
-                response['data'] = decryptAESCryptoJS(response['data'], SettingsManager().settings.guidAuthKey);
+                response['data'] = decryptAESCryptoJS(response['data'], SettingsManager().settings.guidAuthKey.value);
               }
             }
 
@@ -701,8 +701,8 @@ class SocketManager {
   void toggleSetupFinished(bool isFinished, {bool applyToDb = true}) {
     finishedSetup.sink.add(isFinished);
 
-    if (SettingsManager().settings.finishedSetup != isFinished) {
-      SettingsManager().settings.finishedSetup = isFinished;
+    if (SettingsManager().settings.finishedSetup.value != isFinished) {
+      SettingsManager().settings.finishedSetup.value = isFinished;
       SettingsManager().saveSettings(SettingsManager().settings);
     }
   }
@@ -713,13 +713,13 @@ class SocketManager {
   Future<void> newServer(String serverAddress) async {
     // We copy the settings to a local variable
     Settings settingsCopy = SettingsManager().settings;
-    if (settingsCopy.serverAddress == serverAddress) {
+    if (settingsCopy.serverAddress.value == serverAddress) {
       debugPrint("Server address didn't actually change. Ignoring...");
       return;
     }
 
     // Update the address of the copied settings
-    settingsCopy.serverAddress = getServerAddress(address: serverAddress) ?? settingsCopy.serverAddress;
+    settingsCopy.serverAddress.value = getServerAddress(address: serverAddress) ?? settingsCopy.serverAddress.value;
 
     // And then save to disk
     // NOTE: we do not automatically connect to the socket or authorize fcm,
@@ -752,8 +752,8 @@ class SocketManager {
 
       // Set the server URL
       Settings _settingsCopy = SettingsManager().settings;
-      if (_settingsCopy.serverAddress == url) return;
-      _settingsCopy.serverAddress = url ?? _settingsCopy.serverAddress;
+      if (_settingsCopy.serverAddress.value == url) return;
+      _settingsCopy.serverAddress.value = url ?? _settingsCopy.serverAddress.value;
       await SettingsManager().saveSettings(_settingsCopy);
       if (connectToSocket) {
         startSocketIO(forceNewConnection: connectToSocket);

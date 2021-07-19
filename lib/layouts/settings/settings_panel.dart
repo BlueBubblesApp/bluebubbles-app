@@ -7,17 +7,10 @@ import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/settings/about_panel.dart';
-import 'package:bluebubbles/layouts/settings/attachment_panel.dart';
-import 'package:bluebubbles/layouts/settings/private_api_panel.dart';
-import 'package:bluebubbles/layouts/settings/redacted_mode_panel.dart';
-import 'package:bluebubbles/layouts/settings/server_management_panel.dart';
-import 'package:bluebubbles/layouts/settings/theme_panel.dart';
-import 'package:bluebubbles/layouts/settings/ux_panel.dart';
+import 'package:bluebubbles/layouts/settings/misc_panel.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoTextField.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
@@ -25,7 +18,6 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 
 List disconnectedStates = [SocketState.DISCONNECTED, SocketState.ERROR, SocketState.FAILED];
 
@@ -45,19 +37,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
   void initState() {
     super.initState();
     _settingsCopy = SettingsManager().settings;
-
-    // Listen for any incoming events
-    EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (!event.containsKey("type")) return;
-
-      if (event["type"] == 'theme-update' && this.mounted) {
-        setState(() {});
-      }
-    });
-
-    SettingsManager().stream.listen((_) {
-      if (mounted) setState(() {});
-    });
   }
 
   @override
@@ -90,7 +69,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
           headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
-      child: Scaffold(
+      child: Obx(() => Scaffold(
         backgroundColor: SettingsManager().settings.skin.value != Skins.iOS ? tileColor : headerColor,
         appBar: PreferredSize(
           preferredSize: Size(context.width, 80),
@@ -111,7 +90,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
             ),
           ),
         ),
-        body: Obx(() => CustomScrollView(
+        body: CustomScrollView(
           physics: ThemeSwitcher.getScrollPhysics(),
           slivers: <Widget>[
             SliverList(
@@ -123,7 +102,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
                         color: headerColor,
                         border: Border(
-                          bottom: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
+                            bottom: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
                         ),
                       ) : BoxDecoration(
                         color: tileColor,
@@ -169,16 +148,12 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         return SettingsTile(
                           backgroundColor: tileColor,
                           title: "Connection & Server",
-                          subTitle: subtitle,
+                          subtitle: subtitle,
                           onTap: () async {
-                            Navigator.of(context).push(
-                              CupertinoPageRoute(
-                                builder: (context) => ServerManagementPanel(),
-                              ),
-                            );
+                            Get.toNamed("/settings/server-management-panel");
                           },
                           onLongPress: () {
-                            Clipboard.setData(new ClipboardData(text: _settingsCopy.serverAddress));
+                            Clipboard.setData(new ClipboardData(text: _settingsCopy.serverAddress.value));
                             showSnackbar('Copied', "Address copied to clipboard");
                           },
                           leading: Column(
@@ -197,9 +172,9 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                     children: [
                                       Icon(SettingsManager().settings.skin.value == Skins.iOS
                                           ? CupertinoIcons.antenna_radiowaves_left_right : Icons.router,
-                                          color: SettingsManager().settings.skin.value == Skins.iOS ?
-                                          Colors.white : Colors.grey,
-                                          size: SettingsManager().settings.skin.value == Skins.iOS ? 23 : 30,
+                                        color: SettingsManager().settings.skin.value == Skins.iOS ?
+                                        Colors.white : Colors.grey,
+                                        size: SettingsManager().settings.skin.value == Skins.iOS ? 23 : 30,
                                       ),
                                       if (SettingsManager().settings.skin.value != Skins.iOS)
                                         Positioned.fill(
@@ -213,30 +188,24 @@ class _SettingsPanelState extends State<SettingsPanel> {
                               ),
                             ],
                           ),
-                          showDivider: false,
                           trailing: nextIcon,
                         );
                       }),
                   SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
-                    iosSubtitle: iosSubtitle,
-                    materialSubtitle: materialSubtitle,
-                    text: "Appearance"
+                      headerColor: headerColor,
+                      tileColor: tileColor,
+                      iosSubtitle: iosSubtitle,
+                      materialSubtitle: materialSubtitle,
+                      text: "Appearance"
                   ),
                   SettingsTile(
                     backgroundColor: tileColor,
                     title: "Theme Settings",
-                    subTitle: SettingsManager().settings.skin.value.toString().split(".").last
+                    subtitle: SettingsManager().settings.skin.value.toString().split(".").last
                         + "   |   " + AdaptiveTheme.of(context).mode.toString().split(".").last.capitalizeFirst! + " Mode",
                     onTap: () {
-                      Navigator.of(context).push(
-                        CupertinoPageRoute(
-                          builder: (context) => ThemePanel(),
-                        ),
-                      );
+                      Get.toNamed("/settings/theme-panel");
                     },
-                    showDivider: false,
                     trailing: nextIcon,
                     leading: SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.paintbrush,
@@ -252,20 +221,15 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   ),
                   SettingsTile(
                     backgroundColor: tileColor,
-                    title: "Attachment Settings",
+                    title: "Media Settings",
                     onTap: () {
-                      Navigator.of(context).push(
-                        CupertinoPageRoute(
-                          builder: (context) => AttachmentPanel(),
-                        ),
-                      );
+                      Get.toNamed("/settings/attachment-panel");
                     },
                     leading: SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.paperclip,
                       materialIcon: Icons.attachment,
                     ),
                     trailing: nextIcon,
-                    showDivider: false,
                   ),
                   Container(
                     color: tileColor,
@@ -276,19 +240,56 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   ),
                   SettingsTile(
                     backgroundColor: tileColor,
-                    title: "User Experience Settings",
+                    title: "Chat List Settings",
+                    onTap: () {
+                      Get.toNamed("/settings/chat-list-panel");
+                    },
+                    leading: SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.square_list,
+                      materialIcon: Icons.list,
+                    ),
+                    trailing: nextIcon,
+                  ),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
+                    ),
+                  ),
+                  SettingsTile(
+                    backgroundColor: tileColor,
+                    title: "Conversation Settings",
+                    onTap: () {
+                      Get.toNamed("/settings/conversation-panel");
+                    },
+                    leading: SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.chat_bubble,
+                      materialIcon: Icons.sms,
+                    ),
+                    trailing: nextIcon,
+                  ),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
+                    ),
+                  ),
+                  SettingsTile(
+                    backgroundColor: tileColor,
+                    title: "Miscellaneous Settings",
                     onTap: () {
                       Navigator.of(context).push(
                         CupertinoPageRoute(
-                          builder: (context) => UXPanel(),
+                          builder: (context) => MiscPanel(),
                         ),
                       );
                     },
                     leading: SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.person_alt,
-                      materialIcon: Icons.manage_accounts,
+                      iosIcon: CupertinoIcons.ellipsis_circle,
+                      materialIcon: Icons.more_vert,
                     ),
-                    showDivider: false,
                     trailing: nextIcon,
                   ),
                   SettingsHeader(
@@ -301,20 +302,15 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   SettingsTile(
                     backgroundColor: tileColor,
                     title: "Private API Features",
-                    subTitle: "Private API ${SettingsManager().settings.enablePrivateAPI ? "Enabled" : "Disabled"}",
+                    subtitle: "Private API ${SettingsManager().settings.enablePrivateAPI.value ? "Enabled" : "Disabled"}",
                     trailing: nextIcon,
                     onTap: () async {
-                      Navigator.of(context).push(
-                        CupertinoPageRoute(
-                          builder: (context) => PrivateAPIPanel(),
-                        ),
-                      );
+                      Get.toNamed("/settings/private-api-panel");
                     },
-                    showDivider: false,
                     leading: SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.exclamationmark_shield,
                       materialIcon: Icons.gpp_maybe,
-                      containerColor: getIndicatorColor(SettingsManager().settings.enablePrivateAPI ? SocketState.CONNECTED : SocketState.CONNECTING),
+                      containerColor: getIndicatorColor(SettingsManager().settings.enablePrivateAPI.value ? SocketState.CONNECTED : SocketState.CONNECTING),
                     ),
                   ),
                   Container(
@@ -327,20 +323,15 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   SettingsTile(
                     backgroundColor: tileColor,
                     title: "Redacted Mode",
-                    subTitle: "Redacted Mode ${SettingsManager().settings.redactedMode ? "Enabled" : "Disabled"}",
+                    subtitle: "Redacted Mode ${SettingsManager().settings.redactedMode.value ? "Enabled" : "Disabled"}",
                     trailing: nextIcon,
                     onTap: () async {
-                      Navigator.of(context).push(
-                        CupertinoPageRoute(
-                          builder: (context) => RedactedModePanel(),
-                        ),
-                      );
+                      Get.toNamed("/settings/redacted-mode-panel");
                     },
-                    showDivider: false,
                     leading: SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.wand_stars,
                       materialIcon: Icons.auto_fix_high,
-                      containerColor: getIndicatorColor(SettingsManager().settings.redactedMode ? SocketState.CONNECTED : SocketState.CONNECTING),
+                      containerColor: getIndicatorColor(SettingsManager().settings.redactedMode.value ? SocketState.CONNECTED : SocketState.CONNECTING),
                     ),
                   ),
                   // SettingsTile(
@@ -377,15 +368,10 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   SettingsTile(
                     backgroundColor: tileColor,
                     title: "About & Links",
-                    subTitle: "Donate, Rate, Changelog, & More",
+                    subtitle: "Donate, Rate, Changelog, & More",
                     onTap: () {
-                      Navigator.of(context).push(
-                        CupertinoPageRoute(
-                          builder: (context) => AboutPanel(),
-                        ),
-                      );
+                      Get.toNamed("/settings/about-panel");
                     },
-                    showDivider: false,
                     trailing: nextIcon,
                     leading: SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.info_circle,
@@ -439,18 +425,17 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       materialIcon: Icons.storage,
                     ),
                     title: "Reset",
-                    subTitle: "Resets the app to default settings",
-                    showDivider: false,
+                    subtitle: "Resets the app to default settings",
                   ),
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
                   Container(
-                      height: 30,
-                      decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
-                        color: headerColor,
-                        border: Border(
-                            top: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
-                        ),
-                      ) : null,
+                    height: 30,
+                    decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
+                      color: headerColor,
+                      border: Border(
+                          top: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
+                      ),
+                    ) : null,
                   ),
                 ],
               ),
@@ -461,8 +446,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
               ),
             )
           ],
-        )),
-      ),
+        ),
+      )),
     );
   }
 
@@ -488,50 +473,42 @@ class SettingsTile extends StatelessWidget {
       this.title,
       this.trailing,
       this.leading,
-      this.subTitle,
-      this.showDivider = true,
-      this.backgroundColor})
+      this.subtitle,
+      this.backgroundColor,
+      this.isThreeLine = false,
+      })
       : super(key: key);
 
   final Function? onTap;
   final Function? onLongPress;
-  final String? subTitle;
+  final String? subtitle;
   final String? title;
   final Widget? trailing;
   final Widget? leading;
-  final bool showDivider;
   final Color? backgroundColor;
+  final bool isThreeLine;
 
   @override
   Widget build(BuildContext context) {
-    //todo remove Column and Container once settings is fully done
     return Container(
       color: backgroundColor,
-      child: Column(
-        children: <Widget>[
-          ListTile(
-            onLongPress: this.onLongPress as void Function()?,
-            tileColor: backgroundColor,
-            onTap: this.onTap as void Function()?,
-            leading: leading,
-            title: Text(
-              this.title!,
-              style: Theme.of(context).textTheme.bodyText1,
-            ),
-            trailing: this.trailing,
-            subtitle: subTitle != null
-                ? Text(
-                    subTitle!,
-                    style: Theme.of(context).textTheme.subtitle1,
-                  )
-                : null,
-          ),
-          if (showDivider)
-            Divider(
-              color: Theme.of(context).accentColor.withOpacity(0.5),
-              thickness: 1,
-            ),
-        ],
+      child: ListTile(
+        onLongPress: this.onLongPress as void Function()?,
+        tileColor: backgroundColor,
+        onTap: this.onTap as void Function()?,
+        leading: leading,
+        title: Text(
+          this.title!,
+          style: Theme.of(context).textTheme.bodyText1,
+        ),
+        trailing: this.trailing,
+        subtitle: subtitle != null
+            ? Text(
+                subtitle!,
+                style: Theme.of(context).textTheme.subtitle1,
+              )
+            : null,
+        isThreeLine: isThreeLine,
       ),
     );
   }
@@ -599,7 +576,7 @@ class SettingsTextField extends StatelessWidget {
                   placeholder: placeholder ?? "Enter your text here",
                   padding: EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
                   placeholderStyle: Theme.of(context).textTheme.subtitle1,
-                  autofocus: SettingsManager().settings.autoOpenKeyboard,
+                  autofocus: SettingsManager().settings.autoOpenKeyboard.value,
                   decoration: BoxDecoration(
                     color: Theme.of(context).backgroundColor,
                     border: Border.all(
@@ -622,93 +599,95 @@ class SettingsTextField extends StatelessWidget {
   }
 }
 
-class SettingsSwitch extends StatefulWidget {
+class SettingsSwitch extends StatelessWidget {
   SettingsSwitch({
     Key? key,
     required this.initialVal,
-    this.onChanged,
+    required this.onChanged,
     required this.title,
+    this.backgroundColor,
+    this.subtitle,
   }) : super(key: key);
   final bool initialVal;
-  final Function(bool)? onChanged;
+  final Function(bool) onChanged;
   final String title;
-
-  @override
-  _SettingsSwitchState createState() => _SettingsSwitchState();
-}
-
-class _SettingsSwitchState extends State<SettingsSwitch> {
-  bool? _value;
-
-  @override
-  void initState() {
-    super.initState();
-    _value = widget.initialVal;
-  }
+  final Color? backgroundColor;
+  final String? subtitle;
 
   @override
   Widget build(BuildContext context) {
-    return SwitchListTile(
-      title: Text(
-        widget.title,
-        style: Theme.of(context).textTheme.bodyText1,
+    return Container(
+      color: backgroundColor,
+      child: SwitchListTile(
+        tileColor: backgroundColor,
+        title: Text(
+          title,
+          style: Theme.of(context).textTheme.bodyText1,
+        ),
+        subtitle: subtitle != null ? Text(
+          subtitle!,
+          style: Theme.of(context).textTheme.subtitle1,
+        ) : null,
+        value: initialVal,
+        activeColor: Theme.of(context).primaryColor,
+        activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
+        inactiveTrackColor: backgroundColor == Theme.of(context).accentColor
+            ? Theme.of(context).backgroundColor.withOpacity(0.6) : Theme.of(context).accentColor.withOpacity(0.6),
+        inactiveThumbColor: backgroundColor == Theme.of(context).accentColor
+            ? Theme.of(context).backgroundColor : Theme.of(context).accentColor,
+        onChanged: onChanged,
       ),
-      value: _value!,
-      activeColor: Theme.of(context).primaryColor,
-      activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
-      inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
-      inactiveThumbColor: Theme.of(context).accentColor,
-      onChanged: (bool val) {
-        widget.onChanged!(val);
-
-        if (!this.mounted) return;
-
-        setState(() {
-          _value = val;
-        });
-      },
     );
   }
 }
 
-class SettingsOptions<T> extends StatefulWidget {
+class SettingsOptions<T extends Object> extends StatelessWidget {
   SettingsOptions({
     Key? key,
     required this.onChanged,
     required this.options,
+    this.cupertinoCustomWidgets,
     required this.initial,
     this.textProcessing,
     required this.title,
     this.subtitle,
-    this.showDivider = true,
     this.capitalize = true,
+    this.backgroundColor,
+    this.secondaryColor,
   }) : super(key: key);
   final String title;
-  final Function(dynamic) onChanged;
+  final void Function(T?) onChanged;
   final List<T> options;
+  final Iterable<Widget>? cupertinoCustomWidgets;
   final T initial;
-  final String Function(dynamic)? textProcessing;
-  final bool showDivider;
+  final String Function(T)? textProcessing;
   final String? subtitle;
   final bool capitalize;
-
-  @override
-  _SettingsOptionsState createState() => _SettingsOptionsState();
-}
-
-class _SettingsOptionsState<T> extends State<SettingsOptions<T>> {
-  late T currentVal;
-
-  @override
-  void initState() {
-    super.initState();
-    currentVal = widget.initial;
-  }
+  final Color? backgroundColor;
+  final Color? secondaryColor;
 
   @override
   Widget build(BuildContext context) {
-    return Column(children: [
-      Padding(
+    if (SettingsManager().settings.skin.value == Skins.iOS) {
+      final texts = options.map((e) => Text(capitalize ? textProcessing!(e).capitalize! : textProcessing!(e)));
+      final map = Map<T, Widget>.fromIterables(options, cupertinoCustomWidgets ?? texts);
+      return Container(
+        color: backgroundColor,
+        padding: EdgeInsets.symmetric(horizontal: 13),
+        height: 50,
+        child: CupertinoSlidingSegmentedControl<T>(
+          children: map,
+          groupValue: initial,
+          thumbColor: secondaryColor != null && secondaryColor == backgroundColor
+              ? secondaryColor!.lightenOrDarken(20) : secondaryColor ?? Colors.white,
+          backgroundColor: backgroundColor ?? CupertinoColors.tertiarySystemFill,
+          onValueChanged: onChanged,
+        ),
+      );
+    }
+    return Container(
+      color: backgroundColor,
+      child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -719,21 +698,20 @@ class _SettingsOptionsState<T> extends State<SettingsOptions<T>> {
                 children: [
                   Container(
                     child: Text(
-                      widget.title,
+                      title,
                       style: Theme.of(context).textTheme.bodyText1,
                     ),
                   ),
-                  (widget.subtitle != null)
+                  (subtitle != null)
                       ? Container(
-                          child: Padding(
-                            padding: EdgeInsets.only(top: 3.0),
-                            child: Text(
-                              widget.subtitle ?? "",
-                              style: Theme.of(context).textTheme.subtitle1,
-                            ),
+                        child: Padding(
+                          padding: EdgeInsets.only(top: 3.0),
+                          child: Text(
+                            subtitle ?? "",
+                            style: Theme.of(context).textTheme.subtitle1,
                           ),
-                        )
-                      : Container(),
+                        ),
+                      ) : Container(),
                 ]),
             Container(
               padding: EdgeInsets.symmetric(horizontal: 9),
@@ -749,26 +727,17 @@ class _SettingsOptionsState<T> extends State<SettingsOptions<T>> {
                       Icons.arrow_drop_down,
                       color: Theme.of(context).textTheme.bodyText1!.color,
                     ),
-                    value: currentVal,
-                    items: widget.options.map<DropdownMenuItem<T>>((e) {
+                    value: initial,
+                    items: options.map<DropdownMenuItem<T>>((e) {
                       return DropdownMenuItem(
                         value: e,
                         child: Text(
-                          widget.capitalize ? widget.textProcessing!(e).capitalize! : widget.textProcessing!(e),
+                          capitalize ? textProcessing!(e).capitalize! : textProcessing!(e),
                           style: Theme.of(context).textTheme.bodyText1,
                         ),
                       );
                     }).toList(),
-                    onChanged: (T? val) {
-                      widget.onChanged(val);
-
-                      if (!this.mounted || val == null) return;
-
-                      setState(() {
-                        currentVal = val;
-                      });
-                      //
-                    },
+                    onChanged: onChanged,
                   ),
                 ),
               ),
@@ -776,27 +745,23 @@ class _SettingsOptionsState<T> extends State<SettingsOptions<T>> {
           ],
         ),
       ),
-      (widget.showDivider)
-          ? Divider(
-              color: Theme.of(context).accentColor.withOpacity(0.5),
-              thickness: 1,
-            )
-          : Container()
-    ]);
+    );
   }
 }
 
-class SettingsSlider extends StatefulWidget {
-  SettingsSlider(
-      {required this.startingVal,
-      this.update,
-      required this.text,
-      this.formatValue,
-      required this.min,
-      required this.max,
-      required this.divisions,
-      Key? key})
-      : super(key: key);
+class SettingsSlider extends StatelessWidget {
+  SettingsSlider({
+    required this.startingVal,
+    this.update,
+    required this.text,
+    this.formatValue,
+    required this.min,
+    required this.max,
+    required this.divisions,
+    this.leading,
+    this.backgroundColor,
+    Key? key
+  }) : super(key: key);
 
   final double startingVal;
   final Function(double val)? update;
@@ -805,59 +770,40 @@ class SettingsSlider extends StatefulWidget {
   final double min;
   final double max;
   final int divisions;
-
-  @override
-  _SettingsSliderState createState() => _SettingsSliderState();
-}
-
-class _SettingsSliderState extends State<SettingsSlider> {
-  double currentVal = 500;
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.startingVal > 0 && widget.startingVal < 5000) {
-      currentVal = widget.startingVal;
-    }
-  }
+  final Widget? leading;
+  final Color? backgroundColor;
 
   @override
   Widget build(BuildContext context) {
-    String value = currentVal.toString();
-    if (widget.formatValue != null) {
-      value = widget.formatValue!(currentVal);
+    String value = startingVal.toString();
+    if (formatValue != null) {
+      value = formatValue!(startingVal);
     }
 
-    return Column(
-      children: <Widget>[
-        ListTile(
-          title: Text(
-            "${widget.text}: $value",
-            style: Theme.of(context).textTheme.bodyText1,
-          ),
-          subtitle: Slider(
-            activeColor: Theme.of(context).primaryColor,
-            inactiveColor: Theme.of(context).primaryColor.withOpacity(0.2),
-            value: currentVal,
-            onChanged: (double value) {
-              if (!this.mounted) return;
-
-              setState(() {
-                currentVal = value;
-                widget.update!(currentVal);
-              });
-            },
-            label: value,
-            divisions: widget.divisions,
-            min: widget.min,
-            max: widget.max,
-          ),
+    return Container(
+      color: backgroundColor,
+      child: ListTile(
+        tileColor: backgroundColor,
+        leading: leading,
+        trailing: Text(value),
+        title: SettingsManager().settings.skin.value == Skins.iOS ? CupertinoSlider(
+          activeColor: Theme.of(context).primaryColor,
+          value: startingVal,
+          onChanged: update,
+          divisions: divisions,
+          min: min,
+          max: max,
+        ) : Slider(
+          activeColor: Theme.of(context).primaryColor,
+          inactiveColor: Theme.of(context).primaryColor.withOpacity(0.2),
+          value: startingVal,
+          onChanged: update,
+          label: value,
+          divisions: divisions,
+          min: min,
+          max: max,
         ),
-        Divider(
-          color: Theme.of(context).accentColor.withOpacity(0.5),
-          thickness: 1,
-        ),
-      ],
+      ),
     );
   }
 }

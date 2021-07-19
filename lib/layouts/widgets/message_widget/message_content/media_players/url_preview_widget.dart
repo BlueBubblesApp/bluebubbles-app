@@ -110,7 +110,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget> with TickerProvider
     // If the data isn't empty, save/update it in the DB
     if (MetadataHelper.isNotEmpty(meta)) {
       // If pre-caching is enabled, fetch the image and save it
-      if (SettingsManager().settings.preCachePreviewImages && !isNullOrEmpty(meta!.image)!) {
+      if (SettingsManager().settings.preCachePreviewImages.value && !isNullOrEmpty(meta!.image)!) {
         // Save from URL
         File? newFile = await saveImageFromUrl(widget.message.guid!, meta.image!);
 
@@ -192,8 +192,8 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget> with TickerProvider
           filterQuality: FilterQuality.low, errorBuilder: (context, error, stackTrace) => Container());
     }
 
-    final bool hideContent = SettingsManager().settings.redactedMode && SettingsManager().settings.hideMessageContent;
-    final bool hideType = SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachmentTypes;
+    final bool hideContent = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value;
+    final bool hideType = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachmentTypes.value;
 
     List<Widget> items = [
       mainImage,

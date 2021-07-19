@@ -39,8 +39,8 @@ class _TextInputURLState extends State<TextInputURL> {
       return;
     }
 
-    copy.serverAddress = addr;
-    copy.guidAuthKey = password;
+    copy.serverAddress.value = addr;
+    copy.guidAuthKey.value = password;
     await SettingsManager().saveSettings(copy);
     try {
       await SocketManager().startSocketIO(forceNewConnection: true, catchException: false);

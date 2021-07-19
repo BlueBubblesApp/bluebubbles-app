@@ -39,7 +39,7 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
   Uint8List? thumbnail;
   PlayerStatus status = PlayerStatus.NONE;
   bool hasListener = false;
-  bool muted = true;
+  RxBool muted = true.obs;
 
   @override
   void initState() {
@@ -115,12 +115,12 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
             controller = null;
             CurrentChat.of(context)?.changeCurrentPlayingVideo({});
           }
-          if (SettingsManager().settings.lowMemoryMode) {
+          if (SettingsManager().settings.lowMemoryMode.value) {
             CurrentChat.of(context)?.clearImageData(widget.attachment);
           }
         } else if (!isVisible) {
           isVisible = true;
-          if (SettingsManager().settings.lowMemoryMode) {
+          if (SettingsManager().settings.lowMemoryMode.value) {
             getThumbnail();
           }
         }
@@ -235,10 +235,8 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
                           absorbing: !showPlayPauseOverlay,
                           child: GestureDetector(
                             onTap: () {
-                              setState(() {
-                                muted = !muted;
-                              });
-                              controller.setVolume(muted ? 0.0 : 1.0);
+                              muted = muted.toggle() as RxBool;
+                              controller.setVolume(muted.value ? 0.0 : 1.0);
                             },
                             child: Container(
                               decoration: BoxDecoration(
@@ -246,11 +244,11 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
                                 borderRadius: BorderRadius.circular(40),
                               ),
                               padding: EdgeInsets.all(5),
-                              child: Icon(
-                                muted ? Icons.volume_mute : Icons.volume_up,
+                              child: Obx(() => Icon(
+                                muted.value ? Icons.volume_mute : Icons.volume_up,
                                 color: Colors.white,
                                 size: 15,
-                              ),
+                              )),
                             ),
                           ),
                         ),
@@ -268,7 +266,7 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
         onTap: () async {
           VideoPlayerController controller = VideoPlayerController.file(widget.file);
           await controller.initialize();
-          controller.setVolume(muted ? 0.0 : 1.0);
+          controller.setVolume(muted.value ? 0.0 : 1.0);
           controller.play();
           CurrentChat.of(context)!.changeCurrentPlayingVideo({widget.attachment.guid!: controller});
         },
@@ -300,9 +298,7 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
                   padding: const EdgeInsets.only(bottom: 8.0, right: 8.0),
                   child: GestureDetector(
                     onTap: () {
-                      setState(() {
-                        muted = !muted;
-                      });
+                      muted = muted.toggle() as RxBool;
                     },
                     child: Container(
                       decoration: BoxDecoration(
@@ -310,11 +306,11 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
                         borderRadius: BorderRadius.circular(40),
                       ),
                       padding: EdgeInsets.all(5),
-                      child: Icon(
-                        muted ? Icons.volume_mute : Icons.volume_up,
+                      child: Obx(() => Icon(
+                        muted.value ? Icons.volume_mute : Icons.volume_up,
                         color: Colors.white,
                         size: 15,
-                      ),
+                      )),
                     ),
                   ),
                 ),

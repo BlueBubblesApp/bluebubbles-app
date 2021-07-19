@@ -1,7 +1,9 @@
 import 'dart:typed_data';
 
+import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/blue_bubbles_text_field.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/material.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:photo_manager/photo_manager.dart';
@@ -20,22 +22,22 @@ class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepA
   String? path;
 
   @override
-  void initState() {
-    super.initState();
-    load();
-  }
-
-  @override
   void didChangeDependencies() async {
     super.didChangeDependencies();
     path = (await widget.data.file)!.path;
+
     BlueBubblesTextField.of(context)!.stream.listen((event) {
       if (this.mounted) setState(() {});
     });
+
+    load();
   }
 
   Future<void> load() async {
-    image = await widget.data.thumbDataWithSize(800, 800, quality: SettingsManager().compressionQuality);
+    image = await AttachmentHelper.compressAttachment(
+        new Attachment(mimeType: "image/jpg", transferName: path, width: 800, height: 800), path!);
+
+    // image = await widget.data.thumbDataWithSize(800, 800, quality: SettingsManager().compressionQuality);
     if (this.mounted) setState(() {});
   }
 
@@ -45,9 +47,10 @@ class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepA
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final bool hideAttachments = SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachments;
+    final bool hideAttachments =
+        SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachments.value;
     final bool hideAttachmentTypes =
-        SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachmentTypes;
+        SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachmentTypes.value;
     return image != null
         ? AnimatedContainer(
             duration: Duration(milliseconds: 250),

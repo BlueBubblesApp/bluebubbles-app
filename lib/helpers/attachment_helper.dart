@@ -4,6 +4,8 @@ import 'dart:ui';
 
 import 'package:bluebubbles/helpers/simple_vcard_parser.dart';
 import 'package:contacts_service/contacts_service.dart';
+import 'package:exif/exif.dart';
+import 'package:flutter_native_image/flutter_native_image.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -70,14 +72,10 @@ class AttachmentHelper {
 
       if (query.contains("\\")) {
         return AppleLocation(
-            latitude: double.tryParse(query.split("\\,")[1]),
-            longitude: double.tryParse(query.split("\\,")[0])
-        );
+            latitude: double.tryParse(query.split("\\,")[1]), longitude: double.tryParse(query.split("\\,")[0]));
       } else {
         return AppleLocation(
-            latitude: double.tryParse(query.split(",")[1]),
-            longitude: double.tryParse(query.split(",")[0])
-        );
+            latitude: double.tryParse(query.split(",")[1]), longitude: double.tryParse(query.split(",")[0]));
       }
     } catch (ex) {
       debugPrint("Failed to parse location!");
@@ -200,7 +198,8 @@ class AttachmentHelper {
 
     if (SocketManager().attachmentDownloaders.containsKey(attachment.guid)) {
       return SocketManager().attachmentDownloaders[attachment.guid];
-    } else if (FileSystemEntity.typeSync(pathName) != FileSystemEntityType.notFound) {
+    } else if (FileSystemEntity.typeSync(pathName) != FileSystemEntityType.notFound ||
+        attachment.guid == "redacted-mode-demo-attachment") {
       return File(pathName);
     } else if (attachment.mimeType == null || attachment.mimeType!.startsWith("text/")) {
       return AttachmentDownloader(attachment);
@@ -233,9 +232,9 @@ class AttachmentHelper {
     // If auto-download is enabled
     // and (only wifi download is disabled or
     // only wifi download enabled, and we have wifi)
-    return (SettingsManager().settings.autoDownload &&
-        (!SettingsManager().settings.onlyWifiDownload ||
-            (SettingsManager().settings.onlyWifiDownload && status == ConnectivityResult.wifi)));
+    return (SettingsManager().settings.autoDownload.value &&
+        (!SettingsManager().settings.onlyWifiDownload.value ||
+            (SettingsManager().settings.onlyWifiDownload.value && status == ConnectivityResult.wifi)));
   }
 
   static Future<void> setDimensions(Attachment attachment, {Uint8List? data}) async {
@@ -283,5 +282,48 @@ class AttachmentHelper {
 
     // 2. Redownload the attachment
     AttachmentDownloader(attachment, onComplete: onComplete, onError: onError);
+  }
+
+  static Future<Uint8List?> compressAttachment(Attachment attachment, String filePath, {int? qualityOverride}) async {
+    int quality = qualityOverride ?? SettingsManager().compressionQuality;
+
+    // Check if the compressed file exists
+    File cachedFile = new File("$filePath.${quality.toString()}.compressed");
+    if (cachedFile.existsSync()) {
+      return cachedFile.readAsBytes();
+    }
+
+    // Read the image properties using FlutterNativeImage
+    ImageProperties properties = await FlutterNativeImage.getImageProperties(filePath);
+    if (properties.height != 0 && properties.width != 0) {
+      // Save the new height in the attachment
+      attachment.height = properties.height;
+      attachment.width = properties.width;
+    }
+
+    // If we have no metadata, fetch it from the file
+    if (attachment.metadata == null) {
+      attachment.metadata = {};
+    }
+
+    // Map the EXIF to the metadata
+    Map<String, IfdTag> exif = await readExifFromFile(new File(filePath));
+    for (var item in exif.entries) {
+      attachment.metadata![item.key] = item.value.printable;
+    }
+
+    // Compress the file
+    File compressedFile = await FlutterNativeImage.compressImage(filePath,
+        quality: quality, percentage: 100, targetWidth: attachment.width!, targetHeight: attachment.height!);
+
+    // Read the compressed data, then cache it
+    Uint8List data = await compressedFile.readAsBytes();
+    cachedFile.writeAsBytes(data);
+
+    // If we should update the attachment data, do it right before we return, no awaiting
+    attachment.update();
+
+    // Return the bytes
+    return data;
   }
 }

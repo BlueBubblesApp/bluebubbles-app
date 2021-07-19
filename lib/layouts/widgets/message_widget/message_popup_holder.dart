@@ -78,18 +78,17 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
   void sendReaction(String type) {
     debugPrint("Sending reaction type: " + type);
     ActionHandler.sendReaction(CurrentChat.of(context)!.chat, widget.message, type);
-    Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       key: containerKey,
-      onDoubleTap: SettingsManager().settings.doubleTapForDetails && !widget.message.guid!.startsWith('temp')
+      onDoubleTap: SettingsManager().settings.doubleTapForDetails.value && !widget.message.guid!.startsWith('temp')
           ? this.openMessageDetails
-          : SettingsManager().settings.enableQuickTapback
+          : SettingsManager().settings.enableQuickTapback.value
               ? () {
-                  this.sendReaction(SettingsManager().settings.quickTapbackType);
+                  this.sendReaction(SettingsManager().settings.quickTapbackType.value);
                 }
               : null,
       onLongPress: this.openMessageDetails,

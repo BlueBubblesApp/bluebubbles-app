@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
@@ -9,7 +10,6 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
 class ImageWidget extends StatefulWidget {
@@ -38,38 +38,22 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
     initGate = true;
 
     // Try to get the image data from the "cache"
-    data = CurrentChat.of(context)!.getImageData(widget.attachment);
+    data = CurrentChat.of(context)?.getImageData(widget.attachment);
     if (data == null) {
       // If it's an image, compress the image when loading it
-      if (AttachmentHelper.canCompress(widget.attachment)) {
-        int minWidth =
-            (widget.attachment.width != null && widget.attachment.width! > 0) ? widget.attachment.width! : 1920;
-        int minHeight =
-            (widget.attachment.height != null && widget.attachment.height! > 0) ? widget.attachment.height! : 1080;
-
-        CompressFormat format = CompressFormat.png;
-        if (widget.attachment.transferName!.endsWith(".heic")) {
-          format = CompressFormat.heic;
-        } else if (widget.attachment.transferName!.endsWith(".jpg") ||
-            widget.attachment.transferName!.endsWith(".jpeg")) {
-          format = CompressFormat.jpeg;
-        } else if (widget.attachment.transferName!.endsWith(".webp")) {
-          format = CompressFormat.webp;
-        }
-
-        data = await FlutterImageCompress.compressWithFile(widget.file.absolute.path,
-            quality: SettingsManager().compressionQuality,
-            format: format,
-            keepExif: true,
-            autoCorrectionAngle: false,
-            minHeight: minHeight,
-            minWidth: minWidth);
-
+      if (AttachmentHelper.canCompress(widget.attachment) &&
+          widget.attachment.guid != "redacted-mode-demo-attachment") {
+        data = await AttachmentHelper.compressAttachment(widget.attachment, widget.file.absolute.path);
         // All other attachments can be held in memory as bytes
       } else {
+        if (widget.attachment.guid == "redacted-mode-demo-attachment") {
+          data = (await rootBundle.load(widget.file.path)).buffer.asUint8List();
+          return;
+        }
         data = await widget.file.readAsBytes();
       }
-      if (data == null) return;
+
+      if (data == null || CurrentChat.of(context) == null) return;
       CurrentChat.of(context)?.saveImageData(data!, widget.attachment);
       if (this.mounted) setState(() {});
     }
@@ -83,7 +67,7 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
     return VisibilityDetector(
       key: Key(widget.attachment.guid!),
       onVisibilityChanged: (info) {
-        if (!SettingsManager().settings.lowMemoryMode) return;
+        if (!SettingsManager().settings.lowMemoryMode.value) return;
         if (info.visibleFraction == 0 && visible && !navigated) {
           visible = false;
           CurrentChat.of(context)?.clearImageData(widget.attachment);
@@ -97,8 +81,12 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
         children: <Widget>[
           Container(
             constraints: BoxConstraints(
-              maxWidth: context.width / 2,
-              maxHeight: context.height / 2,
+              maxWidth: widget.attachment.guid == "redacted-mode-demo-attachment"
+                  ? widget.attachment.width!.toDouble()
+                  : context.width / 2,
+              maxHeight: widget.attachment.guid == "redacted-mode-demo-attachment"
+                  ? widget.attachment.height!.toDouble()
+                  : context.height / 2,
             ),
             child: buildSwitcher(),
           ),
@@ -137,27 +125,23 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
         child: data != null
             ? Image.memory(
                 data!,
-                //width: widget.attachment.width.toDouble(),
-                //height: widget.attachment.height.toDouble(),
                 frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
                   if (wasSynchronouslyLoaded) return child;
+                  if (data == null) return buildPlaceHolder();
 
-                  return Stack(children: [
-                    buildPlaceHolder(),
-                    AnimatedOpacity(
-                      opacity: (frame == null) ? 0 : 1,
-                      child: child,
-                      duration: const Duration(milliseconds: 250),
-                      curve: Curves.easeInOut,
-                    )
-                  ]);
+                  return AnimatedOpacity(
+                    opacity: (frame == null && widget.attachment.guid != "redacted-mode-demo-attachment") ? 0 : 1,
+                    child: child,
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeInOut,
+                  );
                 },
               )
             : buildPlaceHolder(),
       );
 
   Widget buildPlaceHolder() {
-    if (widget.attachment.hasValidSize) {
+    if (widget.attachment.hasValidSize && data == null) {
       return AspectRatio(
         aspectRatio: widget.attachment.width!.toDouble() / widget.attachment.height!.toDouble(),
         child: Container(

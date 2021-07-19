@@ -35,7 +35,7 @@ class SentMessageHelper {
         ? Theme.of(context).primaryColor.darkenAmount(0.2)
         : Theme.of(context).primaryColor;
 
-    final bool hideContent = SettingsManager().settings.redactedMode && SettingsManager().settings.hideEmojis;
+    final bool hideContent = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideEmojis.value;
 
     Widget msg;
     bool hasReactions = (message?.getReactions() ?? []).length > 0;

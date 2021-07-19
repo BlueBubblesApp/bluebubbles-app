@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/theming/theming_color_picker_popup.dart';
@@ -25,7 +26,7 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
         child: Material(
-          color: whiteLightTheme.accentColor,
+          color: widget.entry.color?.lightenOrDarken(50) ?? whiteLightTheme.accentColor,
           child: InkWell(
             onTap: () {
               BuildContext _context = context;
@@ -67,7 +68,7 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
                     padding: const EdgeInsets.all(8.0),
                     child: Text(
                       widget.entry.name!,
-                      style: whiteLightTheme.textTheme.headline2,
+                      style: whiteLightTheme.textTheme.headline2?.copyWith(color: widget.entry.color),
                     ),
                   ),
                 ],

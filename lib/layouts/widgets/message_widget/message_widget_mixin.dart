@@ -58,9 +58,9 @@ abstract class MessageWidgetMixin {
     List<InlineSpan> textSpans = <InlineSpan>[];
 
     final bool generateContent =
-        SettingsManager().settings.redactedMode && SettingsManager().settings.generateFakeMessageContent;
+        SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeMessageContent.value;
     final bool hideContent =
-        SettingsManager().settings.redactedMode && SettingsManager().settings.hideMessageContent && !generateContent;
+        SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value && !generateContent;
 
     if (message != null && !isEmptyString(message.text)) {
       RegExp exp = new RegExp(
@@ -75,7 +75,7 @@ abstract class MessageWidgetMixin {
 
       TextStyle? textStyle = Theme.of(context).textTheme.bodyText2;
       if (!message.isFromMe!) {
-        if (SettingsManager().settings.colorfulBubbles) {
+        if (SettingsManager().settings.colorfulBubbles.value) {
           if (!isNullOrEmpty(colors)!) {
             bool dark = colors![0].computeLuminance() < 0.179;
             if (!dark) {

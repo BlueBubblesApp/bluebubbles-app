@@ -391,7 +391,7 @@ class Chat {
         message.metadata = meta!.toJson();
 
         // If pre-caching is enabled, fetch the image and save it
-        if (SettingsManager().settings.preCachePreviewImages &&
+        if (SettingsManager().settings.preCachePreviewImages.value &&
             message.metadata!.containsKey("image") &&
             !isNullOrEmpty(message.metadata!["image"])!) {
           // Save from URL
@@ -805,7 +805,7 @@ class Chat {
     if (res.isEmpty) return [];
 
     Iterable<Chat> output = res.map((c) => Chat.fromMap(c));
-    bool shouldFilter = !SettingsManager().settings.filteredChatList;
+    bool shouldFilter = !SettingsManager().settings.filteredChatList.value;
     if (shouldFilter) {
       output = output.where((item) => !item.isFiltered!);
     }

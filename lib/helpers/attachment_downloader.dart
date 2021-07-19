@@ -25,7 +25,7 @@ class AttachmentDownloader {
 
   AttachmentDownloader(Attachment attachment, {Function? onComplete, Function? onError, bool autoFetch = true}) {
     // Set default chunk size based on the current settings
-    _chunkSize = SettingsManager().settings.chunkSize * 1024;
+    _chunkSize = SettingsManager().settings.chunkSize.value * 1024;
     _attachment = attachment;
     _onComplete = onComplete;
 

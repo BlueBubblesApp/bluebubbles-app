@@ -143,7 +143,7 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
   }
 
   List<Widget> _buildCameraStack(BuildContext context) {
-    if (SettingsManager().settings.redactedMode)
+    if (SettingsManager().settings.redactedMode.value)
       return [
         Positioned.fill(
           child: Container(

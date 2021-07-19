@@ -17,14 +17,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-class AboutPanel extends StatefulWidget {
-  AboutPanel({Key? key}) : super(key: key);
-
-  @override
-  _AboutPanelState createState() => _AboutPanelState();
-}
-
-class _AboutPanelState extends State<AboutPanel> {
+class AboutPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
@@ -105,7 +98,6 @@ class _AboutPanelState extends State<AboutPanel> {
                       iosIcon: CupertinoIcons.money_dollar_circle,
                       materialIcon: Icons.attach_money,
                     ),
-                    showDivider: false,
                   ),
                   Container(
                     color: tileColor,
@@ -124,7 +116,6 @@ class _AboutPanelState extends State<AboutPanel> {
                       iosIcon: CupertinoIcons.globe,
                       materialIcon: Icons.language,
                     ),
-                    showDivider: false,
                   ),
                   Container(
                     color: tileColor,
@@ -143,7 +134,6 @@ class _AboutPanelState extends State<AboutPanel> {
                       iosIcon: CupertinoIcons.chevron_left_slash_chevron_right,
                       materialIcon: Icons.code,
                     ),
-                    showDivider: false,
                   ),
                   Container(
                     color: tileColor,
@@ -164,7 +154,6 @@ class _AboutPanelState extends State<AboutPanel> {
                       alignment: Alignment.centerRight,
                       width: 32,
                     ),
-                    showDivider: false,
                   ),
                   SettingsHeader(
                       headerColor: headerColor,
@@ -225,7 +214,6 @@ class _AboutPanelState extends State<AboutPanel> {
                       iosIcon: CupertinoIcons.doc_plaintext,
                       materialIcon: Icons.article,
                     ),
-                    showDivider: false,
                   ),
                   Container(
                     color: tileColor,
@@ -323,7 +311,6 @@ class _AboutPanelState extends State<AboutPanel> {
                       iosIcon: CupertinoIcons.person_alt,
                       materialIcon: Icons.person,
                     ),
-                    showDivider: false,
                   ),
                   Container(
                     color: tileColor,
@@ -350,7 +337,6 @@ class _AboutPanelState extends State<AboutPanel> {
                       iosIcon: CupertinoIcons.info_circle,
                       materialIcon: Icons.info,
                     ),
-                    showDivider: false,
                   ),
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
                   Container(

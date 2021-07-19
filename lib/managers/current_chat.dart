@@ -124,7 +124,7 @@ class CurrentChat {
       // Check and see if we need to unfocus the keyboard
       // The +100 is relatively arbitrary. It was the threshold I thought was good
       if (keyboardOpen &&
-          SettingsManager().settings.hideKeyboardOnScroll &&
+          SettingsManager().settings.hideKeyboardOnScroll.value &&
           scrollController.offset > keyboardOpenOffset + 100) {
         EventDispatcher().emit("unfocus-keyboard", null);
       }
@@ -354,7 +354,7 @@ class CurrentChat {
       duration: const Duration(milliseconds: 300),
     );
 
-    if (SettingsManager().settings.openKeyboardOnSTB) {
+    if (SettingsManager().settings.openKeyboardOnSTB.value) {
       EventDispatcher().emit("focus-keyboard", null);
       keyboardOpenOffset = 0;
     }

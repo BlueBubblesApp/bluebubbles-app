@@ -15,7 +15,6 @@ import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image_size_getter/image_size_getter.dart';
 import 'package:path/path.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
@@ -60,12 +59,11 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
 
   void getCompressedImage() {
     String path = AttachmentHelper.getAttachmentPath(widget.attachment);
-    FlutterImageCompress.compressWithFile(path, quality: SettingsManager().compressionQuality).then((data) {
-      if (this.mounted) {
-        setState(() {
-          previewImage = data;
-        });
-      }
+    AttachmentHelper.compressAttachment(widget.attachment, path).then((data) {
+      if (!this.mounted) return;
+      setState(() {
+        previewImage = data;
+      });
     });
   }
 
@@ -75,9 +73,10 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
     File file = new File(
       "${SettingsManager().appDocDir.path}/attachments/${attachment.guid}/${attachment.transferName}",
     );
-    final bool hideAttachments = SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachments;
+    final bool hideAttachments =
+        SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachments.value;
     final bool hideAttachmentTypes =
-        SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachmentTypes;
+        SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachmentTypes.value;
     if (hideAttachments && !hideAttachmentTypes)
       return Container(
         alignment: Alignment.center,

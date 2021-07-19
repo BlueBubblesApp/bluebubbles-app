@@ -8,7 +8,6 @@ import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
-import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
@@ -16,32 +15,22 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class CustomAvatarPanel extends StatefulWidget {
-  CustomAvatarPanel({Key? key}) : super(key: key);
-
+class CustomAvatarPanelBinding implements Bindings {
   @override
-  _CustomAvatarPanelState createState() => _CustomAvatarPanelState();
+  void dependencies() {
+    Get.lazyPut<CustomAvatarPanelController>(() => CustomAvatarPanelController());
+  }
 }
 
-class _CustomAvatarPanelState extends State<CustomAvatarPanel> {
+class CustomAvatarPanelController extends GetxController {
   late Settings _settingsCopy;
   bool isFetching = false;
-  List<Widget> handleWidgets = [];
+  RxList<Widget> handleWidgets = <Widget>[].obs;
 
   @override
-  void initState() {
-    super.initState();
+  void onInit() {
+    super.onInit();
     _settingsCopy = SettingsManager().settings;
-
-    // Listen for any incoming events
-    EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (!event.containsKey("type")) return;
-
-      if (event["type"] == 'theme-update' && this.mounted) {
-        setState(() {});
-      }
-    });
-
     getCustomHandles();
   }
 
@@ -58,17 +47,24 @@ class _CustomAvatarPanelState extends State<CustomAvatarPanel> {
     for (var item in handles) {
       items.add(SettingsTile(
         title: ContactManager().getCachedContactSync(item.address ?? "")?.displayName ?? await formatPhoneNumber(item),
-        subTitle: "Tap avatar to change color",
+        subtitle: "Tap avatar to change color",
         trailing: ContactAvatarWidget(handle: item),
       ));
     }
 
-    if (!isNullOrEmpty(items)! && this.mounted) {
-      setState(() {
-        this.handleWidgets = items;
-      });
+    if (!isNullOrEmpty(items)!) {
+      this.handleWidgets.value = items;
     }
   }
+
+  @override
+  void dispose() {
+    SettingsManager().saveSettings(_settingsCopy);
+    super.dispose();
+  }
+}
+
+class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
 
   @override
   Widget build(BuildContext context) {
@@ -105,22 +101,22 @@ class _CustomAvatarPanelState extends State<CustomAvatarPanel> {
             parent: CustomBouncingScrollPhysics(),
           ),
           slivers: <Widget>[
-            SliverList(
+            Obx(() => SliverList(
               delegate: SliverChildListDelegate(
                 <Widget>[
                   Container(padding: EdgeInsets.only(top: 5.0)),
-                  if (this.handleWidgets.length == 0)
+                  if (controller.handleWidgets.length == 0)
                     Container(
                         padding: EdgeInsets.all(30),
                         child: Text(
-                          "No avatars have been customized! To get started, tap an avatar.",
-                          style: Theme.of(context).textTheme.subtitle1,
+                          "No avatars have been customized! To get started, turn on colorful avatars and tap an avatar in the conversation details page.",
+                          style: Theme.of(context).textTheme.subtitle1?.copyWith(height: 1.5),
                           textAlign: TextAlign.center,
                         )),
-                  for (Widget handleWidget in this.handleWidgets) handleWidget
+                  for (Widget handleWidget in controller.handleWidgets) handleWidget
                 ],
               ),
-            ),
+            )),
             SliverList(
               delegate: SliverChildListDelegate(
                 <Widget>[],
@@ -130,15 +126,5 @@ class _CustomAvatarPanelState extends State<CustomAvatarPanel> {
         ),
       ),
     );
-  }
-
-  void saveSettings() {
-    SettingsManager().saveSettings(_settingsCopy);
-  }
-
-  @override
-  void dispose() {
-    saveSettings();
-    super.dispose();
   }
 }

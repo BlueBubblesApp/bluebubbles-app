@@ -48,9 +48,9 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
   @override
   Widget build(BuildContext context) {
     List<Widget> items = [];
-    final bool redactedMode = SettingsManager().settings.redactedMode;
-    final bool hideInfo = redactedMode && SettingsManager().settings.hideContactInfo;
-    final bool generateName = redactedMode && SettingsManager().settings.generateFakeContactNames;
+    final bool redactedMode = SettingsManager().settings.redactedMode.value;
+    final bool hideInfo = redactedMode && SettingsManager().settings.hideContactInfo.value;
+    final bool generateName = redactedMode && SettingsManager().settings.generateFakeContactNames.value;
     widget.selectedContacts.forEachIndexed((index, contact) {
       items.add(
         GestureDetector(

@@ -26,7 +26,7 @@ class _SetupViewState extends State<SetupView> {
   void initState() {
     super.initState();
     SocketManager().connectionStateStream.listen((event) {
-      if (!SettingsManager().settings.finishedSetup && controller.page! > 3) {
+      if (!SettingsManager().settings.finishedSetup.value && controller.page! > 3) {
         switch (event) {
           case SocketState.FAILED:
             showDialog(
