@@ -177,6 +177,7 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                     },
                     initialVal: controller._settingsCopy.enablePrivateAPI.value,
                     title: "Enable Private API Features",
+                    backgroundColor: tileColor,
                   ) : Container(
                       decoration: BoxDecoration(
                         color: tileColor,
