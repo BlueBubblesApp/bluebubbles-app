@@ -88,6 +88,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
           ? this.openMessageDetails
           : SettingsManager().settings.enableQuickTapback.value
               ? () {
+                  HapticFeedback.lightImpact();
                   this.sendReaction(SettingsManager().settings.quickTapbackType.value);
                 }
               : null,
