@@ -704,6 +704,9 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
                   ),
                   (subtitle != null)
                       ? Container(
+                        constraints: BoxConstraints(
+                          maxWidth: context.width * 2/3
+                        ),
                         child: Padding(
                           padding: EdgeInsets.only(top: 3.0),
                           child: Text(

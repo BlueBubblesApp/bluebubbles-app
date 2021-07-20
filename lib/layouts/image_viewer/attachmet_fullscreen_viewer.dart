@@ -4,12 +4,14 @@ import 'dart:math';
 
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/layouts/image_viewer/image_viewer.dart';
 import 'package:bluebubbles/layouts/image_viewer/video_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/attachment_downloader_widget.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import "package:flutter/material.dart";
 import 'package:flutter/services.dart';
@@ -128,6 +130,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
         body: controller != null
             ? PageView.builder(
                 physics: physics,
+                reverse: SettingsManager().settings.fullscreenViewerSwipeDir.value == SwipeDirection.RIGHT,
                 itemCount: widget.currentChat?.chatAttachments.length ?? 1,
                 itemBuilder: (BuildContext context, int index) {
                   debugPrint("Showing index: " + index.toString());
