@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
@@ -32,6 +34,7 @@ class _VideoViewerState extends State<VideoViewer> {
   late VideoPlayerController controller;
   PlayerStatus status = PlayerStatus.NONE;
   bool hasListener = false;
+  RxBool isReloading = false.obs;
 
   @override
   void initState() {
@@ -92,45 +95,161 @@ class _VideoViewerState extends State<VideoViewer> {
 
   @override
   Widget build(BuildContext context) {
-    List<Widget> interactives = [];
-    if (widget.showInteractions) {
-      interactives.addAll([
-        Padding(
-          padding: EdgeInsets.only(top: 50.0, right: 10),
-          child: Align(
-            alignment: Alignment.topRight,
-            child: CupertinoButton(
-              onPressed: () async {
-                await AttachmentHelper.saveToGallery(context, widget.file);
-              },
-              child: Icon(
-                Icons.file_download,
-                color: Colors.white,
+    Widget overlay = AnimatedOpacity(
+      opacity: showPlayPauseOverlay ? 1.0 : 0.0,
+      duration: Duration(milliseconds: 125),
+      child: Container(
+          height: 150.0,
+          width: context.width,
+          color: Colors.black.withOpacity(0.65),
+          child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Padding(
+              padding: EdgeInsets.only(top: 40.0, left: 5),
+              child: CupertinoButton(
+                padding: EdgeInsets.symmetric(horizontal: 5),
+                onPressed: () async {
+                  Navigator.pop(context);
+                },
+                child: Icon(
+                  SettingsManager().settings.skin.value == Skins.iOS ? Icons.arrow_back_ios : Icons.arrow_back,
+                  color: Colors.white,
+                ),
               ),
             ),
-          ),
-        ),
-        Padding(
-          padding: EdgeInsets.only(top: 50.0, right: 70),
-          child: Align(
-            alignment: Alignment.topRight,
-            child: CupertinoButton(
-              onPressed: () {
-                // final Uint8List bytes = await widget.file.readAsBytes();
-                Share.file(
-                  "Shared ${widget.attachment.mimeType!.split("/")[0]} from BlueBubbles: ${widget.attachment.transferName}",
-                  widget.file.path,
-                );
-              },
-              child: Icon(
-                Icons.share,
-                color: Colors.white,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(top: 40.0),
+                  child: CupertinoButton(
+                    padding: EdgeInsets.symmetric(horizontal: 5),
+                    onPressed: () async {
+                      List<Widget> metaWidgets = [];
+                      for (var entry in widget.attachment.metadata?.entries ?? {}.entries) {
+                        metaWidgets.add(RichText(
+                            text: TextSpan(children: [
+                              TextSpan(
+                                  text: "${entry.key}: ",
+                                  style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2)),
+                              TextSpan(text: entry.value.toString(), style: Theme.of(context).textTheme.bodyText1)
+                            ])));
+                      }
+
+                      if (metaWidgets.length == 0) {
+                        metaWidgets.add(Text(
+                          "No metadata available",
+                          style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2),
+                          textAlign: TextAlign.center,
+                        ));
+                      }
+
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: Text(
+                            "Metadata",
+                            style: Theme.of(context).textTheme.headline1,
+                            textAlign: TextAlign.center,
+                          ),
+                          backgroundColor: Theme.of(context).accentColor,
+                          content: SizedBox(
+                            width: context.width * 3 / 5,
+                            height: context.height * 1 / 4,
+                            child: Container(
+                              padding: EdgeInsets.all(10.0),
+                              decoration: BoxDecoration(
+                                  color: Theme.of(context).backgroundColor,
+                                  borderRadius: BorderRadius.all(Radius.circular(10))),
+                              child: ListView(
+                                physics: AlwaysScrollableScrollPhysics(
+                                  parent: BouncingScrollPhysics(),
+                                ),
+                                children: metaWidgets,
+                              ),
+                            ),
+                          ),
+                          actions: [
+                            TextButton(
+                              child: Text(
+                                "Close",
+                                style: Theme.of(context).textTheme.bodyText1!.copyWith(
+                                  color: Theme.of(context).primaryColor,
+                                ),
+                              ),
+                              onPressed: () => Navigator.of(context).pop(),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                    child: Icon(
+                      Icons.info,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.only(top: 40.0),
+                  child: CupertinoButton(
+                    padding: EdgeInsets.symmetric(horizontal: 5),
+                    onPressed: () async {
+                      isReloading.value = true;
+                      CurrentChat.of(context)?.clearImageData(widget.attachment);
+
+                      showSnackbar('In Progress', 'Redownloading attachment. Please wait...');
+                      await AttachmentHelper.redownloadAttachment(widget.attachment, onComplete: () async {
+                        controller.dispose();
+                        controller = new VideoPlayerController.file(widget.file);
+                        await controller.initialize();
+                        isReloading.value = false;
+                        controller.setVolume(SettingsManager().settings.startVideosMutedFullscreen.value ? 0 : 1);
+                        this.createListener(controller);
+                        showPlayPauseOverlay = !controller.value.isPlaying;
+                      }, onError: () {
+                        Navigator.pop(context);
+                      });
+                      if (this.mounted) setState(() {});
+                    },
+                    child: Icon(
+                      Icons.refresh,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.only(top: 40.0),
+                  child: CupertinoButton(
+                    padding: EdgeInsets.symmetric(horizontal: 5),
+                    onPressed: () async {
+                      await AttachmentHelper.saveToGallery(context, widget.file);
+                    },
+                    child: Icon(
+                      Icons.file_download,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.only(top: 40.0),
+                  child: CupertinoButton(
+                    padding: EdgeInsets.symmetric(horizontal: 5),
+                    onPressed: () async {
+                      Share.file(
+                        "Shared ${widget.attachment.mimeType!.split("/")[0]} from BlueBubbles: ${widget.attachment.transferName}",
+                        widget.file.path,
+                      );
+                    },
+                    child: Icon(
+                      Icons.share,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ),
-        ),
-      ]);
-    }
+          ])),
+    );
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
@@ -143,81 +262,93 @@ class _VideoViewerState extends State<VideoViewer> {
         body: Stack(
           alignment: Alignment.bottomCenter,
           children: <Widget>[
-            GestureDetector(
-              behavior: HitTestBehavior.translucent,
-              onTap: () {
-                if (!this.mounted) return;
+            Obx(() {
+              if (!isReloading.value)
+                return GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onTap: () {
+                    if (!this.mounted) return;
 
-                setState(() {
-                  showPlayPauseOverlay = !showPlayPauseOverlay;
-                  resetTimer();
-                  setTimer();
-                });
-              },
-              child: Stack(
-                alignment: Alignment.center,
-                children: <Widget>[
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    setState(() {
+                      showPlayPauseOverlay = !showPlayPauseOverlay;
+                      resetTimer();
+                      setTimer();
+                    });
+                  },
+                  child: Stack(
+                    alignment: Alignment.center,
                     children: <Widget>[
-                      Container(
-                        constraints: BoxConstraints(
-                          maxHeight: context.height,
-                          maxWidth: context.width,
-                        ),
-                        child: AspectRatio(
-                          aspectRatio: controller.value.aspectRatio,
-                          child: Stack(
-                            children: <Widget>[
-                              VideoPlayer(controller),
-                            ],
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Container(
+                            constraints: BoxConstraints(
+                              maxHeight: context.height,
+                              maxWidth: context.width,
+                            ),
+                            child: AspectRatio(
+                              aspectRatio: controller.value.aspectRatio,
+                              child: Stack(
+                                children: <Widget>[
+                                  VideoPlayer(controller),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      AnimatedOpacity(
+                        opacity: showPlayPauseOverlay ? 1 : 0,
+                        duration: Duration(milliseconds: 250),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: HexColor('26262a').withOpacity(0.5),
+                            borderRadius: BorderRadius.circular(40),
+                          ),
+                          padding: EdgeInsets.all(10),
+                          child: controller.value.isPlaying ? GestureDetector(
+                            child: Icon(
+                              Icons.pause,
+                              color: Colors.white,
+                              size: 45,
+                            ),
+                            onTap: () {
+                              controller.pause();
+                              if (this.mounted) setState(() {});
+                              resetTimer();
+                              setTimer();
+                            },
+                          ) : GestureDetector(
+                            child: Icon(
+                              Icons.play_arrow,
+                              color: Colors.white,
+                              size: 45,
+                            ),
+                            onTap: () {
+                              controller.play();
+                              resetTimer();
+                              setTimer();
+                              if (this.mounted) setState(() {});
+                            },
                           ),
                         ),
-                      ),
+                      )
                     ],
                   ),
-                  AnimatedOpacity(
-                    opacity: showPlayPauseOverlay ? 1 : 0,
-                    duration: Duration(milliseconds: 250),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: HexColor('26262a').withOpacity(0.5),
-                        borderRadius: BorderRadius.circular(40),
-                      ),
-                      padding: EdgeInsets.all(10),
-                      child: controller.value.isPlaying
-                          ? GestureDetector(
-                              child: Icon(
-                                Icons.pause,
-                                color: Colors.white,
-                                size: 45,
-                              ),
-                              onTap: () {
-                                controller.pause();
-                                if (this.mounted) setState(() {});
-                                resetTimer();
-                                setTimer();
-                              },
-                            )
-                          : GestureDetector(
-                              child: Icon(
-                                Icons.play_arrow,
-                                color: Colors.white,
-                                size: 45,
-                              ),
-                              onTap: () {
-                                controller.play();
-                                resetTimer();
-                                setTimer();
-                                if (this.mounted) setState(() {});
-                              },
-                            ),
-                    ),
-                  )
-                ],
+                );
+              else return Center(
+                child: CircularProgressIndicator(
+                  backgroundColor: Theme.of(context).accentColor,
+                  valueColor: AlwaysStoppedAnimation(Theme.of(context).primaryColor),
+                ),
+              );
+            }),
+            if (widget.showInteractions)
+              Positioned(
+                top: 0,
+                left: 0,
+                child: overlay,
               ),
-            ),
-            ...interactives,
             StreamBuilder(
               stream: videoProgressStream.stream,
               builder: (context, AsyncSnapshot<double> snapshot) {
