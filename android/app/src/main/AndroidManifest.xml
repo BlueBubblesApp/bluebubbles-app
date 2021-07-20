@@ -72,8 +72,7 @@
             android:theme="@style/LaunchTheme"
             android:windowSoftInputMode="adjustResize"
             android:allowEmbedded="true"
-            android:resizeableActivity="true"
-            android:documentLaunchMode="always">
+            android:resizeableActivity="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
