@@ -5,6 +5,7 @@ import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/new_message_loader.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/typing_indicator.dart';
@@ -406,12 +407,27 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                 ),
               if (SettingsManager().settings.enablePrivateAPI.value)
                 SliverToBoxAdapter(
-                    child: Padding(
-                  padding: EdgeInsets.only(top: 5),
-                  child: TypingIndicator(
-                    visible: currentChat!.showTypingIndicator,
+                  child: Row(
+                    children: <Widget>[
+                      if (currentChat!.showTypingIndicator && SettingsManager().settings.alwaysShowAvatars.value)
+                        Padding(
+                          padding: EdgeInsets.only(left: 10.0),
+                          child: ContactAvatarWidget(
+                            handle: widget.chat!.participants[0],
+                            size: 30,
+                            fontSize: 14,
+                            borderThickness: 0.1,
+                          ),
+                        ),
+                      Padding(
+                        padding: EdgeInsets.only(top: 5),
+                        child: TypingIndicator(
+                          visible: currentChat!.showTypingIndicator,
+                        ),
+                      ),
+                    ],
                   ),
-                )),
+                ),
               _listKey != null
                   ? SliverAnimatedList(
                       initialItemCount: _messages.length + 1,
