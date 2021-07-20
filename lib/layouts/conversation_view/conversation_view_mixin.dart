@@ -509,24 +509,27 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           onTap: () {
             Navigator.of(context).pop();
           },
-          child: Row(
-            mainAxisSize: Cupertino.MainAxisSize.min,
-            mainAxisAlignment: Cupertino.MainAxisAlignment.start,
-            children: [
-              buildBackButton(context),
-              if (ChatBloc().unreads.value > 0)
-                Container(
-                  width: 25.0,
-                  height: 20.0,
-                  decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor,
-                      shape: BoxShape.rectangle,
-                      borderRadius: BorderRadius.circular(10)),
-                  child: Center(
-                      child: Text(ChatBloc().unreads.value.toString(),
-                          textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 12.0))),
-                ),
-            ],
+          child: Container(
+            width: 40 + (ChatBloc().unreads.value > 0 ? 25 : 0),
+            child: Row(
+              mainAxisSize: Cupertino.MainAxisSize.min,
+              mainAxisAlignment: Cupertino.MainAxisAlignment.start,
+              children: [
+                buildBackButton(context),
+                if (ChatBloc().unreads.value > 0)
+                  Container(
+                    width: 25.0,
+                    height: 20.0,
+                    decoration: BoxDecoration(
+                        color: Theme.of(context).primaryColor,
+                        shape: BoxShape.rectangle,
+                        borderRadius: BorderRadius.circular(10)),
+                    child: Center(
+                        child: Text(ChatBloc().unreads.value.toString(),
+                            textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 12.0))),
+                  ),
+              ],
+            ),
           ),
         ),
         middle: ListView(
@@ -590,7 +593,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             ),
           ],
         ),
-        trailing: Obx(() => buildCupertinoTrailing()));
+        trailing: Obx(() => Container(width: 40 + (ChatBloc().unreads.value > 0 ? 25 : 0), child: buildCupertinoTrailing())));
   }
 
   /// Chat selector methods
