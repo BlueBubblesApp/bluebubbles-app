@@ -22,6 +22,7 @@ class Handle {
   String? address;
   String? country;
   String? color;
+  String? defaultPhone;
   String? uncanonicalizedId;
 
   Handle({
@@ -30,6 +31,7 @@ class Handle {
     this.address,
     this.country,
     this.color,
+    this.defaultPhone,
     this.uncanonicalizedId,
   });
 
@@ -40,6 +42,7 @@ class Handle {
       address: json["address"],
       country: json.containsKey("country") ? json["country"] : null,
       color: json.containsKey("color") ? json["color"] : null,
+      defaultPhone: json['defaultPhone'],
       uncanonicalizedId: json.containsKey("uncanonicalizedId") ? json["uncanonicalizedId"] : null,
     );
 
@@ -86,6 +89,7 @@ class Handle {
         "address": this.address,
         "country": this.country,
         "color": this.color,
+        "defaultPhone": this.defaultPhone,
         "uncanonicalizedId": this.uncanonicalizedId
       };
 
@@ -106,6 +110,18 @@ class Handle {
     if (this.id == null) return this;
 
     await db.update("handle", {"color": newColor}, where: "ROWID = ?", whereArgs: [this.id]);
+
+    return this;
+  }
+
+  Future<Handle> updateDefaultPhone(String newPhone) async {
+    final Database db = await DBProvider.db.database;
+    if (this.id == null) return this;
+    try {
+      await db.update("handle", {"defaultPhone": newPhone}, where: "ROWID = ?", whereArgs: [this.id]);
+    } catch (_) {
+      await db.update("handle", {"defaultPhone": newPhone}, where: "ROWID = ?", whereArgs: [this.id]);
+    }
 
     return this;
   }
@@ -172,6 +188,7 @@ class Handle {
         "address": address,
         "country": country,
         "color": color,
+        "defaultPhone": defaultPhone,
         "uncanonicalizedId": uncanonicalizedId,
       };
 }
