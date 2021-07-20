@@ -203,6 +203,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     // Get sharing media from files shared to the app from cold start
     // This one only handles files, not text
     ReceiveSharingIntent.getInitialMedia().then((List<SharedMediaFile> value) async {
+      if (!SettingsManager().settings.finishedSetup.value) return;
       if (value.isEmpty) return;
 
       // If we don't have storage permission, we can't do anything
@@ -230,6 +231,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
     // Same thing as [getInitialMedia] except for text
     ReceiveSharingIntent.getInitialText().then((String? text) {
+      if (!SettingsManager().settings.finishedSetup.value) return;
       if (text == null) return;
 
       // Go to the new chat creator, with all of our text
@@ -249,6 +251,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     // The starting intent will be set when you click on a notification
     // This is only really necessary when opening a notification and the app is fully closed
     MethodChannelInterface().invokeMethod("get-starting-intent").then((value) {
+      if (!SettingsManager().settings.finishedSetup.value) return;
       if (value != null) {
         // Open that chat
         MethodChannelInterface().openChat(value.toString());

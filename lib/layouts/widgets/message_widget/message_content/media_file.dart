@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/layouts/widgets/circle_progress_bar.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
@@ -68,14 +69,14 @@ class _MediaFileState extends State<MediaFile> {
         widget.child,
         if (widget.attachment.originalROWID == null)
           Container(
-            child: Theme(
+            child: SettingsManager().settings.skin.value == Skins.iOS ? Theme(
               data: ThemeData(
                 cupertinoOverrideTheme: CupertinoThemeData(brightness: Brightness.dark),
               ),
               child: CupertinoActivityIndicator(
                 radius: 10,
               ),
-            ),
+            ) : Container(height: 20, width: 20, child: Center(child: CircularProgressIndicator(strokeWidth: 2,))),
             height: 45,
             width: 45,
             decoration: BoxDecoration(

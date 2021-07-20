@@ -205,6 +205,37 @@ class AttachmentPanel extends StatelessWidget {
                       tileColor: tileColor,
                       iosSubtitle: iosSubtitle,
                       materialSubtitle: materialSubtitle,
+                      text: "Attachment Viewer"
+                  ),
+                  Obx(() {
+                    if (SettingsManager().settings.skin.value == Skins.iOS)
+                      return SettingsTile(
+                        backgroundColor: tileColor,
+                        title: "Swipe direction",
+                        subtitle: "Set the swipe direction to go to previous media items",
+                      );
+                    else return SizedBox.shrink();
+                  }),
+                  Obx(() => SettingsOptions<SwipeDirection>(
+                    initial: SettingsManager().settings.fullscreenViewerSwipeDir.value,
+                    onChanged: (val) {
+                      if (val == null) return;
+                      SettingsManager().settings.fullscreenViewerSwipeDir.value = val;
+                      saveSettings();
+                    },
+                    options: SwipeDirection.values,
+                    textProcessing: (val) => val.toString().split(".").last,
+                    capitalize: false,
+                    title: "Swipe Direction",
+                    subtitle: "Set the swipe direction to go to previous media items",
+                    backgroundColor: tileColor,
+                    secondaryColor: headerColor,
+                  )),
+                  SettingsHeader(
+                      headerColor: headerColor,
+                      tileColor: tileColor,
+                      iosSubtitle: iosSubtitle,
+                      materialSubtitle: materialSubtitle,
                       text: "Advanced"
                   ),
                   SettingsTile(

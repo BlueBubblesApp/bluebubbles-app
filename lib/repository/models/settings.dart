@@ -78,6 +78,7 @@ class Settings {
 
   Rx<Skins> skin = Skins.iOS.obs;
   Rx<ThemeMode> theme = ThemeMode.system.obs;
+  Rx<SwipeDirection> fullscreenViewerSwipeDir = SwipeDirection.RIGHT.obs;
 
   Settings();
 
@@ -118,6 +119,8 @@ class Settings {
         settings.theme.value = ThemeMode.values[entry.value];
       } else if (entry.name == "skin") {
         settings.skin.value = Skins.values[entry.value];
+      } else if (entry.name == "fullscreenViewerSwipeDir") {
+        settings.fullscreenViewerSwipeDir.value = SwipeDirection.values[entry.value];
       } else if (entry.name == "scrollVelocity") {
         settings.scrollVelocity.value = entry.value;
       } else if (entry.name == "sendWithReturn") {
@@ -330,6 +333,11 @@ class Settings {
           name: "skin",
           value: this.skin.value.index,
           type: this.skin.value.index.runtimeType,
+        ),
+        ConfigEntry(
+          name: "fullscreenViewerSwipeDir",
+          value: this.fullscreenViewerSwipeDir.value.index,
+          type: this.fullscreenViewerSwipeDir.value.index.runtimeType,
         ),
         ConfigEntry(
           name: "scrollVelocity",

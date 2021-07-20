@@ -404,7 +404,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                 onPressed: () async {
                                   await DBProvider.deleteDB();
                                   await SettingsManager().resetConnection();
-
+                                  SettingsManager().settings.finishedSetup.value = false;
                                   SocketManager().finishedSetup.sink.add(false);
                                   Navigator.of(context).popUntil((route) => route.isFirst);
                                 },
@@ -704,6 +704,9 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
                   ),
                   (subtitle != null)
                       ? Container(
+                        constraints: BoxConstraints(
+                          maxWidth: context.width * 2/3
+                        ),
                         child: Padding(
                           padding: EdgeInsets.only(top: 3.0),
                           child: Text(

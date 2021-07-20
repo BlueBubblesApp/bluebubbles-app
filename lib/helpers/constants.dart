@@ -43,3 +43,8 @@ enum Skins {
   Material,
   Samsung,
 }
+
+enum SwipeDirection {
+  LEFT,
+  RIGHT,
+}
