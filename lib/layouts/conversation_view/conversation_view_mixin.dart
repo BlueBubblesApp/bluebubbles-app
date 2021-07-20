@@ -510,7 +510,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             Navigator.of(context).pop();
           },
           child: Container(
-            width: 40,
+            width: 40 + (ChatBloc().unreads.value > 0 ? 25 : 0),
             child: Row(
               mainAxisSize: Cupertino.MainAxisSize.min,
               mainAxisAlignment: Cupertino.MainAxisAlignment.start,
@@ -593,7 +593,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             ),
           ],
         ),
-        trailing: Obx(() => Container(width: 40, child: buildCupertinoTrailing())));
+        trailing: Obx(() => Container(width: 40 + (ChatBloc().unreads.value > 0 ? 25 : 0), child: buildCupertinoTrailing())));
   }
 
   /// Chat selector methods
