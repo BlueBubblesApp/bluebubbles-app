@@ -1,6 +1,8 @@
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -203,14 +205,14 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                               })
                           : Padding(
                               padding: const EdgeInsets.all(12.0),
-                              child: Theme(
+                              child: SettingsManager().settings.skin.value == Skins.iOS ? Theme(
                                 data: ThemeData(
                                   cupertinoOverrideTheme: CupertinoThemeData(
                                       brightness:
                                           ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor)),
                                 ),
                                 child: CupertinoActivityIndicator(),
-                              ),
+                              ) : Container(height: 20, width: 20, child: Center(child: CircularProgressIndicator(strokeWidth: 2,))),
                             )
                     ])),
             Divider(color: Theme.of(context).accentColor),

@@ -252,7 +252,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       if (showManual && manualMark && markingAsRead)
         Padding(
             padding: EdgeInsets.only(right: SettingsManager().settings.colorblindMode.value ? 15.0 : 10.0),
-            child: Theme(
+            child: SettingsManager().settings.skin.value == Skins.iOS ? Theme(
               data: ThemeData(
                 cupertinoOverrideTheme: Cupertino.CupertinoThemeData(
                   brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
@@ -261,7 +261,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
               child: Cupertino.CupertinoActivityIndicator(
                 radius: 12,
               ),
-            )),
+            ) : Container(height: 24, width: 24, child: Center(child: CircularProgressIndicator(strokeWidth: 2,)))),
       if (showManual && manualMark && !markingAsRead)
         Padding(
           padding: EdgeInsets.only(right: SettingsManager().settings.colorblindMode.value ? 10.0 : 5.0),
