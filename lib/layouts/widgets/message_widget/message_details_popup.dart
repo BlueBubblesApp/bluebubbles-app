@@ -297,6 +297,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                         ),
                         child: GestureDetector(
                           onTap: () {
+                            HapticFeedback.lightImpact();
                             sendReaction(selfReaction == e ? "-$e" : e);
                           },
                           onTapDown: (TapDownDetails details) {

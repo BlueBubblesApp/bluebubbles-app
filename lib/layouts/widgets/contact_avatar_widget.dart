@@ -186,13 +186,6 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
   Widget build(BuildContext context) {
     super.build(context);
 
-    Color? color1 = colors.length > 0 ? colors[0] : null;
-    Color? color2 = colors.length > 0 ? colors[1] : null;
-    if (color1 == null || color2 == null || !SettingsManager().settings.colorfulAvatars.value) {
-      color1 = HexColor("686868");
-      color2 = HexColor("928E8E");
-    }
-
     return GestureDetector(
         onTap: onAvatarTap,
         child: Container(
@@ -206,35 +199,35 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
           ),
           child: CircleAvatar(
             radius: (widget.size != null) ? widget.size! / 2 : 20,
-            child: state!.contactImage == null ||
-                (SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactPhotos.value)
-                ? Container(
+            child: Obx(() => state!.contactImage == null ||
+                (SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactPhotos.value) ? Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: AlignmentDirectional.topStart,
-                        colors: [color2, color1],
+                        colors: [
+                          !SettingsManager().settings.colorfulAvatars.value ? HexColor("928E8E") : colors.length > 0 ? colors[1] : HexColor("928E8E"),
+                          !SettingsManager().settings.colorfulAvatars.value ? HexColor("686868") : colors.length > 0 ? colors[0] : HexColor("686868")
+                        ],
                       ),
                       borderRadius: BorderRadius.circular(30),
                     ),
                     child: Container(
-                      child: Obx(() => (SettingsManager().settings.redactedMode.value && SettingsManager().settings.removeLetterAvatars.value) || state!.initials == null
-                          ? Icon(
+                      child: (SettingsManager().settings.redactedMode.value && SettingsManager().settings.removeLetterAvatars.value) || state!.initials == null ? Icon(
                               Icons.person,
                               size: (widget.size ?? 40) / 2,
-                            )
-                          : Text(
+                            ) : Text(
                               state!.initials!,
                               style: TextStyle(
                                 fontSize: (widget.fontSize == null) ? 18 : widget.fontSize,
                               ),
                               textAlign: TextAlign.center,
-                            )),
+                            ),
                       alignment: AlignmentDirectional.center,
                     ),
-                  )
-                : CircleAvatar(
+                  ) : CircleAvatar(
                     backgroundImage: state!.contactImage,
                   ),
+            )
           ),
         ));
   }
