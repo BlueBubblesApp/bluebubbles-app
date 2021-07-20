@@ -150,6 +150,7 @@ class MethodChannelInterface {
 
         return new Future.value("");
       case "shareAttachments":
+        if (!SettingsManager().settings.finishedSetup.value) return Future.value("");
         List<File> attachments = <File>[];
 
         // Get the path to where the temp files are stored
@@ -201,7 +202,7 @@ class MethodChannelInterface {
         return new Future.value("");
 
       case "shareText":
-
+        if (!SettingsManager().settings.finishedSetup.value) return Future.value("");
         // Get the text that was shared to the app
         String? text = call.arguments["text"];
 
