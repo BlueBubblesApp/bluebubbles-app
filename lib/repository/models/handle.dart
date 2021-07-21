@@ -117,11 +117,8 @@ class Handle {
   Future<Handle> updateDefaultPhone(String newPhone) async {
     final Database db = await DBProvider.db.database;
     if (this.id == null) return this;
-    try {
-      await db.update("handle", {"defaultPhone": newPhone}, where: "ROWID = ?", whereArgs: [this.id]);
-    } catch (_) {
-      await db.update("handle", {"defaultPhone": newPhone}, where: "ROWID = ?", whereArgs: [this.id]);
-    }
+
+    await db.update("handle", {"defaultPhone": newPhone}, where: "ROWID = ?", whereArgs: [this.id]);
 
     return this;
   }
