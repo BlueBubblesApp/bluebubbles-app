@@ -133,7 +133,7 @@ class ActionHandler {
         sub?.cancel();
 
         String? tempGuid = message.guid;
-        message.guid = message.guid!.replaceAll("temp", "error-connection-timeout");
+        message.guid = message.guid!.replaceAll("temp", "error-Connection timeout, please check your internet connection and try again");
         message.error = MessageError.BAD_REQUEST.code;
 
         await Message.replaceMessage(tempGuid, message);
