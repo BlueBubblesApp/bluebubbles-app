@@ -143,15 +143,28 @@ class ActionHandler {
         return completer.future;
       });
       sub = InternetConnectionChecker().onStatusChange.listen((event) {
+        /// listen to the internet status. we only want to fire callbacks when we
+        /// are connected
         if (event == InternetConnectionStatus.connected) {
-          sub2 = SocketManager().connectionStateStream.listen((event2) {
-            if (event2 == SocketState.CONNECTED && event == InternetConnectionStatus.connected) {
-              timer.cancel();
-              sendSocketMessage();
-              sub?.cancel();
-              sub2?.cancel();
-            }
-          });
+          /// Check our internal status. If we are connected *and* we haven't
+          /// listened to the connection state stream, then send the message
+          if (SocketManager().state == SocketState.CONNECTED && sub2 == null) {
+            timer.cancel();
+            sendSocketMessage();
+            sub?.cancel();
+            sub2?.cancel();
+          } else {
+            /// Otherwise listen to our stream and await the socket to be connected
+            /// before doing anything
+            sub2 = SocketManager().connectionStateStream.listen((event2) {
+              if (event2 == SocketState.CONNECTED && event == InternetConnectionStatus.connected) {
+                timer.cancel();
+                sendSocketMessage();
+                sub?.cancel();
+                sub2?.cancel();
+              }
+            });
+          }
         }
       });
     } else {
