@@ -127,14 +127,15 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
                 data!,
                 frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
                   if (wasSynchronouslyLoaded) return child;
-                  if (data == null) return buildPlaceHolder();
-
-                  return AnimatedOpacity(
-                    opacity: (frame == null && widget.attachment.guid != "redacted-mode-demo-attachment") ? 0 : 1,
-                    child: child,
-                    duration: const Duration(milliseconds: 250),
-                    curve: Curves.easeInOut,
-                  );
+                  return Stack(children: [
+                    buildPlaceHolder(),
+                    AnimatedOpacity(
+                      opacity: (frame == null && widget.attachment.guid != "redacted-mode-demo-attachment") ? 0 : 1,
+                      child: child,
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeInOut,
+                    )
+                  ]);
                 },
               )
             : buildPlaceHolder(),

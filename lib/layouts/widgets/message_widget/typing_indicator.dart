@@ -1,9 +1,11 @@
 import 'dart:math' as Math;
 
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:get/get.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class TypingIndicator extends StatefulWidget {
   TypingIndicator({Key? key, this.visible}) : super(key: key);
@@ -58,29 +60,31 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
                 Stack(
                   alignment: Alignment.bottomLeft,
                   children: [
-                    Container(
-                      margin: EdgeInsets.only(left: 2),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).accentColor,
-                        borderRadius: BorderRadius.circular(40),
+                    if (SettingsManager().settings.skin.value == Skins.iOS)
+                      Container(
+                        margin: EdgeInsets.only(left: 2),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).accentColor,
+                          borderRadius: BorderRadius.circular(40),
+                        ),
+                        width: 10,
+                        height: 10,
                       ),
-                      width: 10,
-                      height: 10,
-                    ),
-                    Container(
-                      margin: EdgeInsets.only(left: 9, bottom: 10),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).accentColor,
-                        borderRadius: BorderRadius.circular(40),
+                    if (SettingsManager().settings.skin.value == Skins.iOS)
+                      Container(
+                        margin: EdgeInsets.only(left: 9, bottom: 10),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).accentColor,
+                          borderRadius: BorderRadius.circular(40),
+                        ),
+                        width: 15,
+                        height: 15,
                       ),
-                      width: 15,
-                      height: 15,
-                    ),
                     Container(
                       margin: EdgeInsets.only(
                         left: 10,
                         right: 10,
-                        bottom: 13,
+                        bottom: SettingsManager().settings.skin.value == Skins.iOS ? 13 : 5,
                       ),
                       constraints: BoxConstraints(
                         maxWidth: context.width * MessageWidgetMixin.MAX_SIZE,

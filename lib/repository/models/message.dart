@@ -427,6 +427,7 @@ class Message {
         " handle.address AS address,"
         " handle.country AS country,"
         " handle.color AS color,"
+        " handle.defaultPhone AS defaultPhone,"
         " handle.uncanonicalizedId AS uncanonicalizedId"
         " FROM handle"
         " JOIN message ON message.handleId = handle.ROWID"

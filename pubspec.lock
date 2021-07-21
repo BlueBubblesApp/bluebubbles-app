@@ -56,7 +56,7 @@ packages:
       name: assets_audio_player
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "3.0.3+3"
+    version: "3.0.3+5"
   assets_audio_player_web:
     dependency: transitive
     description:
@@ -70,7 +70,7 @@ packages:
       name: assorted_layout_widgets
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "5.0.1"
+    version: "5.0.2"
   async:
     dependency: transitive
     description:
@@ -128,7 +128,7 @@ packages:
       name: build_runner
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.0.5"
+    version: "2.0.6"
   build_runner_core:
     dependency: transitive
     description:
@@ -163,7 +163,7 @@ packages:
       name: camera
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.8.1+3"
+    version: "0.8.1+5"
   camera_platform_interface:
     dependency: transitive
     description:
@@ -500,7 +500,7 @@ packages:
       name: get
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "4.1.4"
+    version: "4.2.1+1"
   glob:
     dependency: transitive
     description:
@@ -578,6 +578,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.0"
+  internet_connection_checker:
+    dependency: "direct main"
+    description:
+      name: internet_connection_checker
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.0.1+2"
   intl:
     dependency: "direct main"
     description:
@@ -612,7 +619,7 @@ packages:
       name: keyboard_attachable
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.0.0"
+    version: "2.0.1"
   latlong2:
     dependency: "direct main"
     description:
@@ -787,14 +794,14 @@ packages:
       name: permission_handler
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "8.1.2"
+    version: "8.1.3"
   permission_handler_platform_interface:
     dependency: transitive
     description:
       name: permission_handler_platform_interface
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "3.6.0"
+    version: "3.6.1"
   petitparser:
     dependency: transitive
     description:
@@ -808,14 +815,14 @@ packages:
       name: photo_manager
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.2.4"
+    version: "1.2.7"
   photo_view:
     dependency: "direct main"
     description:
       name: photo_view
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.11.1"
+    version: "0.12.0"
   platform:
     dependency: transitive
     description:
@@ -885,7 +892,7 @@ packages:
       name: qr_code_scanner
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.5.1"
+    version: "0.5.2"
   quiver:
     dependency: transitive
     description:
@@ -927,7 +934,7 @@ packages:
       name: rxdart
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.26.0"
+    version: "0.27.1"
   share_plus:
     dependency: "direct main"
     description:
@@ -1233,7 +1240,7 @@ packages:
       name: url_launcher
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "6.0.8"
+    version: "6.0.9"
   url_launcher_linux:
     dependency: transitive
     description:
@@ -1289,7 +1296,7 @@ packages:
       name: video_player
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.1.6"
+    version: "2.1.10"
   video_player_platform_interface:
     dependency: transitive
     description:
