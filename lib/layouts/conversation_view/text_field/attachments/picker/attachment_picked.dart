@@ -34,10 +34,7 @@ class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepA
   }
 
   Future<void> load() async {
-    image = await AttachmentHelper.compressAttachment(
-        new Attachment(mimeType: "image/jpg", transferName: path, width: 800, height: 800), path!);
-
-    // image = await widget.data.thumbDataWithSize(800, 800, quality: SettingsManager().compressionQuality);
+    image = await widget.data.thumbDataWithSize(800, 800, quality: SettingsManager().compressionQuality);
     if (this.mounted) setState(() {});
   }
 
