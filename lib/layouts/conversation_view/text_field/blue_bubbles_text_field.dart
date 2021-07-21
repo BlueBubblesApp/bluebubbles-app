@@ -854,27 +854,24 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     ),
                   ),
                 )
-              : GestureDetector(
-                  onTapDown: (_) async {
-                    if (canRecord && !isRecording) {
-                      await startRecording();
-                    }
-                  },
-                  onTapCancel: () async {
-                    await stopRecording();
-                  },
-                  child: ButtonTheme(
-                    minWidth: 40,
-                    height: 40,
+              : Container(
+                constraints: BoxConstraints(maxWidth: 40, minHeight: 40),
+                child: GestureDetector(
+                    onTapDown: (_) async {
+                      if (canRecord && !isRecording) {
+                        await startRecording();
+                      }
+                    },
+                    onTapCancel: () async {
+                      await stopRecording();
+                    },
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         padding: EdgeInsets.symmetric(
                           horizontal: 0,
                         ),
                         primary: Theme.of(context).primaryColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(40),
-                        ),
+                        shape: CircleBorder(),
                       ),
                       onPressed: sendAction,
                       child: Stack(
@@ -916,7 +913,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       ),
                     ),
                   ),
-                ),
+              ),
         ]),
       );
 
