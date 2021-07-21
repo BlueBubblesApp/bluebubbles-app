@@ -79,6 +79,7 @@ dependencies:
       url: https://github.com/ChangJoo-Park/battery_optimization
       ref: master
   collection: ^1.15.0
+  internet_connection_checker: ^0.0.1+2
 
 dev_dependencies:
   build_runner: ^2.0.6

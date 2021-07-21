@@ -20,6 +20,7 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/widgets.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:sqflite/sqflite.dart';
 
 /// This helper class allows us to section off all socket "actions"
@@ -107,20 +108,35 @@ class ActionHandler {
     params["message"] = message.text;
     params["tempGuid"] = message.guid;
 
-    SocketManager().sendMessage("send-message", params, (response) async {
-      String? tempGuid = message.guid;
+    VoidCallback sendSocketMessage = () {
+      SocketManager().sendMessage("send-message", params, (response) async {
+        String? tempGuid = message.guid;
 
-      // If there is an error, replace the temp value with an error
-      if (response['status'] != 200) {
-        message.guid = message.guid!.replaceAll("temp", "error-${response['error']['message']}");
-        message.error = response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
+        // If there is an error, replace the temp value with an error
+        if (response['status'] != 200) {
+          message.guid = message.guid!.replaceAll("temp", "error-${response['error']['message']}");
+          message.error = response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
 
-        await Message.replaceMessage(tempGuid, message);
-        NewMessageManager().updateMessage(chat, tempGuid!, message);
-      }
+          await Message.replaceMessage(tempGuid, message);
+          NewMessageManager().updateMessage(chat, tempGuid!, message);
+        }
 
-      completer.complete();
-    });
+        completer.complete();
+      });
+    };
+
+    bool isConnected = await InternetConnectionChecker().hasConnection;
+    if (!isConnected) {
+      StreamSubscription? sub;
+      sub = InternetConnectionChecker().onStatusChange.listen((event) {
+        if (event == InternetConnectionStatus.connected) {
+          sendSocketMessage();
+          sub?.cancel();
+        }
+      });
+    } else {
+      sendSocketMessage();
+    }
 
     return completer.future;
   }
