@@ -29,9 +29,11 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
 
     <application
+        android:allowBackup="false"
         android:name=".Application"
         android:icon="@mipmap/ic_launcher"
         android:label="BlueBubbles"
+        android:appCategory="social"
         android:requestLegacyExternalStorage="true"
         android:debuggable="false"
         android:usesCleartextTraffic="true">
