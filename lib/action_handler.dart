@@ -129,9 +129,10 @@ class ActionHandler {
     if (!isConnected) {
       InternetConnectionChecker().checkInterval = Duration(seconds: 1);
       StreamSubscription? sub;
+      StreamSubscription? sub2;
       Timer timer = Timer(Duration(seconds: 30), () async {
         sub?.cancel();
-
+        sub2?.cancel();
         String? tempGuid = message.guid;
         message.guid = message.guid!.replaceAll("temp", "error-Connection timeout, please check your internet connection and try again");
         message.error = MessageError.BAD_REQUEST.code;
@@ -143,9 +144,14 @@ class ActionHandler {
       });
       sub = InternetConnectionChecker().onStatusChange.listen((event) {
         if (event == InternetConnectionStatus.connected) {
-          timer.cancel();
-          sendSocketMessage();
-          sub?.cancel();
+          sub2 = SocketManager().connectionStateStream.listen((event2) {
+            if (event2 == SocketState.CONNECTED && event == InternetConnectionStatus.connected) {
+              timer.cancel();
+              sendSocketMessage();
+              sub?.cancel();
+              sub2?.cancel();
+            }
+          });
         }
       });
     } else {

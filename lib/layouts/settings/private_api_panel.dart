@@ -35,7 +35,7 @@ class PrivateAPIPanelController extends GetxController {
     SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
       macOSVersionNumber.value = int.tryParse(res['data']['os_version'].toString().split(".")[0]);
       macOSVersion.value = res['data']['os_version'];
-      if ((macOSVersionNumber.value ?? 10) < 11) _settingsCopy.enablePrivateAPI.value = false;
+      if ((macOSVersionNumber.value ?? 10) > 10) _settingsCopy.enablePrivateAPI.value = false;
     });
   }
 
@@ -172,7 +172,7 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                     ) : Container(),
                   (controller.macOSVersionNumber.value ?? 10) < 11 ? SettingsSwitch(
                     onChanged: (bool val) {
-                     controller._settingsCopy.enablePrivateAPI.value = val;
+                      controller._settingsCopy.enablePrivateAPI.value = val;
                       saveSettings();
                     },
                     initialVal: controller._settingsCopy.enablePrivateAPI.value,
