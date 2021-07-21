@@ -41,7 +41,7 @@ class DBProvider {
 
   static Database? _database;
   static String _path = "";
-  static int currentVersion = 8;
+  static int currentVersion = 9;
 
   /// Contains list of functions to invoke when going from a previous to the current database verison
   /// The previous version is always [key - 1], for example for key 2, it will be the upgrade scheme from version 1 to version 2
@@ -95,6 +95,11 @@ class DBProvider {
         addedInVersion: 8,
         upgrade: (Database db) {
           db.execute("ALTER TABLE handle ADD COLUMN color TEXT DEFAULT NULL;");
+        }),
+    new DBUpgradeItem(
+        addedInVersion: 9,
+        upgrade: (Database db) {
+          db.execute("ALTER TABLE handle ADD COLUMN defaultPhone TEXT DEFAULT NULL;");
         }),
   ];
 
@@ -237,6 +242,7 @@ class DBProvider {
         "address TEXT UNIQUE NOT NULL,"
         "country TEXT DEFAULT NULL,"
         "color TEXT DEFAULT NULL,"
+        "defaultPhone TEXT DEFAULT NULL,"
         "uncanonicalizedId TEXT DEFAULT NULL"
         ");");
   }

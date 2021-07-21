@@ -195,45 +195,8 @@ class _ContactTileState extends State<ContactTile> {
                           shape: CircleBorder(),
                           backgroundColor: Theme.of(context).accentColor,
                         ),
-                        onPressed: () {
-                          if (contact == null) {
-                            if (widget.handle.address == null) return;
-                            makeCall(widget.handle.address!);
-                          } else {
-                            List<Item> phones = getUniqueNumbers(contact!.phones!);
-                            if (phones.length == 1) {
-                              makeCall(contact!.phones!.first.value!);
-                            } else {
-                              showDialog(
-                                context: context,
-                                builder: (BuildContext context) {
-                                  return AlertDialog(
-                                    backgroundColor: Theme.of(context).accentColor,
-                                    title: new Text("Select a Phone Number",
-                                        style: TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
-                                    content: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      mainAxisSize: MainAxisSize.min,
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        for (int i = 0; i < phones.length; i++)
-                                          TextButton(
-                                            child: Text("${phones[i].value} (${phones[i].label})",
-                                                style: TextStyle(color: Theme.of(context).textTheme.bodyText1!.color),
-                                                textAlign: TextAlign.start),
-                                            onPressed: () async {
-                                              makeCall(phones[i].value!);
-                                              Navigator.of(context).pop();
-                                            },
-                                          )
-                                      ],
-                                    ),
-                                  );
-                                },
-                              );
-                            }
-                          }
-                        },
+                        onLongPress: () => onPressContactTrailing(longPressed: true),
+                        onPressed: () => onPressContactTrailing(),
                         child: Icon(Icons.call, color: Theme.of(context).primaryColor, size: 20),
                       ),
                     )
@@ -243,6 +206,84 @@ class _ContactTileState extends State<ContactTile> {
         ),
       ),
     );
+  }
+
+  void onPressContactTrailing({bool longPressed = false}) {
+    if (contact == null) {
+      if (widget.handle.address == null) return;
+      makeCall(widget.handle.address!);
+    } else {
+      List<Item> phones = getUniqueNumbers(contact!.phones!);
+      if (phones.length == 1) {
+        makeCall(contact!.phones!.first.value!);
+      } else if (widget.handle.defaultPhone != null && !longPressed) {
+        makeCall(widget.handle.defaultPhone!);
+      } else {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              backgroundColor: Theme.of(context).accentColor,
+              title: new Text("Select a Phone Number",
+                  style: TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
+              content: ObxValue<Rx<bool>>((data) => Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (int i = 0; i < phones.length; i++)
+                    TextButton(
+                      child: Text("${phones[i].value} (${phones[i].label})",
+                          style: TextStyle(color: Theme.of(context).textTheme.bodyText1!.color),
+                          textAlign: TextAlign.start),
+                      onPressed: () async {
+                        if (data.value) {
+                          widget.handle.defaultPhone = phones[i].value!;
+                          await widget.handle.updateDefaultPhone(phones[i].value!);
+                        }
+                        makeCall(phones[i].value!);
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                  Row(
+                    children: <Widget>[
+                      SizedBox(
+                        height: 48.0,
+                        width: 24.0,
+                        child: Checkbox(
+                          value: data.value,
+                          activeColor: Theme.of(context).primaryColor,
+                          onChanged: (bool? value) {
+                            data.value = value!;
+                          },
+                        ),
+                      ),
+                      ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                              primary: Colors.transparent,
+                              padding: EdgeInsets.only(left: 5),
+                              elevation: 0.0
+                          ),
+                          onPressed: () {
+                            data = data.toggle();
+                          },
+                          child: Text(
+                            "Remember my selection",
+                          )
+                      ),
+                    ],
+                  ),
+                  Text(
+                    "Long press the call button to reset your default selection",
+                    style: Theme.of(context).textTheme.subtitle1,
+                  )
+                ],
+              ), false.obs),
+            );
+          },
+        );
+      }
+    }
   }
 
   @override
