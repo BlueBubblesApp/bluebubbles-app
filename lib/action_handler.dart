@@ -127,9 +127,23 @@ class ActionHandler {
 
     bool isConnected = await InternetConnectionChecker().hasConnection;
     if (!isConnected) {
+      InternetConnectionChecker().checkInterval = Duration(seconds: 1);
       StreamSubscription? sub;
+      Timer timer = Timer(Duration(seconds: 30), () async {
+        sub?.cancel();
+
+        String? tempGuid = message.guid;
+        message.guid = message.guid!.replaceAll("temp", "error-connection-timeout");
+        message.error = MessageError.BAD_REQUEST.code;
+
+        await Message.replaceMessage(tempGuid, message);
+        NewMessageManager().updateMessage(chat, tempGuid!, message);
+        completer.complete();
+        return completer.future;
+      });
       sub = InternetConnectionChecker().onStatusChange.listen((event) {
         if (event == InternetConnectionStatus.connected) {
+          timer.cancel();
           sendSocketMessage();
           sub?.cancel();
         }
