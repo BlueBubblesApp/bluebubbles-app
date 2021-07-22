@@ -176,7 +176,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
           IconSlideAction(
             caption: widget.chat.isPinned! ? 'Unpin' : 'Pin',
             color: Colors.yellow[800],
-            foregroundColor: Theme.of(context).textTheme.bodyText1!.color,
+            foregroundColor: Colors.white,
             icon: widget.chat.isPinned! ? Icons.star_outline : Icons.star,
             onTap: () async {
               await widget.chat.togglePin(!widget.chat.isPinned!);
