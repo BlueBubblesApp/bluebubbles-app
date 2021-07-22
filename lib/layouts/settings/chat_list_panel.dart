@@ -230,7 +230,7 @@ class ChatListPanel extends StatelessWidget {
                         },
                         initialVal: SettingsManager().settings.swipableConversationTiles.value,
                         title: "Swipe Actions for Conversation Tiles",
-                        subtitle: "Enables swipe actions, such as pinning and deleting, for conversation tiles when using Material theme",
+                        subtitle: "Enables swipe actions for conversation tiles when using Material theme",
                         backgroundColor: tileColor,
                       );
                     else return SizedBox.shrink();
