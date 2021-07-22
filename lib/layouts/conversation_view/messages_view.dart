@@ -409,11 +409,11 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                     );
                   },
                 ),
-              if (SettingsManager().settings.enablePrivateAPI.value)
+              if (SettingsManager().settings.enablePrivateAPI.value || widget.chat?.guid == "theme-selector")
                 SliverToBoxAdapter(
                   child: Row(
                     children: <Widget>[
-                      if (currentChat!.showTypingIndicator && SettingsManager().settings.alwaysShowAvatars.value)
+                      if (widget.chat?.guid == "theme-selector" || (currentChat!.showTypingIndicator && SettingsManager().settings.alwaysShowAvatars.value))
                         Padding(
                           padding: EdgeInsets.only(left: 10.0),
                           child: ContactAvatarWidget(
@@ -426,7 +426,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                       Padding(
                         padding: EdgeInsets.only(top: 5),
                         child: TypingIndicator(
-                          visible: currentChat!.showTypingIndicator,
+                          visible: widget.chat?.guid == "theme-selector" ? true : currentChat!.showTypingIndicator,
                         ),
                       ),
                     ],

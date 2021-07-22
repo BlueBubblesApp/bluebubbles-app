@@ -158,10 +158,27 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
                     valueColor: new AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor)))),
       );
     } else {
+      if ((widget.attachment.width!.toDouble() / widget.attachment.height!.toDouble()).isNaN)
+          return Container(
+            padding: EdgeInsets.all(5),
+            width: isLoaded ? widget.attachment.width!.toDouble() : null,
+            height: isLoaded ? widget.attachment.height!.toDouble() : 150,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                color: Theme.of(context).accentColor,
+                child: isLoaded ? null : Center(
+                  child: Text("Invalid Image"),
+                ),
+              ),
+            ),
+          );
       return AspectRatio(
-        aspectRatio: isLoaded ? widget.attachment.width!.toDouble() / widget.attachment.height!.toDouble() : 0.75,
+        aspectRatio: isLoaded ? (widget.attachment.width!.toDouble() / widget.attachment.height!.toDouble()).abs()
+            : context.width / context.height,
         child: Container(
           padding: EdgeInsets.all(5),
+          width: isLoaded ? widget.attachment.width!.toDouble() : null,
           height: isLoaded ? widget.attachment.height!.toDouble() : 150,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(20),
