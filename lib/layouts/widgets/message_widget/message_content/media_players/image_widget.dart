@@ -128,7 +128,7 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
                 frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
                   if (wasSynchronouslyLoaded) return child;
                   return Stack(children: [
-                    buildPlaceHolder(),
+                    buildPlaceHolder(isLoaded: true),
                     AnimatedOpacity(
                       opacity: (frame == null && widget.attachment.guid != "redacted-mode-demo-attachment") ? 0 : 1,
                       child: child,
@@ -141,7 +141,7 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
             : buildPlaceHolder(),
       );
 
-  Widget buildPlaceHolder() {
+  Widget buildPlaceHolder({bool isLoaded = false}) {
     if (widget.attachment.hasValidSize && data == null) {
       return AspectRatio(
         aspectRatio: widget.attachment.width!.toDouble() / widget.attachment.height!.toDouble(),
@@ -154,15 +154,18 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
                     valueColor: new AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor)))),
       );
     } else {
-      return Container(
-        padding: EdgeInsets.all(5),
-        height: 150,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: Container(
-            color: Theme.of(context).accentColor,
-            child: Center(
-              child: Text("Invalid Image"),
+      return AspectRatio(
+        aspectRatio: isLoaded ? widget.attachment.width!.toDouble() / widget.attachment.height!.toDouble() : 0.75,
+        child: Container(
+          padding: EdgeInsets.all(5),
+          height: isLoaded ? widget.attachment.height!.toDouble() : 150,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Container(
+              color: Theme.of(context).accentColor,
+              child: isLoaded ? null : Center(
+                child: Text("Invalid Image"),
+              ),
             ),
           ),
         ),
