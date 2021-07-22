@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
@@ -212,18 +213,13 @@ class ChatListPanel extends StatelessWidget {
                       );
                     else return SizedBox.shrink();
                   }),
-                  Obx(() {
-                    if (SettingsManager().settings.skin.value == Skins.Samsung ||
-                        SettingsManager().settings.skin.value == Skins.Material)
-                      return Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 65.0),
-                          child: SettingsDivider(color: headerColor),
-                        ),
-                      );
-                    else return SizedBox.shrink();
-                  }),
+                  SettingsHeader(
+                      headerColor: headerColor,
+                      tileColor: tileColor,
+                      iosSubtitle: iosSubtitle,
+                      materialSubtitle: materialSubtitle,
+                      text: "Swipe Actions"
+                  ),
                   Obx(() {
                     if (SettingsManager().settings.skin.value == Skins.Samsung ||
                         SettingsManager().settings.skin.value == Skins.Material)
@@ -236,6 +232,322 @@ class ChatListPanel extends StatelessWidget {
                         title: "Swipe Actions for Conversation Tiles",
                         subtitle: "Enables swipe actions, such as pinning and deleting, for conversation tiles when using Material theme",
                         backgroundColor: tileColor,
+                      );
+                    else return SizedBox.shrink();
+                  }),
+                  if (SettingsManager().settings.skin.value == Skins.iOS)
+                    SettingsTile(
+                      backgroundColor: tileColor,
+                      title: "Customize Swipe Actions",
+                      subtitle: "Enable or disable specific swipe actions",
+                    ),
+                  Obx(() {
+                    if (SettingsManager().settings.skin.value == Skins.iOS)
+                      return Container(
+                        color: tileColor,
+                        constraints: BoxConstraints(
+                          maxWidth: context.width
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                          child: Row(
+                            children: [
+                              Column(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                    child: Text("Swipe Right"),
+                                  ),
+                                  Opacity(
+                                    opacity: SettingsManager().settings.iosShowPin.value ? 1 : 0.7,
+                                    child: Container(
+                                      height: 60,
+                                      width: context.width / 5 - 8,
+                                      child: IconSlideAction(
+                                        caption: 'Pin',
+                                        color: Colors.yellow[800],
+                                        foregroundColor: Theme.of(context).textTheme.bodyText1!.color,
+                                        icon: Icons.star,
+                                        onTap: () async {
+                                          SettingsManager().settings.iosShowPin.value = !SettingsManager().settings.iosShowPin.value;
+                                          saveSettings();
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                  CupertinoButton(
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                            color: SettingsManager().settings.iosShowPin.value
+                                                ? Theme.of(context).primaryColor
+                                                : tileColor,
+                                            border: Border.all(
+                                                color: CupertinoColors.systemGrey,
+                                                style: BorderStyle.solid,
+                                                width: 1
+                                            ),
+                                            borderRadius: BorderRadius.all(Radius.circular(25))
+                                        ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(3.0),
+                                          child: Icon(CupertinoIcons.check_mark,
+                                              size: 18,
+                                              color: SettingsManager().settings.iosShowPin.value
+                                                  ? CupertinoColors.white
+                                                  : CupertinoColors.systemGrey),
+                                        ),
+                                      ),
+                                      onPressed: () {
+                                        SettingsManager().settings.iosShowPin.value = !SettingsManager().settings.iosShowPin.value;
+                                        saveSettings();
+                                      }
+                                  ),
+                                ]
+                              ),
+                              Spacer(),
+                              Column(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                    child: Text("Swipe Left"),
+                                  ),
+                                  Row(
+                                    children: [
+                                      Column(
+                                        children: [
+                                          Opacity(
+                                            opacity: SettingsManager().settings.iosShowAlert.value ? 1 : 0.7,
+                                            child: Container(
+                                              height: 60,
+                                              color: Colors.purple[700],
+                                              width: context.width / 5 - 8,
+                                              child: IconSlideAction(
+                                                caption: 'Hide Alerts',
+                                                color: Colors.purple[700],
+                                                icon: Icons.notifications_off,
+                                                onTap: () async {
+                                                  SettingsManager().settings.iosShowAlert.value = !SettingsManager().settings.iosShowAlert.value;
+                                                  saveSettings();
+                                                },
+                                              ),
+                                            ),
+                                          ),
+                                          CupertinoButton(
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                    color: SettingsManager().settings.iosShowAlert.value
+                                                        ? Theme.of(context).primaryColor
+                                                        : tileColor,
+                                                    border: Border.all(
+                                                        color: CupertinoColors.systemGrey,
+                                                        style: BorderStyle.solid,
+                                                        width: 1
+                                                    ),
+                                                    borderRadius: BorderRadius.all(Radius.circular(25))
+                                                ),
+                                                child: Padding(
+                                                  padding: const EdgeInsets.all(3.0),
+                                                  child: Icon(CupertinoIcons.check_mark,
+                                                      size: 18,
+                                                      color: SettingsManager().settings.iosShowAlert.value
+                                                          ? CupertinoColors.white
+                                                          : CupertinoColors.systemGrey),
+                                                ),
+                                              ),
+                                              onPressed: () {
+                                                SettingsManager().settings.iosShowAlert.value = !SettingsManager().settings.iosShowAlert.value;
+                                                saveSettings();
+                                              }
+                                          ),
+                                        ],
+                                      ),
+                                      Column(
+                                        children: [
+                                          Opacity(
+                                            opacity: SettingsManager().settings.iosShowDelete.value ? 1 : 0.7,
+                                            child: Container(
+                                              height: 60,
+                                              color: Colors.red,
+                                              width: context.width / 5 - 8,
+                                              child: IconSlideAction(
+                                                caption: "Delete",
+                                                color: Colors.red,
+                                                icon: Icons.delete_forever,
+                                                onTap: () async {
+                                                  SettingsManager().settings.iosShowDelete.value = !SettingsManager().settings.iosShowDelete.value;
+                                                  saveSettings();
+                                                },
+                                              ),
+                                            ),
+                                          ),
+                                          CupertinoButton(
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                    color: SettingsManager().settings.iosShowDelete.value
+                                                        ? Theme.of(context).primaryColor
+                                                        : tileColor,
+                                                    border: Border.all(
+                                                        color: CupertinoColors.systemGrey,
+                                                        style: BorderStyle.solid,
+                                                        width: 1
+                                                    ),
+                                                    borderRadius: BorderRadius.all(Radius.circular(25))
+                                                ),
+                                                child: Padding(
+                                                  padding: const EdgeInsets.all(3.0),
+                                                  child: Icon(CupertinoIcons.check_mark,
+                                                      size: 18,
+                                                      color: SettingsManager().settings.iosShowDelete.value
+                                                          ? CupertinoColors.white
+                                                          : CupertinoColors.systemGrey),
+                                                ),
+                                              ),
+                                              onPressed: () {
+                                                SettingsManager().settings.iosShowDelete.value = !SettingsManager().settings.iosShowDelete.value;
+                                                saveSettings();
+                                              }
+                                          ),
+                                        ],
+                                      ),
+                                      Column(
+                                        children: [
+                                          Opacity(
+                                            opacity: SettingsManager().settings.iosShowMarkRead.value ? 1 : 0.7,
+                                            child: Container(
+                                              height: 60,
+                                              color: Colors.blue,
+                                              width: context.width / 5 - 8,
+                                              child: IconSlideAction(
+                                                caption: 'Mark Read',
+                                                color: Colors.blue,
+                                                icon: Icons.mark_chat_read,
+                                                onTap: () {
+                                                  SettingsManager().settings.iosShowMarkRead.value = !SettingsManager().settings.iosShowMarkRead.value;saveSettings();
+                                                  saveSettings();
+                                                },
+                                              ),
+                                            ),
+                                          ),
+                                          CupertinoButton(
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                    color: SettingsManager().settings.iosShowMarkRead.value
+                                                        ? Theme.of(context).primaryColor
+                                                        : tileColor,
+                                                    border: Border.all(
+                                                        color: CupertinoColors.systemGrey,
+                                                        style: BorderStyle.solid,
+                                                        width: 1
+                                                    ),
+                                                    borderRadius: BorderRadius.all(Radius.circular(25))
+                                                ),
+                                                child: Padding(
+                                                  padding: const EdgeInsets.all(3.0),
+                                                  child: Icon(CupertinoIcons.check_mark,
+                                                      size: 18,
+                                                      color: SettingsManager().settings.iosShowMarkRead.value
+                                                          ? CupertinoColors.white
+                                                          : CupertinoColors.systemGrey),
+                                                ),
+                                              ),
+                                              onPressed: () {
+                                                SettingsManager().settings.iosShowMarkRead.value = !SettingsManager().settings.iosShowMarkRead.value;
+                                                saveSettings();
+                                              }
+                                          ),
+                                        ],
+                                      ),
+                                      Column(
+                                        children: [
+                                          Opacity(
+                                            opacity: SettingsManager().settings.iosShowArchive.value ? 1 : 0.7,
+                                            child: Container(
+                                              height: 60,
+                                              color: Colors.red,
+                                              width: context.width / 5 - 8,
+                                              child: IconSlideAction(
+                                                caption: 'Archive',
+                                                color: Colors.red,
+                                                icon: Icons.archive,
+                                                onTap: () {
+                                                  SettingsManager().settings.iosShowArchive.value = !SettingsManager().settings.iosShowArchive.value;
+                                                  saveSettings();
+                                                },
+                                              ),
+                                            ),
+                                          ),
+                                          CupertinoButton(
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                    color: SettingsManager().settings.iosShowArchive.value
+                                                        ? Theme.of(context).primaryColor
+                                                        : tileColor,
+                                                    border: Border.all(
+                                                        color: CupertinoColors.systemGrey,
+                                                        style: BorderStyle.solid,
+                                                        width: 1
+                                                    ),
+                                                    borderRadius: BorderRadius.all(Radius.circular(25))
+                                                ),
+                                                child: Padding(
+                                                  padding: const EdgeInsets.all(3.0),
+                                                  child: Icon(CupertinoIcons.check_mark,
+                                                      size: 18,
+                                                      color: SettingsManager().settings.iosShowArchive.value
+                                                          ? CupertinoColors.white
+                                                          : CupertinoColors.systemGrey),
+                                                ),
+                                              ),
+                                              onPressed: () {
+                                                SettingsManager().settings.iosShowArchive.value = !SettingsManager().settings.iosShowArchive.value;
+                                                saveSettings();
+                                              }
+                                          ),
+                                        ],
+                                      ),
+                                    ]
+                                  ),
+                                ]
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    else if (SettingsManager().settings.swipableConversationTiles.value)
+                      return Container(
+                        color: tileColor,
+                        child: Column(
+                          children: [
+                            SettingsOptions<MaterialSwipeAction>(
+                              initial: SettingsManager().settings.materialRightAction.value,
+                              onChanged: (val) {
+                                if (val != null) {
+                                  SettingsManager().settings.materialRightAction.value = val;
+                                  saveSettings();
+                                }
+                              },
+                              options: MaterialSwipeAction.values,
+                              textProcessing: (val) => val.toString().split(".")[1].replaceAll("_", " ").capitalizeFirst!,
+                              title: "Swipe Right Action",
+                              backgroundColor: tileColor,
+                              secondaryColor: headerColor,
+                            ),
+                            SettingsOptions<MaterialSwipeAction>(
+                              initial: SettingsManager().settings.materialLeftAction.value,
+                              onChanged: (val) {
+                                if (val != null) {
+                                  SettingsManager().settings.materialLeftAction.value = val;
+                                  saveSettings();
+                                }
+                              },
+                              options: MaterialSwipeAction.values,
+                              textProcessing: (val) => val.toString().split(".")[1].replaceAll("_", " ").capitalizeFirst!,
+                              title: "Swipe Left Action",
+                              backgroundColor: tileColor,
+                              secondaryColor: headerColor,
+                            ),
+                          ],
+                        ),
                       );
                     else return SizedBox.shrink();
                   }),

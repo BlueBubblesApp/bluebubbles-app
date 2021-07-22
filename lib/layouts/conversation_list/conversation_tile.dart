@@ -168,23 +168,25 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
   }
 
   Widget buildSlider(Widget child) {
-    return Slidable(
+    return Obx(() => Slidable(
       actionPane: SlidableStrechActionPane(),
+      actionExtentRatio: 0.2,
       actions: [
-        IconSlideAction(
-          caption: widget.chat.isPinned! ? 'Unpin' : 'Pin',
-          color: Colors.yellow[800],
-          foregroundColor: Theme.of(context).textTheme.bodyText1!.color,
-          icon: widget.chat.isPinned! ? Icons.star_outline : Icons.star,
-          onTap: () async {
-            await widget.chat.togglePin(!widget.chat.isPinned!);
-            EventDispatcher().emit("refresh", null);
-            if (this.mounted) setState(() {});
-          },
-        ),
+        if (SettingsManager().settings.iosShowPin.value)
+          IconSlideAction(
+            caption: widget.chat.isPinned! ? 'Unpin' : 'Pin',
+            color: Colors.yellow[800],
+            foregroundColor: Theme.of(context).textTheme.bodyText1!.color,
+            icon: widget.chat.isPinned! ? Icons.star_outline : Icons.star,
+            onTap: () async {
+              await widget.chat.togglePin(!widget.chat.isPinned!);
+              EventDispatcher().emit("refresh", null);
+              if (this.mounted) setState(() {});
+            },
+          ),
       ],
       secondaryActions: <Widget>[
-        if (!widget.chat.isArchived!)
+        if (!widget.chat.isArchived! && SettingsManager().settings.iosShowAlert.value)
           IconSlideAction(
             caption: widget.chat.isMuted! ? 'Show Alerts' : 'Hide Alerts',
             color: Colors.purple[700],
@@ -194,7 +196,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
               if (this.mounted) setState(() {});
             },
           ),
-        if (widget.chat.isArchived!)
+        if (SettingsManager().settings.iosShowDelete.value)
           IconSlideAction(
             caption: "Delete",
             color: Colors.red,
@@ -204,29 +206,31 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
               Chat.deleteChat(widget.chat);
             },
           ),
-        IconSlideAction(
-          caption: widget.chat.hasUnreadMessage! ? 'Mark Read' : 'Mark Unread',
-          color: Colors.blue,
-          icon: widget.chat.hasUnreadMessage! ? Icons.mark_chat_read : Icons.mark_chat_unread,
-          onTap: () {
-            ChatBloc().toggleChatUnread(widget.chat, !widget.chat.hasUnreadMessage!);
-          },
-        ),
-        IconSlideAction(
-          caption: widget.chat.isArchived! ? 'UnArchive' : 'Archive',
-          color: widget.chat.isArchived! ? Colors.blue : Colors.red,
-          icon: widget.chat.isArchived! ? Icons.restore_from_trash_rounded : Icons.delete,
-          onTap: () {
-            if (widget.chat.isArchived!) {
-              ChatBloc().unArchiveChat(widget.chat);
-            } else {
-              ChatBloc().archiveChat(widget.chat);
-            }
-          },
-        ),
+        if (SettingsManager().settings.iosShowMarkRead.value)
+          IconSlideAction(
+            caption: widget.chat.hasUnreadMessage! ? 'Mark Read' : 'Mark Unread',
+            color: Colors.blue,
+            icon: widget.chat.hasUnreadMessage! ? Icons.mark_chat_read : Icons.mark_chat_unread,
+            onTap: () {
+              ChatBloc().toggleChatUnread(widget.chat, !widget.chat.hasUnreadMessage!);
+            },
+          ),
+        if (SettingsManager().settings.iosShowArchive.value)
+          IconSlideAction(
+            caption: widget.chat.isArchived! ? 'UnArchive' : 'Archive',
+            color: widget.chat.isArchived! ? Colors.blue : Colors.red,
+            icon: widget.chat.isArchived! ? Icons.unarchive : Icons.archive,
+            onTap: () {
+              if (widget.chat.isArchived!) {
+                ChatBloc().unArchiveChat(widget.chat);
+              } else {
+                ChatBloc().archiveChat(widget.chat);
+              }
+            },
+          ),
       ],
       child: child,
-    );
+    ));
   }
 
   Widget buildTitle() {
