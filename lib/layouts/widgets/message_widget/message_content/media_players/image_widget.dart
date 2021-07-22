@@ -42,11 +42,12 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
     if (data == null) {
       // If it's an image, compress the image when loading it
       if (AttachmentHelper.canCompress(widget.attachment) &&
-          widget.attachment.guid != "redacted-mode-demo-attachment") {
+          widget.attachment.guid != "redacted-mode-demo-attachment"
+          && !widget.attachment.guid!.contains("theme-selector")) {
         data = await AttachmentHelper.compressAttachment(widget.attachment, widget.file.absolute.path);
         // All other attachments can be held in memory as bytes
       } else {
-        if (widget.attachment.guid == "redacted-mode-demo-attachment") {
+        if (widget.attachment.guid == "redacted-mode-demo-attachment" || widget.attachment.guid!.contains("theme-selector")) {
           data = (await rootBundle.load(widget.file.path)).buffer.asUint8List();
           return;
         }
@@ -82,9 +83,11 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
           Container(
             constraints: BoxConstraints(
               maxWidth: widget.attachment.guid == "redacted-mode-demo-attachment"
+                  || widget.attachment.guid!.contains("theme-selector")
                   ? widget.attachment.width!.toDouble()
                   : context.width / 2,
               maxHeight: widget.attachment.guid == "redacted-mode-demo-attachment"
+                  || widget.attachment.guid!.contains("theme-selector")
                   ? widget.attachment.height!.toDouble()
                   : context.height / 2,
             ),
@@ -130,7 +133,8 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
                   return Stack(children: [
                     buildPlaceHolder(isLoaded: true),
                     AnimatedOpacity(
-                      opacity: (frame == null && widget.attachment.guid != "redacted-mode-demo-attachment") ? 0 : 1,
+                      opacity: (frame == null && widget.attachment.guid != "redacted-mode-demo-attachment"
+                          && widget.attachment.guid!.contains("theme-selector")) ? 0 : 1,
                       child: child,
                       duration: const Duration(milliseconds: 250),
                       curve: Curves.easeInOut,

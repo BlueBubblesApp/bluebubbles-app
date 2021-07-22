@@ -59,8 +59,8 @@ abstract class MessageWidgetMixin {
 
     final bool generateContent =
         SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeMessageContent.value;
-    final bool hideContent =
-        SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value && !generateContent;
+    final bool hideContent = (message?.guid?.contains("theme-selector") ?? false) ||
+        (SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value && !generateContent);
 
     if (message != null && !isEmptyString(message.text)) {
       RegExp exp = new RegExp(

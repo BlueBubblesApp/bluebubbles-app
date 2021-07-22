@@ -63,6 +63,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
   @override
   void dispose() {
     _titleController.dispose();
+    _subtitleController.dispose();
     super.dispose();
   }
 
