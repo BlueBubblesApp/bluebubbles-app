@@ -1,14 +1,14 @@
 import 'dart:async';
 
-import 'package:contacts_service/contacts_service.dart';
-import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/theming/avatar_color_picker_popup.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
+import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class ContactAvatarWidgetState {
   MemoryImage? contactImage;
@@ -187,20 +187,25 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
     super.build(context);
 
     return GestureDetector(
-        onTap: onAvatarTap,
-        child: Container(
-          width: widget.size ?? 40,
-          height: widget.size ?? 40,
-          padding: EdgeInsets.all(widget.borderThickness),
-          // borde width
-          decoration: new BoxDecoration(
-            color: Theme.of(context).backgroundColor, // border color
-            shape: BoxShape.circle,
-          ),
-          child: CircleAvatar(
+      onTap: onAvatarTap,
+      child: Container(
+        width: widget.size ?? 40,
+        height: widget.size ?? 40,
+        padding: EdgeInsets.all(widget.borderThickness),
+        decoration: new BoxDecoration(
+          color: Theme.of(context).backgroundColor, // border color
+          shape: BoxShape.circle,
+        ),
+        child: CircleAvatar(
             radius: (widget.size != null) ? widget.size! / 2 : 20,
-            child: Obx(() => state!.contactImage == null ||
-                (SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactPhotos.value) ? Container(
+            backgroundImage:
+                !(SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactPhotos.value)
+                    ? state!.contactImage
+                    : null,
+            child: state!.contactImage == null ||
+                    (SettingsManager().settings.redactedMode.value &&
+                        SettingsManager().settings.hideContactPhotos.value)
+                ? Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: AlignmentDirectional.topStart,
@@ -209,27 +214,29 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
                           !SettingsManager().settings.colorfulAvatars.value ? HexColor("686868") : colors.length > 0 ? colors[0] : HexColor("686868")
                         ],
                       ),
-                      borderRadius: BorderRadius.circular(30),
+                      borderRadius: BorderRadius.circular(widget.size ?? 30),
                     ),
                     child: Container(
-                      child: (SettingsManager().settings.redactedMode.value && SettingsManager().settings.removeLetterAvatars.value) || state!.initials == null ? Icon(
+                      child: Obx(() => (SettingsManager().settings.redactedMode.value &&
+                                  SettingsManager().settings.removeLetterAvatars.value) ||
+                              state!.initials == null
+                          ? Icon(
                               Icons.person,
-                              size: (widget.size ?? 40) / 2,
-                            ) : Text(
+                              size: (widget.size ?? 40) * 0.5,
+                            )
+                          : Text(
                               state!.initials!,
                               style: TextStyle(
-                                fontSize: (widget.fontSize == null) ? 18 : widget.fontSize,
+                                fontSize: widget.fontSize ?? 18,
                               ),
                               textAlign: TextAlign.center,
-                            ),
-                      alignment: AlignmentDirectional.center,
+                            )),
+                      alignment: Alignment.center,
                     ),
-                  ) : CircleAvatar(
-                    backgroundImage: state!.contactImage,
-                  ),
-            )
-          ),
-        ));
+                  )
+                : null),
+      ),
+    );
   }
 
   @override
