@@ -48,3 +48,11 @@ enum SwipeDirection {
   LEFT,
   RIGHT,
 }
+
+enum MaterialSwipeAction {
+  pin,
+  alerts,
+  delete,
+  mark_read,
+  archive,
+}

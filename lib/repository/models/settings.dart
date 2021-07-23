@@ -76,6 +76,15 @@ class Settings {
   RxBool enableQuickTapback = false.obs;
   RxString quickTapbackType = ReactionTypes.toList()[0].obs; // The 'love' reaction
 
+  // Slideable action settings
+  RxBool iosShowPin = RxBool(true);
+  RxBool iosShowAlert = RxBool(true);
+  RxBool iosShowDelete = RxBool(true);
+  RxBool iosShowMarkRead = RxBool(true);
+  RxBool iosShowArchive = RxBool(true);
+  Rx<MaterialSwipeAction> materialRightAction = MaterialSwipeAction.pin.obs;
+  Rx<MaterialSwipeAction> materialLeftAction = MaterialSwipeAction.archive.obs;
+
   Rx<Skins> skin = Skins.iOS.obs;
   Rx<ThemeMode> theme = ThemeMode.system.obs;
   Rx<SwipeDirection> fullscreenViewerSwipeDir = SwipeDirection.RIGHT.obs;
@@ -205,6 +214,20 @@ class Settings {
         settings.quickTapbackType.value = entry.value;
       } else if (entry.name == "alwaysShowAvatars") {
         settings.alwaysShowAvatars.value = entry.value;
+      } else if (entry.name == "iosShowPin") {
+        settings.iosShowPin.value = entry.value;
+      } else if (entry.name == "iosShowAlert") {
+        settings.iosShowAlert.value = entry.value;
+      } else if (entry.name == "iosShowDelete") {
+        settings.iosShowDelete.value = entry.value;
+      } else if (entry.name == "iosShowMarkRead") {
+        settings.iosShowMarkRead.value = entry.value;
+      } else if (entry.name == "iosShowArchive") {
+        settings.iosShowArchive.value = entry.value;
+      } else if (entry.name == "materialRightAction") {
+        settings.materialRightAction.value = MaterialSwipeAction.values[entry.value];
+      } else if (entry.name == "materialLeftAction") {
+        settings.materialLeftAction.value = MaterialSwipeAction.values[entry.value];
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -547,6 +570,41 @@ class Settings {
           name: "alwaysShowAvatars",
           value: this.alwaysShowAvatars.value,
           type: this.alwaysShowAvatars.runtimeType,
+        ),
+        ConfigEntry(
+          name: "iosShowPin",
+          value: this.iosShowPin.value,
+          type: this.iosShowPin.runtimeType,
+        ),
+        ConfigEntry(
+          name: "iosShowAlert",
+          value: this.iosShowAlert.value,
+          type: this.iosShowAlert.runtimeType,
+        ),
+        ConfigEntry(
+          name: "iosShowDelete",
+          value: this.iosShowDelete.value,
+          type: this.iosShowDelete.runtimeType,
+        ),
+        ConfigEntry(
+          name: "iosShowMarkRead",
+          value: this.iosShowMarkRead.value,
+          type: this.iosShowMarkRead.runtimeType,
+        ),
+        ConfigEntry(
+          name: "iosShowArchive",
+          value: this.iosShowArchive.value,
+          type: this.iosShowArchive.runtimeType,
+        ),
+        ConfigEntry(
+          name: "materialRightAction",
+          value: this.materialRightAction.value.index,
+          type: this.materialRightAction.value.index.runtimeType,
+        ),
+        ConfigEntry(
+          name: "materialLeftAction",
+          value: this.materialLeftAction.value.index,
+          type: this.materialLeftAction.value.index.runtimeType,
         ),
         // ConfigEntry(
         //     name: "emojiFontFamily",
