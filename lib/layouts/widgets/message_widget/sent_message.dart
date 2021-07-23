@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:bluebubbles/layouts/setup/theme_selector/theme_selector.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -39,7 +40,7 @@ class SentMessageHelper {
 
     Widget msg;
     bool hasReactions = (message?.getReactions() ?? []).length > 0;
-    Skins currentSkin = SettingsManager().settings.skin.value;
+    Skins currentSkin = Skin.of(context)?.skin ?? SettingsManager().settings.skin.value;
 
     if (message?.isBigEmoji() ?? false) {
       msg = Padding(
@@ -250,6 +251,8 @@ class SentMessage extends StatefulWidget {
 }
 
 class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin, MessageWidgetMixin {
+  Rx<Skins> skin = Rx<Skins>(SettingsManager().settings.skin.value);
+
   @override
   void initState() {
     super.initState();
@@ -258,6 +261,9 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
 
   @override
   Widget build(BuildContext context) {
+    if (Skin.of(context) != null) {
+      skin.value = Skin.of(context)!.skin;
+    }
     // The column that holds all the "messages"
     List<Widget> messageColumn = [];
 
@@ -334,15 +340,15 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
       Padding(
         // Padding to shift the bubble up a bit, relative to the avatar
         padding: EdgeInsets.only(
-            top: (SettingsManager().settings.skin.value != Skins.iOS &&
+            top: (skin.value != Skins.iOS &&
                     widget.message.isFromMe == widget.olderMessage?.isFromMe)
-                ? (SettingsManager().settings.skin.value != Skins.iOS)
+                ? (skin.value != Skins.iOS)
                     ? 0
                     : 3
-                : (SettingsManager().settings.skin.value == Skins.iOS)
+                : (skin.value == Skins.iOS)
                     ? 0.0
                     : 10,
-            bottom: (SettingsManager().settings.skin.value == Skins.iOS &&
+            bottom: (skin.value == Skins.iOS &&
                     widget.showTail &&
                     !isEmptyString(widget.message.fullText))
                 ? 5.0
@@ -361,10 +367,10 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
       mainAxisSize: MainAxisSize.max,
       mainAxisAlignment: MainAxisAlignment.end,
       crossAxisAlignment:
-          (SettingsManager().settings.skin.value == Skins.iOS) ? CrossAxisAlignment.center : CrossAxisAlignment.end,
+          (skin.value == Skins.iOS) ? CrossAxisAlignment.center : CrossAxisAlignment.end,
       children: [
-        if (SettingsManager().settings.skin.value == Skins.iOS ||
-            SettingsManager().settings.skin.value == Skins.Material)
+        if (skin.value == Skins.iOS ||
+            skin.value == Skins.Material)
           MessagePopupHolder(
             message: widget.message,
             child: Row(
@@ -374,7 +380,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
               children: msgRow,
             ),
           ),
-        if (SettingsManager().settings.skin.value == Skins.Samsung)
+        if (skin.value == Skins.Samsung)
           MessagePopupHolder(
             message: widget.message,
             child: Row(
@@ -384,7 +390,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
               children: msgRow,
             ),
           ),
-        if (SettingsManager().settings.skin.value != Skins.Samsung && widget.message.guid != widget.olderMessage?.guid)
+        if (skin.value != Skins.Samsung && widget.message.guid != widget.olderMessage?.guid)
           MessageTimeStamp(
             message: widget.message,
           )

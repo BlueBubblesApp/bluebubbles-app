@@ -28,6 +28,7 @@ class MessagesView extends StatefulWidget {
   final bool showHandle;
   final Chat? chat;
   final Function? initComplete;
+  final List<Message> messages;
 
   MessagesView({
     Key? key,
@@ -35,6 +36,7 @@ class MessagesView extends StatefulWidget {
     required this.showHandle,
     this.chat,
     this.initComplete,
+    this.messages = const [],
   }) : super(key: key);
 
   @override
@@ -80,7 +82,9 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     widget.messageBloc?.stream.listen(handleNewMessage);
 
     // See if we need to load anything from the message bloc
-    if (_messages.isEmpty && widget.messageBloc!.messages.isEmpty) {
+    if (widget.messages.isNotEmpty) {
+      _messages = widget.messages;
+    } else if (_messages.isEmpty && widget.messageBloc!.messages.isEmpty) {
       widget.messageBloc!.getMessages();
     } else if (_messages.isEmpty && widget.messageBloc!.messages.isNotEmpty) {
       widget.messageBloc!.emitLoaded();
@@ -405,11 +409,11 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                     );
                   },
                 ),
-              if (SettingsManager().settings.enablePrivateAPI.value)
+              if (SettingsManager().settings.enablePrivateAPI.value || widget.chat?.guid == "theme-selector")
                 SliverToBoxAdapter(
                   child: Row(
                     children: <Widget>[
-                      if (currentChat!.showTypingIndicator && SettingsManager().settings.alwaysShowAvatars.value)
+                      if (widget.chat?.guid == "theme-selector" || (currentChat!.showTypingIndicator && SettingsManager().settings.alwaysShowAvatars.value))
                         Padding(
                           padding: EdgeInsets.only(left: 10.0),
                           child: ContactAvatarWidget(
@@ -422,12 +426,41 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                       Padding(
                         padding: EdgeInsets.only(top: 5),
                         child: TypingIndicator(
-                          visible: currentChat!.showTypingIndicator,
+                          visible: widget.chat?.guid == "theme-selector" ? true : currentChat!.showTypingIndicator,
                         ),
                       ),
                     ],
                   ),
                 ),
+              widget.messages.isNotEmpty ?
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        Message? olderMessage;
+                        Message? newerMessage;
+                        if (index + 1 >= 0 && index + 1 < _messages.length) {
+                          olderMessage = _messages[index + 1];
+                        }
+                        if (index - 1 >= 0 && index - 1 < _messages.length) {
+                          newerMessage = _messages[index - 1];
+                        }
+
+                        return Padding(
+                            padding: EdgeInsets.only(left: 5.0, right: 5.0),
+                            child: MessageWidget(
+                              key: Key(_messages[index].guid!),
+                              message: _messages[index],
+                              olderMessage: olderMessage,
+                              newerMessage: newerMessage,
+                              showHandle: widget.showHandle,
+                              isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages[index].guid,
+                              showHero: false,
+                              onUpdate: (event) => onUpdateMessage(event),
+                            ));
+                      },
+                    childCount: _messages.length,
+                  ),
+                ) :
               _listKey != null
                   ? SliverAnimatedList(
                       initialItemCount: _messages.length + 1,

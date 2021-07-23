@@ -199,7 +199,7 @@ class AttachmentHelper {
     if (SocketManager().attachmentDownloaders.containsKey(attachment.guid)) {
       return SocketManager().attachmentDownloaders[attachment.guid];
     } else if (FileSystemEntity.typeSync(pathName) != FileSystemEntityType.notFound ||
-        attachment.guid == "redacted-mode-demo-attachment") {
+        attachment.guid == "redacted-mode-demo-attachment" || attachment.guid!.contains("theme-selector")) {
       return File(pathName);
     } else if (attachment.mimeType == null || attachment.mimeType!.startsWith("text/")) {
       return AttachmentDownloader(attachment);

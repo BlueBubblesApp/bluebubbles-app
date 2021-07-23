@@ -2,6 +2,7 @@ import 'dart:math' as Math;
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/layouts/setup/theme_selector/theme_selector.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/material.dart';
@@ -18,6 +19,7 @@ class TypingIndicator extends StatefulWidget {
 class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderStateMixin {
   late AnimationController _controller;
   late Animation animation;
+  Rx<Skins> skin = Rx<Skins>(SettingsManager().settings.skin.value);
 
   @override
   void initState() {
@@ -50,6 +52,9 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    if (Skin.of(context) != null) {
+      skin.value = Skin.of(context)!.skin;
+    }
     return AnimatedSize(
       vsync: this,
       duration: Duration(milliseconds: 200),
@@ -60,7 +65,7 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
                 Stack(
                   alignment: Alignment.bottomLeft,
                   children: [
-                    if (SettingsManager().settings.skin.value == Skins.iOS)
+                    if (skin.value == Skins.iOS)
                       Container(
                         margin: EdgeInsets.only(left: 2),
                         decoration: BoxDecoration(
@@ -70,7 +75,7 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
                         width: 10,
                         height: 10,
                       ),
-                    if (SettingsManager().settings.skin.value == Skins.iOS)
+                    if (skin.value == Skins.iOS)
                       Container(
                         margin: EdgeInsets.only(left: 9, bottom: 10),
                         decoration: BoxDecoration(
@@ -84,7 +89,7 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
                       margin: EdgeInsets.only(
                         left: 10,
                         right: 10,
-                        bottom: SettingsManager().settings.skin.value == Skins.iOS ? 13 : 5,
+                        bottom: skin.value == Skins.iOS ? 13 : 5,
                       ),
                       constraints: BoxConstraints(
                         maxWidth: context.width * MessageWidgetMixin.MAX_SIZE,

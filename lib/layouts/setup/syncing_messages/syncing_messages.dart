@@ -36,6 +36,10 @@ class _SyncingMessagesState extends State<SyncingMessages> {
         );
       } else if (event.progress >= 100) {
         subscription.cancel();
+        widget.controller.nextPage(
+          duration: Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
       }
     });
   }
