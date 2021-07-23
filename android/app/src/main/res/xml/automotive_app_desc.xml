@@ -1,3 +1,4 @@
 <automotiveApp>
     <uses name="media"/>
+    <uses name="notification" />
 </automotiveApp>
