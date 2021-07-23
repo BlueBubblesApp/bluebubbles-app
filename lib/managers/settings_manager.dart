@@ -11,6 +11,7 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
+import 'package:local_auth/local_auth.dart';
 import 'package:path_provider/path_provider.dart';
 
 /// [SettingsManager] is responsible for making the current settings accessible to other managers and for saving new settings
@@ -40,6 +41,7 @@ class SettingsManager {
   late List<ThemeObject> themes;
   String? countryCode;
   int? _macOSVersion;
+  bool canAuthenticate = false;
 
   int get compressionQuality {
     if (settings.lowMemoryMode.value) {
@@ -53,6 +55,7 @@ class SettingsManager {
   Future<void> init() async {
     settings = new Settings();
     appDocDir = await getApplicationSupportDirectory();
+    canAuthenticate = await LocalAuthentication().isDeviceSupported();
   }
 
   /// Retreives files from disk and stores them in [settings]

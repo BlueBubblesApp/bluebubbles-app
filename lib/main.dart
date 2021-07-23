@@ -159,7 +159,7 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
 
         builder: (context, child) => SecureApplication(
           onNeedUnlock: (controller) async {
-            if (SettingsManager().settings.shouldSecure.value) {
+            if (SettingsManager().canAuthenticate && SettingsManager().settings.shouldSecure.value) {
               controller!.lock();
               if (SettingsManager().settings.securityLevel.value == SecurityLevel.locked_and_secured) {
                 controller.secure();
@@ -170,7 +170,7 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
           },
           child: Builder(
               builder: (context) {
-                if (!LifeCycleManager().isAlive) {
+                if (SettingsManager().canAuthenticate && !LifeCycleManager().isAlive) {
                   if (SettingsManager().settings.shouldSecure.value) {
                     SecureApplicationProvider.of(context, listen: false)!.lock();
                     if (SettingsManager().settings.securityLevel.value == SecurityLevel.locked_and_secured) {
