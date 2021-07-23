@@ -1,15 +1,13 @@
 import 'dart:async';
 import 'dart:ui';
 
-import 'package:bluebubbles/helpers/ui_helpers.dart';
-import 'package:contacts_service/contacts_service.dart';
-import 'package:get/get.dart';
 import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/socket_singletons.dart';
+import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_details/conversation_details.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
@@ -27,8 +25,10 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart' as Cupertino;
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:slugify/slugify.dart';
 
 mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on State<ConversationView> {
@@ -57,6 +57,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   int previousContactCount = 0;
 
   final _contactStreamController = StreamController<List<UniqueContact>>.broadcast();
+
   Stream<List<UniqueContact>> get contactStream => _contactStreamController.stream;
 
   TextEditingController chatSelectorController = new TextEditingController(text: " ");
@@ -246,22 +247,34 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
   Widget buildCupertinoTrailing() {
     Color? fontColor = Theme.of(context).textTheme.headline1!.color;
-    bool manualMark = SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateManualMarkAsRead.value;
+    bool manualMark =
+        SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateManualMarkAsRead.value;
     bool showManual = !SettingsManager().settings.privateMarkChatAsRead.value && !(widget.chat?.isGroup() ?? false);
     List<Widget> items = [
       if (showManual && manualMark && markingAsRead)
         Padding(
-            padding: EdgeInsets.only(right: SettingsManager().settings.colorblindMode.value ? 15.0 : 10.0),
-            child: SettingsManager().settings.skin.value == Skins.iOS ? Theme(
-              data: ThemeData(
-                cupertinoOverrideTheme: Cupertino.CupertinoThemeData(
-                  brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
+          padding: EdgeInsets.only(right: SettingsManager().settings.colorblindMode.value ? 15.0 : 10.0),
+          child: SettingsManager().settings.skin.value == Skins.iOS
+              ? Theme(
+                  data: ThemeData(
+                    cupertinoOverrideTheme: Cupertino.CupertinoThemeData(
+                      brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
+                    ),
+                  ),
+                  child: Cupertino.CupertinoActivityIndicator(
+                    radius: 12,
+                  ),
+                )
+              : Container(
+                  height: 24,
+                  width: 24,
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                    ),
+                  ),
                 ),
-              ),
-              child: Cupertino.CupertinoActivityIndicator(
-                radius: 12,
-              ),
-            ) : Container(height: 24, width: 24, child: Center(child: CircularProgressIndicator(strokeWidth: 2,)))),
+        ),
       if (showManual && manualMark && !markingAsRead)
         Padding(
           padding: EdgeInsets.only(right: SettingsManager().settings.colorblindMode.value ? 10.0 : 5.0),
@@ -348,7 +361,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
                     return getIndicatorIcon(connectionStatus, size: 12);
                   });
-            else return SizedBox.shrink();
+            else
+              return SizedBox.shrink();
           }),
           Obx(() {
             if (SettingsManager().settings.privateManualMarkAsRead.value && markingAsRead)
@@ -356,12 +370,13 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                   padding: const EdgeInsets.only(right: 8.0),
                   child: Center(
                       child: SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor)),
-                      )));
-            else return SizedBox.shrink();
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor)),
+                  )));
+            else
+              return SizedBox.shrink();
           }),
           Obx(() {
             if (SettingsManager().settings.enablePrivateAPI.value &&
@@ -377,7 +392,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                   onTap: markChatAsRead,
                 ),
               );
-            else return SizedBox.shrink();
+            else
+              return SizedBox.shrink();
           }),
           Padding(
             padding: const EdgeInsets.only(right: 8.0),
@@ -593,7 +609,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             ),
           ],
         ),
-        trailing: Obx(() => Container(width: 40 + (ChatBloc().unreads.value > 0 ? 25 : 0), child: buildCupertinoTrailing())));
+        trailing:
+            Obx(() => Container(width: 40 + (ChatBloc().unreads.value > 0 ? 25 : 0), child: buildCupertinoTrailing())));
   }
 
   /// Chat selector methods

@@ -213,7 +213,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
           },
         ),
         IconSlideAction(
-          caption: widget.chat.isArchived! ? 'UnArchive' : 'Archive',
+          caption: widget.chat.isArchived! ? 'Unarchive' : 'Archive',
           color: widget.chat.isArchived! ? Colors.blue : Colors.red,
           icon: widget.chat.isArchived! ? Icons.restore_from_trash_rounded : Icons.delete,
           onTap: () {
