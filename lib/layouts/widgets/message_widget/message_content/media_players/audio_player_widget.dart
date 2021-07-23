@@ -39,8 +39,8 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
       CurrentChat.of(widget.context)!.audioPlayers[widget.file.path] = player;
     }
 
-    isPlaying = player.isPlaying.value;
-    current = player.currentPosition.value;
+    isPlaying = player.isPlaying.hasValue ? player.isPlaying.value : false;
+    current = player.currentPosition.hasValue ? player.currentPosition.value : Duration(seconds: 0);
 
     // Listen for when the audio is finished
     player.playlistFinished.listen((bool finished) async {
@@ -100,7 +100,7 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
 
   @override
   Widget build(BuildContext context) {
-    Playing? playing = player.current.value;
+    Playing? playing = player.current.hasValue ? player.current.value : null;
     double maxWidth = widget.width ?? context.width * 3 / 4;
 
     double currentValue = current.inSeconds.toDouble();
