@@ -198,11 +198,11 @@ class ContactManager {
         for (Item item in c.phones ?? []) {
           String compStr = "";
           if (item.value != null) {
-            compStr = item.value!.replaceAll(" ", "").trim();
+            compStr = item.value!.replaceAll(" ", "").trim().numericOnly();
           }
 
           if (!compStr.endsWith(lastDigits!)) continue;
-          if (sameAddress(opts, item.value)) {
+          if (sameAddress(opts, compStr)) {
             contact = c;
             break;
           }
