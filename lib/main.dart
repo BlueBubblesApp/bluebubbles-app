@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/settings/about_panel.dart';
@@ -34,8 +35,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:get/get.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:local_auth/local_auth.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
+import 'package:secure_application/secure_application.dart';
 
 // final SentryClient _sentry = SentryClient(
 //     dsn:
@@ -154,6 +157,71 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
         /// [Home] is the starting widget for the app
         home: Home(),
 
+        builder: (context, child) => SecureApplication(
+          onNeedUnlock: (controller) async {
+            if (SettingsManager().canAuthenticate && SettingsManager().settings.shouldSecure.value) {
+              controller!.lock();
+              if (SettingsManager().settings.securityLevel.value == SecurityLevel.locked_and_secured) {
+                controller.secure();
+              }
+              return SecureApplicationAuthenticationStatus.FAILED;
+            }
+            return SecureApplicationAuthenticationStatus.SUCCESS;
+          },
+          child: Builder(
+              builder: (context) {
+                if (SettingsManager().canAuthenticate && !LifeCycleManager().isAlive) {
+                  if (SettingsManager().settings.shouldSecure.value) {
+                    SecureApplicationProvider.of(context, listen: false)!.lock();
+                    if (SettingsManager().settings.securityLevel.value == SecurityLevel.locked_and_secured) {
+                      SecureApplicationProvider.of(context, listen: false)!.secure();
+                    }
+                  }
+                }
+                return SecureGate(
+                  blurr: 0,
+                  opacity: 1.0,
+                  lockedBuilder: (context, controller) => Container(
+                    color: Theme.of(context).backgroundColor,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 20.0),
+                            child: Text(
+                              "BlueBubbles is currently locked. Please unlock to access your messages.",
+                              style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                          Container(height: 20.0),
+                          ClipOval(
+                            child: Material(
+                              color: Theme.of(context).primaryColor, // button color
+                              child: InkWell(
+                                child: SizedBox(width: 60, height: 60, child: Icon(Icons.lock_open, color: Colors.white)),
+                                onTap: () async {
+                                  var localAuth = LocalAuthentication();
+                                  bool didAuthenticate = await localAuth.authenticate(
+                                      localizedReason: 'Please authenticate to unlock BlueBubbles', stickyAuth: true);
+                                  if (didAuthenticate) {
+                                    controller!.authSuccess(unlock: true);
+                                  }
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  child: child ?? Container(),
+                );
+              }
+          ),
+        ),
+
         defaultTransition: Transition.cupertino,
 
         getPages: [
@@ -200,64 +268,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     // This initialization sets the function address in the native code to be used later
     BackgroundIsolateInterface.initialize();
 
-    // Get sharing media from files shared to the app from cold start
-    // This one only handles files, not text
-    ReceiveSharingIntent.getInitialMedia().then((List<SharedMediaFile> value) async {
-      if (!SettingsManager().settings.finishedSetup.value) return;
-      if (value.isEmpty) return;
-
-      // If we don't have storage permission, we can't do anything
-      if (!await Permission.storage.request().isGranted) return;
-
-      // Add the attached files to a list
-      List<File> attachments = <File>[];
-      value.forEach((element) {
-        attachments.add(File(element.path));
-      });
-
-      if (attachments.length == 0) return;
-
-      // Go to the new chat creator, with all of our attachments
-      Navigator.of(context).pushAndRemoveUntil(
-        ThemeSwitcher.buildPageRoute(
-          builder: (context) => ConversationView(
-            existingAttachments: attachments,
-            isCreator: true,
-          ),
-        ),
-        (route) => route.isFirst,
-      );
-    });
-
-    // Same thing as [getInitialMedia] except for text
-    ReceiveSharingIntent.getInitialText().then((String? text) {
-      if (!SettingsManager().settings.finishedSetup.value) return;
-      if (text == null) return;
-
-      // Go to the new chat creator, with all of our text
-      Navigator.of(context).pushAndRemoveUntil(
-        ThemeSwitcher.buildPageRoute(
-          builder: (context) => ConversationView(
-            existingText: text,
-            isCreator: true,
-          ),
-        ),
-        (route) => route.isFirst,
-      );
-    });
-
-    // Request native code to retreive what the starting intent was
-    //
-    // The starting intent will be set when you click on a notification
-    // This is only really necessary when opening a notification and the app is fully closed
-    MethodChannelInterface().invokeMethod("get-starting-intent").then((value) {
-      if (!SettingsManager().settings.finishedSetup.value) return;
-      if (value != null) {
-        // Open that chat
-        MethodChannelInterface().openChat(value.toString());
-      }
-    });
-
     // Create the notification in case it hasn't been already. Doing this multiple times won't do anything, so we just do it on every app start
     NotificationManager().createNotificationChannel(
       NotificationManager.NEW_MESSAGE_CHANNEL,
@@ -271,7 +281,66 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     );
 
     // Get the saved settings from the settings manager after the first frame
-    SchedulerBinding.instance!.addPostFrameCallback((_) => SettingsManager().getSavedSettings(context: context));
+    SchedulerBinding.instance!.addPostFrameCallback((_) async {
+      await SettingsManager().getSavedSettings(context: context);
+      // Get sharing media from files shared to the app from cold start
+      // This one only handles files, not text
+      ReceiveSharingIntent.getInitialMedia().then((List<SharedMediaFile> value) async {
+        if (!SettingsManager().settings.finishedSetup.value) return;
+        if (value.isEmpty) return;
+
+        // If we don't have storage permission, we can't do anything
+        if (!await Permission.storage.request().isGranted) return;
+
+        // Add the attached files to a list
+        List<File> attachments = <File>[];
+        value.forEach((element) {
+          attachments.add(File(element.path));
+        });
+
+        if (attachments.length == 0) return;
+
+        // Go to the new chat creator, with all of our attachments
+        Navigator.of(context).pushAndRemoveUntil(
+          ThemeSwitcher.buildPageRoute(
+            builder: (context) => ConversationView(
+              existingAttachments: attachments,
+              isCreator: true,
+            ),
+          ),
+              (route) => route.isFirst,
+        );
+      });
+
+      // Same thing as [getInitialMedia] except for text
+      ReceiveSharingIntent.getInitialText().then((String? text) {
+        if (!SettingsManager().settings.finishedSetup.value) return;
+        if (text == null) return;
+
+        // Go to the new chat creator, with all of our text
+        Navigator.of(context).pushAndRemoveUntil(
+          ThemeSwitcher.buildPageRoute(
+            builder: (context) => ConversationView(
+              existingText: text,
+              isCreator: true,
+            ),
+          ),
+              (route) => route.isFirst,
+        );
+      });
+
+      // Request native code to retreive what the starting intent was
+      //
+      // The starting intent will be set when you click on a notification
+      // This is only really necessary when opening a notification and the app is fully closed
+      MethodChannelInterface().invokeMethod("get-starting-intent").then((value) {
+        if (!SettingsManager().settings.finishedSetup.value) return;
+        if (value != null) {
+          // Open that chat
+          MethodChannelInterface().openChat(value.toString());
+        }
+      });
+    });
 
     // Bind the lifecycle events
     WidgetsBinding.instance!.addObserver(this);

@@ -10,9 +10,11 @@ import androidx.annotation.RequiresApi;
 import com.bluebubbles.messaging.MainActivity;
 import com.bluebubbles.messaging.method_call_handler.handlers.AlarmScheduler;
 import com.bluebubbles.messaging.method_call_handler.handlers.ClearChatNotifs;
+import com.bluebubbles.messaging.method_call_handler.handlers.ClearFailedToSend;
 import com.bluebubbles.messaging.method_call_handler.handlers.ClearSocketIssue;
 import com.bluebubbles.messaging.method_call_handler.handlers.CreateNotificationChannel;
 import com.bluebubbles.messaging.method_call_handler.handlers.DownloadHandler;
+import com.bluebubbles.messaging.method_call_handler.handlers.FailedToSend;
 import com.bluebubbles.messaging.method_call_handler.handlers.FetchMessagesHandler;
 import com.bluebubbles.messaging.method_call_handler.handlers.FirebaseAuth;
 import com.bluebubbles.messaging.method_call_handler.handlers.GetLastLocation;
@@ -90,6 +92,10 @@ public class MethodCallHandler {
             new OpenContactForm(context, call, result).Handle();
         } else if (call.method.equals(ViewContactForm.TAG)) {
             new ViewContactForm(context, call, result).Handle();
+        } else if (call.method.equals(FailedToSend.TAG)) {
+            new FailedToSend(context, call, result).Handle();
+        } else if (call.method.equals(ClearFailedToSend.TAG)) {
+            new ClearFailedToSend(context, call, result).Handle();
         } else {
             result.notImplemented();
         }

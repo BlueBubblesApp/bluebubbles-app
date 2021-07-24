@@ -278,7 +278,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   ),
                   SettingsTile(
                     backgroundColor: tileColor,
-                    title: "Miscellaneous Settings",
+                    title: "Misc and Advanced Settings",
                     onTap: () {
                       Navigator.of(context).push(
                         CupertinoPageRoute(

@@ -9,6 +9,8 @@ import 'package:bluebubbles/helpers/attachment_sender.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/outgoing_queue.dart';
@@ -136,7 +138,10 @@ class ActionHandler {
         String? tempGuid = message.guid;
         message.guid = message.guid!.replaceAll("temp", "error-Connection timeout, please check your internet connection and try again");
         message.error = MessageError.BAD_REQUEST.code;
-
+        CurrentChat? currChat = CurrentChat.activeChat;
+        if (!LifeCycleManager().isAlive || currChat?.chat.guid != chat.guid) {
+          NotificationManager().createFailedToSendMessage();
+        }
         await Message.replaceMessage(tempGuid, message);
         NewMessageManager().updateMessage(chat, tempGuid!, message);
         completer.complete();

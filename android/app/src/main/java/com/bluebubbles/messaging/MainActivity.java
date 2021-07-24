@@ -2,7 +2,7 @@ package com.bluebubbles.messaging;
 
 import androidx.annotation.NonNull;
 
-import io.flutter.embedding.android.FlutterActivity;
+import io.flutter.embedding.android.FlutterFragmentActivity;
 import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugins.GeneratedPluginRegistrant;
@@ -45,8 +45,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
-public class MainActivity extends FlutterActivity {
+public class MainActivity extends FlutterFragmentActivity {
     public static final String CHANNEL = "com.bluebubbles.messaging";
     private static final String TAG = "MainActivity";
     public static FlutterEngine engine;

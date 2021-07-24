@@ -56,3 +56,8 @@ enum MaterialSwipeAction {
   mark_read,
   archive,
 }
+
+enum SecurityLevel {
+  locked,
+  locked_and_secured,
+}

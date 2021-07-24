@@ -85,6 +85,10 @@ class Settings {
   Rx<MaterialSwipeAction> materialRightAction = MaterialSwipeAction.pin.obs;
   Rx<MaterialSwipeAction> materialLeftAction = MaterialSwipeAction.archive.obs;
 
+  // Security settings
+  RxBool shouldSecure = RxBool(false);
+  Rx<SecurityLevel> securityLevel = Rx<SecurityLevel>(SecurityLevel.locked);
+
   Rx<Skins> skin = Skins.iOS.obs;
   Rx<ThemeMode> theme = ThemeMode.system.obs;
   Rx<SwipeDirection> fullscreenViewerSwipeDir = SwipeDirection.RIGHT.obs;
@@ -228,6 +232,10 @@ class Settings {
         settings.materialRightAction.value = MaterialSwipeAction.values[entry.value];
       } else if (entry.name == "materialLeftAction") {
         settings.materialLeftAction.value = MaterialSwipeAction.values[entry.value];
+      } else if (entry.name == "shouldSecure") {
+        settings.shouldSecure.value = entry.value;
+      } else if (entry.name == "securityLevel") {
+        settings.securityLevel.value = SecurityLevel.values[entry.value];
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -605,6 +613,16 @@ class Settings {
           name: "materialLeftAction",
           value: this.materialLeftAction.value.index,
           type: this.materialLeftAction.value.index.runtimeType,
+        ),
+        ConfigEntry(
+          name: "shouldSecure",
+          value: this.shouldSecure.value,
+          type: this.shouldSecure.runtimeType,
+        ),
+        ConfigEntry(
+          name: "securityLevel",
+          value: this.securityLevel.value.index,
+          type: this.securityLevel.value.index.runtimeType,
         ),
         // ConfigEntry(
         //     name: "emojiFontFamily",

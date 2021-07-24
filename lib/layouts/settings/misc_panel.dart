@@ -12,6 +12,7 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:secure_application/secure_application.dart';
 
 class MiscPanel extends StatelessWidget {
 
@@ -53,7 +54,7 @@ class MiscPanel extends StatelessWidget {
                 leading: buildBackButton(context),
                 backgroundColor: headerColor.withOpacity(0.5),
                 title: Text(
-                  "Miscellaneous",
+                  "Miscellaneous and Advanced",
                   style: Theme.of(context).textTheme.headline1,
                 ),
               ),
@@ -111,6 +112,83 @@ class MiscPanel extends StatelessWidget {
                     subtitle: "Show a snackbar whenever a message sync is completed",
                     backgroundColor: tileColor,
                   )),
+                  if (SettingsManager().canAuthenticate)
+                    SettingsHeader(
+                        headerColor: headerColor,
+                        tileColor: tileColor,
+                        iosSubtitle: iosSubtitle,
+                        materialSubtitle: materialSubtitle,
+                        text: "Security"
+                    ),
+                  if (SettingsManager().canAuthenticate)
+                    Obx(() => SettingsSwitch(
+                      onChanged: (bool val) {
+                        SettingsManager().settings.shouldSecure.value = val;
+                        if (val == false) {
+                          SecureApplicationProvider.of(context, listen: false)!.open();
+                        } else if (SettingsManager().settings.securityLevel.value == SecurityLevel.locked_and_secured) {
+                          SecureApplicationProvider.of(context, listen: false)!.secure();
+                        }
+                        saveSettings();
+                      },
+                      initialVal: SettingsManager().settings.shouldSecure.value,
+                      title: "Secure App",
+                      subtitle: "Secure app with a fingerprint or pin",
+                      backgroundColor: tileColor,
+                    )),
+                  if (SettingsManager().canAuthenticate)
+                    Obx(() {
+                      if (SettingsManager().settings.shouldSecure.value)
+                        return Container(
+                            color: tileColor,
+                            child: Padding(
+                              padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
+                              child: RichText(
+                                text: TextSpan(
+                                  children: [
+                                    TextSpan(text: "Security Info", style: TextStyle(fontWeight: FontWeight.bold)),
+                                    TextSpan(text: "\n\n"),
+                                    TextSpan(text: "BlueBubbles will use the fingerprints and pin/password set on your device as authentication. Please note that BlueBubbles does not have access to your authentication information - all biometric checks are handled securely by your operating system. The app is only notified when the unlock is successful."),
+                                    TextSpan(text: "\n\n"),
+                                    TextSpan(text: "There are two different security levels you can choose from:"),
+                                    TextSpan(text: "\n\n"),
+                                    TextSpan(text: "Locked", style: TextStyle(fontWeight: FontWeight.bold)),
+                                    TextSpan(text: " - Requires biometrics/pin only when the app is first started"),
+                                    TextSpan(text: "\n\n"),
+                                    TextSpan(text: "Locked and secured", style: TextStyle(fontWeight: FontWeight.bold)),
+                                    TextSpan(text: " - Requires biometrics/pin any time the app is brought into the foreground, hides content in the app switcher, and disables screenshots & screen recordings"),
+                                  ],
+                                  style: Theme.of(context).textTheme.subtitle1?.copyWith(color: Theme.of(context).textTheme.bodyText1?.color),
+                                ),
+                              ),
+                            )
+                        );
+                      else return SizedBox.shrink();
+                    }),
+                  if (SettingsManager().canAuthenticate)
+                    Obx(() {
+                      if (SettingsManager().settings.shouldSecure.value)
+                        return SettingsOptions<SecurityLevel>(
+                          initial: SettingsManager().settings.securityLevel.value,
+                          onChanged: (val) {
+                            if (val != null) {
+                              SettingsManager().settings.securityLevel.value = val;
+                              if (val == SecurityLevel.locked_and_secured) {
+                                SecureApplicationProvider.of(context, listen: false)!.secure();
+                              } else {
+                                SecureApplicationProvider.of(context, listen: false)!.open();
+                              }
+                            }
+                            saveSettings();
+                          },
+                          options: SecurityLevel.values,
+                          textProcessing: (val) => val.toString().split(".")[1].replaceAll("_", " ").capitalizeFirst!,
+                          title: "Security Level",
+                          backgroundColor: tileColor,
+                          secondaryColor: headerColor,
+                        );
+                      else return SizedBox.shrink();
+                    }),
                   SettingsHeader(
                       headerColor: headerColor,
                       tileColor: tileColor,

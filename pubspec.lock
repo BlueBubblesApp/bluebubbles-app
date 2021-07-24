@@ -451,6 +451,20 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.1.8+4"
+  flutter_plugin_android_lifecycle:
+    dependency: transitive
+    description:
+      name: flutter_plugin_android_lifecycle
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.0.2"
+  flutter_screen_lock:
+    dependency: "direct main"
+    description:
+      name: flutter_screen_lock
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "4.0.4+1"
   flutter_slidable:
     dependency: "direct main"
     description:
@@ -629,6 +643,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.1"
+  local_auth:
+    dependency: "direct main"
+    description:
+      name: local_auth
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.1.6"
   logger:
     dependency: "direct main"
     description:
@@ -923,6 +944,20 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.1.0"
+  rxdart:
+    dependency: "direct overridden"
+    description:
+      name: rxdart
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.27.1"
+  secure_application:
+    dependency: "direct main"
+    description:
+      name: secure_application
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "3.7.3"
   share_plus:
     dependency: "direct main"
     description:

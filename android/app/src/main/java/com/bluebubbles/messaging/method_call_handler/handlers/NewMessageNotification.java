@@ -64,6 +64,10 @@ public class NewMessageNotification implements Handler {
             if (chatGuid != null && chatGuid.equals(call.argument("group"))) {
                 existingNotificationId = notification.getId();
                 style = NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(notification.getNotification());
+                if (call.argument("groupConversation")) {
+                    style.setConversationTitle(call.argument("contentTitle"));
+                }
+                style.setGroupConversation(call.argument("groupConversation"));
                 break;
             }
         }
@@ -142,7 +146,10 @@ public class NewMessageNotification implements Handler {
                         .putExtra("chatGuid",
                                 (String) call.argument("group")).setType("markAsRead"),
                 PendingIntent.FLAG_UPDATE_CURRENT);
-        NotificationCompat.Action dismissAction = new NotificationCompat.Action.Builder(0, "Mark As Read", dismissIntent).build();
+        NotificationCompat.Action dismissAction = new NotificationCompat.Action.Builder(0, "Mark As Read", dismissIntent)
+                .setSemanticAction(NotificationCompat.Action.SEMANTIC_ACTION_MARK_AS_READ)
+                .setShowsUserInterface(false)
+                .build();
 
         // Create intent for quick reply
         Intent intent = new Intent(context, ReplyReceiver.class)
@@ -156,6 +163,8 @@ public class NewMessageNotification implements Handler {
         NotificationCompat.Action replyAction = new NotificationCompat.Action.Builder(0, "Reply", replyIntent)
                 .addRemoteInput(replyInput)
                 .setAllowGeneratedReplies(true)
+                .setSemanticAction(NotificationCompat.Action.SEMANTIC_ACTION_REPLY)
+                .setShowsUserInterface(false)
                 .extend(new NotificationCompat.Action.WearableExtender()
                         .setHintDisplayActionInline(true))
                 .build();
