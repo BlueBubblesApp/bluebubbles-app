@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:bluebubbles/layouts/setup/theme_selector/theme_selector.dart';
+import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -172,6 +173,7 @@ class SentMessageHelper {
                       onPressed: () {
                         // Remove the OG alert dialog
                         Navigator.of(context).pop();
+                        NotificationManager().clearFailedToSend();
                         ActionHandler.retryMessage(message);
                       },
                     ),
@@ -185,7 +187,7 @@ class SentMessageHelper {
 
                           // Remove the message from the Bloc
                           NewMessageManager().removeMessage(chat, message.guid);
-
+                          NotificationManager().clearFailedToSend();
                           // Get the "new" latest info
                           List<Message> latest = await Chat.getMessages(chat, limit: 1);
                           chat.latestMessageDate = latest.first.dateCreated;
@@ -199,6 +201,7 @@ class SentMessageHelper {
                       child: new Text("Cancel"),
                       onPressed: () {
                         Navigator.of(context).pop();
+                        NotificationManager().clearFailedToSend();
                       },
                     )
                   ],

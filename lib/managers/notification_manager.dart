@@ -174,8 +174,18 @@ class NotificationManager {
     });
   }
 
+  void createFailedToSendMessage() {
+    MethodChannelInterface().platform.invokeMethod("message-failed-to-send", {
+      "CHANNEL_ID": SOCKET_ERROR_CHANNEL,
+    });
+  }
+
   /// Clears the socket warning notification
   void clearSocketWarning() {
     MethodChannelInterface().platform.invokeMethod("clear-socket-issue");
+  }
+
+  void clearFailedToSend() {
+    MethodChannelInterface().platform.invokeMethod("clear-failed-to-send");
   }
 }
