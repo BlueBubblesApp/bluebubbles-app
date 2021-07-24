@@ -202,6 +202,9 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
   Future<void> openDetails() async {
     Chat _chat = await chat!.getParticipants();
+    CurrentChat.getCurrentChat(_chat)?.audioPlayers.forEach((key, value) {
+      value.dispose();
+    });
     Navigator.of(context).push(
       ThemeSwitcher.buildPageRoute(
         builder: (context) => ConversationDetails(

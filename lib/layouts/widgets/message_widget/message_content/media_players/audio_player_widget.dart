@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:get/get.dart';
 import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
@@ -79,7 +80,6 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
 
   @override
   void dispose() {
-    player.dispose();
     super.dispose();
   }
 
