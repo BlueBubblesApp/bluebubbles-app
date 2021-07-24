@@ -64,6 +64,10 @@ public class NewMessageNotification implements Handler {
             if (chatGuid != null && chatGuid.equals(call.argument("group"))) {
                 existingNotificationId = notification.getId();
                 style = NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(notification.getNotification());
+                if (call.argument("groupConversation")) {
+                    style.setConversationTitle(call.argument("contentTitle"));
+                }
+                style.setGroupConversation(call.argument("groupConversation"));
                 break;
             }
         }
