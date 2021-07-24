@@ -42,7 +42,10 @@ dependencies:
   flutter_svg: ^0.22.0
   photo_manager: ^1.2.7
   video_player: ^2.1.10
-  assets_audio_player: ^3.0.3+5
+  chewie_audio:
+    git:
+      url: https://github.com/tneotia/chewie_audio-1.git
+      ref: BlueBubbles
   mime_type: ^1.0.0
   receive_sharing_intent: ^1.4.5
   flutter_map: ^0.13.1

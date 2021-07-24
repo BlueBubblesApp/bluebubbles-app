@@ -50,20 +50,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.2"
-  assets_audio_player:
-    dependency: "direct main"
-    description:
-      name: assets_audio_player
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "3.0.3+5"
-  assets_audio_player_web:
-    dependency: transitive
-    description:
-      name: assets_audio_player_web
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "3.0.3+3"
   assorted_layout_widgets:
     dependency: "direct main"
     description:
@@ -192,6 +178,15 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.0.1"
+  chewie_audio:
+    dependency: "direct main"
+    description:
+      path: "."
+      ref: BlueBubbles
+      resolved-ref: cfdbd7b2f944c580dbdbb76f9ee9cd4306c3e41d
+      url: "https://github.com/tneotia/chewie_audio-1.git"
+    source: git
+    version: "1.2.0"
   cli_util:
     dependency: transitive
     description:
@@ -928,13 +923,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.1.0"
-  rxdart:
-    dependency: transitive
-    description:
-      name: rxdart
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.27.1"
   share_plus:
     dependency: "direct main"
     description:
@@ -1276,13 +1264,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.0.0"
-  uuid:
-    dependency: transitive
-    description:
-      name: uuid
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "3.0.4"
   vector_math:
     dependency: transitive
     description:

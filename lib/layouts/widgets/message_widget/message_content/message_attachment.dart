@@ -21,9 +21,11 @@ class MessageAttachment extends StatefulWidget {
     Key? key,
     required this.attachment,
     required this.updateAttachment,
+    required this.isFromMe,
   }) : super(key: key);
   final Attachment attachment;
   final Function() updateAttachment;
+  final bool isFromMe;
 
   @override
   _MessageAttachmentState createState() => _MessageAttachmentState();
@@ -95,7 +97,7 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
       } else if (mimeType == "audio" && !widget.attachment.mimeType!.contains("caf")) {
         return MediaFile(
           attachment: widget.attachment,
-          child: AudioPlayerWiget(file: content, context: context, width: 250),
+          child: AudioPlayerWiget(file: content, context: context, width: 250, isFromMe: widget.isFromMe),
         );
       } else if (widget.attachment.mimeType == "text/x-vlocation" || widget.attachment.uti == 'public.vlocation') {
         return MediaFile(

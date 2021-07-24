@@ -89,6 +89,7 @@ class _MessageAttachmentsState extends State<MessageAttachments> with TickerProv
           updateAttachment: () {
             // attachment = AttachmentHelper.getContent(attachment);
           },
+          isFromMe: widget.message?.isFromMe ?? false,
         );
 
         if (widget.message!.error == 0) {
