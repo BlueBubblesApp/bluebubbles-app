@@ -8,6 +8,7 @@ import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/country_codes.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -68,13 +69,15 @@ Future<String> formatPhoneNumber(dynamic item) async {
   String? address;
 
   // Set the address/country accordingly
-  if (item is String) {
+  if (item is String?) {
     address = item;
-  } else if (item is Handle) {
-    address = item.address;
-    countryCode = item.country ?? countryCode;
+  } else if (item is Handle?) {
+    address = item?.address;
+    countryCode = item?.country ?? countryCode;
+  } else if (item is UniqueContact?) {
+    address = item?.address;
   } else {
-    return 'Unsupported';
+    return item.toString();
   }
 
   // If we don't have a valid address, or it's an email, return it
