@@ -182,8 +182,8 @@ class ContactManager {
     List<String> opts = await getCompareOpts(handle);
     bool isEmailAddr = handle.address!.isEmail;
     String? lastDigits = handle.address!.length < 4
-        ? handle.address
-        : handle.address?.substring(handle.address!.length - 4, handle.address!.length);
+        ? handle.address?.numericOnly()
+        : handle.address?.substring(handle.address!.length - 4, handle.address!.length).numericOnly();
 
     // If the contact list is null, get the contacts
     try {
