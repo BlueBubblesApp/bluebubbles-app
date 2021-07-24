@@ -97,7 +97,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
     SchedulerBinding.instance!.addPostFrameCallback((_) {
       if (this.mounted) {
         setState(() {
-          double totalHeight = context.height - Get.mediaQuery.viewInsets.bottom - detailsMenuHeight! - 20;
+          double totalHeight = context.height - detailsMenuHeight! - 20;
           double offset = (widget.childOffset.dy + widget.childSize!.height) - totalHeight;
           messageTopOffset = widget.childOffset.dy.clamp(topMinimum + 40, double.infinity);
           if (offset > 0) {
@@ -158,6 +158,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   @override
   Widget build(BuildContext context) {
     bool isSent = !widget.message.guid!.startsWith('temp') && !widget.message.guid!.startsWith('error');
+    bool hideReactions = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideReactions.value;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
@@ -235,7 +236,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                 ),
               ),
               // Only show the reaction menu if it's enabled and the message isn't temporary
-              if (SettingsManager().settings.enablePrivateAPI.value && isSent) buildReactionMenu(),
+              if (SettingsManager().settings.enablePrivateAPI.value && isSent && !hideReactions) buildReactionMenu(),
               buildCopyPasteMenu(),
             ],
           ),
@@ -253,9 +254,10 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
     double topPadding = -20;
     double topOffset = (messageTopOffset - menuHeight)
         .toDouble()
-        .clamp(topMinimum, size.height - Get.mediaQuery.viewInsets.bottom - 120 - menuHeight);
+        .clamp(topMinimum, size.height - 120 - menuHeight);
+    bool shiftRight = currentChat!.chat.isGroup() || SettingsManager().settings.alwaysShowAvatars.value;
     double leftOffset =
-        (widget.message.isFromMe! ? size.width - maxMenuWidth - 25 : 25 + (currentChat!.chat.isGroup() ? 20 : 0))
+        (widget.message.isFromMe! ? size.width - maxMenuWidth - 25 : 25 + (shiftRight ? 20 : 0))
             .toDouble();
     Color iconColor = Colors.white;
 
@@ -710,14 +712,15 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
       ),
     );
 
-    double upperLimit = size.height - Get.mediaQuery.viewInsets.bottom - detailsMenuHeight!;
+    double upperLimit = size.height - detailsMenuHeight!;
     if (topMinimum > upperLimit) {
       topMinimum = upperLimit;
     }
 
     double topOffset = (messageTopOffset + widget.childSize!.height).toDouble().clamp(topMinimum, upperLimit);
+    bool shiftRight = currentChat!.chat.isGroup() || SettingsManager().settings.alwaysShowAvatars.value;
     double leftOffset =
-        (widget.message.isFromMe! ? size.width - maxMenuWidth - 15 : 15 + (currentChat!.chat.isGroup() ? 35 : 0))
+        (widget.message.isFromMe! ? size.width - maxMenuWidth - 15 : 15 + (shiftRight ? 35 : 0))
             .toDouble();
     return Positioned(
       top: topOffset + 5,

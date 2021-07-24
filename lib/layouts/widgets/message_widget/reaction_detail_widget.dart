@@ -1,6 +1,7 @@
 import 'package:bluebubbles/helpers/redacted_helper.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
@@ -44,6 +45,9 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
 
   @override
   Widget build(BuildContext context) {
+    bool hide = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideReactions.value;
+    if (hide) return Container();
+
     Color iconColor = Colors.white;
     if (Theme.of(context).accentColor.computeLuminance() >= 0.179) {
       iconColor = Colors.black.withAlpha(95);
