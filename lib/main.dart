@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/settings/about_panel.dart';
@@ -34,8 +35,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:get/get.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:local_auth/local_auth.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
+import 'package:secure_application/secure_application.dart';
 
 // final SentryClient _sentry = SentryClient(
 //     dsn:
@@ -153,6 +156,71 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
 
         /// [Home] is the starting widget for the app
         home: Home(),
+
+        builder: (context, child) => SecureApplication(
+          onNeedUnlock: (controller) async {
+            if (SettingsManager().canAuthenticate && SettingsManager().settings.shouldSecure.value) {
+              controller!.lock();
+              if (SettingsManager().settings.securityLevel.value == SecurityLevel.locked_and_secured) {
+                controller.secure();
+              }
+              return SecureApplicationAuthenticationStatus.FAILED;
+            }
+            return SecureApplicationAuthenticationStatus.SUCCESS;
+          },
+          child: Builder(
+              builder: (context) {
+                if (SettingsManager().canAuthenticate && !LifeCycleManager().isAlive) {
+                  if (SettingsManager().settings.shouldSecure.value) {
+                    SecureApplicationProvider.of(context, listen: false)!.lock();
+                    if (SettingsManager().settings.securityLevel.value == SecurityLevel.locked_and_secured) {
+                      SecureApplicationProvider.of(context, listen: false)!.secure();
+                    }
+                  }
+                }
+                return SecureGate(
+                  blurr: 0,
+                  opacity: 1.0,
+                  lockedBuilder: (context, controller) => Container(
+                    color: Theme.of(context).backgroundColor,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 20.0),
+                            child: Text(
+                              "BlueBubbles is currently locked. Please unlock to access your messages.",
+                              style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                          Container(height: 20.0),
+                          ClipOval(
+                            child: Material(
+                              color: Theme.of(context).primaryColor, // button color
+                              child: InkWell(
+                                child: SizedBox(width: 60, height: 60, child: Icon(Icons.lock_open, color: Colors.white)),
+                                onTap: () async {
+                                  var localAuth = LocalAuthentication();
+                                  bool didAuthenticate = await localAuth.authenticate(
+                                      localizedReason: 'Please authenticate to unlock BlueBubbles', stickyAuth: true);
+                                  if (didAuthenticate) {
+                                    controller!.authSuccess(unlock: true);
+                                  }
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  child: child ?? Container(),
+                );
+              }
+          ),
+        ),
 
         defaultTransition: Transition.cupertino,
 
