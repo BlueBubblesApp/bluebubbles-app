@@ -255,8 +255,9 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
     double topOffset = (messageTopOffset - menuHeight)
         .toDouble()
         .clamp(topMinimum, size.height - 120 - menuHeight);
+    bool shiftRight = currentChat!.chat.isGroup() || SettingsManager().settings.alwaysShowAvatars.value;
     double leftOffset =
-        (widget.message.isFromMe! ? size.width - maxMenuWidth - 25 : 25 + (currentChat!.chat.isGroup() ? 20 : 0))
+        (widget.message.isFromMe! ? size.width - maxMenuWidth - 25 : 25 + (shiftRight ? 20 : 0))
             .toDouble();
     Color iconColor = Colors.white;
 
@@ -717,8 +718,9 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
     }
 
     double topOffset = (messageTopOffset + widget.childSize!.height).toDouble().clamp(topMinimum, upperLimit);
+    bool shiftRight = currentChat!.chat.isGroup() || SettingsManager().settings.alwaysShowAvatars.value;
     double leftOffset =
-        (widget.message.isFromMe! ? size.width - maxMenuWidth - 15 : 15 + (currentChat!.chat.isGroup() ? 35 : 0))
+        (widget.message.isFromMe! ? size.width - maxMenuWidth - 15 : 15 + (shiftRight ? 35 : 0))
             .toDouble();
     return Positioned(
       top: topOffset + 5,
