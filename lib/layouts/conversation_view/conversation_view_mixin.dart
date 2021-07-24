@@ -509,6 +509,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           onTap: () {
             Navigator.of(context).pop();
           },
+          behavior: HitTestBehavior.translucent,
           child: Container(
             width: 40 + (ChatBloc().unreads.value > 0 ? 25 : 0),
             child: Row(
