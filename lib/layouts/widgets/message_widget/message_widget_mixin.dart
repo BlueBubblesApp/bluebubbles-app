@@ -142,7 +142,7 @@ abstract class MessageWidgetMixin {
                         url = "http://" + url;
                       }
 
-                      MethodChannelInterface().invokeMethod("open-link", {"link": url});
+                      MethodChannelInterface().invokeMethod("open-link", {"link": url, "forceBrowser": false});
                     },
                   style: textStyle!.apply(decoration: TextDecoration.underline),
                 ),

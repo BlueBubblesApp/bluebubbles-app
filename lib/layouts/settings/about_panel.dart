@@ -92,7 +92,7 @@ class AboutPanel extends StatelessWidget {
                     backgroundColor: tileColor,
                     title: "Support Us",
                     onTap: () {
-                      MethodChannelInterface().invokeMethod("open-link", {"link": "https://bluebubbles.app/donate/"});
+                      MethodChannelInterface().invokeMethod("open-link", {"link": "https://bluebubbles.app/donate/", "forceBrowser": false});
                     },
                     leading: SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.money_dollar_circle,
@@ -110,7 +110,7 @@ class AboutPanel extends StatelessWidget {
                     backgroundColor: tileColor,
                     title: "Website",
                     onTap: () {
-                      MethodChannelInterface().invokeMethod("open-link", {"link": "https://bluebubbles.app/"});
+                      MethodChannelInterface().invokeMethod("open-link", {"link": "https://bluebubbles.app/", "forceBrowser": false});
                     },
                     leading: SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.globe,
@@ -128,7 +128,7 @@ class AboutPanel extends StatelessWidget {
                     backgroundColor: tileColor,
                     title: "Source Code",
                     onTap: () {
-                      MethodChannelInterface().invokeMethod("open-link", {"link": "https://github.com/BlueBubblesApp"});
+                      MethodChannelInterface().invokeMethod("open-link", {"link": "https://github.com/BlueBubblesApp", "forceBrowser": false});
                     },
                     leading: SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.chevron_left_slash_chevron_right,
@@ -146,7 +146,7 @@ class AboutPanel extends StatelessWidget {
                     backgroundColor: tileColor,
                     title: "Join Our Discord",
                     onTap: () {
-                      MethodChannelInterface().invokeMethod("open-link", {"link": "https://discord.gg/hbx7EhNFjp"});
+                      MethodChannelInterface().invokeMethod("open-link", {"link": "https://discord.gg/hbx7EhNFjp", "forceBrowser": false});
                     },
                     leading: SvgPicture.asset(
                       "assets/icon/discord.svg",
@@ -251,7 +251,7 @@ class AboutPanel extends StatelessWidget {
                                         text: "Zach",
                                         style: TextStyle(decoration: TextDecoration.underline, color: Colors.blue),
                                         recognizer: TapGestureRecognizer()..onTap = () {
-                                          MethodChannelInterface().invokeMethod("open-link", {"link": "https://github.com/zlshames"});
+                                          MethodChannelInterface().invokeMethod("open-link", {"link": "https://github.com/zlshames", "forceBrowser": false});
                                         }
                                     ),
                                   ),
@@ -264,7 +264,7 @@ class AboutPanel extends StatelessWidget {
                                         text: "Tanay",
                                         style: TextStyle(decoration: TextDecoration.underline, color: Colors.blue),
                                         recognizer: TapGestureRecognizer()..onTap = () {
-                                          MethodChannelInterface().invokeMethod("open-link", {"link": "https://github.com/tneotia"});
+                                          MethodChannelInterface().invokeMethod("open-link", {"link": "https://github.com/tneotia", "forceBrowser": false});
                                         }
                                     ),
                                   ),
@@ -277,7 +277,7 @@ class AboutPanel extends StatelessWidget {
                                         text: "Joel",
                                         style: TextStyle(decoration: TextDecoration.underline, color: Colors.blue),
                                         recognizer: TapGestureRecognizer()..onTap = () {
-                                          MethodChannelInterface().invokeMethod("open-link", {"link": "https://github.com/jjoelj"});
+                                          MethodChannelInterface().invokeMethod("open-link", {"link": "https://github.com/jjoelj", "forceBrowser": false});
                                         }
                                     ),
                                   ),

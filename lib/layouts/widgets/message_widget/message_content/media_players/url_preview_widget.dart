@@ -289,7 +289,7 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget> with TickerProvider
               onTap: () {
                 MethodChannelInterface().invokeMethod(
                   "open-link",
-                  {"link": data?.url ?? widget.message.text},
+                  {"link": data?.url ?? widget.message.text, "forceBrowser": false},
                 );
               },
               child: Container(
