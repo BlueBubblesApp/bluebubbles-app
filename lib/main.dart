@@ -268,64 +268,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     // This initialization sets the function address in the native code to be used later
     BackgroundIsolateInterface.initialize();
 
-    // Get sharing media from files shared to the app from cold start
-    // This one only handles files, not text
-    ReceiveSharingIntent.getInitialMedia().then((List<SharedMediaFile> value) async {
-      if (!SettingsManager().settings.finishedSetup.value) return;
-      if (value.isEmpty) return;
-
-      // If we don't have storage permission, we can't do anything
-      if (!await Permission.storage.request().isGranted) return;
-
-      // Add the attached files to a list
-      List<File> attachments = <File>[];
-      value.forEach((element) {
-        attachments.add(File(element.path));
-      });
-
-      if (attachments.length == 0) return;
-
-      // Go to the new chat creator, with all of our attachments
-      Navigator.of(context).pushAndRemoveUntil(
-        ThemeSwitcher.buildPageRoute(
-          builder: (context) => ConversationView(
-            existingAttachments: attachments,
-            isCreator: true,
-          ),
-        ),
-        (route) => route.isFirst,
-      );
-    });
-
-    // Same thing as [getInitialMedia] except for text
-    ReceiveSharingIntent.getInitialText().then((String? text) {
-      if (!SettingsManager().settings.finishedSetup.value) return;
-      if (text == null) return;
-
-      // Go to the new chat creator, with all of our text
-      Navigator.of(context).pushAndRemoveUntil(
-        ThemeSwitcher.buildPageRoute(
-          builder: (context) => ConversationView(
-            existingText: text,
-            isCreator: true,
-          ),
-        ),
-        (route) => route.isFirst,
-      );
-    });
-
-    // Request native code to retreive what the starting intent was
-    //
-    // The starting intent will be set when you click on a notification
-    // This is only really necessary when opening a notification and the app is fully closed
-    MethodChannelInterface().invokeMethod("get-starting-intent").then((value) {
-      if (!SettingsManager().settings.finishedSetup.value) return;
-      if (value != null) {
-        // Open that chat
-        MethodChannelInterface().openChat(value.toString());
-      }
-    });
-
     // Create the notification in case it hasn't been already. Doing this multiple times won't do anything, so we just do it on every app start
     NotificationManager().createNotificationChannel(
       NotificationManager.NEW_MESSAGE_CHANNEL,
@@ -339,7 +281,66 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     );
 
     // Get the saved settings from the settings manager after the first frame
-    SchedulerBinding.instance!.addPostFrameCallback((_) => SettingsManager().getSavedSettings(context: context));
+    SchedulerBinding.instance!.addPostFrameCallback((_) async {
+      await SettingsManager().getSavedSettings(context: context);
+      // Get sharing media from files shared to the app from cold start
+      // This one only handles files, not text
+      ReceiveSharingIntent.getInitialMedia().then((List<SharedMediaFile> value) async {
+        if (!SettingsManager().settings.finishedSetup.value) return;
+        if (value.isEmpty) return;
+
+        // If we don't have storage permission, we can't do anything
+        if (!await Permission.storage.request().isGranted) return;
+
+        // Add the attached files to a list
+        List<File> attachments = <File>[];
+        value.forEach((element) {
+          attachments.add(File(element.path));
+        });
+
+        if (attachments.length == 0) return;
+
+        // Go to the new chat creator, with all of our attachments
+        Navigator.of(context).pushAndRemoveUntil(
+          ThemeSwitcher.buildPageRoute(
+            builder: (context) => ConversationView(
+              existingAttachments: attachments,
+              isCreator: true,
+            ),
+          ),
+              (route) => route.isFirst,
+        );
+      });
+
+      // Same thing as [getInitialMedia] except for text
+      ReceiveSharingIntent.getInitialText().then((String? text) {
+        if (!SettingsManager().settings.finishedSetup.value) return;
+        if (text == null) return;
+
+        // Go to the new chat creator, with all of our text
+        Navigator.of(context).pushAndRemoveUntil(
+          ThemeSwitcher.buildPageRoute(
+            builder: (context) => ConversationView(
+              existingText: text,
+              isCreator: true,
+            ),
+          ),
+              (route) => route.isFirst,
+        );
+      });
+
+      // Request native code to retreive what the starting intent was
+      //
+      // The starting intent will be set when you click on a notification
+      // This is only really necessary when opening a notification and the app is fully closed
+      MethodChannelInterface().invokeMethod("get-starting-intent").then((value) {
+        if (!SettingsManager().settings.finishedSetup.value) return;
+        if (value != null) {
+          // Open that chat
+          MethodChannelInterface().openChat(value.toString());
+        }
+      });
+    });
 
     // Bind the lifecycle events
     WidgetsBinding.instance!.addObserver(this);
