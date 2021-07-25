@@ -120,7 +120,7 @@ class ContactManager {
     List<Handle> handles = await Handle.find({});
     for (Handle handle in handles) {
       // If we already have a "match", skip
-      if (handle.address != null && handleToContact.containsKey(handle.address)) {
+      if (handleToContact.containsKey(handle.address)) {
         continue;
       }
 
@@ -129,7 +129,7 @@ class ContactManager {
 
       try {
         contactMatch = await getContact(handle);
-        handleToContact[handle.address!] = contactMatch;
+        handleToContact[handle.address] = contactMatch;
       } catch (ex) {
         debugPrint('Failed to match handle for address, "${handle.address}": ${ex.toString()}');
       }
@@ -137,7 +137,7 @@ class ContactManager {
       // If we have a match, add it to the mapping, then break out
       // of the loop so we don't "over-process" more than we need
       if (contactMatch != null) {
-        _stream.sink.add([handle.address!]);
+        _stream.sink.add([handle.address]);
       }
     }
 
@@ -180,10 +180,10 @@ class ContactManager {
 
     // Get a list of comparable options
     List<String> opts = await getCompareOpts(handle);
-    bool isEmailAddr = handle.address!.isEmail;
-    String? lastDigits = handle.address!.length < 4
-        ? handle.address?.numericOnly()
-        : handle.address?.substring(handle.address!.length - 4, handle.address!.length).numericOnly();
+    bool isEmailAddr = handle.address.isEmail;
+    String? lastDigits = handle.address.length < 4
+        ? handle.address.numericOnly()
+        : handle.address.substring(handle.address.length - 4, handle.address.length).numericOnly();
 
     // If the contact list is null, get the contacts
     try {
@@ -201,7 +201,7 @@ class ContactManager {
             compStr = item.value!.replaceAll(" ", "").trim().numericOnly();
           }
 
-          if (!compStr.endsWith(lastDigits!)) continue;
+          if (!compStr.endsWith(lastDigits)) continue;
           if (sameAddress(opts, compStr)) {
             contact = c;
             break;
@@ -248,7 +248,7 @@ class ContactManager {
     }
 
     try {
-      String contactTitle = address!;
+      String contactTitle = address;
       bool isEmailAddr = contactTitle.isEmail;
       if (contactTitle == address && !isEmailAddr) {
         return await formatPhoneNumber(handle);
