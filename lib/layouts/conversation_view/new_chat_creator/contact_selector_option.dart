@@ -27,7 +27,7 @@ class ContactSelectorOption extends StatelessWidget {
 
     List<String> formatted = [];
     for (var item in item.chat!.participants) {
-      String? contact = ContactManager().getCachedContactSync(item.address ?? "")?.displayName;
+      String? contact = ContactManager().getCachedContactSync(item.address)?.displayName;
       if (contact == null) {
         contact = await formatPhoneNumber(item);
       }
@@ -43,7 +43,7 @@ class ContactSelectorOption extends StatelessWidget {
     if (item is String) {
       address = item;
     } else if (item is Handle) {
-      address = item.address ?? "";
+      address = item.address;
     }
 
     return FutureBuilder<String>(
@@ -95,12 +95,10 @@ class ContactSelectorOption extends StatelessWidget {
         } else {
           subtitle = getTextWidget(context, item.address);
         }
-      } else if (item.chat != null &&
-          item.chat!.participants[0].address != null &&
-          !item.chat!.participants[0].address!.isEmail) {
+      } else if (item.chat != null && !item.chat!.participants[0].address.isEmail) {
         subtitle = formattedNumberFuture(item.chat!.participants[0]);
-      } else if (item.chat!.participants[0].address!.isEmail) {
-        subtitle = getTextWidget(context, item.chat!.participants[0].address!);
+      } else if (item.chat!.participants[0].address.isEmail) {
+        subtitle = getTextWidget(context, item.chat!.participants[0].address);
       } else {
         subtitle = getTextWidget(context, "Person ${index + 1}");
       }
@@ -128,7 +126,7 @@ class ContactSelectorOption extends StatelessWidget {
       subtitle: subtitle,
       leading: !item.isChat
           ? ContactAvatarWidget(
-              handle: Handle(address: item.address),
+              handle: Handle(address: item.address!),
               borderThickness: 0.1,
               editable: false,
             )

@@ -26,7 +26,7 @@ class _AvatarColorPickerPopupState extends State<AvatarColorPickerPopup> {
     if (widget.handle.color != null) {
       currentColor = HexColor(widget.handle.color!);
     } else {
-      List gradient = toColorGradient(widget.handle.address ?? "");
+      List gradient = toColorGradient(widget.handle.address);
       if (!isNullOrEmpty(gradient)!) {
         currentColor = gradient[0];
       }

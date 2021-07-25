@@ -19,7 +19,7 @@ String handleToJson(Handle data) {
 class Handle {
   int? id;
   int? originalROWID;
-  String? address;
+  String address;
   String? country;
   String? color;
   String? defaultPhone;
@@ -28,7 +28,7 @@ class Handle {
   Handle({
     this.id,
     this.originalROWID,
-    this.address,
+    this.address = "",
     this.country,
     this.color,
     this.defaultPhone,

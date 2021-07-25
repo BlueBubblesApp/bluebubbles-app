@@ -109,7 +109,7 @@ Future<String> formatPhoneNumber(dynamic item) async {
 }
 
 Future<List<String>> getCompareOpts(Handle handle) async {
-  if (handle.address!.isEmail) return [handle.address!];
+  if (handle.address.isEmail) return [handle.address];
 
   // Build a list of formatted address (max: 3)
   String formatted = handle.address.toString();
@@ -123,7 +123,7 @@ Future<List<String>> getCompareOpts(Handle handle) async {
     if (i + 1 >= maxOpts) break;
   }
 
-  Map<String, dynamic> parsed = await parsePhoneNumber(handle.address!, handle.country ?? "US");
+  Map<String, dynamic> parsed = await parsePhoneNumber(handle.address, handle.country ?? "US");
   opts.addAll(parsed.values.map((item) => item.toString()).where((item) => item != 'fixedOrMobile'));
   return opts;
 }
@@ -332,7 +332,8 @@ Future<String> getGroupEventText(Message message) async {
     }
   }
 
-  final bool hideNames = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactInfo.value;
+  final bool hideNames =
+      SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactInfo.value;
   if (hideNames) {
     handle = "Someone";
     other = "someone";

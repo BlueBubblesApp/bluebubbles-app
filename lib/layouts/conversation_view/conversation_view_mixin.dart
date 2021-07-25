@@ -246,22 +246,31 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
   Widget buildCupertinoTrailing() {
     Color? fontColor = Theme.of(context).textTheme.headline1!.color;
-    bool manualMark = SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateManualMarkAsRead.value;
+    bool manualMark =
+        SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateManualMarkAsRead.value;
     bool showManual = !SettingsManager().settings.privateMarkChatAsRead.value && !(widget.chat?.isGroup() ?? false);
     List<Widget> items = [
       if (showManual && manualMark && markingAsRead)
         Padding(
             padding: EdgeInsets.only(right: SettingsManager().settings.colorblindMode.value ? 15.0 : 10.0),
-            child: SettingsManager().settings.skin.value == Skins.iOS ? Theme(
-              data: ThemeData(
-                cupertinoOverrideTheme: Cupertino.CupertinoThemeData(
-                  brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
-                ),
-              ),
-              child: Cupertino.CupertinoActivityIndicator(
-                radius: 12,
-              ),
-            ) : Container(height: 24, width: 24, child: Center(child: CircularProgressIndicator(strokeWidth: 2,)))),
+            child: SettingsManager().settings.skin.value == Skins.iOS
+                ? Theme(
+                    data: ThemeData(
+                      cupertinoOverrideTheme: Cupertino.CupertinoThemeData(
+                        brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
+                      ),
+                    ),
+                    child: Cupertino.CupertinoActivityIndicator(
+                      radius: 12,
+                    ),
+                  )
+                : Container(
+                    height: 24,
+                    width: 24,
+                    child: Center(
+                        child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                    )))),
       if (showManual && manualMark && !markingAsRead)
         Padding(
           padding: EdgeInsets.only(right: SettingsManager().settings.colorblindMode.value ? 10.0 : 5.0),
@@ -348,7 +357,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
                     return getIndicatorIcon(connectionStatus, size: 12);
                   });
-            else return SizedBox.shrink();
+            else
+              return SizedBox.shrink();
           }),
           Obx(() {
             if (SettingsManager().settings.privateManualMarkAsRead.value && markingAsRead)
@@ -356,12 +366,13 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                   padding: const EdgeInsets.only(right: 8.0),
                   child: Center(
                       child: SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor)),
-                      )));
-            else return SizedBox.shrink();
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor)),
+                  )));
+            else
+              return SizedBox.shrink();
           }),
           Obx(() {
             if (SettingsManager().settings.enablePrivateAPI.value &&
@@ -377,7 +388,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                   onTap: markChatAsRead,
                 ),
               );
-            else return SizedBox.shrink();
+            else
+              return SizedBox.shrink();
           }),
           Padding(
             padding: const EdgeInsets.only(right: 8.0),
@@ -594,7 +606,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             ),
           ],
         ),
-        trailing: Obx(() => Container(width: 40 + (ChatBloc().unreads.value > 0 ? 25 : 0), child: buildCupertinoTrailing())));
+        trailing:
+            Obx(() => Container(width: 40 + (ChatBloc().unreads.value > 0 ? 25 : 0), child: buildCupertinoTrailing())));
   }
 
   /// Chat selector methods
@@ -692,10 +705,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
           for (var participant in i.participants) {
             // If one is an email and the other isn't, skip
-            if (isEmailAddr && !participant.address!.isEmail) continue;
+            if (isEmailAddr && !participant.address.isEmail) continue;
 
             // If the last 4 digits don't match, skip
-            if (!participant.address!.endsWith(lastDigits)) continue;
+            if (!participant.address.endsWith(lastDigits)) continue;
 
             // Get a list of comparable options
             List<String?> opts = await getCompareOpts(participant);
@@ -980,8 +993,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         for (Handle e in item.chat?.participants ?? []) {
           UniqueContact contact = new UniqueContact(
               address: e.address,
-              displayName:
-                  ContactManager().getCachedContactSync(e.address ?? "")?.displayName ?? await formatPhoneNumber(e));
+              displayName: ContactManager().getCachedContactSync(e.address)?.displayName ?? await formatPhoneNumber(e));
           selected.add(contact);
         }
 

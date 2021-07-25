@@ -111,7 +111,7 @@ class _ContactTileState extends State<ContactTile> {
     final bool redactedMode = SettingsManager().settings.redactedMode.value;
     final bool hideInfo = redactedMode && SettingsManager().settings.hideContactInfo.value;
     final bool generateName = redactedMode && SettingsManager().settings.generateFakeContactNames.value;
-    final bool isEmail = widget.handle.address?.isEmail ?? false;
+    final bool isEmail = widget.handle.address.isEmail;
     return InkWell(
       onLongPress: () {
         Clipboard.setData(new ClipboardData(text: widget.handle.address));
@@ -120,7 +120,7 @@ class _ContactTileState extends State<ContactTile> {
       onTap: () async {
         if (contact == null) {
           await MethodChannelInterface().invokeMethod("open-contact-form",
-              {'address': widget.handle.address, 'addressType': widget.handle.address!.isEmail ? 'email' : 'phone'});
+              {'address': widget.handle.address, 'addressType': widget.handle.address.isEmail ? 'email' : 'phone'});
         } else {
           await MethodChannelInterface().invokeMethod("view-contact-form", {'id': contact!.identifier});
         }
@@ -136,7 +136,7 @@ class _ContactTileState extends State<ContactTile> {
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
                     return Text(
-                      widget.handle.address ?? "",
+                      widget.handle.address,
                       style: Theme.of(context).textTheme.bodyText1,
                     );
                   }
@@ -153,7 +153,7 @@ class _ContactTileState extends State<ContactTile> {
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
                     return Text(
-                      widget.handle.address ?? "",
+                      widget.handle.address,
                       style: Theme.of(context).textTheme.subtitle1!.apply(fontSizeDelta: -0.5),
                     );
                   }
@@ -181,8 +181,7 @@ class _ContactTileState extends State<ContactTile> {
                       backgroundColor: Theme.of(context).accentColor,
                     ),
                     onPressed: () {
-                      if (widget.handle.address == null) return;
-                      startEmail(widget.handle.address!);
+                      startEmail(widget.handle.address);
                     },
                     child: Icon(Icons.email, color: Theme.of(context).primaryColor, size: 20),
                   ),
@@ -210,8 +209,7 @@ class _ContactTileState extends State<ContactTile> {
 
   void onPressContactTrailing({bool longPressed = false}) {
     if (contact == null) {
-      if (widget.handle.address == null) return;
-      makeCall(widget.handle.address!);
+      makeCall(widget.handle.address);
     } else {
       List<Item> phones = getUniqueNumbers(contact!.phones!);
       if (phones.length == 1) {
@@ -226,59 +224,57 @@ class _ContactTileState extends State<ContactTile> {
               backgroundColor: Theme.of(context).accentColor,
               title: new Text("Select a Phone Number",
                   style: TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
-              content: ObxValue<Rx<bool>>((data) => Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  for (int i = 0; i < phones.length; i++)
-                    TextButton(
-                      child: Text("${phones[i].value} (${phones[i].label})",
-                          style: TextStyle(color: Theme.of(context).textTheme.bodyText1!.color),
-                          textAlign: TextAlign.start),
-                      onPressed: () async {
-                        if (data.value) {
-                          widget.handle.defaultPhone = phones[i].value!;
-                          await widget.handle.updateDefaultPhone(phones[i].value!);
-                        }
-                        makeCall(phones[i].value!);
-                        Navigator.of(context).pop();
-                      },
-                    ),
-                  Row(
-                    children: <Widget>[
-                      SizedBox(
-                        height: 48.0,
-                        width: 24.0,
-                        child: Checkbox(
-                          value: data.value,
-                          activeColor: Theme.of(context).primaryColor,
-                          onChanged: (bool? value) {
-                            data.value = value!;
-                          },
-                        ),
-                      ),
-                      ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                              primary: Colors.transparent,
-                              padding: EdgeInsets.only(left: 5),
-                              elevation: 0.0
+              content: ObxValue<Rx<bool>>(
+                  (data) => Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          for (int i = 0; i < phones.length; i++)
+                            TextButton(
+                              child: Text("${phones[i].value} (${phones[i].label})",
+                                  style: TextStyle(color: Theme.of(context).textTheme.bodyText1!.color),
+                                  textAlign: TextAlign.start),
+                              onPressed: () async {
+                                if (data.value) {
+                                  widget.handle.defaultPhone = phones[i].value!;
+                                  await widget.handle.updateDefaultPhone(phones[i].value!);
+                                }
+                                makeCall(phones[i].value!);
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                          Row(
+                            children: <Widget>[
+                              SizedBox(
+                                height: 48.0,
+                                width: 24.0,
+                                child: Checkbox(
+                                  value: data.value,
+                                  activeColor: Theme.of(context).primaryColor,
+                                  onChanged: (bool? value) {
+                                    data.value = value!;
+                                  },
+                                ),
+                              ),
+                              ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                      primary: Colors.transparent, padding: EdgeInsets.only(left: 5), elevation: 0.0),
+                                  onPressed: () {
+                                    data = data.toggle();
+                                  },
+                                  child: Text(
+                                    "Remember my selection",
+                                  )),
+                            ],
                           ),
-                          onPressed: () {
-                            data = data.toggle();
-                          },
-                          child: Text(
-                            "Remember my selection",
+                          Text(
+                            "Long press the call button to reset your default selection",
+                            style: Theme.of(context).textTheme.subtitle1,
                           )
+                        ],
                       ),
-                    ],
-                  ),
-                  Text(
-                    "Long press the call button to reset your default selection",
-                    style: Theme.of(context).textTheme.subtitle1,
-                  )
-                ],
-              ), false.obs),
+                  false.obs),
             );
           },
         );
