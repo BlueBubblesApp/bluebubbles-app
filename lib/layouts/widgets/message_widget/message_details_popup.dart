@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
+import 'package:bluebubbles/helpers/metadata_helper.dart';
+import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:collection/collection.dart';
 
@@ -31,6 +33,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:sprung/sprung.dart';
 
 class MessageDetailsPopup extends StatefulWidget {
@@ -377,6 +380,29 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
               ),
               trailing: Icon(
                 Icons.open_in_new,
+                color: Theme.of(context).textTheme.bodyText1!.color,
+              ),
+            ),
+          ),
+        ),
+      if (widget.message.isUrlPreview())
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () async {
+              Metadata? data = await MetadataHelper.fetchMetadata(widget.message);
+              MethodChannelInterface().invokeMethod(
+                "open-link",
+                {"link": data?.url ?? widget.message.text, "forceBrowser": true},
+              );
+            },
+            child: ListTile(
+              title: Text(
+                "Open In Browser",
+                style: Theme.of(context).textTheme.bodyText1,
+              ),
+              trailing: Icon(
+                Icons.open_in_browser,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),

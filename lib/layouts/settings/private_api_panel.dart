@@ -154,7 +154,7 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                     subtitle: "View instructions on how to set up these features",
                     onTap: () async {
                       MethodChannelInterface().invokeMethod("open-link", {
-                        "link": "https://github.com/BlueBubblesApp/BlueBubbles-Server/wiki/Using-Private-API-Features"
+                        "link": "https://github.com/BlueBubblesApp/BlueBubbles-Server/wiki/Using-Private-API-Features", "forceBrowser": false
                       });
                     },
                     leading: SettingsLeadingIcon(
