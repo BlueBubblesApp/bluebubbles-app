@@ -216,6 +216,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   Future<void> reviewAudio(BuildContext originalContext, File file) async {
     showDialog(
       context: originalContext,
+      barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: Theme.of(context).accentColor,
@@ -237,6 +238,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 child: new Text("Discard", style: Theme.of(context).textTheme.subtitle1),
                 onPressed: () {
                   // Dispose of the audio controller
+                  CurrentChat.of(originalContext)?.audioPlayers[file.path]?.item1.dispose();
+                  CurrentChat.of(originalContext)?.audioPlayers[file.path]?.item2.pause();
                   CurrentChat.of(originalContext)?.audioPlayers.removeWhere((key, _) => key == file.path);
 
                   // Delete the file
@@ -254,6 +257,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 widget.onSend([file], "");
 
                 // Dispose of the audio controller
+                CurrentChat.of(originalContext)?.audioPlayers[file.path]?.item1.dispose();
+                CurrentChat.of(originalContext)?.audioPlayers[file.path]?.item2.pause();
                 CurrentChat.of(originalContext)?.audioPlayers.removeWhere((key, _) => key == file.path);
 
                 // Remove the OG alert dialog

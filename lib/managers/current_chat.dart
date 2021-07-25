@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:bluebubbles/helpers/message_marker.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
@@ -13,8 +12,10 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
+import 'package:chewie_audio/chewie_audio.dart';
 import 'package:flutter/material.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
+import 'package:tuple/tuple.dart';
 import 'package:video_player/video_player.dart';
 
 enum CurrentChatEvent {
@@ -39,7 +40,7 @@ class CurrentChat {
   Map<String, Uint8List> imageData = {};
   Map<String, Metadata> urlPreviews = {};
   Map<String, VideoPlayerController> currentPlayingVideo = {};
-  Map<String, AssetsAudioPlayer> audioPlayers = {};
+  Map<String, Tuple2<ChewieAudioController, VideoPlayerController>> audioPlayers = {};
   List<VideoPlayerController> videoControllersToDispose = [];
   List<Attachment> chatAttachments = [];
   List<Message?> sentMessages = [];
@@ -227,7 +228,7 @@ class CurrentChat {
       VideoPlayerController data = currentPlayingVideo.remove(oldGuid)!;
       currentPlayingVideo[newAttachmentGuid!] = data;
     } else if (audioPlayers.containsKey(oldGuid)) {
-      AssetsAudioPlayer data = audioPlayers.remove(oldGuid)!;
+      Tuple2<ChewieAudioController, VideoPlayerController> data = audioPlayers.remove(oldGuid)!;
       audioPlayers[newAttachmentGuid!] = data;
     } else if (urlPreviews.containsKey(oldGuid)) {
       Metadata data = urlPreviews.remove(oldGuid)!;
@@ -313,8 +314,10 @@ class CurrentChat {
 
     if (!isNullOrEmpty(audioPlayers)!) {
       audioPlayers.values.forEach((element) {
-        element.dispose();
+        element.item1.dispose();
+        element.item2.dispose();
       });
+      audioPlayers = {};
     }
 
     if (_stream.isClosed) _stream.close();
@@ -332,7 +335,8 @@ class CurrentChat {
     urlPreviews = {};
     videoControllersToDispose = [];
     audioPlayers.forEach((key, value) async {
-      await value.dispose();
+      value.item1.dispose();
+      value.item2.dispose();
       audioPlayers.remove(key);
     });
     chatAttachments = [];
@@ -375,7 +379,10 @@ class CurrentChat {
 
   void disposeAudioControllers() {
     audioPlayers.forEach((guid, player) {
-      player.dispose();
+      try {
+        player.item1.dispose();
+        player.item2.dispose();
+      } catch (_) {}
     });
     audioPlayers = {};
   }
