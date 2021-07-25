@@ -170,10 +170,31 @@ class AttachmentHelper {
   }
 
   static Future<void> saveToGallery(BuildContext context, File? file) async {
-    if (await Permission.storage.request().isGranted) {
-      await ImageGallerySaver.saveFile(file!.absolute.path);
-      showSnackbar('Success', 'Saved to gallery!');
+    Function showDeniedSnackbar = (String? err) {
+      showSnackbar("Save Failed", err ?? "Failed to save attachment!");
+    };
+
+    if (file == null) {
+      return showSnackbar("Save Failed", "No file to save!");
     }
+
+    var hasPermissions = await Permission.storage.isGranted;
+    var permDenied = await Permission.storage.isPermanentlyDenied;
+
+    // If we don't have the permission, but it isn't permanently denied, prompt the user
+    if (!hasPermissions && !permDenied) {
+      PermissionStatus response = await Permission.storage.request();
+      hasPermissions = response.isGranted;
+      permDenied = response.isPermanentlyDenied;
+    }
+
+    // If we still don't have the permission or we are permanently denied, show the snackbar error
+    if (!hasPermissions || permDenied) {
+      return showDeniedSnackbar("BlueBubbles does not have the required permissions!");
+    }
+
+    await ImageGallerySaver.saveFile(file.absolute.path);
+    showSnackbar('Success', 'Saved attachment!');
   }
 
   static String getBaseAttachmentsPath() {

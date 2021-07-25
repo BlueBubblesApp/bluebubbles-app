@@ -616,11 +616,16 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
           color: Colors.transparent,
           child: InkWell(
             onTap: () async {
-              for (Attachment? element in widget.message.attachments!) {
-                dynamic content = AttachmentHelper.getContent(element!);
-                if (content is File) {
-                  await AttachmentHelper.saveToGallery(context, content);
+              try {
+                for (Attachment? element in widget.message.attachments!) {
+                  dynamic content = AttachmentHelper.getContent(element!);
+                  if (content is File) {
+                    await AttachmentHelper.saveToGallery(context, content);
+                  }
                 }
+              } catch (ex, trace) {
+                debugPrint(trace.toString());
+                showSnackbar("Download Error", ex.toString());
               }
             },
             child: ListTile(
