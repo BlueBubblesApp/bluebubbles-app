@@ -71,6 +71,8 @@ class MethodChannelInterface {
     // call.method is the name of the call from native code
     switch (call.method) {
       case "new-server":
+        if (!SettingsManager().settings.finishedSetup.value) return new Future.value("");
+
         // The arguments for a new server are formatted with the new server address inside square brackets
         // As such: [https://alksdjfoaehg.ngrok.io]
         String address = call.arguments.toString();

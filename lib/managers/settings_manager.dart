@@ -147,6 +147,10 @@ class SettingsManager {
   }
 
   Future<void> resetConnection() async {
+    if (SocketManager().socket != null && SocketManager().socket!.connected) {
+      SocketManager().socket!.disconnect();
+    }
+
     Settings temp = this.settings;
     temp.finishedSetup.value = false;
     temp.guidAuthKey.value = "";
