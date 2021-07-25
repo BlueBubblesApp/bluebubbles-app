@@ -63,7 +63,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     ContactManager().colorStream.listen((event) {
       if (!event.containsKey(widget.message.handle?.address)) return;
 
-      Color? color = event[widget.message.handle?.address!];
+      Color? color = event[widget.message.handle?.address];
       if (color == null) {
         widget.message.handle!.color = null;
       } else {
@@ -89,7 +89,8 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
   /// Builds the message bubble with teh tail (if applicable)
   Widget _buildMessageWithTail(Message message) {
     if (message.isBigEmoji()) {
-      final bool hideContent = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideEmojis.value;
+      final bool hideContent =
+          SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideEmojis.value;
 
       bool hasReactions = message.getReactions().length > 0;
       return Padding(
@@ -211,10 +212,15 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
 
     // First, add the message sender (if applicable)
     bool isGroup = CurrentChat.of(context)?.chat.isGroup() ?? false;
-    bool showSender = SettingsManager().settings.alwaysShowAvatars.value || isGroup || widget.message.guid == "redacted-mode-demo" || widget.message.guid!.contains("theme-selector");
-    if (widget.message.guid == "redacted-mode-demo" || widget.message.guid!.contains("theme-selector") || (isGroup &&
-        (!sameSender(widget.message, widget.olderMessage) ||
-            !widget.message.dateCreated!.isWithin(widget.olderMessage!.dateCreated!, minutes: 30)))) {
+    bool showSender = SettingsManager().settings.alwaysShowAvatars.value ||
+        isGroup ||
+        widget.message.guid == "redacted-mode-demo" ||
+        widget.message.guid!.contains("theme-selector");
+    if (widget.message.guid == "redacted-mode-demo" ||
+        widget.message.guid!.contains("theme-selector") ||
+        (isGroup &&
+            (!sameSender(widget.message, widget.olderMessage) ||
+                !widget.message.dateCreated!.isWithin(widget.olderMessage!.dateCreated!, minutes: 30)))) {
       messageColumn.add(
         Padding(
           padding: EdgeInsets.only(left: 15.0, top: 5.0, bottom: widget.message.getReactions().length > 0 ? 0.0 : 3.0),
@@ -309,21 +315,15 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     return Padding(
       // Add padding when we are showing the avatar
       padding: EdgeInsets.only(
-          top: (skin.value != Skins.iOS &&
-                  widget.message.isFromMe == widget.olderMessage?.isFromMe)
-              ? 3.0
-              : 0.0,
+          top: (skin.value != Skins.iOS && widget.message.isFromMe == widget.olderMessage?.isFromMe) ? 3.0 : 0.0,
           left: (!widget.showTail && (showSender || skin.value == Skins.Samsung)) ? 35.0 : 0.0,
           bottom: (widget.showTail && skin.value == Skins.iOS) ? 10.0 : 0.0),
       child: Row(
         mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: (skin.value == Skins.iOS ||
-                skin.value == Skins.Material)
+        mainAxisAlignment: (skin.value == Skins.iOS || skin.value == Skins.Material)
             ? MainAxisAlignment.spaceBetween
             : MainAxisAlignment.start,
-        crossAxisAlignment: (skin.value != Skins.Samsung)
-            ? CrossAxisAlignment.center
-            : CrossAxisAlignment.end,
+        crossAxisAlignment: (skin.value != Skins.Samsung) ? CrossAxisAlignment.center : CrossAxisAlignment.end,
         children: [
           MessagePopupHolder(
               message: widget.message,
@@ -331,9 +331,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: (skin.value == Skins.Samsung)
-                      ? CrossAxisAlignment.start
-                      : CrossAxisAlignment.end,
+                  crossAxisAlignment: (skin.value == Skins.Samsung) ? CrossAxisAlignment.start : CrossAxisAlignment.end,
                   children: msgRow,
                 ),
                 // Add the timestamp for the samsung theme
@@ -352,8 +350,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                     ),
                   )
               ])),
-          if ((skin.value != Skins.Samsung &&
-              widget.message.guid != widget.olderMessage?.guid))
+          if ((skin.value != Skins.Samsung && widget.message.guid != widget.olderMessage?.guid))
             MessageTimeStamp(
               message: widget.message,
             )

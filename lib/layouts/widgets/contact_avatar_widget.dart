@@ -58,7 +58,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
       ContactManager().colorStream.listen((event) {
         if (!event.containsKey(widget.handle?.address)) return;
 
-        Color? color = event[widget.handle?.address!];
+        Color? color = event[widget.handle?.address];
         if (color == null) {
           colors = toColorGradient(widget.handle!.address);
           widget.handle!.color = null;
@@ -98,7 +98,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
     if (contact == null && !isInvalid) {
       List<Contact> contactRes = [];
       List<Contact> contacts = ContactManager().contacts;
-      if (widget.handle!.address!.isEmail) {
+      if (widget.handle!.address.isEmail) {
         contactRes =
             contacts.where((element) => element.emails!.any((e) => e.value == widget.handle!.address)).toList();
       } else {
@@ -157,7 +157,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
         onReset: () async {
           widget.handle!.color = null;
           await widget.handle!.update();
-          ContactManager().colorStreamObject.sink.add({widget.handle!.address!: null});
+          ContactManager().colorStreamObject.sink.add({widget.handle!.address: null});
         },
         onSet: (Color? color) async {
           if (color == null) return;
@@ -176,7 +176,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
           ContactManager()
               .colorStreamObject
               .sink
-              .add({widget.handle!.address!: widget.handle?.color == null ? null : HexColor(widget.handle!.color!)});
+              .add({widget.handle!.address: widget.handle?.color == null ? null : HexColor(widget.handle!.color!)});
         },
       ),
     );
@@ -198,37 +198,52 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
             shape: BoxShape.circle,
           ),
           child: CircleAvatar(
-            radius: (widget.size != null) ? widget.size! / 2 : 20,
-            child: Obx(() => state!.contactImage == null ||
-                (SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactPhotos.value) ? Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: AlignmentDirectional.topStart,
-                        colors: [
-                          !SettingsManager().settings.colorfulAvatars.value ? HexColor("928E8E") : colors.length > 0 ? colors[1] : HexColor("928E8E"),
-                          !SettingsManager().settings.colorfulAvatars.value ? HexColor("686868") : colors.length > 0 ? colors[0] : HexColor("686868")
-                        ],
+              radius: (widget.size != null) ? widget.size! / 2 : 20,
+              child: Obx(
+                () => state!.contactImage == null ||
+                        (SettingsManager().settings.redactedMode.value &&
+                            SettingsManager().settings.hideContactPhotos.value)
+                    ? Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: AlignmentDirectional.topStart,
+                            colors: [
+                              !SettingsManager().settings.colorfulAvatars.value
+                                  ? HexColor("928E8E")
+                                  : colors.length > 0
+                                      ? colors[1]
+                                      : HexColor("928E8E"),
+                              !SettingsManager().settings.colorfulAvatars.value
+                                  ? HexColor("686868")
+                                  : colors.length > 0
+                                      ? colors[0]
+                                      : HexColor("686868")
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: Container(
+                          child: (SettingsManager().settings.redactedMode.value &&
+                                      SettingsManager().settings.removeLetterAvatars.value) ||
+                                  state!.initials == null
+                              ? Icon(
+                                  Icons.person,
+                                  size: (widget.size ?? 40) / 2,
+                                )
+                              : Text(
+                                  state!.initials!,
+                                  style: TextStyle(
+                                    fontSize: (widget.fontSize == null) ? 18 : widget.fontSize,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                          alignment: AlignmentDirectional.center,
+                        ),
+                      )
+                    : CircleAvatar(
+                        backgroundImage: state!.contactImage,
                       ),
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: Container(
-                      child: (SettingsManager().settings.redactedMode.value && SettingsManager().settings.removeLetterAvatars.value) || state!.initials == null ? Icon(
-                              Icons.person,
-                              size: (widget.size ?? 40) / 2,
-                            ) : Text(
-                              state!.initials!,
-                              style: TextStyle(
-                                fontSize: (widget.fontSize == null) ? 18 : widget.fontSize,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                      alignment: AlignmentDirectional.center,
-                    ),
-                  ) : CircleAvatar(
-                    backgroundImage: state!.contactImage,
-                  ),
-            )
-          ),
+              )),
         ));
   }
 

@@ -290,7 +290,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                 if (index >= chat.participants.length) return Container();
 
                 return ContactTile(
-                  key: Key(chat.participants[index].id.toString()),
+                  key: Key(chat.participants[index].address),
                   handle: chat.participants[index],
                   chat: chat,
                   updateChat: (Chat newChat) {
@@ -301,54 +301,6 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                 );
               }, childCount: participants.length + 1),
             ),
-            // SliverToBoxAdapter(
-            //   child: chat.participants.length > 1
-            //       ? InkWell(
-            //           onTap: () async {
-            //             Chat result = await Navigator.of(context).push(
-            //               CupertinoPageRoute(
-            //                 builder: (context) => ConversationView(
-            //                   isCreator: true,
-            //                   type: ChatSelectorTypes.ONLY_CONTACTS,
-            //                   onSelect: (List<UniqueContact> items) {
-            //                     Navigator.of(context).pop();
-            //                     if (items.length == 0) return;
-
-            //                     for (UniqueContact contact in items) {
-            //                       if (contact.isChat) return;
-            //                     }
-            //                     showDialog(
-            //                       context: context,
-            //                       barrierDismissible: false,
-            //                       builder: (context) => AddingParticipantPopup(
-            //                         contacts: items,
-            //                         chat: chat,
-            //                       ),
-            //                     );
-            //                   },
-            //                 ),
-            //               ),
-            //             );
-            //             if (result != null && this.mounted) {
-            //               chat = result;
-            //               setState(() {});
-            //             }
-            //           },
-            //           child: ListTile(
-            //             title: Text(
-            //               "Add Contact",
-            //               style: TextStyle(
-            //                 color: Theme.of(context).primaryColor,
-            //               ),
-            //             ),
-            //             leading: Icon(
-            //               Icons.add,
-            //               color: Theme.of(context).primaryColor,
-            //             ),
-            //           ),
-            //         )
-            //       : Container(),
-            // ),
             SliverPadding(
               padding: EdgeInsets.symmetric(vertical: 20),
             ),

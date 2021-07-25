@@ -46,7 +46,7 @@ class CustomAvatarPanelController extends GetxController {
     List<Widget> items = [];
     for (var item in handles) {
       items.add(SettingsTile(
-        title: ContactManager().getCachedContactSync(item.address ?? "")?.displayName ?? await formatPhoneNumber(item),
+        title: ContactManager().getCachedContactSync(item.address)?.displayName ?? await formatPhoneNumber(item),
         subtitle: "Tap avatar to change color",
         trailing: ContactAvatarWidget(handle: item),
       ));
@@ -65,7 +65,6 @@ class CustomAvatarPanelController extends GetxController {
 }
 
 class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
-
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -102,21 +101,21 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
           ),
           slivers: <Widget>[
             Obx(() => SliverList(
-              delegate: SliverChildListDelegate(
-                <Widget>[
-                  Container(padding: EdgeInsets.only(top: 5.0)),
-                  if (controller.handleWidgets.length == 0)
-                    Container(
-                        padding: EdgeInsets.all(30),
-                        child: Text(
-                          "No avatars have been customized! To get started, turn on colorful avatars and tap an avatar in the conversation details page.",
-                          style: Theme.of(context).textTheme.subtitle1?.copyWith(height: 1.5),
-                          textAlign: TextAlign.center,
-                        )),
-                  for (Widget handleWidget in controller.handleWidgets) handleWidget
-                ],
-              ),
-            )),
+                  delegate: SliverChildListDelegate(
+                    <Widget>[
+                      Container(padding: EdgeInsets.only(top: 5.0)),
+                      if (controller.handleWidgets.length == 0)
+                        Container(
+                            padding: EdgeInsets.all(30),
+                            child: Text(
+                              "No avatars have been customized! To get started, turn on colorful avatars and tap an avatar in the conversation details page.",
+                              style: Theme.of(context).textTheme.subtitle1?.copyWith(height: 1.5),
+                              textAlign: TextAlign.center,
+                            )),
+                      for (Widget handleWidget in controller.handleWidgets) handleWidget
+                    ],
+                  ),
+                )),
             SliverList(
               delegate: SliverChildListDelegate(
                 <Widget>[],
