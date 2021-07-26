@@ -30,6 +30,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
   @override
   void initState() {
     super.initState();
+    getAttachments();
     // If the app is reopened, then update the attachments
     LifeCycleManager().stream.listen((event) async {
       if (event && widget.visible) getAttachments();
@@ -49,9 +50,6 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
 
   @override
   Widget build(BuildContext context) {
-    if (widget.visible && _images.isEmpty) {
-      getAttachments();
-    }
     return AnimatedSize(
       duration: Duration(milliseconds: 300),
       vsync: this,
