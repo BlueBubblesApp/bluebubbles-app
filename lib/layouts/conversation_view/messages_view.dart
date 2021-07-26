@@ -58,9 +58,9 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
   bool keyboardOpen = false;
 
   List<Message> currentMessages = [];
-  List<String?> replies = [];
+  List<String> replies = [];
 
-  late StreamController<List<String?>> smartReplyController;
+  late StreamController<List<String>> smartReplyController;
 
   bool get showScrollDown => currentChat?.showScrollDown ?? false;
 
@@ -402,7 +402,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: replies
                                 .map(
-                                  (e) => _buildReply(e!),
+                                  (e) => _buildReply(e),
                                 )
                                 .toList()),
                       ),
@@ -413,7 +413,8 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                 SliverToBoxAdapter(
                   child: Row(
                     children: <Widget>[
-                      if (widget.chat?.guid == "theme-selector" || (currentChat!.showTypingIndicator && SettingsManager().settings.alwaysShowAvatars.value))
+                      if (widget.chat?.guid == "theme-selector" ||
+                          (currentChat!.showTypingIndicator && SettingsManager().settings.alwaysShowAvatars.value))
                         Padding(
                           padding: EdgeInsets.only(left: 10.0),
                           child: ContactAvatarWidget(
@@ -432,106 +433,106 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                     ],
                   ),
                 ),
-              widget.messages.isNotEmpty ?
-                SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        Message? olderMessage;
-                        Message? newerMessage;
-                        if (index + 1 >= 0 && index + 1 < _messages.length) {
-                          olderMessage = _messages[index + 1];
-                        }
-                        if (index - 1 >= 0 && index - 1 < _messages.length) {
-                          newerMessage = _messages[index - 1];
-                        }
-
-                        return Padding(
-                            padding: EdgeInsets.only(left: 5.0, right: 5.0),
-                            child: MessageWidget(
-                              key: Key(_messages[index].guid!),
-                              message: _messages[index],
-                              olderMessage: olderMessage,
-                              newerMessage: newerMessage,
-                              showHandle: widget.showHandle,
-                              isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages[index].guid,
-                              showHero: false,
-                              onUpdate: (event) => onUpdateMessage(event),
-                            ));
-                      },
-                    childCount: _messages.length,
-                  ),
-                ) :
-              _listKey != null
-                  ? SliverAnimatedList(
-                      initialItemCount: _messages.length + 1,
-                      key: _listKey,
-                      itemBuilder: (BuildContext context, int index, Animation<double> animation) {
-                        // Load more messages if we are at the top and we aren't alrady loading
-                        // and we have more messages to load
-                        if (index == _messages.length) {
-                          if (!noMoreMessages &&
-                              (loader == null || !loader!.isCompleted || !loadedPages.contains(_messages.length))) {
-                            loadNextChunk();
-                            return NewMessageLoader();
+              widget.messages.isNotEmpty
+                  ? SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          Message? olderMessage;
+                          Message? newerMessage;
+                          if (index + 1 >= 0 && index + 1 < _messages.length) {
+                            olderMessage = _messages[index + 1];
+                          }
+                          if (index - 1 >= 0 && index - 1 < _messages.length) {
+                            newerMessage = _messages[index - 1];
                           }
 
-                          return Container();
-                        } else if (index > _messages.length) {
-                          return Container();
-                        }
+                          return Padding(
+                              padding: EdgeInsets.only(left: 5.0, right: 5.0),
+                              child: MessageWidget(
+                                key: Key(_messages[index].guid!),
+                                message: _messages[index],
+                                olderMessage: olderMessage,
+                                newerMessage: newerMessage,
+                                showHandle: widget.showHandle,
+                                isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages[index].guid,
+                                showHero: false,
+                                onUpdate: (event) => onUpdateMessage(event),
+                              ));
+                        },
+                        childCount: _messages.length,
+                      ),
+                    )
+                  : _listKey != null
+                      ? SliverAnimatedList(
+                          initialItemCount: _messages.length + 1,
+                          key: _listKey,
+                          itemBuilder: (BuildContext context, int index, Animation<double> animation) {
+                            // Load more messages if we are at the top and we aren't alrady loading
+                            // and we have more messages to load
+                            if (index == _messages.length) {
+                              if (!noMoreMessages &&
+                                  (loader == null || !loader!.isCompleted || !loadedPages.contains(_messages.length))) {
+                                loadNextChunk();
+                                return NewMessageLoader();
+                              }
 
-                        Message? olderMessage;
-                        Message? newerMessage;
-                        if (index + 1 >= 0 && index + 1 < _messages.length) {
-                          olderMessage = _messages[index + 1];
-                        }
-                        if (index - 1 >= 0 && index - 1 < _messages.length) {
-                          newerMessage = _messages[index - 1];
-                        }
+                              return Container();
+                            } else if (index > _messages.length) {
+                              return Container();
+                            }
 
-                        bool fullAnimation = index == 0
-                            && (!_messages[index].isFromMe! || _messages[index].originalROWID == null);
+                            Message? olderMessage;
+                            Message? newerMessage;
+                            if (index + 1 >= 0 && index + 1 < _messages.length) {
+                              olderMessage = _messages[index + 1];
+                            }
+                            if (index - 1 >= 0 && index - 1 < _messages.length) {
+                              newerMessage = _messages[index - 1];
+                            }
 
-                        Widget messageWidget = Padding(
-                            padding: EdgeInsets.only(left: 5.0, right: 5.0),
-                            child: MessageWidget(
-                              key: Key(_messages[index].guid!),
-                              message: _messages[index],
-                              olderMessage: olderMessage,
-                              newerMessage: newerMessage,
-                              showHandle: widget.showHandle,
-                              isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages[index].guid,
-                              showHero: fullAnimation,
-                              onUpdate: (event) => onUpdateMessage(event),
-                            ));
+                            bool fullAnimation =
+                                index == 0 && (!_messages[index].isFromMe! || _messages[index].originalROWID == null);
 
-                        if (fullAnimation) {
-                          return SizeTransition(
-                            axis: Axis.vertical,
-                            sizeFactor:
-                                animation.drive(Tween(begin: 0.0, end: 1.0).chain(CurveTween(curve: Curves.easeInOut))),
-                            child: SlideTransition(
-                              position: animation.drive(
-                                Tween(
-                                  begin: Offset(0.0, 1),
-                                  end: Offset(0.0, 0.0),
-                                ).chain(
-                                  CurveTween(
-                                    curve: Curves.easeInOut,
+                            Widget messageWidget = Padding(
+                                padding: EdgeInsets.only(left: 5.0, right: 5.0),
+                                child: MessageWidget(
+                                  key: Key(_messages[index].guid!),
+                                  message: _messages[index],
+                                  olderMessage: olderMessage,
+                                  newerMessage: newerMessage,
+                                  showHandle: widget.showHandle,
+                                  isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages[index].guid,
+                                  showHero: fullAnimation,
+                                  onUpdate: (event) => onUpdateMessage(event),
+                                ));
+
+                            if (fullAnimation) {
+                              return SizeTransition(
+                                axis: Axis.vertical,
+                                sizeFactor: animation
+                                    .drive(Tween(begin: 0.0, end: 1.0).chain(CurveTween(curve: Curves.easeInOut))),
+                                child: SlideTransition(
+                                  position: animation.drive(
+                                    Tween(
+                                      begin: Offset(0.0, 1),
+                                      end: Offset(0.0, 0.0),
+                                    ).chain(
+                                      CurveTween(
+                                        curve: Curves.easeInOut,
+                                      ),
+                                    ),
+                                  ),
+                                  child: FadeTransition(
+                                    opacity: animation,
+                                    child: messageWidget,
                                   ),
                                 ),
-                              ),
-                              child: FadeTransition(
-                                opacity: animation,
-                                child: messageWidget,
-                              ),
-                            ),
-                          );
-                        }
+                              );
+                            }
 
-                        return messageWidget;
-                      })
-                  : SliverToBoxAdapter(child: Container()),
+                            return messageWidget;
+                          })
+                      : SliverToBoxAdapter(child: Container()),
               SliverPadding(
                 padding: EdgeInsets.all(70),
               ),
