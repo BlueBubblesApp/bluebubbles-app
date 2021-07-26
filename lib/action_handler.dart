@@ -91,7 +91,6 @@ class ActionHandler {
     // Send all the messages
     for (Message message in messages) {
       // Add the message to the UI and DB
-      if (messageBloc != null) messageBloc.insert(message);
       NewMessageManager().addMessage(chat, message, outgoing: true);
       chat.addMessage(message);
 
@@ -136,7 +135,8 @@ class ActionHandler {
         sub?.cancel();
         sub2?.cancel();
         String? tempGuid = message.guid;
-        message.guid = message.guid!.replaceAll("temp", "error-Connection timeout, please check your internet connection and try again");
+        message.guid = message.guid!
+            .replaceAll("temp", "error-Connection timeout, please check your internet connection and try again");
         message.error = MessageError.BAD_REQUEST.code;
         CurrentChat? currChat = CurrentChat.activeChat;
         if (!LifeCycleManager().isAlive || currChat?.chat.guid != chat.guid) {
