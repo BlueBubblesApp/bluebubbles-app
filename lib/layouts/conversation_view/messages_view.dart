@@ -489,7 +489,8 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                           newerMessage = _messages[index - 1];
                         }
 
-                        bool fullAnimation = index == 0;
+                        bool fullAnimation = index == 0
+                            && (!_messages[index].isFromMe! || _messages[index].originalROWID == null);
 
                         Widget messageWidget = Padding(
                             padding: EdgeInsets.only(left: 5.0, right: 5.0),
