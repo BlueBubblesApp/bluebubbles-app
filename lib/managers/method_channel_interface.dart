@@ -6,7 +6,6 @@ import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
-import 'package:bluebubbles/layouts/settings/server_management_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/alarm_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
@@ -20,6 +19,7 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 
 /// [MethodChannelInterface] is a manager used to talk to native code via a flutter MethodChannel
 ///
@@ -71,6 +71,8 @@ class MethodChannelInterface {
     // call.method is the name of the call from native code
     switch (call.method) {
       case "new-server":
+        if (!SettingsManager().settings.finishedSetup.value) return new Future.value("");
+
         // The arguments for a new server are formatted with the new server address inside square brackets
         // As such: [https://alksdjfoaehg.ngrok.io]
         String address = call.arguments.toString();
@@ -104,11 +106,7 @@ class MethodChannelInterface {
 
         return new Future.value("");
       case "socket-error-open":
-        NavigatorManager().navigatorKey.currentState!.push(
-              ThemeSwitcher.buildPageRoute(
-                builder: (context) => ServerManagementPanel(),
-              ),
-            );
+        Get.toNamed("/settings/server-management-panel");
         return new Future.value("");
       case "reply":
         // Find the chat to reply to

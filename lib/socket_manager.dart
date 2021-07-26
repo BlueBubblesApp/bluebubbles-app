@@ -405,6 +405,8 @@ class SocketManager {
   }
 
   Future<void> authFCM({bool catchException = true, bool force = false}) async {
+    if (!SettingsManager().settings.finishedSetup.value) return;
+
     if (isAuthingFcm && !force) {
       debugPrint('Currently authenticating with FCM, not doing it again...');
       return;
