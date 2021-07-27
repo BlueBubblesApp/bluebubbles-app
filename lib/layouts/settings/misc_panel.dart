@@ -12,6 +12,7 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:local_auth/local_auth.dart';
 import 'package:secure_application/secure_application.dart';
 
 class MiscPanel extends StatelessWidget {
@@ -122,14 +123,19 @@ class MiscPanel extends StatelessWidget {
                     ),
                   if (SettingsManager().canAuthenticate)
                     Obx(() => SettingsSwitch(
-                      onChanged: (bool val) {
-                        SettingsManager().settings.shouldSecure.value = val;
-                        if (val == false) {
-                          SecureApplicationProvider.of(context, listen: false)!.open();
-                        } else if (SettingsManager().settings.securityLevel.value == SecurityLevel.locked_and_secured) {
-                          SecureApplicationProvider.of(context, listen: false)!.secure();
+                      onChanged: (bool val) async {
+                        var localAuth = LocalAuthentication();
+                        bool didAuthenticate = await localAuth.authenticate(
+                            localizedReason: 'Please authenticate to ${val == true ? "enable" : "disable"} security', stickyAuth: true);
+                        if (didAuthenticate) {
+                          SettingsManager().settings.shouldSecure.value = val;
+                          if (val == false) {
+                            SecureApplicationProvider.of(context, listen: false)!.open();
+                          } else if (SettingsManager().settings.securityLevel.value == SecurityLevel.locked_and_secured) {
+                            SecureApplicationProvider.of(context, listen: false)!.secure();
+                          }
+                          saveSettings();
                         }
-                        saveSettings();
                       },
                       initialVal: SettingsManager().settings.shouldSecure.value,
                       title: "Secure App",
@@ -170,16 +176,21 @@ class MiscPanel extends StatelessWidget {
                       if (SettingsManager().settings.shouldSecure.value)
                         return SettingsOptions<SecurityLevel>(
                           initial: SettingsManager().settings.securityLevel.value,
-                          onChanged: (val) {
-                            if (val != null) {
-                              SettingsManager().settings.securityLevel.value = val;
-                              if (val == SecurityLevel.locked_and_secured) {
-                                SecureApplicationProvider.of(context, listen: false)!.secure();
-                              } else {
-                                SecureApplicationProvider.of(context, listen: false)!.open();
+                          onChanged: (val) async {
+                            var localAuth = LocalAuthentication();
+                            bool didAuthenticate = await localAuth.authenticate(
+                                localizedReason: 'Please authenticate to change your security level', stickyAuth: true);
+                            if (didAuthenticate) {
+                              if (val != null) {
+                                SettingsManager().settings.securityLevel.value = val;
+                                if (val == SecurityLevel.locked_and_secured) {
+                                  SecureApplicationProvider.of(context, listen: false)!.secure();
+                                } else {
+                                  SecureApplicationProvider.of(context, listen: false)!.open();
+                                }
                               }
+                              saveSettings();
                             }
-                            saveSettings();
                           },
                           options: SecurityLevel.values,
                           textProcessing: (val) => val.toString().split(".")[1].replaceAll("_", " ").capitalizeFirst!,
