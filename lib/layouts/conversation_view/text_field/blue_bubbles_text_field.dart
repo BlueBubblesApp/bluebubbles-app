@@ -859,66 +859,66 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     ),
                   ),
                 )
-              : Container(
-                constraints: BoxConstraints(maxWidth: 40, minHeight: 40),
-                child: GestureDetector(
-                    onTapDown: (_) async {
-                      if (canRecord && !isRecording) {
-                        await startRecording();
-                      }
-                    },
-                    onTapCancel: () async {
-                      await stopRecording();
-                    },
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 0,
+              : GestureDetector(
+                  onTapDown: (_) async {
+                    if (canRecord && !isRecording) {
+                      await startRecording();
+                    }
+                  },
+                  onTapCancel: () async {
+                    await stopRecording();
+                  },
+                  child: Container(
+                    height: 40,
+                    width: 40,
+                    margin: EdgeInsets.only(left: 5.0),
+                    child: ClipOval(
+                        child: Material(
+                          color: Theme.of(context).primaryColor,
+                          child: InkWell(
+                            onTap: sendAction,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                AnimatedOpacity(
+                                  opacity:
+                                  sendCountdown == null && controller!.text.isEmpty && pickedImages.isEmpty ? 1.0 : 0.0,
+                                  duration: Duration(milliseconds: 150),
+                                  child: Icon(
+                                    Icons.mic,
+                                    color: (isRecording) ? Colors.red : Colors.white,
+                                    size: 20,
+                                  ),
+                                ),
+                                AnimatedOpacity(
+                                  opacity:
+                                  (sendCountdown == null && (controller!.text.isNotEmpty || pickedImages.length > 0)) &&
+                                      !isRecording
+                                      ? 1.0
+                                      : 0.0,
+                                  duration: Duration(milliseconds: 150),
+                                  child: Icon(
+                                    Icons.send,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                ),
+                                AnimatedOpacity(
+                                  opacity: sendCountdown != null ? 1.0 : 0.0,
+                                  duration: Duration(milliseconds: 50),
+                                  child: Icon(
+                                    Icons.cancel_outlined,
+                                    color: Colors.red,
+                                    size: 20,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                        primary: Theme.of(context).primaryColor,
-                        shape: CircleBorder(),
-                      ),
-                      onPressed: sendAction,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          AnimatedOpacity(
-                            opacity:
-                                sendCountdown == null && controller!.text.isEmpty && pickedImages.isEmpty ? 1.0 : 0.0,
-                            duration: Duration(milliseconds: 150),
-                            child: Icon(
-                              Icons.mic,
-                              color: (isRecording) ? Colors.red : Colors.white,
-                              size: 20,
-                            ),
-                          ),
-                          AnimatedOpacity(
-                            opacity:
-                                (sendCountdown == null && (controller!.text.isNotEmpty || pickedImages.length > 0)) &&
-                                        !isRecording
-                                    ? 1.0
-                                    : 0.0,
-                            duration: Duration(milliseconds: 150),
-                            child: Icon(
-                              Icons.send,
-                              color: Colors.white,
-                              size: 20,
-                            ),
-                          ),
-                          AnimatedOpacity(
-                            opacity: sendCountdown != null ? 1.0 : 0.0,
-                            duration: Duration(milliseconds: 50),
-                            child: Icon(
-                              Icons.cancel_outlined,
-                              color: Colors.red,
-                              size: 20,
-                            ),
-                          ),
-                        ],
-                      ),
                     ),
                   ),
-              ),
+                )
         ]),
       );
 
