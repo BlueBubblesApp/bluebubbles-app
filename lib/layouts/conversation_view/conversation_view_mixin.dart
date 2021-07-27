@@ -760,8 +760,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       filterContacts();
     };
 
-    // If there are any changes to the chatbloc, use them
-    ChatBloc().chatStream.listen((List<Chat?> chats) async {
+    ever(ChatBloc().chats, (List<Chat> chats) async {
       if (chats.length == 0) return;
 
       // Make sure the contact count changed, otherwise, don't set the chats
