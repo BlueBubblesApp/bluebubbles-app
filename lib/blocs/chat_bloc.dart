@@ -134,6 +134,7 @@ class ChatBloc {
     }
 
     await updateShareTarget(chat);
+    _chats.sort(Chat.sort);
   }
 
   Future<void> markAllAsRead() async {
