@@ -19,9 +19,9 @@ import '../repository/models/handle.dart';
 class ChatBloc {
   static StreamSubscription<NewMessageEvent>? _messageSubscription;
 
-  RxList<Chat> _chats = <Chat>[].obs;
+  final RxList<Chat> _chats = <Chat>[].obs;
   RxList<Chat> get chats => _chats;
-  RxInt _unreads = 0.obs;
+  final RxInt _unreads = 0.obs;
   RxInt get unreads => _unreads;
   bool _hasChats = false;
   bool get hasChats => _hasChats;
