@@ -25,7 +25,7 @@ class CustomAvatarPanelBinding implements Bindings {
 class CustomAvatarPanelController extends GetxController {
   late Settings _settingsCopy;
   bool isFetching = false;
-  RxList<Widget> handleWidgets = <Widget>[].obs;
+  final RxList<Widget> handleWidgets = <Widget>[].obs;
 
   @override
   void onInit() {

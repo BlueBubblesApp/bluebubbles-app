@@ -34,7 +34,7 @@ class _VideoViewerState extends State<VideoViewer> {
   late VideoPlayerController controller;
   PlayerStatus status = PlayerStatus.NONE;
   bool hasListener = false;
-  RxBool isReloading = false.obs;
+  final RxBool isReloading = false.obs;
 
   @override
   void initState() {

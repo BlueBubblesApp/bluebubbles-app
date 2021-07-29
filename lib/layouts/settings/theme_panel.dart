@@ -27,9 +27,9 @@ class ThemePanelBinding extends Bindings {
 
 class ThemePanelController extends GetxController {
   late Settings _settingsCopy;
-  RxList<DisplayMode> modes = <DisplayMode>[].obs;
-  RxList<int> refreshRates = <int>[].obs;
-  RxInt currentMode = 0.obs;
+  final RxList<DisplayMode> modes = <DisplayMode>[].obs;
+  final RxList<int> refreshRates = <int>[].obs;
+  final RxInt currentMode = 0.obs;
 
   @override
   void onInit() {

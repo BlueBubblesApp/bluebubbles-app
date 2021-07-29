@@ -25,8 +25,8 @@ class PrivateAPIPanelBinding extends Bindings {
 
 class PrivateAPIPanelController extends GetxController {
   late Settings _settingsCopy;
-  RxnInt macOSVersionNumber = RxnInt();
-  RxnString macOSVersion = RxnString();
+  final RxnInt macOSVersionNumber = RxnInt();
+  final RxnString macOSVersion = RxnString();
 
   @override
   void onInit() {

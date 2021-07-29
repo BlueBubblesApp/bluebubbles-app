@@ -33,16 +33,16 @@ class ServerManagementPanelBinding extends Bindings {
 }
 
 class ServerManagementPanelController extends GetxController {
-  RxnInt latency = RxnInt();
-  RxnString fetchStatus = RxnString();
-  RxnString serverVersion = RxnString();
-  RxnString macOSVersion = RxnString();
+  final RxnInt latency = RxnInt();
+  final RxnString fetchStatus = RxnString();
+  final RxnString serverVersion = RxnString();
+  final RxnString macOSVersion = RxnString();
 
   // Restart trackers
   int? lastRestart;
   int? lastRestartMessages;
-  RxBool isRestarting = false.obs;
-  RxBool isRestartingMessages = false.obs;
+  final RxBool isRestarting = false.obs;
+  final RxBool isRestartingMessages = false.obs;
 
   late Settings _settingsCopy;
   FCMData? _fcmDataCopy;
@@ -233,7 +233,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                           clientID: fcmData[6],
                           applicationID: fcmData[7],
                         );
-                        controller._settingsCopy.guidAuthKey = fcmData[0];
+                        controller._settingsCopy.guidAuthKey.value = fcmData[0];
                         controller._settingsCopy.serverAddress.value = getServerAddress(address: fcmData[1])!;
 
                         SettingsManager().saveSettings(controller._settingsCopy);

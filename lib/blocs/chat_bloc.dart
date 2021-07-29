@@ -35,7 +35,7 @@ class ChatBloc {
   static StreamSubscription<NewMessageEvent>? _messageSubscription;
 
   List<Chat> _chats = [];
-  RxInt _unreads = 0.obs;
+  final RxInt _unreads = 0.obs;
   RxInt get unreads => _unreads;
   bool _hasChats = false;
   bool get hasChats => _hasChats;
