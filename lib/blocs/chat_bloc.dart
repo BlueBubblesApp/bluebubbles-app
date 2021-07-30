@@ -17,24 +17,10 @@ import '../repository/models/chat.dart';
 import '../repository/models/handle.dart';
 
 class ChatBloc {
-  // Stream controller is the 'Admin' that manages
-  // the state of our stream of data like adding
-  // new data, change the state of the stream
-  // and broadcast it to observers/subscribers
-  final StreamController<List<Chat>> _chatController = StreamController<List<Chat>>.broadcast();
-  final _tileValController = StreamController<Map<String, Map<String, dynamic>>>.broadcast();
-
-  Stream<List<Chat>> get chatStream => _chatController.stream;
-
-  Stream<Map<String, Map<String, dynamic>>> get tileStream => _tileValController.stream;
-
-  final StreamController<List<Chat>> _archivedChatController = StreamController<List<Chat>>.broadcast();
-
-  Stream<List<Chat>> get archivedChatStream => _archivedChatController.stream;
-
   static StreamSubscription<NewMessageEvent>? _messageSubscription;
 
-  List<Chat> _chats = [];
+  final RxList<Chat> _chats = <Chat>[].obs;
+  RxList<Chat> get chats => _chats;
   final RxInt _unreads = 0.obs;
   RxInt get unreads => _unreads;
   bool _hasChats = false;
@@ -42,20 +28,6 @@ class ChatBloc {
 
   void updateUnreads() {
     _unreads.value = chats.where((element) => element.hasUnreadMessage ?? false).map((e) => e.guid).toList().length;
-  }
-
-  // Remove duplicates when this gets accessed
-  List<Chat> get chats {
-    final ids = _chats.map((e) => e.guid).toSet();
-    _chats.retainWhere((element) => ids.remove(element.guid));
-    return _chats;
-  }
-
-  List<Chat> _archivedChats = [];
-  List<Chat> get archivedChats {
-    final ids = _archivedChats.map((e) => e.guid).toSet();
-    _archivedChats.retainWhere((element) => ids.remove(element.guid));
-    return _archivedChats;
   }
 
   Completer<void>? chatRequest;
@@ -109,7 +81,6 @@ class ChatBloc {
 
     // Fetch the first x chats
     getChatBatches();
-    getChatBatches(archived: true);
   }
 
   /// Inserts a [chat] into the chat bloc based on the lastMessage data
@@ -162,9 +133,8 @@ class ChatBloc {
       _chats[currentIndex] = chat;
     }
 
-    // Update the sink so all listeners get the new chat list
-    await this.addToSink(this.chats);
     await updateShareTarget(chat);
+    _chats.sort(Chat.sort);
   }
 
   Future<void> markAllAsRead() async {
@@ -264,7 +234,7 @@ class ChatBloc {
     return NewMessageManager().stream.listen(handleMessageAction);
   }
 
-  Future<void> getChatBatches({int batchSize = 10, bool archived = false}) async {
+  Future<void> getChatBatches({int batchSize = 10}) async {
     int count = (await Chat.count()) ?? 0;
     if (count == 0) {
       _hasChats = false;
@@ -273,20 +243,16 @@ class ChatBloc {
     }
 
     // Reset chat lists
-    if (archived) {
-      _archivedChats = [];
-    } else {
-      _chats = [];
-    }
+    List<Chat> newChats = [];
 
     int batches = (count < batchSize) ? batchSize : (count / batchSize).ceil();
     for (int i = 0; i < batches; i++) {
-      List<Chat> chats = await Chat.getChats(limit: batchSize, offset: i * batchSize, archived: archived);
+      List<Chat> chats = await Chat.getChats(limit: batchSize, offset: i * batchSize);
       if (chats.length == 0) break;
 
       for (Chat chat in chats) {
         bool existing = false;
-        for (Chat? existingChat in (archived ? _archivedChats : _chats)) {
+        for (Chat? existingChat in _chats) {
           if (existingChat!.guid == chat.guid) {
             existing = true;
             break;
@@ -294,40 +260,28 @@ class ChatBloc {
         }
 
         if (existing) continue;
-        if (archived) {
-          _archivedChats.add(chat);
-        } else {
-          _chats.add(chat);
-        }
+        newChats.add(chat);
 
         await initTileValsForChat(chat);
       }
 
-      await this.addToSink((archived) ? this.archivedChats : this.chats, archived: archived);
+      for (int i = 0; i < newChats.length; i++) {
+        if (isNullOrEmpty(newChats[i].participants)!) {
+          await newChats[i].getParticipants();
+        }
+      }
     }
 
-    // If this is for archived chats, return now
-    if (archived) return;
+    if (newChats.length != 0) {
+      _chats.value = newChats;
+      _chats.sort(Chat.sort);
+    }
 
-    // For non-archived chats, do some more processing
-    debugPrint("[ChatBloc] -> Finished fetching chats (${_chats.length}). (archived: $archived)");
+    debugPrint("[ChatBloc] -> Finished fetching chats (${_chats.length}).");
     await updateAllShareTargets();
 
     if (chatRequest != null && !chatRequest!.isCompleted) {
       chatRequest!.complete();
-    }
-  }
-
-  /// Used to initialize all the values of the set List of [chat]s
-  /// @param chats list of chats to initialize values for
-  /// @param addToSink optional param whether to update the stream after initalizing all the values of the chat, defaults to true
-  Future<void> initTileVals(List<Chat> chats, [bool addToSink = true]) async {
-    for (int i = 0; i < chats.length; i++) {
-      await initTileValsForChat(chats[i]);
-    }
-
-    if (addToSink) {
-      await this.addToSink(this.chats);
     }
   }
 
@@ -341,28 +295,19 @@ class ChatBloc {
   }
 
   void archiveChat(Chat chat) async {
-    _chats.removeWhere((element) => element.guid == chat.guid);
-    _archivedChats.add(chat);
+    _chats.firstWhere((element) => element.guid == chat.guid).isArchived = true;
     await chat.toggleArchived(true);
     initTileValsForChat(chat);
-    await this.addToSink(this.chats);
-    _archivedChatController.sink.add(_archivedChats);
   }
 
   void unArchiveChat(Chat chat) async {
-    _archivedChats.removeWhere((element) => element.guid == chat.guid);
+    _chats.firstWhere((element) => element.guid == chat.guid).isArchived = false;
     await chat.toggleArchived(false);
-    await initTileValsForChat(chat);
-    _chats.add(chat);
-    _archivedChatController.sink.add(_archivedChats);
-    await this.addToSink(this.chats);
+    initTileValsForChat(chat);
   }
 
   void deleteChat(Chat chat) async {
-    _archivedChats.removeWhere((element) => element.id == chat.id);
     _chats.removeWhere((element) => element.id == chat.id);
-    _archivedChatController.sink.add(_archivedChats);
-    await this.addToSink(this.chats);
   }
 
   void updateTileVals(Chat chat, Map<String, dynamic> chatMap, Map<String, Map<String, dynamic>> map) {
@@ -384,8 +329,7 @@ class ChatBloc {
         await initTileValsForChat(chats[i]);
       }
     }
-
-    await this.addToSink(this.chats);
+    _chats.sort(Chat.sort);
   }
 
   addChat(Chat chat) async {
@@ -407,24 +351,17 @@ class ChatBloc {
     refreshChats();
   }
 
-  Future<void> addToSink(List<Chat> chats, {bool archived = false}) async {
-    for (int i = 0; i < chats.length; i++) {
-      if (isNullOrEmpty(chats[i].participants)!) {
-        await chats[i].getParticipants();
-      }
-    }
-
-    if (archived && !_archivedChatController.isClosed) {
-      _archivedChatController.sink.add(chats);
-    } else if (!_chatController.isClosed) {
-      _chatController.sink.add(chats);
-    }
-  }
-
   dispose() {
-    _chatController.close();
-    _tileValController.close();
-    _archivedChatController.close();
     _messageSubscription?.cancel();
+  }
+}
+
+extension Archived on RxList<Chat> {
+  /// Helper to return archived chats or all chats depending on the bool passed to it
+  /// This helps reduce a vast amount of code in build methods so the widgets can
+  /// update without StreamBuilders
+  archivedHelper(bool archived) {
+    if (archived) return this.where((e) => e.isArchived ?? false).toList();
+    else return this;
   }
 }

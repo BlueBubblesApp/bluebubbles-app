@@ -18,6 +18,8 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
+import 'package:collection/collection.dart';
 
 class ConversationDetails extends StatefulWidget {
   final Chat chat;
@@ -60,8 +62,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
     showNameField = chat.displayName!.isNotEmpty;
 
     fetchAttachments();
-    ChatBloc().chatStream.listen((event) async {
-      Chat? _chat = await Chat.findOne({"guid": widget.chat.guid});
+    ever(ChatBloc().chats, (List<Chat> chats) async {
+      Chat? _chat = chats.firstWhereOrNull((e) => e.guid == widget.chat.guid);
       if (_chat == null) return;
       await _chat.getParticipants();
       chat = _chat;
