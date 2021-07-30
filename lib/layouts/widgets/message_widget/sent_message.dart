@@ -254,7 +254,7 @@ class SentMessage extends StatefulWidget {
 }
 
 class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin, MessageWidgetMixin {
-  Rx<Skins> skin = Rx<Skins>(SettingsManager().settings.skin.value);
+  final Rx<Skins> skin = Rx<Skins>(SettingsManager().settings.skin.value);
 
   @override
   void initState() {

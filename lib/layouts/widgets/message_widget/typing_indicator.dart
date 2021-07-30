@@ -19,7 +19,7 @@ class TypingIndicator extends StatefulWidget {
 class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderStateMixin {
   late AnimationController _controller;
   late Animation animation;
-  Rx<Skins> skin = Rx<Skins>(SettingsManager().settings.skin.value);
+  final Rx<Skins> skin = Rx<Skins>(SettingsManager().settings.skin.value);
 
   @override
   void initState() {

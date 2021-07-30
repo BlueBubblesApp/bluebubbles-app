@@ -10,88 +10,88 @@ import 'package:get/get.dart';
 import 'package:sqflite/sqflite.dart';
 
 class Settings {
-  RxString guidAuthKey = "".obs;
-  RxString serverAddress = "".obs;
-  RxBool finishedSetup = false.obs;
-  RxInt chunkSize = 500.obs;
-  RxBool autoDownload = true.obs;
-  RxBool onlyWifiDownload = false.obs;
-  RxBool autoOpenKeyboard = true.obs;
-  RxBool hideTextPreviews = false.obs;
-  RxBool showIncrementalSync = false.obs;
-  RxBool lowMemoryMode = false.obs;
-  RxInt lastIncrementalSync = 0.obs;
-  RxInt refreshRate = 0.obs;
-  RxBool colorfulAvatars = false.obs;
-  RxBool colorfulBubbles = false.obs;
-  RxBool hideDividers = false.obs;
-  RxDouble scrollVelocity = 1.00.obs;
-  RxBool sendWithReturn = false.obs;
-  RxBool doubleTapForDetails = false.obs;
-  RxBool denseChatTiles = false.obs;
-  RxBool smartReply = false.obs;
-  RxBool reducedForehead = false.obs;
-  RxBool preCachePreviewImages = true.obs;
-  RxBool showConnectionIndicator = false.obs;
-  RxBool showSyncIndicator = true.obs;
-  RxInt sendDelay = 0.obs;
-  RxBool recipientAsPlaceholder = false.obs;
-  RxBool hideKeyboardOnScroll = false.obs;
-  RxBool moveChatCreatorToHeader = false.obs;
-  RxBool swipeToCloseKeyboard = false.obs;
-  RxBool swipeToOpenKeyboard = false.obs;
-  RxBool openKeyboardOnSTB = false.obs;
-  RxBool swipableConversationTiles = false.obs;
-  RxBool colorblindMode = false.obs;
-  RxBool showDeliveryTimestamps = false.obs;
-  RxInt previewCompressionQuality = 25.obs;
-  RxBool filteredChatList = false.obs;
-  RxBool startVideosMuted = true.obs;
-  RxBool startVideosMutedFullscreen = true.obs;
-  RxBool use24HrFormat = false.obs;
-  RxBool alwaysShowAvatars = false.obs;
+  final RxString guidAuthKey = "".obs;
+  final RxString serverAddress = "".obs;
+  final RxBool finishedSetup = false.obs;
+  final RxInt chunkSize = 500.obs;
+  final RxBool autoDownload = true.obs;
+  final RxBool onlyWifiDownload = false.obs;
+  final RxBool autoOpenKeyboard = true.obs;
+  final RxBool hideTextPreviews = false.obs;
+  final RxBool showIncrementalSync = false.obs;
+  final RxBool lowMemoryMode = false.obs;
+  final RxInt lastIncrementalSync = 0.obs;
+  final RxInt refreshRate = 0.obs;
+  final RxBool colorfulAvatars = false.obs;
+  final RxBool colorfulBubbles = false.obs;
+  final RxBool hideDividers = false.obs;
+  final RxDouble scrollVelocity = 1.00.obs;
+  final RxBool sendWithReturn = false.obs;
+  final RxBool doubleTapForDetails = false.obs;
+  final RxBool denseChatTiles = false.obs;
+  final RxBool smartReply = false.obs;
+  final RxBool reducedForehead = false.obs;
+  final RxBool preCachePreviewImages = true.obs;
+  final RxBool showConnectionIndicator = false.obs;
+  final RxBool showSyncIndicator = true.obs;
+  final RxInt sendDelay = 0.obs;
+  final RxBool recipientAsPlaceholder = false.obs;
+  final RxBool hideKeyboardOnScroll = false.obs;
+  final RxBool moveChatCreatorToHeader = false.obs;
+  final RxBool swipeToCloseKeyboard = false.obs;
+  final RxBool swipeToOpenKeyboard = false.obs;
+  final RxBool openKeyboardOnSTB = false.obs;
+  final RxBool swipableConversationTiles = false.obs;
+  final RxBool colorblindMode = false.obs;
+  final RxBool showDeliveryTimestamps = false.obs;
+  final RxInt previewCompressionQuality = 25.obs;
+  final RxBool filteredChatList = false.obs;
+  final RxBool startVideosMuted = true.obs;
+  final RxBool startVideosMutedFullscreen = true.obs;
+  final RxBool use24HrFormat = false.obs;
+  final RxBool alwaysShowAvatars = false.obs;
 
-  // RxString emojiFontFamily;
+  // final RxString emojiFontFamily;
 
   // Private API features
-  RxBool enablePrivateAPI = false.obs;
-  RxBool privateSendTypingIndicators = false.obs;
-  RxBool privateMarkChatAsRead = false.obs;
-  RxBool privateManualMarkAsRead = false.obs;
+  final RxBool enablePrivateAPI = false.obs;
+  final RxBool privateSendTypingIndicators = false.obs;
+  final RxBool privateMarkChatAsRead = false.obs;
+  final RxBool privateManualMarkAsRead = false.obs;
 
   // Redacted Mode Settings
-  RxBool redactedMode = false.obs;
-  RxBool hideMessageContent = true.obs;
-  RxBool hideReactions = false.obs;
-  RxBool hideAttachments = true.obs;
-  RxBool hideEmojis = false.obs;
-  RxBool hideAttachmentTypes = false.obs;
-  RxBool hideContactPhotos = true.obs;
-  RxBool hideContactInfo = true.obs;
-  RxBool removeLetterAvatars = true.obs;
-  RxBool generateFakeContactNames = false.obs;
-  RxBool generateFakeMessageContent = false.obs;
+  final RxBool redactedMode = false.obs;
+  final RxBool hideMessageContent = true.obs;
+  final RxBool hideReactions = false.obs;
+  final RxBool hideAttachments = true.obs;
+  final RxBool hideEmojis = false.obs;
+  final RxBool hideAttachmentTypes = false.obs;
+  final RxBool hideContactPhotos = true.obs;
+  final RxBool hideContactInfo = true.obs;
+  final RxBool removeLetterAvatars = true.obs;
+  final RxBool generateFakeContactNames = false.obs;
+  final RxBool generateFakeMessageContent = false.obs;
 
   // Quick tapback settings
-  RxBool enableQuickTapback = false.obs;
-  RxString quickTapbackType = ReactionTypes.toList()[0].obs; // The 'love' reaction
+  final RxBool enableQuickTapback = false.obs;
+  final RxString quickTapbackType = ReactionTypes.toList()[0].obs; // The 'love' reaction
 
   // Slideable action settings
-  RxBool iosShowPin = RxBool(true);
-  RxBool iosShowAlert = RxBool(true);
-  RxBool iosShowDelete = RxBool(true);
-  RxBool iosShowMarkRead = RxBool(true);
-  RxBool iosShowArchive = RxBool(true);
-  Rx<MaterialSwipeAction> materialRightAction = MaterialSwipeAction.pin.obs;
-  Rx<MaterialSwipeAction> materialLeftAction = MaterialSwipeAction.archive.obs;
+  final RxBool iosShowPin = RxBool(true);
+  final RxBool iosShowAlert = RxBool(true);
+  final RxBool iosShowDelete = RxBool(true);
+  final RxBool iosShowMarkRead = RxBool(true);
+  final RxBool iosShowArchive = RxBool(true);
+  final Rx<MaterialSwipeAction> materialRightAction = MaterialSwipeAction.pin.obs;
+  final Rx<MaterialSwipeAction> materialLeftAction = MaterialSwipeAction.archive.obs;
 
   // Security settings
-  RxBool shouldSecure = RxBool(false);
-  Rx<SecurityLevel> securityLevel = Rx<SecurityLevel>(SecurityLevel.locked);
+  final RxBool shouldSecure = RxBool(false);
+  final Rx<SecurityLevel> securityLevel = Rx<SecurityLevel>(SecurityLevel.locked);
 
-  Rx<Skins> skin = Skins.iOS.obs;
-  Rx<ThemeMode> theme = ThemeMode.system.obs;
-  Rx<SwipeDirection> fullscreenViewerSwipeDir = SwipeDirection.RIGHT.obs;
+  final Rx<Skins> skin = Skins.iOS.obs;
+  final Rx<ThemeMode> theme = ThemeMode.system.obs;
+  final Rx<SwipeDirection> fullscreenViewerSwipeDir = SwipeDirection.RIGHT.obs;
 
   Settings();
 

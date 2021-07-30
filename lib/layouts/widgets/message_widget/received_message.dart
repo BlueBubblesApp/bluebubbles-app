@@ -51,7 +51,7 @@ class ReceivedMessage extends StatefulWidget {
 
 class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMixin {
   bool checkedHandle = false;
-  Rx<Skins> skin = Rx<Skins>(SettingsManager().settings.skin.value);
+  final Rx<Skins> skin = Rx<Skins>(SettingsManager().settings.skin.value);
 
   @override
   initState() {

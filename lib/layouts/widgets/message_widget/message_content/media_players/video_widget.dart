@@ -39,12 +39,12 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
   Uint8List? thumbnail;
   PlayerStatus status = PlayerStatus.NONE;
   bool hasListener = false;
-  RxBool muted = true.obs;
+  final RxBool muted = true.obs;
 
   @override
   void initState() {
     super.initState();
-    muted = SettingsManager().settings.startVideosMuted;
+    muted.value = SettingsManager().settings.startVideosMuted.value;
     Map<String, VideoPlayerController> controllers = CurrentChat.of(context)!.currentPlayingVideo;
     showPlayPauseOverlay =
         !controllers.containsKey(widget.attachment.guid) || !controllers[widget.attachment.guid]!.value.isPlaying;
@@ -235,7 +235,7 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
                           absorbing: !showPlayPauseOverlay,
                           child: GestureDetector(
                             onTap: () {
-                              muted = muted.toggle() as RxBool;
+                              muted.toggle();
                               controller.setVolume(muted.value ? 0.0 : 1.0);
                             },
                             child: Container(
@@ -298,7 +298,7 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
                   padding: const EdgeInsets.only(bottom: 8.0, right: 8.0),
                   child: GestureDetector(
                     onTap: () {
-                      muted = muted.toggle() as RxBool;
+                      muted.toggle();
                     },
                     child: Container(
                       decoration: BoxDecoration(
