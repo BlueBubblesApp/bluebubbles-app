@@ -20,6 +20,7 @@ import 'package:bluebubbles/managers/outgoing_queue.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
@@ -103,16 +104,18 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       currentChat?.isAlive = true;
     });
 
-    ChatBloc().chatStream.listen((event) async {
+    ever(ChatBloc().chats, (List<Chat> chats) async {
       if (currentChat == null) {
         currentChat = CurrentChat.getCurrentChat(widget.chat);
       }
 
       if (currentChat != null) {
-        Chat _chat = (await Chat.findOne({"guid": currentChat!.chat.guid}))!;
-        await _chat.getParticipants();
-        currentChat!.chat = _chat;
-        if (this.mounted) setState(() {});
+        Chat? _chat = chats.firstWhereOrNull((e) => e.guid == widget.chat?.guid);
+        if (chat != null) {
+          await _chat!.getParticipants();
+          currentChat!.chat = _chat;
+          if (this.mounted) setState(() {});
+        }
       }
     });
 

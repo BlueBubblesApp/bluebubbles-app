@@ -30,8 +30,6 @@ class ConversationList extends StatefulWidget {
 }
 
 class _ConversationListState extends State<ConversationList> {
-  List<Chat> chats = [];
-
   Color? currentHeaderColor;
   bool hasPinnedChats = false;
 
@@ -60,23 +58,7 @@ class _ConversationListState extends State<ConversationList> {
   @override
   void initState() {
     super.initState();
-    if (!widget.showArchivedChats) {
-      ChatBloc().chatStream.listen((List<Chat> chats) {
-        if (chats.length == 0) return;
-        this.chats = chats;
-        if (this.mounted) setState(() {});
-      });
-
-      ChatBloc().refreshChats();
-    } else {
-      ChatBloc().archivedChatStream.listen((List<Chat> chats) {
-        if (chats.length == 0) return;
-        this.chats = chats;
-        if (this.mounted) setState(() {});
-      });
-      this.chats = ChatBloc().archivedChats;
-    }
-
+    ChatBloc().refreshChats();
     scrollController = ScrollController()..addListener(scrollListener);
 
     // Listen for any incoming events
@@ -160,7 +142,7 @@ class _ConversationListState extends State<ConversationList> {
   }
 
   void sortChats() {
-    chats.sort((a, b) {
+    ChatBloc().chats.sort((a, b) {
       if (!a.isPinned! && b.isPinned!) return 1;
       if (a.isPinned! && !b.isPinned!) return -1;
       if (a.latestMessageDate == null && b.latestMessageDate == null) return 0;
@@ -292,6 +274,7 @@ class _Cupertino extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    bool showArchived = parent.widget.showArchivedChats;
     Brightness brightness = ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor);
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
@@ -326,7 +309,7 @@ class _Cupertino extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: <Widget>[
                             Text(
-                              parent.widget.showArchivedChats ? "Archive" : "Messages",
+                              showArchived ? "Archive" : "Messages",
                               style: Theme.of(context).textTheme.bodyText1,
                             ),
                           ],
@@ -350,13 +333,13 @@ class _Cupertino extends StatelessWidget {
           physics: ThemeManager().scrollPhysics,
           slivers: <Widget>[
             SliverAppBar(
-              leading: ((SettingsManager().settings.skin.value == Skins.iOS && parent.widget.showArchivedChats) ||
+              leading: ((SettingsManager().settings.skin.value == Skins.iOS && showArchived) ||
                       (SettingsManager().settings.skin.value == Skins.Material ||
                               SettingsManager().settings.skin.value == Skins.Samsung) &&
-                          !parent.widget.showArchivedChats)
+                          !showArchived)
                   ? IconButton(
                       icon: Icon(
-                          (SettingsManager().settings.skin.value == Skins.iOS && parent.widget.showArchivedChats)
+                          (SettingsManager().settings.skin.value == Skins.iOS && showArchived)
                               ? Icons.arrow_back_ios
                               : Icons.arrow_back,
                           color: Theme.of(context).primaryColor),
@@ -366,7 +349,7 @@ class _Cupertino extends StatelessWidget {
                     )
                   : new Container(),
               stretch: true,
-              expandedHeight: (!parent.widget.showArchivedChats) ? 80 : 50,
+              expandedHeight: (!showArchived) ? 80 : 50,
               backgroundColor: Colors.transparent,
               pinned: false,
               flexibleSpace: FlexibleSpaceBar(
@@ -383,7 +366,7 @@ class _Cupertino extends StatelessWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: <Widget>[
-                          Container(width: (!parent.widget.showArchivedChats) ? 20 : 50),
+                          Container(width: (!showArchived) ? 20 : 50),
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -397,7 +380,7 @@ class _Cupertino extends StatelessWidget {
                           Spacer(
                             flex: 25,
                           ),
-                          if (!parent.widget.showArchivedChats)
+                          if (!showArchived)
                             ClipOval(
                               child: Material(
                                 color: Theme.of(context).accentColor, // button color
@@ -415,8 +398,8 @@ class _Cupertino extends StatelessWidget {
                                     }),
                               ),
                             ),
-                          if (!parent.widget.showArchivedChats) Container(width: 10.0),
-                          if (SettingsManager().settings.moveChatCreatorToHeader.value && !parent.widget.showArchivedChats)
+                          if (!showArchived) Container(width: 10.0),
+                          if (SettingsManager().settings.moveChatCreatorToHeader.value && !showArchived)
                             ClipOval(
                               child: Material(
                                 color: Theme.of(context).accentColor, // button color
@@ -457,43 +440,37 @@ class _Cupertino extends StatelessWidget {
             //     ),
             //   ),
             // ),
-            StreamBuilder(
-              stream: ChatBloc().chatStream,
-              builder: (BuildContext context, AsyncSnapshot<List<Chat?>> snapshot) {
-                if (snapshot.hasData || parent.widget.showArchivedChats) {
-                  parent.chats.sort(Chat.sort);
-                  if (parent.chats.isEmpty) {
-                    return SliverToBoxAdapter(
-                      child: Center(
-                        child: Container(
-                          padding: EdgeInsets.only(top: 50.0),
-                          child: Text(
-                            parent.widget.showArchivedChats ? "You have no archived chats :(" : "You have no chats :(",
-                            style: Theme.of(context).textTheme.subtitle1,
-                          ),
-                        ),
+            Obx(() {
+              if (ChatBloc().chats.archivedHelper(showArchived).isEmpty) {
+                return SliverToBoxAdapter(
+                  child: Center(
+                    child: Container(
+                      padding: EdgeInsets.only(top: 50.0),
+                      child: Text(
+                        showArchived ? "You have no archived chats :(" : "You have no chats :(",
+                        style: Theme.of(context).textTheme.subtitle1,
                       ),
-                    );
-                  }
-
-                  return SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                        if (!parent.widget.showArchivedChats && parent.chats[index].isArchived!) return Container();
-                        if (parent.widget.showArchivedChats && !parent.chats[index].isArchived!) return Container();
-                        return ConversationTile(
-                          key: Key(parent.chats[index].guid.toString()),
-                          chat: parent.chats[index],
-                        );
-                      },
-                      childCount: parent.chats.length,
                     ),
-                  );
-                } else {
-                  return SliverToBoxAdapter(child: Container());
-                }
-              },
-            ),
+                  ),
+                );
+              }
+
+              return SliverList(
+                delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                    if (!showArchived && ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!) return Container();
+                    if (showArchived && !ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!) return Container();
+                    return ConversationTile(
+                      key: Key(
+                          ChatBloc().chats.archivedHelper(showArchived)[index].guid.toString()
+                      ),
+                      chat: ChatBloc().chats.archivedHelper(showArchived)[index],
+                    );
+                  },
+                  childCount: ChatBloc().chats.archivedHelper(showArchived).length,
+                ),
+              );
+            }),
           ],
         ),
         floatingActionButton: !SettingsManager().settings.moveChatCreatorToHeader.value ? parent.buildFloatinActionButton() : null,
@@ -515,8 +492,8 @@ class __MaterialState extends State<_Material> {
   List<Chat> selected = [];
 
   bool hasPinnedChat() {
-    for (var i = 0; i < widget.parent.chats.length; i++) {
-      if (widget.parent.chats[i].isPinned!) {
+    for (var i = 0; i < ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).length; i++) {
+      if (ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats)[i].isPinned!) {
         widget.parent.hasPinnedChats = true;
         return true;
       } else {
@@ -528,12 +505,12 @@ class __MaterialState extends State<_Material> {
 
   bool hasNormalChats() {
     int counter = 0;
-    for (var i = 0; i < widget.parent.chats.length; i++) {
-      if (widget.parent.chats[i].isPinned!) {
+    for (var i = 0; i < ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).length; i++) {
+      if (ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats)[i].isPinned!) {
         counter++;
       } else {}
     }
-    if (counter == widget.parent.chats.length) {
+    if (counter == ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).length) {
       return false;
     } else {
       return true;
@@ -625,7 +602,7 @@ class __MaterialState extends State<_Material> {
   @override
   Widget build(BuildContext context) {
     hasPinnedChat();
-
+    bool showArchived = widget.parent.widget.showArchivedChats;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
@@ -668,7 +645,7 @@ class __MaterialState extends State<_Material> {
                         ],
                       ),
                       actions: [
-                        (!widget.parent.widget.showArchivedChats)
+                        (!showArchived)
                             ? GestureDetector(
                                 onTap: () async {
                                   Navigator.of(context).push(
@@ -686,7 +663,7 @@ class __MaterialState extends State<_Material> {
                                 ),
                               )
                             : Container(),
-                        (SettingsManager().settings.moveChatCreatorToHeader.value && !widget.parent.widget.showArchivedChats)
+                        (SettingsManager().settings.moveChatCreatorToHeader.value && !showArchived)
                             ? GestureDetector(
                                 onTap: () {
                                   Navigator.of(context).push(
@@ -799,7 +776,7 @@ class __MaterialState extends State<_Material> {
                                 child: Padding(
                                   padding: const EdgeInsets.all(8.0),
                                   child: Icon(
-                                    widget.parent.widget.showArchivedChats ? Icons.unarchive : Icons.archive,
+                                    showArchived ? Icons.unarchive : Icons.archive,
                                     color: Theme.of(context).textTheme.bodyText1!.color,
                                   ),
                                 ),
@@ -830,127 +807,119 @@ class __MaterialState extends State<_Material> {
             ),
           ),
           backgroundColor: Theme.of(context).backgroundColor,
-          body: StreamBuilder(
-            stream: ChatBloc().chatStream,
-            builder: (context, snapshot) {
-              if (snapshot.hasData || widget.parent.widget.showArchivedChats || widget.parent.chats.isNotEmpty) {
-                widget.parent.sortChats();
-                if (widget.parent.chats.isEmpty) {
-                  return Center(
-                    child: Container(
-                      padding: EdgeInsets.only(top: 50.0),
-                      child: Text(
-                        "You have no archived chats :(",
-                        style: Theme.of(context).textTheme.subtitle1,
-                      ),
-                    ),
-                  );
-                }
-                return ListView.builder(
-                    physics: ThemeSwitcher.getScrollPhysics(),
-                    itemBuilder: (context, index) {
-                      return Obx(() {
-                        if (SettingsManager().settings.swipableConversationTiles.value) {
-                          return Dismissible(
-                              background: Obx(() => slideRightBackground(widget.parent.chats[index])),
-                              secondaryBackground: Obx(() => slideLeftBackground(widget.parent.chats[index])),
-                              // Each Dismissible must contain a Key. Keys allow Flutter to
-                              // uniquely identify widgets.
-                              key: UniqueKey(),
-                              // Provide a function that tells the app
-                              // what to do after an item has been swiped away.
-                              onDismissed: (direction) async {
-                                if (direction == DismissDirection.endToStart) {
-                                  if (SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.pin) {
-                                    await widget.parent.chats[index].togglePin(!widget.parent.chats[index].isPinned!);
-                                    EventDispatcher().emit("refresh", null);
-                                    if (this.mounted) setState(() {});
-                                  } else if (SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.alerts) {
-                                    await widget.parent.chats[index].toggleMute(!widget.parent.chats[index].isMuted!);
-                                    if (this.mounted) setState(() {});
-                                  } else if (SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.delete) {
-                                    ChatBloc().deleteChat(widget.parent.chats[index]);
-                                    Chat.deleteChat(widget.parent.chats[index]);
-                                  } else if (SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.mark_read) {
-                                    ChatBloc().toggleChatUnread(widget.parent.chats[index], !widget.parent.chats[index].hasUnreadMessage!);
-                                  } else {
-                                    if (widget.parent.chats[index].isArchived!) {
-                                      ChatBloc().unArchiveChat(widget.parent.chats[index]);
-                                    } else {
-                                      ChatBloc().archiveChat(widget.parent.chats[index]);
-                                    }
-                                  }
+          body: Obx(() {
+            if (ChatBloc().chats.archivedHelper(showArchived).isEmpty) {
+              return Center(
+                child: Container(
+                  padding: EdgeInsets.only(top: 50.0),
+                  child: Text(
+                    "You have no archived chats :(",
+                    style: Theme.of(context).textTheme.subtitle1,
+                  ),
+                ),
+              );
+            }
+            return ListView.builder(
+                physics: ThemeSwitcher.getScrollPhysics(),
+                itemBuilder: (context, index) {
+                  return Obx(() {
+                    if (SettingsManager().settings.swipableConversationTiles.value) {
+                      return Dismissible(
+                          background: Obx(() => slideRightBackground(ChatBloc().chats.archivedHelper(showArchived)[index])),
+                          secondaryBackground: Obx(() => slideLeftBackground(ChatBloc().chats.archivedHelper(showArchived)[index])),
+                          // Each Dismissible must contain a Key. Keys allow Flutter to
+                          // uniquely identify widgets.
+                          key: UniqueKey(),
+                          // Provide a function that tells the app
+                          // what to do after an item has been swiped away.
+                          onDismissed: (direction) async {
+                            if (direction == DismissDirection.endToStart) {
+                              if (SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.pin) {
+                                await ChatBloc().chats.archivedHelper(showArchived)[index].togglePin(!ChatBloc().chats.archivedHelper(showArchived)[index].isPinned!);
+                                EventDispatcher().emit("refresh", null);
+                                if (this.mounted) setState(() {});
+                              } else if (SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.alerts) {
+                                await ChatBloc().chats.archivedHelper(showArchived)[index].toggleMute(!ChatBloc().chats.archivedHelper(showArchived)[index].isMuted!);
+                                if (this.mounted) setState(() {});
+                              } else if (SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.delete) {
+                                ChatBloc().deleteChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                Chat.deleteChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                              } else if (SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.mark_read) {
+                                ChatBloc().toggleChatUnread(ChatBloc().chats.archivedHelper(showArchived)[index], !ChatBloc().chats.archivedHelper(showArchived)[index].hasUnreadMessage!);
+                              } else {
+                                if (ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!) {
+                                  ChatBloc().unArchiveChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
                                 } else {
-                                  if (SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.pin) {
-                                    await widget.parent.chats[index].togglePin(!widget.parent.chats[index].isPinned!);
-                                    EventDispatcher().emit("refresh", null);
-                                    if (this.mounted) setState(() {});
-                                  } else if (SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.alerts) {
-                                    await widget.parent.chats[index].toggleMute(!widget.parent.chats[index].isMuted!);
-                                    if (this.mounted) setState(() {});
-                                  } else if (SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.delete) {
-                                    ChatBloc().deleteChat(widget.parent.chats[index]);
-                                    Chat.deleteChat(widget.parent.chats[index]);
-                                  } else if (SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.mark_read) {
-                                    ChatBloc().toggleChatUnread(widget.parent.chats[index], !widget.parent.chats[index].hasUnreadMessage!);
-                                  } else {
-                                    if (widget.parent.chats[index].isArchived!) {
-                                      ChatBloc().unArchiveChat(widget.parent.chats[index]);
-                                    } else {
-                                      ChatBloc().archiveChat(widget.parent.chats[index]);
-                                    }
-                                  }
+                                  ChatBloc().archiveChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
                                 }
-                              },
-                              child: (!widget.parent.widget.showArchivedChats && widget.parent.chats[index].isArchived!)
-                                  ? Container()
-                                  : (widget.parent.widget.showArchivedChats && !widget.parent.chats[index].isArchived!)
-                                  ? Container()
-                                  : ConversationTile(
-                                key: UniqueKey(),
-                                chat: widget.parent.chats[index],
-                                inSelectMode: selected.isNotEmpty,
-                                selected: selected,
-                                onSelect: (bool selected) {
-                                  if (selected) {
-                                    this.selected.add(widget.parent.chats[index]);
-                                    setState(() {});
-                                  } else {
-                                    this.selected.removeWhere(
-                                            (element) => element.guid == widget.parent.chats[index].guid);
-                                    setState(() {});
-                                  }
-                                },
-                              ));
-                        } else {
-                          if (!widget.parent.widget.showArchivedChats && widget.parent.chats[index].isArchived!)
-                            return Container();
-                          if (widget.parent.widget.showArchivedChats && !widget.parent.chats[index].isArchived!)
-                            return Container();
-                          return ConversationTile(
+                              }
+                            } else {
+                              if (SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.pin) {
+                                await ChatBloc().chats.archivedHelper(showArchived)[index].togglePin(!ChatBloc().chats.archivedHelper(showArchived)[index].isPinned!);
+                                EventDispatcher().emit("refresh", null);
+                                if (this.mounted) setState(() {});
+                              } else if (SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.alerts) {
+                                await ChatBloc().chats.archivedHelper(showArchived)[index].toggleMute(!ChatBloc().chats.archivedHelper(showArchived)[index].isMuted!);
+                                if (this.mounted) setState(() {});
+                              } else if (SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.delete) {
+                                ChatBloc().deleteChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                Chat.deleteChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                              } else if (SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.mark_read) {
+                                ChatBloc().toggleChatUnread(ChatBloc().chats.archivedHelper(showArchived)[index], !ChatBloc().chats.archivedHelper(showArchived)[index].hasUnreadMessage!);
+                              } else {
+                                if (ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!) {
+                                  ChatBloc().unArchiveChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                } else {
+                                  ChatBloc().archiveChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                }
+                              }
+                            }
+                          },
+                          child: (!showArchived && ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!)
+                              ? Container()
+                              : (showArchived && !ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!)
+                              ? Container()
+                              : ConversationTile(
                             key: UniqueKey(),
-                            chat: widget.parent.chats[index],
+                            chat: ChatBloc().chats.archivedHelper(showArchived)[index],
                             inSelectMode: selected.isNotEmpty,
                             selected: selected,
                             onSelect: (bool selected) {
                               if (selected) {
-                                this.selected.add(widget.parent.chats[index]);
+                                this.selected.add(ChatBloc().chats.archivedHelper(showArchived)[index]);
                                 setState(() {});
                               } else {
-                                this.selected.removeWhere((element) => element.guid == widget.parent.chats[index].guid);
+                                this.selected.removeWhere(
+                                        (element) => element.guid == ChatBloc().chats.archivedHelper(showArchived)[index].guid);
                                 setState(() {});
                               }
                             },
-                          );
-                        }
-                      });
-                    },
-                    itemCount: widget.parent.chats.length);
-              } else {
-                return Container();
-              }
-            },
-          ),
+                          ));
+                    } else {
+                      if (!showArchived && ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!)
+                        return Container();
+                      if (showArchived && !ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!)
+                        return Container();
+                      return ConversationTile(
+                        key: UniqueKey(),
+                        chat: ChatBloc().chats.archivedHelper(showArchived)[index],
+                        inSelectMode: selected.isNotEmpty,
+                        selected: selected,
+                        onSelect: (bool selected) {
+                          if (selected) {
+                            this.selected.add(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                            setState(() {});
+                          } else {
+                            this.selected.removeWhere((element) => element.guid == ChatBloc().chats.archivedHelper(showArchived)[index].guid);
+                            setState(() {});
+                          }
+                        },
+                      );
+                    }
+                  });
+                },
+                itemCount: ChatBloc().chats.archivedHelper(showArchived).length);
+          }),
           floatingActionButton: selected.isEmpty && !SettingsManager().settings.moveChatCreatorToHeader.value
               ? widget.parent.buildFloatinActionButton()
               : null,
@@ -973,8 +942,8 @@ class _SamsungState extends State<_Samsung> {
   List<Chat> selected = [];
 
   bool hasPinnedChat() {
-    for (var i = 0; i < widget.parent.chats.length; i++) {
-      if (widget.parent.chats[i].isPinned!) {
+    for (var i = 0; i < ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).length; i++) {
+      if (ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats)[i].isPinned!) {
         widget.parent.hasPinnedChats = true;
         return true;
       } else {
@@ -986,12 +955,12 @@ class _SamsungState extends State<_Samsung> {
 
   bool hasNormalChats() {
     int counter = 0;
-    for (var i = 0; i < widget.parent.chats.length; i++) {
-      if (widget.parent.chats[i].isPinned!) {
+    for (var i = 0; i < ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).length; i++) {
+      if (ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats)[i].isPinned!) {
         counter++;
       } else {}
     }
-    if (counter == widget.parent.chats.length) {
+    if (counter == ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).length) {
       return false;
     } else {
       return true;
@@ -1082,6 +1051,7 @@ class _SamsungState extends State<_Samsung> {
 
   @override
   Widget build(BuildContext context) {
+    bool showArchived = widget.parent.widget.showArchivedChats;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
@@ -1124,7 +1094,7 @@ class _SamsungState extends State<_Samsung> {
                         ],
                       ),
                       actions: [
-                        (!widget.parent.widget.showArchivedChats)
+                        (!showArchived)
                             ? GestureDetector(
                                 onTap: () async {
                                   Navigator.of(context).push(
@@ -1142,7 +1112,7 @@ class _SamsungState extends State<_Samsung> {
                                 ),
                               )
                             : Container(),
-                        (SettingsManager().settings.moveChatCreatorToHeader.value && !widget.parent.widget.showArchivedChats)
+                        (SettingsManager().settings.moveChatCreatorToHeader.value && !showArchived)
                             ? GestureDetector(
                                 onTap: () {
                                   Navigator.of(context).push(
@@ -1219,7 +1189,7 @@ class _SamsungState extends State<_Samsung> {
                                 child: Padding(
                                   padding: const EdgeInsets.all(8.0),
                                   child: Icon(
-                                    widget.parent.widget.showArchivedChats ? Icons.unarchive : Icons.archive,
+                                    showArchived ? Icons.unarchive : Icons.archive,
                                     color: Theme.of(context).textTheme.bodyText1!.color,
                                   ),
                                 ),
@@ -1249,298 +1219,290 @@ class _SamsungState extends State<_Samsung> {
             ),
           ),
           backgroundColor: Theme.of(context).backgroundColor,
-          body: StreamBuilder(
-            stream: ChatBloc().chatStream,
-            builder: (context, snapshot) {
-              if (snapshot.hasData || widget.parent.widget.showArchivedChats || widget.parent.chats.isNotEmpty) {
-                widget.parent.sortChats();
-                if (widget.parent.chats.isEmpty) {
-                  return Center(
-                    child: Container(
-                      padding: EdgeInsets.only(top: 50.0),
-                      child: Text(
-                        "You have no archived chats :(",
-                        style: Theme.of(context).textTheme.subtitle1,
+          body: Obx(() {
+            if (ChatBloc().chats.archivedHelper(showArchived).isEmpty) {
+              return Center(
+                child: Container(
+                  padding: EdgeInsets.only(top: 50.0),
+                  child: Text(
+                    "You have no archived chats :(",
+                    style: Theme.of(context).textTheme.subtitle1,
+                  ),
+                ),
+              );
+            }
+
+            bool hasPinned = hasPinnedChat();
+            return SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisSize: MainAxisSize.max,
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  if (hasPinned)
+                    Container(
+                      height: 20.0,
+                      decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Colors.transparent,
+                          ),
+                          borderRadius: BorderRadius.all(Radius.circular(20))),
+                    ),
+                  if (hasPinned)
+                    Container(
+                      padding: EdgeInsets.all(6.0),
+                      decoration: new BoxDecoration(
+                          color: Theme.of(context).accentColor, borderRadius: BorderRadius.circular(20)),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        physics: NeverScrollableScrollPhysics(),
+                        itemBuilder: (context, index) {
+                          return Obx(() {
+                            if (SettingsManager().settings.swipableConversationTiles.value) {
+                              return Dismissible(
+                                background: Obx(() => slideRightBackground(ChatBloc().chats.archivedHelper(showArchived)[index])),
+                                secondaryBackground: Obx(() => slideLeftBackground(ChatBloc().chats.archivedHelper(showArchived)[index])),
+                                // Each Dismissible must contain a Key. Keys allow Flutter to
+                                // uniquely identify widgets.
+                                key: UniqueKey(),
+                                // Provide a function that tells the app
+                                // what to do after an item has been swiped away.
+                                onDismissed: (direction) async {
+                                  if (direction == DismissDirection.endToStart) {
+                                    if (SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.pin) {
+                                      await ChatBloc().chats.archivedHelper(showArchived)[index].togglePin(!ChatBloc().chats.archivedHelper(showArchived)[index].isPinned!);
+                                      EventDispatcher().emit("refresh", null);
+                                      if (this.mounted) setState(() {});
+                                    } else if (SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.alerts) {
+                                      await ChatBloc().chats.archivedHelper(showArchived)[index].toggleMute(!ChatBloc().chats.archivedHelper(showArchived)[index].isMuted!);
+                                      if (this.mounted) setState(() {});
+                                    } else if (SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.delete) {
+                                      ChatBloc().deleteChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                      Chat.deleteChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                    } else if (SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.mark_read) {
+                                      ChatBloc().toggleChatUnread(ChatBloc().chats.archivedHelper(showArchived)[index], !ChatBloc().chats.archivedHelper(showArchived)[index].hasUnreadMessage!);
+                                    } else {
+                                      if (ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!) {
+                                        ChatBloc().unArchiveChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                      } else {
+                                        ChatBloc().archiveChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                      }
+                                    }
+                                  } else {
+                                    if (SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.pin) {
+                                      await ChatBloc().chats.archivedHelper(showArchived)[index].togglePin(!ChatBloc().chats.archivedHelper(showArchived)[index].isPinned!);
+                                      EventDispatcher().emit("refresh", null);
+                                      if (this.mounted) setState(() {});
+                                    } else if (SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.alerts) {
+                                      await ChatBloc().chats.archivedHelper(showArchived)[index].toggleMute(!ChatBloc().chats.archivedHelper(showArchived)[index].isMuted!);
+                                      if (this.mounted) setState(() {});
+                                    } else if (SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.delete) {
+                                      ChatBloc().deleteChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                      Chat.deleteChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                    } else if (SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.mark_read) {
+                                      ChatBloc().toggleChatUnread(ChatBloc().chats.archivedHelper(showArchived)[index], !ChatBloc().chats.archivedHelper(showArchived)[index].hasUnreadMessage!);
+                                    } else {
+                                      if (ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!) {
+                                        ChatBloc().unArchiveChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                      } else {
+                                        ChatBloc().archiveChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                      }
+                                    }
+                                  }
+                                },
+                                child: (!showArchived &&
+                                    ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!)
+                                    ? Container()
+                                    : (showArchived &&
+                                    !ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!)
+                                    ? Container()
+                                    : ChatBloc().chats.archivedHelper(showArchived)[index].isPinned!
+                                    ? ConversationTile(
+                                  key: UniqueKey(),
+                                  chat: ChatBloc().chats.archivedHelper(showArchived)[index],
+                                  inSelectMode: selected.isNotEmpty,
+                                  selected: selected,
+                                  onSelect: (bool selected) {
+                                    if (selected) {
+                                      this.selected.add(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                    } else {
+                                      this.selected.removeWhere(
+                                              (element) => element.guid == ChatBloc().chats.archivedHelper(showArchived)[index].guid);
+                                    }
+
+                                    if (this.mounted) setState(() {});
+                                  },
+                                )
+                                    : Container(),
+                              );
+                            } else {
+                              if (!showArchived && ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!)
+                                return Container();
+                              if (showArchived && !ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!)
+                                return Container();
+                              if (ChatBloc().chats.archivedHelper(showArchived)[index].isPinned!) {
+                                return ConversationTile(
+                                  key: UniqueKey(),
+                                  chat: ChatBloc().chats.archivedHelper(showArchived)[index],
+                                  inSelectMode: selected.isNotEmpty,
+                                  selected: selected,
+                                  onSelect: (bool selected) {
+                                    if (selected) {
+                                      this.selected.add(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                      if (this.mounted) setState(() {});
+                                    } else {
+                                      this
+                                          .selected
+                                          .removeWhere((element) => element.guid == ChatBloc().chats.archivedHelper(showArchived)[index].guid);
+                                      if (this.mounted) setState(() {});
+                                    }
+                                  },
+                                );
+                              }
+                              return Container();
+                            }
+                          });
+                        },
+                        itemCount: ChatBloc().chats.archivedHelper(showArchived).length,
                       ),
                     ),
-                  );
-                }
-
-                bool hasPinned = hasPinnedChat();
-                return SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.max,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      if (hasPinned)
-                        Container(
-                          height: 20.0,
-                          decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Colors.transparent,
-                              ),
-                              borderRadius: BorderRadius.all(Radius.circular(20))),
-                        ),
-                      if (hasPinned)
-                        Container(
-                          padding: EdgeInsets.all(6.0),
-                          decoration: new BoxDecoration(
-                              color: Theme.of(context).accentColor, borderRadius: BorderRadius.circular(20)),
-                          child: ListView.builder(
-                            shrinkWrap: true,
-                            physics: NeverScrollableScrollPhysics(),
-                            itemBuilder: (context, index) {
-                              return Obx(() {
-                                if (SettingsManager().settings.swipableConversationTiles.value) {
-                                  return Dismissible(
-                                    background: Obx(() => slideRightBackground(widget.parent.chats[index])),
-                                    secondaryBackground: Obx(() => slideLeftBackground(widget.parent.chats[index])),
-                                    // Each Dismissible must contain a Key. Keys allow Flutter to
-                                    // uniquely identify widgets.
-                                    key: UniqueKey(),
-                                    // Provide a function that tells the app
-                                    // what to do after an item has been swiped away.
-                                    onDismissed: (direction) async {
-                                      if (direction == DismissDirection.endToStart) {
-                                        if (SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.pin) {
-                                          await widget.parent.chats[index].togglePin(!widget.parent.chats[index].isPinned!);
-                                          EventDispatcher().emit("refresh", null);
-                                          if (this.mounted) setState(() {});
-                                        } else if (SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.alerts) {
-                                          await widget.parent.chats[index].toggleMute(!widget.parent.chats[index].isMuted!);
-                                          if (this.mounted) setState(() {});
-                                        } else if (SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.delete) {
-                                          ChatBloc().deleteChat(widget.parent.chats[index]);
-                                          Chat.deleteChat(widget.parent.chats[index]);
-                                        } else if (SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.mark_read) {
-                                          ChatBloc().toggleChatUnread(widget.parent.chats[index], !widget.parent.chats[index].hasUnreadMessage!);
-                                        } else {
-                                          if (widget.parent.chats[index].isArchived!) {
-                                            ChatBloc().unArchiveChat(widget.parent.chats[index]);
-                                          } else {
-                                            ChatBloc().archiveChat(widget.parent.chats[index]);
-                                          }
-                                        }
-                                      } else {
-                                        if (SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.pin) {
-                                          await widget.parent.chats[index].togglePin(!widget.parent.chats[index].isPinned!);
-                                          EventDispatcher().emit("refresh", null);
-                                          if (this.mounted) setState(() {});
-                                        } else if (SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.alerts) {
-                                          await widget.parent.chats[index].toggleMute(!widget.parent.chats[index].isMuted!);
-                                          if (this.mounted) setState(() {});
-                                        } else if (SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.delete) {
-                                          ChatBloc().deleteChat(widget.parent.chats[index]);
-                                          Chat.deleteChat(widget.parent.chats[index]);
-                                        } else if (SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.mark_read) {
-                                          ChatBloc().toggleChatUnread(widget.parent.chats[index], !widget.parent.chats[index].hasUnreadMessage!);
-                                        } else {
-                                          if (widget.parent.chats[index].isArchived!) {
-                                            ChatBloc().unArchiveChat(widget.parent.chats[index]);
-                                          } else {
-                                            ChatBloc().archiveChat(widget.parent.chats[index]);
-                                          }
-                                        }
-                                      }
-                                    },
-                                    child: (!widget.parent.widget.showArchivedChats &&
-                                        widget.parent.chats[index].isArchived!)
-                                        ? Container()
-                                        : (widget.parent.widget.showArchivedChats &&
-                                        !widget.parent.chats[index].isArchived!)
-                                        ? Container()
-                                        : widget.parent.chats[index].isPinned!
-                                        ? ConversationTile(
-                                      key: UniqueKey(),
-                                      chat: widget.parent.chats[index],
-                                      inSelectMode: selected.isNotEmpty,
-                                      selected: selected,
-                                      onSelect: (bool selected) {
-                                        if (selected) {
-                                          this.selected.add(widget.parent.chats[index]);
-                                        } else {
-                                          this.selected.removeWhere(
-                                                  (element) => element.guid == widget.parent.chats[index].guid);
-                                        }
-
-                                        if (this.mounted) setState(() {});
-                                      },
-                                    )
-                                        : Container(),
-                                  );
-                                } else {
-                                  if (!widget.parent.widget.showArchivedChats && widget.parent.chats[index].isArchived!)
-                                    return Container();
-                                  if (widget.parent.widget.showArchivedChats && !widget.parent.chats[index].isArchived!)
-                                    return Container();
-                                  if (widget.parent.chats[index].isPinned!) {
-                                    return ConversationTile(
-                                      key: UniqueKey(),
-                                      chat: widget.parent.chats[index],
-                                      inSelectMode: selected.isNotEmpty,
-                                      selected: selected,
-                                      onSelect: (bool selected) {
-                                        if (selected) {
-                                          this.selected.add(widget.parent.chats[index]);
-                                          if (this.mounted) setState(() {});
-                                        } else {
-                                          this
-                                              .selected
-                                              .removeWhere((element) => element.guid == widget.parent.chats[index].guid);
-                                          if (this.mounted) setState(() {});
-                                        }
-                                      },
-                                    );
-                                  }
-                                  return Container();
-                                }
-                              });
-                            },
-                            itemCount: widget.parent.chats.length,
+                  if (hasNormalChats())
+                    Container(
+                      height: 20.0,
+                      decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Colors.transparent,
                           ),
-                        ),
-                      if (hasNormalChats())
-                        Container(
-                          height: 20.0,
-                          decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Colors.transparent,
-                              ),
-                              borderRadius: BorderRadius.all(Radius.circular(20))),
-                        ),
-                      if (hasNormalChats())
-                        Container(
-                          padding: const EdgeInsets.all(6.0),
-                          decoration: new BoxDecoration(
-                              color: Theme.of(context).accentColor,
-                              borderRadius: new BorderRadius.only(
-                                topLeft: const Radius.circular(20.0),
-                                topRight: const Radius.circular(20.0),
-                                bottomLeft: const Radius.circular(20.0),
-                                bottomRight: const Radius.circular(20.0),
-                              )),
-                          child: ListView.builder(
-                            shrinkWrap: true,
-                            physics: NeverScrollableScrollPhysics(),
-                            itemBuilder: (context, index) {
-                              return Obx(() {
-                                if (SettingsManager().settings.swipableConversationTiles.value) {
-                                  return Dismissible(
-                                    background: Obx(() => slideRightBackground(widget.parent.chats[index])),
-                                    secondaryBackground: Obx(() => slideLeftBackground(widget.parent.chats[index])),
-                                    // Each Dismissible must contain a Key. Keys allow Flutter to
-                                    // uniquely identify widgets.
-                                    key: UniqueKey(),
-                                    // Provide a function that tells the app
-                                    // what to do after an item has been swiped away.
-                                    onDismissed: (direction) async {
-                                      if (direction == DismissDirection.endToStart) {
-                                        if (SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.pin) {
-                                          await widget.parent.chats[index].togglePin(!widget.parent.chats[index].isPinned!);
-                                          EventDispatcher().emit("refresh", null);
-                                          if (this.mounted) setState(() {});
-                                        } else if (SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.alerts) {
-                                          await widget.parent.chats[index].toggleMute(!widget.parent.chats[index].isMuted!);
-                                          if (this.mounted) setState(() {});
-                                        } else if (SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.delete) {
-                                          ChatBloc().deleteChat(widget.parent.chats[index]);
-                                          Chat.deleteChat(widget.parent.chats[index]);
-                                        } else if (SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.mark_read) {
-                                          ChatBloc().toggleChatUnread(widget.parent.chats[index], !widget.parent.chats[index].hasUnreadMessage!);
-                                        } else {
-                                          if (widget.parent.chats[index].isArchived!) {
-                                            ChatBloc().unArchiveChat(widget.parent.chats[index]);
-                                          } else {
-                                            ChatBloc().archiveChat(widget.parent.chats[index]);
-                                          }
-                                        }
+                          borderRadius: BorderRadius.all(Radius.circular(20))),
+                    ),
+                  if (hasNormalChats())
+                    Container(
+                      padding: const EdgeInsets.all(6.0),
+                      decoration: new BoxDecoration(
+                          color: Theme.of(context).accentColor,
+                          borderRadius: new BorderRadius.only(
+                            topLeft: const Radius.circular(20.0),
+                            topRight: const Radius.circular(20.0),
+                            bottomLeft: const Radius.circular(20.0),
+                            bottomRight: const Radius.circular(20.0),
+                          )),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        physics: NeverScrollableScrollPhysics(),
+                        itemBuilder: (context, index) {
+                          return Obx(() {
+                            if (SettingsManager().settings.swipableConversationTiles.value) {
+                              return Dismissible(
+                                background: Obx(() => slideRightBackground(ChatBloc().chats.archivedHelper(showArchived)[index])),
+                                secondaryBackground: Obx(() => slideLeftBackground(ChatBloc().chats.archivedHelper(showArchived)[index])),
+                                // Each Dismissible must contain a Key. Keys allow Flutter to
+                                // uniquely identify widgets.
+                                key: UniqueKey(),
+                                // Provide a function that tells the app
+                                // what to do after an item has been swiped away.
+                                onDismissed: (direction) async {
+                                  if (direction == DismissDirection.endToStart) {
+                                    if (SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.pin) {
+                                      await ChatBloc().chats.archivedHelper(showArchived)[index].togglePin(!ChatBloc().chats.archivedHelper(showArchived)[index].isPinned!);
+                                      EventDispatcher().emit("refresh", null);
+                                      if (this.mounted) setState(() {});
+                                    } else if (SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.alerts) {
+                                      await ChatBloc().chats.archivedHelper(showArchived)[index].toggleMute(!ChatBloc().chats.archivedHelper(showArchived)[index].isMuted!);
+                                      if (this.mounted) setState(() {});
+                                    } else if (SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.delete) {
+                                      ChatBloc().deleteChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                      Chat.deleteChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                    } else if (SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.mark_read) {
+                                      ChatBloc().toggleChatUnread(ChatBloc().chats.archivedHelper(showArchived)[index], !ChatBloc().chats.archivedHelper(showArchived)[index].hasUnreadMessage!);
+                                    } else {
+                                      if (ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!) {
+                                        ChatBloc().unArchiveChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
                                       } else {
-                                        if (SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.pin) {
-                                          await widget.parent.chats[index].togglePin(!widget.parent.chats[index].isPinned!);
-                                          EventDispatcher().emit("refresh", null);
-                                          if (this.mounted) setState(() {});
-                                        } else if (SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.alerts) {
-                                          await widget.parent.chats[index].toggleMute(!widget.parent.chats[index].isMuted!);
-                                          if (this.mounted) setState(() {});
-                                        } else if (SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.delete) {
-                                          ChatBloc().deleteChat(widget.parent.chats[index]);
-                                          Chat.deleteChat(widget.parent.chats[index]);
-                                        } else if (SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.mark_read) {
-                                          ChatBloc().toggleChatUnread(widget.parent.chats[index], !widget.parent.chats[index].hasUnreadMessage!);
-                                        } else {
-                                          if (widget.parent.chats[index].isArchived!) {
-                                            ChatBloc().unArchiveChat(widget.parent.chats[index]);
-                                          } else {
-                                            ChatBloc().archiveChat(widget.parent.chats[index]);
-                                          }
-                                        }
+                                        ChatBloc().archiveChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
                                       }
-                                    },
-                                    child: (!widget.parent.widget.showArchivedChats &&
-                                        widget.parent.chats[index].isArchived!)
-                                        ? Container()
-                                        : (widget.parent.widget.showArchivedChats &&
-                                        !widget.parent.chats[index].isArchived!)
-                                        ? Container()
-                                        : (!widget.parent.chats[index].isPinned!)
-                                        ? ConversationTile(
-                                      key: UniqueKey(),
-                                      chat: widget.parent.chats[index],
-                                      inSelectMode: selected.isNotEmpty,
-                                      selected: selected,
-                                      onSelect: (bool selected) {
-                                        if (selected) {
-                                          this.selected.add(widget.parent.chats[index]);
-                                        } else {
-                                          this.selected.removeWhere(
-                                                  (element) => element.guid == widget.parent.chats[index].guid);
-                                        }
-
-                                        if (this.mounted) setState(() {});
-                                      },
-                                    )
-                                        : Container(),
-                                  );
-                                } else {
-                                  if (!widget.parent.widget.showArchivedChats && widget.parent.chats[index].isArchived!)
-                                    return Container();
-                                  if (widget.parent.widget.showArchivedChats && !widget.parent.chats[index].isArchived!)
-                                    return Container();
-                                  if (!widget.parent.chats[index].isPinned!) {
-                                    return ConversationTile(
-                                      key: UniqueKey(),
-                                      chat: widget.parent.chats[index],
-                                      inSelectMode: selected.isNotEmpty,
-                                      selected: selected,
-                                      onSelect: (bool selected) {
-                                        if (selected) {
-                                          this.selected.add(widget.parent.chats[index]);
-                                        } else {
-                                          this
-                                              .selected
-                                              .removeWhere((element) => element.guid == widget.parent.chats[index].guid);
-                                        }
-
-                                        if (this.mounted) setState(() {});
-                                      },
-                                    );
+                                    }
+                                  } else {
+                                    if (SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.pin) {
+                                      await ChatBloc().chats.archivedHelper(showArchived)[index].togglePin(!ChatBloc().chats.archivedHelper(showArchived)[index].isPinned!);
+                                      EventDispatcher().emit("refresh", null);
+                                      if (this.mounted) setState(() {});
+                                    } else if (SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.alerts) {
+                                      await ChatBloc().chats.archivedHelper(showArchived)[index].toggleMute(!ChatBloc().chats.archivedHelper(showArchived)[index].isMuted!);
+                                      if (this.mounted) setState(() {});
+                                    } else if (SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.delete) {
+                                      ChatBloc().deleteChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                      Chat.deleteChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                    } else if (SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.mark_read) {
+                                      ChatBloc().toggleChatUnread(ChatBloc().chats.archivedHelper(showArchived)[index], !ChatBloc().chats.archivedHelper(showArchived)[index].hasUnreadMessage!);
+                                    } else {
+                                      if (ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!) {
+                                        ChatBloc().unArchiveChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                      } else {
+                                        ChatBloc().archiveChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                      }
+                                    }
                                   }
-                                  return Container();
-                                }
-                              });
-                            },
-                            itemCount: widget.parent.chats.length,
-                          ),
-                        )
-                    ],
-                  ),
-                );
-              } else {
-                return Container();
-              }
-            },
-          ),
+                                },
+                                child: (!showArchived &&
+                                    ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!)
+                                    ? Container()
+                                    : (showArchived &&
+                                    !ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!)
+                                    ? Container()
+                                    : (!ChatBloc().chats.archivedHelper(showArchived)[index].isPinned!)
+                                    ? ConversationTile(
+                                  key: UniqueKey(),
+                                  chat: ChatBloc().chats.archivedHelper(showArchived)[index],
+                                  inSelectMode: selected.isNotEmpty,
+                                  selected: selected,
+                                  onSelect: (bool selected) {
+                                    if (selected) {
+                                      this.selected.add(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                    } else {
+                                      this.selected.removeWhere(
+                                              (element) => element.guid == ChatBloc().chats.archivedHelper(showArchived)[index].guid);
+                                    }
+
+                                    if (this.mounted) setState(() {});
+                                  },
+                                )
+                                    : Container(),
+                              );
+                            } else {
+                              if (!showArchived && ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!)
+                                return Container();
+                              if (showArchived && !ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!)
+                                return Container();
+                              if (!ChatBloc().chats.archivedHelper(showArchived)[index].isPinned!) {
+                                return ConversationTile(
+                                  key: UniqueKey(),
+                                  chat: ChatBloc().chats.archivedHelper(showArchived)[index],
+                                  inSelectMode: selected.isNotEmpty,
+                                  selected: selected,
+                                  onSelect: (bool selected) {
+                                    if (selected) {
+                                      this.selected.add(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                    } else {
+                                      this
+                                          .selected
+                                          .removeWhere((element) => element.guid == ChatBloc().chats.archivedHelper(showArchived)[index].guid);
+                                    }
+
+                                    if (this.mounted) setState(() {});
+                                  },
+                                );
+                              }
+                              return Container();
+                            }
+                          });
+                        },
+                        itemCount: ChatBloc().chats.archivedHelper(showArchived).length,
+                      ),
+                    )
+                ],
+              ),
+            );
+          }),
           floatingActionButton: selected.isEmpty && !SettingsManager().settings.moveChatCreatorToHeader.value
               ? widget.parent.buildFloatinActionButton()
               : null,

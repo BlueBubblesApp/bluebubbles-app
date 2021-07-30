@@ -782,7 +782,7 @@ class Chat {
     return (res.isNotEmpty) ? res.map((c) => Chat.fromMap(c)).toList() : [];
   }
 
-  static Future<List<Chat>> getChats({bool archived = false, int limit = 15, int offset = 0}) async {
+  static Future<List<Chat>> getChats({int limit = 15, int offset = 0}) async {
     final Database db = await DBProvider.db.database;
 
     var res = await db.rawQuery(
@@ -801,8 +801,8 @@ class Chat {
         " chat.latestMessageText as latestMessageText,"
         " chat.displayName as displayName"
         " FROM chat"
-        " WHERE chat.isArchived = ? ORDER BY chat.latestMessageDate DESC LIMIT $limit OFFSET $offset;",
-        [archived ? 1 : 0]);
+        " ORDER BY chat.latestMessageDate DESC LIMIT $limit OFFSET $offset;",
+    );
 
     if (res.isEmpty) return [];
 
