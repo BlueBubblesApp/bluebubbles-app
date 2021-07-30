@@ -270,11 +270,11 @@ class ChatBloc {
           await newChats[i].getParticipants();
         }
       }
-    }
 
-    if (newChats.length != 0) {
-      _chats.value = newChats;
-      _chats.sort(Chat.sort);
+      if (newChats.length != 0) {
+        _chats.value = newChats;
+        _chats.sort(Chat.sort);
+      }
     }
 
     debugPrint("[ChatBloc] -> Finished fetching chats (${_chats.length}).");
