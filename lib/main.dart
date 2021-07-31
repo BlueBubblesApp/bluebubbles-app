@@ -158,16 +158,6 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
         home: Home(),
 
         builder: (context, child) => SecureApplication(
-          onNeedUnlock: (controller) async {
-            if (SettingsManager().canAuthenticate && SettingsManager().settings.shouldSecure.value) {
-              controller!.lock();
-              if (SettingsManager().settings.securityLevel.value == SecurityLevel.locked_and_secured) {
-                controller.secure();
-              }
-              return SecureApplicationAuthenticationStatus.FAILED;
-            }
-            return SecureApplicationAuthenticationStatus.SUCCESS;
-          },
           child: Builder(
               builder: (context) {
                 if (SettingsManager().canAuthenticate && !LifeCycleManager().isAlive) {
