@@ -328,10 +328,40 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         appBar: !isCreator!
             ? buildConversationViewHeader() as PreferredSizeWidget?
             : buildChatSelectorHeader() as PreferredSizeWidget?,
-        resizeToAvoidBottomInset: wasCreator,
-        body: FooterLayout(
-          footer: KeyboardAttachable(
-            child: Obx(() {
+        body: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: <Widget>[
+            if (isCreator!)
+              ChatSelectorTextField(
+                controller: chatSelectorController,
+                onRemove: (UniqueContact item) {
+                  if (item.isChat) {
+                    selected.removeWhere((e) => (e.chat?.guid ?? null) == item.chat!.guid);
+                  } else {
+                    selected.removeWhere((e) => e.address == item.address);
+                  }
+                  fetchCurrentChat();
+                  filterContacts();
+                  resetCursor();
+                  if (this.mounted) setState(() {});
+                },
+                onSelected: onSelected,
+                isCreator: widget.isCreator,
+                allContacts: contacts,
+                selectedContacts: selected,
+              ),
+            Expanded(
+              child: (searchQuery.length == 0 || !isCreator!) && chat != null
+                  ? MessagesView(
+                key: new Key(chat?.guid ?? "unknown-chat"),
+                messageBloc: messageBloc,
+                showHandle: chat!.participants.length > 1,
+                chat: chat,
+                initComplete: widget.onMessagesViewComplete,
+              )
+                  : buildChatSelectorBody(),
+            ),
+            Obx(() {
               if (widget.onSelect == null) {
                 if (SettingsManager().settings.swipeToCloseKeyboard.value) {
                   return GestureDetector(
@@ -349,42 +379,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
               }
               return Container();
             }),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: <Widget>[
-              if (isCreator!)
-                ChatSelectorTextField(
-                  controller: chatSelectorController,
-                  onRemove: (UniqueContact item) {
-                    if (item.isChat) {
-                      selected.removeWhere((e) => (e.chat?.guid ?? null) == item.chat!.guid);
-                    } else {
-                      selected.removeWhere((e) => e.address == item.address);
-                    }
-                    fetchCurrentChat();
-                    filterContacts();
-                    resetCursor();
-                    if (this.mounted) setState(() {});
-                  },
-                  onSelected: onSelected,
-                  isCreator: widget.isCreator,
-                  allContacts: contacts,
-                  selectedContacts: selected,
-                ),
-              Expanded(
-                child: (searchQuery.length == 0 || !isCreator!) && chat != null
-                    ? MessagesView(
-                        key: new Key(chat?.guid ?? "unknown-chat"),
-                        messageBloc: messageBloc,
-                        showHandle: chat!.participants.length > 1,
-                        chat: chat,
-                        initComplete: widget.onMessagesViewComplete,
-                      )
-                    : buildChatSelectorBody(),
-              ),
-            ],
-          ),
+          ],
         ),
         floatingActionButton: currentChat != null
             ? StreamBuilder<bool>(
