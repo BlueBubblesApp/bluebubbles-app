@@ -5,6 +5,8 @@ import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:tuple/tuple.dart';
 
 class MediaFile extends StatefulWidget {
   MediaFile({
@@ -41,27 +43,23 @@ class _MediaFileState extends State<MediaFile> {
         alignment: Alignment.center,
         children: <Widget>[
           widget.child,
-          StreamBuilder(
-            builder: (context, AsyncSnapshot<double> snapshot) {
-              if (snapshot.hasError) {
-                return Text(
-                  "Unable to send",
-                  style: Theme.of(context).textTheme.bodyText1,
-                );
-              }
+          Obx(() {
+            Tuple2<num?, bool> data = SocketManager().attachmentSenders[widget.attachment.guid]!.attachmentData.value;
+            if (data.item2) {
+              return Text(
+                "Unable to send",
+                style: Theme.of(context).textTheme.bodyText1,
+              );
+            }
 
-              return Container(
-                  height: 40,
-                  width: 40,
-                  child: CircleProgressBar(
-                      foregroundColor: Colors.white,
-                      backgroundColor: Colors.grey,
-                      value: snapshot.hasData
-                          ? snapshot.data!
-                          : SocketManager().attachmentSenders[widget.attachment.guid]!.progress));
-            },
-            stream: SocketManager().attachmentSenders[widget.attachment.guid]!.stream,
-          ),
+            return Container(
+                height: 40,
+                width: 40,
+                child: CircleProgressBar(
+                    foregroundColor: Colors.white,
+                    backgroundColor: Colors.grey,
+                    value: data.item1?.toDouble() ?? 0));
+          }),
         ],
       );
     } else {

@@ -12,15 +12,15 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:image_size_getter/file_input.dart';
 import 'package:image_size_getter/image_size_getter.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:path/path.dart';
+import 'package:tuple/tuple.dart';
 
 class AttachmentSender {
-  final _stream = StreamController<double>.broadcast();
-
-  Stream<double> get stream => _stream.stream;
+  final Rx<Tuple2<num?, bool>> attachmentData = Rx<Tuple2<num?, bool>>(Tuple2(null, false));
 
   int _totalChunks = 0;
   int _chunkSize = 500;
@@ -84,11 +84,11 @@ class AttachmentSender {
       if (response['status'] == 200) {
         if (index + _chunkSize < _imageBytes.length) {
           progress = index / _imageBytes.length;
-          if (!_stream.isClosed) _stream.sink.add(progress);
+          attachmentData.value = Tuple2(progress, false);
           sendChunkRecursive(index + _chunkSize, total, tempGuid);
         } else {
           progress = index / _imageBytes.length;
-          if (!_stream.isClosed) _stream.sink.add(progress);
+          attachmentData.value = Tuple2(progress, false);
           SocketManager().finishSender(_attachmentGuid);
         }
       } else {
@@ -109,8 +109,8 @@ class AttachmentSender {
           NewMessageManager().updateMessage(_chat, tempGuid!, messageWithText!);
         }
         SocketManager().finishSender(_attachmentGuid);
-        _stream.sink.addError("failed to send");
-        _stream.close();
+        attachmentData.value = Tuple2(null, true);
+        attachmentData.close();
       }
     });
   }
