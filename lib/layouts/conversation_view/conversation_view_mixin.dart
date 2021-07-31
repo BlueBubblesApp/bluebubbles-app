@@ -799,7 +799,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       this.setContacts([], addToStream: false);
     }
 
-    Function slugText = (String text) {
+    String Function(String) slugText = (String text) {
       return slugify(text, delimiter: '').toString().replaceAll('-', '');
     };
 
@@ -809,8 +809,9 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     List<UniqueContact> _contacts = [];
     List<String> cache = [];
     Function addContactEntries = (Contact contact, {conditionally = false}) {
-      for (Item phone in contact.phones!) {
-        String cleansed = slugText(phone.value);
+      for (Item phone in (contact.phones ?? [])) {
+        if (phone.value == null) continue;
+        String cleansed = slugText(phone.value!);
         if (conditionally && !cleansed.contains(searchQuery)) continue;
 
         if (!cache.contains(cleansed)) {
@@ -825,8 +826,9 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         }
       }
 
-      for (Item email in contact.emails!) {
-        String emailVal = slugText(email.value);
+      for (Item email in (contact.emails ?? [])) {
+        if (email.value == null) continue;
+        String emailVal = slugText.call(email.value!);
         if (conditionally && !emailVal.contains(searchQuery)) continue;
 
         if (!cache.contains(emailVal)) {
@@ -844,7 +846,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
     if (widget.type != ChatSelectorTypes.ONLY_EXISTING) {
       for (Contact contact in ContactManager().contacts) {
-        String name = slugText(contact.displayName);
+        if (contact.displayName == null) continue;
+        String name = slugText(contact.displayName!);
         if (name.contains(searchQuery)) {
           addContactEntries(contact);
         } else {
@@ -856,7 +859,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     List<UniqueContact> _conversations = [];
     if (selected.length == 0 && widget.type != ChatSelectorTypes.ONLY_CONTACTS) {
       for (Chat chat in conversations) {
-        String title = slugText(chat.title ?? chat.displayName);
+        if (chat.title == null && chat.displayName == null) continue;
+        String title = slugText(chat.title ?? chat.displayName!);
         if (title.contains(searchQuery)) {
           if (!cache.contains(chat.guid)) {
             cache.add(chat.guid!);
