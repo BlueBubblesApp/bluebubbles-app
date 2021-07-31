@@ -141,72 +141,63 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
       // If it's an AttachmentDownloader, it is currently being downloaded
     } else if (content is AttachmentDownloader) {
       if (widget.attachment.mimeType == null) return Container();
-      return StreamBuilder(
-        stream: content.stream,
-        builder: (BuildContext context, AsyncSnapshot snapshot) {
-          // If there is an error, return an error text
-          if (snapshot.hasError) {
-            content = widget.attachment;
-            return AttachmentDownloaderWidget(
-              onPressed: () {
-                content = new AttachmentDownloader(content);
-                if (this.mounted) setState(() {});
-              },
-              attachment: content,
-              placeHolder: buildPlaceHolder(),
-            );
-          }
+      AttachmentDownloader downloader = content;
+      return Obx(() {
+        // If there is an error, return an error text
+        if (downloader.attachmentData.value.item3) {
+          content = widget.attachment;
+          return AttachmentDownloaderWidget(
+            onPressed: () {
+              content = new AttachmentDownloader(content);
+              if (this.mounted) setState(() {});
+            },
+            attachment: content,
+            placeHolder: buildPlaceHolder(),
+          );
+        }
 
-          // If the snapshot data is a file, we have finished downloading
-          if (snapshot.data is File) {
-            content = snapshot.data;
-            return _buildAttachmentWidget();
-          }
+        // If the snapshot data is a file, we have finished downloading
+        if (downloader.attachmentData.value.item2 != null) {
+          content = downloader.attachmentData.value.item2;
+          return _buildAttachmentWidget();
+        }
 
-          double? progress = 0.0;
-          if (snapshot.hasData) {
-            progress = snapshot.data["progress"];
-          } else {
-            progress = content.progress;
-          }
-
-          return Stack(
-            alignment: Alignment.center,
-            children: <Widget>[
-              buildPlaceHolder(),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  Column(
-                    children: <Widget>[
-                      Center(
-                        child: Container(
-                          height: 40,
-                          width: 40,
-                          child: CircleProgressBar(
-                            value: progress ?? 0,
-                            backgroundColor: Colors.grey,
-                            foregroundColor: Colors.white,
-                          ),
+        return Stack(
+          alignment: Alignment.center,
+          children: <Widget>[
+            buildPlaceHolder(),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Column(
+                  children: <Widget>[
+                    Center(
+                      child: Container(
+                        height: 40,
+                        width: 40,
+                        child: CircleProgressBar(
+                          value: downloader.attachmentData.value.item1?.toDouble() ?? 0,
+                          backgroundColor: Colors.grey,
+                          foregroundColor: Colors.white,
                         ),
                       ),
-                      ((content as AttachmentDownloader).attachment.mimeType != null)
-                          ? Container(height: 5.0)
-                          : Container(),
-                      (content.attachment.mimeType != null)
-                          ? Text(
-                              content.attachment.mimeType,
-                              style: Theme.of(context).textTheme.bodyText1,
-                            )
-                          : Container()
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          );
-        },
-      );
+                    ),
+                    ((content as AttachmentDownloader).attachment.mimeType != null)
+                        ? Container(height: 5.0)
+                        : Container(),
+                    (content.attachment.mimeType != null)
+                        ? Text(
+                      content.attachment.mimeType,
+                      style: Theme.of(context).textTheme.bodyText1,
+                    )
+                        : Container()
+                  ],
+                ),
+              ],
+            ),
+          ],
+        );
+      });
     } else {
       return Text(
         "Error loading",
