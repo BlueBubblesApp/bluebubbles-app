@@ -133,6 +133,12 @@ class ChatBloc {
       _chats[currentIndex] = chat;
     }
 
+    for (int i = 0; i < _chats.length; i++) {
+      if (isNullOrEmpty(_chats[i].participants)!) {
+        await _chats[i].getParticipants();
+      }
+    }
+
     await updateShareTarget(chat);
     _chats.sort(Chat.sort);
   }
@@ -251,15 +257,6 @@ class ChatBloc {
       if (chats.length == 0) break;
 
       for (Chat chat in chats) {
-        bool existing = false;
-        for (Chat? existingChat in _chats) {
-          if (existingChat!.guid == chat.guid) {
-            existing = true;
-            break;
-          }
-        }
-
-        if (existing) continue;
         newChats.add(chat);
 
         await initTileValsForChat(chat);
@@ -327,6 +324,11 @@ class ChatBloc {
       if (_chat.guid == chat.guid) {
         _chats[i] = chat;
         await initTileValsForChat(chats[i]);
+      }
+    }
+    for (int i = 0; i < _chats.length; i++) {
+      if (isNullOrEmpty(_chats[i].participants)!) {
+        await _chats[i].getParticipants();
       }
     }
     _chats.sort(Chat.sort);
