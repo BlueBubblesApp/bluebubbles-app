@@ -15,6 +15,8 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import "package:flutter/material.dart";
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
+import 'package:tuple/tuple.dart';
 
 class AttachmentFullscreenViewer extends StatefulWidget {
   AttachmentFullscreenViewer({
@@ -181,72 +183,63 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                     );
                   } else if (content is AttachmentDownloader) {
                     content = content;
+                    AttachmentDownloader downloader = content;
                     if (widget.attachment.mimeType == null) return Container();
-                    content.stream.listen((event) {
-                      if (event is File) {
-                        content = event;
+                    ever<Tuple3<num?, File?, bool>>(downloader.attachmentData, (event) {
+                      if (event.item2 != null) {
+                        content = event.item2;
                         if (this.mounted) setState(() {});
                       }
                     }, onError: (error) {
                       content = widget.attachment;
                       if (this.mounted) setState(() {});
                     });
-                    return StreamBuilder(
-                      stream: content.stream,
-                      builder: (BuildContext context, AsyncSnapshot snapshot) {
-                        if (snapshot.hasError) {
-                          return Text(
-                            "Error loading",
-                            style: Theme.of(context).textTheme.bodyText1,
-                          );
-                        }
-                        if (snapshot.data is File) {
-                          content = snapshot.data;
-                          return Container();
-                        } else {
-                          double? progress = 0.0;
-                          if (snapshot.hasData) {
-                            progress = snapshot.data["Progress"];
-                          } else {
-                            progress = content.progress;
-                          }
-
-                          return KeyedSubtree(
-                            key: Key(viewerKey),
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: <Widget>[
-                                placeHolder,
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: <Widget>[
-                                    Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: <Widget>[
-                                        CircularProgressIndicator(
-                                          value: progress,
-                                          backgroundColor: Colors.grey,
-                                          valueColor: AlwaysStoppedAnimation(Colors.white),
-                                        ),
-                                        ((content as AttachmentDownloader).attachment.mimeType != null)
-                                            ? Container(height: 5.0)
-                                            : Container(),
-                                        (content.attachment.mimeType != null)
-                                            ? Text(
-                                                content.attachment.mimeType,
-                                                style: Theme.of(context).textTheme.bodyText1,
-                                              )
-                                            : Container()
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          );
-                        }
-                      },
-                    );
+                    return Obx(() {
+                      if (downloader.attachmentData.value.item3) {
+                        return Text(
+                          "Error loading",
+                          style: Theme.of(context).textTheme.bodyText1,
+                        );
+                      }
+                      if (downloader.attachmentData.value.item2 != null) {
+                        content = downloader.attachmentData.value.item2;
+                        return Container();
+                      } else {
+                        return KeyedSubtree(
+                          key: Key(viewerKey),
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: <Widget>[
+                              placeHolder,
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: <Widget>[
+                                  Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: <Widget>[
+                                      CircularProgressIndicator(
+                                        value: downloader.attachmentData.value.item1?.toDouble() ?? 0,
+                                        backgroundColor: Colors.grey,
+                                        valueColor: AlwaysStoppedAnimation(Colors.white),
+                                      ),
+                                      ((content as AttachmentDownloader).attachment.mimeType != null)
+                                          ? Container(height: 5.0)
+                                          : Container(),
+                                      (content.attachment.mimeType != null)
+                                          ? Text(
+                                        content.attachment.mimeType,
+                                        style: Theme.of(context).textTheme.bodyText1,
+                                      )
+                                          : Container()
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                    });
                   } else {
                     return Column(
                       mainAxisAlignment: MainAxisAlignment.center,

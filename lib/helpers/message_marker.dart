@@ -3,30 +3,24 @@ import 'dart:async';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
+import 'package:get/get.dart';
 
 class MessageMarkers {
   Chat chat;
   Message? myLastMessage;
   Message? lastReadMessage;
   Message? lastDeliveredMessage;
-
-  StreamController<MessageMarkers> streamController = StreamController<MessageMarkers>.broadcast();
-  get stream => streamController.stream;
+  late final Rx<MessageMarkers> markers;
 
   MessageMarkers(this.chat) {
+    markers = Rx<MessageMarkers>(this);
     NewMessageManager().stream.listen((event) {
-      if (streamController.isClosed) return;
-
       // Ignore any events that don't have to do with the current chat
       if (event.chatGuid != chat.guid) return;
 
       // If it's the event we want
       if (event.type == NewMessageType.UPDATE || event.type == NewMessageType.ADD) {
         this.updateMessageMarkers(event.event["message"] as Message);
-      }
-
-      if (!streamController.isClosed) {
-        streamController.sink.add(this);
       }
     });
   }
@@ -55,11 +49,6 @@ class MessageMarkers {
                 this.lastDeliveredMessage!.dateDelivered!.millisecondsSinceEpoch)) {
       this.lastDeliveredMessage = msg;
     }
-  }
-
-  dispose() {
-    if (!streamController.isClosed) {
-      streamController.close();
-    }
+    markers.value = this;
   }
 }

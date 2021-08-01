@@ -325,8 +325,6 @@ class CurrentChat {
     if (!timeStampOffsetStream.isClosed) timeStampOffsetStream.close();
     if (!showScrollDownStream.isClosed) showScrollDownStream.close();
 
-    messageMarkers.dispose();
-
     _timeStampOffset = 0;
     _showScrollDown = false;
     imageData = {};
