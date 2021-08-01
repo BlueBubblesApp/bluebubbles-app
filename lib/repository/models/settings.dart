@@ -242,6 +242,8 @@ class Settings {
         settings.shouldSecure.value = entry.value;
       } else if (entry.name == "securityLevel") {
         settings.securityLevel.value = SecurityLevel.values[entry.value];
+      } else if (entry.name == "pinRowsPortrait") {
+        settings.pinRowsPortrait.value = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -482,10 +484,7 @@ class Settings {
           type: this.privateManualMarkAsRead.runtimeType,
         ),
         ConfigEntry(
-          name: "showSyncIndicator",
-          value: this.showSyncIndicator.value,
-          type: this.showSyncIndicator.runtimeType
-        ),
+            name: "showSyncIndicator", value: this.showSyncIndicator.value, type: this.showSyncIndicator.runtimeType),
         ConfigEntry(
             name: "showDeliveryTimestamps",
             value: this.showDeliveryTimestamps.value,
@@ -629,6 +628,11 @@ class Settings {
           name: "securityLevel",
           value: this.securityLevel.value.index,
           type: this.securityLevel.value.index.runtimeType,
+        ),
+        ConfigEntry(
+          name: "pinRowsPortrait",
+          value: this.pinRowsPortrait.value,
+          type: this.pinRowsPortrait.value.runtimeType,
         ),
         // ConfigEntry(
         //     name: "emojiFontFamily",
