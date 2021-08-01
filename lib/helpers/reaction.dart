@@ -2,6 +2,7 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:get/get.dart';
 
 class ReactionTypes {
   // ignore: non_constant_identifier_names
@@ -88,7 +89,7 @@ class Reaction {
     this.messages.add(message);
   }
 
-  Widget? getSmallWidget(BuildContext context, {Message? message, bool isReactionPicker = true}) {
+  Widget? getSmallWidget(BuildContext context, {Message? message, bool bigPin = false, bool isReactionPicker = true}) {
     if (this.messages.isEmpty && message == null) return null;
     if (this.messages.isEmpty && message != null) this.messages = [message];
 
@@ -96,7 +97,7 @@ class Reaction {
 
     for (int i = 0; i < this.messages.length; i++) {
       Color iconColor = Colors.white;
-      if (!this.messages[i].isFromMe! && Theme.of(context).accentColor.computeLuminance() >= 0.179) {
+      if (!this.messages[i].isFromMe! && context.theme.accentColor.computeLuminance() >= 0.179) {
         iconColor = Colors.black.withAlpha(95);
       }
 
@@ -104,27 +105,85 @@ class Reaction {
         Padding(
           padding: EdgeInsets.fromLTRB(
             (this.messages[i].isFromMe! && isReactionPicker ? 5.0 : 0.0) + i.toDouble() * 10.0,
-            1.0,
+            bigPin ? 0 : 1.0,
             0,
             0,
           ),
-          child: Container(
-            height: 28,
-            width: 28,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(100),
-              color: this.messages[i].isFromMe! ? Colors.blue : Theme.of(context).accentColor,
-              boxShadow: isReactionPicker ? null : [
-                new BoxShadow(
-                  blurRadius: 1.0,
-                  color: Colors.black.withOpacity(0.8),
-                )
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.only(top: 8.0, left: 7.0, right: 7.0, bottom: 7.0),
-              child: getReactionIcon(reactionType, iconColor),
-            ),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: <Widget>[
+              if (bigPin)
+                Positioned(
+                  left: -6,
+                  top: 24,
+                  child: Container(
+                    height: 5.5,
+                    width: 5.5,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(100),
+                      color: context.theme.accentColor,
+                      boxShadow: [
+                        new BoxShadow(
+                          blurRadius: 1.0,
+                          color: Colors.black.withOpacity(0.8),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              if (bigPin)
+                Positioned(
+                  top: 15.5,
+                  left: -1.5,
+                  child: Container(
+                    height: 10,
+                    width: 10,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(100),
+                      color: context.theme.accentColor,
+                      boxShadow: [
+                        new BoxShadow(
+                          blurRadius: 1.0,
+                          color: Colors.black.withOpacity(0.8),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              Container(
+                height: bigPin ? 25 : 28,
+                width: bigPin ? 25 : 28,
+                margin: EdgeInsets.only(right: bigPin ? 10 : 0),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(100),
+                  color: this.messages[i].isFromMe! ? context.theme.primaryColor : context.theme.accentColor,
+                  boxShadow: isReactionPicker
+                      ? null
+                      : [
+                          new BoxShadow(
+                            blurRadius: 1.0,
+                            color: Colors.black.withOpacity(0.8),
+                          )
+                        ],
+                ),
+                child: Padding(
+                  padding: bigPin
+                      ? const EdgeInsets.only(
+                          top: 6.0,
+                          left: 5.0,
+                          right: 5.0,
+                          bottom: 5.0,
+                        )
+                      : const EdgeInsets.only(
+                          top: 8.0,
+                          left: 7.0,
+                          right: 7.0,
+                          bottom: 7.0,
+                        ),
+                  child: getReactionIcon(reactionType, iconColor),
+                ),
+              ),
+            ],
           ),
         ),
       );

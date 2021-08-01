@@ -93,6 +93,12 @@ class Settings {
   final Rx<ThemeMode> theme = ThemeMode.system.obs;
   final Rx<SwipeDirection> fullscreenViewerSwipeDir = SwipeDirection.RIGHT.obs;
 
+  // Pin settings
+  final RxInt pinRowsPortrait = RxInt(3);
+  final RxInt pinColumnsPortrait = RxInt(3);
+  final RxInt pinRowsLandscape = RxInt(1);
+  final RxInt pinColumnsLandscape = RxInt(6);
+
   Settings();
 
   factory Settings.fromConfigEntries(List<ConfigEntry> entries) {

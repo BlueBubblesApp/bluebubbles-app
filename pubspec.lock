@@ -1082,6 +1082,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.0.0"
+  smooth_page_indicator:
+    dependency: "direct main"
+    description:
+      name: smooth_page_indicator
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.3.0-nullsafety.0"
   socket_io_client:
     dependency: "direct main"
     description:

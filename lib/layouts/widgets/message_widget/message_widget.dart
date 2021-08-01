@@ -266,7 +266,6 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
         StickersWidget(key: new Key("stickers-${associatedCount.toString()}"), messages: _message.associatedMessages);
     ReactionsWidget reactionsWidget = ReactionsWidget(
         key: new Key("reactions-${associatedCount.toString()}"),
-        message: _message,
         associatedMessages: _message.associatedMessages);
 
     // Add the correct type of message to the message stack
