@@ -71,6 +71,8 @@ dependencies:
   flutter_displaymode: ^0.3.2
   flutter_libphonenumber: ^1.1.0
   flutter_markdown: ^0.6.2
+  # pinned to 2.0.0 to avoid exceptions
+  keyboard_attachable: ^2.0.0
   device_info: ^2.0.2
   google_ml_kit: ^0.6.0
   faker: ^2.0.0
