@@ -293,8 +293,6 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
               ),
             )
           : ContactAvatarWidget(
-              fontSize: (widget.width ?? 40) * 0.45,
-              size: (widget.width ?? 40) * 0.65,
               handle: participants.first,
               borderThickness: 0.1,
               size: widget.width,
