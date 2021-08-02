@@ -323,14 +323,63 @@ class AboutPanel extends StatelessWidget {
                     backgroundColor: tileColor,
                     title: "About",
                     onTap: () {
-                      showAboutDialog(
+                      showDialog<void>(
                         context: context,
-                        applicationName: "BlueBubbles",
-                        applicationIcon: Image.asset(
-                          "assets/icon/icon.png",
-                          width: 30,
-                          height: 30,
-                        ),
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            scrollable: true,
+                            content: ListBody(
+                              children: <Widget>[
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: <Widget>[
+                                    IconTheme(data: Theme.of(context).iconTheme, child: Image.asset(
+                                      "assets/icon/icon.png",
+                                      width: 30,
+                                      height: 30,
+                                    ),),
+                                    Expanded(
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                                        child: ListBody(
+                                          children: <Widget>[
+                                            Text("BlueBubbles", style: Theme.of(context).textTheme.headline5),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            actions: <Widget>[
+                              TextButton(
+                                child: Text(MaterialLocalizations.of(context).viewLicensesButtonLabel),
+                                onPressed: () {
+                                  Navigator.of(context).push(MaterialPageRoute<void>(
+                                    builder: (BuildContext context) => Theme(
+                                      data: whiteLightTheme,
+                                      child: LicensePage(
+                                        applicationName: "BlueBubbles",
+                                        applicationIcon: Image.asset(
+                                          "assets/icon/icon.png",
+                                          width: 30,
+                                          height: 30,
+                                        ),
+                                      ),
+                                    ),
+                                  ));
+                                },
+                              ),
+                              TextButton(
+                                child: Text(MaterialLocalizations.of(context).closeButtonLabel),
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                              ),
+                            ],
+                          );
+                        },
                       );
                     },
                     leading: SettingsLeadingIcon(
