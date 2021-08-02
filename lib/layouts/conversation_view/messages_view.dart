@@ -206,8 +206,8 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
       event.messages = event.messages.where((element) => element.dateDeleted == null).toList();
     }
 
-    if (event.type == MessageBlocEventType.insert) {
-      if (this.mounted && LifeCycleManager().isAlive) {
+    if (event.type == MessageBlocEventType.insert && this.mounted) {
+      if (LifeCycleManager().isAlive) {
         NotificationManager().switchChat(CurrentChat.of(context)?.chat);
       }
       currentChat!.getAttachmentsForMessage(event.message);
@@ -217,7 +217,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
           currentChat!.sentMessages.removeWhere((element) => element!.guid == event.message!.guid);
         });
 
-        navigator!.push(
+        Navigator.of(context).push(
           SendPageBuilder(
             builder: (context) {
               return SendWidget(
