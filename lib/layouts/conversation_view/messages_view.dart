@@ -21,7 +21,6 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:get/get.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
 
 class MessagesView extends StatefulWidget {
@@ -80,8 +79,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     super.initState();
 
     currentChat = CurrentChat.of(context);
-    if (widget.messageBloc != null)
-      ever<MessageBlocEvent?>(widget.messageBloc!.event, (e) => handleNewMessage(e));
+    widget.messageBloc?.stream.listen(handleNewMessage);
 
     // See if we need to load anything from the message bloc
     if (widget.messages.isNotEmpty) {
@@ -195,10 +193,9 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     return loader!.future;
   }
 
-  void handleNewMessage(MessageBlocEvent? event) async {
+  void handleNewMessage(MessageBlocEvent event) async {
     // Get outta here if we don't have a chat "open"
     if (currentChat == null) return;
-    if (event == null) return;
 
     // Skip deleted messages
     if (event.message != null && event.message!.dateDeleted != null) return;
@@ -217,7 +214,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
           currentChat!.sentMessages.removeWhere((element) => element!.guid == event.message!.guid);
         });
 
-        navigator!.push(
+        Navigator.of(context).push(
           SendPageBuilder(
             builder: (context) {
               return SendWidget(

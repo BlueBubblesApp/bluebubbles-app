@@ -10,7 +10,6 @@ import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 enum SetupOutputType { ERROR, LOG }
 
@@ -29,9 +28,11 @@ class SetupOutputData {
 }
 
 class SetupBloc {
-  final Rxn<SetupData> data = Rxn<SetupData>();
-  final Rxn<SocketState> connectionStatus = Rxn<SocketState>();
+  StreamController<SetupData> _stream = StreamController<SetupData>.broadcast();
+  StreamController<SocketState> _connectionStatusStream = StreamController<SocketState>.broadcast();
   StreamSubscription? connectionSubscription;
+
+  Stream<SocketState> get conenctionStatus => _connectionStatusStream.stream;
 
   double _progress = 0.0;
   int _currentIndex = 0;
@@ -40,6 +41,8 @@ class SetupBloc {
   double numberOfMessagesPerPage = 25;
   bool downloadAttachments = false;
   bool skipEmptyChats = true;
+
+  Stream<SetupData> get stream => _stream.stream;
 
   double get progress => _progress;
   int? processId;
@@ -63,7 +66,8 @@ class SetupBloc {
     await SocketManager().authFCM(catchException: false, force: true);
     await SocketManager().startSocketIO(forceNewConnection: true, catchException: false);
     connectionSubscription = SocketManager().connectionStateStream.listen((event) {
-      connectionStatus.value = event;
+      if (_connectionStatusStream.isClosed) return;
+      _connectionStatusStream.sink.add(event);
 
       if (isSyncing) {
         switch (event) {
@@ -91,8 +95,10 @@ class SetupBloc {
   }
 
   void handleError(String error) {
-    addOutput(error, SetupOutputType.ERROR);
-    data.value = SetupData(-1, output);
+    if (!_stream.isClosed) {
+      addOutput(error, SetupOutputType.ERROR);
+      _stream.sink.add(SetupData(-1, output));
+    }
     closeSync();
   }
 
@@ -223,7 +229,7 @@ class SetupBloc {
   void addOutput(String _output, SetupOutputType type) {
     debugPrint('[Setup] -> $_output');
     output.add(SetupOutputData(_output, type));
-    data.value = SetupData(_progress, output);
+    _stream.sink.add(SetupData(_progress, output));
   }
 
   Future<void> startIncrementalSync(Settings settings,
@@ -273,7 +279,7 @@ class SetupBloc {
     if (messages.length > 0) {
       await MessageHelper.bulkAddMessages(null, messages, onProgress: (progress, total) {
         _progress = (progress / total) * 100;
-        data.value = SetupData(_progress, output);
+        _stream.sink.add(SetupData(_progress, output));
       });
 
       // If we want to download the attachments, do it, and wait for them to finish before continuing
@@ -309,8 +315,10 @@ class SetupBloc {
   void closeSync() {
     isSyncing = false;
     if (processId != null) SocketManager().finishSocketProcess(processId);
-    data.value = null;
-    connectionStatus.value = null;
+    _stream.close();
+    _connectionStatusStream.close();
+    _stream = StreamController<SetupData>.broadcast();
+    _connectionStatusStream = StreamController<SocketState>.broadcast();
 
     _progress = 0.0;
     _currentIndex = 0;
@@ -323,5 +331,9 @@ class SetupBloc {
 
     output = [];
     connectionSubscription?.cancel();
+  }
+
+  void dispose() {
+    _stream.close();
   }
 }

@@ -9,7 +9,6 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 import '../socket_manager.dart';
 
@@ -31,8 +30,11 @@ class MessageBlocEvent {
 }
 
 class MessageBloc {
-  final Rxn<MessageBlocEvent> event = Rxn<MessageBlocEvent>();
+  final _messageController = StreamController<MessageBlocEvent>.broadcast();
+
+  Stream<MessageBlocEvent> get stream => _messageController.stream;
   LinkedHashMap<String, Message> _allMessages = new LinkedHashMap();
+
   int _reactions = 0;
   bool showDeleted = false;
   bool _canLoadMore = true;
@@ -64,11 +66,13 @@ class MessageBloc {
     _currentChat = chat;
 
     NewMessageManager().stream.listen((msgEvent) {
+      if (_messageController.isClosed) return;
+
       // Ignore any events that don't have to do with the current chat
       if (msgEvent.chatGuid != currentChat?.guid) return;
 
       // Iterate over each action that needs to take place on the chat
-      bool addToRx = true;
+      bool addToSink = true;
       MessageBlocEvent baseEvent = new MessageBlocEvent();
 
       // If we want to remove something, set the event data correctly
@@ -79,39 +83,39 @@ class MessageBloc {
       } else if (msgEvent.type == NewMessageType.UPDATE && _allMessages.containsKey(msgEvent.event["oldGuid"])) {
         // If we want to updating an existing message, remove the old one, and add the new one
         _allMessages.remove(msgEvent.event["oldGuid"]);
-        insert(msgEvent.event["message"], addToRx: false);
+        insert(msgEvent.event["message"], addToSink: false);
         baseEvent.message = msgEvent.event["message"];
         baseEvent.oldGuid = msgEvent.event["oldGuid"];
         baseEvent.type = MessageBlocEventType.update;
       } else if (msgEvent.type == NewMessageType.ADD) {
         // If we want to add a message, just add it through `insert`
-        addToRx = false;
+        addToSink = false;
         insert(msgEvent.event["message"], sentFromThisClient: msgEvent.event["outgoing"]);
         baseEvent.message = msgEvent.event["message"];
         baseEvent.type = MessageBlocEventType.insert;
       }
 
       // As long as the controller isn't closed and it's not an `add`, update the listeners
-      if (addToRx) {
+      if (addToSink && !_messageController.isClosed) {
         baseEvent.messages = _allMessages.values.toList();
-        event.value = baseEvent;
+        _messageController.sink.add(baseEvent);
       }
     });
   }
 
-  void insert(Message message, {bool sentFromThisClient = false, bool addToRx = true}) {
+  void insert(Message message, {bool sentFromThisClient = false, bool addToSink = true}) {
     if (message.associatedMessageGuid != null) {
       if (_allMessages.containsKey(message.associatedMessageGuid)) {
         Message messageWithReaction = _allMessages[message.associatedMessageGuid]!;
         messageWithReaction.hasReactions = true;
         _allMessages.update(message.associatedMessageGuid!, (value) => messageWithReaction);
-        if (addToRx) {
-          MessageBlocEvent mbEvent = MessageBlocEvent();
-          mbEvent.messages = _allMessages.values.toList();
-          mbEvent.oldGuid = message.associatedMessageGuid;
-          mbEvent.message = _allMessages[message.associatedMessageGuid];
-          mbEvent.type = MessageBlocEventType.update;
-          event.value = mbEvent;
+        if (addToSink) {
+          MessageBlocEvent event = MessageBlocEvent();
+          event.messages = _allMessages.values.toList();
+          event.oldGuid = message.associatedMessageGuid;
+          event.message = _allMessages[message.associatedMessageGuid];
+          event.type = MessageBlocEventType.update;
+          _messageController.sink.add(event);
         }
       }
       return;
@@ -120,14 +124,14 @@ class MessageBloc {
     int index = 0;
     if (_allMessages.isEmpty && message.guid != null) {
       _allMessages.addAll({message.guid!: message});
-      if (addToRx) {
-        MessageBlocEvent mbEvent = MessageBlocEvent();
-        mbEvent.messages = _allMessages.values.toList();
-        mbEvent.message = message;
-        mbEvent.outGoing = sentFromThisClient;
-        mbEvent.type = MessageBlocEventType.insert;
-        mbEvent.index = index;
-        event.value = mbEvent;
+      if (!_messageController.isClosed && addToSink) {
+        MessageBlocEvent event = MessageBlocEvent();
+        event.messages = _allMessages.values.toList();
+        event.message = message;
+        event.outGoing = sentFromThisClient;
+        event.type = MessageBlocEventType.insert;
+        event.index = index;
+        _messageController.sink.add(event);
       }
 
       return;
@@ -152,14 +156,14 @@ class MessageBloc {
       }
     }
 
-    if (addToRx) {
-      MessageBlocEvent mbEvent = MessageBlocEvent();
-      mbEvent.messages = _allMessages.values.toList();
-      mbEvent.message = message;
-      mbEvent.outGoing = sentFromThisClient;
-      mbEvent.type = MessageBlocEventType.insert;
-      mbEvent.index = index;
-      event.value = mbEvent;
+    if (!_messageController.isClosed && addToSink) {
+      MessageBlocEvent event = MessageBlocEvent();
+      event.messages = _allMessages.values.toList();
+      event.message = message;
+      event.outGoing = sentFromThisClient;
+      event.type = MessageBlocEventType.insert;
+      event.index = index;
+      _messageController.sink.add(event);
     }
   }
 
@@ -173,9 +177,11 @@ class MessageBloc {
   }
 
   void emitLoaded() {
-    MessageBlocEvent mbEvent = MessageBlocEvent();
-    mbEvent.messages = _allMessages.values.toList();
-    event.value = mbEvent;
+    if (!_messageController.isClosed) {
+      MessageBlocEvent event = MessageBlocEvent();
+      event.messages = _allMessages.values.toList();
+      _messageController.sink.add(event);
+    }
   }
 
   Future<LinkedHashMap<String, Message>> getMessages() async {
@@ -250,7 +256,7 @@ class MessageBloc {
     int reactionCnt = includeReactions ? _reactions : 0;
     Completer<LoadMessageResult> completer = new Completer();
     if (!this._canLoadMore) {
-      completer.complete(LoadMessageResult.RETREIVED_LAST_PAGE);
+      completer.complete();
       return completer.future;
     }
 
@@ -309,13 +315,16 @@ class MessageBloc {
         await currentChat.preloadMessageAttachments(specificMessages: messagesWithAttachment);
       }
 
-      this.emitLoaded();
+      // Emit messages to listeners
+      if (!_messageController.isClosed) {
+        this.emitLoaded();
 
-      // Complete the execution
-      if (count < 25 && !completer.isCompleted) {
-        completer.complete(LoadMessageResult.RETREIVED_LAST_PAGE);
-      } else if (count >= 25 && !completer.isCompleted) {
-        completer.complete(LoadMessageResult.RETREIVED_MESSAGES);
+        // Complete the execution
+        if (count < 25 && !completer.isCompleted) {
+          completer.complete(LoadMessageResult.RETREIVED_LAST_PAGE);
+        } else if (count >= 25 && !completer.isCompleted) {
+          completer.complete(LoadMessageResult.RETREIVED_MESSAGES);
+        }
       }
     } else {
       debugPrint("(CHUNK) Failed to load message chunk! Unknown chat!");
@@ -334,6 +343,7 @@ class MessageBloc {
 
   void dispose() {
     _allMessages = new LinkedHashMap();
+    _messageController.close();
   }
 }
 
