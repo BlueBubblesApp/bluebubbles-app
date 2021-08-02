@@ -94,31 +94,37 @@ class _ConversationListState extends State<ConversationList> {
     return [Text(widget.showArchivedChats ? "Archive" : "Messages", style: style), Container(width: 10)];
   }
 
-  Widget getSyncIndicatorWidget() {
-    if (!SettingsManager().settings.showSyncIndicator.value) return SizedBox.shrink();
+  List<Widget> getSyncIndicatorWidgets() {
+    if (!SettingsManager().settings.showSyncIndicator.value) return [];
 
-    return Obx(() {
-      if ((SetupBloc().data.value?.progress ?? 0) < 1 || (SetupBloc().data.value?.progress ?? 100) >= 100) return Container();
+    return [
+      StreamBuilder<SetupData>(
+        stream: SocketManager().setup.stream,
+        initialData: SetupData(0, []),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData || snapshot.data!.progress < 1 || snapshot.data!.progress >= 100) return Container();
 
-      if (SettingsManager().settings.skin.value == Skins.iOS) {
-        return Theme(
-          data: ThemeData(
-            cupertinoOverrideTheme: CupertinoThemeData(
-                brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor)),
-          ),
-          child: CupertinoActivityIndicator(
-            radius: 6.5,
-          ),
-        );
-      }
+          if (SettingsManager().settings.skin.value == Skins.iOS) {
+            return Theme(
+              data: ThemeData(
+                cupertinoOverrideTheme: CupertinoThemeData(
+                    brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor)),
+              ),
+              child: CupertinoActivityIndicator(
+                radius: 6.5,
+              ),
+            );
+          }
 
-      return Container(
-          constraints: BoxConstraints(maxHeight: 15, maxWidth: 15),
-          child: CircularProgressIndicator(
-            strokeWidth: 2.0,
-            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
-          ));
-    });
+          return Container(
+              constraints: BoxConstraints(maxHeight: 15, maxWidth: 15),
+              child: CircularProgressIndicator(
+                strokeWidth: 2.0,
+                valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+              ));
+        },
+      )
+    ];
   }
 
   void openNewChatCreator() async {
@@ -368,7 +374,7 @@ class _Cupertino extends StatelessWidget {
                             children: [
                               ...parent.getHeaderTextWidgets(),
                               ...parent.getConnectionIndicatorWidgets(),
-                              parent.getSyncIndicatorWidget(),
+                              ...parent.getSyncIndicatorWidgets(),
                             ],
                           ),
                           Spacer(
@@ -635,7 +641,7 @@ class __MaterialState extends State<_Material> {
                         children: [
                           ...widget.parent.getHeaderTextWidgets(size: 20),
                           ...widget.parent.getConnectionIndicatorWidgets(),
-                          widget.parent.getSyncIndicatorWidget(),
+                          ...widget.parent.getSyncIndicatorWidgets(),
                         ],
                       ),
                       actions: [
@@ -1084,7 +1090,7 @@ class _SamsungState extends State<_Samsung> {
                         children: [
                           ...widget.parent.getHeaderTextWidgets(size: 20),
                           ...widget.parent.getConnectionIndicatorWidgets(),
-                          widget.parent.getSyncIndicatorWidget(),
+                          ...widget.parent.getSyncIndicatorWidgets(),
                         ],
                       ),
                       actions: [
