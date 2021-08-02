@@ -75,7 +75,7 @@ class MetadataHelper {
       // Manually load it into a metadata object via JSON
       Map? json = MetadataHelper.safeJsonDecode(response.body);
       if (isNullOrEmpty(json)!) {
-        completer.complete(null);
+        completer.complete(Metadata());
         return completer.future;
       }
 
@@ -93,7 +93,7 @@ class MetadataHelper {
       // Manually load it into a metadata object via JSON
       Map? res = MetadataHelper.safeJsonDecode(response.body);
       if (isNullOrEmpty(res)!) {
-        completer.complete(null);
+        completer.complete(Metadata());
         return completer.future;
       }
 
