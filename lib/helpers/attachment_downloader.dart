@@ -6,11 +6,11 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:tuple/tuple.dart';
 
 class AttachmentDownloader {
-  final _stream = StreamController<dynamic>.broadcast();
-
-  Stream<dynamic> get stream => _stream.stream;
+  final Rx<Tuple3<num?, File?, bool>> attachmentData = Rx<Tuple3<num?, File?, bool>>(Tuple3(null, null, false));
 
   int _currentChunk = 0;
   int _totalChunks = 0;
@@ -55,9 +55,8 @@ class AttachmentDownloader {
         SocketManager().finishDownloader(attachment.guid!);
         if (_onComplete != null) _onComplete!();
 
-        _stream.sink.addError("Error");
-
-        _stream.close();
+        attachmentData.value = Tuple3(null, null, true);
+        attachmentData.close();
         return;
       }
 
@@ -85,7 +84,7 @@ class AttachmentDownloader {
   Future<void> fetchAttachment(Attachment attachment) async {
     if (attachment.guid == null) return;
     if (SocketManager().attachmentDownloaders.containsKey(attachment.guid)) {
-      _stream.close();
+      attachmentData.close();
       return;
     }
     int numOfChunks = (attachment.totalBytes! / _chunkSize).ceil();
@@ -114,10 +113,9 @@ class AttachmentDownloader {
       if (_onComplete != null) _onComplete!();
 
       // Add attachment to sink based on if we got data
-      _stream.sink.add(file);
-
+      attachmentData.value = Tuple3(1, file, false);
       // Close the stream
-      _stream.close();
+      attachmentData.close();
     };
 
     SocketManager().addAttachmentDownloader(attachment.guid!, this);
@@ -134,6 +132,6 @@ class AttachmentDownloader {
       value = 0;
     }
 
-    _stream.sink.add({"progress": value.clamp(0, 1)});
+    attachmentData.value = Tuple3(value.clamp(0, 1), null, false);
   }
 }

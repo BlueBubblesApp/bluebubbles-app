@@ -17,6 +17,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_size_getter/image_size_getter.dart';
 import 'package:path/path.dart';
+import 'package:tuple/tuple.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
 class AttachmentDetailsCard extends StatefulWidget {
@@ -29,7 +30,6 @@ class AttachmentDetailsCard extends StatefulWidget {
 }
 
 class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
-  StreamSubscription? downloadStream;
   Uint8List? previewImage;
   double aspectRatio = 4 / 3;
 
@@ -39,16 +39,10 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
     subscribeToDownloadStream();
   }
 
-  @override
-  void dispose() {
-    downloadStream?.cancel();
-    super.dispose();
-  }
-
   void subscribeToDownloadStream() {
-    if (SocketManager().attachmentDownloaders.containsKey(widget.attachment.guid) && downloadStream == null) {
-      downloadStream = SocketManager().attachmentDownloaders[widget.attachment.guid]!.stream.listen((event) {
-        if (event is File && this.mounted) {
+    if (SocketManager().attachmentDownloaders.containsKey(widget.attachment.guid)) {
+      ever<Tuple3<num?, File?, bool>>(SocketManager().attachmentDownloaders[widget.attachment.guid]!.attachmentData, (event) {
+        if (event.item2 != null && this.mounted) {
           Future.delayed(Duration(milliseconds: 500), () {
             setState(() {});
           });
@@ -126,25 +120,14 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
                         ],
                       ),
                     )
-                  : StreamBuilder<dynamic>(
-                      stream: SocketManager().attachmentDownloaders[attachment.guid]!.stream,
-                      builder: (context, snapshot) {
-                        double value = 0;
-                        if (snapshot.hasData) {
-                          if (snapshot.data is Map) {
-                            value = (snapshot.data as Map<String, num>)["progress"]!.toDouble();
-                          } else if (snapshot.data is File) {
-                            value = 1;
-                          }
-                        }
-
-                        return Container(
-                            height: 40,
-                            width: 40,
-                            child: CircleProgressBar(
-                                foregroundColor: Colors.white, backgroundColor: Colors.grey, value: value));
-                      },
-                    ),
+                  : Obx(() {
+                      Tuple3<num?, File?, bool> data = SocketManager().attachmentDownloaders[widget.attachment.guid]!.attachmentData.value;
+                      return Container(
+                          height: 40,
+                          width: 40,
+                          child: CircleProgressBar(
+                              foregroundColor: Colors.white, backgroundColor: Colors.grey, value: data.item1?.toDouble() ?? 0));
+                    }),
             ],
           ),
         ],

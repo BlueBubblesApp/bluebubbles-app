@@ -168,15 +168,18 @@ class SentMessageHelper {
                   title: new Text("Message failed to send", style: TextStyle(color: Colors.black)),
                   content: new Text("Error ($errorCode): $errorText"),
                   actions: <Widget>[
-                    new TextButton(
-                      child: new Text("Retry"),
-                      onPressed: () {
-                        // Remove the OG alert dialog
-                        Navigator.of(context).pop();
-                        NotificationManager().clearFailedToSend();
-                        ActionHandler.retryMessage(message);
-                      },
-                    ),
+                    if (chat != null)
+                      new TextButton(
+                        child: new Text("Retry"),
+                        onPressed: () async {
+                          // Remove the OG alert dialog
+                          Navigator.of(context).pop();
+                          NewMessageManager().removeMessage(chat, message.guid);
+                          await Message.softDelete({'guid': message.guid});
+                          NotificationManager().clearFailedToSend();
+                          ActionHandler.retryMessage(message);
+                        },
+                      ),
                     if (chat != null)
                       new TextButton(
                         child: new Text("Remove"),

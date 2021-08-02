@@ -4,6 +4,7 @@ import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class DeliveredReceipt extends StatefulWidget {
   DeliveredReceipt({
@@ -21,7 +22,7 @@ class DeliveredReceipt extends StatefulWidget {
 }
 
 class _DeliveredReceiptState extends State<DeliveredReceipt> with TickerProviderStateMixin {
-  bool? shouldShow(Message? myLastMessage, Message? lastReadMessage, Message? lastDeliveredMessage) {
+  bool shouldShow(Message? myLastMessage, Message? lastReadMessage, Message? lastDeliveredMessage) {
     // If we have no delivered date, don't show anything
     if (widget.message.dateDelivered == null) return false;
 
@@ -80,31 +81,17 @@ class _DeliveredReceiptState extends State<DeliveredReceipt> with TickerProvider
   Widget build(BuildContext context) {
     Widget timestampWidget = Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: <Widget>[
-          StreamBuilder(
-              stream: CurrentChat.of(context)?.messageMarkers.stream,
-              initialData: CurrentChat.of(context)?.messageMarkers,
-              builder: (context, AsyncSnapshot<MessageMarkers> snapshot) {
-                if (!snapshot.hasData && shouldShow(null, null, null)!) {
-                  return Text(
-                    getText(),
-                    style: Theme.of(context).textTheme.subtitle2,
-                  );
-                } else if (snapshot.hasData &&
-                    shouldShow(snapshot.data!.myLastMessage, snapshot.data!.lastReadMessage,
-                        snapshot.data!.lastDeliveredMessage)!) {
-                  return Text(
-                    getText(),
-                    style: Theme.of(context).textTheme.subtitle2,
-                  );
-                } else {
-                  return Container();
-                }
-              })
-        ],
-      ),
+      child: Obx(() {
+        MessageMarkers? markers = CurrentChat.of(context)?.messageMarkers.markers.value;
+        if (shouldShow(markers?.myLastMessage, markers?.lastReadMessage, markers?.lastDeliveredMessage)) {
+          return Text(
+            getText(),
+            style: Theme.of(context).textTheme.subtitle2,
+          );
+        } else {
+          return Container();
+        }
+      }),
     );
 
     Widget item;
