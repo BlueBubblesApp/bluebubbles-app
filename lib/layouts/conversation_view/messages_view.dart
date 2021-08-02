@@ -203,8 +203,8 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
       event.messages = event.messages.where((element) => element.dateDeleted == null).toList();
     }
 
-    if (event.type == MessageBlocEventType.insert) {
-      if (this.mounted && LifeCycleManager().isAlive) {
+    if (event.type == MessageBlocEventType.insert && this.mounted) {
+      if (LifeCycleManager().isAlive) {
         NotificationManager().switchChat(CurrentChat.of(context)?.chat);
       }
       currentChat!.getAttachmentsForMessage(event.message);
