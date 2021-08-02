@@ -25,7 +25,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:keyboard_attachable/keyboard_attachable.dart';
 import 'package:slugify/slugify.dart';
 
 abstract class ChatSelectorTypes {
