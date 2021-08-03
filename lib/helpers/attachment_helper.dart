@@ -222,7 +222,8 @@ class AttachmentHelper {
     if (SocketManager().attachmentDownloaders.containsKey(attachment.guid)) {
       return SocketManager().attachmentDownloaders[attachment.guid];
     } else if (FileSystemEntity.typeSync(pathName) != FileSystemEntityType.notFound ||
-        attachment.guid == "redacted-mode-demo-attachment" || attachment.guid!.contains("theme-selector")) {
+        attachment.guid == "redacted-mode-demo-attachment" ||
+        attachment.guid!.contains("theme-selector")) {
       return File(pathName);
     } else if (attachment.mimeType == null || attachment.mimeType!.startsWith("text/")) {
       return AttachmentDownloader(attachment);
@@ -285,7 +286,7 @@ class AttachmentHelper {
     }
     return thumbnail;
   }
-  
+
   static Future<Size> getImageSizingFallback(String filePath) async {
     try {
       isg.Size size = isg.ImageSizeGetter.getSize(FileInput(File(filePath)));
@@ -295,12 +296,12 @@ class AttachmentHelper {
     }
   }
 
-  static Future<Size> getImageSizing(String filePath) async {
+  static Future<Size> getImageSizing(String filePath, {ImageProperties? properties}) async {
     try {
-      ImageProperties size = await FlutterNativeImage.getImageProperties(filePath);
+      ImageProperties size = properties ?? await FlutterNativeImage.getImageProperties(filePath);
       double width = (size.width ?? 0).toDouble();
       double height = (size.height ?? 0).toDouble();
-      
+
       if (width == 0 || height == 0) {
         return AttachmentHelper.getImageSizingFallback(filePath);
       }
@@ -313,6 +314,11 @@ class AttachmentHelper {
 
   static Future<Uint8List?> compressAttachment(Attachment attachment, String filePath, {int? qualityOverride}) async {
     if (attachment.mimeType == null) return null;
+
+    if (attachment.metadata == null) {
+      attachment.metadata = {};
+    }
+
     // Make sure the attachment is an image or video
     String mimeStart = attachment.mimeType!.split("/").first;
     if (!["image", "video"].contains(mimeStart)) return null;
@@ -327,12 +333,19 @@ class AttachmentHelper {
       }
       return null;
     } else if (mimeStart == "image") {
-      Size size = await getImageSizing(filePath);
+      ImageProperties props = await FlutterNativeImage.getImageProperties(filePath);
+      Size size = await getImageSizing(filePath, properties: props);
       if (size.width != 0 && size.height != 0) {
         attachment.width = size.width.toInt();
         attachment.height = size.height.toInt();
       }
-      // Don't return null here because we want to compress images that aren't gifs
+
+      String orientation = props.orientation.toString();
+      if (orientation == '0') {
+        attachment.metadata!['orientation'] = 'landscape';
+      } else if (orientation == '1') {
+        attachment.metadata!['orientation'] = 'portrait';
+      }
     } else if (mimeStart == "video") {
       Size size = await getVideoDimensions(filePath);
       if (size.width != 0 && size.height != 0) {
@@ -349,11 +362,6 @@ class AttachmentHelper {
       return cachedFile.readAsBytes();
     }
 
-    // If we have no metadata, fetch it from the file
-    if (attachment.metadata == null) {
-      attachment.metadata = {};
-    }
-
     // Map the EXIF to the metadata
     Map<String, IfdTag> exif = await readExifFromFile(new File(filePath));
     for (var item in exif.entries) {
@@ -362,7 +370,10 @@ class AttachmentHelper {
 
     // Compress the file
     File compressedFile = await FlutterNativeImage.compressImage(filePath,
-        quality: quality, percentage: 100, targetWidth: attachment.width!, targetHeight: attachment.height!);
+        quality: quality,
+        percentage: SettingsManager().compressionQuality,
+        targetWidth: attachment.width!,
+        targetHeight: attachment.height!);
 
     // Read the compressed data, then cache it
     Uint8List data = await compressedFile.readAsBytes();
@@ -373,5 +384,18 @@ class AttachmentHelper {
 
     // Return the bytes
     return data;
+  }
+
+  static double getAspectRatio(int? height, int? width, {BuildContext? context}) {
+    double aspectRatio = 0.78;
+    int aHeight = height ?? context?.height.toInt() ?? 0;
+    int aWidth = width ?? context?.width.toInt() ?? 0;
+
+    // If we somehow end up with 0 for either the height or width, return the default (16:9)
+    if (aHeight == 0 || aWidth == 0) {
+      return aspectRatio;
+    }
+
+    return (aWidth / aHeight).abs();
   }
 }

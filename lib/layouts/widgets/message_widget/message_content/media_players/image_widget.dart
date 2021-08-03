@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
@@ -42,12 +42,13 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
     if (data == null) {
       // If it's an image, compress the image when loading it
       if (AttachmentHelper.canCompress(widget.attachment) &&
-          widget.attachment.guid != "redacted-mode-demo-attachment"
-          && !widget.attachment.guid!.contains("theme-selector")) {
+          widget.attachment.guid != "redacted-mode-demo-attachment" &&
+          !widget.attachment.guid!.contains("theme-selector")) {
         data = await AttachmentHelper.compressAttachment(widget.attachment, widget.file.absolute.path);
         // All other attachments can be held in memory as bytes
       } else {
-        if (widget.attachment.guid == "redacted-mode-demo-attachment" || widget.attachment.guid!.contains("theme-selector")) {
+        if (widget.attachment.guid == "redacted-mode-demo-attachment" ||
+            widget.attachment.guid!.contains("theme-selector")) {
           data = (await rootBundle.load(widget.file.path)).buffer.asUint8List();
           return;
         }
@@ -78,47 +79,29 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
           _initializeBytes(runForcefully: true);
         }
       },
-      child: Stack(
-        children: <Widget>[
-          Container(
-            constraints: BoxConstraints(
-              maxWidth: widget.attachment.guid == "redacted-mode-demo-attachment"
-                  || widget.attachment.guid!.contains("theme-selector")
-                  ? widget.attachment.width!.toDouble()
-                  : context.width / 2,
-              maxHeight: widget.attachment.guid == "redacted-mode-demo-attachment"
-                  || widget.attachment.guid!.contains("theme-selector")
-                  ? widget.attachment.height!.toDouble()
-                  : context.height / 2,
-            ),
-            child: buildSwitcher(),
-          ),
-          Positioned.fill(
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () async {
-                  if (!this.mounted) return;
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          child: buildSwitcher(),
+          onTap: () async {
+            if (!this.mounted) return;
 
-                  navigated = true;
+            navigated = true;
 
-                  CurrentChat? currentChat = CurrentChat.of(context);
-                  await Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => AttachmentFullscreenViewer(
-                        currentChat: currentChat,
-                        attachment: widget.attachment,
-                        showInteractions: true,
-                      ),
-                    ),
-                  );
-
-                  navigated = false;
-                },
+            CurrentChat? currentChat = CurrentChat.of(context);
+            await Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => AttachmentFullscreenViewer(
+                  currentChat: currentChat,
+                  attachment: widget.attachment,
+                  showInteractions: true,
+                ),
               ),
-            ),
-          ),
-        ],
+            );
+
+            navigated = false;
+          },
+        ),
       ),
     );
   }
@@ -129,12 +112,14 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
             ? Image.memory(
                 data!,
                 frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-                  if (wasSynchronouslyLoaded) return child;
                   return Stack(children: [
-                    buildPlaceHolder(isLoaded: true),
+                    buildPlaceHolder(isLoaded: frame != null || wasSynchronouslyLoaded),
                     AnimatedOpacity(
-                      opacity: (frame == null && widget.attachment.guid != "redacted-mode-demo-attachment"
-                          && widget.attachment.guid!.contains("theme-selector")) ? 0 : 1,
+                      opacity: (frame == null &&
+                              widget.attachment.guid != "redacted-mode-demo-attachment" &&
+                              widget.attachment.guid!.contains("theme-selector"))
+                          ? 0
+                          : 1,
                       child: child,
                       duration: const Duration(milliseconds: 250),
                       curve: Curves.easeInOut,
@@ -146,52 +131,45 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
       );
 
   Widget buildPlaceHolder({bool isLoaded = false}) {
-    if (widget.attachment.hasValidSize && data == null) {
-      return AspectRatio(
-        aspectRatio: widget.attachment.width!.toDouble() / widget.attachment.height!.toDouble(),
-        child: Container(
-            width: widget.attachment.width!.toDouble(),
-            height: widget.attachment.height!.toDouble(),
+    Widget mainChild = Container(height: 0, width: 0);
+    double placeholderWidth = 200;
+    double placeholderHeight = 150;
+
+    // Handle the cases when the image is done loading
+    if (isLoaded) {
+      // If we have data, don't show any placeholder
+      if (data != null) {
+        return mainChild;
+      } else {
+        // If we don't have data, show an invalid image widget
+        return Container(
+            width: placeholderWidth,
+            height: placeholderHeight,
             color: Theme.of(context).accentColor,
-            child: Center(
-                child: CircularProgressIndicator(
-                    valueColor: new AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor)))),
-      );
-    } else {
-      if (((widget.attachment.width?.toDouble() ?? 0) / (widget.attachment.height?.toDouble() ?? 0)).isNaN)
-          return Container(
-            padding: EdgeInsets.all(5),
-            width: widget.attachment.width?.toDouble(),
-            height: widget.attachment.height?.toDouble() ?? 150,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: Container(
-                color: Theme.of(context).accentColor,
-                child: isLoaded ? null : Center(
-                  child: Text("Invalid Image"),
-                ),
-              ),
-            ),
-          );
-      return AspectRatio(
-        aspectRatio: ((widget.attachment.width?.toDouble() ?? context.width) /
-            (widget.attachment.height?.toDouble() ?? context.height)).abs(),
-        child: Container(
-          padding: EdgeInsets.all(5),
-          width: widget.attachment.width?.toDouble(),
-          height: widget.attachment.height?.toDouble() ?? 150,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: Container(
-              color: Theme.of(context).accentColor,
-              child: isLoaded ? null : Center(
-                child: Text("Invalid Image"),
-              ),
-            ),
-          ),
-        ),
-      );
+            child: Center(child: Text("Invalid Image")));
+      }
     }
+
+    // If it's not loaded, we are in progress
+    mainChild = Center(child: buildProgressIndicator(context));
+
+    // If the image doesn't have a valid size, show the loader with static height/width
+    if (!widget.attachment.hasValidSize) {
+      return Container(
+          width: placeholderWidth, height: placeholderHeight, color: Theme.of(context).accentColor, child: mainChild);
+    }
+
+    // If we have a valid size, we want to calculate the aspect ratio so the image doesn't "jitter" when loading
+    // Calculate the aspect ratio for the placeholders
+    double ratio = AttachmentHelper.getAspectRatio(widget.attachment.height, widget.attachment.width, context: context);
+
+    return AspectRatio(
+        aspectRatio: ratio,
+        child: Container(
+            width: widget.attachment.width?.toDouble() ?? placeholderWidth,
+            height: widget.attachment.height?.toDouble() ?? placeholderHeight,
+            color: Theme.of(context).accentColor,
+            child: mainChild));
   }
 
   @override
