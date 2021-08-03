@@ -455,41 +455,6 @@ class _Cupertino extends StatelessWidget {
                   colCount = (colCount / context.mediaQuerySize.height * context.mediaQuerySize.width).floor();
                 }
                 int maxOnPage = rowCount * colCount;
-
-                if (ChatBloc().chats.archivedHelper(showArchived).bigPinHelper(true).length <= maxOnPage) {
-                  return SliverPadding(
-                    padding: EdgeInsets.only(
-                      top: 20,
-                      left: 20,
-                      right: 20,
-                      bottom: 20,
-                    ),
-                    sliver: SliverGrid(
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: colCount,
-                        mainAxisExtent: (context.mediaQuerySize.width - 40) / colCount,
-                        mainAxisSpacing: 10.0,
-                        crossAxisSpacing: 10.0,
-                        childAspectRatio: 0.85,
-                      ),
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          return PinnedConversationTile(
-                            key: Key(ChatBloc()
-                                .chats
-                                .archivedHelper(showArchived)
-                                .bigPinHelper(true)[index]
-                                .guid
-                                .toString()),
-                            chat: ChatBloc().chats.archivedHelper(showArchived).bigPinHelper(true)[index],
-                          );
-                        },
-                        childCount: ChatBloc().chats.archivedHelper(showArchived).bigPinHelper(true).length,
-                      ),
-                    ),
-                  );
-                }
-
                 PageController _controller = PageController();
                 int _pageCount =
                     (ChatBloc().chats.archivedHelper(showArchived).bigPinHelper(true).length / maxOnPage).ceil();
@@ -510,7 +475,7 @@ class _Cupertino extends StatelessWidget {
                         alignment: Alignment.bottomCenter,
                         children: <Widget>[
                           PageView.builder(
-                            physics: BouncingScrollPhysics(),
+                            physics: BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                             scrollDirection: Axis.horizontal,
                             controller: _controller,
                             itemBuilder: (context, index) {
@@ -546,18 +511,19 @@ class _Cupertino extends StatelessWidget {
                             },
                             itemCount: _pageCount,
                           ),
-                          SmoothPageIndicator(
-                            controller: _controller,
-                            count: _pageCount,
-                            effect: ScaleEffect(
-                              dotHeight: 5.0,
-                              dotWidth: 5.0,
-                              spacing: 5.0,
-                              radius: 5.0,
-                              scale: 1.5,
-                              activeDotColor: context.theme.primaryColor,
+                          if (_pageCount > 1)
+                            SmoothPageIndicator(
+                              controller: _controller,
+                              count: _pageCount,
+                              effect: ScaleEffect(
+                                dotHeight: 5.0,
+                                dotWidth: 5.0,
+                                spacing: 5.0,
+                                radius: 5.0,
+                                scale: 1.5,
+                                activeDotColor: context.theme.primaryColor,
+                              ),
                             ),
-                          ),
                         ],
                       ),
                     ),
@@ -584,7 +550,8 @@ class _Cupertino extends StatelessWidget {
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
                       return ConversationTile(
-                        key: Key(ChatBloc().chats.archivedHelper(showArchived).bigPinHelper(false)[index].guid.toString()),
+                        key: Key(
+                            ChatBloc().chats.archivedHelper(showArchived).bigPinHelper(false)[index].guid.toString()),
                         chat: ChatBloc().chats.archivedHelper(showArchived).bigPinHelper(false)[index],
                       );
                     },

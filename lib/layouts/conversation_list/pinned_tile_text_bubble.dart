@@ -70,14 +70,14 @@ class _PinnedTileTextBubbleState extends State<PinnedTileTextBubble> with Automa
         padding: EdgeInsets.only(
           left: widget.showTail
               ? widget.leftSide
-                  ? 25
-                  : 15
-              : 20,
+                  ? 15
+                  : 5
+              : 10,
           right: widget.showTail
               ? widget.leftSide
-                  ? 15
-                  : 25
-              : 20,
+                  ? 5
+                  : 15
+              : 10,
         ),
         child: Stack(
           clipBehavior: Clip.none,
