@@ -33,10 +33,11 @@ class _SyncingMessagesState extends State<SyncingMessages> {
           curve: Curves.easeInOut,
         );
       } else if ((event?.progress ?? 0) >= 100) {
-        widget.controller.nextPage(
+        /*widget.controller.nextPage(
           duration: Duration(milliseconds: 300),
           curve: Curves.easeInOut,
-        );
+        );*/
+        SocketManager().toggleSetupFinished(true, applyToDb: true);
       }
     });
   }

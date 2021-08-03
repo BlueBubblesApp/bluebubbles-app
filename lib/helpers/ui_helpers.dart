@@ -19,3 +19,21 @@ Widget buildBackButton(BuildContext context, {EdgeInsets padding = EdgeInsets.ze
     ),
   );
 }
+
+Widget buildProgressIndicator(BuildContext context, {double height = 20, double width = 20, double strokeWidth = 2}) {
+  return SettingsManager().settings.skin.value == Skins.iOS ? Theme(
+    data: ThemeData(
+      cupertinoOverrideTheme: CupertinoThemeData(
+          brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor)),
+    ),
+    child: CupertinoActivityIndicator(
+      radius: width / 2,
+    ),
+  ) : Container(
+      constraints: BoxConstraints(maxHeight: height, maxWidth: width),
+      child: CircularProgressIndicator(
+        strokeWidth: strokeWidth,
+        valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+      )
+  );
+}

@@ -28,6 +28,8 @@ class ChatBloc {
   bool _hasChats = false;
 
   bool get hasChats => _hasChats;
+  final RxBool _loadedChats = false.obs;
+  RxBool get loadedChats => _loadedChats;
 
   void updateUnreads() {
     _unreads.value = chats.where((element) => element.hasUnreadMessage ?? false).map((e) => e.guid).toList().length;
@@ -284,6 +286,7 @@ class ChatBloc {
 
     if (chatRequest != null && !chatRequest!.isCompleted) {
       chatRequest!.complete();
+      _loadedChats.value = true;
     }
   }
 

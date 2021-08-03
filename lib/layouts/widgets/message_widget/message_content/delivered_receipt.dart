@@ -82,7 +82,7 @@ class _DeliveredReceiptState extends State<DeliveredReceipt> with TickerProvider
     Widget timestampWidget = Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
       child: Obx(() {
-        MessageMarkers? markers = CurrentChat.of(context)?.messageMarkers.markers.value;
+        MessageMarkers? markers = CurrentChat.of(context)?.messageMarkers.markers.value ?? null.obs.value;
         if (shouldShow(markers?.myLastMessage, markers?.lastReadMessage, markers?.lastDeliveredMessage)) {
           return Text(
             getText(),

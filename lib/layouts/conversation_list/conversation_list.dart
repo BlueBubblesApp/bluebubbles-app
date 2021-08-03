@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:get/get.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
@@ -534,14 +536,35 @@ class _Cupertino extends StatelessWidget {
               }),
               Obx(() {
                 ChatBloc().chats.archivedHelper(showArchived).sort(Chat.sort);
+                if (!ChatBloc().loadedChats.value) {
+                  return SliverToBoxAdapter(
+                    child: Center(
+                      child: Container(
+                        padding: EdgeInsets.only(top: 50.0),
+                        child: Column(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Text(
+                                "Loading chats...",
+                                style: Theme.of(context).textTheme.subtitle1,
+                              ),
+                            ),
+                            buildProgressIndicator(context, width: 15, height: 15),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }
                 if (ChatBloc().chats.archivedHelper(showArchived).isEmpty) {
                   return SliverToBoxAdapter(
                     child: Center(
                       child: Container(
                         padding: EdgeInsets.only(top: 50.0),
                         child: Text(
-                          parent.widget.showArchivedChats ? "You have no archived chats :(" : "You have no chats :(",
-                          style: context.textTheme.subtitle1,
+                          showArchived ? "You have no archived chats :(" : "You have no chats :(",
+                          style: Theme.of(context).textTheme.subtitle1,
                         ),
                       ),
                     ),
@@ -926,7 +949,25 @@ class __MaterialState extends State<_Material> {
             backgroundColor: context.theme.backgroundColor,
             body: Obx(
               () {
-                widget.parent.sortChats();
+                if (!ChatBloc().loadedChats.value) {
+                  return Center(
+                    child: Container(
+                      padding: EdgeInsets.only(top: 50.0),
+                      child: Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text(
+                              "Loading chats...",
+                              style: Theme.of(context).textTheme.subtitle1,
+                            ),
+                          ),
+                          buildProgressIndicator(context, width: 15, height: 15),
+                        ],
+                      ),
+                    ),
+                  );
+                }
                 if (ChatBloc().chats.archivedHelper(showArchived).isEmpty) {
                   return Center(
                     child: Container(
@@ -1391,7 +1432,25 @@ class _SamsungState extends State<_Samsung> {
             ),
             backgroundColor: context.theme.backgroundColor,
             body: Obx(() {
-              widget.parent.sortChats();
+              if (!ChatBloc().loadedChats.value) {
+                return Center(
+                  child: Container(
+                    padding: EdgeInsets.only(top: 50.0),
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            "Loading chats...",
+                            style: Theme.of(context).textTheme.subtitle1,
+                          ),
+                        ),
+                        buildProgressIndicator(context, width: 15, height: 15),
+                      ],
+                    ),
+                  ),
+                );
+              }
               if (ChatBloc().chats.archivedHelper(showArchived).isEmpty) {
                 return Center(
                   child: Container(
