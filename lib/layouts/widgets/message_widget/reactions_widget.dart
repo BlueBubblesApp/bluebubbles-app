@@ -6,11 +6,11 @@ import 'package:flutter/material.dart';
 class ReactionsWidget extends StatefulWidget {
   ReactionsWidget({
     Key? key,
-    required this.message,
     required this.associatedMessages,
+    this.bigPin = false,
   }) : super(key: key);
-  final Message message;
   final List<Message> associatedMessages;
+  final bool bigPin;
 
   @override
   _ReactionsWidgetState createState() => _ReactionsWidgetState();
@@ -24,7 +24,8 @@ class _ReactionsWidgetState extends State<ReactionsWidget> with TickerProviderSt
     List<Message> reactions =
         widget.associatedMessages.where((item) => ReactionTypes.toList().contains(item.associatedMessageType)).toList();
 
-    final bool hideReactions = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideReactions.value;
+    final bool hideReactions =
+        SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideReactions.value;
 
     // If the reactions are empty, return nothing
     if (reactions.isEmpty || hideReactions) {
@@ -38,7 +39,10 @@ class _ReactionsWidgetState extends State<ReactionsWidget> with TickerProviderSt
     List<Widget> reactionWidgets = [];
     int tmpIdx = 0;
     reactionsMap.forEach((String reactionType, Reaction item) {
-      Widget? itemWidget = item.getSmallWidget(context);
+      Widget? itemWidget = item.getSmallWidget(
+        context,
+        bigPin: widget.bigPin,
+      );
       if (itemWidget != null) {
         reactionWidgets.add(
           Padding(

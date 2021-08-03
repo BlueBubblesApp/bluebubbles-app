@@ -20,10 +20,13 @@ class ChatBloc {
   static StreamSubscription<NewMessageEvent>? _messageSubscription;
 
   final RxList<Chat> _chats = <Chat>[].obs;
+
   RxList<Chat> get chats => _chats;
   final RxInt _unreads = 0.obs;
+
   RxInt get unreads => _unreads;
   bool _hasChats = false;
+
   bool get hasChats => _hasChats;
   final RxBool _loadedChats = false.obs;
   bool get loadedChats => _loadedChats.value || _chats.isNotEmpty;
@@ -43,7 +46,9 @@ class ChatBloc {
   }
 
   int get pageSize {
-    return (SettingsManager().settings.denseChatTiles.value || SettingsManager().settings.skin.value != Skins.iOS) ? 12 : 10;
+    return (SettingsManager().settings.denseChatTiles.value || SettingsManager().settings.skin.value != Skins.iOS)
+        ? 12
+        : 10;
   }
 
   Future<Chat?> getChat(String? guid) async {
@@ -361,12 +366,21 @@ class ChatBloc {
   }
 }
 
-extension Archived on RxList<Chat> {
+extension Helpers on RxList<Chat> {
   /// Helper to return archived chats or all chats depending on the bool passed to it
   /// This helps reduce a vast amount of code in build methods so the widgets can
   /// update without StreamBuilders
-  archivedHelper(bool archived) {
-    if (archived) return this.where((e) => e.isArchived ?? false).toList();
-    else return this;
+  RxList<Chat> archivedHelper(bool archived) {
+    if (archived)
+      return this.where((e) => e.isArchived ?? false).toList().obs;
+    else
+      return this.where((e) => !(e.isArchived ?? false)).toList().obs;
+  }
+
+  RxList<Chat> bigPinHelper(bool pinned) {
+    if (pinned)
+      return this.where((e) => SettingsManager().settings.skin.value == Skins.iOS ? (e.isPinned ?? false) : true).toList().obs;
+    else
+      return this.where((e) => SettingsManager().settings.skin.value == Skins.iOS ? !(e.isPinned ?? false) : true).toList().obs;
   }
 }

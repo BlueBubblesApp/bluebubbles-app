@@ -29,8 +29,6 @@ import 'package:get/get.dart';
 
 class ConversationTile extends StatefulWidget {
   final Chat chat;
-  final bool? onTapGoToChat;
-  final Function? onTapCallback;
   final List<File> existingAttachments;
   final String? existingText;
   final Function(bool)? onSelect;
@@ -40,10 +38,8 @@ class ConversationTile extends StatefulWidget {
   ConversationTile({
     Key? key,
     required this.chat,
-    this.onTapGoToChat,
     this.existingAttachments = const [],
     this.existingText,
-    this.onTapCallback,
     this.onSelect,
     this.inSelectMode = false,
     this.selected = const [],
@@ -131,22 +127,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
   }
 
   void onTapUp(details) {
-    if (widget.onTapGoToChat != null && widget.onTapGoToChat!) {
-      Navigator.of(context).pushAndRemoveUntil(
-        CupertinoPageRoute(
-          builder: (BuildContext context) {
-            return ConversationView(
-              chat: widget.chat,
-              existingAttachments: widget.existingAttachments,
-              existingText: widget.existingText,
-            );
-          },
-        ),
-        (route) => route.isFirst,
-      );
-    } else if (widget.onTapCallback != null) {
-      widget.onTapCallback!();
-    } else if (widget.inSelectMode && widget.onSelect != null) {
+    if (widget.inSelectMode && widget.onSelect != null) {
       onSelect();
     } else {
       Navigator.of(context).push(
@@ -342,7 +323,6 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
       );
 
   void onTap() {
-    if (widget.onTapGoToChat != null && widget.onTapGoToChat!) {
       Navigator.of(context).pushAndRemoveUntil(
         ThemeSwitcher.buildPageRoute(
           builder: (BuildContext context) {
@@ -355,21 +335,6 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
         ),
         (route) => route.isFirst,
       );
-    } else if (widget.onTapCallback != null) {
-      widget.onTapCallback!();
-    } else {
-      Navigator.of(context).push(
-        ThemeSwitcher.buildPageRoute(
-          builder: (BuildContext context) {
-            return ConversationView(
-              chat: widget.chat,
-              existingAttachments: widget.existingAttachments,
-              existingText: widget.existingText,
-            );
-          },
-        ),
-      );
-    }
   }
 
   void onSelect() {
@@ -460,7 +425,7 @@ class __CupertinoState extends State<_Cupertino> {
                     decoration: BoxDecoration(
                       border: (!SettingsManager().settings.hideDividers.value)
                           ? Border(
-                              top: BorderSide(
+                              bottom: BorderSide(
                                 color: Theme.of(context).dividerColor,
                                 width: 0.5,
                               ),

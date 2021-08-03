@@ -835,6 +835,11 @@ class Chat {
         [this.guid]);
   }
 
+  Future<Message> get latestMessage async {
+    List<Message> latests = await Chat.getMessages(this, limit: 1);
+    return latests.first;
+  }
+
   static int sort(Chat? a, Chat? b) {
     if (!a!.isPinned! && b!.isPinned!) return 1;
     if (a.isPinned! && !b!.isPinned!) return -1;

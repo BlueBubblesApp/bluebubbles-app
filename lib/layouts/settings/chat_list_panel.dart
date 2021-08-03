@@ -1,11 +1,9 @@
 import 'dart:ui';
 
-import 'package:bluebubbles/helpers/themes.dart';
-import 'package:bluebubbles/helpers/ui_helpers.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/themes.dart';
+import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
@@ -13,17 +11,22 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:get/get.dart';
 
 class ChatListPanel extends StatelessWidget {
-
   @override
   Widget build(BuildContext context) {
-    final iosSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
-    final materialSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
+    final iosSubtitle =
+        Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
+    final materialSubtitle = Theme.of(context)
+        .textTheme
+        .subtitle1
+        ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
     Color headerColor;
     Color tileColor;
-    if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance()
-        || SettingsManager().settings.skin.value != Skins.iOS) {
+    if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+        SettingsManager().settings.skin.value != Skins.iOS) {
       headerColor = Theme.of(context).accentColor;
       tileColor = Theme.of(context).backgroundColor;
     } else {
@@ -37,8 +40,7 @@ class ChatListPanel extends StatelessWidget {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: headerColor, // navigation bar color
-        systemNavigationBarIconBrightness:
-        headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarIconBrightness: headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
@@ -71,30 +73,32 @@ class ChatListPanel extends StatelessWidget {
                   Container(
                       height: SettingsManager().settings.skin.value == Skins.iOS ? 30 : 40,
                       alignment: Alignment.bottomLeft,
-                      decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
-                        color: headerColor,
-                        border: Border(
-                            bottom: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
-                        ),
-                      ) : BoxDecoration(
-                        color: tileColor,
-                      ),
+                      decoration: SettingsManager().settings.skin.value == Skins.iOS
+                          ? BoxDecoration(
+                              color: headerColor,
+                              border: Border(
+                                  bottom: BorderSide(
+                                      color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
+                            )
+                          : BoxDecoration(
+                              color: tileColor,
+                            ),
                       child: Padding(
                         padding: const EdgeInsets.only(bottom: 8.0, left: 15),
-                        child: Text("Indicators".psCapitalize, style: SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
-                      )
-                  ),
+                        child: Text("Indicators".psCapitalize,
+                            style: SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
+                      )),
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
                   Obx(() => SettingsSwitch(
-                    onChanged: (bool val) {
-                      SettingsManager().settings.showConnectionIndicator.value = val;
-                      saveSettings();
-                    },
-                    initialVal: SettingsManager().settings.showConnectionIndicator.value,
-                    title: "Show Connection Indicator",
-                    subtitle: "Enables a connection status indicator at the top left",
-                    backgroundColor: tileColor,
-                  )),
+                        onChanged: (bool val) {
+                          SettingsManager().settings.showConnectionIndicator.value = val;
+                          saveSettings();
+                        },
+                        initialVal: SettingsManager().settings.showConnectionIndicator.value,
+                        title: "Show Connection Indicator",
+                        subtitle: "Enables a connection status indicator at the top left",
+                        backgroundColor: tileColor,
+                      )),
                   Container(
                     color: tileColor,
                     child: Padding(
@@ -103,15 +107,15 @@ class ChatListPanel extends StatelessWidget {
                     ),
                   ),
                   Obx(() => SettingsSwitch(
-                    onChanged: (bool val) {
-                      SettingsManager().settings.showSyncIndicator.value = val;
-                      saveSettings();
-                    },
-                    initialVal: SettingsManager().settings.showSyncIndicator.value,
-                    title: "Show Sync Indicator in Chat List",
-                    subtitle: "Enables a small indicator at the top left to show when the app is syncing messages",
-                    backgroundColor: tileColor,
-                  )),
+                        onChanged: (bool val) {
+                          SettingsManager().settings.showSyncIndicator.value = val;
+                          saveSettings();
+                        },
+                        initialVal: SettingsManager().settings.showSyncIndicator.value,
+                        title: "Show Sync Indicator in Chat List",
+                        subtitle: "Enables a small indicator at the top left to show when the app is syncing messages",
+                        backgroundColor: tileColor,
+                      )),
                   Container(
                     color: tileColor,
                     child: Padding(
@@ -120,39 +124,38 @@ class ChatListPanel extends StatelessWidget {
                     ),
                   ),
                   Obx(() => SettingsSwitch(
-                    onChanged: (bool val) {
-                      SettingsManager().settings.colorblindMode.value = val;
-                      saveSettings();
-                    },
-                    initialVal: SettingsManager().settings.colorblindMode.value,
-                    title: "Colorblind Mode",
-                    subtitle: "Replaces the colored connection indicator with icons to aid accessibility",
-                    backgroundColor: tileColor,
-                  )),
+                        onChanged: (bool val) {
+                          SettingsManager().settings.colorblindMode.value = val;
+                          saveSettings();
+                        },
+                        initialVal: SettingsManager().settings.colorblindMode.value,
+                        title: "Colorblind Mode",
+                        subtitle: "Replaces the colored connection indicator with icons to aid accessibility",
+                        backgroundColor: tileColor,
+                      )),
                   SettingsHeader(
                       headerColor: headerColor,
                       tileColor: tileColor,
                       iosSubtitle: iosSubtitle,
                       materialSubtitle: materialSubtitle,
-                      text: "Filtering"
-                  ),
+                      text: "Filtering"),
                   Obx(() => SettingsSwitch(
-                    onChanged: (bool val) {
-                      SettingsManager().settings.filteredChatList.value = val;
-                      saveSettings();
-                    },
-                    initialVal: SettingsManager().settings.filteredChatList.value,
-                    title: "Filtered Chat List",
-                    subtitle: "Filters the chat list based on parameters set in iMessage (usually this removes old, inactive chats)",
-                    backgroundColor: tileColor,
-                  )),
+                        onChanged: (bool val) {
+                          SettingsManager().settings.filteredChatList.value = val;
+                          saveSettings();
+                        },
+                        initialVal: SettingsManager().settings.filteredChatList.value,
+                        title: "Filtered Chat List",
+                        subtitle:
+                            "Filters the chat list based on parameters set in iMessage (usually this removes old, inactive chats)",
+                        backgroundColor: tileColor,
+                      )),
                   SettingsHeader(
                       headerColor: headerColor,
                       tileColor: tileColor,
                       iosSubtitle: iosSubtitle,
                       materialSubtitle: materialSubtitle,
-                      text: "Appearance"
-                  ),
+                      text: "Appearance"),
                   Obx(() {
                     if (SettingsManager().settings.skin.value != Skins.Samsung)
                       return SettingsSwitch(
@@ -165,7 +168,8 @@ class ChatListPanel extends StatelessWidget {
                         backgroundColor: tileColor,
                         subtitle: "Hides dividers between tiles",
                       );
-                    else return SizedBox.shrink();
+                    else
+                      return SizedBox.shrink();
                   }),
                   Obx(() {
                     if (SettingsManager().settings.skin.value != Skins.Samsung)
@@ -176,18 +180,19 @@ class ChatListPanel extends StatelessWidget {
                           child: SettingsDivider(color: headerColor),
                         ),
                       );
-                    else return SizedBox.shrink();
+                    else
+                      return SizedBox.shrink();
                   }),
                   Obx(() => SettingsSwitch(
-                    onChanged: (bool val) {
-                      SettingsManager().settings.denseChatTiles.value = val;
-                      saveSettings();
-                    },
-                    initialVal: SettingsManager().settings.denseChatTiles.value,
-                    title: "Dense Conversation Tiles",
-                    backgroundColor: tileColor,
-                    subtitle: "Compresses chat tile size on the conversation list page",
-                  )),
+                        onChanged: (bool val) {
+                          SettingsManager().settings.denseChatTiles.value = val;
+                          saveSettings();
+                        },
+                        initialVal: SettingsManager().settings.denseChatTiles.value,
+                        title: "Dense Conversation Tiles",
+                        backgroundColor: tileColor,
+                        subtitle: "Compresses chat tile size on the conversation list page",
+                      )),
                   Obx(() {
                     if (SettingsManager().settings.skin.value == Skins.iOS)
                       return Container(
@@ -197,7 +202,8 @@ class ChatListPanel extends StatelessWidget {
                           child: SettingsDivider(color: headerColor),
                         ),
                       );
-                    else return SizedBox.shrink();
+                    else
+                      return SizedBox.shrink();
                   }),
                   Obx(() {
                     if (SettingsManager().settings.skin.value == Skins.iOS)
@@ -211,15 +217,47 @@ class ChatListPanel extends StatelessWidget {
                         backgroundColor: tileColor,
                         subtitle: "Reduces the appbar size on conversation pages",
                       );
-                    else return SizedBox.shrink();
+                    else
+                      return SizedBox.shrink();
+                  }),
+                  Obx(() {
+                    if (SettingsManager().settings.skin.value == Skins.iOS)
+                      return SettingsTile(
+                        title: "Max Pin Rows",
+                        subtitle:
+                            "The maximum row count of pins displayed when using the app in the portrait orientation",
+                        backgroundColor: tileColor,
+                      );
+                    else
+                      return SizedBox.shrink();
+                  }),
+                  Obx(() {
+                    if (SettingsManager().settings.skin.value == Skins.iOS)
+                      return SettingsSlider(
+                        min: 2,
+                        max: 4,
+                        divisions: 3,
+                        update: (double val) {
+                          SettingsManager().settings.pinRowsPortrait.value = val.toInt();
+                          saveSettings();
+                        },
+                        startingVal: SettingsManager().settings.pinRowsPortrait.value.toDouble(),
+                        text: "Maximum Pin Rows",
+                        backgroundColor: tileColor,
+                        formatValue: (val) =>
+                            SettingsManager().settings.pinRowsPortrait.toString() +
+                            " rows of " +
+                            SettingsManager().settings.pinColumnsPortrait.toString(),
+                      );
+                    else
+                      return SizedBox.shrink();
                   }),
                   SettingsHeader(
                       headerColor: headerColor,
                       tileColor: tileColor,
                       iosSubtitle: iosSubtitle,
                       materialSubtitle: materialSubtitle,
-                      text: "Swipe Actions"
-                  ),
+                      text: "Swipe Actions"),
                   Obx(() {
                     if (SettingsManager().settings.skin.value == Skins.Samsung ||
                         SettingsManager().settings.skin.value == Skins.Material)
@@ -233,7 +271,8 @@ class ChatListPanel extends StatelessWidget {
                         subtitle: "Enables swipe actions for conversation tiles when using Material theme",
                         backgroundColor: tileColor,
                       );
-                    else return SizedBox.shrink();
+                    else
+                      return SizedBox.shrink();
                   }),
                   if (SettingsManager().settings.skin.value == Skins.iOS)
                     SettingsTile(
@@ -245,270 +284,256 @@ class ChatListPanel extends StatelessWidget {
                     if (SettingsManager().settings.skin.value == Skins.iOS)
                       return Container(
                         color: tileColor,
-                        constraints: BoxConstraints(
-                          maxWidth: context.width
-                        ),
+                        constraints: BoxConstraints(maxWidth: context.width),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 15.0),
                           child: Row(
                             children: [
-                              Column(
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                                    child: Text("Swipe Right"),
-                                  ),
-                                  Opacity(
-                                    opacity: SettingsManager().settings.iosShowPin.value ? 1 : 0.7,
-                                    child: Container(
-                                      height: 60,
-                                      width: context.width / 5 - 8,
-                                      child: IconSlideAction(
-                                        caption: 'Pin',
-                                        color: Colors.yellow[800],
-                                        foregroundColor: Theme.of(context).textTheme.bodyText1!.color,
-                                        icon: Icons.star,
-                                        onTap: () async {
-                                          SettingsManager().settings.iosShowPin.value = !SettingsManager().settings.iosShowPin.value;
-                                          saveSettings();
-                                        },
-                                      ),
+                              Column(children: [
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                  child: Text("Swipe Right"),
+                                ),
+                                Opacity(
+                                  opacity: SettingsManager().settings.iosShowPin.value ? 1 : 0.7,
+                                  child: Container(
+                                    height: 60,
+                                    width: context.width / 5 - 8,
+                                    child: IconSlideAction(
+                                      caption: 'Pin',
+                                      color: Colors.yellow[800],
+                                      foregroundColor: Theme.of(context).textTheme.bodyText1!.color,
+                                      icon: Icons.star,
+                                      onTap: () async {
+                                        SettingsManager().settings.iosShowPin.value =
+                                            !SettingsManager().settings.iosShowPin.value;
+                                        saveSettings();
+                                      },
                                     ),
                                   ),
-                                  CupertinoButton(
-                                      child: Container(
-                                        decoration: BoxDecoration(
+                                ),
+                                CupertinoButton(
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                          color: SettingsManager().settings.iosShowPin.value
+                                              ? Theme.of(context).primaryColor
+                                              : tileColor,
+                                          border: Border.all(
+                                              color: CupertinoColors.systemGrey, style: BorderStyle.solid, width: 1),
+                                          borderRadius: BorderRadius.all(Radius.circular(25))),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(3.0),
+                                        child: Icon(CupertinoIcons.check_mark,
+                                            size: 18,
                                             color: SettingsManager().settings.iosShowPin.value
-                                                ? Theme.of(context).primaryColor
-                                                : tileColor,
-                                            border: Border.all(
-                                                color: CupertinoColors.systemGrey,
-                                                style: BorderStyle.solid,
-                                                width: 1
-                                            ),
-                                            borderRadius: BorderRadius.all(Radius.circular(25))
-                                        ),
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(3.0),
-                                          child: Icon(CupertinoIcons.check_mark,
-                                              size: 18,
-                                              color: SettingsManager().settings.iosShowPin.value
-                                                  ? CupertinoColors.white
-                                                  : CupertinoColors.systemGrey),
-                                        ),
+                                                ? CupertinoColors.white
+                                                : CupertinoColors.systemGrey),
                                       ),
-                                      onPressed: () {
-                                        SettingsManager().settings.iosShowPin.value = !SettingsManager().settings.iosShowPin.value;
-                                        saveSettings();
-                                      }
-                                  ),
-                                ]
-                              ),
+                                    ),
+                                    onPressed: () {
+                                      SettingsManager().settings.iosShowPin.value =
+                                          !SettingsManager().settings.iosShowPin.value;
+                                      saveSettings();
+                                    }),
+                              ]),
                               Spacer(),
-                              Column(
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                                    child: Text("Swipe Left"),
-                                  ),
-                                  Row(
+                              Column(children: [
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                  child: Text("Swipe Left"),
+                                ),
+                                Row(children: [
+                                  Column(
                                     children: [
-                                      Column(
-                                        children: [
-                                          Opacity(
-                                            opacity: SettingsManager().settings.iosShowAlert.value ? 1 : 0.7,
-                                            child: Container(
-                                              height: 60,
-                                              color: Colors.purple[700],
-                                              width: context.width / 5 - 8,
-                                              child: IconSlideAction(
-                                                caption: 'Hide Alerts',
-                                                color: Colors.purple[700],
-                                                icon: Icons.notifications_off,
-                                                onTap: () async {
-                                                  SettingsManager().settings.iosShowAlert.value = !SettingsManager().settings.iosShowAlert.value;
-                                                  saveSettings();
-                                                },
-                                              ),
+                                      Opacity(
+                                        opacity: SettingsManager().settings.iosShowAlert.value ? 1 : 0.7,
+                                        child: Container(
+                                          height: 60,
+                                          color: Colors.purple[700],
+                                          width: context.width / 5 - 8,
+                                          child: IconSlideAction(
+                                            caption: 'Hide Alerts',
+                                            color: Colors.purple[700],
+                                            icon: Icons.notifications_off,
+                                            onTap: () async {
+                                              SettingsManager().settings.iosShowAlert.value =
+                                                  !SettingsManager().settings.iosShowAlert.value;
+                                              saveSettings();
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                      CupertinoButton(
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                                color: SettingsManager().settings.iosShowAlert.value
+                                                    ? Theme.of(context).primaryColor
+                                                    : tileColor,
+                                                border: Border.all(
+                                                    color: CupertinoColors.systemGrey,
+                                                    style: BorderStyle.solid,
+                                                    width: 1),
+                                                borderRadius: BorderRadius.all(Radius.circular(25))),
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(3.0),
+                                              child: Icon(CupertinoIcons.check_mark,
+                                                  size: 18,
+                                                  color: SettingsManager().settings.iosShowAlert.value
+                                                      ? CupertinoColors.white
+                                                      : CupertinoColors.systemGrey),
                                             ),
                                           ),
-                                          CupertinoButton(
-                                              child: Container(
-                                                decoration: BoxDecoration(
-                                                    color: SettingsManager().settings.iosShowAlert.value
-                                                        ? Theme.of(context).primaryColor
-                                                        : tileColor,
-                                                    border: Border.all(
-                                                        color: CupertinoColors.systemGrey,
-                                                        style: BorderStyle.solid,
-                                                        width: 1
-                                                    ),
-                                                    borderRadius: BorderRadius.all(Radius.circular(25))
-                                                ),
-                                                child: Padding(
-                                                  padding: const EdgeInsets.all(3.0),
-                                                  child: Icon(CupertinoIcons.check_mark,
-                                                      size: 18,
-                                                      color: SettingsManager().settings.iosShowAlert.value
-                                                          ? CupertinoColors.white
-                                                          : CupertinoColors.systemGrey),
-                                                ),
-                                              ),
-                                              onPressed: () {
-                                                SettingsManager().settings.iosShowAlert.value = !SettingsManager().settings.iosShowAlert.value;
-                                                saveSettings();
-                                              }
-                                          ),
-                                        ],
-                                      ),
-                                      Column(
-                                        children: [
-                                          Opacity(
-                                            opacity: SettingsManager().settings.iosShowDelete.value ? 1 : 0.7,
-                                            child: Container(
-                                              height: 60,
-                                              color: Colors.red,
-                                              width: context.width / 5 - 8,
-                                              child: IconSlideAction(
-                                                caption: "Delete",
-                                                color: Colors.red,
-                                                icon: Icons.delete_forever,
-                                                onTap: () async {
-                                                  SettingsManager().settings.iosShowDelete.value = !SettingsManager().settings.iosShowDelete.value;
-                                                  saveSettings();
-                                                },
-                                              ),
-                                            ),
-                                          ),
-                                          CupertinoButton(
-                                              child: Container(
-                                                decoration: BoxDecoration(
-                                                    color: SettingsManager().settings.iosShowDelete.value
-                                                        ? Theme.of(context).primaryColor
-                                                        : tileColor,
-                                                    border: Border.all(
-                                                        color: CupertinoColors.systemGrey,
-                                                        style: BorderStyle.solid,
-                                                        width: 1
-                                                    ),
-                                                    borderRadius: BorderRadius.all(Radius.circular(25))
-                                                ),
-                                                child: Padding(
-                                                  padding: const EdgeInsets.all(3.0),
-                                                  child: Icon(CupertinoIcons.check_mark,
-                                                      size: 18,
-                                                      color: SettingsManager().settings.iosShowDelete.value
-                                                          ? CupertinoColors.white
-                                                          : CupertinoColors.systemGrey),
-                                                ),
-                                              ),
-                                              onPressed: () {
-                                                SettingsManager().settings.iosShowDelete.value = !SettingsManager().settings.iosShowDelete.value;
-                                                saveSettings();
-                                              }
-                                          ),
-                                        ],
-                                      ),
-                                      Column(
-                                        children: [
-                                          Opacity(
-                                            opacity: SettingsManager().settings.iosShowMarkRead.value ? 1 : 0.7,
-                                            child: Container(
-                                              height: 60,
-                                              color: Colors.blue,
-                                              width: context.width / 5 - 8,
-                                              child: IconSlideAction(
-                                                caption: 'Mark Read',
-                                                color: Colors.blue,
-                                                icon: Icons.mark_chat_read,
-                                                onTap: () {
-                                                  SettingsManager().settings.iosShowMarkRead.value = !SettingsManager().settings.iosShowMarkRead.value;saveSettings();
-                                                  saveSettings();
-                                                },
-                                              ),
-                                            ),
-                                          ),
-                                          CupertinoButton(
-                                              child: Container(
-                                                decoration: BoxDecoration(
-                                                    color: SettingsManager().settings.iosShowMarkRead.value
-                                                        ? Theme.of(context).primaryColor
-                                                        : tileColor,
-                                                    border: Border.all(
-                                                        color: CupertinoColors.systemGrey,
-                                                        style: BorderStyle.solid,
-                                                        width: 1
-                                                    ),
-                                                    borderRadius: BorderRadius.all(Radius.circular(25))
-                                                ),
-                                                child: Padding(
-                                                  padding: const EdgeInsets.all(3.0),
-                                                  child: Icon(CupertinoIcons.check_mark,
-                                                      size: 18,
-                                                      color: SettingsManager().settings.iosShowMarkRead.value
-                                                          ? CupertinoColors.white
-                                                          : CupertinoColors.systemGrey),
-                                                ),
-                                              ),
-                                              onPressed: () {
-                                                SettingsManager().settings.iosShowMarkRead.value = !SettingsManager().settings.iosShowMarkRead.value;
-                                                saveSettings();
-                                              }
-                                          ),
-                                        ],
-                                      ),
-                                      Column(
-                                        children: [
-                                          Opacity(
-                                            opacity: SettingsManager().settings.iosShowArchive.value ? 1 : 0.7,
-                                            child: Container(
-                                              height: 60,
-                                              color: Colors.red,
-                                              width: context.width / 5 - 8,
-                                              child: IconSlideAction(
-                                                caption: 'Archive',
-                                                color: Colors.red,
-                                                icon: Icons.archive,
-                                                onTap: () {
-                                                  SettingsManager().settings.iosShowArchive.value = !SettingsManager().settings.iosShowArchive.value;
-                                                  saveSettings();
-                                                },
-                                              ),
-                                            ),
-                                          ),
-                                          CupertinoButton(
-                                              child: Container(
-                                                decoration: BoxDecoration(
-                                                    color: SettingsManager().settings.iosShowArchive.value
-                                                        ? Theme.of(context).primaryColor
-                                                        : tileColor,
-                                                    border: Border.all(
-                                                        color: CupertinoColors.systemGrey,
-                                                        style: BorderStyle.solid,
-                                                        width: 1
-                                                    ),
-                                                    borderRadius: BorderRadius.all(Radius.circular(25))
-                                                ),
-                                                child: Padding(
-                                                  padding: const EdgeInsets.all(3.0),
-                                                  child: Icon(CupertinoIcons.check_mark,
-                                                      size: 18,
-                                                      color: SettingsManager().settings.iosShowArchive.value
-                                                          ? CupertinoColors.white
-                                                          : CupertinoColors.systemGrey),
-                                                ),
-                                              ),
-                                              onPressed: () {
-                                                SettingsManager().settings.iosShowArchive.value = !SettingsManager().settings.iosShowArchive.value;
-                                                saveSettings();
-                                              }
-                                          ),
-                                        ],
-                                      ),
-                                    ]
+                                          onPressed: () {
+                                            SettingsManager().settings.iosShowAlert.value =
+                                                !SettingsManager().settings.iosShowAlert.value;
+                                            saveSettings();
+                                          }),
+                                    ],
                                   ),
-                                ]
-                              ),
+                                  Column(
+                                    children: [
+                                      Opacity(
+                                        opacity: SettingsManager().settings.iosShowDelete.value ? 1 : 0.7,
+                                        child: Container(
+                                          height: 60,
+                                          color: Colors.red,
+                                          width: context.width / 5 - 8,
+                                          child: IconSlideAction(
+                                            caption: "Delete",
+                                            color: Colors.red,
+                                            icon: Icons.delete_forever,
+                                            onTap: () async {
+                                              SettingsManager().settings.iosShowDelete.value =
+                                                  !SettingsManager().settings.iosShowDelete.value;
+                                              saveSettings();
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                      CupertinoButton(
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                                color: SettingsManager().settings.iosShowDelete.value
+                                                    ? Theme.of(context).primaryColor
+                                                    : tileColor,
+                                                border: Border.all(
+                                                    color: CupertinoColors.systemGrey,
+                                                    style: BorderStyle.solid,
+                                                    width: 1),
+                                                borderRadius: BorderRadius.all(Radius.circular(25))),
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(3.0),
+                                              child: Icon(CupertinoIcons.check_mark,
+                                                  size: 18,
+                                                  color: SettingsManager().settings.iosShowDelete.value
+                                                      ? CupertinoColors.white
+                                                      : CupertinoColors.systemGrey),
+                                            ),
+                                          ),
+                                          onPressed: () {
+                                            SettingsManager().settings.iosShowDelete.value =
+                                                !SettingsManager().settings.iosShowDelete.value;
+                                            saveSettings();
+                                          }),
+                                    ],
+                                  ),
+                                  Column(
+                                    children: [
+                                      Opacity(
+                                        opacity: SettingsManager().settings.iosShowMarkRead.value ? 1 : 0.7,
+                                        child: Container(
+                                          height: 60,
+                                          color: Colors.blue,
+                                          width: context.width / 5 - 8,
+                                          child: IconSlideAction(
+                                            caption: 'Mark Read',
+                                            color: Colors.blue,
+                                            icon: Icons.mark_chat_read,
+                                            onTap: () {
+                                              SettingsManager().settings.iosShowMarkRead.value =
+                                                  !SettingsManager().settings.iosShowMarkRead.value;
+                                              saveSettings();
+                                              saveSettings();
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                      CupertinoButton(
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                                color: SettingsManager().settings.iosShowMarkRead.value
+                                                    ? Theme.of(context).primaryColor
+                                                    : tileColor,
+                                                border: Border.all(
+                                                    color: CupertinoColors.systemGrey,
+                                                    style: BorderStyle.solid,
+                                                    width: 1),
+                                                borderRadius: BorderRadius.all(Radius.circular(25))),
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(3.0),
+                                              child: Icon(CupertinoIcons.check_mark,
+                                                  size: 18,
+                                                  color: SettingsManager().settings.iosShowMarkRead.value
+                                                      ? CupertinoColors.white
+                                                      : CupertinoColors.systemGrey),
+                                            ),
+                                          ),
+                                          onPressed: () {
+                                            SettingsManager().settings.iosShowMarkRead.value =
+                                                !SettingsManager().settings.iosShowMarkRead.value;
+                                            saveSettings();
+                                          }),
+                                    ],
+                                  ),
+                                  Column(
+                                    children: [
+                                      Opacity(
+                                        opacity: SettingsManager().settings.iosShowArchive.value ? 1 : 0.7,
+                                        child: Container(
+                                          height: 60,
+                                          color: Colors.red,
+                                          width: context.width / 5 - 8,
+                                          child: IconSlideAction(
+                                            caption: 'Archive',
+                                            color: Colors.red,
+                                            icon: Icons.archive,
+                                            onTap: () {
+                                              SettingsManager().settings.iosShowArchive.value =
+                                                  !SettingsManager().settings.iosShowArchive.value;
+                                              saveSettings();
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                      CupertinoButton(
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                                color: SettingsManager().settings.iosShowArchive.value
+                                                    ? Theme.of(context).primaryColor
+                                                    : tileColor,
+                                                border: Border.all(
+                                                    color: CupertinoColors.systemGrey,
+                                                    style: BorderStyle.solid,
+                                                    width: 1),
+                                                borderRadius: BorderRadius.all(Radius.circular(25))),
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(3.0),
+                                              child: Icon(CupertinoIcons.check_mark,
+                                                  size: 18,
+                                                  color: SettingsManager().settings.iosShowArchive.value
+                                                      ? CupertinoColors.white
+                                                      : CupertinoColors.systemGrey),
+                                            ),
+                                          ),
+                                          onPressed: () {
+                                            SettingsManager().settings.iosShowArchive.value =
+                                                !SettingsManager().settings.iosShowArchive.value;
+                                            saveSettings();
+                                          }),
+                                    ],
+                                  ),
+                                ]),
+                              ]),
                             ],
                           ),
                         ),
@@ -527,7 +552,8 @@ class ChatListPanel extends StatelessWidget {
                                 }
                               },
                               options: MaterialSwipeAction.values,
-                              textProcessing: (val) => val.toString().split(".")[1].replaceAll("_", " ").capitalizeFirst!,
+                              textProcessing: (val) =>
+                                  val.toString().split(".")[1].replaceAll("_", " ").capitalizeFirst!,
                               title: "Swipe Right Action",
                               backgroundColor: tileColor,
                               secondaryColor: headerColor,
@@ -541,7 +567,8 @@ class ChatListPanel extends StatelessWidget {
                                 }
                               },
                               options: MaterialSwipeAction.values,
-                              textProcessing: (val) => val.toString().split(".")[1].replaceAll("_", " ").capitalizeFirst!,
+                              textProcessing: (val) =>
+                                  val.toString().split(".")[1].replaceAll("_", " ").capitalizeFirst!,
                               title: "Swipe Left Action",
                               backgroundColor: tileColor,
                               secondaryColor: headerColor,
@@ -549,34 +576,35 @@ class ChatListPanel extends StatelessWidget {
                           ],
                         ),
                       );
-                    else return SizedBox.shrink();
+                    else
+                      return SizedBox.shrink();
                   }),
                   SettingsHeader(
                       headerColor: headerColor,
                       tileColor: tileColor,
                       iosSubtitle: iosSubtitle,
                       materialSubtitle: materialSubtitle,
-                      text: "Misc"
-                  ),
+                      text: "Misc"),
                   Obx(() => SettingsSwitch(
-                    onChanged: (bool val) {
-                      SettingsManager().settings.moveChatCreatorToHeader.value = val;
-                      saveSettings();
-                    },
-                    initialVal: SettingsManager().settings.moveChatCreatorToHeader.value,
-                    title: "Move Chat Creator Button to Header",
-                    subtitle: "Replaces the floating button at the bottom to a fixed button at the top",
-                    backgroundColor: tileColor,
-                  )),
+                        onChanged: (bool val) {
+                          SettingsManager().settings.moveChatCreatorToHeader.value = val;
+                          saveSettings();
+                        },
+                        initialVal: SettingsManager().settings.moveChatCreatorToHeader.value,
+                        title: "Move Chat Creator Button to Header",
+                        subtitle: "Replaces the floating button at the bottom to a fixed button at the top",
+                        backgroundColor: tileColor,
+                      )),
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
                   Container(
                     height: 30,
-                    decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
-                      color: headerColor,
-                      border: Border(
-                          top: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
-                      ),
-                    ) : null,
+                    decoration: SettingsManager().settings.skin.value == Skins.iOS
+                        ? BoxDecoration(
+                            color: headerColor,
+                            border: Border(
+                                top: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
+                          )
+                        : null,
                   ),
                 ],
               ),

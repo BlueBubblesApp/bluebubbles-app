@@ -9,8 +9,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class TypingIndicator extends StatefulWidget {
-  TypingIndicator({Key? key, this.visible}) : super(key: key);
-  final bool? visible;
+  TypingIndicator({
+    Key? key,
+    this.visible = false,
+    this.bigPin = false,
+  }) : super(key: key);
+  final bool visible;
+  final bool bigPin;
 
   @override
   _TypingIndicatorState createState() => _TypingIndicatorState();
@@ -58,7 +63,7 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
     return AnimatedSize(
       vsync: this,
       duration: Duration(milliseconds: 200),
-      child: widget.visible!
+      child: widget.visible
           ? Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
@@ -67,9 +72,9 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
                   children: [
                     if (skin.value == Skins.iOS)
                       Container(
-                        margin: EdgeInsets.only(left: 2),
+                        margin: EdgeInsets.only(left: widget.bigPin ? 18 : 2),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).accentColor,
+                          color: context.theme.accentColor,
                           borderRadius: BorderRadius.circular(40),
                         ),
                         width: 10,
@@ -79,7 +84,7 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
                       Container(
                         margin: EdgeInsets.only(left: 9, bottom: 10),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).accentColor,
+                          color: context.theme.accentColor,
                           borderRadius: BorderRadius.circular(40),
                         ),
                         width: 15,
@@ -100,7 +105,7 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
                       ),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(20),
-                        color: Theme.of(context).accentColor,
+                        color: context.theme.accentColor,
                       ),
                       child: Stack(
                         alignment: Alignment.center,
@@ -130,7 +135,7 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
         builder: (context, child) {
           return Container(
             decoration: BoxDecoration(
-              color: Theme.of(context).accentColor.lightenOrDarken(
+              color: context.theme.accentColor.lightenOrDarken(
                   (Math.sin(animation.value + (index) * Math.pi / 4).abs() * 20).clamp(1, 20).toDouble()),
               borderRadius: BorderRadius.circular(30),
             ),
