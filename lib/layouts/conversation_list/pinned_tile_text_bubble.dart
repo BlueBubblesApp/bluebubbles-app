@@ -49,6 +49,7 @@ class _PinnedTileTextBubbleState extends State<PinnedTileTextBubble> with Automa
       future: widget.chat.latestMessage,
       builder: (BuildContext context, AsyncSnapshot snapshot) {
         if (!snapshot.hasData) return Container();
+        if (!(widget.chat.hasUnreadMessage ?? false)) return Container();
         Message message = snapshot.data;
         bool leftSide = Random(message.id).nextBool();
         if (message.associatedMessageGuid != null || message.isFromMe! || (message.text ?? "").trim() == "")
