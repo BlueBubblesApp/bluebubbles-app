@@ -415,13 +415,13 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
                   return Container();
                 },
               ),
-              FutureBuilder<Rx<Message>>(
+              FutureBuilder<Message>(
                 future: widget.chat.latestMessage,
                 builder: (BuildContext context, AsyncSnapshot snapshot) {
                   if (!(widget.chat.hasUnreadMessage ?? false)) return Container();
                   if (showTypingIndicator.value) return Container();
                   if (!snapshot.hasData) return Container();
-                  Message message = snapshot.data.value;
+                  Message message = snapshot.data;
                   if ([null, ""].contains(message.associatedMessageGuid) || (message.isFromMe ?? false)) {
                     return Container();
                   }
