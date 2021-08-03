@@ -289,7 +289,11 @@ class AttachmentHelper {
   static Future<Size> getImageSizing(String filePath) async {
     try {
       ImageProperties size = await FlutterNativeImage.getImageProperties(filePath);
-      return Size((size.width ?? 0).toDouble(), (size.height ?? 0).toDouble());
+      if ((size.width ?? 0) == 0 || (size.height ?? 0) == 0) {
+        isg.Size size = isg.ImageSizeGetter.getSize(FileInput(File(filePath)));
+        return Size(size.width.toDouble(), size.height.toDouble());
+      }
+      return Size(size.width!.toDouble(), size.height!.toDouble());
     } catch (_) {
       isg.Size size = isg.ImageSizeGetter.getSize(FileInput(File(filePath)));
       return Size(size.width.toDouble(), size.height.toDouble());
