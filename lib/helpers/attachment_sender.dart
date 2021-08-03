@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
@@ -13,8 +14,6 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:image_size_getter/file_input.dart';
-import 'package:image_size_getter/image_size_getter.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:path/path.dart';
 import 'package:tuple/tuple.dart';
@@ -130,9 +129,9 @@ class AttachmentSender {
       uti: "public.jpg",
       transferName: _attachmentName,
       mimeType: mime(_attachmentName),
-      width: mime(_attachmentName)!.startsWith("image") ? ImageSizeGetter.getSize(FileInput(_attachment)).width : null,
+      width: mime(_attachmentName)!.startsWith("image") ? (await AttachmentHelper.getImageSizing(_attachment.path)).width.toInt() : null,
       height:
-          mime(_attachmentName)!.startsWith("image") ? ImageSizeGetter.getSize(FileInput(_attachment)).height : null,
+          mime(_attachmentName)!.startsWith("image") ? (await AttachmentHelper.getImageSizing(_attachment.path)).height.toInt() : null,
     );
 
     sentMessage = Message(

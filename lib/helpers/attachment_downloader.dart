@@ -99,8 +99,8 @@ class AttachmentDownloader {
       debugPrint("Attachment downloaded in ${stopwatch.elapsedMilliseconds} ms");
 
       try {
-        // Get the dimensions of the attachment
-        await AttachmentHelper.setDimensions(attachment);
+        // Compress the attachment
+        await AttachmentHelper.compressAttachment(attachment, attachment.getPath());
         await attachment.update();
       } catch (ex) {
         // So what if it crashes here.... I don't care...
