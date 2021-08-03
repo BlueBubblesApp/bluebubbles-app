@@ -21,15 +21,7 @@ class ChatBloc {
 
   final RxList<Chat> _chats = <Chat>[].obs;
 
-  RxList<Chat> get chats => _chats
-      .where((e) => SettingsManager().settings.skin.value == Skins.iOS ? !(e.isPinned ?? false) : true)
-      .toList()
-      .obs;
-
-  RxList<Chat> get pinnedChats => _chats
-      .where((e) => SettingsManager().settings.skin.value == Skins.iOS ? e.isPinned ?? false : false)
-      .toList()
-      .obs;
+  RxList<Chat> get chats => _chats;
   final RxInt _unreads = 0.obs;
 
   RxInt get unreads => _unreads;
@@ -375,10 +367,17 @@ extension Helpers on RxList<Chat> {
   /// Helper to return archived chats or all chats depending on the bool passed to it
   /// This helps reduce a vast amount of code in build methods so the widgets can
   /// update without StreamBuilders
-  archivedHelper(bool archived) {
+  RxList<Chat> archivedHelper(bool archived) {
     if (archived)
-      return this.where((e) => e.isArchived ?? false).toList();
+      return this.where((e) => e.isArchived ?? false).toList().obs;
     else
-      return this.where((e) => !(e.isArchived ?? false)).toList();
+      return this.where((e) => !(e.isArchived ?? false)).toList().obs;
+  }
+
+  RxList<Chat> bigPinHelper(bool pinned) {
+    if (pinned)
+      return this.where((e) => SettingsManager().settings.skin.value == Skins.iOS ? (e.isPinned ?? false) : true).toList().obs;
+    else
+      return this.where((e) => SettingsManager().settings.skin.value == Skins.iOS ? !(e.isPinned ?? false) : true).toList().obs;
   }
 }

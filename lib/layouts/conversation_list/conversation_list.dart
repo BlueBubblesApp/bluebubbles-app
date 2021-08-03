@@ -146,12 +146,6 @@ class _ConversationListState extends State<ConversationList> {
       if (b.latestMessageDate == null) return -1;
       return -a.latestMessageDate!.compareTo(b.latestMessageDate!);
     });
-    ChatBloc().pinnedChats.sort((a, b) {
-      if (a.latestMessageDate == null && b.latestMessageDate == null) return 0;
-      if (a.latestMessageDate == null) return 1;
-      if (b.latestMessageDate == null) return -1;
-      return -a.latestMessageDate!.compareTo(b.latestMessageDate!);
-    });
   }
 
   Widget buildSettingsButton() => !widget.showArchivedChats
@@ -448,10 +442,10 @@ class _Cupertino extends StatelessWidget {
               //   ),
               // ),
               Obx(() {
-                if (ChatBloc().pinnedChats.archivedHelper(showArchived).isEmpty) {
+                if (ChatBloc().chats.archivedHelper(showArchived).bigPinHelper(true).isEmpty) {
                   return SliverToBoxAdapter(child: Container());
                 }
-                ChatBloc().pinnedChats.archivedHelper(showArchived).sort(Chat.sort);
+                ChatBloc().chats.archivedHelper(showArchived).sort(Chat.sort);
 
                 int rowCount = context.mediaQuery.orientation == Orientation.portrait
                     ? SettingsManager().settings.pinRowsPortrait.value
@@ -462,7 +456,7 @@ class _Cupertino extends StatelessWidget {
                 }
                 int maxOnPage = rowCount * colCount;
 
-                if (ChatBloc().pinnedChats.archivedHelper(showArchived).length <= maxOnPage) {
+                if (ChatBloc().chats.archivedHelper(showArchived).bigPinHelper(true).length <= maxOnPage) {
                   return SliverPadding(
                     padding: EdgeInsets.only(
                       top: 20,
@@ -481,19 +475,26 @@ class _Cupertino extends StatelessWidget {
                       delegate: SliverChildBuilderDelegate(
                         (context, index) {
                           return PinnedConversationTile(
-                            key: Key(ChatBloc().pinnedChats.archivedHelper(showArchived)[index].guid.toString()),
-                            chat: ChatBloc().pinnedChats.archivedHelper(showArchived)[index],
+                            key: Key(ChatBloc()
+                                .chats
+                                .archivedHelper(showArchived)
+                                .bigPinHelper(true)[index]
+                                .guid
+                                .toString()),
+                            chat: ChatBloc().chats.archivedHelper(showArchived).bigPinHelper(true)[index],
                           );
                         },
-                        childCount: ChatBloc().pinnedChats.archivedHelper(showArchived).length,
+                        childCount: ChatBloc().chats.archivedHelper(showArchived).bigPinHelper(true).length,
                       ),
                     ),
                   );
                 }
 
                 PageController _controller = PageController();
-                int _pageCount = (ChatBloc().pinnedChats.archivedHelper(showArchived).length / maxOnPage).ceil();
-                int _filledPageCount = (ChatBloc().pinnedChats.archivedHelper(showArchived).length / maxOnPage).floor();
+                int _pageCount =
+                    (ChatBloc().chats.archivedHelper(showArchived).bigPinHelper(true).length / maxOnPage).ceil();
+                int _filledPageCount =
+                    (ChatBloc().chats.archivedHelper(showArchived).bigPinHelper(true).length / maxOnPage).floor();
 
                 return SliverPadding(
                   padding: EdgeInsets.only(
@@ -526,17 +527,21 @@ class _Cupertino extends StatelessWidget {
                                 itemBuilder: (context, _index) {
                                   return PinnedConversationTile(
                                     key: Key(ChatBloc()
-                                        .pinnedChats
-                                        .archivedHelper(showArchived)[index * maxOnPage + _index]
+                                        .chats
+                                        .archivedHelper(showArchived)
+                                        .bigPinHelper(true)[index * maxOnPage + _index]
                                         .guid
                                         .toString()),
-                                    chat:
-                                        ChatBloc().pinnedChats.archivedHelper(showArchived)[index * maxOnPage + _index],
+                                    chat: ChatBloc()
+                                        .chats
+                                        .archivedHelper(showArchived)
+                                        .bigPinHelper(true)[index * maxOnPage + _index],
                                   );
                                 },
                                 itemCount: index < _filledPageCount
                                     ? maxOnPage
-                                    : ChatBloc().pinnedChats.archivedHelper(showArchived).length % maxOnPage,
+                                    : ChatBloc().chats.archivedHelper(showArchived).bigPinHelper(true).length %
+                                        maxOnPage,
                               );
                             },
                             itemCount: _pageCount,
@@ -561,8 +566,7 @@ class _Cupertino extends StatelessWidget {
               }),
               Obx(() {
                 ChatBloc().chats.archivedHelper(showArchived).sort(Chat.sort);
-                if (ChatBloc().chats.archivedHelper(showArchived).isEmpty &&
-                    ChatBloc().pinnedChats.archivedHelper(showArchived).isEmpty) {
+                if (ChatBloc().chats.archivedHelper(showArchived).isEmpty) {
                   return SliverToBoxAdapter(
                     child: Center(
                       child: Container(
@@ -580,11 +584,11 @@ class _Cupertino extends StatelessWidget {
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
                       return ConversationTile(
-                        key: Key(ChatBloc().chats.archivedHelper(showArchived)[index].guid.toString()),
-                        chat: ChatBloc().chats.archivedHelper(showArchived)[index],
+                        key: Key(ChatBloc().chats.archivedHelper(showArchived).bigPinHelper(false)[index].guid.toString()),
+                        chat: ChatBloc().chats.archivedHelper(showArchived).bigPinHelper(false)[index],
                       );
                     },
-                    childCount: ChatBloc().chats.archivedHelper(showArchived).length,
+                    childCount: ChatBloc().chats.archivedHelper(showArchived).bigPinHelper(false).length,
                   ),
                 );
               }),
@@ -611,10 +615,6 @@ class __MaterialState extends State<_Material> {
   List<Chat> selected = [];
 
   bool hasPinnedChat() {
-    if (ChatBloc().pinnedChats.archivedHelper(widget.parent.widget.showArchivedChats).isNotEmpty) {
-      widget.parent.hasPinnedChats = true;
-      return true;
-    }
     for (var i = 0; i < ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).length; i++) {
       if (ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats)[i].isPinned!) {
         widget.parent.hasPinnedChats = true;
@@ -627,8 +627,6 @@ class __MaterialState extends State<_Material> {
   }
 
   bool hasNormalChats() {
-    if (ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).isEmpty &&
-        ChatBloc().pinnedChats.archivedHelper(widget.parent.widget.showArchivedChats).isNotEmpty) return true;
     int counter = 0;
     for (var i = 0; i < ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).length; i++) {
       if (ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats)[i].isPinned!) {
@@ -1425,8 +1423,7 @@ class _SamsungState extends State<_Samsung> {
             backgroundColor: context.theme.backgroundColor,
             body: Obx(() {
               widget.parent.sortChats();
-              if (ChatBloc().chats.archivedHelper(showArchived).isEmpty &&
-                  ChatBloc().pinnedChats.archivedHelper(showArchived).isEmpty) {
+              if (ChatBloc().chats.archivedHelper(showArchived).isEmpty) {
                 return Center(
                   child: Container(
                     padding: EdgeInsets.only(top: 50.0),
