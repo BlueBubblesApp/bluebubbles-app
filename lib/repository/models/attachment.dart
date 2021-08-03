@@ -61,6 +61,24 @@ class Attachment {
     return attachment.existsSync();
   }
 
+  String get orientation {
+    String orientation = 'portrait'; // Default
+    if (this.metadata == null) return orientation;
+    // This key is from FlutterNativeImage
+    if (this.metadata!.containsKey('orientation') &&
+        (this.metadata!['orientation'].toString().toLowerCase().contains('landscape') ||
+            this.metadata!['orientation'].toString() == '0')) {
+      orientation = 'landscape';
+      // This key is from the Exif loader
+    } else if (this.metadata!.containsKey('Image Orientation') &&
+        (this.metadata!['Image Orientation'].toString().toLowerCase().contains('horizontal') ||
+            this.metadata!['orientation'].toString() == '0')) {
+      orientation = 'landscape';
+    }
+
+    return orientation;
+  }
+
   factory Attachment.fromMap(Map<String, dynamic> json) {
     String? mimeType = json["mimeType"];
     if ((json.containsKey("uti") && json["uti"] == "com.apple.coreaudio_format") ||

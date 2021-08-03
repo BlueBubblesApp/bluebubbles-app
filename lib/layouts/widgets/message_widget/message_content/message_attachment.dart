@@ -44,7 +44,10 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
   void updateContent() async {
     // Ge the current attachment content (status)
     content = AttachmentHelper.getContent(widget.attachment,
-        path: widget.attachment.guid == "redacted-mode-demo-attachment" || widget.attachment.guid!.contains("theme-selector") ? widget.attachment.transferName : null);
+        path: widget.attachment.guid == "redacted-mode-demo-attachment" ||
+                widget.attachment.guid!.contains("theme-selector")
+            ? widget.attachment.transferName
+            : null);
 
     // If we can download it, do so
     if (await AttachmentHelper.canAutoDownload() && content is Attachment) {
@@ -65,8 +68,8 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
       borderRadius: BorderRadius.circular(20),
       child: Container(
         constraints: BoxConstraints(
-          maxWidth: context.width * 3 / 4,
-          // maxHeight: 600,
+          maxWidth: context.width * 0.5,
+          maxHeight: context.height * 0.6,
         ),
         child: _buildAttachmentWidget(),
       ),
@@ -187,9 +190,9 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
                         : Container(),
                     (content.attachment.mimeType != null)
                         ? Text(
-                      content.attachment.mimeType,
-                      style: Theme.of(context).textTheme.bodyText1,
-                    )
+                            content.attachment.mimeType,
+                            style: Theme.of(context).textTheme.bodyText1,
+                          )
                         : Container()
                   ],
                 ),
