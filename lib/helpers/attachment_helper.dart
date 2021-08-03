@@ -285,18 +285,29 @@ class AttachmentHelper {
     }
     return thumbnail;
   }
+  
+  static Future<Size> getImageSizingFallback(String filePath) async {
+    try {
+      isg.Size size = isg.ImageSizeGetter.getSize(FileInput(File(filePath)));
+      return Size(size.width.toDouble(), size.height.toDouble());
+    } catch (ex) {
+      return Size(0, 0);
+    }
+  }
 
   static Future<Size> getImageSizing(String filePath) async {
     try {
       ImageProperties size = await FlutterNativeImage.getImageProperties(filePath);
-      if ((size.width ?? 0) == 0 || (size.height ?? 0) == 0) {
-        isg.Size size = isg.ImageSizeGetter.getSize(FileInput(File(filePath)));
-        return Size(size.width.toDouble(), size.height.toDouble());
+      double width = (size.width ?? 0).toDouble();
+      double height = (size.height ?? 0).toDouble();
+      
+      if (width == 0 || height == 0) {
+        return AttachmentHelper.getImageSizingFallback(filePath);
       }
-      return Size(size.width!.toDouble(), size.height!.toDouble());
+
+      return Size(width, height);
     } catch (_) {
-      isg.Size size = isg.ImageSizeGetter.getSize(FileInput(File(filePath)));
-      return Size(size.width.toDouble(), size.height.toDouble());
+      return AttachmentHelper.getImageSizingFallback(filePath);
     }
   }
 
