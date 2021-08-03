@@ -835,9 +835,9 @@ class Chat {
         [this.guid]);
   }
 
-  Future<Message> get latestMessage async {
+  Future<Rx<Message>> get latestMessage async {
     List<Message> latests = await Chat.getMessages(this, limit: 1);
-    return latests.first;
+    return latests.first.obs;
   }
 
   static int sort(Chat? a, Chat? b) {

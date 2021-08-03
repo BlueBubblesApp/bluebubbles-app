@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -11,16 +12,10 @@ import 'package:get/get.dart';
 class PinnedTileTextBubble extends StatefulWidget {
   PinnedTileTextBubble({
     Key? key,
-    required this.message,
     required this.chat,
-    this.showTail = false,
-    required this.leftSide,
   }) : super(key: key);
 
-  final Message message;
   final Chat chat;
-  final bool showTail;
-  final bool leftSide;
 
   @override
   _PinnedTileTextBubbleState createState() => _PinnedTileTextBubbleState();
@@ -48,83 +43,93 @@ class _PinnedTileTextBubbleState extends State<PinnedTileTextBubble> with Automa
   Widget build(BuildContext context) {
     super.build(context);
 
-    if (widget.message.associatedMessageGuid != null ||
-        widget.message.isFromMe! ||
-        (widget.message.text ?? "").trim() == "") return Container();
+    bool showTail = !widget.chat.isGroup();
 
-    bool hide = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value;
-    bool generate =
-        SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeMessageContent.value;
+    return FutureBuilder(
+      future: widget.chat.latestMessage,
+      builder: (BuildContext context, AsyncSnapshot snapshot) {
+        if (!snapshot.hasData) return Container();
+        Message message = snapshot.data.value;
+        bool leftSide = Random(message.id).nextBool();
+        if (message.associatedMessageGuid != null || message.isFromMe! || (message.text ?? "").trim() == "")
+          return Container();
 
-    TextStyle style = Get.textTheme.subtitle1!.apply(fontSizeFactor: 0.8);
+        bool hide =
+            SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value;
+        bool generate = SettingsManager().settings.redactedMode.value &&
+            SettingsManager().settings.generateFakeMessageContent.value;
 
-    if (hide && !generate) style = style.apply(color: Colors.transparent);
+        TextStyle style = Get.textTheme.subtitle1!.apply(fontSizeFactor: 0.8);
 
-    return Align(
-      alignment: widget.showTail
-          ? widget.leftSide
-              ? Alignment.centerLeft
-              : Alignment.centerRight
-          : Alignment.center,
-      child: Padding(
-        padding: EdgeInsets.only(
-          left: widget.showTail
-              ? widget.leftSide
-                  ? 15
-                  : 5
-              : 10,
-          right: widget.showTail
-              ? widget.leftSide
-                  ? 5
-                  : 15
-              : 10,
-        ),
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: <Widget>[
-            if (widget.showTail)
-              Positioned(
-                top: -8.5,
-                right: widget.leftSide ? null : 7,
-                left: widget.leftSide ? 7 : null,
-                child: CustomPaint(
-                  size: Size(18, 9),
-                  painter: TailPainter(leftSide: widget.leftSide),
-                ),
-              ),
-            ConstrainedBox(
-              constraints: BoxConstraints(minWidth: widget.showTail ? 30 : 0),
-              child: ClipRRect(
-                clipBehavior: Clip.antiAlias,
-                borderRadius: BorderRadius.circular(10.0),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(
-                    sigmaX: 2,
-                    sigmaY: 2,
-                  ),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      vertical: 3.0,
-                      horizontal: 6.0,
-                    ),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10.0),
-                      color: context.theme.accentColor.withOpacity(0.8),
-                    ),
-                    child: Text(
-                      generate ? widget.chat.fakeLatestMessageText ?? "" : widget.message.text!,
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 2,
-                      textAlign: TextAlign.center,
-                      style: style,
-                    ),
-                  ),
-                ),
-              ),
+        if (hide && !generate) style = style.apply(color: Colors.transparent);
+
+        return Align(
+          alignment: showTail
+              ? leftSide
+                  ? Alignment.centerLeft
+                  : Alignment.centerRight
+              : Alignment.center,
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: showTail
+                  ? leftSide
+                      ? 15
+                      : 5
+                  : 10,
+              right: showTail
+                  ? leftSide
+                      ? 5
+                      : 15
+                  : 10,
             ),
-          ],
-        ),
-      ),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: <Widget>[
+                if (showTail)
+                  Positioned(
+                    top: -8.5,
+                    right: leftSide ? null : 7,
+                    left: leftSide ? 7 : null,
+                    child: CustomPaint(
+                      size: Size(18, 9),
+                      painter: TailPainter(leftSide: leftSide),
+                    ),
+                  ),
+                ConstrainedBox(
+                  constraints: BoxConstraints(minWidth: showTail ? 30 : 0),
+                  child: ClipRRect(
+                    clipBehavior: Clip.antiAlias,
+                    borderRadius: BorderRadius.circular(10.0),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(
+                        sigmaX: 2,
+                        sigmaY: 2,
+                      ),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          vertical: 3.0,
+                          horizontal: 6.0,
+                        ),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10.0),
+                          color: context.theme.accentColor.withOpacity(0.8),
+                        ),
+                        child: Text(
+                          generate ? widget.chat.fakeLatestMessageText ?? "" : message.text!,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 2,
+                          textAlign: TextAlign.center,
+                          style: style,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

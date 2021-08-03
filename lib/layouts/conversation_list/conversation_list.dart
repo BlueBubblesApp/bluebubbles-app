@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -454,6 +455,7 @@ class _Cupertino extends StatelessWidget {
                 if (context.mediaQuery.orientation != Orientation.portrait) {
                   colCount = (colCount / context.mediaQuerySize.height * context.mediaQuerySize.width).floor();
                 }
+                int usedRowCount = min((ChatBloc().chats.archivedHelper(showArchived).bigPinHelper(true).length / colCount).ceil(), rowCount);
                 int maxOnPage = rowCount * colCount;
                 PageController _controller = PageController();
                 int _pageCount =
@@ -463,14 +465,14 @@ class _Cupertino extends StatelessWidget {
 
                 return SliverPadding(
                   padding: EdgeInsets.only(
-                    top: 20,
-                    left: 20,
-                    right: 20,
-                    bottom: 20,
+                    top: 10,
+                    left: 10,
+                    right: 10,
+                    bottom: 10,
                   ),
                   sliver: SliverToBoxAdapter(
                     child: ConstrainedBox(
-                      constraints: BoxConstraints(maxHeight: (context.mediaQuerySize.width - 20) / colCount * rowCount),
+                      constraints: BoxConstraints(maxHeight: (context.mediaQuerySize.width - 20) / colCount * usedRowCount),
                       child: Stack(
                         alignment: Alignment.bottomCenter,
                         children: <Widget>[

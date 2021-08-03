@@ -460,7 +460,7 @@ class __CupertinoState extends State<_Cupertino> {
                     decoration: BoxDecoration(
                       border: (!SettingsManager().settings.hideDividers.value)
                           ? Border(
-                              top: BorderSide(
+                              bottom: BorderSide(
                                 color: Theme.of(context).dividerColor,
                                 width: 0.5,
                               ),
