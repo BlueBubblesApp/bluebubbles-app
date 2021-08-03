@@ -435,6 +435,41 @@ class _Cupertino extends StatelessWidget {
             //   ),
             // ),
             Obx(() {
+              if (!ChatBloc().loadedChats.value) {
+                return SliverToBoxAdapter(
+                  child: Center(
+                    child: Container(
+                      padding: EdgeInsets.only(top: 50.0),
+                      child: Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text(
+                              "Loading chats...",
+                              style: Theme.of(context).textTheme.subtitle1,
+                            ),
+                          ),
+                          SettingsManager().settings.skin.value == Skins.iOS ? Theme(
+                            data: ThemeData(
+                              cupertinoOverrideTheme: CupertinoThemeData(
+                                  brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor)),
+                            ),
+                            child: CupertinoActivityIndicator(
+                              radius: 6.5,
+                            ),
+                          ) : Container(
+                            constraints: BoxConstraints(maxHeight: 15, maxWidth: 15),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.0,
+                              valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                            )
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }
               if (ChatBloc().chats.archivedHelper(showArchived).isEmpty) {
                 return SliverToBoxAdapter(
                   child: Center(
@@ -802,6 +837,39 @@ class __MaterialState extends State<_Material> {
           ),
           backgroundColor: Theme.of(context).backgroundColor,
           body: Obx(() {
+            if (!ChatBloc().loadedChats.value) {
+              return Center(
+                child: Container(
+                  padding: EdgeInsets.only(top: 50.0),
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          "Loading chats...",
+                          style: Theme.of(context).textTheme.subtitle1,
+                        ),
+                      ),
+                      SettingsManager().settings.skin.value == Skins.iOS ? Theme(
+                        data: ThemeData(
+                          cupertinoOverrideTheme: CupertinoThemeData(
+                              brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor)),
+                        ),
+                        child: CupertinoActivityIndicator(
+                          radius: 6.5,
+                        ),
+                      ) : Container(
+                          constraints: BoxConstraints(maxHeight: 15, maxWidth: 15),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.0,
+                            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                          )
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
             if (ChatBloc().chats.archivedHelper(showArchived).isEmpty) {
               return Center(
                 child: Container(
@@ -1214,6 +1282,39 @@ class _SamsungState extends State<_Samsung> {
           ),
           backgroundColor: Theme.of(context).backgroundColor,
           body: Obx(() {
+            if (!ChatBloc().loadedChats.value) {
+              return Center(
+                child: Container(
+                  padding: EdgeInsets.only(top: 50.0),
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          "Loading chats...",
+                          style: Theme.of(context).textTheme.subtitle1,
+                        ),
+                      ),
+                      SettingsManager().settings.skin.value == Skins.iOS ? Theme(
+                        data: ThemeData(
+                          cupertinoOverrideTheme: CupertinoThemeData(
+                              brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor)),
+                        ),
+                        child: CupertinoActivityIndicator(
+                          radius: 6.5,
+                        ),
+                      ) : Container(
+                          constraints: BoxConstraints(maxHeight: 15, maxWidth: 15),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.0,
+                            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                          )
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
             if (ChatBloc().chats.archivedHelper(showArchived).isEmpty) {
               return Center(
                 child: Container(
