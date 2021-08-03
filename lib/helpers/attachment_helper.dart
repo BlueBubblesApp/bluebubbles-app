@@ -311,13 +311,15 @@ class AttachmentHelper {
     }
   }
 
-  static Future<Uint8List?> compressAttachment(Attachment attachment, String filePath, {int? qualityOverride}) async {
+  static Future<Uint8List?> compressAttachment(Attachment attachment, String filePath, {int? qualityOverride, bool getActualPath = true}) async {
     if (attachment.mimeType == null) return null;
     // Make sure the attachment is an image or video
     String mimeStart = attachment.mimeType!.split("/").first;
     if (!["image", "video"].contains(mimeStart)) return null;
     // Get byte data
-    Uint8List previewData = new File(AttachmentHelper.getAttachmentPath(attachment)).readAsBytesSync();
+    Uint8List previewData = getActualPath
+        ? new File(AttachmentHelper.getAttachmentPath(attachment)).readAsBytesSync()
+        : new File(filePath).readAsBytesSync();
     // Update sizing
     if (attachment.mimeType == "image/gif") {
       Size size = getGifDimensions(previewData);

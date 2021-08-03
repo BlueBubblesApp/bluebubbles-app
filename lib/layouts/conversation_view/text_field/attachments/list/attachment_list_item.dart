@@ -43,7 +43,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
       // Compress the file, using a dummy attachment object
       preview = await AttachmentHelper.compressAttachment(
           new Attachment(mimeType: mimeType, transferName: widget.file.absolute.path, width: 100, height: 100),
-          widget.file.absolute.path);
+          widget.file.absolute.path, getActualPath: false);
       if (this.mounted) setState(() {});
     }
   }
