@@ -243,6 +243,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
         onLongPressStart: (details) {
           _tapPosition = details.globalPosition;
         },
+        onTap: onTapUpBypass,
         onLongPress: () {
           HapticFeedback.mediumImpact();
           showMenu(
