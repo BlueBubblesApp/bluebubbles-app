@@ -482,9 +482,8 @@ String? getServerAddress({String? address}) {
   String sanitized = serverAddress.replaceAll("https://", "").replaceAll("http://", "").trim();
   if (sanitized.isEmpty) return null;
 
-  // If the serverAddress doesn't start with HTTP, modify it
-  if (!serverAddress.startsWith("http")) {
-    // If it''s an ngrok address, use HTTPS, otherwise, just use HTTP
+  Uri? uri = Uri.tryParse(serverAddress);
+  if (uri?.scheme.isEmpty ?? true) {
     if (serverAddress.contains("ngrok.io")) {
       serverAddress = "https://$serverAddress";
     } else {
