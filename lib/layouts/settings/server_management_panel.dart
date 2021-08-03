@@ -41,8 +41,10 @@ class ServerManagementPanelController extends GetxController {
   // Restart trackers
   int? lastRestart;
   int? lastRestartMessages;
+  int? lastRestartPrivateAPI;
   final RxBool isRestarting = false.obs;
   final RxBool isRestartingMessages = false.obs;
+  final RxBool isRestartingPrivateAPI = false.obs;
 
   late Settings _settingsCopy;
   FCMData? _fcmDataCopy;
@@ -56,8 +58,6 @@ class ServerManagementPanelController extends GetxController {
       SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
         int later = DateTime.now().toUtc().millisecondsSinceEpoch;
         latency.value = later - now;
-      });
-      SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
         macOSVersion.value = res['data']['os_version'];
         serverVersion.value = res['data']['server_version'];
       });
@@ -386,7 +386,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                               // Execute the restart
                               try {
                                 // If it fails or there is an endpoint error, stop the loader
-                                await SocketManager().sendMessage("restart-imessage", null, (_) {
+                                await SocketManager().sendMessage("restart-messages-app", null, (_) {
                                   stopRestarting();
                                 }).catchError((_) {
                                   stopRestarting();
@@ -407,6 +407,81 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                                       valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
                                     ))));
                       }),
+                  Obx(() {
+                    if (SettingsManager().settings.enablePrivateAPI.value) {
+                      return Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 65.0),
+                          child: SettingsDivider(color: headerColor),
+                        ),
+                      );
+                    } else return SizedBox.shrink();
+                  }),
+                  Obx(() {
+                    if (SettingsManager().settings.enablePrivateAPI.value) {
+                      return StreamBuilder(
+                          stream: SocketManager().connectionStateStream,
+                          builder: (context, AsyncSnapshot<SocketState> snapshot) {
+                            SocketState? connectionStatus;
+                            if (snapshot.hasData) {
+                              connectionStatus = snapshot.data;
+                            } else {
+                              connectionStatus = SocketManager().state;
+                            }
+
+                            return Obx(() => SettingsTile(
+                                title: "Restart Private API",
+                                subtitle: controller.isRestartingPrivateAPI.value && connectionStatus == SocketState.CONNECTED
+                                    ? "Restart in progress..." : connectionStatus == SocketState.CONNECTED ? "Restart the Private API" : "Disconnected, cannot restart",
+                                backgroundColor: tileColor,
+                                leading: SettingsLeadingIcon(
+                                  iosIcon: CupertinoIcons.exclamationmark_shield,
+                                  materialIcon: Icons.gpp_maybe,
+                                ),
+                                onTap: () async {
+                                  if (![SocketState.CONNECTED].contains(connectionStatus) || controller.isRestartingPrivateAPI.value) return;
+
+                                  controller.isRestartingPrivateAPI.value = true;
+
+                                  // Prevent restarting more than once every 30 seconds
+                                  int now = DateTime.now().toUtc().millisecondsSinceEpoch;
+                                  if (controller.lastRestartPrivateAPI != null && now - controller.lastRestartPrivateAPI! < 1000 * 30) return;
+
+                                  // Save the last time we restarted
+                                  controller.lastRestartPrivateAPI = now;
+
+                                  // Create a temporary functon so we can call it easily
+                                  Function stopRestarting = () {
+                                    controller.isRestartingPrivateAPI.value = false;
+                                  };
+
+                                  // Execute the restart
+                                  try {
+                                    // If it fails or there is an endpoint error, stop the loader
+                                    await SocketManager().sendMessage("restart-private-api", null, (_) {
+                                      stopRestarting();
+                                    }).catchError((_) {
+                                      stopRestarting();
+                                    });
+                                  } finally {
+                                    stopRestarting();
+                                  }
+                                },
+                                trailing: (!controller.isRestartingPrivateAPI.value)
+                                    ? Icon(Icons.refresh, color: Colors.grey)
+                                    : Container(
+                                    constraints: BoxConstraints(
+                                      maxHeight: 20,
+                                      maxWidth: 20,
+                                    ),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 3,
+                                      valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                                    ))));
+                          });
+                    } else return SizedBox.shrink();
+                  }),
                   Container(
                     color: tileColor,
                     child: Padding(
