@@ -26,18 +26,14 @@ import 'package:get/get.dart';
 
 class PinnedConversationTile extends StatefulWidget {
   final Chat chat;
-  final bool? onTapGoToChat;
-  final Function? onTapCallback;
   final List<File> existingAttachments;
   final String? existingText;
 
   PinnedConversationTile({
     Key? key,
     required this.chat,
-    this.onTapGoToChat,
     this.existingAttachments = const [],
     this.existingText,
-    this.onTapCallback,
   }) : super(key: key);
 
   @override
@@ -117,34 +113,18 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
   }
 
   void onTapUp(details) {
-    if (widget.onTapGoToChat != null && widget.onTapGoToChat!) {
-      Navigator.of(context).pushAndRemoveUntil(
-        CupertinoPageRoute(
-          builder: (BuildContext context) {
-            return ConversationView(
-              chat: widget.chat,
-              existingAttachments: widget.existingAttachments,
-              existingText: widget.existingText,
-            );
-          },
-        ),
-        (route) => route.isFirst,
-      );
-    } else if (widget.onTapCallback != null) {
-      widget.onTapCallback!();
-    } else {
-      Navigator.of(context).push(
-        CupertinoPageRoute(
-          builder: (BuildContext context) {
-            return ConversationView(
-              chat: widget.chat,
-              existingAttachments: widget.existingAttachments,
-              existingText: widget.existingText,
-            );
-          },
-        ),
-      );
-    }
+    Navigator.of(context).pushAndRemoveUntil(
+      CupertinoPageRoute(
+        builder: (BuildContext context) {
+          return ConversationView(
+            chat: widget.chat,
+            existingAttachments: widget.existingAttachments,
+            existingText: widget.existingText,
+          );
+        },
+      ),
+      (route) => route.isFirst,
+    );
   }
 
   void onTapUpBypass() {
@@ -200,34 +180,18 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
   }
 
   void onTap() {
-    if (widget.onTapGoToChat != null && widget.onTapGoToChat!) {
-      Navigator.of(context).pushAndRemoveUntil(
-        ThemeSwitcher.buildPageRoute(
-          builder: (BuildContext context) {
-            return ConversationView(
-              chat: widget.chat,
-              existingAttachments: widget.existingAttachments,
-              existingText: widget.existingText,
-            );
-          },
-        ),
-        (route) => route.isFirst,
-      );
-    } else if (widget.onTapCallback != null) {
-      widget.onTapCallback!();
-    } else {
-      Navigator.of(context).push(
-        ThemeSwitcher.buildPageRoute(
-          builder: (BuildContext context) {
-            return ConversationView(
-              chat: widget.chat,
-              existingAttachments: widget.existingAttachments,
-              existingText: widget.existingText,
-            );
-          },
-        ),
-      );
-    }
+    Navigator.of(context).pushAndRemoveUntil(
+      ThemeSwitcher.buildPageRoute(
+        builder: (BuildContext context) {
+          return ConversationView(
+            chat: widget.chat,
+            existingAttachments: widget.existingAttachments,
+            existingText: widget.existingText,
+          );
+        },
+      ),
+      (route) => route.isFirst,
+    );
   }
 
   @override
