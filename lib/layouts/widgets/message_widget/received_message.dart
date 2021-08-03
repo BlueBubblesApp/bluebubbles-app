@@ -224,7 +224,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
       messageColumn.add(
         Padding(
           padding: EdgeInsets.only(left: 15.0, top: 5.0, bottom: widget.message.getReactions().length > 0 ? 0.0 : 3.0),
-          child: Text(getContactName(context, contactTitle, widget.message.handle!.address)!,
+          child: Text(getContactName(context, contactTitle, widget.message.handle!.address),
               style: Theme.of(context).textTheme.subtitle1),
         ),
       );

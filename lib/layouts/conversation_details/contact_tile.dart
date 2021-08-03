@@ -128,7 +128,7 @@ class _ContactTileState extends State<ContactTile> {
       child: ListTile(
         title: (contact?.displayName != null || hideInfo || generateName)
             ? Text(
-                getContactName(context, contact?.displayName, widget.handle.address, currentChat: widget.chat)!,
+                getContactName(context, contact?.displayName ?? "", widget.handle.address, currentChat: widget.chat),
                 style: Theme.of(context).textTheme.bodyText1,
               )
             : FutureBuilder<String>(
