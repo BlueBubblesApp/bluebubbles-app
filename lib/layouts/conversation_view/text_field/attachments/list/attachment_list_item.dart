@@ -37,12 +37,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
   Future<void> loadPreview() async {
     String? mimeType = mime(widget.file.path);
     if (mimeType != null && mimeType.startsWith("video/")) {
-      preview = await VideoThumbnail.thumbnailData(
-        video: widget.file.path,
-        imageFormat: ImageFormat.PNG,
-        maxHeight: 100,
-        quality: SettingsManager().compressionQuality,
-      );
+      preview = await AttachmentHelper.getVideoThumbnail(widget.file.path);
       if (this.mounted) setState(() {});
     } else if (mimeType == null || mimeType.startsWith("image/")) {
       // Compress the file, using a dummy attachment object

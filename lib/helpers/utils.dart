@@ -460,14 +460,12 @@ Size getGifDimensions(Uint8List bytes) {
   return size;
 }
 
-Future<IMG.Size> getVideoDimensions(Attachment attachment, {Uint8List? bytes}) async {
-  Uint8List? imageData = await VideoThumbnail.thumbnailData(
-    video: AttachmentHelper.getAttachmentPath(attachment),
-    imageFormat: ImageFormat.JPEG,
-    quality: 50,
-  );
-
-  return IMG.ImageSizeGetter.getSize(IMG.MemoryInput(imageData!));
+Future<Size> getVideoDimensions(String filePath) async {
+  File cachedFile = new File("$filePath.thumbnail");
+  if (!cachedFile.existsSync()) {
+    await AttachmentHelper.getVideoThumbnail(filePath);
+  }
+  return await AttachmentHelper.getImageSizing("$filePath.thumbnail");
 }
 
 Brightness getBrightness(BuildContext context) {

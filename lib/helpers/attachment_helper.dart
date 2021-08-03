@@ -15,8 +15,10 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
-import 'package:image_size_getter/image_size_getter.dart' as IMG;
+import 'package:image_size_getter/file_input.dart';
+import 'package:image_size_getter/image_size_getter.dart' as isg;
 import 'package:permission_handler/permission_handler.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
 
 class AppleLocation {
   double? longitude;
@@ -268,6 +270,32 @@ class AttachmentHelper {
     AttachmentDownloader(attachment, onComplete: onComplete, onError: onError);
   }
 
+  static Future<Uint8List?> getVideoThumbnail(String filePath) async {
+    File cachedFile = new File("$filePath.thumbnail");
+    if (cachedFile.existsSync()) {
+      return cachedFile.readAsBytes();
+    }
+    Uint8List? thumbnail = await VideoThumbnail.thumbnailData(
+      video: filePath,
+      imageFormat: ImageFormat.JPEG,
+      quality: SettingsManager().compressionQuality,
+    );
+    if (thumbnail != null) {
+      cachedFile.writeAsBytes(thumbnail);
+    }
+    return thumbnail;
+  }
+
+  static Future<Size> getImageSizing(String filePath) async {
+    try {
+      ImageProperties size = await FlutterNativeImage.getImageProperties(filePath);
+      return Size((size.width ?? 0).toDouble(), (size.height ?? 0).toDouble());
+    } catch (_) {
+      isg.Size size = isg.ImageSizeGetter.getSize(FileInput(File(filePath)));
+      return Size(size.width.toDouble(), size.height.toDouble());
+    }
+  }
+
   static Future<Uint8List?> compressAttachment(Attachment attachment, String filePath, {int? qualityOverride}) async {
     if (attachment.mimeType == null) return null;
     // Make sure the attachment is an image or video
@@ -284,17 +312,17 @@ class AttachmentHelper {
       }
       return null;
     } else if (mimeStart == "image") {
-      ImageProperties size = await FlutterNativeImage.getImageProperties(filePath);
+      Size size = await getImageSizing(filePath);
       if (size.width != 0 && size.height != 0) {
-        attachment.width = size.width;
-        attachment.height = size.height;
+        attachment.width = size.width.toInt();
+        attachment.height = size.height.toInt();
       }
       // Don't return null here because we want to compress images that aren't gifs
     } else if (mimeStart == "video") {
-      IMG.Size size = await getVideoDimensions(attachment);
+      Size size = await getVideoDimensions(filePath);
       if (size.width != 0 && size.height != 0) {
-        attachment.width = size.width;
-        attachment.height = size.height;
+        attachment.width = size.width.toInt();
+        attachment.height = size.height.toInt();
       }
       return null;
     }

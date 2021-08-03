@@ -15,7 +15,6 @@ import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:image_size_getter/image_size_getter.dart';
 import 'package:path/path.dart';
 import 'package:tuple/tuple.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
@@ -142,14 +141,10 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
 
   Future<void> getVideoPreview(File file) async {
     if (previewImage != null) return;
-    previewImage = await VideoThumbnail.thumbnailData(
-      video: file.path,
-      imageFormat: ImageFormat.JPEG,
-      quality: 50,
-    );
-    Size size = ImageSizeGetter.getSize(MemoryInput(previewImage!));
-    widget.attachment.width = size.width;
-    widget.attachment.height = size.height;
+    previewImage = await AttachmentHelper.getVideoThumbnail(file.path);
+    Size size = await AttachmentHelper.getImageSizing("${file.path}.thumbnail");
+    widget.attachment.width = size.width.toInt();
+    widget.attachment.height = size.height.toInt();
     aspectRatio = size.width / size.height;
     if (this.mounted) setState(() {});
   }

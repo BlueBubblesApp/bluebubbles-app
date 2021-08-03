@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
@@ -85,15 +86,8 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
   }
 
   void getThumbnail() async {
-    thumbnail = CurrentChat.of(context)!.getImageData(widget.attachment);
-    if (thumbnail != null) return;
-    thumbnail = await VideoThumbnail.thumbnailData(
-      video: widget.file.path,
-      imageFormat: ImageFormat.JPEG,
-      quality: SettingsManager().compressionQuality,
-    );
+    thumbnail = await AttachmentHelper.getVideoThumbnail(widget.file.path);
     if (thumbnail == null) return;
-    CurrentChat.of(context)?.saveImageData(thumbnail!, widget.attachment);
     if (this.mounted) this.setState(() {});
   }
 
