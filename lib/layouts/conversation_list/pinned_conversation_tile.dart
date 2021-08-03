@@ -286,34 +286,32 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
                   ),
                 ),
               ),
-              if (!widget.chat.isArchived!)
-                PopupMenuItem(
-                  padding: EdgeInsets.zero,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () async {
-                      await widget.chat.toggleMute(!widget.chat.isMuted!);
-                      if (this.mounted) setState(() {});
-                      Navigator.pop(context);
-                    },
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 12.0),
-                      child: Row(
-                        children: <Widget>[
-                          Padding(
-                            padding: EdgeInsets.only(right: 10),
-                            child: Icon(
-                              widget.chat.isMuted! ? Icons.notifications_active : Icons.notifications_off,
-                              color: context.textTheme.bodyText1!.color,
-                            ),
+              PopupMenuItem(
+                padding: EdgeInsets.zero,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () async {
+                    await widget.chat.toggleMute(!widget.chat.isMuted!);
+                    if (this.mounted) setState(() {});
+                    Navigator.pop(context);
+                  },
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 12.0),
+                    child: Row(
+                      children: <Widget>[
+                        Padding(
+                          padding: EdgeInsets.only(right: 10),
+                          child: Icon(
+                            widget.chat.isMuted! ? Icons.notifications_active : Icons.notifications_off,
+                            color: context.textTheme.bodyText1!.color,
                           ),
-                          Text(widget.chat.isMuted! ? 'Show Alerts' : 'Hide Alerts',
-                              style: context.textTheme.bodyText1!),
-                        ],
-                      ),
+                        ),
+                        Text(widget.chat.isMuted! ? 'Show Alerts' : 'Hide Alerts', style: context.textTheme.bodyText1!),
+                      ],
                     ),
                   ),
                 ),
+              ),
               PopupMenuItem(
                 padding: EdgeInsets.zero,
                 child: GestureDetector(
@@ -361,45 +359,43 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
                         Padding(
                           padding: EdgeInsets.only(right: 10),
                           child: Icon(
-                            widget.chat.isArchived! ? Icons.restore_from_trash_rounded : Icons.delete,
+                            widget.chat.isArchived! ? Icons.unarchive : Icons.archive,
                             color: context.textTheme.bodyText1!.color,
                           ),
                         ),
-                        Text(widget.chat.isArchived! ? 'Unarchive' : 'Archive',
-                            style: context.textTheme.bodyText1!),
+                        Text(widget.chat.isArchived! ? 'Unarchive' : 'Archive', style: context.textTheme.bodyText1!),
                       ],
                     ),
                   ),
                 ),
               ),
-              if (widget.chat.isArchived!)
-                PopupMenuItem(
-                  padding: EdgeInsets.zero,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () async {
-                      ChatBloc().deleteChat(widget.chat);
-                      Chat.deleteChat(widget.chat);
-                      if (this.mounted) setState(() {});
-                      Navigator.pop(context);
-                    },
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 12.0),
-                      child: Row(
-                        children: <Widget>[
-                          Padding(
-                            padding: EdgeInsets.only(right: 10),
-                            child: Icon(
-                              Icons.delete_forever,
-                              color: context.textTheme.bodyText1!.color,
-                            ),
+              PopupMenuItem(
+                padding: EdgeInsets.zero,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () async {
+                    ChatBloc().deleteChat(widget.chat);
+                    Chat.deleteChat(widget.chat);
+                    if (this.mounted) setState(() {});
+                    Navigator.pop(context);
+                  },
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 12.0),
+                    child: Row(
+                      children: <Widget>[
+                        Padding(
+                          padding: EdgeInsets.only(right: 10),
+                          child: Icon(
+                            Icons.delete_forever,
+                            color: context.textTheme.bodyText1!.color,
                           ),
-                          Text('Delete', style: context.textTheme.bodyText1!),
-                        ],
-                      ),
+                        ),
+                        Text('Delete', style: context.textTheme.bodyText1!),
+                      ],
                     ),
                   ),
                 ),
+              ),
             ],
           );
         },
