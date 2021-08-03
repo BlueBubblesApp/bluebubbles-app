@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/setup_bloc.dart';
@@ -449,21 +450,7 @@ class _Cupertino extends StatelessWidget {
                               style: Theme.of(context).textTheme.subtitle1,
                             ),
                           ),
-                          SettingsManager().settings.skin.value == Skins.iOS ? Theme(
-                            data: ThemeData(
-                              cupertinoOverrideTheme: CupertinoThemeData(
-                                  brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor)),
-                            ),
-                            child: CupertinoActivityIndicator(
-                              radius: 6.5,
-                            ),
-                          ) : Container(
-                            constraints: BoxConstraints(maxHeight: 15, maxWidth: 15),
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.0,
-                              valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
-                            )
-                          ),
+                          buildProgressIndicator(context, width: 15, height: 15),
                         ],
                       ),
                     ),
@@ -850,21 +837,7 @@ class __MaterialState extends State<_Material> {
                           style: Theme.of(context).textTheme.subtitle1,
                         ),
                       ),
-                      SettingsManager().settings.skin.value == Skins.iOS ? Theme(
-                        data: ThemeData(
-                          cupertinoOverrideTheme: CupertinoThemeData(
-                              brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor)),
-                        ),
-                        child: CupertinoActivityIndicator(
-                          radius: 6.5,
-                        ),
-                      ) : Container(
-                          constraints: BoxConstraints(maxHeight: 15, maxWidth: 15),
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.0,
-                            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
-                          )
-                      ),
+                      buildProgressIndicator(context, width: 15, height: 15),
                     ],
                   ),
                 ),
@@ -1295,21 +1268,7 @@ class _SamsungState extends State<_Samsung> {
                           style: Theme.of(context).textTheme.subtitle1,
                         ),
                       ),
-                      SettingsManager().settings.skin.value == Skins.iOS ? Theme(
-                        data: ThemeData(
-                          cupertinoOverrideTheme: CupertinoThemeData(
-                              brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor)),
-                        ),
-                        child: CupertinoActivityIndicator(
-                          radius: 6.5,
-                        ),
-                      ) : Container(
-                          constraints: BoxConstraints(maxHeight: 15, maxWidth: 15),
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.0,
-                            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
-                          )
-                      ),
+                      buildProgressIndicator(context, width: 15, height: 15),
                     ],
                   ),
                 ),
