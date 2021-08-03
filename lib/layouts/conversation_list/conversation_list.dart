@@ -2,11 +2,10 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
 
-import 'package:bluebubbles/helpers/ui_helpers.dart';
-import 'package:get/get.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_tile.dart';
 import 'package:bluebubbles/layouts/conversation_list/pinned_conversation_tile.dart';
@@ -457,7 +456,9 @@ class _Cupertino extends StatelessWidget {
                 if (context.mediaQuery.orientation != Orientation.portrait) {
                   colCount = (colCount / context.mediaQuerySize.height * context.mediaQuerySize.width).floor();
                 }
-                int usedRowCount = min((ChatBloc().chats.archivedHelper(showArchived).bigPinHelper(true).length / colCount).ceil(), rowCount);
+                int usedRowCount = min(
+                    (ChatBloc().chats.archivedHelper(showArchived).bigPinHelper(true).length / colCount).ceil(),
+                    rowCount);
                 int maxOnPage = rowCount * colCount;
                 PageController _controller = PageController();
                 int _pageCount =
@@ -474,7 +475,8 @@ class _Cupertino extends StatelessWidget {
                   ),
                   sliver: SliverToBoxAdapter(
                     child: ConstrainedBox(
-                      constraints: BoxConstraints(maxHeight: (context.mediaQuerySize.width - 20) / colCount * usedRowCount),
+                      constraints:
+                          BoxConstraints(maxHeight: (context.mediaQuerySize.width - 20) / colCount * usedRowCount),
                       child: Stack(
                         alignment: Alignment.bottomCenter,
                         children: <Widget>[
@@ -1079,10 +1081,6 @@ class __MaterialState extends State<_Material> {
                                         },
                                       ));
                       } else {
-                        if (!widget.parent.widget.showArchivedChats &&
-                            ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!) return Container();
-                        if (widget.parent.widget.showArchivedChats &&
-                            !ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!) return Container();
                         return ConversationTile(
                           key: UniqueKey(),
                           chat: ChatBloc().chats.archivedHelper(showArchived)[index],
