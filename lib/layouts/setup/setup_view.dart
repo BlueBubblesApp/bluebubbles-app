@@ -81,7 +81,7 @@ class _SetupViewState extends State<SetupView> {
             SyncingMessages(
               controller: controller,
             ),
-            ThemeSelector(),
+            //ThemeSelector(),
           ],
         ),
         Center(
@@ -91,7 +91,7 @@ class _SetupViewState extends State<SetupView> {
               Padding(
                 padding: EdgeInsets.only(bottom: 20),
                 child: Text(
-                  "$currentPage/8",
+                  "$currentPage/7",
                   style: Theme.of(context).textTheme.bodyText1,
                 ),
               ),
