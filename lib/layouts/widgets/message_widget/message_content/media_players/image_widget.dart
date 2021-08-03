@@ -158,11 +158,11 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
                     valueColor: new AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor)))),
       );
     } else {
-      if ((widget.attachment.width!.toDouble() / widget.attachment.height!.toDouble()).isNaN)
+      if (((widget.attachment.width?.toDouble() ?? 0) / (widget.attachment.height?.toDouble() ?? 0)).isNaN)
           return Container(
             padding: EdgeInsets.all(5),
-            width: isLoaded ? widget.attachment.width!.toDouble() : null,
-            height: isLoaded ? widget.attachment.height!.toDouble() : 150,
+            width: widget.attachment.width?.toDouble(),
+            height: widget.attachment.height?.toDouble() ?? 150,
             child: ClipRRect(
               borderRadius: BorderRadius.circular(20),
               child: Container(
@@ -174,12 +174,12 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
             ),
           );
       return AspectRatio(
-        aspectRatio: isLoaded ? (widget.attachment.width!.toDouble() / widget.attachment.height!.toDouble()).abs()
-            : context.width / context.height,
+        aspectRatio: ((widget.attachment.width?.toDouble() ?? context.width) /
+            (widget.attachment.height?.toDouble() ?? context.height)).abs(),
         child: Container(
           padding: EdgeInsets.all(5),
-          width: isLoaded ? widget.attachment.width!.toDouble() : null,
-          height: isLoaded ? widget.attachment.height!.toDouble() : 150,
+          width: widget.attachment.width?.toDouble(),
+          height: widget.attachment.height?.toDouble() ?? 150,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(20),
             child: Container(
