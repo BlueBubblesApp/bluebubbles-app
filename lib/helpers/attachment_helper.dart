@@ -258,43 +258,6 @@ class AttachmentHelper {
             (SettingsManager().settings.onlyWifiDownload.value && status == ConnectivityResult.wifi)));
   }
 
-  static Future<void> setDimensions(Attachment attachment, {Uint8List? data}) async {
-    // Handle break cases
-    if (attachment.width != null && attachment.height != null && attachment.height != 0 && attachment.width != 0)
-      return;
-    if (attachment.mimeType == null) return;
-
-    // Make sure the attachment is an image or video
-    String mimeStart = attachment.mimeType!.split("/").first;
-    if (!["image", "video"].contains(mimeStart)) return;
-
-    Uint8List? previewData = data;
-    if (data == null) {
-      previewData = new File(AttachmentHelper.getAttachmentPath(attachment)).readAsBytesSync();
-    }
-
-    if (attachment.mimeType == "image/gif") {
-      Size size = getGifDimensions(previewData!);
-
-      if (size.width != 0 && size.height != 0) {
-        attachment.width = size.width.toInt();
-        attachment.height = size.height.toInt();
-      }
-    } else if (mimeStart == "image") {
-      IMG.Size size = IMG.ImageSizeGetter.getSize(IMG.MemoryInput(previewData!));
-      if (size.width != 0 && size.height != 0) {
-        attachment.width = size.width;
-        attachment.height = size.height;
-      }
-    } else if (mimeStart == "video") {
-      IMG.Size size = await getVideoDimensions(attachment);
-      if (size.width != 0 && size.height != 0) {
-        attachment.width = size.width;
-        attachment.height = size.height;
-      }
-    }
-  }
-
   static Future<void> redownloadAttachment(Attachment attachment, {Function()? onComplete, Function()? onError}) async {
     // 1. Delete the old file
     File file = new File(attachment.getPath());
@@ -306,22 +269,41 @@ class AttachmentHelper {
   }
 
   static Future<Uint8List?> compressAttachment(Attachment attachment, String filePath, {int? qualityOverride}) async {
-    await setDimensions(attachment);
-    int quality = qualityOverride ?? SettingsManager().compressionQuality;
+    if (attachment.mimeType == null) return null;
+    // Make sure the attachment is an image or video
     String mimeStart = attachment.mimeType!.split("/").first;
-    if (mimeStart != "image") return null;
+    if (!["image", "video"].contains(mimeStart)) return null;
+    // Get byte data
+    Uint8List previewData = new File(AttachmentHelper.getAttachmentPath(attachment)).readAsBytesSync();
+    // Update sizing
+    if (attachment.mimeType == "image/gif") {
+      Size size = getGifDimensions(previewData);
+      if (size.width != 0 && size.height != 0) {
+        attachment.width = size.width.toInt();
+        attachment.height = size.height.toInt();
+      }
+      return null;
+    } else if (mimeStart == "image") {
+      ImageProperties size = await FlutterNativeImage.getImageProperties(filePath);
+      if (size.width != 0 && size.height != 0) {
+        attachment.width = size.width;
+        attachment.height = size.height;
+      }
+      // Don't return null here because we want to compress images that aren't gifs
+    } else if (mimeStart == "video") {
+      IMG.Size size = await getVideoDimensions(attachment);
+      if (size.width != 0 && size.height != 0) {
+        attachment.width = size.width;
+        attachment.height = size.height;
+      }
+      return null;
+    }
+
+    int quality = qualityOverride ?? SettingsManager().compressionQuality;
     // Check if the compressed file exists
     File cachedFile = new File("$filePath.${quality.toString()}.compressed");
     if (cachedFile.existsSync()) {
       return cachedFile.readAsBytes();
-    }
-
-    // Read the image properties using FlutterNativeImage
-    ImageProperties properties = await FlutterNativeImage.getImageProperties(filePath);
-    if (properties.height != 0 && properties.width != 0) {
-      // Save the new height in the attachment
-      attachment.height = properties.height;
-      attachment.width = properties.width;
     }
 
     // If we have no metadata, fetch it from the file
