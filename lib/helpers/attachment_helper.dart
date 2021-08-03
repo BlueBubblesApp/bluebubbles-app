@@ -306,8 +306,10 @@ class AttachmentHelper {
   }
 
   static Future<Uint8List?> compressAttachment(Attachment attachment, String filePath, {int? qualityOverride}) async {
+    await setDimensions(attachment);
     int quality = qualityOverride ?? SettingsManager().compressionQuality;
-
+    String mimeStart = attachment.mimeType!.split("/").first;
+    if (mimeStart != "image") return null;
     // Check if the compressed file exists
     File cachedFile = new File("$filePath.${quality.toString()}.compressed");
     if (cachedFile.existsSync()) {
