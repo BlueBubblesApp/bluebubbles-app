@@ -29,14 +29,21 @@ class SetupOutputData {
 }
 
 class SetupBloc {
+  // Setup as a Singleton
+  static final SetupBloc _setupBloc = SetupBloc._internal();
+  SetupBloc._internal();
+  factory SetupBloc() {
+    return _setupBloc;
+  }
+
   final Rxn<SetupData> data = Rxn<SetupData>();
   final Rxn<SocketState> connectionStatus = Rxn<SocketState>();
+  final RxBool isSyncing = false.obs;
   StreamSubscription? connectionSubscription;
 
   double _progress = 0.0;
   int _currentIndex = 0;
   List chats = [];
-  final RxBool isSyncing = false.obs;
   double numberOfMessagesPerPage = 25;
   bool downloadAttachments = false;
   bool skipEmptyChats = true;
@@ -45,8 +52,6 @@ class SetupBloc {
   int? processId;
 
   List<SetupOutputData> output = [];
-
-  SetupBloc();
 
   Future<void> connectToServer(FCMData data, String serverURL, String password) async {
     Settings settingsCopy = SettingsManager().settings;
@@ -239,9 +244,7 @@ class SetupBloc {
     processId = SocketManager().addSocketProcess(([bool finishWithError = false]) {});
 
     // if (onConnectionError != null) this.onConnectionError = onConnectionError;
-    print("UPDATING");
     isSyncing.value = true;
-    print(isSyncing.value);
     _progress = 1;
 
     // Store the time we started syncing
@@ -318,7 +321,6 @@ class SetupBloc {
     _progress = 0.0;
     _currentIndex = 0;
     chats = [];
-    isSyncing.value = false;
     numberOfMessagesPerPage = 25;
     downloadAttachments = false;
     skipEmptyChats = true;

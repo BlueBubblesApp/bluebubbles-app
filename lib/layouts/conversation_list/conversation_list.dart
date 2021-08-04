@@ -101,7 +101,7 @@ class _ConversationListState extends State<ConversationList> {
     return Obx(() {
       if (!SettingsManager().settings.showSyncIndicator.value) return SizedBox.shrink();
       if (!SetupBloc().isSyncing.value) return Container();
-      return buildProgressIndicator(context, width: 12);
+      return buildProgressIndicator(context, width: 10);
     });
   }
 
