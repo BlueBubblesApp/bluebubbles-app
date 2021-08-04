@@ -110,7 +110,12 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       if (!message.isGroupEvent()) return;
 
       // If it's a group event, let's fetch the new information and save it
-      await fetchChatSingleton(widget.chat!.guid!);
+      try {
+        await fetchChatSingleton(widget.chat!.guid!);
+      } catch (ex) {
+        debugPrint(ex.toString());
+      }
+
       setNewChatData(forceUpdate: true);
     });
   }

@@ -29,14 +29,21 @@ class SetupOutputData {
 }
 
 class SetupBloc {
+  // Setup as a Singleton
+  static final SetupBloc _setupBloc = SetupBloc._internal();
+  SetupBloc._internal();
+  factory SetupBloc() {
+    return _setupBloc;
+  }
+
   final Rxn<SetupData> data = Rxn<SetupData>();
   final Rxn<SocketState> connectionStatus = Rxn<SocketState>();
+  final RxBool isSyncing = false.obs;
   StreamSubscription? connectionSubscription;
 
   double _progress = 0.0;
   int _currentIndex = 0;
   List chats = [];
-  bool isSyncing = false;
   double numberOfMessagesPerPage = 25;
   bool downloadAttachments = false;
   bool skipEmptyChats = true;
@@ -45,8 +52,6 @@ class SetupBloc {
   int? processId;
 
   List<SetupOutputData> output = [];
-
-  SetupBloc();
 
   Future<void> connectToServer(FCMData data, String serverURL, String password) async {
     Settings settingsCopy = SettingsManager().settings;
@@ -65,7 +70,7 @@ class SetupBloc {
     connectionSubscription = SocketManager().connectionStateStream.listen((event) {
       connectionStatus.value = event;
 
-      if (isSyncing) {
+      if (isSyncing.value) {
         switch (event) {
           case SocketState.DISCONNECTED:
             addOutput("Disconnected from socket!", SetupOutputType.ERROR);
@@ -98,11 +103,11 @@ class SetupBloc {
 
   Future<void> startFullSync(Settings settings) async {
     // Make sure we aren't already syncing
-    if (isSyncing) return;
+    if (isSyncing.value) return;
 
     // Setup syncing process
     processId = SocketManager().addSocketProcess(([bool finishWithError = false]) {});
-    isSyncing = true;
+    isSyncing.value = true;
 
     // Set the last sync date (for incremental, even though this isn't incremental)
     // We won't try an incremental sync until the last (full) sync date is set
@@ -230,7 +235,7 @@ class SetupBloc {
       {String? chatGuid, bool saveDate = true, Function? onConnectionError, Function? onComplete}) async {
     // If we are already syncing, don't sync again
     // Or, if we haven't finished setup, or we aren't connected, don't sync
-    if (isSyncing || !settings.finishedSetup.value || SocketManager().state != SocketState.CONNECTED) return;
+    if (isSyncing.value || !settings.finishedSetup.value || SocketManager().state != SocketState.CONNECTED) return;
 
     // Reset the progress
     _progress = 0;
@@ -239,12 +244,13 @@ class SetupBloc {
     processId = SocketManager().addSocketProcess(([bool finishWithError = false]) {});
 
     // if (onConnectionError != null) this.onConnectionError = onConnectionError;
-    isSyncing = true;
+    isSyncing.value = true;
     _progress = 1;
 
     // Store the time we started syncing
     addOutput("Starting incremental sync for messages since: ${settings.lastIncrementalSync}", SetupOutputType.LOG);
     int syncStart = DateTime.now().millisecondsSinceEpoch;
+    await Future.delayed(Duration(seconds: 3));
 
     // Build request params. We want all details on the messages
     Map<String, dynamic> params = Map();
@@ -307,7 +313,7 @@ class SetupBloc {
   }
 
   void closeSync() {
-    isSyncing = false;
+    isSyncing.value = false;
     if (processId != null) SocketManager().finishSocketProcess(processId);
     data.value = null;
     connectionStatus.value = null;
@@ -315,7 +321,6 @@ class SetupBloc {
     _progress = 0.0;
     _currentIndex = 0;
     chats = [];
-    isSyncing = false;
     numberOfMessagesPerPage = 25;
     downloadAttachments = false;
     skipEmptyChats = true;

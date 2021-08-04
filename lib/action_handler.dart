@@ -439,8 +439,12 @@ class ActionHandler {
     if (currentChat != null) return;
 
     // Fetch chat data from server
-    newChat = await SocketManager().fetchChat(newChat.guid!);
-    await ChatBloc().updateChatPosition(newChat);
+    try {
+      newChat = await SocketManager().fetchChat(newChat.guid!);
+      await ChatBloc().updateChatPosition(newChat);
+    } catch (ex) {
+      debugPrint(ex.toString());
+    }
   }
 
   /// Handles the ingestion of a 'new-message' event from the server.

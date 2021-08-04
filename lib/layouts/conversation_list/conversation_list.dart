@@ -98,30 +98,10 @@ class _ConversationListState extends State<ConversationList> {
   }
 
   Widget getSyncIndicatorWidget() {
-    if (!SettingsManager().settings.showSyncIndicator.value) return SizedBox.shrink();
-
     return Obx(() {
-      if ((SetupBloc().data.value?.progress ?? 0) < 1 || (SetupBloc().data.value?.progress ?? 100) >= 100)
-        return Container();
-
-      if (SettingsManager().settings.skin.value == Skins.iOS) {
-        return Theme(
-          data: ThemeData(
-            cupertinoOverrideTheme:
-                CupertinoThemeData(brightness: ThemeData.estimateBrightnessForColor(context.theme.backgroundColor)),
-          ),
-          child: CupertinoActivityIndicator(
-            radius: 6.5,
-          ),
-        );
-      }
-
-      return Container(
-          constraints: BoxConstraints(maxHeight: 15, maxWidth: 15),
-          child: CircularProgressIndicator(
-            strokeWidth: 2.0,
-            valueColor: AlwaysStoppedAnimation<Color>(context.theme.primaryColor),
-          ));
+      if (!SettingsManager().settings.showSyncIndicator.value) return SizedBox.shrink();
+      if (!SetupBloc().isSyncing.value) return Container();
+      return buildProgressIndicator(context, width: 10);
     });
   }
 
