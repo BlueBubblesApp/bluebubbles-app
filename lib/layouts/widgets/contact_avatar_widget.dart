@@ -196,14 +196,14 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
           color: context.theme.backgroundColor, // border color
           shape: BoxShape.circle,
         ),
-        child: CircleAvatar(
-          radius: (widget.size != null) ? widget.size! / 2 : 20,
-          backgroundImage:
-              !(SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactPhotos.value)
-                  ? state!.contactImage
-                  : null,
-          child: Obx(
-            () => state!.contactImage == null ||
+        child: Obx(
+          () => CircleAvatar(
+            radius: (widget.size != null) ? widget.size! / 2 : 20,
+            backgroundImage:
+                !(SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactPhotos.value)
+                    ? state!.contactImage
+                    : null,
+            child: state!.contactImage == null ||
                     (SettingsManager().settings.redactedMode.value &&
                         SettingsManager().settings.hideContactPhotos.value)
                 ? Container(
@@ -243,7 +243,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
                       alignment: AlignmentDirectional.center,
                     ),
                   )
-                : Container(),
+                : null,
           ),
         ),
       ),

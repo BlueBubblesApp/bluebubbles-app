@@ -65,8 +65,8 @@ class _CameraWidgetState extends State<CameraWidget> with WidgetsBindingObserver
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) async {
     // Call the [LifeCycleManager] events based on the [state]
-    if (mounted && state == AppLifecycleState.paused ||
-        state == AppLifecycleState.inactive && BlueBubblesTextField.of(context)!.cameraController != null) {
+    if (mounted && (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) && BlueBubblesTextField.of(context)?.cameraController != null) {
       await BlueBubblesTextField.of(context)!.disposeCameras();
     } else if (state == AppLifecycleState.resumed) {
       initCameras();
