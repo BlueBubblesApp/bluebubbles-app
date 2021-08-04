@@ -406,10 +406,9 @@ class Message {
   }
 
   Future<Message> fetchAssociatedMessages() async {
-    if (this.associatedMessages.isNotEmpty
-        && this.associatedMessages.length == 1
-        && this.associatedMessages[0].guid == this.guid
-    ) {
+    if (this.associatedMessages.isNotEmpty &&
+        this.associatedMessages.length == 1 &&
+        this.associatedMessages[0].guid == this.guid) {
       return this;
     }
     associatedMessages = await Message.find({"associatedMessageGuid": this.guid});
@@ -503,8 +502,7 @@ class Message {
   }
 
   bool isUrlPreview() {
-    return this.balloonBundleId != null &&
-        this.balloonBundleId == "com.apple.messages.URLBalloonProvider" &&
+    return this.balloonBundleId != null && this.balloonBundleId == "com.apple.messages.URLBalloonProvider" ||
         this.hasDdResults!;
   }
 
