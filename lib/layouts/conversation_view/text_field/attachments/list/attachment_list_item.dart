@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
@@ -104,12 +105,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
         return Container(
           height: 100,
           child: Center(
-            child: LinearProgressIndicator(
-              backgroundColor: Colors.grey,
-              valueColor: AlwaysStoppedAnimation(
-                Theme.of(context).primaryColor,
-              ),
-            ),
+            child: buildProgressIndicator(context),
           ),
         );
       } else {
