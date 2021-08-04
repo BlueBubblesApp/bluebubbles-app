@@ -71,8 +71,8 @@ public class MethodCallHandler {
         } else if(call.method.equals(PushShareTargets.TAG)) {
             new PushShareTargets(context, call, result).Handle();
         } else if (call.method.equals("get-starting-intent")) {
-            String intent = ((MainActivity) context).getIntent().getStringExtra("chatGUID");
-            ((MainActivity) context).getIntent().putExtra("chatGUID", (String) null);
+            String intent = ((MainActivity) context).getIntent().getStringExtra("chatGuid");
+            ((MainActivity) context).getIntent().putExtra("chatGuid", (String) null);
             result.success(intent);
         } else if (call.method.equals(InitializeBackgroundHandle.TAG)) {
             new InitializeBackgroundHandle(context, call, result).Handle();

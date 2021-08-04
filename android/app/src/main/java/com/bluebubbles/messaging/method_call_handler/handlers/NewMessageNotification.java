@@ -54,6 +54,37 @@ public class NewMessageNotification implements Handler {
     @RequiresApi(api = Build.VERSION_CODES.P)
     @Override
     public void Handle() {
+        // Information we need from Dart code
+        // - Chat GUID
+        // - Chat.isGroup
+        // - Chat Title / Name
+        // - Contact Name
+        // - Contact Avatar
+        // - Message Text
+        // - Message.isFromMe
+        // - Message.dateCreated
+        // - Chat Icon (Group chat icon)
+        // - Notification visibility
+
+        // These are new, not yet implemented on the Dart side
+        // Chat stuff
+        // String chatGuid = (String) call.argument("chatGuid");
+        // Boolean chatIsGroup = (Boolean) call.argument("chatIsGroup");
+        // String chatTitle = (String) call.argument("chatTitle");
+        // byte[] chatIcon = (byte[]) call.argument("chatIcon");
+
+        // // Contact stuff
+        // String contactName = (String) call.argument("contactName");
+        // byte[] contactAvatar = (byte[]) call.argument("contactAvatar");
+
+        // // Message stuff
+        // String messageText = (String) call.argument("messageText");
+        // String messageDate = (String) call.argument("messageDate");
+        // Boolean messageIsFromMe = (Boolean) call.argument("messageIsFromMe");
+
+        // // Notification stuff
+        // Integer notificationVisibility = (Integer) call.argument("visibility");
+
         // Find any notifications that match the same chat
         NotificationCompat.MessagingStyle style = null;
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
@@ -131,7 +162,7 @@ public class NewMessageNotification implements Handler {
                 existingNotificationId,
                 new Intent(context, MainActivity.class)
                         .putExtra("id", existingNotificationId)
-                        .putExtra("chatGUID",
+                        .putExtra("chatGuid",
                                 (String) call.argument("group"))
                         .putExtra("bubble", true)
                         .setType("NotificationOpen"),

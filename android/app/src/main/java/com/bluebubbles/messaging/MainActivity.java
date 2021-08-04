@@ -92,10 +92,10 @@ public class MainActivity extends FlutterFragmentActivity {
         } else {
             if (type.equals("NotificationOpen")) {
                 Log.d("Notifications", "Tapped on notification with ID: " + intent.getExtras().getInt("id"));
-                startingChat = intent.getStringExtra("chatGUID");
+                startingChat = intent.getStringExtra("chatGuid");
 
                 Log.d("Notifications", "Opening Chat with GUID: " + startingChat);
-                new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("ChatOpen", intent.getExtras().getString("chatGUID"));
+                new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("ChatOpen", intent.getExtras().getString("chatGuid"));
             } else if (type.equals(SocketIssueWarning.TYPE)) {
                 new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("socket-error-open", null);
             }
