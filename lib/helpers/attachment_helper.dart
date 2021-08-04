@@ -312,7 +312,8 @@ class AttachmentHelper {
     }
   }
 
-  static Future<Uint8List?> compressAttachment(Attachment attachment, String filePath, {int? qualityOverride, bool getActualPath = true}) async {
+  static Future<Uint8List?> compressAttachment(Attachment attachment, String filePath,
+      {int? qualityOverride, bool getActualPath = true}) async {
     if (attachment.mimeType == null) return null;
 
     if (attachment.metadata == null) {
@@ -323,17 +324,20 @@ class AttachmentHelper {
     String mimeStart = attachment.mimeType!.split("/").first;
     if (!["image", "video"].contains(mimeStart)) return null;
     // Get byte data
-    Uint8List previewData = getActualPath
-        ? new File(AttachmentHelper.getAttachmentPath(attachment)).readAsBytesSync()
-        : new File(filePath).readAsBytesSync();
+
     // Update sizing
     if (attachment.mimeType == "image/gif") {
+      Uint8List previewData = getActualPath
+          ? new File(AttachmentHelper.getAttachmentPath(attachment)).readAsBytesSync()
+          : new File(filePath).readAsBytesSync();
+
       Size size = getGifDimensions(previewData);
       if (size.width != 0 && size.height != 0) {
         attachment.width = size.width.toInt();
         attachment.height = size.height.toInt();
       }
-      return null;
+
+      return previewData;
     } else if (mimeStart == "image") {
       ImageProperties props = await FlutterNativeImage.getImageProperties(filePath);
       Size size = await getImageSizing(filePath, properties: props);
