@@ -12,7 +12,6 @@ import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.da
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
@@ -29,11 +28,9 @@ import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:get/get.dart';
 import 'package:html/parser.dart';
 import 'package:http/http.dart' show get;
-import 'package:image_size_getter/image_size_getter.dart' as IMG;
 import 'package:intl/intl.dart' as intl;
 import 'package:slugify/slugify.dart';
 import 'package:video_player/video_player.dart';
-import 'package:video_thumbnail/video_thumbnail.dart';
 
 DateTime? parseDate(dynamic value) {
   if (value == null) return null;

@@ -36,7 +36,7 @@ class SetupBloc {
   double _progress = 0.0;
   int _currentIndex = 0;
   List chats = [];
-  RxBool isSyncing = false.obs;
+  final RxBool isSyncing = false.obs;
   double numberOfMessagesPerPage = 25;
   bool downloadAttachments = false;
   bool skipEmptyChats = true;

@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';

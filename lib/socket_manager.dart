@@ -575,7 +575,7 @@ class SocketManager {
     params["chatGuid"] = chatGuid;
     params["withParticipants"] = withParticipants;
     SocketManager().sendMessage("get-chat", params, (data) async {
-      if (data['status'] != 200) {
+      if (data['status'] != 200 && !completer.isCompleted) {
         return completer.completeError(new Exception(data['error']['message']));
       }
 

@@ -8,7 +8,6 @@ import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/material.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:path/path.dart' as path;
-import 'package:video_thumbnail/video_thumbnail.dart';
 
 class AttachmentListItem extends StatefulWidget {
   AttachmentListItem({
@@ -43,7 +42,8 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
       // Compress the file, using a dummy attachment object
       preview = await AttachmentHelper.compressAttachment(
           new Attachment(mimeType: mimeType, transferName: widget.file.absolute.path, width: 100, height: 100),
-          widget.file.absolute.path, getActualPath: false);
+          widget.file.absolute.path,
+          getActualPath: false);
       if (this.mounted) setState(() {});
     }
   }

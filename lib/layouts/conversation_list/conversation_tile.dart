@@ -91,7 +91,12 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
       if (!message.isGroupEvent()) return;
 
       // If it's a group event, let's fetch the new information and save it
-      await fetchChatSingleton(widget.chat.guid!);
+      try {
+        await fetchChatSingleton(widget.chat.guid!);
+      } catch (ex) {
+        debugPrint(ex.toString());
+      }
+
       this.setNewChatData(forceUpdate: true);
     });
   }
@@ -150,68 +155,68 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
 
   Widget buildSlider(Widget child) {
     return Obx(() => Slidable(
-      actionPane: SlidableStrechActionPane(),
-      actionExtentRatio: 0.2,
-      actions: [
-        if (SettingsManager().settings.iosShowPin.value)
-          IconSlideAction(
-            caption: widget.chat.isPinned! ? 'Unpin' : 'Pin',
-            color: Colors.yellow[800],
-            foregroundColor: Colors.white,
-            icon: widget.chat.isPinned! ? Icons.star_outline : Icons.star,
-            onTap: () async {
-              await widget.chat.togglePin(!widget.chat.isPinned!);
-              EventDispatcher().emit("refresh", null);
-              if (this.mounted) setState(() {});
-            },
-          ),
-      ],
-      secondaryActions: <Widget>[
-        if (!widget.chat.isArchived! && SettingsManager().settings.iosShowAlert.value)
-          IconSlideAction(
-            caption: widget.chat.isMuted! ? 'Show Alerts' : 'Hide Alerts',
-            color: Colors.purple[700],
-            icon: widget.chat.isMuted! ? Icons.notifications_active : Icons.notifications_off,
-            onTap: () async {
-              await widget.chat.toggleMute(!widget.chat.isMuted!);
-              if (this.mounted) setState(() {});
-            },
-          ),
-        if (SettingsManager().settings.iosShowDelete.value)
-          IconSlideAction(
-            caption: "Delete",
-            color: Colors.red,
-            icon: Icons.delete_forever,
-            onTap: () async {
-              ChatBloc().deleteChat(widget.chat);
-              Chat.deleteChat(widget.chat);
-            },
-          ),
-        if (SettingsManager().settings.iosShowMarkRead.value)
-          IconSlideAction(
-            caption: widget.chat.hasUnreadMessage! ? 'Mark Read' : 'Mark Unread',
-            color: Colors.blue,
-            icon: widget.chat.hasUnreadMessage! ? Icons.mark_chat_read : Icons.mark_chat_unread,
-            onTap: () {
-              ChatBloc().toggleChatUnread(widget.chat, !widget.chat.hasUnreadMessage!);
-            },
-          ),
-        if (SettingsManager().settings.iosShowArchive.value)
-          IconSlideAction(
-            caption: widget.chat.isArchived! ? 'UnArchive' : 'Archive',
-            color: widget.chat.isArchived! ? Colors.blue : Colors.red,
-            icon: widget.chat.isArchived! ? Icons.unarchive : Icons.archive,
-            onTap: () {
-              if (widget.chat.isArchived!) {
-                ChatBloc().unArchiveChat(widget.chat);
-              } else {
-                ChatBloc().archiveChat(widget.chat);
-              }
-            },
-          ),
-      ],
-      child: child,
-    ));
+          actionPane: SlidableStrechActionPane(),
+          actionExtentRatio: 0.2,
+          actions: [
+            if (SettingsManager().settings.iosShowPin.value)
+              IconSlideAction(
+                caption: widget.chat.isPinned! ? 'Unpin' : 'Pin',
+                color: Colors.yellow[800],
+                foregroundColor: Colors.white,
+                icon: widget.chat.isPinned! ? Icons.star_outline : Icons.star,
+                onTap: () async {
+                  await widget.chat.togglePin(!widget.chat.isPinned!);
+                  EventDispatcher().emit("refresh", null);
+                  if (this.mounted) setState(() {});
+                },
+              ),
+          ],
+          secondaryActions: <Widget>[
+            if (!widget.chat.isArchived! && SettingsManager().settings.iosShowAlert.value)
+              IconSlideAction(
+                caption: widget.chat.isMuted! ? 'Show Alerts' : 'Hide Alerts',
+                color: Colors.purple[700],
+                icon: widget.chat.isMuted! ? Icons.notifications_active : Icons.notifications_off,
+                onTap: () async {
+                  await widget.chat.toggleMute(!widget.chat.isMuted!);
+                  if (this.mounted) setState(() {});
+                },
+              ),
+            if (SettingsManager().settings.iosShowDelete.value)
+              IconSlideAction(
+                caption: "Delete",
+                color: Colors.red,
+                icon: Icons.delete_forever,
+                onTap: () async {
+                  ChatBloc().deleteChat(widget.chat);
+                  Chat.deleteChat(widget.chat);
+                },
+              ),
+            if (SettingsManager().settings.iosShowMarkRead.value)
+              IconSlideAction(
+                caption: widget.chat.hasUnreadMessage! ? 'Mark Read' : 'Mark Unread',
+                color: Colors.blue,
+                icon: widget.chat.hasUnreadMessage! ? Icons.mark_chat_read : Icons.mark_chat_unread,
+                onTap: () {
+                  ChatBloc().toggleChatUnread(widget.chat, !widget.chat.hasUnreadMessage!);
+                },
+              ),
+            if (SettingsManager().settings.iosShowArchive.value)
+              IconSlideAction(
+                caption: widget.chat.isArchived! ? 'UnArchive' : 'Archive',
+                color: widget.chat.isArchived! ? Colors.blue : Colors.red,
+                icon: widget.chat.isArchived! ? Icons.unarchive : Icons.archive,
+                onTap: () {
+                  if (widget.chat.isArchived!) {
+                    ChatBloc().unArchiveChat(widget.chat);
+                  } else {
+                    ChatBloc().archiveChat(widget.chat);
+                  }
+                },
+              ),
+          ],
+          child: child,
+        ));
   }
 
   Widget buildTitle() {
@@ -323,18 +328,18 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
       );
 
   void onTap() {
-      Navigator.of(context).pushAndRemoveUntil(
-        ThemeSwitcher.buildPageRoute(
-          builder: (BuildContext context) {
-            return ConversationView(
-              chat: widget.chat,
-              existingAttachments: widget.existingAttachments,
-              existingText: widget.existingText,
-            );
-          },
-        ),
-        (route) => route.isFirst,
-      );
+    Navigator.of(context).pushAndRemoveUntil(
+      ThemeSwitcher.buildPageRoute(
+        builder: (BuildContext context) {
+          return ConversationView(
+            chat: widget.chat,
+            existingAttachments: widget.existingAttachments,
+            existingText: widget.existingText,
+          );
+        },
+      ),
+      (route) => route.isFirst,
+    );
   }
 
   void onSelect() {

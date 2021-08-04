@@ -98,10 +98,8 @@ class _ConversationListState extends State<ConversationList> {
   }
 
   Widget getSyncIndicatorWidget() {
-    if (!SettingsManager().settings.showSyncIndicator.value) return SizedBox.shrink();
-
     return Obx(() {
-      print(SetupBloc().isSyncing.value);
+      if (!SettingsManager().settings.showSyncIndicator.value) return SizedBox.shrink();
       if (!SetupBloc().isSyncing.value) return Container();
       return buildProgressIndicator(context, width: 12);
     });
