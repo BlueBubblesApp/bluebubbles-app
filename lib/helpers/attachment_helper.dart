@@ -315,7 +315,6 @@ class AttachmentHelper {
   static Future<Uint8List?> compressAttachment(Attachment attachment, String filePath,
       {int? qualityOverride, bool getActualPath = true}) async {
     if (attachment.mimeType == null) return null;
-
     if (attachment.metadata == null) {
       attachment.metadata = {};
     }
@@ -323,73 +322,100 @@ class AttachmentHelper {
     // Make sure the attachment is an image or video
     String mimeStart = attachment.mimeType!.split("/").first;
     if (!["image", "video"].contains(mimeStart)) return null;
-    // Get byte data
 
-    // Update sizing
-    if (attachment.mimeType == "image/gif") {
-      Uint8List previewData = getActualPath
-          ? new File(AttachmentHelper.getAttachmentPath(attachment)).readAsBytesSync()
-          : new File(filePath).readAsBytesSync();
-
-      Size size = getGifDimensions(previewData);
-      if (size.width != 0 && size.height != 0) {
-        attachment.width = size.width.toInt();
-        attachment.height = size.height.toInt();
-      }
-
-      return previewData;
-    } else if (mimeStart == "image") {
-      ImageProperties props = await FlutterNativeImage.getImageProperties(filePath);
-      Size size = await getImageSizing(filePath, properties: props);
-      if (size.width != 0 && size.height != 0) {
-        attachment.width = size.width.toInt();
-        attachment.height = size.height.toInt();
-      }
-
-      String orientation = props.orientation.toString();
-      if (orientation == '0') {
-        attachment.metadata!['orientation'] = 'landscape';
-      } else if (orientation == '1') {
-        attachment.metadata!['orientation'] = 'portrait';
-      }
-    } else if (mimeStart == "video") {
-      Size size = await getVideoDimensions(filePath);
-      if (size.width != 0 && size.height != 0) {
-        attachment.width = size.width.toInt();
-        attachment.height = size.height.toInt();
-      }
-      return null;
+    // If we want the actual path, get it
+    if (getActualPath) {
+      filePath = AttachmentHelper.getAttachmentPath(attachment);
     }
 
+    // Check if the compressed file exists, and return it if it does
     int quality = qualityOverride ?? SettingsManager().compressionQuality;
-    // Check if the compressed file exists
     File cachedFile = new File("$filePath.${quality.toString()}.compressed");
     if (cachedFile.existsSync()) {
       return cachedFile.readAsBytes();
     }
 
-    // Map the EXIF to the metadata
-    Map<String, IfdTag> exif = await readExifFromFile(new File(filePath));
-    for (var item in exif.entries) {
-      attachment.metadata![item.key] = item.value.printable;
+    File originalFile = new File(filePath);
+
+    // Get dimensions and preview images
+    Uint8List? previewData;
+    if (attachment.mimeType == "image/gif") {
+      // For GIFs, just load the entire thing
+      previewData = originalFile.readAsBytesSync();
+
+      try {
+        Size size = getGifDimensions(previewData);
+        if (size.width != 0 && size.height != 0) {
+          attachment.width = size.width.toInt();
+          attachment.height = size.height.toInt();
+        }
+      } catch (ex) {
+        debugPrint('Failed to get GIF dimensions! Error: ${ex.toString()}');
+      }
+    } else if (mimeStart == "image") {
+      // For images, load properties
+      try {
+        ImageProperties props = await FlutterNativeImage.getImageProperties(filePath);
+        Size size = await getImageSizing(filePath, properties: props);
+        if (size.width != 0 && size.height != 0) {
+          attachment.width = size.width.toInt();
+          attachment.height = size.height.toInt();
+        }
+
+        String orientation = props.orientation.toString();
+        if (orientation == '0') {
+          attachment.metadata!['orientation'] = 'landscape';
+        } else if (orientation == '1') {
+          attachment.metadata!['orientation'] = 'portrait';
+        }
+      } catch (ex) {
+        debugPrint('Failed to get Image Properties! Error: ${ex.toString()}');
+      }
+    } else if (mimeStart == "video") {
+      // For videos, load the thumbnail
+      try {
+        previewData = await getVideoThumbnail(filePath);
+        Size size = await getVideoDimensions(filePath);
+        if (size.width != 0 && size.height != 0) {
+          attachment.width = size.width.toInt();
+          attachment.height = size.height.toInt();
+        }
+      } catch (ex) {
+        debugPrint('Failed to get video thumbnail! Error: ${ex.toString()}');
+      }
     }
 
-    // Compress the file
-    File compressedFile = await FlutterNativeImage.compressImage(filePath,
-        quality: quality,
-        percentage: SettingsManager().compressionQuality,
-        targetWidth: attachment.width!,
-        targetHeight: attachment.height!);
+    // Map the EXIF to the metadata
+    try {
+      Map<String, IfdTag> exif = await readExifFromFile(new File(filePath));
+      for (var item in exif.entries) {
+        attachment.metadata![item.key] = item.value.printable;
+      }
+    } catch (ex) {
+      debugPrint('Failed to read EXIF data: ${ex.toString()}');
+    }
 
-    // Read the compressed data, then cache it
-    Uint8List data = await compressedFile.readAsBytes();
-    cachedFile.writeAsBytes(data);
+    // If the preview data is null, compress the file
+    if (previewData == null) {
+      // Compress the file
+      File compressedFile = await FlutterNativeImage.compressImage(filePath,
+          quality: quality,
+          percentage: SettingsManager().compressionQuality,
+          targetWidth: attachment.width!,
+          targetHeight: attachment.height!);
+
+      // Read the compressed data, then cache it
+      previewData = await compressedFile.readAsBytes();
+    }
+
+    // As long as we have preview data now, save it
+    cachedFile.writeAsBytes(previewData);
 
     // If we should update the attachment data, do it right before we return, no awaiting
     attachment.update();
 
     // Return the bytes
-    return data;
+    return previewData;
   }
 
   static double getAspectRatio(int? height, int? width, {BuildContext? context}) {
