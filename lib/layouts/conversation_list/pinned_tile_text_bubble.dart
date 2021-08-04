@@ -1,6 +1,8 @@
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
@@ -52,15 +54,20 @@ class _PinnedTileTextBubbleState extends State<PinnedTileTextBubble> with Automa
         if (!(widget.chat.hasUnreadMessage ?? false)) return Container();
         Message message = snapshot.data;
         bool leftSide = Random(message.id).nextBool();
-        if (message.associatedMessageGuid != null || message.isFromMe! || (message.text ?? "").trim() == "")
-          return Container();
-
         bool hide =
             SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value;
         bool generate = SettingsManager().settings.redactedMode.value &&
             SettingsManager().settings.generateFakeMessageContent.value;
 
-        TextStyle style = Get.textTheme.subtitle1!.apply(fontSizeFactor: 0.8);
+        String messageText = MessageHelper.getNotificationTextSync(message);
+        if (generate) messageText = widget.chat.fakeLatestMessageText ?? "";
+        if (message.associatedMessageGuid != null ||
+            message.isFromMe! ||
+            isNullOrEmpty(messageText, trimString: true)!) {
+          return Container();
+        }
+
+        TextStyle style = Get.textTheme.subtitle1!.apply(fontSizeFactor: 0.85);
 
         if (hide && !generate) style = style.apply(color: Colors.transparent);
 
@@ -116,7 +123,7 @@ class _PinnedTileTextBubbleState extends State<PinnedTileTextBubble> with Automa
                           color: context.theme.accentColor.withOpacity(0.8),
                         ),
                         child: Text(
-                          generate ? widget.chat.fakeLatestMessageText ?? "" : message.text!,
+                          messageText,
                           overflow: TextOverflow.ellipsis,
                           maxLines: 2,
                           textAlign: TextAlign.center,

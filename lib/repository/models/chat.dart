@@ -837,7 +837,11 @@ class Chat {
 
   Future<Message> get latestMessage async {
     List<Message> latests = await Chat.getMessages(this, limit: 1);
-    return latests.first;
+    Message message = latests.first;
+    if (message.hasAttachments) {
+      await message.fetchAttachments();
+    }
+    return message;
   }
 
   static int sort(Chat? a, Chat? b) {

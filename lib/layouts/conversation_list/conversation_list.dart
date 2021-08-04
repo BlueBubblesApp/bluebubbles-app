@@ -466,14 +466,12 @@ class _Cupertino extends StatelessWidget {
                 return SliverPadding(
                   padding: EdgeInsets.only(
                     top: 10,
-                    left: 10,
-                    right: 10,
                     bottom: 10,
                   ),
                   sliver: SliverToBoxAdapter(
                     child: ConstrainedBox(
                       constraints: BoxConstraints(
-                        maxHeight: (context.mediaQuerySize.width - 20) / colCount * usedRowCount,
+                        maxHeight: (context.mediaQuerySize.width + 30) / colCount * usedRowCount,
                       ),
                       child: Stack(
                         alignment: Alignment.bottomCenter,
@@ -483,34 +481,29 @@ class _Cupertino extends StatelessWidget {
                             scrollDirection: Axis.horizontal,
                             controller: _controller,
                             itemBuilder: (context, index) {
-                              return GridView.builder(
-                                physics: NeverScrollableScrollPhysics(),
-                                padding: EdgeInsets.zero,
-                                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: min(colCount, pinCount),
-                                  mainAxisExtent: (context.mediaQuerySize.width - 40) / colCount,
-                                  mainAxisSpacing: 10.0,
-                                  crossAxisSpacing: 10.0,
-                                  childAspectRatio: 0.85,
+                              return Wrap(
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                alignment: _pageCount > 1 ? WrapAlignment.start : WrapAlignment.center,
+                                children: List.generate(
+                                  index < _filledPageCount
+                                      ? maxOnPage
+                                      : ChatBloc().chats.archivedHelper(showArchived).bigPinHelper(true).length %
+                                          maxOnPage,
+                                  (_index) {
+                                    return PinnedConversationTile(
+                                      key: Key(ChatBloc()
+                                          .chats
+                                          .archivedHelper(showArchived)
+                                          .bigPinHelper(true)[index * maxOnPage + _index]
+                                          .guid
+                                          .toString()),
+                                      chat: ChatBloc()
+                                          .chats
+                                          .archivedHelper(showArchived)
+                                          .bigPinHelper(true)[index * maxOnPage + _index],
+                                    );
+                                  },
                                 ),
-                                itemBuilder: (context, _index) {
-                                  return PinnedConversationTile(
-                                    key: Key(ChatBloc()
-                                        .chats
-                                        .archivedHelper(showArchived)
-                                        .bigPinHelper(true)[index * maxOnPage + _index]
-                                        .guid
-                                        .toString()),
-                                    chat: ChatBloc()
-                                        .chats
-                                        .archivedHelper(showArchived)
-                                        .bigPinHelper(true)[index * maxOnPage + _index],
-                                  );
-                                },
-                                itemCount: index < _filledPageCount
-                                    ? maxOnPage
-                                    : ChatBloc().chats.archivedHelper(showArchived).bigPinHelper(true).length %
-                                        maxOnPage,
                               );
                             },
                             itemCount: _pageCount,
