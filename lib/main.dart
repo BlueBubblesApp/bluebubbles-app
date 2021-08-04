@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/settings/about_panel.dart';
@@ -72,7 +73,22 @@ Future<Null> _reportError(dynamic error, dynamic stackTrace) async {
   }
 }
 
+class MyHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+      // If there is a bad certificate callback, override it if the host is part of
+      // your server URL
+      ..badCertificateCallback = (X509Certificate cert, String host, int port) {
+        String serverUrl = getServerAddress() ?? "";
+        return serverUrl.contains(host);
+      }; // add your localhost detection logic here if you want
+  }
+}
+
 Future<Null> main() async {
+  HttpOverrides.global = new MyHttpOverrides();
+
   // This captures errors reported by the Flutter framework.
   FlutterError.onError = (FlutterErrorDetails details) {
     if (isInDebugMode) {
@@ -158,58 +174,56 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
         home: Home(),
 
         builder: (context, child) => SecureApplication(
-          child: Builder(
-              builder: (context) {
-                if (SettingsManager().canAuthenticate && !LifeCycleManager().isAlive) {
-                  if (SettingsManager().settings.shouldSecure.value) {
-                    SecureApplicationProvider.of(context, listen: false)!.lock();
-                    if (SettingsManager().settings.securityLevel.value == SecurityLevel.locked_and_secured) {
-                      SecureApplicationProvider.of(context, listen: false)!.secure();
-                    }
-                  }
+          child: Builder(builder: (context) {
+            if (SettingsManager().canAuthenticate && !LifeCycleManager().isAlive) {
+              if (SettingsManager().settings.shouldSecure.value) {
+                SecureApplicationProvider.of(context, listen: false)!.lock();
+                if (SettingsManager().settings.securityLevel.value == SecurityLevel.locked_and_secured) {
+                  SecureApplicationProvider.of(context, listen: false)!.secure();
                 }
-                return SecureGate(
-                  blurr: 0,
-                  opacity: 1.0,
-                  lockedBuilder: (context, controller) => Container(
-                    color: Theme.of(context).backgroundColor,
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 20.0),
-                            child: Text(
-                              "BlueBubbles is currently locked. Please unlock to access your messages.",
-                              style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                          Container(height: 20.0),
-                          ClipOval(
-                            child: Material(
-                              color: Theme.of(context).primaryColor, // button color
-                              child: InkWell(
-                                child: SizedBox(width: 60, height: 60, child: Icon(Icons.lock_open, color: Colors.white)),
-                                onTap: () async {
-                                  var localAuth = LocalAuthentication();
-                                  bool didAuthenticate = await localAuth.authenticate(
-                                      localizedReason: 'Please authenticate to unlock BlueBubbles', stickyAuth: true);
-                                  if (didAuthenticate) {
-                                    controller!.authSuccess(unlock: true);
-                                  }
-                                },
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  child: child ?? Container(),
-                );
               }
-          ),
+            }
+            return SecureGate(
+              blurr: 0,
+              opacity: 1.0,
+              lockedBuilder: (context, controller) => Container(
+                color: Theme.of(context).backgroundColor,
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 20.0),
+                        child: Text(
+                          "BlueBubbles is currently locked. Please unlock to access your messages.",
+                          style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      Container(height: 20.0),
+                      ClipOval(
+                        child: Material(
+                          color: Theme.of(context).primaryColor, // button color
+                          child: InkWell(
+                            child: SizedBox(width: 60, height: 60, child: Icon(Icons.lock_open, color: Colors.white)),
+                            onTap: () async {
+                              var localAuth = LocalAuthentication();
+                              bool didAuthenticate = await localAuth.authenticate(
+                                  localizedReason: 'Please authenticate to unlock BlueBubbles', stickyAuth: true);
+                              if (didAuthenticate) {
+                                controller!.authSuccess(unlock: true);
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              child: child ?? Container(),
+            );
+          }),
         ),
 
         defaultTransition: Transition.cupertino,
@@ -219,10 +233,17 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
           GetPage(page: () => AttachmentPanel(), name: "/settings/attachment-panel"),
           GetPage(page: () => ChatListPanel(), name: "/settings/chat-list-panel"),
           GetPage(page: () => ConversationPanel(), name: "/settings/conversation-panel"),
-          GetPage(page: () => CustomAvatarPanel(), name: "/settings/custom-avatar-panel", binding: CustomAvatarPanelBinding()),
-          GetPage(page: () => PrivateAPIPanel(), name: "/settings/private-api-panel", binding: PrivateAPIPanelBinding()),
+          GetPage(
+              page: () => CustomAvatarPanel(),
+              name: "/settings/custom-avatar-panel",
+              binding: CustomAvatarPanelBinding()),
+          GetPage(
+              page: () => PrivateAPIPanel(), name: "/settings/private-api-panel", binding: PrivateAPIPanelBinding()),
           GetPage(page: () => RedactedModePanel(), name: "/settings/redacted-mode-panel"),
-          GetPage(page: () => ServerManagementPanel(), name: "/settings/server-management-panel", binding: ServerManagementPanelBinding()),
+          GetPage(
+              page: () => ServerManagementPanel(),
+              name: "/settings/server-management-panel",
+              binding: ServerManagementPanelBinding()),
           GetPage(page: () => ThemePanel(), name: "/settings/theme-panel", binding: ThemePanelBinding()),
         ],
       ),
@@ -298,7 +319,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
               isCreator: true,
             ),
           ),
-              (route) => route.isFirst,
+          (route) => route.isFirst,
         );
       });
 
@@ -315,7 +336,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
               isCreator: true,
             ),
           ),
-              (route) => route.isFirst,
+          (route) => route.isFirst,
         );
       });
 
@@ -368,14 +389,16 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
-      systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+      systemNavigationBarIconBrightness:
+          Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       statusBarColor: Colors.transparent, // status bar color
     ));
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarIconBrightness:
+            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(

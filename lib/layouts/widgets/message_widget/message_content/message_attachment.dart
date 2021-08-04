@@ -173,6 +173,7 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
                 Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
                     Center(
                       child: Container(

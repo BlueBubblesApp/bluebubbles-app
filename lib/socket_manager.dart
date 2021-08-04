@@ -526,9 +526,7 @@ class SocketManager {
     return completer.future;
   }
 
-  Future<List<dynamic>> getAttachments(String chatGuid, String messageGuid, {Function(List<dynamic>?)? cb}) {
-    Completer<List<dynamic>> completer = new Completer();
-
+  Future<dynamic>? getAttachments(String chatGuid, String messageGuid, {Function(List<dynamic>?)? cb}) {
     Map<String, dynamic> params = {
       'after': 1,
       'identifier': chatGuid,
@@ -543,21 +541,7 @@ class SocketManager {
       ]
     };
 
-    _manager.socket!.emitWithAck("get-messages", jsonEncode(params), ack: (data) async {
-      dynamic json = data;
-      if (json["status"] != 200) return completer.completeError(json);
-
-      List<dynamic>? output = [];
-      if (json.containsKey("data") && json["data"].length > 0) {
-        output = json["data"];
-      }
-
-      completer.complete(output);
-
-      if (cb != null) cb(output);
-    });
-
-    return completer.future;
+    return request('get-messages', params);
   }
 
   Future<List<dynamic>> loadMessageChunk(Chat chat, int offset, {limit = 25}) async {
@@ -672,7 +656,10 @@ class SocketManager {
             }
 
             cb(response);
-            completer.complete(response);
+            if (!completer.isCompleted) {
+              completer.complete(response);
+            }
+
             if (awaitResponse) _manager.finishSocketProcess(_processId);
           });
         } else {
