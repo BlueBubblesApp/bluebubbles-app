@@ -11,6 +11,7 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class SetupView extends StatefulWidget {
   SetupView({Key? key}) : super(key: key);
@@ -26,7 +27,7 @@ class _SetupViewState extends State<SetupView> {
   @override
   void initState() {
     super.initState();
-    SocketManager().connectionStateStream.listen((event) {
+    ever(SocketManager().state, (event) {
       if (!SettingsManager().settings.finishedSetup.value && controller.hasClients && controller.page! > 3) {
         switch (event) {
           case SocketState.FAILED:

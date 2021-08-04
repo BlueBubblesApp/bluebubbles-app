@@ -22,6 +22,7 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/widgets.dart';
+import 'package:get/get.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -145,10 +146,10 @@ class ActionHandler {
     if (!isConnected) {
       InternetConnectionChecker().checkInterval = Duration(seconds: 1);
       StreamSubscription? sub;
-      StreamSubscription? sub2;
+      Worker? sub2;
       Timer timer = Timer(Duration(seconds: 30), () async {
         sub?.cancel();
-        sub2?.cancel();
+        sub2?.dispose();
         String? tempGuid = message.guid;
         message.guid = message.guid!
             .replaceAll("temp", "error-Connection timeout, please check your internet connection and try again");
@@ -168,20 +169,20 @@ class ActionHandler {
         if (event == InternetConnectionStatus.connected) {
           /// Check our internal status. If we are connected *and* we haven't
           /// listened to the connection state stream, then send the message
-          if (SocketManager().state == SocketState.CONNECTED && sub2 == null) {
+          if (SocketManager().state.value == SocketState.CONNECTED && sub2 == null) {
             timer.cancel();
             sendSocketMessage();
             sub?.cancel();
-            sub2?.cancel();
+            sub2?.dispose();
           } else {
             /// Otherwise listen to our stream and await the socket to be connected
             /// before doing anything
-            sub2 = SocketManager().connectionStateStream.listen((event2) {
+            sub2 = ever(SocketManager().state, (event2) {
               if (event2 == SocketState.CONNECTED && event == InternetConnectionStatus.connected) {
                 timer.cancel();
                 sendSocketMessage();
                 sub?.cancel();
-                sub2?.cancel();
+                sub2?.dispose();
               }
             });
           }
@@ -441,6 +442,7 @@ class ActionHandler {
     // Fetch chat data from server
     try {
       newChat = await SocketManager().fetchChat(newChat.guid!);
+      if (newChat == null) return;
       await ChatBloc().updateChatPosition(newChat);
     } catch (ex) {
       debugPrint(ex.toString());

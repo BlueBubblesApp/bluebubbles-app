@@ -113,84 +113,75 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       )
                   ),
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
-                  StreamBuilder(
-                      stream: SocketManager().connectionStateStream,
-                      builder: (context, AsyncSnapshot<SocketState> snapshot) {
-                        late SocketState connectionStatus;
-                        if (snapshot.hasData) {
-                          connectionStatus = snapshot.data!;
-                        } else {
-                          connectionStatus = SocketManager().state;
-                        }
-                        String? subtitle;
+                  Obx(() {
+                    String? subtitle;
+                    switch (SocketManager().state.value) {
+                      case SocketState.CONNECTED:
+                        subtitle = "Connected";
+                        break;
+                      case SocketState.DISCONNECTED:
+                        subtitle = "Disconnected";
+                        break;
+                      case SocketState.ERROR:
+                        subtitle = "Error";
+                        break;
+                      case SocketState.CONNECTING:
+                        subtitle = "Connecting...";
+                        break;
+                      case SocketState.FAILED:
+                        subtitle = "Failed to connect";
+                        break;
+                      default:
+                        subtitle = "Error";
+                        break;
+                    }
 
-                        switch (connectionStatus) {
-                          case SocketState.CONNECTED:
-                            subtitle = "Connected";
-                            break;
-                          case SocketState.DISCONNECTED:
-                            subtitle = "Disconnected";
-                            break;
-                          case SocketState.ERROR:
-                            subtitle = "Error";
-                            break;
-                          case SocketState.CONNECTING:
-                            subtitle = "Connecting...";
-                            break;
-                          case SocketState.FAILED:
-                            subtitle = "Failed to connect";
-                            break;
-                          default:
-                            subtitle = "Error";
-                            break;
-                        }
-
-                        return SettingsTile(
-                          backgroundColor: tileColor,
-                          title: "Connection & Server",
-                          subtitle: subtitle,
-                          onTap: () async {
-                            Get.toNamed("/settings/server-management-panel");
-                          },
-                          onLongPress: () {
-                            Clipboard.setData(new ClipboardData(text: _settingsCopy.serverAddress.value));
-                            showSnackbar('Copied', "Address copied to clipboard");
-                          },
-                          leading: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Container(
-                                width: 32,
-                                height: 32,
-                                decoration: BoxDecoration(
-                                  color: SettingsManager().settings.skin.value == Skins.iOS ?
-                                  getIndicatorColor(connectionStatus) : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(5),
-                                ),
-                                alignment: Alignment.center,
-                                child: Stack(
-                                    children: [
-                                      Icon(SettingsManager().settings.skin.value == Skins.iOS
-                                          ? CupertinoIcons.antenna_radiowaves_left_right : Icons.router,
-                                        color: SettingsManager().settings.skin.value == Skins.iOS ?
-                                        Colors.white : Colors.grey,
-                                        size: SettingsManager().settings.skin.value == Skins.iOS ? 23 : 30,
+                    return SettingsTile(
+                      backgroundColor: tileColor,
+                      title: "Connection & Server",
+                      subtitle: subtitle,
+                      onTap: () async {
+                        Get.toNamed("/settings/server-management-panel");
+                      },
+                      onLongPress: () {
+                        Clipboard.setData(new ClipboardData(text: _settingsCopy.serverAddress.value));
+                        showSnackbar('Copied', "Address copied to clipboard");
+                      },
+                      leading: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: SettingsManager().settings.skin.value == Skins.iOS ?
+                              getIndicatorColor(SocketManager().state.value) : Colors.transparent,
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            alignment: Alignment.center,
+                            child: Stack(
+                                children: [
+                                  Icon(SettingsManager().settings.skin.value == Skins.iOS
+                                      ? CupertinoIcons.antenna_radiowaves_left_right : Icons.router,
+                                    color: SettingsManager().settings.skin.value == Skins.iOS ?
+                                    Colors.white : Colors.grey,
+                                    size: SettingsManager().settings.skin.value == Skins.iOS ? 23 : 30,
+                                  ),
+                                  if (SettingsManager().settings.skin.value != Skins.iOS)
+                                    Positioned.fill(
+                                      child: Align(
+                                          alignment: Alignment.bottomRight,
+                                          child: getIndicatorIcon(SocketManager().state.value, size: 15, showAlpha: false)
                                       ),
-                                      if (SettingsManager().settings.skin.value != Skins.iOS)
-                                        Positioned.fill(
-                                          child: Align(
-                                              alignment: Alignment.bottomRight,
-                                              child: getIndicatorIcon(connectionStatus, size: 15, showAlpha: false)
-                                          ),
-                                        ),
-                                    ]
-                                ),
-                              ),
-                            ],
+                                    ),
+                                ]
+                            ),
                           ),
-                          trailing: nextIcon,
-                        );
-                      }),
+                        ],
+                      ),
+                      trailing: nextIcon,
+                    );
+                  }),
                   SettingsHeader(
                       headerColor: headerColor,
                       tileColor: tileColor,

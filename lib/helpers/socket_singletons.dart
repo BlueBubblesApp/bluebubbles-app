@@ -22,7 +22,7 @@ Future<Chat?> fetchChatSingleton(String chatGuid, {withParticipants: true}) asyn
   };
 
   // Fetch the chat data
-  SocketManager().fetchChat(chatGuid, withParticipants: withParticipants).then((Chat chat) {
+  SocketManager().fetchChat(chatGuid, withParticipants: withParticipants).then((Chat? chat) {
     // If the chat GUID isn't in the cache anymore, return
     if (!chatCache.containsKey(chatGuid)) return;
     chatCache[chatGuid]?.complete(chat);
