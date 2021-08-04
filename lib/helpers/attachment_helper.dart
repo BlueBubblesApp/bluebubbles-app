@@ -312,6 +312,19 @@ class AttachmentHelper {
     }
   }
 
+  static Future<File> tryCopyTempFile(File oldFile) async {
+    String? ogFilename = getFilenameFromUrl(oldFile.absolute.path);
+    if (ogFilename == null) return oldFile;
+
+    String dir = SettingsManager().appDocDir.path;
+    Directory tempAssets = Directory("$dir/tempAssets");
+    if (!await tempAssets.exists()) {
+      await tempAssets.create();
+    }
+
+    return oldFile.copy('$dir/tempAssets/$ogFilename');
+  }
+
   static Future<Uint8List?> compressAttachment(Attachment attachment, String filePath,
       {int? qualityOverride, bool getActualPath = true}) async {
     if (attachment.mimeType == null) return null;
@@ -328,14 +341,20 @@ class AttachmentHelper {
       filePath = AttachmentHelper.getAttachmentPath(attachment);
     }
 
+    File originalFile = new File(filePath);
+
+    // If we don't get the actual path, it's a dummy "attachment" and we need to copy it locally
+    if (!getActualPath) {
+      originalFile = await tryCopyTempFile(originalFile);
+      filePath = originalFile.absolute.path;
+    }
+
     // Check if the compressed file exists, and return it if it does
     int quality = qualityOverride ?? SettingsManager().compressionQuality;
     File cachedFile = new File("$filePath.${quality.toString()}.compressed");
     if (cachedFile.existsSync()) {
       return cachedFile.readAsBytes();
     }
-
-    File originalFile = new File(filePath);
 
     // Get dimensions and preview images
     Uint8List? previewData;
