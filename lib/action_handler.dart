@@ -50,15 +50,29 @@ class ActionHandler {
     // Get the first match (if it exists)
     if (matches.length > 0) {
       linkMatch = matches.first;
-      linkMsg = text.substring(linkMatch.start, linkMatch.end);
+      linkMsg = text.substring(linkMatch.start, linkMatch.end).trim();
     }
 
-    // If the message starts/ends with the link, it should split it
-    bool shouldSplit = linkMatch != null && (text.endsWith(linkMsg!) || text.startsWith(linkMsg));
+    // Figure out of the message starts or ends with the link
+    // In either case, we want to split up the messages
+    bool shouldSplitEnd = linkMatch != null && text.endsWith(linkMsg!);
+    bool shouldSplitStart = linkMatch != null && text.startsWith(linkMsg!);
+    bool shouldSplit = shouldSplitEnd || shouldSplitStart;
+
+    // Split up the messages depending on if the link is at the start or end
+    String mainText = text;
+    String secondaryText = text;
+    if (shouldSplitEnd) {
+      mainText = text.substring(0, linkMatch.start).trim();
+      secondaryText = text.substring(linkMatch.start, linkMatch.end);
+    } else if (shouldSplitStart) {
+      mainText = text.substring(linkMatch.start, linkMatch.end);
+      secondaryText = text.substring(linkMatch.end).trim();
+    }
 
     // Create the main message
     Message mainMsg = Message(
-      text: (!shouldSplit) ? text : text.substring(0, linkMatch.start),
+      text: mainText,
       dateCreated: DateTime.now(),
       hasAttachments: attachments.length > 0 ? true : false,
     );
@@ -71,7 +85,7 @@ class ActionHandler {
     // If there is a link, build the link message
     if (shouldSplit) {
       Message secondaryMessage = Message(
-        text: text.substring(linkMatch.start, linkMatch.end),
+        text: secondaryText,
         dateCreated: DateTime.now(),
         hasAttachments: false,
       );
