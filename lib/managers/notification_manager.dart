@@ -1,13 +1,17 @@
 import 'dart:async';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
+import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
@@ -116,21 +120,28 @@ class NotificationManager {
   /// @param [handle] optional parameter of the handle of the message
   ///
   /// @param [contact] optional parameter of the contact of the message
-  void createNewNotification(
-      String contentTitle,
-      String? contentText,
-      String? group,
-      Chat chat,
-      int id,
-      int? summaryId,
-      int timeStamp,
-      String? senderName,
-      bool groupConversation,
-      Handle? handle,
-      Contact? contact,
-      int visibility) async {
+  void createNotificationFromMessage(Chat chat, Message message, int visibility) async {
     Uint8List? contactIcon;
 
+    // Get the contact name if the message is not from you
+    String? contactName = 'You';
+    if (!message.isFromMe!) {
+      contactName = await ContactManager().getContactTitle(message.handle);
+    }
+
+    // If it's still null or empty, we need to put something in there... so 'You'
+    if (contactName == null || contactName.isEmpty) {
+      contactName = 'You';
+    }
+
+    // Get the actual contact metadata
+    Contact? contact = await ContactManager().getCachedContact(message.handle);
+
+    // Build the message text for the notification
+    String? messageText = await MessageHelper.getNotificationText(message);
+    if (SettingsManager().settings.hideTextPreviews.value) messageText = "iMessage";
+
+    // Try to load in an avatar for the person
     try {
       // If there is a contact specified, we can use it's avatar
       if (contact != null) {
@@ -148,21 +159,53 @@ class NotificationManager {
     } catch (ex) {
       debugPrint("Failed to load contact avatar: ${ex.toString()}");
     }
-    await ChatBloc().updateShareTarget(chat);
 
-    // Invoke the method in native code
+    try {
+      // Try to update the share targets
+      await ChatBloc().updateShareTarget(chat);
+    } catch (ex) {
+      debugPrint("Failed to update share target! Error: ${ex.toString()}");
+    }
+
+    // Get a title as best as we can
+    String? chatTitle = await chat.getTitle();
+    bool isGroup = chat.isGroup();
+
+    // If we couldn't get a chat title, generate placeholder names
+    if (chatTitle == null) {
+      chatTitle = isGroup ? 'Group Chat' : 'iMessage Chat';
+    }
+
+    createNewMessageNotification(chat.guid!, isGroup, chatTitle, contactIcon, contactName, contactIcon, messageText,
+        message.dateCreated!, message.isFromMe!, visibility, chat.id!);
+  }
+
+  void createNewMessageNotification(
+      String chatGuid,
+      bool chatIsGroup,
+      String chatTitle,
+      Uint8List? chatIcon,
+      String contactName,
+      Uint8List? contactAvatar,
+      String messageText,
+      DateTime messageDate,
+      bool messageIsFromMe,
+      int visibility,
+      int summaryId) {
     MethodChannelInterface().platform.invokeMethod("new-message-notification", {
       "CHANNEL_ID": NEW_MESSAGE_CHANNEL,
       "CHANNEL_NAME": "New Messages",
-      "contentTitle": contentTitle,
-      "contentText": contentText,
-      "group": group,
-      "notificationId": id,
+      "notificationId": Random().nextInt(9998) + 1,
       "summaryId": summaryId,
-      "timeStamp": timeStamp,
-      "name": senderName,
-      "groupConversation": groupConversation,
-      "contactIcon": contactIcon,
+      "chatGuid": chatGuid,
+      "chatIsGroup": chatIsGroup,
+      "chatTitle": chatTitle,
+      "chatIcon": chatIcon,
+      "contactName": contactName,
+      "contactAvatar": contactAvatar,
+      "messageText": messageText,
+      "messageDate": messageDate.millisecondsSinceEpoch,
+      "messageIsFromMe": messageIsFromMe,
       "visibility": visibility
     });
   }

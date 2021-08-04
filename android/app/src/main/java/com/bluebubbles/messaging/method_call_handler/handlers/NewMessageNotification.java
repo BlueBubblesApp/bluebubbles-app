@@ -67,181 +67,226 @@ public class NewMessageNotification implements Handler {
         // - Notification visibility
 
         // These are new, not yet implemented on the Dart side
+        // Channel stuff
+        String channelId = (String) call.argument("CHANNEL_ID");
+        String channelName = (String) call.argument("CHANNEL_NAME");
+
         // Chat stuff
-        // String chatGuid = (String) call.argument("chatGuid");
-        // Boolean chatIsGroup = (Boolean) call.argument("chatIsGroup");
-        // String chatTitle = (String) call.argument("chatTitle");
-        // byte[] chatIcon = (byte[]) call.argument("chatIcon");
+        String chatGuid = (String) call.argument("chatGuid");
+        Boolean chatIsGroup = (Boolean) call.argument("chatIsGroup");
+        String chatTitle = (String) call.argument("chatTitle");
+        byte[] chatIcon = (byte[]) call.argument("chatIcon");
 
-        // // Contact stuff
-        // String contactName = (String) call.argument("contactName");
-        // byte[] contactAvatar = (byte[]) call.argument("contactAvatar");
+        // Contact stuff
+        String contactName = (String) call.argument("contactName");
+        byte[] contactAvatar = (byte[]) call.argument("contactAvatar");
 
-        // // Message stuff
-        // String messageText = (String) call.argument("messageText");
-        // String messageDate = (String) call.argument("messageDate");
-        // Boolean messageIsFromMe = (Boolean) call.argument("messageIsFromMe");
+        // Message stuff
+        String messageText = (String) call.argument("messageText");
+        Integer messageDate = (Integer) call.argument("messageDate");
+        Boolean messageIsFromMe = (Boolean) call.argument("messageIsFromMe");
 
-        // // Notification stuff
-        // Integer notificationVisibility = (Integer) call.argument("visibility");
+        // Notification stuff
+        Integer notificationVisibility = (Integer) call.argument("visibility");
+        Integer notificationId = (Integer) call.argument("notificationId");
+        Integer summaryId = (Integer) call.argument("summaryId");
 
-        // Find any notifications that match the same chat
-        NotificationCompat.MessagingStyle style = null;
+        // Find any notifications that already exist for the chat
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
-        int existingNotificationId = 0;
+        Notification existingNotification;
+        int existingNotificationId = notificationId;
         for (StatusBarNotification notification : notificationManager.getActiveNotifications()) {
-            String chatGuid = notification.getNotification().extras.getString("chatGuid");
-
-            if (chatGuid != null && chatGuid.equals(call.argument("group"))) {
+            String existingChatGuid = notification.getNotification().extras.getString("chatGuid");
+            if (existingChatGuid == null) continue;
+            if (existingChatGuid.equals(chatGuid)) {
+                existingNotification = notification;
                 existingNotificationId = notification.getId();
-                style = NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(notification.getNotification());
-                if (call.argument("groupConversation")) {
-                    style.setConversationTitle(call.argument("contentTitle"));
-                }
-                style.setGroupConversation(call.argument("groupConversation"));
                 break;
             }
         }
 
-        // Set the style based on if there is already a matching notification
-        if (style == null) {
-            androidx.core.app.Person myPerson = androidx.core.app.Person.fromAndroidPerson(
-                new Person.Builder()
-                    .setName("You")
-                    .setImportant(true)
-                    .build()
-            );
-            style = new NotificationCompat.MessagingStyle(myPerson);
-            if (call.argument("groupConversation")) {
-                style.setConversationTitle(call.argument("contentTitle"));
-            }
-
-            style.setGroupConversation(call.argument("groupConversation"));
-        }
-
-        // Get the current timestamp
-        Long timestamp;
-        if (call.argument("timeStamp").getClass() == Long.class) {
-            timestamp = call.argument("timeStamp");
-        } else if (call.argument("timeStamp").getClass() == Integer.class) {
-            timestamp = Long.valueOf(((Integer) call.argument("timeStamp")).longValue());
-        } else {
-            timestamp = Long.valueOf(call.argument("timeStamp"));
-        }
-
-        // Build the sender icon
-        IconCompat icon = null;
-        if (call.argument("contactIcon") != null) {
-            Bitmap bmp = BitmapFactory.decodeByteArray((byte[]) call.argument("contactIcon"), 0, ((byte[]) call.argument("contactIcon")).length);
-            icon = IconCompat.createWithAdaptiveBitmap(HelperUtils.getCircleBitmap(bmp));
-        }
-
-        Person.Builder person = new Person.Builder()
-            .setName(call.argument("name"))
+        // Build a "Person" for the sender
+        Person.Builder sender = new Person.Builder()
+            .setName(contactName)
+            .isBot(false)
             .setImportant(true);
-        if (icon != null) {
-            person.setIcon(icon.toIcon());
+
+        // Load the group avatar
+        IconCompat senderIcon;
+        if (contactAvatar != null) {
+            Bitmap bmp = BitmapFactory.decodeByteArray(contactAvatar, 0, contactAvatar.length);
+            senderIcon = IconCompat.createWithAdaptiveBitmap(HelperUtils.getCircleBitmap(bmp));
         }
+
+        // Set the icon if available
+        if (senderIcon != null) {
+            sender.setIcon(senderIcon.toIcon());
+        }
+
+        // Create a group "person" if the chat is a group
+        IconCompat groupIcon;
+        Person.Builder group = new Person.Builder();
+        if (chatIsGroup) {
+            group.setName(chatTitle)
+                .isBot(false)
+                .setImportant(true);
+
+            if (chatIcon != null) {
+                Bitmap bmp = BitmapFactory.decodeByteArray(chatIcon, 0, chatIcon.length);
+                groupIcon = IconCompat.createWithAdaptiveBitmap(HelperUtils.getCircleBitmap(bmp));
+                group.setIcon(groupIcon.toIcon());
+            }
+        } else {
+            // If the chat isn't a group, use the sender's info
+            group = sender;
+        }
+
+        // If we have an existing style, load it
+        // This will load all the other messages as part of the notification as well
+        NotificationCompat.MessagingStyle style;
+        if (existingNotification != null) {
+            style = NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(notification.getNotification());
+        } else {
+            style = new NotificationCompat.MessagingStyle(group);
+        }
+
+        // Set whether the chat is a group conversation
+        style.setGroupConversation(chatIsGroup);
+
+        // Set the title of the conversation (in-case it may have changed)
+        style.setConversationTitle(chatTitle);
 
         // Add the message to the notification
         style.addMessage(new NotificationCompat.MessagingStyle.Message(
-                call.argument("contentText"),
-                timestamp,
-                androidx.core.app.Person.fromAndroidPerson(person.build())
+            messageText,
+            Long.valueOf(messageDate).longValue(),
+            androidx.core.app.Person.fromAndroidPerson(sender.build())
         ));
+
+        // Create a bundle with some extra information in it
         Bundle extras = new Bundle();
-        extras.putCharSequence("chatGuid", call.argument("group"));
+        extras.putCharSequence("chatGuid", chatGuid);
 
-        if (existingNotificationId == 0) {
-            existingNotificationId = call.argument("notificationId");
-        }
-
-        // Create intent for opening the conversation in the app
-        PendingIntent openIntent = PendingIntent.getActivity(
-                context,
-                existingNotificationId,
-                new Intent(context, MainActivity.class)
-                        .putExtra("id", existingNotificationId)
-                        .putExtra("chatGuid",
-                                (String) call.argument("group"))
-                        .putExtra("bubble", true)
-                        .setType("NotificationOpen"),
-                Intent.FILL_IN_ACTION);
-
-        // Create intent for dismissing the notification
-        PendingIntent dismissIntent = PendingIntent.getBroadcast(
-                context,
-                existingNotificationId,
-                new Intent(context, ReplyReceiver.class)
-                        .putExtra("id", existingNotificationId)
-                        .putExtra("chatGuid",
-                                (String) call.argument("group")).setType("markAsRead"),
-                PendingIntent.FLAG_UPDATE_CURRENT);
-        NotificationCompat.Action dismissAction = new NotificationCompat.Action.Builder(0, "Mark As Read", dismissIntent)
-                .setSemanticAction(NotificationCompat.Action.SEMANTIC_ACTION_MARK_AS_READ)
-                .setShowsUserInterface(false)
-                .build();
-
-        // Create intent for quick reply
-        Intent intent = new Intent(context, ReplyReceiver.class)
-                .putExtra("id", existingNotificationId)
-                .putExtra("chatGuid", (String) call.argument("group"))
-                .putExtra("channelName", (String) call.argument("CHANNEL_NAME"))
-                .putExtra("channelID", (String) call.argument("CHANNEL_ID"))
-                .setType("reply");
-        PendingIntent replyIntent = PendingIntent.getBroadcast(context, existingNotificationId, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-        androidx.core.app.RemoteInput replyInput = new androidx.core.app.RemoteInput.Builder("key_text_reply").setLabel("Reply").build();
-        NotificationCompat.Action replyAction = new NotificationCompat.Action.Builder(0, "Reply", replyIntent)
-                .addRemoteInput(replyInput)
-                .setAllowGeneratedReplies(true)
-                .setSemanticAction(NotificationCompat.Action.SEMANTIC_ACTION_REPLY)
-                .setShowsUserInterface(false)
-                .extend(new NotificationCompat.Action.WearableExtender()
-                        .setHintDisplayActionInline(true))
-                .build();
-
-        // // Build the metadata
-        // NotificationCompat.BubbleMetadata.Builder bubbleMetadata = new NotificationCompat.BubbleMetadata.Builder()
-        //     .setIntent(openIntent)
-        //     .setDesiredHeight(600)
-        //     .setAutoExpandBubble(true)
-        //     .setSuppressNotification(false);
-
-        // // Dynamically set the icon
-        // NotificationCompat.BubbleMetadata bubbleData = null;
-        // if (icon != null) {
-        //     bubbleMetadata.setIcon(icon);
-        //     bubbleData = bubbleMetadata.build();
-        // }
-
+        // Build the base notification
         Integer visibility = Notification.VISIBILITY_PUBLIC;
-        Integer visibilityArg = (Integer) call.argument("visibility");
-        if (visibilityArg != null) {
-            visibility = visibilityArg;
+        if (notificationVisibility != null) {
+            visibility = notificationVisibility;
         }
 
         // Build the actual notification
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, (String) call.argument("CHANNEL_ID"))
-                .setSmallIcon(R.mipmap.ic_stat_icon)
-                .setAllowSystemGeneratedContextualActions(true)
-                .setAutoCancel(true)
-                // Tell android that it's a message/conversation
-                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
-                // Set the priority to high since it's a message they should see
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setVisibility(visibility)
-                .setContentIntent(openIntent)
-                .addAction(dismissAction)
-                .addAction(replyAction)
-                .setStyle(style)
-                .setShortcutId(call.argument("group"))
-                .addExtras(extras)
-                // .setBubbleMetadata(bubbleData)
-                .setColor(4888294);
+        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(context, channelId)
+            // Set the status bar notification icon
+            .setSmallIcon(R.mipmap.ic_stat_icon)
+            // Let's the notification dismiss itself when it's tapped
+            .setAutoCancel(true)
+            // Tell android that it's a message/conversation
+            .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+            // Set the priority to high since it's a message they should see
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            // Set the visibility of the notification
+            .setVisibility(visibility)
+            // Sets the intent for when it's clicked
+            .setContentIntent(openIntent)
+            // Adds the mark as read action
+            .addAction(dismissAction)
+            // Adds the reply action
+            .addAction(replyAction)
+            // Sets the style (messages/content/etc)
+            .setStyle(style)
+            // Set the shortcut ID to the chat GUID since it's already unique
+            .setShortcutId(chatGuid)
+            // Add in any extra info we may want
+            .addExtras(extras)
+            // Set the color. This is the blue primary color
+            .setColor(4888294);
+
+        // Disable the alert if it's from you
+        notificationBuilder.setOnlyAlertOnce(messageIsFromMe);
+
+        // Create intent for opening the conversation in the app
+        PendingIntent openIntent = PendingIntent.getActivity(
+            context,
+            existingNotificationId,
+            new Intent(context, MainActivity.class)
+                .putExtra("id", existingNotificationId)
+                .putExtra("chatGuid", chatGuid)
+                .putExtra("bubble", false)
+                .setType("NotificationOpen"),
+            Intent.FILL_IN_ACTION);
+
+        // Create intent for dismissing the notification
+        PendingIntent dismissIntent = PendingIntent.getBroadcast(
+            context,
+            existingNotificationId,
+            new Intent(context, ReplyReceiver.class)
+                .putExtra("id", existingNotificationId)
+                .putExtra("chatGuid", chatGuid)
+                .putExtra("bubble", false)
+                .setType("markAsRead"),
+            PendingIntent.FLAG_UPDATE_CURRENT);
+
+        // Create intent for quick reply
+        Intent intent = new Intent(context, ReplyReceiver.class)
+            .putExtra("id", existingNotificationId)
+            .putExtra("chatGuid", chatGuid)
+            .putExtra("channelName", channelName)
+            .putExtra("channelID", channelId)
+            .putExtra("bubble", false)
+            .setType("reply");
+
+        // Create the dismiss action (mark as read)
+        NotificationCompat.Action dismissAction = new NotificationCompat.Action.Builder(0, "Mark As Read", dismissIntent)
+            .setSemanticAction(NotificationCompat.Action.SEMANTIC_ACTION_MARK_AS_READ)
+            .setShowsUserInterface(false)
+            .build();
+
+        PendingIntent replyIntent = PendingIntent.getBroadcast(context, existingNotificationId, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        NotificationCompat.Action.Builder replyActionBuilder = new NotificationCompat.Action.Builder(0, "Reply", replyIntent)
+            .setSemanticAction(NotificationCompat.Action.SEMANTIC_ACTION_REPLY)
+            .setShowsUserInterface(false)
+            .extend(new NotificationCompat.Action.WearableExtender().setHintDisplayActionInline(true));
+
+        // Generate contextual interactive buttons
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            replyActionBuilder.setAllowGeneratedReplies(true);
+            notificationBuilder.setAllowSystemGeneratedContextualActions(true);
+        }
+
+        // Add remote input replier
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            androidx.core.app.RemoteInput replyInput = new androidx.core.app.RemoteInput.Builder("key_text_reply").setLabel("Reply").build();
+            replyActionBuilder.addRemoteInput(replyInput);
+        }
+
+        // Add bubble intent handler
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            PendingIntent bubbleIntent = PendingIntent.getActivity(
+                context,
+                existingNotificationId,
+                new Intent(context, MainActivity.class)
+                    .putExtra("id", existingNotificationId)
+                    .putExtra("chatGuid", chatGuid)
+                    .putExtra("bubble", true)
+                    .setType("NotificationOpen"),
+                PendingIntent.FLAG_UPDATE_CURRENT);
+
+            NotificationCompat.BubbleMetadata.Builder bubbleMetadataBuilder = new NotificationCompat.BubbleMetadata.Builder()
+                .setIntent(bubbleIntent)
+                .setDesiredHeight(600);
+
+            // Set the icon to a user or group
+            if (groupIcon != null) {
+                bubbleMetadataBuilder.setIcon(groupIcon.toIcon());
+            } else if (senderIcon != null) {
+                bubbleMetadataBuilder.setIcon(senderIcon.toIcon());
+            }
+
+            notificationBuilder.setBubbleMetadata(bubbleMetadataBuilder.build());
+        }
 
         // Send the notification
         NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(context);
-        notificationManagerCompat.notify(existingNotificationId, builder.build());
+        notificationManagerCompat.notify(existingNotificationId, notificationBuilder.build());
         result.success("");
     }
 }
