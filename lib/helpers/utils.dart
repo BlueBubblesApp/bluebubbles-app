@@ -191,17 +191,21 @@ String randomString(int length) {
   return new String.fromCharCodes(codeUnits);
 }
 
-void showSnackbar(String title, String message) {
-  Get.snackbar(
-    title,
-    message,
-    snackPosition: SnackPosition.BOTTOM,
-    colorText: Get.textTheme.bodyText1!.color,
-    backgroundColor: Get.theme.accentColor,
-    margin: EdgeInsets.only(bottom: 10),
-    maxWidth: Get.width - 20,
-    isDismissible: false,
-  );
+void showSnackbar(String title, String message,
+    {int animationMs = 250, int durationMs = 1500, Function(GetBar<Object>)? onTap}) {
+  Get.snackbar(title, message,
+      snackPosition: SnackPosition.BOTTOM,
+      colorText: Get.textTheme.bodyText1!.color,
+      backgroundColor: Get.theme.accentColor,
+      margin: EdgeInsets.only(bottom: 10),
+      maxWidth: Get.width - 20,
+      isDismissible: false,
+      duration: Duration(milliseconds: durationMs),
+      animationDuration: Duration(milliseconds: animationMs),
+      onTap: onTap ??
+          (GetBar<Object> bar) {
+            if (Get.isSnackbarOpen ?? false) Get.back();
+          });
 }
 
 bool sameSender(Message? first, Message? second) {
