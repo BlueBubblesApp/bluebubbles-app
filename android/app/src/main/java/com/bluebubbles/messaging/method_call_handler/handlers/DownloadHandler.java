@@ -31,7 +31,18 @@ public class DownloadHandler implements Handler {
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void Handle() {
-        final byte[] decoded = Base64.getDecoder().decode(call.argument("data").toString());
+        String data = call.argument("data");
+        if (data == null) {
+            result.error("1", "Attachment data was null, no data to decode!", null);
+            return;
+        }
+
+        final byte[] decoded = Base64.getDecoder().decode(data.toString());
+        if (decoded == null || decoded.length == 0) {
+            result.success("");
+            return;
+        }
+
         Runnable r = new Runnable() {
             @Override
             public void run() {

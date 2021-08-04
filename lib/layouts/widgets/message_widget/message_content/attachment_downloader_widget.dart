@@ -29,6 +29,7 @@ class _AttachmentDownloaderWidgetState extends State<AttachmentDownloaderWidget>
           onPressed: widget.onPressed,
           color: Colors.transparent,
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               Text(
                 widget.attachment.getFriendlySize(),

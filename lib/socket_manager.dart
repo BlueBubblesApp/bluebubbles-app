@@ -672,7 +672,10 @@ class SocketManager {
             }
 
             cb(response);
-            completer.complete(response);
+            if (!completer.isCompleted) {
+              completer.complete(response);
+            }
+
             if (awaitResponse) _manager.finishSocketProcess(_processId);
           });
         } else {
