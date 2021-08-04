@@ -161,7 +161,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   @override
   Widget build(BuildContext context) {
     bool isSent = !widget.message.guid!.startsWith('temp') && !widget.message.guid!.startsWith('error');
-    bool hideReactions = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideReactions.value;
+    bool hideReactions =
+        SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideReactions.value;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
@@ -255,13 +256,10 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
     double maxMenuWidth = (ReactionTypes.toList().length * reactionIconSize).toDouble();
     double menuHeight = (reactionIconSize).toDouble();
     double topPadding = -20;
-    double topOffset = (messageTopOffset - menuHeight)
-        .toDouble()
-        .clamp(topMinimum, size.height - 120 - menuHeight);
+    double topOffset = (messageTopOffset - menuHeight).toDouble().clamp(topMinimum, size.height - 120 - menuHeight);
     bool shiftRight = currentChat!.chat.isGroup() || SettingsManager().settings.alwaysShowAvatars.value;
     double leftOffset =
-        (widget.message.isFromMe! ? size.width - maxMenuWidth - 25 : 25 + (shiftRight ? 20 : 0))
-            .toDouble();
+        (widget.message.isFromMe! ? size.width - maxMenuWidth - 25 : 25 + (shiftRight ? 20 : 0)).toDouble();
     Color iconColor = Colors.white;
 
     if (Theme.of(context).accentColor.computeLuminance() >= 0.179) {
@@ -513,7 +511,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             onTap: () {
               Clipboard.setData(new ClipboardData(text: widget.message.fullText));
               Navigator.of(context, rootNavigator: true).pop();
-              showSnackbar("Copied", "Copied to clipboard!");
+              showSnackbar("Copied", "Copied to clipboard!", durationMs: 1000);
             },
             child: ListTile(
               title: Text("Copy", style: Theme.of(context).textTheme.bodyText1),
@@ -751,8 +749,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
     double topOffset = (messageTopOffset + widget.childSize!.height).toDouble().clamp(topMinimum, upperLimit);
     bool shiftRight = currentChat!.chat.isGroup() || SettingsManager().settings.alwaysShowAvatars.value;
     double leftOffset =
-        (widget.message.isFromMe! ? size.width - maxMenuWidth - 15 : 15 + (shiftRight ? 35 : 0))
-            .toDouble();
+        (widget.message.isFromMe! ? size.width - maxMenuWidth - 15 : 15 + (shiftRight ? 35 : 0)).toDouble();
     return Positioned(
       top: topOffset + 5,
       left: leftOffset,
