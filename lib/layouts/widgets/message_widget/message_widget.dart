@@ -206,8 +206,7 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
       if (lastRequestCount != nullAttachments.length) {
         lastRequestCount = nullAttachments.length;
 
-        List<dynamic> msgs = await SocketManager().getAttachments(currentChat!.chat.guid!, _message.guid!);
-
+        List<dynamic> msgs = (await SocketManager().getAttachments(currentChat!.chat.guid!, _message.guid!)) ?? [];
         for (var msg in msgs) await ActionHandler.handleMessage(msg, forceProcess: true);
       }
     }
@@ -265,8 +264,7 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
     StickersWidget stickersWidget =
         StickersWidget(key: new Key("stickers-${associatedCount.toString()}"), messages: _message.associatedMessages);
     ReactionsWidget reactionsWidget = ReactionsWidget(
-        key: new Key("reactions-${associatedCount.toString()}"),
-        associatedMessages: _message.associatedMessages);
+        key: new Key("reactions-${associatedCount.toString()}"), associatedMessages: _message.associatedMessages);
 
     // Add the correct type of message to the message stack
     Widget message;
