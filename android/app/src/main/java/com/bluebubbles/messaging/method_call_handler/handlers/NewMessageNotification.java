@@ -5,7 +5,6 @@ import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.Person;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -26,6 +25,7 @@ import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.graphics.drawable.IconCompat;
+import androidx.core.app.Person;
 
 import com.bluebubbles.messaging.MainActivity;
 import com.bluebubbles.messaging.R;
@@ -93,13 +93,13 @@ public class NewMessageNotification implements Handler {
 
         // Find any notifications that already exist for the chat
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
-        Notification existingNotification;
+        Notification existingNotification = null;
         int existingNotificationId = notificationId;
         for (StatusBarNotification notification : notificationManager.getActiveNotifications()) {
             String existingChatGuid = notification.getNotification().extras.getString("chatGuid");
             if (existingChatGuid == null) continue;
             if (existingChatGuid.equals(chatGuid)) {
-                existingNotification = notification;
+                existingNotification = notification.getNotification();
                 existingNotificationId = notification.getId();
                 break;
             }
@@ -108,11 +108,10 @@ public class NewMessageNotification implements Handler {
         // Build a "Person" for the sender
         Person.Builder sender = new Person.Builder()
             .setName(contactName)
-            .isBot(false)
             .setImportant(true);
 
         // Load the group avatar
-        IconCompat senderIcon;
+        IconCompat senderIcon = null;
         if (contactAvatar != null) {
             Bitmap bmp = BitmapFactory.decodeByteArray(contactAvatar, 0, contactAvatar.length);
             senderIcon = IconCompat.createWithAdaptiveBitmap(HelperUtils.getCircleBitmap(bmp));
@@ -120,21 +119,20 @@ public class NewMessageNotification implements Handler {
 
         // Set the icon if available
         if (senderIcon != null) {
-            sender.setIcon(senderIcon.toIcon());
+            sender.setIcon(senderIcon);
         }
 
         // Create a group "person" if the chat is a group
-        IconCompat groupIcon;
+        IconCompat groupIcon = null;
         Person.Builder group = new Person.Builder();
         if (chatIsGroup) {
             group.setName(chatTitle)
-                .isBot(false)
                 .setImportant(true);
 
             if (chatIcon != null) {
                 Bitmap bmp = BitmapFactory.decodeByteArray(chatIcon, 0, chatIcon.length);
                 groupIcon = IconCompat.createWithAdaptiveBitmap(HelperUtils.getCircleBitmap(bmp));
-                group.setIcon(groupIcon.toIcon());
+                group.setIcon(groupIcon);
             }
         } else {
             // If the chat isn't a group, use the sender's info
@@ -145,9 +143,9 @@ public class NewMessageNotification implements Handler {
         // This will load all the other messages as part of the notification as well
         NotificationCompat.MessagingStyle style;
         if (existingNotification != null) {
-            style = NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(notification.getNotification());
+            style = NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(existingNotification);
         } else {
-            style = new NotificationCompat.MessagingStyle(group);
+            style = new NotificationCompat.MessagingStyle(group.build());
         }
 
         // Set whether the chat is a group conversation
@@ -160,7 +158,7 @@ public class NewMessageNotification implements Handler {
         style.addMessage(new NotificationCompat.MessagingStyle.Message(
             messageText,
             Long.valueOf(messageDate).longValue(),
-            androidx.core.app.Person.fromAndroidPerson(sender.build())
+            sender.build()
         ));
 
         // Create a bundle with some extra information in it
@@ -172,36 +170,6 @@ public class NewMessageNotification implements Handler {
         if (notificationVisibility != null) {
             visibility = notificationVisibility;
         }
-
-        // Build the actual notification
-        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(context, channelId)
-            // Set the status bar notification icon
-            .setSmallIcon(R.mipmap.ic_stat_icon)
-            // Let's the notification dismiss itself when it's tapped
-            .setAutoCancel(true)
-            // Tell android that it's a message/conversation
-            .setCategory(NotificationCompat.CATEGORY_MESSAGE)
-            // Set the priority to high since it's a message they should see
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            // Set the visibility of the notification
-            .setVisibility(visibility)
-            // Sets the intent for when it's clicked
-            .setContentIntent(openIntent)
-            // Adds the mark as read action
-            .addAction(dismissAction)
-            // Adds the reply action
-            .addAction(replyAction)
-            // Sets the style (messages/content/etc)
-            .setStyle(style)
-            // Set the shortcut ID to the chat GUID since it's already unique
-            .setShortcutId(chatGuid)
-            // Add in any extra info we may want
-            .addExtras(extras)
-            // Set the color. This is the blue primary color
-            .setColor(4888294);
-
-        // Disable the alert if it's from you
-        notificationBuilder.setOnlyAlertOnce(messageIsFromMe);
 
         // Create intent for opening the conversation in the app
         PendingIntent openIntent = PendingIntent.getActivity(
@@ -249,7 +217,6 @@ public class NewMessageNotification implements Handler {
         // Generate contextual interactive buttons
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             replyActionBuilder.setAllowGeneratedReplies(true);
-            notificationBuilder.setAllowSystemGeneratedContextualActions(true);
         }
 
         // Add remote input replier
@@ -258,8 +225,43 @@ public class NewMessageNotification implements Handler {
             replyActionBuilder.addRemoteInput(replyInput);
         }
 
+        // Build the actual notification
+        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(context, channelId)
+                // Set the status bar notification icon
+                .setSmallIcon(R.mipmap.ic_stat_icon)
+                // Let's the notification dismiss itself when it's tapped
+                .setAutoCancel(true)
+                // Tell android that it's a message/conversation
+                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+                // Set the priority to high since it's a message they should see
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                // Set the visibility of the notification
+                .setVisibility(visibility)
+                // Sets the intent for when it's clicked
+                .setContentIntent(openIntent)
+                // Adds the mark as read action
+                .addAction(dismissAction)
+                // Adds the reply action
+                .addAction(replyActionBuilder.build())
+                // Sets the style (messages/content/etc)
+                .setStyle(style)
+                // Set the shortcut ID to the chat GUID since it's already unique
+                .setShortcutId(chatGuid)
+                // Add in any extra info we may want
+                .addExtras(extras)
+                // Set the color. This is the blue primary color
+                .setColor(4888294);
+
+        // Disable the alert if it's from you
+        notificationBuilder.setOnlyAlertOnce(messageIsFromMe);
+
+        // Generate contextual interactive buttons
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            notificationBuilder.setAllowSystemGeneratedContextualActions(true);
+        }
+
         // Add bubble intent handler
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        if (Build.VERSION.SDK_INT >= 30) {
             PendingIntent bubbleIntent = PendingIntent.getActivity(
                 context,
                 existingNotificationId,
@@ -276,9 +278,9 @@ public class NewMessageNotification implements Handler {
 
             // Set the icon to a user or group
             if (groupIcon != null) {
-                bubbleMetadataBuilder.setIcon(groupIcon.toIcon());
+                bubbleMetadataBuilder.setIcon(groupIcon);
             } else if (senderIcon != null) {
-                bubbleMetadataBuilder.setIcon(senderIcon.toIcon());
+                bubbleMetadataBuilder.setIcon(senderIcon);
             }
 
             notificationBuilder.setBubbleMetadata(bubbleMetadataBuilder.build());

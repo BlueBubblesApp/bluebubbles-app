@@ -131,7 +131,7 @@ class NotificationManager {
 
     // If it's still null or empty, we need to put something in there... so 'You'
     if (contactName == null || contactName.isEmpty) {
-      contactName = 'You';
+      contactName = 'Unknown';
     }
 
     // Get the actual contact metadata
@@ -150,7 +150,7 @@ class NotificationManager {
       } else {
         // If [defaultAvatar] is not loaded, load it from assets
         if (defaultAvatar == null) {
-          ByteData file = await loadAsset("assets/images/person.png");
+          ByteData file = await loadAsset("assets/images/person64.png");
           defaultAvatar = file.buffer.asUint8List();
         }
 
@@ -177,7 +177,7 @@ class NotificationManager {
     }
 
     createNewMessageNotification(chat.guid!, isGroup, chatTitle, contactIcon, contactName, contactIcon, messageText,
-        message.dateCreated!, message.isFromMe!, visibility, chat.id!);
+        message.dateCreated ?? DateTime.now(), message.isFromMe ?? false, visibility, chat.id ?? Random().nextInt(9998) + 1);
   }
 
   void createNewMessageNotification(
