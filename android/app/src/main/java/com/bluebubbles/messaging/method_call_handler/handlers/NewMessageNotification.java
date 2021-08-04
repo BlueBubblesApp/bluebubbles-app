@@ -83,7 +83,7 @@ public class NewMessageNotification implements Handler {
 
         // Message stuff
         String messageText = (String) call.argument("messageText");
-        Integer messageDate = (Integer) call.argument("messageDate");
+        Long messageDate = (Long) call.argument("messageDate");
         Boolean messageIsFromMe = (Boolean) call.argument("messageIsFromMe");
 
         // Notification stuff
@@ -276,11 +276,13 @@ public class NewMessageNotification implements Handler {
                 .setIntent(bubbleIntent)
                 .setDesiredHeight(600);
 
-            // Set the icon to a user or group
+            // Set the icon to a user or group or fallback to the BB icon
             if (groupIcon != null) {
                 bubbleMetadataBuilder.setIcon(groupIcon);
             } else if (senderIcon != null) {
                 bubbleMetadataBuilder.setIcon(senderIcon);
+            } else {
+                bubbleMetadataBuilder.setIcon(IconCompat.createWithResource(context, R.mipmap.ic_stat_icon));
             }
 
             notificationBuilder.setBubbleMetadata(bubbleMetadataBuilder.build());
