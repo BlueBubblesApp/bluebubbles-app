@@ -502,7 +502,8 @@ class Message {
   }
 
   bool isUrlPreview() {
-    return this.balloonBundleId != null && this.balloonBundleId == "com.apple.messages.URLBalloonProvider" ||
+    return this.balloonBundleId != null &&
+        this.balloonBundleId == "com.apple.messages.URLBalloonProvider" &&
         this.hasDdResults!;
   }
 
