@@ -136,7 +136,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
     final generateNames =
         SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeContactNames.value;
 
-    TextStyle? style = context.textTheme.subtitle1!.apply(fontSizeFactor: 0.8);
+    TextStyle? style = context.textTheme.subtitle1!.apply(fontSizeFactor: 0.85);
     String? title = widget.chat.title != null ? widget.chat.title : "";
 
     if (generateNames)
@@ -363,83 +363,106 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
       },
       child: Padding(
         padding: EdgeInsets.only(
-          top: 10,
+          top: 20,
+          left: 10,
+          right: 10,
+          bottom: 10,
         ),
         child: Obx(
-          () => Stack(
-            clipBehavior: Clip.none,
-            alignment: Alignment.center,
-            children: <Widget>[
-              Column(
-                children: [
-                  ContactAvatarGroupWidget(
-                    participants: widget.chat.participants,
-                    chat: widget.chat,
-                    width: (context.mediaQueryShortestSide - 200) / 3,
-                    height: (context.mediaQueryShortestSide - 200) / 3,
-                    editable: false,
-                    onTap: this.onTapUpBypass,
+          () {
+            int colCount = SettingsManager().settings.pinColumnsPortrait.value;
+            if (context.mediaQuery.orientation != Orientation.portrait) {
+              colCount = (colCount / context.mediaQuerySize.height * context.mediaQuerySize.width).floor();
+            }
+            int spaceBetween = (colCount - 1) * 20;
+            int spaceAround = 20;
+
+            // Great math right here
+            double maxWidth = ((context.mediaQuerySize.width - spaceBetween - spaceAround) / colCount).floorToDouble();
+            return ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: maxWidth,
+              ),
+              child: Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.center,
+                children: <Widget>[
+                  Column(
+                    children: [
+                      ContactAvatarGroupWidget(
+                        participants: widget.chat.participants,
+                        chat: widget.chat,
+                        width: (context.mediaQueryShortestSide - 150) / 3,
+                        height: (context.mediaQueryShortestSide - 150) / 3,
+                        editable: false,
+                        onTap: this.onTapUpBypass,
+                      ),
+                      Container(
+                        padding: EdgeInsets.only(
+                          top: 10,
+                          left: 10,
+                          right: 10,
+                        ),
+                        child: buildSubtitle(),
+                      ),
+                    ],
                   ),
-                  Container(
-                    padding: EdgeInsets.only(
-                      top: 10,
-                      left: 10,
-                      right: 10,
+                  StreamBuilder<Map<String, dynamic>>(
+                    stream: CurrentChat.getCurrentChat(widget.chat)?.stream as Stream<Map<String, dynamic>>?,
+                    builder: (BuildContext context, AsyncSnapshot snapshot) {
+                      if (snapshot.connectionState == ConnectionState.active &&
+                          snapshot.hasData &&
+                          snapshot.data["type"] == CurrentChatEvent.TypingStatus) {
+                        showTypingIndicator.value = snapshot.data["data"];
+                      }
+                      if (showTypingIndicator.value) {
+                        return Positioned(
+                          top: -11,
+                          right: -13,
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(maxHeight: 32),
+                            child: FittedBox(
+                              child: TypingIndicator(
+                                visible: true,
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+                      return Container();
+                    },
+                  ),
+                  FutureBuilder<Message>(
+                    future: widget.chat.latestMessage,
+                    builder: (BuildContext context, AsyncSnapshot snapshot) {
+                      if (!(widget.chat.hasUnreadMessage ?? false)) return Container();
+                      if (showTypingIndicator.value) return Container();
+                      if (!snapshot.hasData) return Container();
+                      Message message = snapshot.data;
+                      if ([null, ""].contains(message.associatedMessageGuid) || (message.isFromMe ?? false)) {
+                        return Container();
+                      }
+                      return Positioned(
+                        top: -12,
+                        right: -8,
+                        child: ReactionsWidget(
+                          associatedMessages: [message],
+                          bigPin: true,
+                        ),
+                      );
+                    },
+                  ),
+                  Positioned(
+                    bottom: 20,
+                    width: maxWidth,
+                    child: PinnedTileTextBubble(
+                      chat: widget.chat,
                     ),
-                    child: buildSubtitle(),
                   ),
                 ],
               ),
-              StreamBuilder<Map<String, dynamic>>(
-                stream: CurrentChat.getCurrentChat(widget.chat)?.stream as Stream<Map<String, dynamic>>?,
-                builder: (BuildContext context, AsyncSnapshot snapshot) {
-                  if (snapshot.connectionState == ConnectionState.active &&
-                      snapshot.hasData &&
-                      snapshot.data["type"] == CurrentChatEvent.TypingStatus) {
-                    showTypingIndicator.value = snapshot.data["data"];
-                  }
-                  if (showTypingIndicator.value) {
-                    return Positioned(
-                      top: -10,
-                      right: -10,
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(maxHeight: 30),
-                        child: FittedBox(
-                          child: TypingIndicator(
-                            visible: true,
-                          ),
-                        ),
-                      ),
-                    );
-                  }
-                  return Container();
-                },
-              ),
-              FutureBuilder<Message>(
-                future: widget.chat.latestMessage,
-                builder: (BuildContext context, AsyncSnapshot snapshot) {
-                  if (!(widget.chat.hasUnreadMessage ?? false)) return Container();
-                  if (showTypingIndicator.value) return Container();
-                  if (!snapshot.hasData) return Container();
-                  Message message = snapshot.data;
-                  if ([null, ""].contains(message.associatedMessageGuid) || (message.isFromMe ?? false)) {
-                    return Container();
-                  }
-                  return Positioned(
-                    top: -10,
-                    right: 0,
-                    child: ReactionsWidget(
-                      associatedMessages: [message],
-                      bigPin: true,
-                    ),
-                  );
-                },
-              ),
-              PinnedTileTextBubble(
-                chat: widget.chat,
-              ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

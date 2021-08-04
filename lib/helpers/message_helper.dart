@@ -241,6 +241,66 @@ class MessageHelper {
         visibility);
   }
 
+  /// A synchronous notification text method for big pins to display new attachments
+  /// Returns "" for any unsupported message or a message that usually requires an async call
+  static String getNotificationTextSync(Message message) {
+    // If the item type is not 0, it's a group event
+    if (message.isGroupEvent()) {
+      return "";
+    }
+
+    if (message.isInteractive()) {
+      return "Interactive: ${MessageHelper.getInteractiveText(message)}";
+    }
+
+    if (isNullOrEmpty(message.text, trimString: true)! && !message.hasAttachments) {
+      return "";
+    }
+
+    // Parse/search for links
+    List<RegExpMatch> matches = parseLinks(message.text!);
+
+    // If there are attachments, return the number of attachments
+    int aCount = (message.attachments ?? []).length;
+    if (message.hasAttachments && matches.isEmpty) {
+      // Build the attachment output by counting the attachments
+      String output = "Attachment${aCount > 1 ? "s" : ""}";
+      Map<String, int> counts = {};
+      for (Attachment? attachment in message.attachments ?? []) {
+        String? mime = attachment!.mimeType;
+        String key;
+        if (mime == null) {
+          key = "link";
+        } else if (mime.contains("vcard")) {
+          key = "contact card";
+        } else if (mime.contains("location")) {
+          key = "location";
+        } else if (mime.contains("contact")) {
+          key = "contact";
+        } else if (mime.contains("video")) {
+          key = "movie";
+        } else if (mime.contains("image/gif")) {
+          key = "GIF";
+        } else {
+          key = mime.split("/").first;
+        }
+
+        int current = counts.containsKey(key) ? counts[key]! : 0;
+        counts[key] = current + 1;
+      }
+
+      List<String> attachmentStr = [];
+      counts.forEach((key, value) {
+        attachmentStr.add("$value $key${value > 1 ? "s" : ""}");
+      });
+
+      return "$output: ${attachmentStr.join(attachmentStr.length == 2 ? " & " : ", ")}";
+    } else {
+      // It's all other message types
+      return message.text ?? "";
+    }
+  }
+
   static Future<String> getNotificationText(Message message) async {
     // If the item type is not 0, it's a group event
     if (message.isGroupEvent()) {

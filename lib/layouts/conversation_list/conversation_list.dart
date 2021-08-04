@@ -456,27 +456,23 @@ class _Cupertino extends StatelessWidget {
                 if (context.mediaQuery.orientation != Orientation.portrait) {
                   colCount = (colCount / context.mediaQuerySize.height * context.mediaQuerySize.width).floor();
                 }
-                int usedRowCount = min(
-                    (ChatBloc().chats.archivedHelper(showArchived).bigPinHelper(true).length / colCount).ceil(),
-                    rowCount);
+                int pinCount = ChatBloc().chats.archivedHelper(showArchived).bigPinHelper(true).length;
+                int usedRowCount = min((pinCount / colCount).ceil(), rowCount);
                 int maxOnPage = rowCount * colCount;
                 PageController _controller = PageController();
-                int _pageCount =
-                    (ChatBloc().chats.archivedHelper(showArchived).bigPinHelper(true).length / maxOnPage).ceil();
-                int _filledPageCount =
-                    (ChatBloc().chats.archivedHelper(showArchived).bigPinHelper(true).length / maxOnPage).floor();
+                int _pageCount = (pinCount / maxOnPage).ceil();
+                int _filledPageCount = (pinCount / maxOnPage).floor();
 
                 return SliverPadding(
                   padding: EdgeInsets.only(
                     top: 10,
-                    left: 10,
-                    right: 10,
                     bottom: 10,
                   ),
                   sliver: SliverToBoxAdapter(
                     child: ConstrainedBox(
-                      constraints:
-                          BoxConstraints(maxHeight: (context.mediaQuerySize.width - 20) / colCount * usedRowCount),
+                      constraints: BoxConstraints(
+                        maxHeight: (context.mediaQuerySize.width + 30) / colCount * usedRowCount,
+                      ),
                       child: Stack(
                         alignment: Alignment.bottomCenter,
                         children: <Widget>[
@@ -485,34 +481,29 @@ class _Cupertino extends StatelessWidget {
                             scrollDirection: Axis.horizontal,
                             controller: _controller,
                             itemBuilder: (context, index) {
-                              return GridView.builder(
-                                physics: NeverScrollableScrollPhysics(),
-                                padding: EdgeInsets.zero,
-                                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: colCount,
-                                  mainAxisExtent: (context.mediaQuerySize.width - 40) / colCount,
-                                  mainAxisSpacing: 10.0,
-                                  crossAxisSpacing: 10.0,
-                                  childAspectRatio: 0.85,
+                              return Wrap(
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                alignment: _pageCount > 1 ? WrapAlignment.start : WrapAlignment.center,
+                                children: List.generate(
+                                  index < _filledPageCount
+                                      ? maxOnPage
+                                      : ChatBloc().chats.archivedHelper(showArchived).bigPinHelper(true).length %
+                                          maxOnPage,
+                                  (_index) {
+                                    return PinnedConversationTile(
+                                      key: Key(ChatBloc()
+                                          .chats
+                                          .archivedHelper(showArchived)
+                                          .bigPinHelper(true)[index * maxOnPage + _index]
+                                          .guid
+                                          .toString()),
+                                      chat: ChatBloc()
+                                          .chats
+                                          .archivedHelper(showArchived)
+                                          .bigPinHelper(true)[index * maxOnPage + _index],
+                                    );
+                                  },
                                 ),
-                                itemBuilder: (context, _index) {
-                                  return PinnedConversationTile(
-                                    key: Key(ChatBloc()
-                                        .chats
-                                        .archivedHelper(showArchived)
-                                        .bigPinHelper(true)[index * maxOnPage + _index]
-                                        .guid
-                                        .toString()),
-                                    chat: ChatBloc()
-                                        .chats
-                                        .archivedHelper(showArchived)
-                                        .bigPinHelper(true)[index * maxOnPage + _index],
-                                  );
-                                },
-                                itemCount: index < _filledPageCount
-                                    ? maxOnPage
-                                    : ChatBloc().chats.archivedHelper(showArchived).bigPinHelper(true).length %
-                                        maxOnPage,
                               );
                             },
                             itemCount: _pageCount,
