@@ -44,7 +44,7 @@ class ActionHandler {
 
     // Check for URLs
     RegExpMatch? linkMatch;
-    late String linkMsg;
+    String? linkMsg;
     List<RegExpMatch> matches = parseLinks(text);
 
     // Get the first match (if it exists)
@@ -53,7 +53,8 @@ class ActionHandler {
       linkMsg = text.substring(linkMatch.start, linkMatch.end);
     }
 
-    bool shouldSplit = linkMatch != null && text.endsWith(linkMsg);
+    // If the message starts/ends with the link, it should split it
+    bool shouldSplit = linkMatch != null && (text.endsWith(linkMsg!) || text.startsWith(linkMsg));
 
     // Create the main message
     Message mainMsg = Message(
