@@ -39,7 +39,7 @@ class SetupBloc {
   final Rxn<SetupData> data = Rxn<SetupData>();
   final Rxn<SocketState> connectionStatus = Rxn<SocketState>();
   final RxBool isSyncing = false.obs;
-  StreamSubscription? connectionSubscription;
+  Worker? connectionSubscription;
 
   double _progress = 0.0;
   int _currentIndex = 0;
@@ -55,7 +55,7 @@ class SetupBloc {
 
   Future<void> connectToServer(FCMData data, String serverURL, String password) async {
     Settings settingsCopy = SettingsManager().settings;
-    if (SocketManager().state == SocketState.CONNECTED && settingsCopy.serverAddress.value == serverURL) {
+    if (SocketManager().state.value == SocketState.CONNECTED && settingsCopy.serverAddress.value == serverURL) {
       debugPrint("Not reconnecting to server we are already connected to!");
       return;
     }
@@ -67,7 +67,7 @@ class SetupBloc {
     await SettingsManager().saveFCMData(data);
     await SocketManager().authFCM(catchException: false, force: true);
     await SocketManager().startSocketIO(forceNewConnection: true, catchException: false);
-    connectionSubscription = SocketManager().connectionStateStream.listen((event) {
+    connectionSubscription = ever<SocketState>(SocketManager().state, (event) {
       connectionStatus.value = event;
 
       if (isSyncing.value) {
@@ -235,7 +235,7 @@ class SetupBloc {
       {String? chatGuid, bool saveDate = true, Function? onConnectionError, Function? onComplete}) async {
     // If we are already syncing, don't sync again
     // Or, if we haven't finished setup, or we aren't connected, don't sync
-    if (isSyncing.value || !settings.finishedSetup.value || SocketManager().state != SocketState.CONNECTED) return;
+    if (isSyncing.value || !settings.finishedSetup.value || SocketManager().state.value != SocketState.CONNECTED) return;
 
     // Reset the progress
     _progress = 0;
@@ -327,6 +327,6 @@ class SetupBloc {
     processId = null;
 
     output = [];
-    connectionSubscription?.cancel();
+    connectionSubscription?.dispose();
   }
 }

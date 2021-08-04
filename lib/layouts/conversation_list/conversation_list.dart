@@ -218,19 +218,7 @@ class _ConversationListState extends State<ConversationList> {
     if (!SettingsManager().settings.showConnectionIndicator.value) return [];
 
     return [
-      StreamBuilder(
-          stream: SocketManager().connectionStateStream,
-          initialData: SocketManager().state,
-          builder: (context, AsyncSnapshot<SocketState> snapshot) {
-            late SocketState connectionStatus;
-            if (snapshot.hasData) {
-              connectionStatus = snapshot.data!;
-            } else {
-              connectionStatus = SocketManager().state;
-            }
-
-            return getIndicatorIcon(connectionStatus, size: 12);
-          }),
+      Obx(() => getIndicatorIcon(SocketManager().state.value, size: 12)),
       Container(width: 10.0)
     ];
   }

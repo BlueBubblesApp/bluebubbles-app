@@ -62,26 +62,15 @@ class SocketManager {
   Map<String, AttachmentSender> attachmentSenders = Map();
   Map<int, Function> socketProcesses = new Map();
 
-  SocketState _state = SocketState.DISCONNECTED;
-
-  StreamController<SocketState> _connectionStateStream = StreamController<SocketState>.broadcast();
-
-  Stream<SocketState> get connectionStateStream => _connectionStateStream.stream;
-
-  SocketState get state => _state;
-
-  set state(SocketState val) {
-    _state = val;
-    _connectionStateStream.sink.add(_state);
-  }
+  final Rx<SocketState> state = SocketState.DISCONNECTED.obs;
 
   int addSocketProcess(Function() cb) {
     int processId = Random().nextInt(10000);
     socketProcesses[processId] = cb;
     Future.delayed(Duration(milliseconds: Random().nextInt(100)), () {
-      if (state == SocketState.DISCONNECTED || state == SocketState.FAILED) {
+      if (state.value == SocketState.DISCONNECTED || state.value == SocketState.FAILED) {
         _manager.startSocketIO();
-      } else if (state == SocketState.CONNECTED) {
+      } else if (state.value == SocketState.CONNECTED) {
         cb();
       }
     });
@@ -136,7 +125,7 @@ class SocketManager {
           _manager.disconnectSubscribers.remove(key);
         });
 
-        state = SocketState.CONNECTED;
+        state.value = SocketState.CONNECTED;
         _manager.socketProcesses.values.forEach((element) {
           element();
         });
@@ -147,14 +136,14 @@ class SocketManager {
           });
         return;
       case "connect_error":
-        if (state != SocketState.ERROR && state != SocketState.FAILED) {
-          state = SocketState.ERROR;
+        if (state.value != SocketState.ERROR && state.value != SocketState.FAILED) {
+          state.value = SocketState.ERROR;
           Timer(Duration(seconds: 5), () {
-            if (state != SocketState.ERROR) return;
+            if (state.value != SocketState.ERROR) return;
             refreshConnection(connectToSocket: true);
           });
           Timer(Duration(seconds: 20), () {
-            if (state != SocketState.ERROR) return;
+            if (state.value != SocketState.ERROR) return;
             debugPrint("[Socket] -> Unable to connect");
 
             // Only show the notification if setup is finished
@@ -162,7 +151,7 @@ class SocketManager {
               NotificationManager().createSocketWarningNotification();
             }
 
-            state = SocketState.FAILED;
+            state.value = SocketState.FAILED;
             List processes = socketProcesses.values.toList();
             processes.forEach((value) {
               value(true);
@@ -175,15 +164,15 @@ class SocketManager {
         }
         return;
       case "disconnect":
-        if (state == SocketState.FAILED) return;
+        if (state.value == SocketState.FAILED) return;
         _manager.disconnectSubscribers.values.forEach((f) {
           f();
         });
 
-        state = SocketState.DISCONNECTED;
+        state.value = SocketState.DISCONNECTED;
         Timer t;
         t = Timer(const Duration(seconds: 5), () {
-          if (state == SocketState.DISCONNECTED && LifeCycleManager().isAlive && !Get.isSnackbarOpen!) {
+          if (state.value == SocketState.DISCONNECTED && LifeCycleManager().isAlive && !Get.isSnackbarOpen!) {
             showSnackbar('Socket Disconnected', 'You are not longer connected to the socket 🔌');
           }
         });
@@ -192,7 +181,7 @@ class SocketManager {
             t.cancel();
           } else {
             t = Timer(const Duration(seconds: 5), () {
-              if (state == SocketState.DISCONNECTED && LifeCycleManager().isAlive && !Get.isSnackbarOpen!) {
+              if (state.value == SocketState.DISCONNECTED && LifeCycleManager().isAlive && !Get.isSnackbarOpen!) {
                 showSnackbar('Socket Disconnected', 'You are not longer connected to the socket 🔌');
               }
             });
@@ -201,7 +190,7 @@ class SocketManager {
         return;
       case "reconnect":
         debugPrint("RECONNECTED");
-        state = SocketState.CONNECTING;
+        state.value = SocketState.CONNECTING;
         _manager.socketProcesses.values.forEach((element) {
           element();
         });
@@ -227,12 +216,12 @@ class SocketManager {
 
   Future<void> startSocketIO({bool forceNewConnection = false, bool catchException = true}) async {
     //removed check for settings being null here, could be an issue later but I doubt it (tneotia)
-    if ((state == SocketState.CONNECTING || state == SocketState.CONNECTED) && !forceNewConnection) {
+    if ((state.value == SocketState.CONNECTING || state.value == SocketState.CONNECTED) && !forceNewConnection) {
       debugPrint("[Socket] -> Already connected");
       return;
     }
-    if (state == SocketState.FAILED) {
-      state = SocketState.CONNECTING;
+    if (state.value == SocketState.FAILED) {
+      state.value = SocketState.CONNECTING;
     }
 
     // If we already have a socket connection, kill it
@@ -400,7 +389,7 @@ class SocketManager {
       _manager.socket!.destroy();
     }
     _manager.socket = null;
-    state = SocketState.DISCONNECTED;
+    state.value = SocketState.DISCONNECTED;
     NotificationManager().clearSocketWarning();
   }
 
@@ -567,8 +556,8 @@ class SocketManager {
     return completer.future;
   }
 
-  Future<Chat> fetchChat(String chatGuid, {withParticipants = true}) async {
-    Completer<Chat> completer = new Completer();
+  Future<Chat?> fetchChat(String chatGuid, {withParticipants = true}) async {
+    Completer<Chat?> completer = new Completer();
     debugPrint("[Fetch Chat] Fetching full chat metadata from server.");
 
     Map<String, dynamic> params = Map();
@@ -724,7 +713,6 @@ class SocketManager {
 
   dispose() {
     _attachmentSenderCompleter.close();
-    _connectionStateStream.close();
     _socketProcessUpdater.close();
     finishedSetup.close();
   }

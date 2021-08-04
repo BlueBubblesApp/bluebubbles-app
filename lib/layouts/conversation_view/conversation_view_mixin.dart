@@ -290,18 +290,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     ];
 
     if (SettingsManager().settings.showConnectionIndicator.value) {
-      items.add(StreamBuilder(
-          stream: SocketManager().connectionStateStream,
-          builder: (context, AsyncSnapshot<SocketState> snapshot) {
-            late SocketState connectionStatus;
-            if (snapshot.hasData) {
-              connectionStatus = snapshot.data!;
-            } else {
-              connectionStatus = SocketManager().state;
-            }
-
-            return getIndicatorIcon(connectionStatus, size: 12);
-          }));
+      items.add(Obx(() => getIndicatorIcon(SocketManager().state.value, size: 12)));
     }
 
     if (items.length <= 1) {
@@ -350,18 +339,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         actions: [
           Obx(() {
             if (SettingsManager().settings.showConnectionIndicator.value)
-              return StreamBuilder(
-                  stream: SocketManager().connectionStateStream,
-                  builder: (context, AsyncSnapshot<SocketState> snapshot) {
-                    late SocketState connectionStatus;
-                    if (snapshot.hasData) {
-                      connectionStatus = snapshot.data!;
-                    } else {
-                      connectionStatus = SocketManager().state;
-                    }
-
-                    return getIndicatorIcon(connectionStatus, size: 12);
-                  });
+              return Obx(() => getIndicatorIcon(SocketManager().state.value, size: 12));
             else
               return SizedBox.shrink();
           }),

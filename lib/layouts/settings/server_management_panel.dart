@@ -53,7 +53,7 @@ class ServerManagementPanelController extends GetxController {
   void onInit() {
     _settingsCopy = SettingsManager().settings;
     _fcmDataCopy = SettingsManager().fcmData;
-    if (SocketManager().state == SocketState.CONNECTED) {
+    if (SocketManager().state.value == SocketState.CONNECTED) {
       int now = DateTime.now().toUtc().millisecondsSinceEpoch;
       SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
         int later = DateTime.now().toUtc().millisecondsSinceEpoch;
@@ -146,54 +146,46 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                         child: Text("Connection & Server Details".psCapitalize, style: SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
                       )
                   ),
-                  StreamBuilder(
-                      stream: SocketManager().connectionStateStream,
-                      builder: (context, AsyncSnapshot<SocketState> snapshot) {
-                        SocketState connectionStatus;
-                        if (snapshot.hasData) {
-                          connectionStatus = snapshot.data!;
-                        } else {
-                          connectionStatus = SocketManager().state;
-                        }
-                        bool redact = SettingsManager().settings.redactedMode.value;
-                        return Container(
-                            color: tileColor,
-                            child: Padding(
-                              padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
-                              child: Obx(() => SelectableText.rich(
-                                TextSpan(
-                                    children: [
-                                      TextSpan(text: "Connection Status: "),
-                                      TextSpan(text: describeEnum(connectionStatus), style: TextStyle(color: getIndicatorColor(connectionStatus))),
-                                      TextSpan(text: "\n\n"),
-                                      TextSpan(text: "Server URL: ${redact ? "Redacted" : controller._settingsCopy.serverAddress}"),
-                                      TextSpan(text: "\n\n"),
-                                      TextSpan(text: "Latency: ${redact ? "Redacted" : ((controller.latency.value ?? "N/A").toString() + " ms")}"),
-                                      TextSpan(text: "\n\n"),
-                                      TextSpan(text: "Server Version: ${redact ? "Redacted" : (controller.serverVersion.value ?? "N/A")}"),
-                                      TextSpan(text: "\n\n"),
-                                      TextSpan(text: "macOS Version: ${redact ? "Redacted" : (controller.macOSVersion.value ?? "N/A")}"),
-                                      TextSpan(text: "\n\n"),
-                                      TextSpan(text: "Tap to update values...", style: TextStyle(fontStyle: FontStyle.italic)),
-                                    ]
-                                ),
-                                onTap: () {
-                                  if (connectionStatus != SocketState.CONNECTED) return;
+                  Obx(() {
+                    bool redact = SettingsManager().settings.redactedMode.value;
+                    return Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
+                          child: SelectableText.rich(
+                            TextSpan(
+                                children: [
+                                  TextSpan(text: "Connection Status: "),
+                                  TextSpan(text: describeEnum(SocketManager().state.value), style: TextStyle(color: getIndicatorColor(SocketManager().state.value))),
+                                  TextSpan(text: "\n\n"),
+                                  TextSpan(text: "Server URL: ${redact ? "Redacted" : controller._settingsCopy.serverAddress}"),
+                                  TextSpan(text: "\n\n"),
+                                  TextSpan(text: "Latency: ${redact ? "Redacted" : ((controller.latency.value ?? "N/A").toString() + " ms")}"),
+                                  TextSpan(text: "\n\n"),
+                                  TextSpan(text: "Server Version: ${redact ? "Redacted" : (controller.serverVersion.value ?? "N/A")}"),
+                                  TextSpan(text: "\n\n"),
+                                  TextSpan(text: "macOS Version: ${redact ? "Redacted" : (controller.macOSVersion.value ?? "N/A")}"),
+                                  TextSpan(text: "\n\n"),
+                                  TextSpan(text: "Tap to update values...", style: TextStyle(fontStyle: FontStyle.italic)),
+                                ]
+                            ),
+                            onTap: () {
+                              if (SocketManager().state.value != SocketState.CONNECTED) return;
 
-                                  int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-                                  SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
-                                    int later = DateTime.now().toUtc().millisecondsSinceEpoch;
-                                    controller.latency.value = later - now;
-                                  });
-                                  SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
-                                    controller.macOSVersion.value = res['data']['os_version'];
-                                    controller.serverVersion.value = res['data']['server_version'];
-                                  });
-                                },
-                              )),
-                            )
-                        );
-                      }),
+                              int now = DateTime.now().toUtc().millisecondsSinceEpoch;
+                              SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
+                                int later = DateTime.now().toUtc().millisecondsSinceEpoch;
+                                controller.latency.value = later - now;
+                              });
+                              SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
+                                controller.macOSVersion.value = res['data']['os_version'];
+                                controller.serverVersion.value = res['data']['server_version'];
+                              });
+                            },
+                          ),
+                        )
+                    );
+                  }),
                   SettingsHeader(
                       headerColor: headerColor,
                       tileColor: tileColor,
@@ -249,40 +241,32 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                       child: SettingsDivider(color: headerColor),
                     ),
                   ),
-                  StreamBuilder(
-                      stream: SocketManager().connectionStateStream,
-                      builder: (context, AsyncSnapshot<SocketState> snapshot) {
-                        SocketState? connectionStatus;
-                        if (snapshot.hasData) {
-                          connectionStatus = snapshot.data;
-                        } else {
-                          connectionStatus = SocketManager().state;
-                        }
-                        String subtitle;
+                  Obx(() {
+                    String subtitle;
 
-                        switch (connectionStatus) {
-                          case SocketState.CONNECTED:
-                            subtitle = "Tap to sync messages";
-                            break;
-                          default:
-                            subtitle = "Disconnected, cannot sync";
-                        }
+                    switch (SocketManager().state.value) {
+                      case SocketState.CONNECTED:
+                        subtitle = "Tap to sync messages";
+                        break;
+                      default:
+                        subtitle = "Disconnected, cannot sync";
+                    }
 
-                        return SettingsTile(
-                            title: "Manually Sync Messages",
-                            subtitle: subtitle,
-                            backgroundColor: tileColor,
-                            leading: SettingsLeadingIcon(
-                              iosIcon: CupertinoIcons.arrow_2_circlepath,
-                              materialIcon: Icons.sync,
-                            ),
-                            onTap: () async {
-                              showDialog(
-                                context: context,
-                                builder: (context) => SyncDialog(),
-                              );
-                            });
-                      }),
+                    return SettingsTile(
+                        title: "Manually Sync Messages",
+                        subtitle: subtitle,
+                        backgroundColor: tileColor,
+                        leading: SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.arrow_2_circlepath,
+                          materialIcon: Icons.sync,
+                        ),
+                        onTap: () async {
+                          showDialog(
+                            context: context,
+                            builder: (context) => SyncDialog(),
+                          );
+                        });
+                  }),
                   SettingsHeader(
                       headerColor: headerColor,
                       tileColor: tileColor,
@@ -290,56 +274,45 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                       materialSubtitle: materialSubtitle,
                       text: "Server Actions"
                   ),
-                  StreamBuilder(
-                      stream: SocketManager().connectionStateStream,
-                      builder: (context, AsyncSnapshot<SocketState> snapshot) {
-                        SocketState? connectionStatus;
-                        if (snapshot.hasData) {
-                          connectionStatus = snapshot.data;
-                        } else {
-                          connectionStatus = SocketManager().state;
+                  Obx(() => SettingsTile(
+                    title: "Fetch & Share Server Logs",
+                    subtitle: controller.fetchStatus.value
+                        ?? (SocketManager().state.value == SocketState.CONNECTED ? "Tap to fetch logs" : "Disconnected, cannot fetch logs"),
+                    backgroundColor: tileColor,
+                    leading: SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.doc_plaintext,
+                      materialIcon: Icons.article,
+                    ),
+                    onTap: () {
+                      if (![SocketState.CONNECTED].contains(SocketManager().state.value)) return;
+
+                      controller.fetchStatus.value = "Fetching logs, please wait...";
+
+                      SocketManager().sendMessage("get-logs", {"count": 500}, (Map<String, dynamic> res) {
+                        if (res['status'] != 200) {
+                          controller.fetchStatus.value = "Failed to fetch logs!";
+
+                          return;
                         }
 
-                        return Obx(() => SettingsTile(
-                          title: "Fetch & Share Server Logs",
-                          subtitle: controller.fetchStatus.value
-                              ?? (connectionStatus == SocketState.CONNECTED ? "Tap to fetch logs" : "Disconnected, cannot fetch logs"),
-                          backgroundColor: tileColor,
-                          leading: SettingsLeadingIcon(
-                            iosIcon: CupertinoIcons.doc_plaintext,
-                            materialIcon: Icons.article,
-                          ),
-                          onTap: () {
-                            if (![SocketState.CONNECTED].contains(connectionStatus)) return;
+                        String appDocPath = SettingsManager().appDocDir.path;
+                        File logFile = new File("$appDocPath/attachments/main.log");
 
-                            controller.fetchStatus.value = "Fetching logs, please wait...";
+                        if (logFile.existsSync()) {
+                          logFile.deleteSync();
+                        }
 
-                            SocketManager().sendMessage("get-logs", {"count": 500}, (Map<String, dynamic> res) {
-                              if (res['status'] != 200) {
-                                controller.fetchStatus.value = "Failed to fetch logs!";
+                        logFile.writeAsStringSync(res['data']);
 
-                                return;
-                              }
-
-                              String appDocPath = SettingsManager().appDocDir.path;
-                              File logFile = new File("$appDocPath/attachments/main.log");
-
-                              if (logFile.existsSync()) {
-                                logFile.deleteSync();
-                              }
-
-                              logFile.writeAsStringSync(res['data']);
-
-                              try {
-                                Share.file("BlueBubbles Server Log", logFile.absolute.path);
-                                controller.fetchStatus.value = null;
-                              } catch (ex) {
-                                controller.fetchStatus.value = "Failed to share file! ${ex.toString()}";
-                              }
-                            });
-                          },
-                        ));
-                      }),
+                        try {
+                          Share.file("BlueBubbles Server Log", logFile.absolute.path);
+                          controller.fetchStatus.value = null;
+                        } catch (ex) {
+                          controller.fetchStatus.value = "Failed to share file! ${ex.toString()}";
+                        }
+                      });
+                    },
+                  )),
                   Container(
                     color: tileColor,
                     child: Padding(
@@ -347,66 +320,55 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                       child: SettingsDivider(color: headerColor),
                     ),
                   ),
-                  StreamBuilder(
-                      stream: SocketManager().connectionStateStream,
-                      builder: (context, AsyncSnapshot<SocketState> snapshot) {
-                        SocketState? connectionStatus;
-                        if (snapshot.hasData) {
-                          connectionStatus = snapshot.data;
-                        } else {
-                          connectionStatus = SocketManager().state;
+                  Obx(() => SettingsTile(
+                      title: "Restart iMessage",
+                      subtitle: controller.isRestartingMessages.value && SocketManager().state.value == SocketState.CONNECTED
+                          ? "Restart in progress..." : SocketManager().state.value == SocketState.CONNECTED ? "Restart the iMessage app" : "Disconnected, cannot restart",
+                      backgroundColor: tileColor,
+                      leading: SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.chat_bubble,
+                        materialIcon: Icons.sms,
+                      ),
+                      onTap: () async {
+                        if (![SocketState.CONNECTED].contains(SocketManager().state.value) || controller.isRestartingMessages.value) return;
+
+                        controller.isRestartingMessages.value = true;
+
+                        // Prevent restarting more than once every 30 seconds
+                        int now = DateTime.now().toUtc().millisecondsSinceEpoch;
+                        if (controller.lastRestartMessages != null && now - controller.lastRestartMessages! < 1000 * 30) return;
+
+                        // Save the last time we restarted
+                        controller.lastRestartMessages = now;
+
+                        // Create a temporary functon so we can call it easily
+                        Function stopRestarting = () {
+                          controller.isRestartingMessages.value = false;
+                        };
+
+                        // Execute the restart
+                        try {
+                          // If it fails or there is an endpoint error, stop the loader
+                          await SocketManager().sendMessage("restart-messages-app", null, (_) {
+                            stopRestarting();
+                          }).catchError((_) {
+                            stopRestarting();
+                          });
+                        } finally {
+                          stopRestarting();
                         }
-
-                        return Obx(() => SettingsTile(
-                            title: "Restart iMessage",
-                            subtitle: controller.isRestartingMessages.value && connectionStatus == SocketState.CONNECTED
-                                ? "Restart in progress..." : connectionStatus == SocketState.CONNECTED ? "Restart the iMessage app" : "Disconnected, cannot restart",
-                            backgroundColor: tileColor,
-                            leading: SettingsLeadingIcon(
-                              iosIcon: CupertinoIcons.chat_bubble,
-                              materialIcon: Icons.sms,
-                            ),
-                            onTap: () async {
-                              if (![SocketState.CONNECTED].contains(connectionStatus) || controller.isRestartingMessages.value) return;
-
-                              controller.isRestartingMessages.value = true;
-
-                              // Prevent restarting more than once every 30 seconds
-                              int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-                              if (controller.lastRestartMessages != null && now - controller.lastRestartMessages! < 1000 * 30) return;
-
-                              // Save the last time we restarted
-                              controller.lastRestartMessages = now;
-
-                              // Create a temporary functon so we can call it easily
-                              Function stopRestarting = () {
-                                controller.isRestartingMessages.value = false;
-                              };
-
-                              // Execute the restart
-                              try {
-                                // If it fails or there is an endpoint error, stop the loader
-                                await SocketManager().sendMessage("restart-messages-app", null, (_) {
-                                  stopRestarting();
-                                }).catchError((_) {
-                                  stopRestarting();
-                                });
-                              } finally {
-                                stopRestarting();
-                              }
-                            },
-                            trailing: (!controller.isRestartingMessages.value)
-                                ? Icon(Icons.refresh, color: Colors.grey)
-                                : Container(
-                                    constraints: BoxConstraints(
-                                      maxHeight: 20,
-                                      maxWidth: 20,
-                                    ),
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 3,
-                                      valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
-                                    ))));
-                      }),
+                      },
+                      trailing: (!controller.isRestartingMessages.value)
+                          ? Icon(Icons.refresh, color: Colors.grey)
+                          : Container(
+                          constraints: BoxConstraints(
+                            maxHeight: 20,
+                            maxWidth: 20,
+                          ),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 3,
+                            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                          )))),
                   Obx(() {
                     if (SettingsManager().settings.enablePrivateAPI.value) {
                       return Container(
@@ -420,66 +382,55 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                   }),
                   Obx(() {
                     if (SettingsManager().settings.enablePrivateAPI.value) {
-                      return StreamBuilder(
-                          stream: SocketManager().connectionStateStream,
-                          builder: (context, AsyncSnapshot<SocketState> snapshot) {
-                            SocketState? connectionStatus;
-                            if (snapshot.hasData) {
-                              connectionStatus = snapshot.data;
-                            } else {
-                              connectionStatus = SocketManager().state;
+                      return SettingsTile(
+                          title: "Restart Private API",
+                          subtitle: controller.isRestartingPrivateAPI.value && SocketManager().state.value == SocketState.CONNECTED
+                              ? "Restart in progress..." : SocketManager().state.value == SocketState.CONNECTED ? "Restart the Private API" : "Disconnected, cannot restart",
+                          backgroundColor: tileColor,
+                          leading: SettingsLeadingIcon(
+                            iosIcon: CupertinoIcons.exclamationmark_shield,
+                            materialIcon: Icons.gpp_maybe,
+                          ),
+                          onTap: () async {
+                            if (![SocketState.CONNECTED].contains(SocketManager().state.value) || controller.isRestartingPrivateAPI.value) return;
+
+                            controller.isRestartingPrivateAPI.value = true;
+
+                            // Prevent restarting more than once every 30 seconds
+                            int now = DateTime.now().toUtc().millisecondsSinceEpoch;
+                            if (controller.lastRestartPrivateAPI != null && now - controller.lastRestartPrivateAPI! < 1000 * 30) return;
+
+                            // Save the last time we restarted
+                            controller.lastRestartPrivateAPI = now;
+
+                            // Create a temporary functon so we can call it easily
+                            Function stopRestarting = () {
+                              controller.isRestartingPrivateAPI.value = false;
+                            };
+
+                            // Execute the restart
+                            try {
+                              // If it fails or there is an endpoint error, stop the loader
+                              await SocketManager().sendMessage("restart-private-api", null, (_) {
+                                stopRestarting();
+                              }).catchError((_) {
+                                stopRestarting();
+                              });
+                            } finally {
+                              stopRestarting();
                             }
-
-                            return Obx(() => SettingsTile(
-                                title: "Restart Private API",
-                                subtitle: controller.isRestartingPrivateAPI.value && connectionStatus == SocketState.CONNECTED
-                                    ? "Restart in progress..." : connectionStatus == SocketState.CONNECTED ? "Restart the Private API" : "Disconnected, cannot restart",
-                                backgroundColor: tileColor,
-                                leading: SettingsLeadingIcon(
-                                  iosIcon: CupertinoIcons.exclamationmark_shield,
-                                  materialIcon: Icons.gpp_maybe,
-                                ),
-                                onTap: () async {
-                                  if (![SocketState.CONNECTED].contains(connectionStatus) || controller.isRestartingPrivateAPI.value) return;
-
-                                  controller.isRestartingPrivateAPI.value = true;
-
-                                  // Prevent restarting more than once every 30 seconds
-                                  int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-                                  if (controller.lastRestartPrivateAPI != null && now - controller.lastRestartPrivateAPI! < 1000 * 30) return;
-
-                                  // Save the last time we restarted
-                                  controller.lastRestartPrivateAPI = now;
-
-                                  // Create a temporary functon so we can call it easily
-                                  Function stopRestarting = () {
-                                    controller.isRestartingPrivateAPI.value = false;
-                                  };
-
-                                  // Execute the restart
-                                  try {
-                                    // If it fails or there is an endpoint error, stop the loader
-                                    await SocketManager().sendMessage("restart-private-api", null, (_) {
-                                      stopRestarting();
-                                    }).catchError((_) {
-                                      stopRestarting();
-                                    });
-                                  } finally {
-                                    stopRestarting();
-                                  }
-                                },
-                                trailing: (!controller.isRestartingPrivateAPI.value)
-                                    ? Icon(Icons.refresh, color: Colors.grey)
-                                    : Container(
-                                    constraints: BoxConstraints(
-                                      maxHeight: 20,
-                                      maxWidth: 20,
-                                    ),
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 3,
-                                      valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
-                                    ))));
-                          });
+                          },
+                          trailing: (!controller.isRestartingPrivateAPI.value)
+                              ? Icon(Icons.refresh, color: Colors.grey)
+                              : Container(
+                              constraints: BoxConstraints(
+                                maxHeight: 20,
+                                maxWidth: 20,
+                              ),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 3,
+                                valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                              )));
                     } else return SizedBox.shrink();
                   }),
                   Container(
