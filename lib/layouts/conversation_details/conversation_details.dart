@@ -59,7 +59,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
     super.initState();
     chat = widget.chat;
     controller = new TextEditingController(text: chat.displayName);
-    showNameField = chat.displayName!.isNotEmpty;
+    showNameField = chat.displayName?.isNotEmpty ?? false;
 
     fetchAttachments();
     ever(ChatBloc().chats, (List<Chat> chats) async {
