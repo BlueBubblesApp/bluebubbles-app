@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:contacts_service/contacts_service.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -511,7 +512,9 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
               mainAxisSize: Cupertino.MainAxisSize.min,
               mainAxisAlignment: Cupertino.MainAxisAlignment.start,
               children: [
-                buildBackButton(context),
+                buildBackButton(context, callback: () async {
+                  await SystemChannels.textInput.invokeMethod('TextInput.hide');
+                }),
                 if (ChatBloc().unreads.value > 0)
                   Container(
                     width: 25.0,
