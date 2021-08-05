@@ -218,27 +218,7 @@ class MessageHelper {
       return;
     }
 
-    // Create the notification
-    String? contactTitle = await ContactManager().getContactTitle(message.handle);
-    Contact? contact = await ContactManager().getCachedContact(message.handle);
-    String title = await getFullChatTitle(chat);
-    String? notification = await MessageHelper.getNotificationText(message);
-    if (SettingsManager().settings.hideTextPreviews.value) {
-      notification = "iMessage";
-    }
-    NotificationManager().createNewNotification(
-        title,
-        notification,
-        chat.guid,
-        chat,
-        Random().nextInt(9998) + 1,
-        chat.id,
-        message.dateCreated!.millisecondsSinceEpoch,
-        contactTitle,
-        chat.participants.length > 1,
-        message.handle,
-        contact,
-        visibility);
+    NotificationManager().createNotificationFromMessage(chat, message, visibility);
   }
 
   /// A synchronous notification text method for big pins to display new attachments

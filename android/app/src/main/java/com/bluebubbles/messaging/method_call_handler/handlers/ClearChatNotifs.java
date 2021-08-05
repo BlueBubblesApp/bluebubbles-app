@@ -35,12 +35,24 @@ public class ClearChatNotifs implements Handler {
     @Override
     public void Handle() {
         NotificationManager manager = (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
+        String groupKey = null;
         for (StatusBarNotification statusBarNotification : manager.getActiveNotifications()) {
             if (statusBarNotification.getNotification().extras.getString("chatGuid") != null && statusBarNotification.getNotification().extras.getString("chatGuid").contains(Objects.requireNonNull(call.argument("chatGuid")))) {
                 NotificationManagerCompat.from(context).cancel(statusBarNotification.getId());
+                groupKey = statusBarNotification.getGroupKey();
             } else {
                 Log.d("notification clearing", statusBarNotification.getGroupKey());
             }
+        }
+        int counter = 0;
+        for (StatusBarNotification statusBarNotification : manager.getActiveNotifications()) {
+            if (statusBarNotification.getGroupKey().equals(groupKey)) {
+                counter++;
+            }
+        }
+
+        if (counter == 1) {
+            NotificationManagerCompat.from(context).cancel(-1);
         }
         result.success("");
     }

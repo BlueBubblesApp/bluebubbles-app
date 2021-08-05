@@ -256,6 +256,10 @@ class MethodChannelInterface {
   }
 
   Future<void> openChat(String id, {List<File> existingAttachments = const [], String? existingText}) async {
+    if (id == "-1") {
+      NavigatorManager().navigatorKey.currentState!.popUntil((route) => route.isFirst);
+      return;
+    }
     if (CurrentChat.activeChat?.chat.guid == id) {
       NotificationManager().switchChat(CurrentChat.activeChat!.chat);
       return;
