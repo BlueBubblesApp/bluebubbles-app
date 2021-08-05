@@ -395,10 +395,8 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
                   Column(
                     children: [
                       ContactAvatarGroupWidget(
-                        participants: widget.chat.participants,
                         chat: widget.chat,
-                        width: (context.mediaQueryShortestSide - 150) / 3,
-                        height: (context.mediaQueryShortestSide - 150) / 3,
+                        size: (context.mediaQueryShortestSide - 150) / 3,
                         editable: false,
                         onTap: this.onTapUpBypass,
                       ),

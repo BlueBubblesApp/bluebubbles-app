@@ -99,6 +99,8 @@ class Settings {
   final RxInt pinRowsLandscape = RxInt(1);
   final RxInt pinColumnsLandscape = RxInt(6);
 
+  final RxInt maxAvatarsInGroupWidget = RxInt(4);
+
   Settings();
 
   factory Settings.fromConfigEntries(List<ConfigEntry> entries) {
@@ -244,6 +246,8 @@ class Settings {
         settings.securityLevel.value = SecurityLevel.values[entry.value];
       } else if (entry.name == "pinRowsPortrait") {
         settings.pinRowsPortrait.value = entry.value;
+      } else if (entry.name == "maxAvatarsInGroupWidget") {
+        settings.maxAvatarsInGroupWidget.value = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -634,6 +638,11 @@ class Settings {
           value: this.pinRowsPortrait.value,
           type: this.pinRowsPortrait.value.runtimeType,
         ),
+        ConfigEntry(
+          name: "maxAvatarsInGroupWidget",
+          value: this.maxAvatarsInGroupWidget.value,
+          type: this.maxAvatarsInGroupWidget.value.runtimeType,
+        )
         // ConfigEntry(
         //     name: "emojiFontFamily",
         //     value: this.emojiFontFamily,

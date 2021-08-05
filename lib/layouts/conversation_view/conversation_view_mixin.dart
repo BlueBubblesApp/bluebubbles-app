@@ -1,21 +1,18 @@
 import 'dart:async';
 import 'dart:ui';
 
-import 'package:bluebubbles/helpers/ui_helpers.dart';
-import 'package:contacts_service/contacts_service.dart';
-import 'package:flutter/services.dart';
-import 'package:get/get.dart';
-import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/socket_singletons.dart';
+import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_details/conversation_details.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/contact_selector_option.dart';
 import 'package:bluebubbles/layouts/widgets/CustomCupertinoNavBar.dart';
+import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
@@ -28,8 +25,11 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart' as Cupertino;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:slugify/slugify.dart';
 
 mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on State<ConversationView> {
@@ -58,6 +58,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   int previousContactCount = 0;
 
   final _contactStreamController = StreamController<List<UniqueContact>>.broadcast();
+
   Stream<List<UniqueContact>> get contactStream => _contactStreamController.stream;
 
   TextEditingController chatSelectorController = new TextEditingController(text: " ");
@@ -542,12 +543,15 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    RowSuper(
-                      children: avatars,
-                      innerDistance: distance,
-                      alignment: Alignment.center,
+                    // RowSuper(
+                    //   children: avatars,
+                    //   innerDistance: distance,
+                    //   alignment: Alignment.center,
+                    // ),
+                    ContactAvatarGroupWidget(
+                      chat: widget.chat!,
+                      size: 45,
                     ),
-                    Container(height: 5.0),
                     Center(
                         child: Container(
                       constraints: BoxConstraints(

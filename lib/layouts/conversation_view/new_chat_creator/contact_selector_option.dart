@@ -132,7 +132,6 @@ class ContactSelectorOption extends StatelessWidget {
             )
           : ContactAvatarGroupWidget(
               chat: item.chat!,
-              participants: item.chat!.participants,
               editable: false,
             ),
       trailing: item.isChat
