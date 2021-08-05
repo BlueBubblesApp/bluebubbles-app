@@ -293,10 +293,8 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
         padding: EdgeInsets.only(top: 2, right: 2),
         child: !selected
             ? ContactAvatarGroupWidget(
-                participants: widget.chat.participants,
                 chat: widget.chat,
-                width: 40,
-                height: 40,
+                size: 40,
                 editable: false,
                 onTap: this.onTapUpBypass,
               )
