@@ -135,6 +135,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         focusNode!.unfocus();
       } else if (event["type"] == "focus-keyboard" && !focusNode!.hasFocus) {
         focusNode!.requestFocus();
+      } else if (event["type"] == "text-field-update-attachments") {
+        updateTextFieldAttachments();
       }
     });
 
