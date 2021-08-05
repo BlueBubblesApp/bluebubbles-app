@@ -221,10 +221,20 @@ public class NewMessageNotification implements Handler {
             .build();
 
         PendingIntent replyIntent = PendingIntent.getBroadcast(context, existingNotificationId, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-        NotificationCompat.Action.Builder replyActionBuilder = new NotificationCompat.Action.Builder(0, "Reply", replyIntent)
-            .setSemanticAction(NotificationCompat.Action.SEMANTIC_ACTION_REPLY)
-            .setShowsUserInterface(false)
-            .extend(new NotificationCompat.Action.WearableExtender().setHintDisplayActionInline(true));
+        NotificationCompat.Action.Builder replyActionBuilder = null;
+
+        // SEMANTIC_ACTION_REPLY isn't supported until API level 28 so we need to programatically
+        // apply it
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.O) {
+            replyActionBuilder = new NotificationCompat.Action.Builder(0, "Reply", replyIntent)
+                    .setShowsUserInterface(false)
+                    .extend(new NotificationCompat.Action.WearableExtender().setHintDisplayActionInline(true));
+        } else {
+            replyActionBuilder = new NotificationCompat.Action.Builder(0, "Reply", replyIntent)
+                    .setSemanticAction(NotificationCompat.Action.SEMANTIC_ACTION_REPLY)
+                    .setShowsUserInterface(false)
+                    .extend(new NotificationCompat.Action.WearableExtender().setHintDisplayActionInline(true));
+        }
 
         // Generate contextual interactive buttons
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
