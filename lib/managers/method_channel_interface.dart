@@ -4,11 +4,13 @@ import 'dart:io';
 
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/blocs/text_field_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/alarm_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/navigator_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
@@ -258,6 +260,14 @@ class MethodChannelInterface {
   Future<void> openChat(String id, {List<File> existingAttachments = const [], String? existingText}) async {
     if (CurrentChat.activeChat?.chat.guid == id) {
       NotificationManager().switchChat(CurrentChat.activeChat!.chat);
+      TextFieldData? data = TextFieldBloc().getTextField(id);
+      if (existingAttachments.isNotEmpty) {
+        data?.attachments.addAll(existingAttachments);
+        EventDispatcher().emit("text-field-update-attachments", null);
+      }
+      if (existingText != null) {
+        data?.controller.text = existingText;
+      }
       return;
     }
     // Try to find the specified chat to open
