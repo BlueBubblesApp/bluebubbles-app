@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -349,6 +350,27 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                 allContacts: contacts,
                 selectedContacts: selected,
               ),
+            Obx(() {
+              if (!ChatBloc().loadedChats) {
+                return Center(
+                  child: Container(
+                    padding: EdgeInsets.symmetric(vertical: 20.0),
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            "Loading existing chats...",
+                            style: Theme.of(context).textTheme.subtitle1,
+                          ),
+                        ),
+                        buildProgressIndicator(context, width: 15, height: 15),
+                      ],
+                    ),
+                  ),
+                );
+              } else return SizedBox.shrink();
+            }),
             Expanded(
               child: (searchQuery.length == 0 || !isCreator!) && chat != null
                   ? MessagesView(
