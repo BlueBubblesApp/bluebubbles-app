@@ -76,10 +76,13 @@ class _QRScanState extends State<QRScan> {
 
       showDialog(
         context: context,
-        builder: (context) => ConnectingAlert(
+        builder: (connectContext) => ConnectingAlert(
           onConnect: (bool result) {
             if (result) {
-              Navigator.of(context).pop();
+              if (Navigator.of(connectContext).canPop()) {
+                Navigator.of(connectContext).pop();
+              }
+
               goToNextPage();
             }
           },
@@ -98,7 +101,10 @@ class _QRScanState extends State<QRScan> {
 
         await SocketManager().setup.connectToServer(fcmData, serverURL, password);
       } catch (e) {
-        Navigator.of(context).pop();
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        }
+
         showDialog(
           context: context,
           builder: (context) => FailedToScan(
@@ -115,7 +121,8 @@ class _QRScanState extends State<QRScan> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarIconBrightness:
+            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
@@ -175,13 +182,18 @@ class _QRScanState extends State<QRScan> {
                       onTap: () async {
                         showDialog(
                           context: context,
-                          builder: (context) => TextInputURL(
+                          builder: (connectContext) => TextInputURL(
                             onConnect: () {
-                              Navigator.of(context).pop();
+                              if (Navigator.of(connectContext).canPop()) {
+                                Navigator.of(connectContext).pop();
+                              }
+
                               goToNextPage();
                             },
                             onClose: () {
-                              Navigator.of(context).pop();
+                              if (Navigator.of(connectContext).canPop()) {
+                                Navigator.of(connectContext).pop();
+                              }
                             },
                           ),
                         );
