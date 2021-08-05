@@ -138,7 +138,7 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
           if (this.mounted) setState(() {});
         },
         attachment: content,
-        placeHolder: buildPlaceHolder(),
+        placeHolder: buildPlaceHolder(widget),
       );
 
       // If it's an AttachmentDownloader, it is currently being downloaded
@@ -155,7 +155,7 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
               if (this.mounted) setState(() {});
             },
             attachment: content,
-            placeHolder: buildPlaceHolder(),
+            placeHolder: buildPlaceHolder(widget),
           );
         }
 
@@ -168,7 +168,7 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
         return Stack(
           alignment: Alignment.center,
           children: <Widget>[
-            buildPlaceHolder(),
+            buildPlaceHolder(widget),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
@@ -211,14 +211,16 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
     }
   }
 
-  Widget buildPlaceHolder() => ClipRRect(
-        borderRadius: BorderRadius.circular(8.0),
-        child: Container(
-          height: 150,
-          width: 200,
-          color: Theme.of(context).accentColor,
-        ),
-      );
+  Widget buildPlaceHolder(MessageAttachment parent) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8.0),
+      child: Container(
+        height: widget.attachment.height?.toDouble() ?? 150,
+        width: widget.attachment.width?.toDouble() ?? 200,
+        color: Theme.of(context).accentColor,
+      ),
+    );
+  }
 
   @override
   bool get wantKeepAlive => true;
