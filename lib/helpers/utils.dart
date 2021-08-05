@@ -521,7 +521,7 @@ Future<String> getDeviceName() async {
   return deviceName;
 }
 
-String? getFilenameFromUrl(String url) {
+String? getFilenameFromUri(String url) {
   if (isNullOrEmpty(url)!) return null;
 
   // Return everything after the last slash
@@ -539,7 +539,7 @@ Future<File?> saveImageFromUrl(String guid, String url) async {
   if (!url.contains("/")) return null;
 
   // Get the filename from the URL
-  String? filename = getFilenameFromUrl(url);
+  String? filename = getFilenameFromUri(url);
   if (filename == null) return null;
 
   try {

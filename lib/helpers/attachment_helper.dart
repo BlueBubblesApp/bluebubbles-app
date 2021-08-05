@@ -312,17 +312,36 @@ class AttachmentHelper {
     }
   }
 
-  static Future<File> tryCopyTempFile(File oldFile) async {
-    String? ogFilename = getFilenameFromUrl(oldFile.absolute.path);
-    if (ogFilename == null) return oldFile;
-
+  static String getTempPath() {
     String dir = SettingsManager().appDocDir.path;
     Directory tempAssets = Directory("$dir/tempAssets");
-    if (!await tempAssets.exists()) {
-      await tempAssets.create();
+    if (!tempAssets.existsSync()) {
+      tempAssets.createSync();
     }
 
-    return oldFile.copy('$dir/tempAssets/$ogFilename');
+    return tempAssets.absolute.path;
+  }
+
+  static File saveTempFile(String filename, Uint8List bytes) {
+    String tempPath = AttachmentHelper.getTempPath();
+    File newFile = new File("$tempPath/$filename");
+    newFile.writeAsBytesSync(bytes, mode: FileMode.write);
+    return newFile;
+  }
+
+  static File tryCopyTempFile(File oldFile) {
+    // Pull the filename from the Uri. If we can't, just return the original file
+    String? ogFilename = getFilenameFromUri(oldFile.absolute.path);
+    if (ogFilename == null) return oldFile;
+
+    // Build the new path
+    String newPath = '${AttachmentHelper.getTempPath()}/$ogFilename';
+
+    // If the paths are the same, return the original file
+    if (oldFile.absolute.path == newPath) return oldFile;
+
+    // Otherwise, copy the file to the new path
+    return oldFile.copySync(newPath);
   }
 
   static Future<Uint8List?> compressAttachment(Attachment attachment, String filePath,
@@ -345,14 +364,14 @@ class AttachmentHelper {
 
     // If we don't get the actual path, it's a dummy "attachment" and we need to copy it locally
     if (!getActualPath) {
-      originalFile = await tryCopyTempFile(originalFile);
+      originalFile = tryCopyTempFile(originalFile);
       filePath = originalFile.absolute.path;
     }
 
     // Check if the compressed file exists, and return it if it does
     int quality = qualityOverride ?? SettingsManager().compressionQuality;
     File cachedFile = new File("$filePath.${quality.toString()}.compressed");
-    if (cachedFile.existsSync()) {
+    if (cachedFile.existsSync() && cachedFile.statSync().size != 0) {
       return cachedFile.readAsBytes();
     }
 
