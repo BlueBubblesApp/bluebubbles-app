@@ -39,6 +39,7 @@ import io.flutter.plugin.common.MethodChannel;
 
 public class NewMessageNotification implements Handler {
     public static String TAG = "new-message-notification";
+    public static String GROUP_KEY = "com.bluebubbles.messaging.MESSAGE";
 
     private Context context;
     private MethodCall call;
@@ -182,6 +183,17 @@ public class NewMessageNotification implements Handler {
                 .setType("NotificationOpen"),
             Intent.FILL_IN_ACTION);
 
+        // Create intent for opening the app when the summary is pressed
+        PendingIntent openSummaryIntent = PendingIntent.getActivity(
+                context,
+                existingNotificationId,
+                new Intent(context, MainActivity.class)
+                        .putExtra("id", existingNotificationId)
+                        .putExtra("chatGuid", -1)
+                        .putExtra("bubble", false)
+                        .setType("NotificationOpen"),
+                Intent.FILL_IN_ACTION);
+
         // Create intent for dismissing the notification
         PendingIntent dismissIntent = PendingIntent.getBroadcast(
             context,
@@ -229,6 +241,11 @@ public class NewMessageNotification implements Handler {
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(context, channelId)
                 // Set the status bar notification icon
                 .setSmallIcon(R.mipmap.ic_stat_icon)
+                // Add the notification to the BlueBubbles messages group
+                .setGroup(GROUP_KEY)
+                // Prevent the message group notification from making sound, only let the child
+                // notification make sound
+                .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
                 // Let's the notification dismiss itself when it's tapped
                 .setAutoCancel(true)
                 // Tell android that it's a message/conversation
@@ -254,6 +271,26 @@ public class NewMessageNotification implements Handler {
 
         // Disable the alert if it's from you
         notificationBuilder.setOnlyAlertOnce(messageIsFromMe);
+
+        NotificationCompat.Builder summaryNotificationBuilder = new NotificationCompat.Builder(context, channelId)
+                // Set the status bar notification icon
+                .setSmallIcon(R.mipmap.ic_stat_icon)
+                // Add the notification to the BlueBubbles messages group
+                .setGroup(GROUP_KEY)
+                .setGroupSummary(true)
+                // Prevent the message group notification from making sound, only let the child
+                // notification make sound
+                .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
+                // Let's the notification dismiss itself when it's tapped
+                .setAutoCancel(true)
+                // Set the priority to high since it's a notification they should see
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                // Set the visibility of the notification
+                .setVisibility(visibility)
+                // Sets the intent for when it's clicked
+                .setContentIntent(openSummaryIntent)
+                // Set the color. This is the blue primary color
+                .setColor(4888294);
 
         // Generate contextual interactive buttons
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -291,6 +328,7 @@ public class NewMessageNotification implements Handler {
         // Send the notification
         NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(context);
         notificationManagerCompat.notify(existingNotificationId, notificationBuilder.build());
+        notificationManagerCompat.notify(-1, summaryNotificationBuilder.build());
         result.success("");
     }
 }
