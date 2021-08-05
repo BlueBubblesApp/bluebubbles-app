@@ -4,7 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-Widget buildBackButton(BuildContext context, {EdgeInsets padding = EdgeInsets.zero, double? iconSize, Skins? skin}) {
+Widget buildBackButton(BuildContext context, {EdgeInsets padding = EdgeInsets.zero, double? iconSize, Skins? skin, Function()? callback}) {
   return Container(
     padding: padding,
     width: 25,
@@ -14,6 +14,7 @@ Widget buildBackButton(BuildContext context, {EdgeInsets padding = EdgeInsets.ze
           color: Theme.of(context).primaryColor) : Obx(() => Icon(SettingsManager().settings.skin.value == Skins.iOS ? Icons.arrow_back_ios : Icons.arrow_back,
           color: Theme.of(context).primaryColor)),
       onPressed: () {
+        callback?.call();
         Get.back(closeOverlays: true);
       },
     ),
