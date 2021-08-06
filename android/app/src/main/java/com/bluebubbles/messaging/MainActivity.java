@@ -82,7 +82,7 @@ public class MainActivity extends FlutterFragmentActivity {
         if (type == null) return;
 
         if (Intent.ACTION_SEND.equals(action)) {
-            if (type.equals("text/plain")) {
+            if (type.startsWith("text/")) {
                 handleSendText(intent); // Handle text being sent
             } else {
                 handleShareFile(intent);
@@ -90,7 +90,7 @@ public class MainActivity extends FlutterFragmentActivity {
         } else if (Intent.ACTION_SEND_MULTIPLE.equals(action) && type != null) {
             handleSendMultipleImages(intent);
         } else {
-            if (type.equals("NotificationOpen")) {
+            if (type.equals("NotificationOpen") || type.equals("DirectShare")) {
                 Log.d("Notifications", "Tapped on notification with ID: " + intent.getExtras().getInt("id"));
                 startingChat = intent.getStringExtra("chatGuid");
 
