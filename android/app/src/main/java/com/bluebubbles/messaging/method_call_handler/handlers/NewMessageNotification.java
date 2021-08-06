@@ -37,6 +37,8 @@ import com.bluebubbles.messaging.sharing.ShareShortcutManager;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 
+import java.util.Arrays;
+
 public class NewMessageNotification implements Handler {
     public static String TAG = "new-message-notification";
     public static String GROUP_KEY = "com.bluebubbles.messaging.MESSAGE";
@@ -282,26 +284,6 @@ public class NewMessageNotification implements Handler {
         // Disable the alert if it's from you
         notificationBuilder.setOnlyAlertOnce(messageIsFromMe);
 
-        NotificationCompat.Builder summaryNotificationBuilder = new NotificationCompat.Builder(context, channelId)
-                // Set the status bar notification icon
-                .setSmallIcon(R.mipmap.ic_stat_icon)
-                // Add the notification to the BlueBubbles messages group
-                .setGroup(GROUP_KEY)
-                .setGroupSummary(true)
-                // Prevent the message group notification from making sound, only let the child
-                // notification make sound
-                .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
-                // Let's the notification dismiss itself when it's tapped
-                .setAutoCancel(true)
-                // Set the priority to high since it's a notification they should see
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                // Set the visibility of the notification
-                .setVisibility(visibility)
-                // Sets the intent for when it's clicked
-                .setContentIntent(openSummaryIntent)
-                // Set the color. This is the blue primary color
-                .setColor(4888294);
-
         // Generate contextual interactive buttons
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             notificationBuilder.setAllowSystemGeneratedContextualActions(true);
@@ -338,7 +320,33 @@ public class NewMessageNotification implements Handler {
         // Send the notification
         NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(context);
         notificationManagerCompat.notify(existingNotificationId, notificationBuilder.build());
-        notificationManagerCompat.notify(-1, summaryNotificationBuilder.build());
+
+        // Only build the summary if we haven't built it already
+        NotificationManager manager = (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
+        boolean found = Arrays.stream(manager.getActiveNotifications()).anyMatch(el -> el.getId() == -1);
+        if (found == false) {
+            NotificationCompat.Builder summaryNotificationBuilder = new NotificationCompat.Builder(context, channelId)
+                    // Set the status bar notification icon
+                    .setSmallIcon(R.mipmap.ic_stat_icon)
+                    // Add the notification to the BlueBubbles messages group
+                    .setGroup(GROUP_KEY)
+                    // Tell Android this is a summary notification so everything should be grouped inside it
+                    .setGroupSummary(true)
+                    // Prevent the message group notification from making sound, only let the child
+                    // notification make sound
+                    .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
+                    // Let's the notification dismiss itself when it's tapped
+                    .setAutoCancel(true)
+                    // Set the priority to high since it's a notification they should see
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    // Set the visibility of the notification
+                    .setVisibility(visibility)
+                    // Sets the intent for when it's clicked
+                    .setContentIntent(openSummaryIntent)
+                    // Set the color. This is the blue primary color
+                    .setColor(4888294);
+            notificationManagerCompat.notify(-1, summaryNotificationBuilder.build());
+        }
         result.success("");
     }
 }
