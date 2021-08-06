@@ -62,7 +62,24 @@ public class ReplyReceiver extends BroadcastReceiver {
             Map<String, Object> params = new HashMap<>();
             params.put("chat", intent.getExtras().getString("chatGuid"));
             NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
-            notificationManager.cancel(intent.getExtras().getInt("id"));
+            NotificationManager manager = (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
+            String groupKey = null;
+            for (StatusBarNotification statusBarNotification : manager.getActiveNotifications()) {
+                if (statusBarNotification.getId() == intent.getExtras().getInt("id")) {
+                    notificationManager.cancel(intent.getExtras().getInt("id"));
+                    groupKey = statusBarNotification.getGroupKey();
+                }
+            }
+            int counter = 0;
+            for (StatusBarNotification statusBarNotification : manager.getActiveNotifications()) {
+                if (statusBarNotification.getGroupKey().equals(groupKey)) {
+                    counter++;
+                }
+            }
+
+            if (counter == 1) {
+                NotificationManagerCompat.from(context).cancel(-1);
+            }
             if (engine != null) {
                 new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("markAsRead", params);
             } else {
