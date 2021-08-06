@@ -65,7 +65,7 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    _initializeBytes();
+    Future.delayed(Duration.zero, () => _initializeBytes());
 
     return VisibilityDetector(
       key: Key(widget.attachment.guid!),
