@@ -30,10 +30,13 @@ class AttachmentDetailsCard extends StatefulWidget {
 class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
   Uint8List? previewImage;
   double aspectRatio = 4 / 3;
+  late File attachmentFile;
 
   @override
   void initState() {
     super.initState();
+
+    attachmentFile = new File(widget.attachment.getPath());
     subscribeToDownloadStream();
   }
 
@@ -43,6 +46,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
           (event) {
         if (event.item2 != null && this.mounted) {
           Future.delayed(Duration(milliseconds: 500), () {
+            if (!this.mounted) return;
             setState(() {});
           });
         }
@@ -59,6 +63,40 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
       });
     });
   }
+
+  Widget buildReadyToDownload(BuildContext context) {
+    return CupertinoButton(
+      padding: EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 10),
+      onPressed: () async {
+        AttachmentDownloader downloader = new AttachmentDownloader(widget.attachment, autoFetch: false);
+        await downloader.fetchAttachment(widget.attachment);
+        subscribeToDownloadStream();
+        if (this.mounted) setState(() {});
+      },
+      color: Colors.transparent,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Text(
+            widget.attachment.getFriendlySize(),
+            style: Theme.of(context).textTheme.bodyText1,
+          ),
+          Icon(Icons.cloud_download, size: 28.0),
+          (widget.attachment.mimeType != null)
+              ? Text(
+                  basename(this.attachmentFile.path),
+                  style: Theme.of(context).textTheme.bodyText1,
+                )
+              : Container()
+        ],
+      ),
+    );
+  }
+
+  Widget buildPreview(BuildContext context) => SizedBox(
+        width: context.width / 2,
+        child: _buildPreview(this.attachmentFile, context),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -90,55 +128,40 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
           Container(
             color: Theme.of(context).accentColor,
           ),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              !SocketManager().attachmentDownloaders.containsKey(attachment.guid)
-                  ? CupertinoButton(
-                      padding: EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 10),
-                      onPressed: () async {
-                        AttachmentDownloader downloader = new AttachmentDownloader(attachment, autoFetch: false);
-                        await downloader.fetchAttachment(attachment);
-                        subscribeToDownloadStream();
-                        if (this.mounted) setState(() {});
-                      },
-                      color: Colors.transparent,
-                      child: Column(
-                        children: <Widget>[
-                          Text(
-                            attachment.getFriendlySize(),
-                            style: Theme.of(context).textTheme.bodyText1,
-                          ),
-                          Icon(Icons.cloud_download, size: 28.0),
-                          (attachment.mimeType != null)
-                              ? Text(
-                                  basename(file.path),
-                                  style: Theme.of(context).textTheme.bodyText1,
-                                )
-                              : Container()
-                        ],
-                      ),
-                    )
-                  : Obx(() {
-                      Tuple3<num?, File?, bool> data =
-                          SocketManager().attachmentDownloaders[widget.attachment.guid]!.attachmentData.value;
-                      return Container(
-                          height: 40,
-                          width: 40,
-                          child: CircleProgressBar(
-                              foregroundColor: Colors.white,
-                              backgroundColor: Colors.grey,
-                              value: data.item1?.toDouble() ?? 0));
-                    }),
-            ],
+          Center(
+            child: !SocketManager().attachmentDownloaders.containsKey(attachment.guid)
+                ? buildReadyToDownload(context)
+                : Obx(() {
+                    bool attachmentExists = this.attachmentFile.existsSync();
+
+                    // If the attachment exists, build the preview
+                    if (attachmentExists) return buildPreview(context);
+
+                    // If the attachment is not being downloaded, show the downloader
+                    if (!SocketManager().attachmentDownloaders.containsKey(attachment.guid)) {
+                      return buildReadyToDownload(context);
+                    }
+
+                    Tuple3<num?, File?, bool> data =
+                        SocketManager().attachmentDownloaders[widget.attachment.guid]!.attachmentData.value;
+
+                    // If the download is complete, show the preview
+                    if (data.item3) return buildPreview(context);
+
+                    // If all else fails, show the downloader
+                    return Container(
+                        height: 40,
+                        width: 40,
+                        child: CircleProgressBar(
+                            foregroundColor: Colors.white,
+                            backgroundColor: Colors.grey,
+                            value: data.item1?.toDouble() ?? 0));
+                  }),
           ),
         ],
       );
     } else {
-      return SizedBox(
-        width: context.width / 2,
-        child: _buildPreview(file, context),
-      );
+      return buildPreview(context);
     }
   }
 
