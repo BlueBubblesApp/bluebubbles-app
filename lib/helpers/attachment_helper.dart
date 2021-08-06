@@ -262,9 +262,8 @@ class AttachmentHelper {
   }
 
   static Future<void> redownloadAttachment(Attachment attachment, {Function()? onComplete, Function()? onError}) async {
-    String fPath = attachment.getPath();
-    File file = new File(fPath);
-    File compressedFile = new File("$fPath.compressed");
+    File file = new File(attachment.getPath());
+    File compressedFile = new File(attachment.getCompressedPath());
 
     // If neither exist, don't do anything
     bool fExists = file.existsSync();

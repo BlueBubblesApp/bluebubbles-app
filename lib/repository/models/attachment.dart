@@ -292,6 +292,10 @@ class Attachment {
     return pathName;
   }
 
+  String getCompressedPath() {
+    return "${this.getPath()}.${SettingsManager().compressionQuality}.compressed";
+  }
+
   Map<String, dynamic> toMap() => {
         "ROWID": id,
         "originalROWID": originalROWID,
