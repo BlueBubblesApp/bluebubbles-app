@@ -140,10 +140,10 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
       if (data.value != null && data.value!.length > 0 && widget.attachment.hasValidSize) {
         return empty;
       } else if (data.value != null && data.value!.length > 0) {
-        // If we have data, but _not_ a valid size
+        // If we have data, but _not_ a valid size, return an empty image placeholder
         return buildImagePlaceholder(context, widget.attachment, empty);
       } else {
-        // If we don't have data, show an invalid image widget
+        // If we don't have data, show an invalid image placeholder
         return buildImagePlaceholder(context, widget.attachment, Center(child: Text("Invalid Image")));
       }
     }
