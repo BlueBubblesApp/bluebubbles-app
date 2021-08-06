@@ -550,8 +550,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                     // ),
                     ContactAvatarGroupWidget(
                       chat: chat!,
-                      size: 45,
+                      size: avatars.length == 1 ? 40 : 45,
                     ),
+                    if (avatars.length == 1)
+                      SizedBox(height: 5.0),
                     Center(
                         child: Container(
                       constraints: BoxConstraints(
