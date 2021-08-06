@@ -256,7 +256,7 @@ class Attachment {
     return "${size.toStringAsFixed(decimals)} $postfix";
   }
 
-  bool get hasValidSize => width != null && height != null && width != 0 && height != 0;
+  bool get hasValidSize => (width ?? 0) > 0 && (height ?? 0) > 0;
 
   String? get mimeStart {
     if (this.mimeType == null) return null;
