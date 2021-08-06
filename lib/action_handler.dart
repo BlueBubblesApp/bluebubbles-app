@@ -537,6 +537,11 @@ class ActionHandler {
       chats.forEach((element) {
         if (!isHeadless) NewMessageManager().addMessage(element, message);
       });
+    } else if (NotificationManager().hasProcessed(data["guid"])) {
+      Message? existing = await Message.findOne({'guid': data['guid']});
+      if (existing != null) {
+        handleUpdatedMessage(data, headless: isHeadless);
+      }
     }
   }
 }
