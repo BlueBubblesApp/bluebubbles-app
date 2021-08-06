@@ -132,28 +132,24 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
       );
 
   Widget buildPlaceHolder({bool isLoaded = false}) {
-    Widget mainChild = Container(height: 0, width: 0);
-    double placeholderWidth = 200;
-    double placeholderHeight = 150;
+    Widget empty = Container(height: 0, width: 0);
 
     // Handle the cases when the image is done loading
     if (isLoaded) {
-      // If we have data, don't show any placeholder
-      if (data.value != null) {
-        return mainChild;
+      // If we have data and the image has a valid size, return an empty container (no placeholder)
+      if (data.value != null && data.value!.length > 0 && widget.attachment.hasValidSize) {
+        return empty;
+      } else if (data.value != null && data.value!.length > 0) {
+        // If we have data, but _not_ a valid size
+        return buildImagePlaceholder(context, widget.attachment, empty);
       } else {
         // If we don't have data, show an invalid image widget
-        return Container(
-            width: placeholderWidth,
-            height: placeholderHeight,
-            color: Theme.of(context).accentColor,
-            child: Center(child: Text("Invalid Image")));
+        return buildImagePlaceholder(context, widget.attachment, Center(child: Text("Invalid Image")));
       }
     }
 
     // If it's not loaded, we are in progress
-    mainChild = Center(child: buildProgressIndicator(context));
-    return buildImagePlaceholder(context, widget.attachment, mainChild);
+    return buildImagePlaceholder(context, widget.attachment, Center(child: buildProgressIndicator(context)));
   }
 
   @override
