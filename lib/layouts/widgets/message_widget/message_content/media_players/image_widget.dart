@@ -127,7 +127,8 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
                     )
                   ]);
                 },
-              ) : buildPlaceHolder()),
+              )
+            : buildPlaceHolder()),
       );
 
   Widget buildPlaceHolder({bool isLoaded = false}) {
@@ -152,26 +153,7 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
 
     // If it's not loaded, we are in progress
     mainChild = Center(child: buildProgressIndicator(context));
-
-    // If the image doesn't have a valid size, show the loader with static height/width
-    if (!widget.attachment.hasValidSize) {
-      return Container(
-          width: placeholderWidth, height: placeholderHeight, color: Theme.of(context).accentColor, child: mainChild);
-    }
-
-    // If we have a valid size, we want to calculate the aspect ratio so the image doesn't "jitter" when loading
-    // Calculate the aspect ratio for the placeholders
-    double ratio = AttachmentHelper.getAspectRatio(widget.attachment.height, widget.attachment.width, context: context);
-    double height = widget.attachment.height?.toDouble() ?? placeholderHeight;
-    double width = widget.attachment.width?.toDouble() ?? placeholderWidth;
-
-    // YES, this countainer surrounding the AspectRatio is needed.
-    // If not there, the box may be too large
-    return Container(
-        constraints: BoxConstraints(maxHeight: height, maxWidth: width),
-        child: AspectRatio(
-            aspectRatio: ratio,
-            child: Container(width: width, height: height, color: Theme.of(context).accentColor, child: mainChild)));
+    return buildImagePlaceholder(context, widget.attachment, mainChild);
   }
 
   @override

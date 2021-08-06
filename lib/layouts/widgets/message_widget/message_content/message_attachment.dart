@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
@@ -212,14 +213,7 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
   }
 
   Widget buildPlaceHolder(MessageAttachment parent) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(8.0),
-      child: Container(
-        height: widget.attachment.height?.toDouble() ?? 150,
-        width: widget.attachment.width?.toDouble() ?? 200,
-        color: Theme.of(context).accentColor,
-      ),
-    );
+    return buildImagePlaceholder(context, widget.attachment, Container());
   }
 
   @override
