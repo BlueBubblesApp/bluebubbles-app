@@ -138,6 +138,13 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         focusNode!.requestFocus();
       } else if (event["type"] == "text-field-update-attachments") {
         addSharedAttachments();
+        while (!(ModalRoute.of(context)?.isCurrent ?? false)) {
+          Navigator.of(context).pop();
+        }
+      } else if (event["type"] == "text-field-update-text") {
+        while (!(ModalRoute.of(context)?.isCurrent ?? false)) {
+          Navigator.of(context).pop();
+        }
       }
     });
 
