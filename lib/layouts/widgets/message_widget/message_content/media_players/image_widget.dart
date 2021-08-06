@@ -35,6 +35,7 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
   void _initializeBytes({runForcefully: false}) async {
     // initGate prevents this from running more than once
     // Especially if the compression takes a while
+    if (!mounted) return;
     if (!runForcefully && (initGate || data.value != null)) return;
     initGate = true;
 
@@ -58,7 +59,6 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
 
       if (data.value == null || CurrentChat.of(context) == null) return;
       CurrentChat.of(context)?.saveImageData(data.value!, widget.attachment);
-      if (this.mounted) setState(() {});
     }
   }
 
