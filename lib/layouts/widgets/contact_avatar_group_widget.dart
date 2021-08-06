@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
@@ -22,14 +23,23 @@ class ContactAvatarGroupWidget extends StatefulWidget {
 }
 
 class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
-  List<Handle> participants = [];
+  RxList<Handle> participants = RxList<Handle>();
 
   @override
   Widget build(BuildContext context) {
-    participants = widget.chat.participants;
-    // if (participants.length > 2) {
-    //   participants = participants.sublist(0, 2);
-    // }
+    participants = widget.chat.participants.obs;
+
+    participants.sort((a, b) {
+      bool avatarA = ContactManager().getCachedContactSync(a.address)?.avatar?.isNotEmpty ?? false;
+      bool avatarB = ContactManager().getCachedContactSync(b.address)?.avatar?.isNotEmpty ?? false;
+      if (!avatarA && avatarB) return 1;
+      if (avatarA && !avatarB) return -1;
+      return 0;
+    });
+
+    for (Handle participant in participants) {
+      if (!(ContactManager().handleToContact[participant]?.avatar?.isNotEmpty ?? false)) {}
+    }
 
     if (participants.length == 0) {
       return Container(
@@ -38,15 +48,16 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
       );
     }
 
-    return Container(
-      width: widget.size,
-      height: widget.size,
-      child: participants.length > 1
-          ? ThemeSwitcher(
-              iOSSkin: Obx(
-                () {
-                  int maxAvatars = SettingsManager().settings.maxAvatarsInGroupWidget.value;
-                  return Stack(
+    return Obx(
+      () {
+        int maxAvatars = SettingsManager().settings.maxAvatarsInGroupWidget.value;
+
+        return Container(
+          width: widget.size,
+          height: widget.size,
+          child: participants.length > 1
+              ? ThemeSwitcher(
+                  iOSSkin: Stack(
                     children: [
                       Container(
                         width: widget.size,
@@ -111,238 +122,238 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
                         },
                       ),
                     ],
-                  );
-                },
-              ),
-              materialSkin: Builder(
-                builder: (context) {
-                  if (participants.length == 2) {
-                    return Stack(
-                      children: [
-                        Align(
-                          alignment: Alignment.topRight,
-                          child: ContactAvatarWidget(
-                            handle: participants[0],
-                            size: 24.5,
-                            fontSize: 10.5,
-                            editable: widget.editable,
-                            onTap: widget.onTap,
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.bottomLeft,
-                          child: ContactAvatarWidget(
-                            handle: participants[1],
-                            size: 24.5,
-                            fontSize: 10.5,
-                            editable: widget.editable,
-                            onTap: widget.onTap,
-                          ),
-                        ),
-                      ],
-                    );
-                  } else if (participants.length == 3) {
-                    return Stack(
-                      children: [
-                        Align(
-                          alignment: Alignment.bottomRight,
-                          child: ContactAvatarWidget(
-                            handle: participants[0],
-                            size: 21.5,
-                            fontSize: 9,
-                            editable: widget.editable,
-                            onTap: widget.onTap,
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.bottomLeft,
-                          child: ContactAvatarWidget(
-                            handle: participants[1],
-                            size: 21.5,
-                            fontSize: 9,
-                            editable: widget.editable,
-                            onTap: widget.onTap,
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.topCenter,
-                          child: ContactAvatarWidget(
-                            handle: participants[2],
-                            size: 21.5,
-                            fontSize: 9,
-                            editable: widget.editable,
-                            onTap: widget.onTap,
-                          ),
-                        ),
-                      ],
-                    );
-                  } else {
-                    return Stack(
-                      children: [
-                        Align(
-                          alignment: Alignment.bottomRight,
-                          child: ContactAvatarWidget(
-                            handle: participants[0],
-                            size: 20,
-                            fontSize: 8.7,
-                            editable: widget.editable,
-                            onTap: widget.onTap,
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.bottomLeft,
-                          child: ContactAvatarWidget(
-                            handle: participants[1],
-                            size: 20,
-                            fontSize: 8.7,
-                            editable: widget.editable,
-                            onTap: widget.onTap,
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.topLeft,
-                          child: ContactAvatarWidget(
-                            handle: participants[2],
-                            size: 20,
-                            fontSize: 8.7,
-                            editable: widget.editable,
-                            onTap: widget.onTap,
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.topRight,
-                          child: ContactAvatarWidget(
-                            handle: participants[3],
-                            size: 20,
-                            fontSize: 8.7,
-                            editable: widget.editable,
-                            onTap: widget.onTap,
-                          ),
-                        ),
-                      ],
-                    );
-                  }
-                },
-              ),
-              samsungSkin: Builder(
-                builder: (context) {
-                  if (participants.length == 2) {
-                    return Stack(
-                      children: [
-                        Align(
-                          alignment: Alignment.topRight,
-                          child: ContactAvatarWidget(
-                            handle: participants[0],
-                            size: 24.5,
-                            fontSize: 10.5,
-                            editable: widget.editable,
-                            onTap: widget.onTap,
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.bottomLeft,
-                          child: ContactAvatarWidget(
-                            handle: participants[1],
-                            size: 24.5,
-                            fontSize: 10.5,
-                            editable: widget.editable,
-                            onTap: widget.onTap,
-                          ),
-                        ),
-                      ],
-                    );
-                  } else if (participants.length == 3) {
-                    return Stack(
-                      children: [
-                        Align(
-                          alignment: Alignment.bottomRight,
-                          child: ContactAvatarWidget(
-                            handle: participants[0],
-                            size: 21.5,
-                            fontSize: 9,
-                            editable: widget.editable,
-                            onTap: widget.onTap,
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.bottomLeft,
-                          child: ContactAvatarWidget(
-                            handle: participants[1],
-                            size: 21.5,
-                            fontSize: 9,
-                            editable: widget.editable,
-                            onTap: widget.onTap,
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.topCenter,
-                          child: ContactAvatarWidget(
-                            handle: participants[2],
-                            size: 21.5,
-                            fontSize: 9,
-                            editable: widget.editable,
-                            onTap: widget.onTap,
-                          ),
-                        ),
-                      ],
-                    );
-                  } else {
-                    return Stack(
-                      children: [
-                        Align(
-                          alignment: Alignment.bottomRight,
-                          child: ContactAvatarWidget(
-                            handle: participants[0],
-                            size: 20,
-                            fontSize: 8.7,
-                            editable: widget.editable,
-                            onTap: widget.onTap,
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.bottomLeft,
-                          child: ContactAvatarWidget(
-                            handle: participants[1],
-                            size: 20,
-                            fontSize: 8.7,
-                            editable: widget.editable,
-                            onTap: widget.onTap,
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.topLeft,
-                          child: ContactAvatarWidget(
-                            handle: participants[2],
-                            size: 20,
-                            fontSize: 8.7,
-                            editable: widget.editable,
-                            onTap: widget.onTap,
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.topRight,
-                          child: ContactAvatarWidget(
-                            handle: participants[3],
-                            size: 20,
-                            fontSize: 8.7,
-                            editable: widget.editable,
-                            onTap: widget.onTap,
-                          ),
-                        ),
-                      ],
-                    );
-                  }
-                },
-              ),
-            )
-          : ContactAvatarWidget(
-              handle: participants.first,
-              borderThickness: 0.1,
-              size: widget.size,
-              fontSize: widget.size * 0.5,
-              editable: widget.editable,
-              onTap: widget.onTap,
-            ),
+                  ),
+                  materialSkin: Builder(
+                    builder: (context) {
+                      if (participants.length == 2) {
+                        return Stack(
+                          children: [
+                            Align(
+                              alignment: Alignment.topRight,
+                              child: ContactAvatarWidget(
+                                handle: participants[0],
+                                size: 24.5,
+                                fontSize: 10.5,
+                                editable: widget.editable,
+                                onTap: widget.onTap,
+                              ),
+                            ),
+                            Align(
+                              alignment: Alignment.bottomLeft,
+                              child: ContactAvatarWidget(
+                                handle: participants[1],
+                                size: 24.5,
+                                fontSize: 10.5,
+                                editable: widget.editable,
+                                onTap: widget.onTap,
+                              ),
+                            ),
+                          ],
+                        );
+                      } else if (participants.length == 3) {
+                        return Stack(
+                          children: [
+                            Align(
+                              alignment: Alignment.bottomRight,
+                              child: ContactAvatarWidget(
+                                handle: participants[0],
+                                size: 21.5,
+                                fontSize: 9,
+                                editable: widget.editable,
+                                onTap: widget.onTap,
+                              ),
+                            ),
+                            Align(
+                              alignment: Alignment.bottomLeft,
+                              child: ContactAvatarWidget(
+                                handle: participants[1],
+                                size: 21.5,
+                                fontSize: 9,
+                                editable: widget.editable,
+                                onTap: widget.onTap,
+                              ),
+                            ),
+                            Align(
+                              alignment: Alignment.topCenter,
+                              child: ContactAvatarWidget(
+                                handle: participants[2],
+                                size: 21.5,
+                                fontSize: 9,
+                                editable: widget.editable,
+                                onTap: widget.onTap,
+                              ),
+                            ),
+                          ],
+                        );
+                      } else {
+                        return Stack(
+                          children: [
+                            Align(
+                              alignment: Alignment.bottomRight,
+                              child: ContactAvatarWidget(
+                                handle: participants[0],
+                                size: 20,
+                                fontSize: 8.7,
+                                editable: widget.editable,
+                                onTap: widget.onTap,
+                              ),
+                            ),
+                            Align(
+                              alignment: Alignment.bottomLeft,
+                              child: ContactAvatarWidget(
+                                handle: participants[1],
+                                size: 20,
+                                fontSize: 8.7,
+                                editable: widget.editable,
+                                onTap: widget.onTap,
+                              ),
+                            ),
+                            Align(
+                              alignment: Alignment.topLeft,
+                              child: ContactAvatarWidget(
+                                handle: participants[2],
+                                size: 20,
+                                fontSize: 8.7,
+                                editable: widget.editable,
+                                onTap: widget.onTap,
+                              ),
+                            ),
+                            Align(
+                              alignment: Alignment.topRight,
+                              child: ContactAvatarWidget(
+                                handle: participants[3],
+                                size: 20,
+                                fontSize: 8.7,
+                                editable: widget.editable,
+                                onTap: widget.onTap,
+                              ),
+                            ),
+                          ],
+                        );
+                      }
+                    },
+                  ),
+                  samsungSkin: Builder(
+                    builder: (context) {
+                      if (participants.length == 2) {
+                        return Stack(
+                          children: [
+                            Align(
+                              alignment: Alignment.topRight,
+                              child: ContactAvatarWidget(
+                                handle: participants[0],
+                                size: 24.5,
+                                fontSize: 10.5,
+                                editable: widget.editable,
+                                onTap: widget.onTap,
+                              ),
+                            ),
+                            Align(
+                              alignment: Alignment.bottomLeft,
+                              child: ContactAvatarWidget(
+                                handle: participants[1],
+                                size: 24.5,
+                                fontSize: 10.5,
+                                editable: widget.editable,
+                                onTap: widget.onTap,
+                              ),
+                            ),
+                          ],
+                        );
+                      } else if (participants.length == 3) {
+                        return Stack(
+                          children: [
+                            Align(
+                              alignment: Alignment.bottomRight,
+                              child: ContactAvatarWidget(
+                                handle: participants[0],
+                                size: 21.5,
+                                fontSize: 9,
+                                editable: widget.editable,
+                                onTap: widget.onTap,
+                              ),
+                            ),
+                            Align(
+                              alignment: Alignment.bottomLeft,
+                              child: ContactAvatarWidget(
+                                handle: participants[1],
+                                size: 21.5,
+                                fontSize: 9,
+                                editable: widget.editable,
+                                onTap: widget.onTap,
+                              ),
+                            ),
+                            Align(
+                              alignment: Alignment.topCenter,
+                              child: ContactAvatarWidget(
+                                handle: participants[2],
+                                size: 21.5,
+                                fontSize: 9,
+                                editable: widget.editable,
+                                onTap: widget.onTap,
+                              ),
+                            ),
+                          ],
+                        );
+                      } else {
+                        return Stack(
+                          children: [
+                            Align(
+                              alignment: Alignment.bottomRight,
+                              child: ContactAvatarWidget(
+                                handle: participants[0],
+                                size: 20,
+                                fontSize: 8.7,
+                                editable: widget.editable,
+                                onTap: widget.onTap,
+                              ),
+                            ),
+                            Align(
+                              alignment: Alignment.bottomLeft,
+                              child: ContactAvatarWidget(
+                                handle: participants[1],
+                                size: 20,
+                                fontSize: 8.7,
+                                editable: widget.editable,
+                                onTap: widget.onTap,
+                              ),
+                            ),
+                            Align(
+                              alignment: Alignment.topLeft,
+                              child: ContactAvatarWidget(
+                                handle: participants[2],
+                                size: 20,
+                                fontSize: 8.7,
+                                editable: widget.editable,
+                                onTap: widget.onTap,
+                              ),
+                            ),
+                            Align(
+                              alignment: Alignment.topRight,
+                              child: ContactAvatarWidget(
+                                handle: participants[3],
+                                size: 20,
+                                fontSize: 8.7,
+                                editable: widget.editable,
+                                onTap: widget.onTap,
+                              ),
+                            ),
+                          ],
+                        );
+                      }
+                    },
+                  ),
+                )
+              : ContactAvatarWidget(
+                  handle: participants.first,
+                  borderThickness: 0.1,
+                  size: widget.size,
+                  fontSize: widget.size * 0.5,
+                  editable: widget.editable,
+                  onTap: widget.onTap,
+                ),
+        );
+      },
     );
   }
 }

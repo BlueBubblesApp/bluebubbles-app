@@ -549,7 +549,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                     //   alignment: Alignment.center,
                     // ),
                     ContactAvatarGroupWidget(
-                      chat: widget.chat!,
+                      chat: chat!,
                       size: 45,
                     ),
                     Center(
