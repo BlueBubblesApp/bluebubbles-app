@@ -17,8 +17,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ShareShortcutManager {
-    private static final int MAX_SHORTCUTS = 4;
-
     private static final String CATEGORY_SHARE_TARGET = "com.bluebubbles.messaging.directshare.category.TEXT_SHARE_TARGET";
 
     public static void publishShareTarget(Context context, Contact contact) {
