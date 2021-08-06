@@ -137,7 +137,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       } else if (event["type"] == "focus-keyboard" && !focusNode!.hasFocus) {
         focusNode!.requestFocus();
       } else if (event["type"] == "text-field-update-attachments") {
-        updateTextFieldAttachments();
+        addSharedAttachments();
       }
     });
 
@@ -165,6 +165,13 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     if (textFieldData != null) {
       textFieldData!.attachments = pickedImages.where((element) => mime(element.path) != null).toList();
       _streamController.sink.add(null);
+    }
+  }
+
+  void addSharedAttachments() {
+    if (textFieldData != null && mounted) {
+      pickedImages = textFieldData!.attachments;
+      setState(() {});
     }
   }
 
