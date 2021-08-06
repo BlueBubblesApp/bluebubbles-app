@@ -265,12 +265,15 @@ class MethodChannelInterface {
     if (CurrentChat.activeChat?.chat.guid == id) {
       NotificationManager().switchChat(CurrentChat.activeChat!.chat);
       TextFieldData? data = TextFieldBloc().getTextField(id);
-      if (existingAttachments.isNotEmpty) {
-        data?.attachments.addAll(existingAttachments);
+      if (existingAttachments.isNotEmpty && data != null) {
+        data.attachments.addAll(existingAttachments);
+        final ids = data.attachments.map((e) => e.path).toSet();
+        data.attachments.retainWhere((element) => ids.remove(element.path));
         EventDispatcher().emit("text-field-update-attachments", null);
       }
       if (existingText != null) {
         data?.controller.text = existingText;
+        EventDispatcher().emit("text-field-update-text", null);
       }
       return;
     }
