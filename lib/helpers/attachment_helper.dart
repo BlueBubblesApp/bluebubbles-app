@@ -438,9 +438,8 @@ class AttachmentHelper {
       // Compress the file
       File compressedFile = await FlutterNativeImage.compressImage(filePath,
           quality: quality,
-          percentage: SettingsManager().compressionQuality,
-          targetWidth: attachment.width!,
-          targetHeight: attachment.height!);
+          targetWidth: attachment.width == null ? 0 : attachment.width!,
+          targetHeight: attachment.height == null ? 0 : attachment.height!);
 
       // Read the compressed data, then cache it
       previewData = await compressedFile.readAsBytes();
