@@ -262,12 +262,20 @@ class AttachmentHelper {
   }
 
   static Future<void> redownloadAttachment(Attachment attachment, {Function()? onComplete, Function()? onError}) async {
-    // 1. Delete the old file
-    File file = new File(attachment.getPath());
-    if (!file.existsSync()) return;
-    file.deleteSync();
+    String fPath = attachment.getPath();
+    File file = new File(fPath);
+    File compressedFile = new File("$fPath.compressed");
 
-    // 2. Redownload the attachment
+    // If neither exist, don't do anything
+    bool fExists = file.existsSync();
+    bool cExists = compressedFile.existsSync();
+    if (!fExists && !cExists) return;
+
+    // Delete them if they exist
+    if (fExists) file.deleteSync();
+    if (cExists) compressedFile.deleteSync();
+
+    // Redownload the attachment
     AttachmentDownloader(attachment, onComplete: onComplete, onError: onError);
   }
 
