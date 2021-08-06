@@ -64,16 +64,16 @@ class ActionHandler {
     String mainText = text;
     String secondaryText = text;
     if (shouldSplitEnd) {
-      mainText = text.substring(0, linkMatch.start).trim();
+      mainText = text.substring(0, linkMatch.start);
       secondaryText = text.substring(linkMatch.start, linkMatch.end);
     } else if (shouldSplitStart) {
       mainText = text.substring(linkMatch.start, linkMatch.end);
-      secondaryText = text.substring(linkMatch.end).trim();
+      secondaryText = text.substring(linkMatch.end);
     }
 
     // Create the main message
     Message mainMsg = Message(
-      text: mainText,
+      text: mainText.trim(),
       dateCreated: DateTime.now(),
       hasAttachments: attachments.length > 0 ? true : false,
     );
@@ -86,7 +86,7 @@ class ActionHandler {
     // If there is a link, build the link message
     if (shouldSplit) {
       Message secondaryMessage = Message(
-        text: secondaryText,
+        text: secondaryText.trim(),
         dateCreated: DateTime.now(),
         hasAttachments: false,
       );
