@@ -217,7 +217,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
           currentChat!.sentMessages.removeWhere((element) => element!.guid == event.message!.guid);
         });
 
-        Navigator.of(context).push(
+        navigator!.push(
           SendPageBuilder(
             builder: (context) {
               return SendWidget(
