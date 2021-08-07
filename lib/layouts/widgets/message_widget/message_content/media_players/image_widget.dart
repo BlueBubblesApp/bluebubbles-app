@@ -10,7 +10,6 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
 class ImageWidget extends StatefulWidget {
@@ -29,43 +28,43 @@ class ImageWidget extends StatefulWidget {
 class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   bool navigated = false;
   bool visible = true;
-  final Rxn<Uint8List> data = Rxn<Uint8List>();
+  Uint8List? data;
   bool initGate = false;
 
   void _initializeBytes({runForcefully: false}) async {
     // initGate prevents this from running more than once
     // Especially if the compression takes a while
-    if (!mounted) return;
-    if (!runForcefully && (initGate || data.value != null)) return;
+    if (!runForcefully && (initGate || data != null)) return;
     initGate = true;
 
     // Try to get the image data from the "cache"
-    data.value = CurrentChat.of(context)?.getImageData(widget.attachment);
-    if (data.value == null) {
+    data = CurrentChat.of(context)?.getImageData(widget.attachment);
+    if (data == null) {
       // If it's an image, compress the image when loading it
       if (AttachmentHelper.canCompress(widget.attachment) &&
           widget.attachment.guid != "redacted-mode-demo-attachment" &&
           !widget.attachment.guid!.contains("theme-selector")) {
-        data.value = await AttachmentHelper.compressAttachment(widget.attachment, widget.file.absolute.path);
+        data = await AttachmentHelper.compressAttachment(widget.attachment, widget.file.absolute.path);
         // All other attachments can be held in memory as bytes
       } else {
         if (widget.attachment.guid == "redacted-mode-demo-attachment" ||
             widget.attachment.guid!.contains("theme-selector")) {
-          data.value = (await rootBundle.load(widget.file.path)).buffer.asUint8List();
+          data = (await rootBundle.load(widget.file.path)).buffer.asUint8List();
           return;
         }
-        data.value = await widget.file.readAsBytes();
+        data = await widget.file.readAsBytes();
       }
 
-      if (data.value == null || CurrentChat.of(context) == null) return;
-      CurrentChat.of(context)?.saveImageData(data.value!, widget.attachment);
+      if (data == null || CurrentChat.of(context) == null) return;
+      CurrentChat.of(context)?.saveImageData(data!, widget.attachment);
+      if (this.mounted) setState(() {});
     }
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    Future.delayed(Duration.zero, () => _initializeBytes());
+    _initializeBytes();
 
     return VisibilityDetector(
       key: Key(widget.attachment.guid!),
@@ -109,9 +108,9 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
 
   Widget buildSwitcher() => AnimatedSwitcher(
         duration: Duration(milliseconds: 150),
-        child: Obx(() => data.value != null
+        child: data != null
             ? Image.memory(
-                data.value!,
+                data!,
                 frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
                   return Stack(children: [
                     buildPlaceHolder(isLoaded: frame != null || wasSynchronouslyLoaded),
@@ -128,18 +127,19 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
                   ]);
                 },
               )
-            : buildPlaceHolder()),
+            : buildPlaceHolder(),
       );
 
   Widget buildPlaceHolder({bool isLoaded = false}) {
     Widget empty = Container(height: 0, width: 0);
 
     // Handle the cases when the image is done loading
+    // Handle the cases when the image is done loading
     if (isLoaded) {
       // If we have data and the image has a valid size, return an empty container (no placeholder)
-      if (data.value != null && data.value!.length > 0 && widget.attachment.hasValidSize) {
+      if (data != null && data!.length > 0 && widget.attachment.hasValidSize) {
         return empty;
-      } else if (data.value != null && data.value!.length > 0) {
+      } else if (data != null && data!.length > 0) {
         // If we have data, but _not_ a valid size, return an empty image placeholder
         return buildImagePlaceholder(context, widget.attachment, empty);
       } else {
