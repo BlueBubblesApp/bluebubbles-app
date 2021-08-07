@@ -86,8 +86,8 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
         return MediaFile(
           attachment: widget.attachment,
           child: ImageWidget(
-            attachment: widget.attachment,
             file: content,
+            attachment: widget.attachment,
           ),
         );
       } else if (mimeType == "video") {
