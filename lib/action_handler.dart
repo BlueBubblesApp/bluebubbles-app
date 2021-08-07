@@ -539,7 +539,9 @@ class ActionHandler {
       });
     } else if (NotificationManager().hasProcessed(data["guid"])) {
       Message? existing = await Message.findOne({'guid': data['guid']});
-      if (existing != null) {
+      if (existing != null
+          && (existing.dateDelivered?.millisecondsSinceEpoch != message.dateDelivered?.millisecondsSinceEpoch
+              || existing.dateRead?.millisecondsSinceEpoch != message.dateRead?.millisecondsSinceEpoch)) {
         handleUpdatedMessage(data, headless: isHeadless);
       }
     }
