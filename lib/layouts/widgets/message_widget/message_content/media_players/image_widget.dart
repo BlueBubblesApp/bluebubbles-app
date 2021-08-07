@@ -62,58 +62,68 @@ class ImageWidgetController extends GetxController {
 }
 
 class ImageWidget extends StatelessWidget {
-  final ImageWidgetController controller;
+  final File file;
+  final Attachment attachment;
   ImageWidget({
     Key? key,
-    required this.controller,
+    required this.file,
+    required this.attachment,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return VisibilityDetector(
-      key: Key(controller.attachment.guid!),
-      onVisibilityChanged: (info) {
-        if (!SettingsManager().settings.lowMemoryMode.value) return;
-        if (info.visibleFraction == 0 && controller.visible && !controller.navigated) {
-          controller.visible = false;
-          CurrentChat.of(context)?.clearImageData(controller.attachment);
-          controller.update();
-        } else if (!controller.visible) {
-          controller.visible = true;
-          controller.initBytes(runForcefully: true);
-        }
-      },
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          child: buildSwitcher(context),
-          onTap: () async {
-            controller.navigated = true;
-            CurrentChat? currentChat = CurrentChat.of(context);
-            await Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => AttachmentFullscreenViewer(
-                  currentChat: currentChat,
-                  attachment: controller.attachment,
-                  showInteractions: true,
+    return GetBuilder<ImageWidgetController>(
+      global: false,
+      init: ImageWidgetController(
+        file: file,
+        attachment: attachment,
+        context: context,
+      ),
+      builder: (controller) => VisibilityDetector(
+        key: Key(controller.attachment.guid!),
+        onVisibilityChanged: (info) {
+          if (!SettingsManager().settings.lowMemoryMode.value) return;
+          if (info.visibleFraction == 0 && controller.visible && !controller.navigated) {
+            controller.visible = false;
+            CurrentChat.of(context)?.clearImageData(controller.attachment);
+            controller.update();
+          } else if (!controller.visible) {
+            controller.visible = true;
+            controller.initBytes(runForcefully: true);
+          }
+        },
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            child: buildSwitcher(context, controller),
+            onTap: () async {
+              controller.navigated = true;
+              CurrentChat? currentChat = CurrentChat.of(context);
+              await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => AttachmentFullscreenViewer(
+                    currentChat: currentChat,
+                    attachment: controller.attachment,
+                    showInteractions: true,
+                  ),
                 ),
-              ),
-            );
-            controller.navigated = false;
-          },
+              );
+              controller.navigated = false;
+            },
+          ),
         ),
       ),
     );
   }
 
-  Widget buildSwitcher(BuildContext context) => AnimatedSwitcher(
+  Widget buildSwitcher(BuildContext context, ImageWidgetController controller) => AnimatedSwitcher(
     duration: Duration(milliseconds: 150),
     child: Obx(() => controller.data.value != null
         ? Image.memory(
             controller.data.value!,
             frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
               return Stack(children: [
-                buildPlaceHolder(context, isLoaded: frame != null || wasSynchronouslyLoaded),
+                buildPlaceHolder(context, controller, isLoaded: frame != null || wasSynchronouslyLoaded),
                 AnimatedOpacity(
                   opacity: (frame == null &&
                       controller.attachment.guid != "redacted-mode-demo-attachment" &&
@@ -127,10 +137,10 @@ class ImageWidget extends StatelessWidget {
         ]);
       },
     )
-        : buildPlaceHolder(context),
+        : buildPlaceHolder(context, controller),
   ));
 
-  Widget buildPlaceHolder(BuildContext context, {bool isLoaded = false}) {
+  Widget buildPlaceHolder(BuildContext context, ImageWidgetController controller, {bool isLoaded = false}) {
     Widget empty = Container(height: 0, width: 0);
 
     // Handle the cases when the image is done loading

@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:bluebubbles/helpers/ui_helpers.dart';
-import 'package:bluebubbles/helpers/utils.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
@@ -84,15 +83,11 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
       String? mimeType = widget.attachment.mimeType;
       if (mimeType != null) mimeType = mimeType.substring(0, mimeType.indexOf("/"));
       if (mimeType == "image" && !widget.attachment.mimeType!.endsWith("tiff")) {
-        ImageWidgetController controller = Get.put(ImageWidgetController(
-          context: context,
-          file: content,
-          attachment: widget.attachment,
-        ), tag: widget.attachment.guid ?? randomString(8));
         return MediaFile(
           attachment: widget.attachment,
           child: ImageWidget(
-            controller: controller,
+            file: content,
+            attachment: widget.attachment,
           ),
         );
       } else if (mimeType == "video") {
