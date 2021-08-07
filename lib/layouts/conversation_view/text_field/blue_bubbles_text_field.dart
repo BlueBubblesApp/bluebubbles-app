@@ -101,8 +101,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       if (!mounted || CurrentChat.of(context)?.chat == null) return;
 
       // If the private API features are disabled, or sending the indicators is disabled, return
-      if (!SettingsManager().settings.enablePrivateAPI.value || !SettingsManager().settings.privateSendTypingIndicators.value) {
-        if (mounted) setState(() {});
+      if (!SettingsManager().settings.enablePrivateAPI.value ||
+          !SettingsManager().settings.privateSendTypingIndicators.value) {
         return;
       }
 
@@ -123,6 +123,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     focusNode = new FocusNode();
     focusNode!.addListener(() {
       if (focusNode!.hasFocus && this.mounted) {
+        if (!showImagePicker) return;
         showImagePicker = false;
         setState(() {});
       }
@@ -133,8 +134,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     EventDispatcher().stream.listen((event) {
       if (!event.containsKey("type")) return;
       if (event["type"] == "unfocus-keyboard" && focusNode!.hasFocus) {
+        print("(EVENT) Unfocus Keyboard");
         focusNode!.unfocus();
       } else if (event["type"] == "focus-keyboard" && !focusNode!.hasFocus) {
+        print("(EVENT) Focus Keyboard");
         focusNode!.requestFocus();
       } else if (event["type"] == "text-field-update-attachments") {
         addSharedAttachments();
@@ -418,7 +421,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       children: <Widget>[
         buildShareButton(),
         buildActualTextField(),
-        if (SettingsManager().settings.skin.value == Skins.Material || SettingsManager().settings.skin.value == Skins.Samsung)
+        if (SettingsManager().settings.skin.value == Skins.Material ||
+            SettingsManager().settings.skin.value == Skins.Samsung)
           buildSendButton(canRecord),
       ],
     );
@@ -456,7 +460,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       // Don't do anything if this setting isn't enabled
       if (SettingsManager().settings.recipientAsPlaceholder.value) {
         // Redacted mode stuff
-        final bool hideInfo = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactInfo.value;
+        final bool hideInfo =
+            SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactInfo.value;
         final bool generateNames =
             SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeContactNames.value;
 
@@ -539,44 +544,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       });
                     }
                   },
-                  onSubmitted: (String value) async {
+                  onSubmitted: (String value) {
                     if (!SettingsManager().settings.sendWithReturn.value || isNullOrEmpty(value)!) return;
-
-                    // If send delay is enabled, delay the sending
-                    if (!isNullOrZero(SettingsManager().settings.sendDelay.value)) {
-                      // Break the delay into 1 second intervals
-                      for (var i = 0; i < SettingsManager().settings.sendDelay.value; i++) {
-                        if (i != 0 && sendCountdown == null) break;
-
-                        // Update UI with new state information
-                        if (this.mounted) {
-                          setState(() {
-                            sendCountdown = SettingsManager().settings.sendDelay.value - i;
-                          });
-                        }
-
-                        await Future.delayed(new Duration(seconds: 1));
-                      }
-                    }
-
-                    if (this.mounted) {
-                      setState(() {
-                        sendCountdown = null;
-                      });
-                    }
-
-                    if (stopSending != null && stopSending!) {
-                      stopSending = null;
-                      return;
-                    }
-
-                    if (await widget.onSend(pickedImages, value)) {
-                      controller!.text = "";
-                      pickedImages = <File>[];
-                      updateTextFieldAttachments();
-                    }
-
-                    if (this.mounted) setState(() {});
+                    sendMessage();
                   },
                   onContentCommitted: onContentCommit,
                   textCapitalization: TextCapitalization.sentences,
@@ -594,7 +564,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   keyboardType: TextInputType.multiline,
                   maxLines: 14,
                   minLines: 1,
-                  placeholder: SettingsManager().settings.recipientAsPlaceholder.value == true ? placeholder : "BlueBubbles",
+                  placeholder:
+                      SettingsManager().settings.recipientAsPlaceholder.value == true ? placeholder : "BlueBubbles",
                   padding: EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
                   placeholderStyle: Theme.of(context).textTheme.subtitle1,
                   autofocus: SettingsManager().settings.autoOpenKeyboard.value,
@@ -649,7 +620,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       ),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    hintText: SettingsManager().settings.recipientAsPlaceholder.value == true ? placeholder : "BlueBubbles",
+                    hintText:
+                        SettingsManager().settings.recipientAsPlaceholder.value == true ? placeholder : "BlueBubbles",
                     hintStyle: Theme.of(context).textTheme.subtitle1,
                     contentPadding: EdgeInsets.only(
                       left: 10,
@@ -704,7 +676,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       ),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    hintText: SettingsManager().settings.recipientAsPlaceholder.value == true ? placeholder : "BlueBubbles",
+                    hintText:
+                        SettingsManager().settings.recipientAsPlaceholder.value == true ? placeholder : "BlueBubbles",
                     hintStyle: Theme.of(context).textTheme.subtitle1,
                     contentPadding: EdgeInsets.only(
                       left: 10,
@@ -768,31 +741,21 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     }
   }
 
-  Future<void> sendAction() async {
-    if (sendCountdown != null) {
-      stopSending = true;
-      sendCountdown = null;
-      if (this.mounted) setState(() {});
-    } else if (isRecording) {
-      await stopRecording();
-    } else if (canRecord && !isRecording && await Permission.microphone.request().isGranted) {
-      await startRecording();
-    } else {
-      // If send delay is enabled, delay the sending
-      if (!isNullOrZero(SettingsManager().settings.sendDelay.value)) {
-        // Break the delay into 1 second intervals
-        for (var i = 0; i < SettingsManager().settings.sendDelay.value; i++) {
-          if (i != 0 && sendCountdown == null) break;
+  Future<void> sendMessage() async {
+    // If send delay is enabled, delay the sending
+    if (!isNullOrZero(SettingsManager().settings.sendDelay.value)) {
+      // Break the delay into 1 second intervals
+      for (var i = 0; i < SettingsManager().settings.sendDelay.value; i++) {
+        if (i != 0 && sendCountdown == null) break;
 
-          // Update UI with new state information
-          if (this.mounted) {
-            setState(() {
-              sendCountdown = SettingsManager().settings.sendDelay.value - i;
-            });
-          }
-
-          await Future.delayed(new Duration(seconds: 1));
+        // Update UI with new state information
+        if (this.mounted) {
+          setState(() {
+            sendCountdown = SettingsManager().settings.sendDelay.value - i;
+          });
         }
+
+        await Future.delayed(new Duration(seconds: 1));
       }
 
       if (this.mounted) {
@@ -800,20 +763,37 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           sendCountdown = null;
         });
       }
-
-      if (stopSending != null && stopSending!) {
-        stopSending = null;
-        return;
-      }
-
-      if (await widget.onSend(pickedImages, controller!.text)) {
-        controller!.text = "";
-        pickedImages = <File>[];
-        updateTextFieldAttachments();
-      }
     }
 
-    if (this.mounted) setState(() {});
+    if (stopSending != null && stopSending!) {
+      stopSending = null;
+      return;
+    }
+
+    if (await widget.onSend(pickedImages, controller!.text)) {
+      controller!.text = "";
+      pickedImages = <File>[];
+      updateTextFieldAttachments();
+    }
+  }
+
+  Future<void> sendAction() async {
+    bool shouldUpdate = false;
+    if (sendCountdown != null) {
+      stopSending = true;
+      sendCountdown = null;
+      shouldUpdate = true;
+    } else if (isRecording) {
+      await stopRecording();
+      shouldUpdate = true;
+    } else if (canRecord && !isRecording && await Permission.microphone.request().isGranted) {
+      await startRecording();
+      shouldUpdate = true;
+    } else {
+      await sendMessage();
+    }
+
+    if (shouldUpdate && this.mounted) setState(() {});
   }
 
   Widget buildSendButton(bool canRecord) => Align(
@@ -890,49 +870,50 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     width: 40,
                     margin: EdgeInsets.only(left: 5.0),
                     child: ClipOval(
-                        child: Material(
-                          color: Theme.of(context).primaryColor,
-                          child: InkWell(
-                            onTap: sendAction,
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                AnimatedOpacity(
-                                  opacity:
-                                  sendCountdown == null && controller!.text.isEmpty && pickedImages.isEmpty ? 1.0 : 0.0,
-                                  duration: Duration(milliseconds: 150),
-                                  child: Icon(
-                                    Icons.mic,
-                                    color: (isRecording) ? Colors.red : Colors.white,
-                                    size: 20,
-                                  ),
+                      child: Material(
+                        color: Theme.of(context).primaryColor,
+                        child: InkWell(
+                          onTap: sendAction,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              AnimatedOpacity(
+                                opacity: sendCountdown == null && controller!.text.isEmpty && pickedImages.isEmpty
+                                    ? 1.0
+                                    : 0.0,
+                                duration: Duration(milliseconds: 150),
+                                child: Icon(
+                                  Icons.mic,
+                                  color: (isRecording) ? Colors.red : Colors.white,
+                                  size: 20,
                                 ),
-                                AnimatedOpacity(
-                                  opacity:
-                                  (sendCountdown == null && (controller!.text.isNotEmpty || pickedImages.length > 0)) &&
-                                      !isRecording
-                                      ? 1.0
-                                      : 0.0,
-                                  duration: Duration(milliseconds: 150),
-                                  child: Icon(
-                                    Icons.send,
-                                    color: Colors.white,
-                                    size: 20,
-                                  ),
+                              ),
+                              AnimatedOpacity(
+                                opacity: (sendCountdown == null &&
+                                            (controller!.text.isNotEmpty || pickedImages.length > 0)) &&
+                                        !isRecording
+                                    ? 1.0
+                                    : 0.0,
+                                duration: Duration(milliseconds: 150),
+                                child: Icon(
+                                  Icons.send,
+                                  color: Colors.white,
+                                  size: 20,
                                 ),
-                                AnimatedOpacity(
-                                  opacity: sendCountdown != null ? 1.0 : 0.0,
-                                  duration: Duration(milliseconds: 50),
-                                  child: Icon(
-                                    Icons.cancel_outlined,
-                                    color: Colors.red,
-                                    size: 20,
-                                  ),
+                              ),
+                              AnimatedOpacity(
+                                opacity: sendCountdown != null ? 1.0 : 0.0,
+                                duration: Duration(milliseconds: 50),
+                                child: Icon(
+                                  Icons.cancel_outlined,
+                                  color: Colors.red,
+                                  size: 20,
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
+                      ),
                     ),
                   ),
                 )
