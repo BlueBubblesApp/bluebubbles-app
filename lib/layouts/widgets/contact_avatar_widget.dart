@@ -198,6 +198,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
         ),
         child: Obx(
           () => CircleAvatar(
+            key: Key(widget.handle?.address ?? randomString(8)),
             radius: (widget.size != null) ? widget.size! / 2 : 20,
             backgroundImage:
                 !(SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactPhotos.value)
