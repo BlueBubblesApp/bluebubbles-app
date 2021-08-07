@@ -28,6 +28,7 @@ class MessageBlocEvent {
   bool outGoing = false;
   int? index;
   String? type;
+  Map<String, dynamic> data = {};
 }
 
 class MessageBloc {
@@ -79,14 +80,14 @@ class MessageBloc {
       } else if (msgEvent.type == NewMessageType.UPDATE && _allMessages.containsKey(msgEvent.event["oldGuid"])) {
         // If we want to updating an existing message, remove the old one, and add the new one
         _allMessages.remove(msgEvent.event["oldGuid"]);
-        insert(msgEvent.event["message"], addToRx: false);
+        insert(msgEvent.event["message"], msgEvent.event, addToRx: false);
         baseEvent.message = msgEvent.event["message"];
         baseEvent.oldGuid = msgEvent.event["oldGuid"];
         baseEvent.type = MessageBlocEventType.update;
       } else if (msgEvent.type == NewMessageType.ADD) {
         // If we want to add a message, just add it through `insert`
         addToRx = false;
-        insert(msgEvent.event["message"], sentFromThisClient: msgEvent.event["outgoing"]);
+        insert(msgEvent.event["message"], msgEvent.event, sentFromThisClient: msgEvent.event["outgoing"]);
         baseEvent.message = msgEvent.event["message"];
         baseEvent.type = MessageBlocEventType.insert;
       }
@@ -94,12 +95,13 @@ class MessageBloc {
       // As long as the controller isn't closed and it's not an `add`, update the listeners
       if (addToRx) {
         baseEvent.messages = _allMessages.values.toList();
+        baseEvent.data = msgEvent.event;
         event.value = baseEvent;
       }
     });
   }
 
-  void insert(Message message, {bool sentFromThisClient = false, bool addToRx = true}) {
+  void insert(Message message, Map<String, dynamic> data, {bool sentFromThisClient = false, bool addToRx = true}) {
     if (message.associatedMessageGuid != null) {
       if (_allMessages.containsKey(message.associatedMessageGuid)) {
         Message messageWithReaction = _allMessages[message.associatedMessageGuid]!;
@@ -111,6 +113,7 @@ class MessageBloc {
           mbEvent.oldGuid = message.associatedMessageGuid;
           mbEvent.message = _allMessages[message.associatedMessageGuid];
           mbEvent.type = MessageBlocEventType.update;
+          mbEvent.data = data;
           event.value = mbEvent;
         }
       }
@@ -127,6 +130,7 @@ class MessageBloc {
         mbEvent.outGoing = sentFromThisClient;
         mbEvent.type = MessageBlocEventType.insert;
         mbEvent.index = index;
+        mbEvent.data = data;
         event.value = mbEvent;
       }
 
@@ -159,6 +163,7 @@ class MessageBloc {
       mbEvent.outGoing = sentFromThisClient;
       mbEvent.type = MessageBlocEventType.insert;
       mbEvent.index = index;
+      mbEvent.data = data;
       event.value = mbEvent;
     }
   }
