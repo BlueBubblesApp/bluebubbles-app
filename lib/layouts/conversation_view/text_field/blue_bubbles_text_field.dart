@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
+import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/list/text_field_attachment_list.dart';
@@ -75,7 +76,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   bool selfTyping = false;
   int? sendCountdown;
   bool? stopSending;
-  RxString placeholder = "BlueBubbles".obs;
+  final RxString placeholder = "BlueBubbles".obs;
 
   // bool selfTyping = false;
 
@@ -519,7 +520,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               vsync: this,
               curve: Curves.easeInOut,
               child: ThemeSwitcher(
-                iOSSkin: Obx(() => CustomCupertinoTextField(
+                iOSSkin: CustomCupertinoTextField(
                       enabled: sendCountdown == null,
                       textInputAction: SettingsManager().settings.sendWithReturn.value
                           ? TextInputAction.send
@@ -577,8 +578,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         ),
                         borderRadius: BorderRadius.circular(20),
                       ),
-                    )),
-                materialSkin: Obx(() => TextField(
+                    ),
+                materialSkin: TextField(
                       controller: controller,
                       focusNode: focusNode,
                       textCapitalization: TextCapitalization.sentences,
@@ -634,8 +635,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       keyboardType: TextInputType.multiline,
                       maxLines: 14,
                       minLines: 1,
-                    )),
-                samsungSkin: Obx(() => TextField(
+                    ),
+                samsungSkin: TextField(
                       controller: controller,
                       focusNode: focusNode,
                       textCapitalization: TextCapitalization.sentences,
@@ -688,7 +689,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                           bottom: 10,
                         ),
                       ),
-                    )),
+                    ),
               ),
             ),
             if (SettingsManager().settings.skin.value == Skins.iOS) buildSendButton(canRecord),
