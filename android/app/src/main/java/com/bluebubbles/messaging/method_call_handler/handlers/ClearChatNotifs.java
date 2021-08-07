@@ -10,6 +10,7 @@ import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationManagerCompat;
 
 import com.bluebubbles.messaging.MainActivity;
+import com.bluebubbles.messaging.method_call_handler.handlers.NewMessageNotification;
 
 import java.util.Objects;
 
@@ -35,28 +36,24 @@ public class ClearChatNotifs implements Handler {
     @Override
     public void Handle() {
         NotificationManager manager = (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
-        String groupKey = null;
+        Integer notifId = null;
         for (StatusBarNotification statusBarNotification : manager.getActiveNotifications()) {
-            Log.d("initial notifs", Integer.toString(statusBarNotification.getId()));
             if (statusBarNotification.getNotification().extras.getString("chatGuid") != null && statusBarNotification.getNotification().extras.getString("chatGuid").contains(Objects.requireNonNull(call.argument("chatGuid")))) {
+                notifId = statusBarNotification.getId();
                 NotificationManagerCompat.from(context).cancel(statusBarNotification.getId());
-                groupKey = statusBarNotification.getGroupKey();
             } else {
                 Log.d("notification clearing", statusBarNotification.getGroupKey());
             }
         }
-        int counter = 0;
+
+        result.success("");
+
         for (StatusBarNotification statusBarNotification : manager.getActiveNotifications()) {
-            Log.d("updated notifs", Integer.toString(statusBarNotification.getId()));
-            if (statusBarNotification.getGroupKey().equals(groupKey)) {
-                counter++;
+            if (NewMessageNotification.notificationTag == statusBarNotification.getTag() && statusBarNotification.getId() != notifId) {
+                return;
             }
         }
 
-        if (counter == 1) {
-            Log.d("test", "canceled group summary");
-            NotificationManagerCompat.from(context).cancel(-1);
-        }
-        result.success("");
+        NotificationManagerCompat.from(context).cancel(-1);
     }
 }

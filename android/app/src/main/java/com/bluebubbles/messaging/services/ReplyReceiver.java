@@ -23,6 +23,7 @@ import io.flutter.plugin.common.MethodChannel;
 import static android.content.Context.NOTIFICATION_SERVICE;
 import static com.bluebubbles.messaging.MainActivity.CHANNEL;
 import static com.bluebubbles.messaging.MainActivity.engine;
+import com.bluebubbles.messaging.method_call_handler.handlers.NewMessageNotification;
 
 public class ReplyReceiver extends BroadcastReceiver {
 
@@ -63,23 +64,20 @@ public class ReplyReceiver extends BroadcastReceiver {
             params.put("chat", intent.getExtras().getString("chatGuid"));
             NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
             NotificationManager manager = (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
-            String groupKey = null;
+            Integer notifId = null;
             for (StatusBarNotification statusBarNotification : manager.getActiveNotifications()) {
                 if (statusBarNotification.getId() == intent.getExtras().getInt("id")) {
+                    notifId = statusBarNotification.getId();
                     notificationManager.cancel(intent.getExtras().getInt("id"));
-                    groupKey = statusBarNotification.getGroupKey();
                 }
             }
-            int counter = 0;
             for (StatusBarNotification statusBarNotification : manager.getActiveNotifications()) {
-                if (statusBarNotification.getGroupKey().equals(groupKey)) {
-                    counter++;
+                if (NewMessageNotification.notificationTag == statusBarNotification.getTag() && statusBarNotification.getId() != notifId) {
+                    return;
                 }
             }
 
-            if (counter == 1) {
-                NotificationManagerCompat.from(context).cancel(-1);
-            }
+            NotificationManagerCompat.from(context).cancel(-1);
             if (engine != null) {
                 new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("markAsRead", params);
             } else {
