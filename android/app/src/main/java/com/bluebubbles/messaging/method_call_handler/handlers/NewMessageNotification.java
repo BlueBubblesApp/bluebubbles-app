@@ -42,6 +42,7 @@ import java.util.Arrays;
 public class NewMessageNotification implements Handler {
     public static String TAG = "new-message-notification";
     public static String GROUP_KEY = "com.bluebubbles.messaging.MESSAGE";
+    public static String notificationTag = "message";
 
     private Context context;
     private MethodCall call;
@@ -319,7 +320,7 @@ public class NewMessageNotification implements Handler {
 
         // Send the notification
         NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(context);
-        notificationManagerCompat.notify(existingNotificationId, notificationBuilder.build());
+        notificationManagerCompat.notify(notificationTag, existingNotificationId, notificationBuilder.build());
 
         // Only build the summary if we haven't built it already
         NotificationManager manager = (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
