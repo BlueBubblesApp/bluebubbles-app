@@ -65,12 +65,12 @@ class NewMessageManager {
     );
   }
 
-  void addMessage(Chat chat, Message message, {bool outgoing = false}) {
+  void addMessage(Chat chat, Message message, {bool outgoing = false, bool shouldNotAnimate = false}) {
     _stream.sink.add(
       NewMessageEvent(
         chatGuid: chat.guid!,
         type: NewMessageType.ADD,
-        event: {"message": message, "outgoing": outgoing, "chat": chat},
+        event: {"message": message, "outgoing": outgoing, "chat": chat, "shouldNotAnimate": shouldNotAnimate},
       ),
     );
   }

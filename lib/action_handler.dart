@@ -21,6 +21,7 @@ import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
@@ -105,9 +106,9 @@ class ActionHandler {
     }
 
     // Send all the messages
-    for (Message message in messages) {
+    messages.forEachIndexed((index, message) async {
       // Add the message to the UI and DB
-      NewMessageManager().addMessage(chat, message, outgoing: true);
+      NewMessageManager().addMessage(chat, message, outgoing: true, shouldNotAnimate: index > 0);
       chat.addMessage(message);
 
       // Create params for the queue item
@@ -115,7 +116,7 @@ class ActionHandler {
 
       // Add the message send to the queue
       await OutgoingQueue().add(new QueueItem(event: "send-message", item: params));
-    }
+    });
   }
 
   static Future<void> sendMessageHelper(Chat chat, Message message) async {
