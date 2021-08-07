@@ -141,7 +141,10 @@ class _ImageWidgetState extends State<ImageWidget> with TickerProviderStateMixin
         return empty;
       } else if (data != null && data!.length > 0) {
         // If we have data, but _not_ a valid size, return an empty image placeholder
-        return buildImagePlaceholder(context, widget.attachment, empty);
+        return buildImagePlaceholder(context, widget.attachment, Center(child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Text("Something went wrong, tap here to display in fullscreen"),
+        )));
       } else {
         // If we don't have data, show an invalid image placeholder
         return buildImagePlaceholder(context, widget.attachment, Center(child: Text("Invalid Image")));
