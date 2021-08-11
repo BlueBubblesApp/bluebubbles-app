@@ -531,6 +531,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       },
                       onTap: () {
                         HapticFeedback.selectionClick();
+                        if (cameraState == CameraState.ACTIVE) {
+                          disposeCameras();
+                        }
                       },
                       key: _searchFormKey,
                       onChanged: (String value) {
