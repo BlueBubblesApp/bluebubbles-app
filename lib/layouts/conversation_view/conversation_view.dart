@@ -369,32 +369,37 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                     ),
                   ),
                 );
-              } else return SizedBox.shrink();
+              } else
+                return SizedBox.shrink();
             }),
             Expanded(
               child: (searchQuery.length == 0 || !isCreator!) && chat != null
                   ? MessagesView(
-                key: new Key(chat?.guid ?? "unknown-chat"),
-                messageBloc: messageBloc,
-                showHandle: chat!.participants.length > 1,
-                chat: chat,
-                initComplete: widget.onMessagesViewComplete,
-              )
+                      key: new Key(chat?.guid ?? "unknown-chat"),
+                      messageBloc: messageBloc,
+                      showHandle: chat!.participants.length > 1,
+                      chat: chat,
+                      initComplete: widget.onMessagesViewComplete,
+                    )
                   : buildChatSelectorBody(),
             ),
             Obx(() {
               if (widget.onSelect == null) {
-                if (SettingsManager().settings.swipeToCloseKeyboard.value) {
+                if (SettingsManager().settings.swipeToCloseKeyboard.value ||
+                    SettingsManager().settings.swipeToOpenKeyboard.value) {
                   return GestureDetector(
                       onPanUpdate: (details) {
-                        if (details.delta.dy > 0 && (currentChat?.keyboardOpen ?? false)) {
+                        if (SettingsManager().settings.swipeToCloseKeyboard.value &&
+                            details.delta.dy > 0 &&
+                            (currentChat?.keyboardOpen ?? false)) {
                           EventDispatcher().emit("unfocus-keyboard", null);
-                        } else if (details.delta.dy < 0 && !(currentChat?.keyboardOpen ?? false)) {
+                        } else if (SettingsManager().settings.swipeToOpenKeyboard.value &&
+                            details.delta.dy < 0 &&
+                            !(currentChat?.keyboardOpen ?? false)) {
                           EventDispatcher().emit("focus-keyboard", null);
                         }
                       },
-                      child: textField
-                  );
+                      child: textField);
                 }
                 return textField;
               }
