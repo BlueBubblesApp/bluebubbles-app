@@ -231,14 +231,14 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   }
 
   Widget buildScrollToBottomFAB(BuildContext context) {
-    if (CurrentChat.of(context) != null &&
-        CurrentChat.of(context)!.showScrollDown &&
+    if (currentChat != null &&
+        currentChat!.showScrollDown.value &&
         (SettingsManager().settings.skin.value == Skins.Material ||
             SettingsManager().settings.skin.value == Skins.Samsung)) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 15.0),
         child: FloatingActionButton(
-          onPressed: CurrentChat.of(context)!.scrollToBottom,
+          onPressed: currentChat!.scrollToBottom,
           child: Icon(
             Icons.arrow_downward,
             color: Theme.of(context).textTheme.bodyText1!.color,
@@ -246,8 +246,8 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
           backgroundColor: Theme.of(context).accentColor,
         ),
       );
-    } else if (CurrentChat.of(context) != null &&
-        CurrentChat.of(context)!.showScrollDown &&
+    } else if (currentChat != null &&
+        currentChat!.showScrollDown.value &&
         SettingsManager().settings.skin.value == Skins.iOS) {
       return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         Padding(
@@ -267,7 +267,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                   padding: EdgeInsets.symmetric(horizontal: 10),
                   child: Center(
                     child: GestureDetector(
-                      onTap: CurrentChat.of(context)!.scrollToBottom,
+                      onTap: currentChat!.scrollToBottom,
                       child: Text(
                         "\u{2193} Scroll to bottom \u{2193}",
                         textAlign: TextAlign.center,
@@ -380,28 +380,25 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
             Expanded(
               child: (searchQuery.length == 0 || !isCreator!) && chat != null
                   ? Stack(
-                    alignment: Alignment.bottomCenter,
-                    children: [
-                      MessagesView(
-                        key: new Key(chat?.guid ?? "unknown-chat"),
-                        messageBloc: messageBloc,
-                        showHandle: chat!.participants.length > 1,
-                        chat: chat,
-                        initComplete: widget.onMessagesViewComplete,
-                      ),
-                      currentChat != null
-                          ? StreamBuilder<bool>(
-                        stream: currentChat!.showScrollDownStream.stream,
-                        builder: (context, snapshot) {
-                          return AnimatedOpacity(
-                              duration: Duration(milliseconds: 250),
-                              opacity: (snapshot.data ?? false) ? 1 : 0,
-                              curve: Curves.easeInOut,
-                              child: buildScrollToBottomFAB(context));
-                        },
-                      ) : Container(),
-                    ],
-                  )
+                      alignment: Alignment.bottomCenter,
+                      children: [
+                        MessagesView(
+                          key: new Key(chat?.guid ?? "unknown-chat"),
+                          messageBloc: messageBloc,
+                          showHandle: chat!.participants.length > 1,
+                          chat: chat,
+                          initComplete: widget.onMessagesViewComplete,
+                        ),
+                        Obx(() => currentChat != null
+                            ? AnimatedOpacity(
+                                duration: Duration(milliseconds: 250),
+                                opacity: currentChat!.showScrollDown.value ? 1 : 0,
+                                curve: Curves.easeInOut,
+                                child: buildScrollToBottomFAB(context),
+                              )
+                            : Container()),
+                      ],
+                    )
                   : buildChatSelectorBody(),
             ),
             Obx(() {
@@ -429,16 +426,8 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
           ],
         ),
         floatingActionButton: currentChat != null
-            ? StreamBuilder<bool>(
-                stream: currentChat!.showScrollDownStream.stream,
-                builder: (context, snapshot) {
-                  return AnimatedOpacity(
-                      duration: Duration(milliseconds: 250),
-                      opacity: (snapshot.data ?? false) ? 1 : 0,
-                      curve: Curves.easeInOut,
-                      child: buildFAB());
-                },
-              )
+            ? AnimatedOpacity(
+                duration: Duration(milliseconds: 250), opacity: 1, curve: Curves.easeInOut, child: buildFAB())
             : null,
       ),
     );

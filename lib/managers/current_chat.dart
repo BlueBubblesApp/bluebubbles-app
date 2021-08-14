@@ -14,6 +14,7 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:chewie_audio/chewie_audio.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:tuple/tuple.dart';
 import 'package:video_player/video_player.dart';
@@ -68,11 +69,9 @@ class CurrentChat {
     if (!timeStampOffsetStream.isClosed) timeStampOffsetStream.sink.add(_timeStampOffset);
   }
 
-  StreamController<bool> showScrollDownStream = StreamController<bool>.broadcast();
   ScrollController scrollController = ScrollController();
-  bool _showScrollDown = false;
-
-  bool get showScrollDown => _showScrollDown;
+  final RxBool showScrollDown = false.obs;
+  final RxBool showShareMenu = false.obs;
 
   CurrentChat(this.chat) {
     messageMarkers = new MessageMarkers(this.chat);
@@ -130,17 +129,13 @@ class CurrentChat {
         EventDispatcher().emit("unfocus-keyboard", null);
       }
 
-      if (_showScrollDown && scrollController.offset >= 500) return;
-      if (!_showScrollDown && scrollController.offset < 500) return;
+      if (showScrollDown.value && scrollController.offset >= 500) return;
+      if (!showScrollDown.value && scrollController.offset < 500) return;
 
-      if (scrollController.offset >= 500) {
-        _showScrollDown = true;
-      } else {
-        _showScrollDown = false;
-      }
-
-      if (!showScrollDownStream.isClosed) {
-        showScrollDownStream.sink.add(_showScrollDown);
+      if (scrollController.offset >= 500 && !showScrollDown.value) {
+        showScrollDown.value = true;
+      } else if (showScrollDown.value) {
+        showScrollDown.value = false;
       }
     });
   }
@@ -156,10 +151,6 @@ class CurrentChat {
 
     if (timeStampOffsetStream.isClosed) {
       timeStampOffsetStream = StreamController.broadcast();
-    }
-
-    if (showScrollDownStream.isClosed) {
-      showScrollDownStream = StreamController.broadcast();
     }
   }
 
@@ -181,8 +172,7 @@ class CurrentChat {
     indicatorHideTimer = null;
     _timeStampOffset = 0;
     timeStampOffsetStream = StreamController<double>.broadcast();
-    _showScrollDown = false;
-    showScrollDownStream = StreamController<bool>.broadcast();
+    showScrollDown.value = false;
 
     initScrollController();
     initControllers();
@@ -323,10 +313,9 @@ class CurrentChat {
     if (_stream.isClosed) _stream.close();
     if (!_attachmentStream.isClosed) _attachmentStream.close();
     if (!timeStampOffsetStream.isClosed) timeStampOffsetStream.close();
-    if (!showScrollDownStream.isClosed) showScrollDownStream.close();
 
     _timeStampOffset = 0;
-    _showScrollDown = false;
+    showScrollDown.value = false;
     imageData = {};
     currentPlayingVideo = {};
     audioPlayers = {};

@@ -63,8 +63,6 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
 
   late StreamController<List<String>> smartReplyController;
 
-  bool get showScrollDown => currentChat?.showScrollDown ?? false;
-
   ScrollController? get scrollController {
     if (currentChat == null) return null;
 
@@ -80,8 +78,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     super.initState();
 
     currentChat = CurrentChat.of(context);
-    if (widget.messageBloc != null)
-      ever<MessageBlocEvent?>(widget.messageBloc!.event, (e) => handleNewMessage(e));
+    if (widget.messageBloc != null) ever<MessageBlocEvent?>(widget.messageBloc!.event, (e) => handleNewMessage(e));
 
     // See if we need to load anything from the message bloc
     if (widget.messages.isNotEmpty) {
