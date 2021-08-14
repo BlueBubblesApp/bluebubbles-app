@@ -35,14 +35,16 @@ public class ClearChatNotifs implements Handler {
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void Handle() {
+        String chatGuid = (String) call.argument("chatGuid");
+        Log.d(TAG, "Clearing notifications for chat: " + chatGuid);
+
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
         NotificationManager manager = (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
         for (StatusBarNotification statusBarNotification : manager.getActiveNotifications()) {
             // Only clear the notification if the Chat GUIDs match
-            if (statusBarNotification.getNotification().extras.getString("chatGuid") != null && statusBarNotification.getNotification().extras.getString("chatGuid").contains(Objects.requireNonNull(call.argument("chatGuid")))) {
-                notificationManager.cancel(statusBarNotification.getId());
-            } else {
-                Log.d("notification clearing", statusBarNotification.getGroupKey());
+            if (statusBarNotification.getNotification().extras.getString("chatGuid") != null && statusBarNotification.getNotification().extras.getString("chatGuid").contains(Objects.requireNonNull(chatGuid))) {
+                Log.d(TAG, "Cancelling notification with ID: " + statusBarNotification.getId());
+                notificationManager.cancel(statusBarNotification.getTag(), statusBarNotification.getId());
             }
         }
 
