@@ -225,14 +225,20 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
           backgroundColor: Theme.of(context).primaryColor,
         ),
       );
-    } else if (currentChat != null &&
-        currentChat!.showScrollDown &&
+    }
+
+    return Container();
+  }
+
+  Widget buildScrollToBottomFAB(BuildContext context) {
+    if (CurrentChat.of(context) != null &&
+        CurrentChat.of(context)!.showScrollDown &&
         (SettingsManager().settings.skin.value == Skins.Material ||
             SettingsManager().settings.skin.value == Skins.Samsung)) {
       return Padding(
-        padding: const EdgeInsets.only(bottom: 55.0),
+        padding: const EdgeInsets.only(bottom: 15.0),
         child: FloatingActionButton(
-          onPressed: currentChat!.scrollToBottom,
+          onPressed: CurrentChat.of(context)!.scrollToBottom,
           child: Icon(
             Icons.arrow_downward,
             color: Theme.of(context).textTheme.bodyText1!.color,
@@ -240,12 +246,12 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
           backgroundColor: Theme.of(context).accentColor,
         ),
       );
-    } else if (currentChat != null &&
-        currentChat!.showScrollDown &&
+    } else if (CurrentChat.of(context) != null &&
+        CurrentChat.of(context)!.showScrollDown &&
         SettingsManager().settings.skin.value == Skins.iOS) {
       return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         Padding(
-          padding: EdgeInsets.only(left: 25.0, bottom: 45),
+          padding: EdgeInsets.only(left: 25.0, bottom: 15),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(10.0),
             child: BackdropFilter(
@@ -261,7 +267,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                   padding: EdgeInsets.symmetric(horizontal: 10),
                   child: Center(
                     child: GestureDetector(
-                      onTap: currentChat!.scrollToBottom,
+                      onTap: CurrentChat.of(context)!.scrollToBottom,
                       child: Text(
                         "\u{2193} Scroll to bottom \u{2193}",
                         textAlign: TextAlign.center,
@@ -276,7 +282,6 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         ),
       ]);
     }
-
     return Container();
   }
 
@@ -374,13 +379,29 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
             }),
             Expanded(
               child: (searchQuery.length == 0 || !isCreator!) && chat != null
-                  ? MessagesView(
-                      key: new Key(chat?.guid ?? "unknown-chat"),
-                      messageBloc: messageBloc,
-                      showHandle: chat!.participants.length > 1,
-                      chat: chat,
-                      initComplete: widget.onMessagesViewComplete,
-                    )
+                  ? Stack(
+                    alignment: Alignment.bottomCenter,
+                    children: [
+                      MessagesView(
+                        key: new Key(chat?.guid ?? "unknown-chat"),
+                        messageBloc: messageBloc,
+                        showHandle: chat!.participants.length > 1,
+                        chat: chat,
+                        initComplete: widget.onMessagesViewComplete,
+                      ),
+                      currentChat != null
+                          ? StreamBuilder<bool>(
+                        stream: currentChat!.showScrollDownStream.stream,
+                        builder: (context, snapshot) {
+                          return AnimatedOpacity(
+                              duration: Duration(milliseconds: 250),
+                              opacity: (snapshot.data ?? false) ? 1 : 0,
+                              curve: Curves.easeInOut,
+                              child: buildScrollToBottomFAB(context));
+                        },
+                      ) : Container(),
+                    ],
+                  )
                   : buildChatSelectorBody(),
             ),
             Obx(() {
