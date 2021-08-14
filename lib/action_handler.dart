@@ -472,6 +472,7 @@ class ActionHandler {
       // If the GUID exists already, delete the temporary entry
       // Otherwise, replace the temp message
       if (existing != null) {
+        debugPrint("(Message status) -> Deleting message: [${data["text"]}] - ${data["guid"]} - ${data["tempGuid"]}");
         await Message.delete({'guid': data['tempGuid']});
         NewMessageManager().removeMessage(chats.first, data['tempGuid']);
       } else {

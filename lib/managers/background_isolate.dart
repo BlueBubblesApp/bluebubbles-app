@@ -22,9 +22,9 @@ callbackHandler() async {
   MethodChannel _backgroundChannel = MethodChannel("background_isolate");
   WidgetsFlutterBinding.ensureInitialized();
   await DBProvider.db.initDB();
-  await ContactManager().getContacts(headless: true);
   await SettingsManager().init();
   await SettingsManager().getSavedSettings(headless: true);
+  await ContactManager().getContacts(headless: true);
   MethodChannelInterface().init(customChannel: _backgroundChannel);
   await SocketManager().refreshConnection(connectToSocket: false);
 }
