@@ -359,17 +359,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     CurrentChat.of(context)!.showShareMenu.value = !showMenu;
   }
 
-  Future<File> _saveData(Uint8List data, String filename) async {
-    String dir = SettingsManager().appDocDir.path;
-    Directory tempAssets = Directory("$dir/tempAssets");
-    if (!await tempAssets.exists()) {
-      await tempAssets.create();
-    }
-    File file = new File('$dir/tempAssets/$filename');
-    await file.writeAsBytes(data);
-    return file;
-  }
-
   Future<bool> _onWillPop() async {
     if (showShareMenu) {
       if (this.mounted) {
