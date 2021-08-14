@@ -389,14 +389,13 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                           chat: chat,
                           initComplete: widget.onMessagesViewComplete,
                         ),
-                        Obx(() => currentChat != null
-                            ? AnimatedOpacity(
+                        currentChat != null ? Obx(() => AnimatedOpacity(
                                 duration: Duration(milliseconds: 250),
                                 opacity: currentChat!.showScrollDown.value ? 1 : 0,
                                 curve: Curves.easeInOut,
                                 child: buildScrollToBottomFAB(context),
                               )
-                            : Container()),
+                        ) : Container(),
                       ],
                     )
                   : buildChatSelectorBody(),
