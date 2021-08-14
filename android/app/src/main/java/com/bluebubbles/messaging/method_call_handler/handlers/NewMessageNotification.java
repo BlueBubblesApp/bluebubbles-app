@@ -147,6 +147,7 @@ public class NewMessageNotification implements Handler {
         // This will load all the other messages as part of the notification as well
         NotificationCompat.MessagingStyle style;
         if (existingNotification != null) {
+            Log.d(TAG, "Notification already exists, appending...");
             style = NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(existingNotification);
         } else {
             style = new NotificationCompat.MessagingStyle(group.build());
@@ -319,6 +320,7 @@ public class NewMessageNotification implements Handler {
         // }
 
         // Send the notification
+        Log.d(TAG, "Creating notification for chat: " + chatGuid + " - With ID: " + existingNotificationId);
         NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(context);
         notificationManagerCompat.notify(notificationTag, existingNotificationId, notificationBuilder.build());
 
