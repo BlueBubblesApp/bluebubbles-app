@@ -121,6 +121,8 @@ class ImageWidget extends StatelessWidget {
     child: Obx(() => controller.data.value != null
         ? Image.memory(
             controller.data.value!,
+            // prevents the image widget from "refreshing" when the provider changes
+            gaplessPlayback: true,
             frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
               return Stack(children: [
                 buildPlaceHolder(context, controller, isLoaded: frame != null || wasSynchronouslyLoaded),
