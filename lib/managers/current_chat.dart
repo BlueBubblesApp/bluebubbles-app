@@ -71,7 +71,6 @@ class CurrentChat {
 
   ScrollController scrollController = ScrollController();
   final RxBool showScrollDown = false.obs;
-  final RxBool showShareMenu = false.obs;
 
   CurrentChat(this.chat) {
     messageMarkers = new MessageMarkers(this.chat);
