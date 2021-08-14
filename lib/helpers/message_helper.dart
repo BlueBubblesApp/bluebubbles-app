@@ -109,7 +109,7 @@ class MessageHelper {
       }
     }
 
-    if (notifyForNewMessage && notifyMessageManager) {
+    if (notifyForNewMessage || notifyMessageManager) {
       notificationMessages.forEach((message, value) async {
         //this should always be non-null
         Chat msgChat = chats[value]!;
