@@ -111,6 +111,7 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
                             top: top,
                             right: right,
                             child: ContactAvatarWidget(
+                              key: Key("${participants[index].address}-contact-avatar-group-widget"),
                               handle: participants[index],
                               size: size,
                               borderThickness: widget.size * 0.01,

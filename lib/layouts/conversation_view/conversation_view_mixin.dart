@@ -400,7 +400,12 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           child: CircleAvatar(
             radius: 20,
             backgroundColor: Theme.of(context).accentColor,
-            child: ContactAvatarWidget(handle: participant, borderThickness: 0.1, editable: false, onTap: openDetails),
+            child: ContactAvatarWidget(
+                key: Key("${participant.address}-conversation-view"),
+                handle: participant,
+                borderThickness: 0.1,
+                editable: false,
+                onTap: openDetails),
           ),
         ),
       );
@@ -552,8 +557,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                       chat: chat!,
                       size: avatars.length == 1 ? 40 : 45,
                     ),
-                    if (avatars.length == 1)
-                      SizedBox(height: 5.0),
+                    if (avatars.length == 1) SizedBox(height: 5.0),
                     Center(
                         child: Container(
                       constraints: BoxConstraints(

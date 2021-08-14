@@ -164,6 +164,7 @@ class _ContactTileState extends State<ContactTile> {
                   );
                 }),
         leading: ContactAvatarWidget(
+          key: Key("${widget.handle.address}-contact-tile"),
           handle: widget.handle,
           borderThickness: 0.1,
         ),

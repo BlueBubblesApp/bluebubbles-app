@@ -126,6 +126,7 @@ class ContactSelectorOption extends StatelessWidget {
       subtitle: subtitle,
       leading: !item.isChat
           ? ContactAvatarWidget(
+              key: Key("${item.address}-contact-selector-option"),
               handle: Handle(address: item.address!),
               borderThickness: 0.1,
               editable: false,

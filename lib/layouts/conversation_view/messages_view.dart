@@ -418,6 +418,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                         Padding(
                           padding: EdgeInsets.only(left: 10.0),
                           child: ContactAvatarWidget(
+                            key: Key("${widget.chat!.participants[0].address}-messages-view"),
                             handle: widget.chat!.participants[0],
                             size: 30,
                             fontSize: 14,

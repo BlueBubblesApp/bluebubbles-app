@@ -48,6 +48,8 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
 
   bool get isInvalid => (widget.handle?.address ?? null) == null;
 
+  String get keyPrefix => widget.handle?.address ?? randomString(8);
+
   @override
   void initState() {
     super.initState();
@@ -189,6 +191,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
     return GestureDetector(
       onTap: onAvatarTap,
       child: Container(
+        key: Key("$keyPrefix-avatar-container"),
         width: widget.size ?? 40,
         height: widget.size ?? 40,
         padding: EdgeInsets.all(widget.borderThickness),
@@ -198,7 +201,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
         ),
         child: Obx(
           () => CircleAvatar(
-            key: Key(widget.handle?.address ?? randomString(8)),
+            key: Key("$keyPrefix-avatar"),
             radius: (widget.size != null) ? widget.size! / 2 : 20,
             backgroundImage:
                 !(SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactPhotos.value)
@@ -232,10 +235,12 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
                               state!.initials == null
                           ? Icon(
                               Icons.person,
+                              key: Key("$keyPrefix-avatar-icon"),
                               size: (widget.size ?? 40) / 2,
                             )
                           : Text(
                               state!.initials!,
+                              key: Key("$keyPrefix-avatar-text"),
                               style: TextStyle(
                                 fontSize: widget.fontSize ?? 18,
                               ),
