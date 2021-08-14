@@ -35,12 +35,12 @@ public class ClearChatNotifs implements Handler {
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void Handle() {
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
         NotificationManager manager = (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
-        Integer notifId = null;
         for (StatusBarNotification statusBarNotification : manager.getActiveNotifications()) {
+            // Only clear the notification if the Chat GUIDs match
             if (statusBarNotification.getNotification().extras.getString("chatGuid") != null && statusBarNotification.getNotification().extras.getString("chatGuid").contains(Objects.requireNonNull(call.argument("chatGuid")))) {
-                notifId = statusBarNotification.getId();
-                NotificationManagerCompat.from(context).cancel(statusBarNotification.getId());
+                notificationManager.cancel(statusBarNotification.getId());
             } else {
                 Log.d("notification clearing", statusBarNotification.getGroupKey());
             }
@@ -48,12 +48,12 @@ public class ClearChatNotifs implements Handler {
 
         result.success("");
 
-        for (StatusBarNotification statusBarNotification : manager.getActiveNotifications()) {
-            if (NewMessageNotification.notificationTag == statusBarNotification.getTag() && statusBarNotification.getId() != notifId) {
-                return;
-            }
-        }
-
-        NotificationManagerCompat.from(context).cancel(-1);
+       // If there are no more notifications (only the group is left). Clear the group
+       StatusBarNotification[] notifications = manager.getActiveNotifications();
+       Log.d(TAG, "Leftover Notifications: " + notifications.length);
+       if (manager.getActiveNotifications().length == 1 && notifications[0].getId() == -1) {
+           Log.d(TAG, "Cancelling the notification group...");
+           notificationManager.cancel(-1);
+       }
     }
 }

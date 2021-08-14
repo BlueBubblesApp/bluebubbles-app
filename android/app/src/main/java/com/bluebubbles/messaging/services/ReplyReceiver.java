@@ -28,7 +28,7 @@ import com.bluebubbles.messaging.method_call_handler.handlers.NewMessageNotifica
 
 public class ReplyReceiver extends BroadcastReceiver {
 
-    final String TAG = "ReplyReceiver";
+    final String TAG = "reply-receiver";
 
     @RequiresApi(api = Build.VERSION_CODES.P)
     @Override
