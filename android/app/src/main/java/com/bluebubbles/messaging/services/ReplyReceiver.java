@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.service.notification.StatusBarNotification;
+import android.util.Log;
 
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationManagerCompat;
@@ -26,6 +27,8 @@ import static com.bluebubbles.messaging.MainActivity.engine;
 import com.bluebubbles.messaging.method_call_handler.handlers.NewMessageNotification;
 
 public class ReplyReceiver extends BroadcastReceiver {
+
+    final String TAG = "ReplyReceiver";
 
     @RequiresApi(api = Build.VERSION_CODES.P)
     @Override
@@ -60,24 +63,34 @@ public class ReplyReceiver extends BroadcastReceiver {
                 NotificationWorker.createWorker(context.getApplicationContext(), "reply", params);
             }
         } else if (intent.getType().equals("markAsRead")) {
-            Map<String, Object> params = new HashMap<>();
-            params.put("chat", intent.getExtras().getString("chatGuid"));
+            Integer existingId = intent.getExtras().getInt("id");
+            String chatGuid = intent.getExtras().getString("chatGuid");
+            Log.d(TAG, "Marking chat notification as read: " + intent.getExtras().getString("chatGuid"));
+            Log.d(TAG, "Finding notifications with ID: " + existingId);
+
+            // Clear the chat notification by finding the notification by Tag/ID and cancelling it
             NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
             NotificationManager manager = (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
-            Integer notifId = null;
             for (StatusBarNotification statusBarNotification : manager.getActiveNotifications()) {
-                if (statusBarNotification.getId() == intent.getExtras().getInt("id")) {
-                    notifId = statusBarNotification.getId();
-                    notificationManager.cancel(intent.getExtras().getInt("id"));
-                }
-            }
-            for (StatusBarNotification statusBarNotification : manager.getActiveNotifications()) {
-                if (NewMessageNotification.notificationTag == statusBarNotification.getTag() && statusBarNotification.getId() != notifId) {
-                    return;
+                if (NewMessageNotification.notificationTag.equals(statusBarNotification.getTag()) && statusBarNotification.getId() == existingId) {
+                    notificationManager.cancel(NewMessageNotification.notificationTag, existingId);
+                    break;
                 }
             }
 
-            NotificationManagerCompat.from(context).cancel(-1);
+            // If there are no more notifications (only the group is left). Clear the group
+            StatusBarNotification[] notifications = manager.getActiveNotifications();
+            Log.d(TAG, "Leftover Notifications: " + notifications.length);
+            if (manager.getActiveNotifications().length == 1 && notifications[0].getId() == -1) {
+                Log.d(TAG, "Cancelling the notification group...");
+                notificationManager.cancel(-1);
+            }
+
+            // Build params to send to Dart for it to handle whatever it needs
+            Map<String, Object> params = new HashMap<>();
+            params.put("chat", chatGuid);
+
+            // Invoke the Dart isolate to clear the notification from that side
             if (engine != null) {
                 new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("markAsRead", params);
             } else {

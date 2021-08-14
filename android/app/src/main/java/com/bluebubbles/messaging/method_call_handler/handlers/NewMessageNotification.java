@@ -291,32 +291,32 @@ public class NewMessageNotification implements Handler {
         }
 
         // Add bubble intent handler
-        if (Build.VERSION.SDK_INT >= 30) {
-            PendingIntent bubbleIntent = PendingIntent.getActivity(
-                context,
-                existingNotificationId,
-                new Intent(context, MainActivity.class)
-                    .putExtra("id", existingNotificationId)
-                    .putExtra("chatGuid", chatGuid)
-                    .putExtra("bubble", true)
-                    .setType("NotificationOpen"),
-                PendingIntent.FLAG_UPDATE_CURRENT);
+        // if (Build.VERSION.SDK_INT >= 30) {
+        //     PendingIntent bubbleIntent = PendingIntent.getActivity(
+        //         context,
+        //         existingNotificationId,
+        //         new Intent(context, MainActivity.class)
+        //             .putExtra("id", existingNotificationId)
+        //             .putExtra("chatGuid", chatGuid)
+        //             .putExtra("bubble", true)
+        //             .setType("NotificationOpen"),
+        //         PendingIntent.FLAG_UPDATE_CURRENT);
 
-            NotificationCompat.BubbleMetadata.Builder bubbleMetadataBuilder = new NotificationCompat.BubbleMetadata.Builder()
-                .setIntent(bubbleIntent)
-                .setDesiredHeight(600);
+        //     NotificationCompat.BubbleMetadata.Builder bubbleMetadataBuilder = new NotificationCompat.BubbleMetadata.Builder()
+        //         .setIntent(bubbleIntent)
+        //         .setDesiredHeight(600);
 
-            // Set the icon to a user or group or fallback to the BB icon
-            if (groupIcon != null) {
-                bubbleMetadataBuilder.setIcon(groupIcon);
-            } else if (senderIcon != null) {
-                bubbleMetadataBuilder.setIcon(senderIcon);
-            } else {
-                bubbleMetadataBuilder.setIcon(IconCompat.createWithResource(context, R.mipmap.ic_stat_icon));
-            }
+        //     // Set the icon to a user or group or fallback to the BB icon
+        //     if (groupIcon != null) {
+        //         bubbleMetadataBuilder.setIcon(groupIcon);
+        //     } else if (senderIcon != null) {
+        //         bubbleMetadataBuilder.setIcon(senderIcon);
+        //     } else {
+        //         bubbleMetadataBuilder.setIcon(IconCompat.createWithResource(context, R.mipmap.ic_stat_icon));
+        //     }
 
-            notificationBuilder.setBubbleMetadata(bubbleMetadataBuilder.build());
-        }
+        //     notificationBuilder.setBubbleMetadata(bubbleMetadataBuilder.build());
+        // }
 
         // Send the notification
         NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(context);
