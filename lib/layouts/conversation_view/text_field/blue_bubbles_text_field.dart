@@ -374,6 +374,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         setState(() {
           showImagePicker = false;
         });
+        disposeCameras();
       }
       return false;
     }
