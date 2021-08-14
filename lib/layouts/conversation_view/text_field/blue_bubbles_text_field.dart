@@ -60,7 +60,6 @@ class BlueBubblesTextField extends StatefulWidget {
 class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerProviderStateMixin {
   TextEditingController? controller;
   FocusNode? focusNode;
-  bool showImagePicker = false;
   List<File> pickedImages = <File>[];
   bool isRecording = false;
   TextFieldData? textFieldData;
@@ -83,6 +82,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   Stream get stream => _streamController.stream;
 
   bool get canRecord => controller!.text.isEmpty && pickedImages.isEmpty;
+
+  bool get showShareMenu => CurrentChat.of(context)?.showShareMenu.value ?? false;
 
   final GlobalKey<FormFieldState<String>> _searchFormKey = GlobalKey<FormFieldState<String>>();
 
@@ -126,9 +127,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       CurrentChat.of(context)?.keyboardOpen = focusNode?.hasFocus ?? false;
 
       if (focusNode!.hasFocus && this.mounted) {
-        if (!showImagePicker) return;
-        showImagePicker = false;
-        setState(() {});
+        if (!showShareMenu) return;
+        CurrentChat.of(context)!.showShareMenu.value = false;
       }
 
       EventDispatcher().emit("keyboard-status", focusNode!.hasFocus);
@@ -340,21 +340,23 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   }
 
   Future<void> toggleShareMenu() async {
+    if (CurrentChat.of(context) == null) return;
+
+    bool showMenu = CurrentChat.of(context)!.showShareMenu.value;
+
     // If the image picker is already open, close it, and return
-    if (!showImagePicker) FocusScope.of(context).requestFocus(new FocusNode());
-    if (!showImagePicker && !(await PhotoManager.requestPermission())) {
-      showImagePicker = false;
-      if (this.mounted) setState(() {});
+    if (!showMenu) FocusScope.of(context).requestFocus(new FocusNode());
+    if (!showMenu && !(await PhotoManager.requestPermission())) {
+      CurrentChat.of(context)!.showShareMenu.value = false;
       return;
     }
 
     // If we are closing, dispose the camera
-    if (showImagePicker) {
+    if (showMenu) {
       this.disposeCameras();
     }
 
-    showImagePicker = !showImagePicker;
-    if (this.mounted) setState(() {});
+    CurrentChat.of(context)!.showShareMenu.value = !showMenu;
   }
 
   Future<File> _saveData(Uint8List data, String filename) async {
@@ -369,11 +371,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   }
 
   Future<bool> _onWillPop() async {
-    if (showImagePicker) {
+    if (showShareMenu) {
       if (this.mounted) {
-        setState(() {
-          showImagePicker = false;
-        });
+        CurrentChat.of(context)?.showShareMenu.value = false;
         disposeCameras();
       }
       return false;
@@ -928,8 +928,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         ]),
       );
 
-  Widget buildAttachmentPicker() => TextFieldAttachmentPicker(
-        visible: showImagePicker,
+  Widget buildAttachmentPicker() => Obx(() => TextFieldAttachmentPicker(
+        visible: showShareMenu,
         onAddAttachment: (File? file) {
           if (file == null) return;
           bool exists = file.existsSync();
@@ -948,5 +948,5 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           updateTextFieldAttachments();
           if (this.mounted) setState(() {});
         },
-      );
+      ));
 }
