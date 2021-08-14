@@ -83,7 +83,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
   bool get canRecord => controller!.text.isEmpty && pickedImages.isEmpty;
 
-  bool get showShareMenu => CurrentChat.of(context)?.showShareMenu.value ?? false;
+  final RxBool showShareMenu = false.obs;
 
   final GlobalKey<FormFieldState<String>> _searchFormKey = GlobalKey<FormFieldState<String>>();
 
@@ -127,8 +127,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       CurrentChat.of(context)?.keyboardOpen = focusNode?.hasFocus ?? false;
 
       if (focusNode!.hasFocus && this.mounted) {
-        if (!showShareMenu) return;
-        CurrentChat.of(context)!.showShareMenu.value = false;
+        if (!showShareMenu.value) return;
+        showShareMenu.value = false;
       }
 
       EventDispatcher().emit("keyboard-status", focusNode!.hasFocus);
@@ -340,14 +340,12 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   }
 
   Future<void> toggleShareMenu() async {
-    if (CurrentChat.of(context) == null) return;
-
-    bool showMenu = CurrentChat.of(context)!.showShareMenu.value;
+    bool showMenu = showShareMenu.value;
 
     // If the image picker is already open, close it, and return
     if (!showMenu) FocusScope.of(context).requestFocus(new FocusNode());
     if (!showMenu && !(await PhotoManager.requestPermission())) {
-      CurrentChat.of(context)!.showShareMenu.value = false;
+      showShareMenu.value = false;
       return;
     }
 
@@ -356,13 +354,13 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       this.disposeCameras();
     }
 
-    CurrentChat.of(context)!.showShareMenu.value = !showMenu;
+    showShareMenu.value = !showMenu;
   }
 
   Future<bool> _onWillPop() async {
-    if (showShareMenu) {
+    if (showShareMenu.value) {
       if (this.mounted) {
-        CurrentChat.of(context)?.showShareMenu.value = false;
+        showShareMenu.value = false;
         disposeCameras();
       }
       return false;
@@ -918,7 +916,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       );
 
   Widget buildAttachmentPicker() => Obx(() => TextFieldAttachmentPicker(
-        visible: showShareMenu,
+        visible: showShareMenu.value,
         onAddAttachment: (File? file) {
           if (file == null) return;
           bool exists = file.existsSync();
