@@ -1,10 +1,8 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
-import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/list/text_field_attachment_list.dart';
@@ -61,7 +59,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   TextEditingController? controller;
   FocusNode? focusNode;
   List<File> pickedImages = <File>[];
-  bool isRecording = false;
   TextFieldData? textFieldData;
   StreamController _streamController = new StreamController.broadcast();
   CurrentChat? safeChat;
@@ -75,13 +72,16 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   bool selfTyping = false;
   int? sendCountdown;
   bool? stopSending;
+
   final RxString placeholder = "BlueBubbles".obs;
+  final RxBool isRecording = false.obs;
+  final RxBool canRecord = true.obs;
 
   // bool selfTyping = false;
 
   Stream get stream => _streamController.stream;
 
-  bool get canRecord => controller!.text.isEmpty && pickedImages.isEmpty;
+  bool get _canRecord => controller!.text.isEmpty && pickedImages.isEmpty;
 
   final RxBool showShareMenu = false.obs;
 
@@ -101,6 +101,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     // Add the text listener to detect when we should send the typing indicators
     controller!.addListener(() {
       if (!mounted || CurrentChat.of(context)?.chat == null) return;
+
+      setCanRecord();
 
       // If the private API features are disabled, or sending the indicators is disabled, return
       if (!SettingsManager().settings.enablePrivateAPI.value ||
@@ -156,6 +158,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
     if (widget.existingText != null) {
       controller!.text = widget.existingText!;
+      setCanRecord();
     }
 
     if (widget.existingAttachments != null) {
@@ -165,6 +168,13 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
     if (textFieldData != null) {
       this.addAttachments(textFieldData?.attachments ?? []);
+    }
+  }
+
+  void setCanRecord() {
+    bool canRec = this._canRecord;
+    if (canRec != canRecord.value) {
+      canRecord.value = canRec;
     }
   }
 
@@ -414,7 +424,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         buildActualTextField(),
         if (SettingsManager().settings.skin.value == Skins.Material ||
             SettingsManager().settings.skin.value == Skins.Samsung)
-          buildSendButton(canRecord),
+          buildSendButton(),
       ],
     );
   }
@@ -496,8 +506,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   }
 
   Widget buildActualTextField() {
-    IconData rightIcon = Icons.arrow_upward;
-    if (canRecord) rightIcon = Icons.mic;
     return Flexible(
       flex: 1,
       fit: FlexFit.loose,
@@ -525,17 +533,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     }
                   },
                   key: _searchFormKey,
-                  onChanged: (String value) {
-                    if (value.isEmpty && this.mounted) {
-                      setState(() {
-                        rightIcon = Icons.mic;
-                      });
-                    } else if (value.isNotEmpty && rightIcon == Icons.mic && this.mounted) {
-                      setState(() {
-                        rightIcon = Icons.arrow_upward;
-                      });
-                    }
-                  },
                   onSubmitted: (String value) {
                     if (!SettingsManager().settings.sendWithReturn.value || isNullOrEmpty(value)!) return;
                     sendMessage();
@@ -684,7 +681,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 ),
               ),
             ),
-            if (SettingsManager().settings.skin.value == Skins.iOS) buildSendButton(canRecord),
+            if (SettingsManager().settings.skin.value == Skins.iOS) buildSendButton(),
           ],
         ),
       ),
@@ -702,7 +699,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     File file = new File(pathName);
     if (file.existsSync()) file.deleteSync();
 
-    if (!isRecording) {
+    if (!isRecording.value) {
       await Record().start(
         path: pathName, // required
         encoder: AudioEncoder.AAC, // by default
@@ -711,9 +708,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       );
 
       if (this.mounted) {
-        setState(() {
-          isRecording = true;
-        });
+        isRecording.value = true;
       }
     }
   }
@@ -721,13 +716,11 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   Future<void> stopRecording() async {
     HapticFeedback.lightImpact();
 
-    if (isRecording) {
+    if (isRecording.value) {
       await Record().stop();
 
       if (this.mounted) {
-        setState(() {
-          isRecording = false;
-        });
+        isRecording.value = false;
       }
 
       String appDocPath = SettingsManager().appDocDir.path;
@@ -778,10 +771,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       stopSending = true;
       sendCountdown = null;
       shouldUpdate = true;
-    } else if (isRecording) {
+    } else if (isRecording.value) {
       await stopRecording();
       shouldUpdate = true;
-    } else if (canRecord && !isRecording && await Permission.microphone.request().isGranted) {
+    } else if (canRecord.value && !isRecording.value && await Permission.microphone.request().isGranted) {
       await startRecording();
       shouldUpdate = true;
     } else {
@@ -791,7 +784,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     if (shouldUpdate && this.mounted) setState(() {});
   }
 
-  Widget buildSendButton(bool canRecord) => Align(
+  Widget buildSendButton() => Align(
         alignment: Alignment.bottomRight,
         child: Row(mainAxisAlignment: MainAxisAlignment.end, crossAxisAlignment: CrossAxisAlignment.center, children: [
           if (sendCountdown != null) Text(sendCountdown.toString()),
@@ -814,29 +807,24 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
-                          AnimatedOpacity(
-                            opacity:
-                                sendCountdown == null && controller!.text.isEmpty && pickedImages.isEmpty ? 1.0 : 0.0,
-                            duration: Duration(milliseconds: 150),
-                            child: Icon(
-                              Icons.mic,
-                              color: (isRecording) ? Colors.red : Colors.white,
-                              size: 20,
-                            ),
-                          ),
-                          AnimatedOpacity(
-                            opacity:
-                                (sendCountdown == null && (controller!.text.isNotEmpty || pickedImages.length > 0)) &&
-                                        !isRecording
-                                    ? 1.0
-                                    : 0.0,
-                            duration: Duration(milliseconds: 150),
-                            child: Icon(
-                              Icons.arrow_upward,
-                              color: Colors.white,
-                              size: 20,
-                            ),
-                          ),
+                          Obx(() => AnimatedOpacity(
+                                opacity: sendCountdown == null && canRecord.value ? 1.0 : 0.0,
+                                duration: Duration(milliseconds: 150),
+                                child: Icon(
+                                  Icons.mic,
+                                  color: (isRecording.value) ? Colors.red : Colors.white,
+                                  size: 20,
+                                ),
+                              )),
+                          Obx(() => AnimatedOpacity(
+                                opacity: (sendCountdown == null && !canRecord.value) && !isRecording.value ? 1.0 : 0.0,
+                                duration: Duration(milliseconds: 150),
+                                child: Icon(
+                                  Icons.arrow_upward,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                              )),
                           AnimatedOpacity(
                             opacity: sendCountdown != null ? 1.0 : 0.0,
                             duration: Duration(milliseconds: 50),
@@ -853,7 +841,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 )
               : GestureDetector(
                   onTapDown: (_) async {
-                    if (canRecord && !isRecording) {
+                    if (canRecord.value && !isRecording.value) {
                       await startRecording();
                     }
                   },
@@ -872,30 +860,25 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                           child: Stack(
                             alignment: Alignment.center,
                             children: [
-                              AnimatedOpacity(
-                                opacity: sendCountdown == null && controller!.text.isEmpty && pickedImages.isEmpty
-                                    ? 1.0
-                                    : 0.0,
-                                duration: Duration(milliseconds: 150),
-                                child: Icon(
-                                  Icons.mic,
-                                  color: (isRecording) ? Colors.red : Colors.white,
-                                  size: 20,
-                                ),
-                              ),
-                              AnimatedOpacity(
-                                opacity: (sendCountdown == null &&
-                                            (controller!.text.isNotEmpty || pickedImages.length > 0)) &&
-                                        !isRecording
-                                    ? 1.0
-                                    : 0.0,
-                                duration: Duration(milliseconds: 150),
-                                child: Icon(
-                                  Icons.send,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
-                              ),
+                              Obx(() => AnimatedOpacity(
+                                    opacity: sendCountdown == null && canRecord.value ? 1.0 : 0.0,
+                                    duration: Duration(milliseconds: 150),
+                                    child: Icon(
+                                      Icons.mic,
+                                      color: (isRecording.value) ? Colors.red : Colors.white,
+                                      size: 20,
+                                    ),
+                                  )),
+                              Obx(() => AnimatedOpacity(
+                                    opacity:
+                                        (sendCountdown == null && !canRecord.value) && !isRecording.value ? 1.0 : 0.0,
+                                    duration: Duration(milliseconds: 150),
+                                    child: Icon(
+                                      Icons.send,
+                                      color: Colors.white,
+                                      size: 20,
+                                    ),
+                                  )),
                               AnimatedOpacity(
                                 opacity: sendCountdown != null ? 1.0 : 0.0,
                                 duration: Duration(milliseconds: 50),
