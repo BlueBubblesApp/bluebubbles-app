@@ -5,12 +5,13 @@ Below are the last few BlueBubbles App release changelogs
 ## v1.3.0
 
 ### The Big Stuff
+
 - Redesigned pinned chats for iOS theme
 - Huge settings UI overhaul
 - Android Auto support
 - Notification improvements
 - Performance and reliability improvements
-- Lots of small new features, UI, and UX improvements
+- Lots of small new features and UI / UX improvements
 
 ### The Nitty Gritty
 
@@ -71,6 +72,8 @@ Below are the last few BlueBubbles App release changelogs
    - Fixed "unsupported" showing instead of the contact number in the chat creator
    - Fixed license page theming in dark mode
    - Fixed issue where some messages would show up as a link preview
+   - Fixed layout issues with "Scroll To Bottom" button
+   - Fixed issue where send button would not switch between the send/mic icon in Material theme
 - **UX bugs**
    - Fixed some bugs with the audio player
    - Fixed some bugs with chats becoming randomly unpinned
@@ -80,6 +83,8 @@ Below are the last few BlueBubbles App release changelogs
    - Fixed "Restart iMessage" button not working
    - Fixed issues with initializing the camera after taking a picture
    - Fixed issue with syncing business chats (they are ignored now)
+   - Fixed many issues with URL parsing
+   - Fixed camera being used after closing the share sheet in some cases
 
 #### Improvements
 
@@ -108,6 +113,7 @@ Below are the last few BlueBubbles App release changelogs
    - Added Battery Optimization page to the setup
 
 #### Optimizations
+
 - Migrated the entire app to Nullsafety and Flutter 2.0 - what does this mean for you? Much better stability and lots of under-the-hood optimizations!
 - Migrated to new Socket IO plugin
 - Migrated to using the GetX package
@@ -116,9 +122,10 @@ Below are the last few BlueBubbles App release changelogs
    - Improved handling of SSL errors for link previews
    - Improved handling of .heic images
    - Improved handling of saving media to the device
-   - Improved handling of compressing attachments for better performance
+   - Improved handling of compressing attachments for better performance & reliability
    - Video thumbnails are now cached to the device
    - Improved logic for getting image dimensions
+   - Improved image display widget to be more reliable
 - **System Interaction Optimizations**
    - Vastly improved notifications logic to make them more consistent and more reliable 
    - Prevent sharing items to the app when setup is incomplete
