@@ -159,7 +159,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
     if (widget.existingText != null) {
       controller!.text = widget.existingText!;
-      setCanRecord();
     }
 
     if (widget.existingAttachments != null) {
@@ -170,6 +169,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     if (textFieldData != null) {
       this.addAttachments(textFieldData?.attachments ?? []);
     }
+
+    setCanRecord();
   }
 
   void setCanRecord() {
@@ -183,6 +184,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     pickedImages.addAll(attachments);
     final ids = pickedImages.map((e) => e.path).toSet();
     pickedImages.retainWhere((element) => ids.remove(element.path));
+    setCanRecord();
   }
 
   void updateTextFieldAttachments() {
@@ -190,6 +192,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       textFieldData!.attachments = pickedImages.where((element) => mime(element.path) != null).toList();
       _streamController.sink.add(null);
     }
+
+    setCanRecord();
   }
 
   void addSharedAttachments() {
@@ -197,6 +201,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       pickedImages = textFieldData!.attachments;
       setState(() {});
     }
+
+    setCanRecord();
   }
 
   @override
