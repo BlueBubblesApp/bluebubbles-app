@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:typed_data';
 import 'dart:ui';
 
@@ -14,6 +15,7 @@ import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';
+import 'package:image/image.dart' as img;
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:image_size_getter/file_input.dart';
 import 'package:image_size_getter/image_size_getter.dart' as isg;
@@ -443,15 +445,39 @@ class AttachmentHelper {
     // If the preview data is null, compress the file
     if (previewData == null) {
       // Compress the file
-      File compressedFile = await FlutterNativeImage.compressImage(filePath,
-          quality: quality,
-          targetWidth: attachment.width == null ? 0 : attachment.width!,
-          targetHeight: attachment.height == null ? 0 : attachment.height!);
+      ReceivePort receivePort = ReceivePort();
+      debugPrint("Spawning isolate...");
+      await Isolate.spawn(
+          resizeIsolate,
+          ResizeArgs(filePath, receivePort.sendPort, attachment.width == null ? 350 : (attachment.width! * quality * 0.01).toInt()),
+          errorsAreFatal: false,
+      );
 
-      // Read the compressed data, then cache it
-      previewData = await compressedFile.readAsBytes();
+      var received = await receivePort.first;
+      debugPrint("Compressing via ${received is String ? "FlutterNativeImage" : "image"} plugin");
+      if (received is String) {
+        File compressedFile = await FlutterNativeImage.compressImage(filePath,
+            quality: quality,
+            targetWidth: attachment.width == null ? 0 : attachment.width!,
+            targetHeight: attachment.height == null ? 0 : attachment.height!);
+
+        // Read the compressed data, then cache it
+        previewData = await compressedFile.readAsBytes();
+      } else {
+        try {
+          previewData = Uint8List.fromList(img.encodeNamedImage(received as img.Image, filePath.split("/").last) ?? []);
+        } catch (e) {
+          File compressedFile = await FlutterNativeImage.compressImage(filePath,
+              quality: quality,
+              targetWidth: attachment.width == null ? 0 : attachment.width!,
+              targetHeight: attachment.height == null ? 0 : attachment.height!);
+
+          // Read the compressed data, then cache it
+          previewData = await compressedFile.readAsBytes();
+        }
+      }
     }
-
+    debugPrint("Got previewData: ${previewData.isNotEmpty}");
     // As long as we have preview data now, save it
     cachedFile.writeAsBytes(previewData);
 
@@ -460,6 +486,19 @@ class AttachmentHelper {
 
     // Return the bytes
     return previewData;
+  }
+
+  static void resizeIsolate(ResizeArgs args) {
+    try {
+      debugPrint("Decoding image...");
+      img.Image image = img.decodeImage(File(args.path).readAsBytesSync())!;
+      debugPrint("Resizing image...");
+      img.Image resized = img.copyResize(image, width: args.width);
+      args.sendPort.send(resized);
+    } catch (e) {
+      e.printError();
+      args.sendPort.send("failed");
+    }
   }
 
   static double getAspectRatio(int? height, int? width, {BuildContext? context}) {
@@ -474,4 +513,12 @@ class AttachmentHelper {
 
     return (aWidth / aHeight).abs();
   }
+}
+
+class ResizeArgs {
+  final String path;
+  final SendPort sendPort;
+  final int width;
+
+  ResizeArgs(this.path, this.sendPort, this.width);
 }

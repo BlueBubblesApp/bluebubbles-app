@@ -195,7 +195,11 @@ class AboutPanel extends StatelessWidget {
                                 h3: Theme.of(context)
                                     .textTheme
                                     .headline3!
-                                    .copyWith(fontSize: 17, fontWeight: FontWeight.bold),
+                                    .copyWith(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.bold,
+                                      color: Theme.of(context).textTheme.headline1?.color,
+                                ),
                               ),
                             ),
                             backgroundColor: Theme.of(context).backgroundColor,
