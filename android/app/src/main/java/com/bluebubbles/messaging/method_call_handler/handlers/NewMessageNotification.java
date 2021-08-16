@@ -58,19 +58,6 @@ public class NewMessageNotification implements Handler {
     @RequiresApi(api = Build.VERSION_CODES.P)
     @Override
     public void Handle() {
-        // Information we need from Dart code
-        // - Chat GUID
-        // - Chat.isGroup
-        // - Chat Title / Name
-        // - Contact Name
-        // - Contact Avatar
-        // - Message Text
-        // - Message.isFromMe
-        // - Message.dateCreated
-        // - Chat Icon (Group chat icon)
-        // - Notification visibility
-
-        // These are new, not yet implemented on the Dart side
         // Channel stuff
         String channelId = (String) call.argument("CHANNEL_ID");
         String channelName = (String) call.argument("CHANNEL_NAME");

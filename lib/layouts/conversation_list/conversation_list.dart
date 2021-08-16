@@ -48,6 +48,10 @@ class _ConversationListState extends State<ConversationList> {
     if (this.mounted) {
       theme = Colors.transparent;
     }
+
+    SystemChannels.textInput.invokeMethod('TextInput.hide').catchError((e) {
+      debugPrint("Error caught while hiding keyboard: ${e.toString()}");
+    });
   }
 
   @override
@@ -217,10 +221,7 @@ class _ConversationListState extends State<ConversationList> {
   List<Widget> getConnectionIndicatorWidgets() {
     if (!SettingsManager().settings.showConnectionIndicator.value) return [];
 
-    return [
-      Obx(() => getIndicatorIcon(SocketManager().state.value, size: 12)),
-      Container(width: 10.0)
-    ];
+    return [Obx(() => getIndicatorIcon(SocketManager().state.value, size: 12)), Container(width: 10.0)];
   }
 
   @override

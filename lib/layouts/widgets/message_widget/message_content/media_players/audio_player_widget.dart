@@ -38,9 +38,10 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> with AutomaticKeepA
   void initState() {
     super.initState();
 
-    if (CurrentChat.of(widget.context)!.audioPlayers.containsKey(widget.file.path)) {
-      audioController = CurrentChat.of(widget.context)!.audioPlayers[widget.file.path]!.item2;
-      controller = CurrentChat.of(widget.context)!.audioPlayers[widget.file.path]!.item1;
+    CurrentChat? thisChat = CurrentChat.of(widget.context);
+    if (thisChat != null && thisChat.audioPlayers.containsKey(widget.file.path)) {
+      audioController = thisChat.audioPlayers[widget.file.path]!.item2;
+      controller = thisChat.audioPlayers[widget.file.path]!.item1;
     } else {
       audioController = VideoPlayerController.file(
         widget.file,
@@ -66,7 +67,11 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> with AutomaticKeepA
         cupertinoIconColor: Theme.of(widget.context).textTheme.bodyText1?.color,
         cupertinoColumnAlignment: widget.isFromMe ? MainAxisAlignment.end : MainAxisAlignment.start,
       );
-      CurrentChat.of(widget.context)!.audioPlayers[widget.file.path] = Tuple2(controller, audioController);
+
+      thisChat = CurrentChat.of(widget.context);
+      if (thisChat != null) {
+        CurrentChat.of(widget.context)!.audioPlayers[widget.file.path] = Tuple2(controller, audioController);
+      }
     }
   }
 
@@ -100,8 +105,7 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> with AutomaticKeepA
         data: Theme.of(context).copyWith(
             platform: SettingsManager().settings.skin.value == Skins.iOS ? TargetPlatform.iOS : TargetPlatform.android,
             dialogBackgroundColor: Theme.of(context).accentColor,
-            iconTheme: Theme.of(context).iconTheme.copyWith(color: Theme.of(context).textTheme.bodyText1?.color)
-        ),
+            iconTheme: Theme.of(context).iconTheme.copyWith(color: Theme.of(context).textTheme.bodyText1?.color)),
         child: ChewieAudio(
           controller: controller,
         ),
