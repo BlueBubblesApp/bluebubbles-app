@@ -41,11 +41,11 @@ class VideoWidgetController extends GetxController with SingleGetTickerProviderM
         !controllers.containsKey(attachment.guid) || !controllers[attachment.guid]!.value.isPlaying;
 
     if (controllers.containsKey(attachment.guid)) {
-      createListener(controllers[attachment.guid]!);
       controller = controllers[attachment.guid]!;
     } else {
       initializeController();
     }
+    createListener(controller);
   }
 
   void initializeController() async {
