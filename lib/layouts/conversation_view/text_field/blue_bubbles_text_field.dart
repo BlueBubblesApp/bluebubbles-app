@@ -230,6 +230,16 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     super.dispose();
   }
 
+  void disposeAudioFile(BuildContext context, File file) {
+    // Dispose of the audio controller
+    CurrentChat.of(context)?.audioPlayers[file.path]?.item1.dispose();
+    CurrentChat.of(context)?.audioPlayers[file.path]?.item2.pause();
+    CurrentChat.of(context)?.audioPlayers.removeWhere((key, _) => key == file.path);
+
+    // Delete the file
+    file.delete();
+  }
+
   void onContentCommit(CommittedContent content) async {
     // Add some debugging logs
     debugPrint("[Content Commit] Keyboard received content");
@@ -278,12 +288,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 child: new Text("Discard", style: Theme.of(context).textTheme.subtitle1),
                 onPressed: () {
                   // Dispose of the audio controller
-                  CurrentChat.of(originalContext)?.audioPlayers[file.path]?.item1.dispose();
-                  CurrentChat.of(originalContext)?.audioPlayers[file.path]?.item2.pause();
-                  CurrentChat.of(originalContext)?.audioPlayers.removeWhere((key, _) => key == file.path);
-
-                  // Delete the file
-                  file.delete();
+                  this.disposeAudioFile(originalContext, file);
 
                   // Remove the OG alert dialog
                   Navigator.of(originalContext).pop();
@@ -294,12 +299,13 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               onPressed: () async {
-                widget.onSend([file], "");
-
-                // Dispose of the audio controller
-                CurrentChat.of(originalContext)?.audioPlayers[file.path]?.item1.dispose();
-                CurrentChat.of(originalContext)?.audioPlayers[file.path]?.item2.pause();
-                CurrentChat.of(originalContext)?.audioPlayers.removeWhere((key, _) => key == file.path);
+                CurrentChat? thisChat = CurrentChat.of(originalContext);
+                if (thisChat == null) {
+                  this.addAttachments([file]);
+                } else {
+                  await widget.onSend([file], "");
+                  this.disposeAudioFile(originalContext, file);
+                }
 
                 // Remove the OG alert dialog
                 Navigator.of(originalContext).pop();
