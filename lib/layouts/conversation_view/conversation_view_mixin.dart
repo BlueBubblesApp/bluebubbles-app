@@ -763,10 +763,6 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       if (chats.length == previousContactCount) return;
       previousContactCount = chats.length;
 
-      // We only care about getting the first 25, for updating the state
-      // 25 is relatively arbitrary. We just want the most recent...
-      if (chats.length > 25) return;
-
       // Update and filter the chats
       await setChats(chats);
     });

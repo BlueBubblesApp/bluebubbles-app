@@ -25,11 +25,9 @@ class ChatBloc {
   final RxInt _unreads = 0.obs;
 
   RxInt get unreads => _unreads;
-  bool _hasChats = false;
 
-  bool get hasChats => _hasChats;
-  final RxBool _loadedChats = false.obs;
-  bool get loadedChats => _loadedChats.value || _chats.isNotEmpty;
+  final RxBool hasChats = false.obs;
+  final RxBool loadedChats = false.obs;
 
   void updateUnreads() {
     _unreads.value = chats.where((element) => element.hasUnreadMessage ?? false).map((e) => e.guid).toList().length;
@@ -250,9 +248,9 @@ class ChatBloc {
   Future<void> getChatBatches({int batchSize = 10}) async {
     int count = (await Chat.count()) ?? 0;
     if (count == 0) {
-      _hasChats = false;
+      hasChats.value = false;
     } else {
-      _hasChats = true;
+      hasChats.value = true;
     }
 
     // Reset chat lists
@@ -286,7 +284,7 @@ class ChatBloc {
 
     if (chatRequest != null && !chatRequest!.isCompleted) {
       chatRequest!.complete();
-      _loadedChats.value = true;
+      loadedChats.value = true;
     }
   }
 
@@ -379,8 +377,14 @@ extension Helpers on RxList<Chat> {
 
   RxList<Chat> bigPinHelper(bool pinned) {
     if (pinned)
-      return this.where((e) => SettingsManager().settings.skin.value == Skins.iOS ? (e.isPinned ?? false) : true).toList().obs;
+      return this
+          .where((e) => SettingsManager().settings.skin.value == Skins.iOS ? (e.isPinned ?? false) : true)
+          .toList()
+          .obs;
     else
-      return this.where((e) => SettingsManager().settings.skin.value == Skins.iOS ? !(e.isPinned ?? false) : true).toList().obs;
+      return this
+          .where((e) => SettingsManager().settings.skin.value == Skins.iOS ? !(e.isPinned ?? false) : true)
+          .toList()
+          .obs;
   }
 }

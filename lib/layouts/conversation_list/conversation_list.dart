@@ -498,7 +498,7 @@ class _Cupertino extends StatelessWidget {
               }),
               Obx(() {
                 ChatBloc().chats.archivedHelper(showArchived).sort(Chat.sort);
-                if (!ChatBloc().loadedChats) {
+                if (!ChatBloc().hasChats.value) {
                   return SliverToBoxAdapter(
                     child: Center(
                       child: Container(
@@ -519,7 +519,7 @@ class _Cupertino extends StatelessWidget {
                     ),
                   );
                 }
-                if (ChatBloc().chats.archivedHelper(showArchived).isEmpty) {
+                if (!ChatBloc().hasChats.value) {
                   return SliverToBoxAdapter(
                     child: Center(
                       child: Container(
@@ -911,7 +911,7 @@ class __MaterialState extends State<_Material> {
             backgroundColor: context.theme.backgroundColor,
             body: Obx(
               () {
-                if (!ChatBloc().loadedChats) {
+                if (!ChatBloc().hasChats.value) {
                   return Center(
                     child: Container(
                       padding: EdgeInsets.only(top: 50.0),
@@ -1390,7 +1390,7 @@ class _SamsungState extends State<_Samsung> {
             ),
             backgroundColor: context.theme.backgroundColor,
             body: Obx(() {
-              if (!ChatBloc().loadedChats) {
+              if (!ChatBloc().hasChats.value) {
                 return Center(
                   child: Container(
                     padding: EdgeInsets.only(top: 50.0),

@@ -356,7 +356,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                 selectedContacts: selected,
               ),
             Obx(() {
-              if (!ChatBloc().loadedChats) {
+              if (!ChatBloc().hasChats.value) {
                 return Center(
                   child: Container(
                     padding: EdgeInsets.symmetric(vertical: 20.0),
@@ -389,13 +389,14 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                           chat: chat,
                           initComplete: widget.onMessagesViewComplete,
                         ),
-                        currentChat != null ? Obx(() => AnimatedOpacity(
-                                duration: Duration(milliseconds: 250),
-                                opacity: currentChat!.showScrollDown.value ? 1 : 0,
-                                curve: Curves.easeInOut,
-                                child: buildScrollToBottomFAB(context),
-                              )
-                        ) : Container(),
+                        currentChat != null
+                            ? Obx(() => AnimatedOpacity(
+                                  duration: Duration(milliseconds: 250),
+                                  opacity: currentChat!.showScrollDown.value ? 1 : 0,
+                                  curve: Curves.easeInOut,
+                                  child: buildScrollToBottomFAB(context),
+                                ))
+                            : Container(),
                       ],
                     )
                   : buildChatSelectorBody(),
