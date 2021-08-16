@@ -307,6 +307,7 @@ public class NewMessageNotification implements Handler {
         // }
 
         Log.d(TAG, "Creating notification for chat: " + chatGuid + " - With ID: " + existingNotificationId);
+        NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(context);
 
         // Create/Update the summary notification
         NotificationCompat.Builder summaryNotificationBuilder = new NotificationCompat.Builder(context, channelId)
@@ -332,7 +333,6 @@ public class NewMessageNotification implements Handler {
         notificationManagerCompat.notify(-1, summaryNotificationBuilder.build());
 
         // Create the actual notification
-        NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(context);
         notificationManagerCompat.notify(notificationTag, existingNotificationId, notificationBuilder.build());
         
         result.success("");
