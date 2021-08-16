@@ -556,6 +556,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                     ContactAvatarGroupWidget(
                       chat: chat!,
                       size: avatars.length == 1 ? 40 : 45,
+                      onTap: openDetails,
                     ),
                     if (avatars.length == 1) SizedBox(height: 5.0),
                     Center(
