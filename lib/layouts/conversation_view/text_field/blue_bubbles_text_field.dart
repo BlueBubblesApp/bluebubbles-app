@@ -101,9 +101,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
     // Add the text listener to detect when we should send the typing indicators
     controller!.addListener(() {
-      if (!mounted || CurrentChat.of(context)?.chat == null) return;
-
       setCanRecord();
+      if (!mounted || CurrentChat.of(context)?.chat == null) return;
 
       // If the private API features are disabled, or sending the indicators is disabled, return
       if (!SettingsManager().settings.enablePrivateAPI.value ||
