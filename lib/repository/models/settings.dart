@@ -44,7 +44,7 @@ class Settings {
   final RxBool swipableConversationTiles = false.obs;
   final RxBool colorblindMode = false.obs;
   final RxBool showDeliveryTimestamps = false.obs;
-  final RxInt previewCompressionQuality = 25.obs;
+  final RxInt previewCompressionQuality = 50.obs;
   final RxBool filteredChatList = false.obs;
   final RxBool startVideosMuted = true.obs;
   final RxBool startVideosMutedFullscreen = true.obs;
