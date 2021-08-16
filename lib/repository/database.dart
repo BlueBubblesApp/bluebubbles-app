@@ -4,10 +4,13 @@ import 'dart:io';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/config_entry.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/theme_object.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
+import 'package:get/get.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
@@ -41,7 +44,7 @@ class DBProvider {
 
   static Database? _database;
   static String _path = "";
-  static int currentVersion = 9;
+  static int currentVersion = 10;
 
   /// Contains list of functions to invoke when going from a previous to the current database verison
   /// The previous version is always [key - 1], for example for key 2, it will be the upgrade scheme from version 1 to version 2
@@ -100,6 +103,19 @@ class DBProvider {
         addedInVersion: 9,
         upgrade: (Database db) {
           db.execute("ALTER TABLE handle ADD COLUMN defaultPhone TEXT DEFAULT NULL;");
+        }),
+    new DBUpgradeItem(
+        addedInVersion: 10,
+        upgrade: (Database db) async {
+          List<Map<String, dynamic>> result = await db.query("config");
+          Map<String, dynamic>? quality = result.firstWhereOrNull((element) => element['name'] == "previewCompressionQuality");
+          if (quality != null) {
+            ConfigEntry(
+              name: "previewCompressionQuality",
+              value: ((int.tryParse(quality['value']) ?? 25) + 25).clamp(0, 100),
+              type: RxInt,
+            ).save("config");
+          }
         }),
   ];
 
