@@ -1,8 +1,5 @@
-import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 
-import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
@@ -14,45 +11,48 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:video_player/video_player.dart';
-import 'package:video_thumbnail/video_thumbnail.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
 enum PlayerStatus { NONE, STOPPED, PAUSED, PLAYING, ENDED }
 
-class VideoWidget extends StatefulWidget {
-  VideoWidget({
-    Key? key,
-    required this.file,
-    required this.attachment,
-  }) : super(key: key);
-  final File file;
-  final Attachment attachment;
-
-  @override
-  _VideoWidgetState createState() => _VideoWidgetState();
-}
-
-class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin {
-  bool showPlayPauseOverlay = true;
-  bool isVisible = false;
-  Timer? hideOverlayTimer;
+class VideoWidgetController extends GetxController with SingleGetTickerProviderMixin {
   bool navigated = false;
-  Uint8List? thumbnail;
+  bool isVisible = false;
   PlayerStatus status = PlayerStatus.NONE;
   bool hasListener = false;
+  late final VideoPlayerController controller;
+  final RxBool showPlayPauseOverlay = true.obs;
   final RxBool muted = true.obs;
+  final File file;
+  final Attachment attachment;
+  final BuildContext context;
+  VideoWidgetController({
+    required this.file,
+    required this.attachment,
+    required this.context,
+  });
 
   @override
-  void initState() {
-    super.initState();
+  void onInit() {
+    super.onInit();
     muted.value = SettingsManager().settings.startVideosMuted.value;
     Map<String, VideoPlayerController> controllers = CurrentChat.of(context)!.currentPlayingVideo;
-    showPlayPauseOverlay =
-        !controllers.containsKey(widget.attachment.guid) || !controllers[widget.attachment.guid]!.value.isPlaying;
+    showPlayPauseOverlay.value =
+        !controllers.containsKey(attachment.guid) || !controllers[attachment.guid]!.value.isPlaying;
 
-    if (controllers.containsKey(widget.attachment.guid)) {
-      createListener(controllers[widget.attachment.guid]!);
+    if (controllers.containsKey(attachment.guid)) {
+      createListener(controllers[attachment.guid]!);
+      controller = controllers[attachment.guid]!;
+    } else {
+      initializeController();
     }
+  }
+
+  void initializeController() async {
+    VideoPlayerController vpc = VideoPlayerController.file(file);
+    controller = vpc;
+    await vpc.initialize();
+    CurrentChat.of(context)!.changeCurrentPlayingVideo({attachment.guid!: vpc});
   }
 
   void createListener(VideoPlayerController controller) {
@@ -68,119 +68,107 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
 
       // If the status is ended, restart
       if (this.status == PlayerStatus.ENDED) {
-        showPlayPauseOverlay = true;
+        showPlayPauseOverlay.value = true;
         await controller.pause();
         await controller.seekTo(Duration());
       }
-
-      if (this.mounted) setState(() {});
     });
 
     hasListener = true;
   }
+}
 
-  @override
-  void didChangeDependencies() async {
-    super.didChangeDependencies();
-    getThumbnail();
-  }
-
-  void getThumbnail() async {
-    thumbnail = await AttachmentHelper.getVideoThumbnail(widget.file.path);
-    if (thumbnail == null) return;
-    if (this.mounted) this.setState(() {});
-  }
+class VideoWidget extends StatelessWidget {
+  VideoWidget({
+    Key? key,
+    required this.file,
+    required this.attachment,
+  }) : super(key: key);
+  final File file;
+  final Attachment attachment;
 
   @override
   Widget build(BuildContext context) {
-    VideoPlayerController? controller;
-    Map<String, VideoPlayerController> controllers = CurrentChat.of(context)!.currentPlayingVideo;
-    // If the currently playing video is this attachment guid
-    if (controllers.isNotEmpty && controllers.containsKey(widget.attachment.guid)) {
-      controller = controllers[widget.attachment.guid]!;
-      this.createListener(controller);
-    }
-
-    return VisibilityDetector(
-      onVisibilityChanged: (info) {
-        if (info.visibleFraction == 0 && isVisible && !navigated) {
-          isVisible = false;
-          if (controller != null) {
-            controller = null;
-            CurrentChat.of(context)?.changeCurrentPlayingVideo({});
-          }
-          if (SettingsManager().settings.lowMemoryMode.value) {
-            CurrentChat.of(context)?.clearImageData(widget.attachment);
-          }
-        } else if (!isVisible) {
-          isVisible = true;
-          if (SettingsManager().settings.lowMemoryMode.value) {
-            getThumbnail();
-          }
-        }
-        if (this.mounted) setState(() {});
-      },
-      key: Key(widget.attachment.guid!),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(8.0),
-        child: AnimatedSize(
-          vsync: this,
-          curve: Curves.easeInOut,
-          alignment: Alignment.center,
-          duration: Duration(milliseconds: 250),
-          child: controller != null ? buildPlayer(controller!) : buildPreview(),
-        ),
+    return GetBuilder<VideoWidgetController>(
+      global: false,
+      init: VideoWidgetController(
+        file: file,
+        attachment: attachment,
+        context: context
       ),
+      dispose: (state) {
+        state.controller?.navigated = true;
+      },
+      builder: (controller) {
+        return VisibilityDetector(
+          onVisibilityChanged: (info) {
+            if (info.visibleFraction == 0 && controller.isVisible && !controller.navigated) {
+              controller.isVisible = false;
+              controller.controller.pause();
+              controller.showPlayPauseOverlay.value = true;
+              if (SettingsManager().settings.lowMemoryMode.value) {
+                CurrentChat.of(context)?.clearImageData(attachment);
+              }
+            } else if (!controller.isVisible) {
+              controller.isVisible = true;
+            }
+          },
+          key: Key(attachment.guid!),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8.0),
+            child: AnimatedSize(
+              vsync: controller,
+              curve: Curves.easeInOut,
+              alignment: Alignment.center,
+              duration: Duration(milliseconds: 250),
+              child: Obx(() => buildPlayer(controller, context)),
+            ),
+          ),
+        );
+      },
     );
   }
 
-  Widget buildPlayer(VideoPlayerController controller) => GestureDetector(
+  Widget buildPlayer(VideoWidgetController controller, BuildContext context) => GestureDetector(
         onTap: () async {
-          if (controller.value.isPlaying) {
-            controller.pause();
-            setState(() {
-              showPlayPauseOverlay = true;
-            });
+          if (controller.controller.value.isPlaying) {
+            controller.controller.pause();
+            controller.showPlayPauseOverlay.value = true;
           } else {
-            setState(() {
-              navigated = true;
-            });
+            controller.navigated = true;
             CurrentChat? currentChat = CurrentChat.of(context);
             await Navigator.of(context).push(
               ThemeSwitcher.buildPageRoute(
                 builder: (context) => AttachmentFullscreenViewer(
                   currentChat: currentChat,
-                  attachment: widget.attachment,
+                  attachment: attachment,
                   showInteractions: true,
                 ),
               ),
             );
-            setState(() {
-              navigated = false;
-            });
+            controller.navigated = false;
           }
         },
-        // ignore: unnecessary_null_comparison
         child: Container(
           constraints: BoxConstraints(
             maxWidth: context.width / 2,
             maxHeight: context.height / 2,
           ),
           child: Hero(
-            tag: widget.attachment.guid!,
+            tag: attachment.guid!,
             child: Stack(
               alignment: Alignment.center,
               children: <Widget>[
                 AspectRatio(
-                  aspectRatio: controller.value.aspectRatio,
+                  aspectRatio: controller.controller.value.aspectRatio,
                   child: Stack(
                     children: <Widget>[
-                      VideoPlayer(controller),
+                      VideoPlayer(controller.controller),
                     ],
                   ),
                 ),
                 AnimatedOpacity(
-                  opacity: showPlayPauseOverlay ? 1 : 0,
+                  opacity: controller.showPlayPauseOverlay.value ? 1 : 0,
                   duration: Duration(milliseconds: 250),
                   child: Container(
                     decoration: BoxDecoration(
@@ -188,7 +176,7 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
                       borderRadius: BorderRadius.circular(40),
                     ),
                     padding: EdgeInsets.all(10),
-                    child: controller.value.isPlaying
+                    child: controller.controller.value.isPlaying
                         ? GestureDetector(
                             child: Icon(
                               Icons.pause,
@@ -196,10 +184,8 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
                               size: 45,
                             ),
                             onTap: () {
-                              controller.pause();
-                              setState(() {
-                                showPlayPauseOverlay = true;
-                              });
+                              controller.controller.pause();
+                              controller.showPlayPauseOverlay.value = true;
                             },
                           )
                         : GestureDetector(
@@ -209,10 +195,8 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
                               size: 45,
                             ),
                             onTap: () {
-                              controller.play();
-                              setState(() {
-                                showPlayPauseOverlay = false;
-                              });
+                              controller.controller.play();
+                              controller.showPlayPauseOverlay.value = false;
                             },
                           ),
                   ),
@@ -223,14 +207,14 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
                     child: Padding(
                       padding: const EdgeInsets.only(bottom: 8.0, right: 8.0),
                       child: AnimatedOpacity(
-                        opacity: showPlayPauseOverlay ? 1 : 0,
+                        opacity: controller.showPlayPauseOverlay.value ? 1 : 0,
                         duration: Duration(milliseconds: 250),
                         child: AbsorbPointer(
-                          absorbing: !showPlayPauseOverlay,
+                          absorbing: !controller.showPlayPauseOverlay.value,
                           child: GestureDetector(
                             onTap: () {
-                              muted.toggle();
-                              controller.setVolume(muted.value ? 0.0 : 1.0);
+                              controller.muted.toggle();
+                              controller.controller.setVolume(controller.muted.value ? 0.0 : 1.0);
                             },
                             child: Container(
                               decoration: BoxDecoration(
@@ -239,7 +223,7 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
                               ),
                               padding: EdgeInsets.all(5),
                               child: Obx(() => Icon(
-                                muted.value ? Icons.volume_mute : Icons.volume_up,
+                                controller.muted.value ? Icons.volume_mute : Icons.volume_up,
                                 color: Colors.white,
                                 size: 15,
                               )),
@@ -255,85 +239,4 @@ class _VideoWidgetState extends State<VideoWidget> with TickerProviderStateMixin
           ),
         ),
       );
-
-  Widget buildPreview() => GestureDetector(
-        onTap: () async {
-          VideoPlayerController controller = VideoPlayerController.file(widget.file);
-          await controller.initialize();
-          controller.setVolume(muted.value ? 0.0 : 1.0);
-          controller.play();
-          CurrentChat.of(context)!.changeCurrentPlayingVideo({widget.attachment.guid!: controller});
-        },
-        child: Stack(
-          children: [
-            Container(
-              constraints: BoxConstraints(
-                maxWidth: context.width / 2,
-                maxHeight: context.height / 2,
-              ),
-              child: buildSwitcher(),
-            ),
-            Container(
-              decoration: BoxDecoration(
-                color: HexColor('26262a').withOpacity(0.5),
-                borderRadius: BorderRadius.circular(40),
-              ),
-              padding: EdgeInsets.all(10),
-              child: Icon(
-                Icons.play_arrow,
-                color: Colors.white,
-                size: 45,
-              ),
-            ),
-            Positioned.fill(
-              child: Align(
-                alignment: Alignment.bottomRight,
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 8.0, right: 8.0),
-                  child: GestureDetector(
-                    onTap: () {
-                      muted.toggle();
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: HexColor('26262a').withOpacity(0.5),
-                        borderRadius: BorderRadius.circular(40),
-                      ),
-                      padding: EdgeInsets.all(5),
-                      child: Obx(() => Icon(
-                        muted.value ? Icons.volume_mute : Icons.volume_up,
-                        color: Colors.white,
-                        size: 15,
-                      )),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-          alignment: Alignment.center,
-        ),
-      );
-
-  Widget buildSwitcher() => AnimatedSwitcher(
-        duration: Duration(milliseconds: 150),
-        child: thumbnail != null ? Image.memory(thumbnail!) : buildPlaceHolder(),
-      );
-
-  Widget buildPlaceHolder() {
-    if (widget.attachment.hasValidSize) {
-      return AspectRatio(
-        aspectRatio: widget.attachment.width!.toDouble() / widget.attachment.height!.toDouble(),
-        child: Container(
-          width: widget.attachment.width!.toDouble(),
-          height: widget.attachment.height!.toDouble(),
-        ),
-      );
-    } else {
-      return Container(
-        width: 0,
-        height: 0,
-      );
-    }
-  }
 }
