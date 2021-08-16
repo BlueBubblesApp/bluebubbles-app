@@ -6,6 +6,12 @@ if (localPropertiesFile.exists()) {
     }
 }
 
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('key.properties')
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
 def flutterRoot = localProperties.getProperty('flutter.sdk')
 if (flutterRoot == null) {
     throw new GradleException("Flutter SDK not found. Define location with flutter.sdk in the local.properties file.")
@@ -21,17 +27,8 @@ if (flutterVersionName == null) {
     flutterVersionName = '1.0'
 }
 
-
 apply plugin: 'com.android.application'
 apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
-//apply plugin: 'com.google.gms.google-services'  // Google Services plugin
-apply plugin: 'kotlin-android'
-
-def keystoreProperties = new Properties()
-def keystorePropertiesFile = rootProject.file('key.properties')
-if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
-}
 
 android {
     compileSdkVersion 29
@@ -49,17 +46,9 @@ android {
         applicationId "com.bluebubbles.messaging"
         minSdkVersion 21
         targetSdkVersion 29
-        //                 v0.1.14        hotfix version (0-9)      armv7 OR arm64
-        // version code: 1  0114                    0                70      64
-
-        //noinspection AccidentalOctal
-        versionCode 11300070
+        versionCode 20000000 + flutterVersionCode.toInteger()
         versionName flutterVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-
-        // ndk {
-        //     abiFilters 'armeabi-v7a'
-        // }
     }
 
     compileOptions {
