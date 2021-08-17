@@ -378,44 +378,47 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                 return SizedBox.shrink();
             }),
             Expanded(
-              child: Obx(() => fetchingCurrentChat.value ? Center(
-                child: Container(
-                  padding: EdgeInsets.symmetric(vertical: 20.0),
-                  child: Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          "Loading chat...",
-                          style: Theme.of(context).textTheme.subtitle1,
+                child: Obx(
+              () => fetchingCurrentChat.value
+                  ? Center(
+                      child: Container(
+                        padding: EdgeInsets.symmetric(vertical: 20.0),
+                        child: Column(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Text(
+                                "Loading chat...",
+                                style: Theme.of(context).textTheme.subtitle1,
+                              ),
+                            ),
+                            buildProgressIndicator(context, size: 15),
+                          ],
                         ),
                       ),
-                      buildProgressIndicator(context, width: 15, height: 15),
-                    ],
-                  ),
-                ),
-              ) : (searchQuery.length == 0 || !isCreator!) && chat != null
-                  ? Stack(
-                      alignment: Alignment.bottomCenter,
-                      children: [
-                        MessagesView(
-                          key: new Key(chat?.guid ?? "unknown-chat"),
-                          messageBloc: messageBloc,
-                          showHandle: chat!.participants.length > 1,
-                          chat: chat,
-                          initComplete: widget.onMessagesViewComplete,
-                        ),
-                        currentChat != null
-                            ? Obx(() => AnimatedOpacity(
-                                  duration: Duration(milliseconds: 250),
-                                  opacity: currentChat!.showScrollDown.value ? 1 : 0,
-                                  curve: Curves.easeInOut,
-                                  child: buildScrollToBottomFAB(context),
-                                ))
-                            : Container(),
-                      ],
                     )
-                  : buildChatSelectorBody(),
+                  : (searchQuery.length == 0 || !isCreator!) && chat != null
+                      ? Stack(
+                          alignment: Alignment.bottomCenter,
+                          children: [
+                            MessagesView(
+                              key: new Key(chat?.guid ?? "unknown-chat"),
+                              messageBloc: messageBloc,
+                              showHandle: chat!.participants.length > 1,
+                              chat: chat,
+                              initComplete: widget.onMessagesViewComplete,
+                            ),
+                            currentChat != null
+                                ? Obx(() => AnimatedOpacity(
+                                      duration: Duration(milliseconds: 250),
+                                      opacity: currentChat!.showScrollDown.value ? 1 : 0,
+                                      curve: Curves.easeInOut,
+                                      child: buildScrollToBottomFAB(context),
+                                    ))
+                                : Container(),
+                          ],
+                        )
+                      : buildChatSelectorBody(),
             )),
             Obx(() {
               if (widget.onSelect == null) {
