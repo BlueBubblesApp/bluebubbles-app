@@ -21,14 +21,7 @@ packages:
       name: analyzer
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.7.1"
-  android_intent:
-    dependency: "direct main"
-    description:
-      name: android_intent
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "2.0.2"
+    version: "1.7.2"
   archive:
     dependency: transitive
     description:
@@ -42,7 +35,7 @@ packages:
       name: args
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.0.0"
+    version: "2.2.0"
   asn1lib:
     dependency: transitive
     description:
@@ -63,7 +56,7 @@ packages:
       name: async
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.6.1"
+    version: "2.7.0"
   battery_optimization:
     dependency: "direct main"
     description:
@@ -86,7 +79,7 @@ packages:
       name: build
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.0.2"
+    version: "2.1.0"
   build_config:
     dependency: transitive
     description:
@@ -114,14 +107,14 @@ packages:
       name: build_runner
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.0.6"
+    version: "2.1.1"
   build_runner_core:
     dependency: transitive
     description:
       name: build_runner_core
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "7.0.0"
+    version: "7.1.0"
   build_verify:
     dependency: "direct dev"
     description:
@@ -149,7 +142,7 @@ packages:
       name: camera
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.8.1+5"
+    version: "0.8.1+7"
   camera_platform_interface:
     dependency: transitive
     description:
@@ -170,7 +163,7 @@ packages:
       name: charcode
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.2.0"
+    version: "1.3.1"
   checked_yaml:
     dependency: transitive
     description:
@@ -194,13 +187,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.3.1"
-  clipboard:
-    dependency: "direct main"
-    description:
-      name: clipboard
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.1.3"
   clock:
     dependency: transitive
     description:
@@ -326,7 +312,7 @@ packages:
       name: encrypt
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "5.0.0"
+    version: "5.0.1"
   exif:
     dependency: "direct main"
     description:
@@ -394,7 +380,7 @@ packages:
       name: flutter_launcher_icons
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.9.0"
+    version: "0.9.1"
   flutter_libphonenumber:
     dependency: "direct main"
     description:
@@ -415,7 +401,7 @@ packages:
       name: flutter_markdown
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.6.2"
+    version: "0.6.4"
   flutter_native_image:
     dependency: "direct main"
     description:
@@ -429,7 +415,7 @@ packages:
       name: flutter_native_splash
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.1.8+4"
+    version: "1.2.1"
   flutter_plugin_android_lifecycle:
     dependency: transitive
     description:
@@ -468,13 +454,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  fluttertoast:
-    dependency: "direct main"
-    description:
-      name: fluttertoast
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "8.0.7"
   frontend_server_client:
     dependency: transitive
     description:
@@ -488,7 +467,7 @@ packages:
       name: get
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "4.2.1+1"
+    version: "4.3.8"
   glob:
     dependency: transitive
     description:
@@ -502,7 +481,7 @@ packages:
       name: google_ml_kit
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.6.0"
+    version: "0.7.0"
   graphs:
     dependency: transitive
     description:
@@ -622,13 +601,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.1.6"
-  logger:
-    dependency: "direct main"
-    description:
-      name: logger
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "1.0.0"
   logging:
     dependency: transitive
     description:
@@ -670,7 +642,7 @@ packages:
       name: meta
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.3.0"
+    version: "1.7.0"
   metadata_fetch:
     dependency: "direct main"
     description:
@@ -782,7 +754,7 @@ packages:
       name: permission_handler
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "8.1.3"
+    version: "8.1.4+2"
   permission_handler_platform_interface:
     dependency: transitive
     description:
@@ -803,7 +775,7 @@ packages:
       name: photo_manager
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.2.7"
+    version: "1.3.1"
   photo_view:
     dependency: "direct main"
     description:
@@ -831,7 +803,7 @@ packages:
       name: pointycastle
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "3.1.3"
+    version: "3.3.0"
   pool:
     dependency: transitive
     description:
@@ -917,12 +889,12 @@ packages:
     source: hosted
     version: "0.1.0"
   rxdart:
-    dependency: "direct overridden"
+    dependency: transitive
     description:
       name: rxdart
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.27.1"
+    version: "0.26.0"
   secure_application:
     dependency: "direct main"
     description:
@@ -973,7 +945,7 @@ packages:
     source: hosted
     version: "2.0.3"
   shared_preferences:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: shared_preferences
       url: "https://pub.dartlang.org"
@@ -1179,21 +1151,21 @@ packages:
       name: test
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.16.8"
+    version: "1.17.10"
   test_api:
     dependency: transitive
     description:
       name: test_api
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.3.0"
+    version: "0.4.2"
   test_core:
     dependency: transitive
     description:
       name: test_core
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.3.19"
+    version: "0.4.0"
   timing:
     dependency: transitive
     description:
@@ -1291,7 +1263,7 @@ packages:
       name: video_player
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.1.10"
+    version: "2.1.14"
   video_player_platform_interface:
     dependency: transitive
     description:
@@ -1312,7 +1284,7 @@ packages:
       name: video_thumbnail
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.3.3"
+    version: "0.4.3"
   visibility_detector:
     dependency: "direct main"
     description:

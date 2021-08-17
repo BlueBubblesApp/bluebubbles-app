@@ -257,7 +257,6 @@ class SocketManager {
         return;
       }
 
-      _manager.socket!.connect();
       _manager.socket!.clearListeners();
 
       _manager.socket!.onConnect((data) => socketStatusUpdate("connect"));
@@ -370,6 +369,8 @@ class SocketManager {
       _manager.socket!.on("updated-message", (_data) async {
         IncomingQueue().add(new QueueItem(event: "handle-updated-message", item: {"data": _data}));
       });
+
+      _manager.socket!.connect();
     } catch (e) {
       if (!catchException) {
         throw ("[Socket] -> " + e.toString());
