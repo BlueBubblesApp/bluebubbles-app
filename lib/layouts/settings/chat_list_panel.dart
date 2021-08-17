@@ -595,6 +595,23 @@ class ChatListPanel extends StatelessWidget {
                         subtitle: "Replaces the floating button at the bottom to a fixed button at the top",
                         backgroundColor: tileColor,
                       )),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
+                    ),
+                  ),
+                  Obx(() => SettingsSwitch(
+                    onChanged: (bool val) {
+                      SettingsManager().settings.notifyOnChatList.value = val;
+                      saveSettings();
+                    },
+                    initialVal: SettingsManager().settings.notifyOnChatList.value,
+                    title: "Notify New Messages on Chat List",
+                    subtitle: "Sends notifications for new chats while on the chat list or chat creator",
+                    backgroundColor: tileColor,
+                  )),
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
                   Container(
                     height: 30,

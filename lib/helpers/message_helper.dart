@@ -213,7 +213,7 @@ class MessageHelper {
     if (message.isFromMe! || message.handle == null) return; // Don't notify if the text is from me
 
     CurrentChat? currChat = CurrentChat.activeChat;
-    if (LifeCycleManager().isAlive && (currChat == null || currChat.chat.guid == chat.guid)) {
+    if (LifeCycleManager().isAlive && ((!SettingsManager().settings.notifyOnChatList.value && currChat == null) || currChat?.chat.guid == chat.guid)) {
       // Don't notify if the the chat is the active chat
       return;
     }
