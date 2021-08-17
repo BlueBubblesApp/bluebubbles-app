@@ -7,6 +7,7 @@ import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:get/get.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -502,8 +503,9 @@ class Message {
   }
 
   bool isUrlPreview() {
-    return this.balloonBundleId != null && this.balloonBundleId == "com.apple.messages.URLBalloonProvider" &&
-        this.hasDdResults!;
+    // first condition is for macOS < 11 and second condition is for macOS >= 11
+    return (this.balloonBundleId != null && this.balloonBundleId == "com.apple.messages.URLBalloonProvider" &&
+        this.hasDdResults!) || (this.hasDdResults! && (this.text ?? "").isURL);
   }
 
   bool isInteractive() {
