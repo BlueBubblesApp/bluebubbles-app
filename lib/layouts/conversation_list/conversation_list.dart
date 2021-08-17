@@ -105,7 +105,7 @@ class _ConversationListState extends State<ConversationList> {
     return Obx(() {
       if (!SettingsManager().settings.showSyncIndicator.value) return SizedBox.shrink();
       if (!SetupBloc().isSyncing.value) return Container();
-      return buildProgressIndicator(context, width: 10, height: 10);
+      return buildProgressIndicator(context, size: 10);
     });
   }
 
@@ -512,7 +512,7 @@ class _Cupertino extends StatelessWidget {
                                 style: Theme.of(context).textTheme.subtitle1,
                               ),
                             ),
-                            buildProgressIndicator(context, width: 15, height: 15),
+                            buildProgressIndicator(context, size: 15),
                           ],
                         ),
                       ),
@@ -924,7 +924,7 @@ class __MaterialState extends State<_Material> {
                               style: Theme.of(context).textTheme.subtitle1,
                             ),
                           ),
-                          buildProgressIndicator(context, width: 15, height: 15),
+                          buildProgressIndicator(context, size: 15),
                         ],
                       ),
                     ),
@@ -1403,7 +1403,7 @@ class _SamsungState extends State<_Samsung> {
                             style: Theme.of(context).textTheme.subtitle1,
                           ),
                         ),
-                        buildProgressIndicator(context, width: 15, height: 15),
+                        buildProgressIndicator(context, size: 15),
                       ],
                     ),
                   ),
