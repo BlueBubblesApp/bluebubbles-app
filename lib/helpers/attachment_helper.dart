@@ -447,9 +447,25 @@ class AttachmentHelper {
       // Compress the file
       ReceivePort receivePort = ReceivePort();
       debugPrint("Spawning isolate...");
+      // if we don't have a valid width use the max image width
+      // if the image width is less than the max width already don't bother
+      // compressing it because it is already low quality
+      // otherwise use the current width multiplied by preview quality
+      late int compressWidth;
+      if (attachment.width == null) {
+        compressWidth = getDeviceWidth() ~/ 2;
+      } else if (attachment.width! < getDeviceWidth() ~/ 2) {
+        compressWidth = attachment.width!;
+      } else {
+        compressWidth = (attachment.width! * quality * 0.01).toInt();
+        // make sure the compressed image will not be unnecessarily shrunken
+        if (compressWidth < getDeviceWidth() ~/ 2) {
+          compressWidth = getDeviceWidth() ~/ 2;
+        }
+      }
       await Isolate.spawn(
           resizeIsolate,
-          ResizeArgs(filePath, receivePort.sendPort, attachment.width == null ? 350 : (attachment.width! * quality * 0.01).toInt()),
+          ResizeArgs(filePath, receivePort.sendPort, compressWidth),
           errorsAreFatal: false,
       );
 
