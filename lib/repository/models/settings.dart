@@ -50,6 +50,7 @@ class Settings {
   final RxBool startVideosMutedFullscreen = true.obs;
   final RxBool use24HrFormat = false.obs;
   final RxBool alwaysShowAvatars = false.obs;
+  final RxBool notifyOnChatList = false.obs;
 
   // final RxString emojiFontFamily;
 
@@ -248,6 +249,8 @@ class Settings {
         settings.pinRowsPortrait.value = entry.value;
       } else if (entry.name == "maxAvatarsInGroupWidget") {
         settings.maxAvatarsInGroupWidget.value = entry.value;
+      } else if (entry.name == "notifyOnChatList") {
+        settings.notifyOnChatList.value = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -642,6 +645,11 @@ class Settings {
           name: "maxAvatarsInGroupWidget",
           value: this.maxAvatarsInGroupWidget.value,
           type: this.maxAvatarsInGroupWidget.value.runtimeType,
+        ),
+        ConfigEntry(
+          name: "notifyOnChatList",
+          value: this.notifyOnChatList.value,
+          type: this.notifyOnChatList.runtimeType,
         )
         // ConfigEntry(
         //     name: "emojiFontFamily",
