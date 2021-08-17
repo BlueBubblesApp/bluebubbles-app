@@ -25,7 +25,7 @@ Widget buildBackButton(BuildContext context,
   );
 }
 
-Widget buildProgressIndicator(BuildContext context, {double height = 20, double width = 20, double strokeWidth = 2}) {
+Widget buildProgressIndicator(BuildContext context, {double size = 20, double strokeWidth = 2}) {
   return SettingsManager().settings.skin.value == Skins.iOS
       ? Theme(
           data: ThemeData(
@@ -33,11 +33,11 @@ Widget buildProgressIndicator(BuildContext context, {double height = 20, double 
                 CupertinoThemeData(brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor)),
           ),
           child: CupertinoActivityIndicator(
-            radius: width / 2,
+            radius: size / 2,
           ),
         )
       : Container(
-          constraints: BoxConstraints(maxHeight: height, maxWidth: width),
+          constraints: BoxConstraints(maxHeight: size, maxWidth: size),
           child: CircularProgressIndicator(
             strokeWidth: strokeWidth,
             valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),

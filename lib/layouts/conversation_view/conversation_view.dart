@@ -369,7 +369,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                             style: Theme.of(context).textTheme.subtitle1,
                           ),
                         ),
-                        buildProgressIndicator(context, width: 15, height: 15),
+                        buildProgressIndicator(context, size: 15),
                       ],
                     ),
                   ),
