@@ -378,7 +378,23 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                 return SizedBox.shrink();
             }),
             Expanded(
-              child: (searchQuery.length == 0 || !isCreator!) && chat != null
+              child: Obx(() => fetchingCurrentChat.value ? Center(
+                child: Container(
+                  padding: EdgeInsets.symmetric(vertical: 20.0),
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          "Loading chat...",
+                          style: Theme.of(context).textTheme.subtitle1,
+                        ),
+                      ),
+                      buildProgressIndicator(context, width: 15, height: 15),
+                    ],
+                  ),
+                ),
+              ) : (searchQuery.length == 0 || !isCreator!) && chat != null
                   ? Stack(
                       alignment: Alignment.bottomCenter,
                       children: [
@@ -400,7 +416,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                       ],
                     )
                   : buildChatSelectorBody(),
-            ),
+            )),
             Obx(() {
               if (widget.onSelect == null) {
                 if (SettingsManager().settings.swipeToCloseKeyboard.value ||

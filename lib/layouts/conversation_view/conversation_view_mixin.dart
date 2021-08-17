@@ -57,6 +57,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   String previousSearch = '';
   int previousContactCount = 0;
 
+  final RxBool fetchingCurrentChat = false.obs;
+
   final _contactStreamController = StreamController<List<UniqueContact>>.broadcast();
 
   Stream<List<UniqueContact>> get contactStream => _contactStreamController.stream;
@@ -980,6 +982,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   }
 
   void onSelected(UniqueContact item) async {
+    fetchingCurrentChat.value = true;
     if (item.isChat) {
       if (widget.type == ChatSelectorTypes.ONLY_EXISTING) {
         selected.add(item);
@@ -998,6 +1001,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
       resetCursor();
       if (this.mounted) setState(() {});
+      fetchingCurrentChat.value = false;
       return;
     }
     // Add the selected item
@@ -1007,6 +1011,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     // Reset the controller text
     resetCursor();
     if (this.mounted) setState(() {});
+    fetchingCurrentChat.value = false;
   }
 
   Widget buildChatSelectorBody() => StreamBuilder(
