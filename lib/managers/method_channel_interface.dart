@@ -7,6 +7,7 @@ import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
+import 'package:bluebubbles/layouts/testing_mode.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/alarm_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
@@ -111,6 +112,14 @@ class MethodChannelInterface {
         Get.toNamed("/settings/server-management-panel");
         return new Future.value("");
       case "reply":
+        if (call.arguments["chat"] == "google-play-test-chat") {
+          TestingModeController controller = Get.find<TestingModeController>();
+          controller.mostRecentReply.value = call.arguments["text"];
+          // If `reply` is called when the app is in a background isolate, then we need to close it once we are done
+          closeThread();
+
+          return new Future.value("");
+        }
         // Find the chat to reply to
         Chat? chat = await Chat.findOne({"guid": call.arguments["chat"]});
 

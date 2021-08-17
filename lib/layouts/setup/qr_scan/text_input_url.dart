@@ -6,6 +6,7 @@ import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class TextInputURL extends StatefulWidget {
   TextInputURL({Key? key, required this.onConnect, required this.onClose}) : super(key: key);
@@ -101,6 +102,10 @@ class _TextInputURLState extends State<TextInputURL> {
           TextButton(
             child: Text("OK"),
             onPressed: () {
+              if (urlController.text == "googleplaytest" && passwordController.text == "googleplaytest") {
+                Get.toNamed("/testing-mode");
+                return;
+              }
               connect(urlController.text, passwordController.text);
               connecting = true;
               if (this.mounted) setState(() {});

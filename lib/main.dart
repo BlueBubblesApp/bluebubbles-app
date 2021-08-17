@@ -17,6 +17,7 @@ import 'package:bluebubbles/layouts/settings/server_management_panel.dart';
 import 'package:bluebubbles/layouts/settings/theme_panel.dart';
 import 'package:bluebubbles/layouts/setup/failure_to_start.dart';
 import 'package:bluebubbles/layouts/setup/setup_view.dart';
+import 'package:bluebubbles/layouts/testing_mode.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/background_isolate.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
@@ -244,6 +245,10 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
               page: () => ServerManagementPanel(),
               name: "/settings/server-management-panel",
               binding: ServerManagementPanelBinding()),
+          GetPage(
+              page: () => TestingMode(),
+              name: "/testing-mode",
+              binding: TestingModeBinding()),
           GetPage(page: () => ThemePanel(), name: "/settings/theme-panel", binding: ThemePanelBinding()),
         ],
       ),
