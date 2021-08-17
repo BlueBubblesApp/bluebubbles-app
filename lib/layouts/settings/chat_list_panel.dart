@@ -608,8 +608,8 @@ class ChatListPanel extends StatelessWidget {
                       saveSettings();
                     },
                     initialVal: SettingsManager().settings.notifyOnChatList.value,
-                    title: "Notify New Messages on Chat List",
-                    subtitle: "Sends notifications for new chats while on the chat list or chat creator",
+                    title: "Send Notifications on Chat List",
+                    subtitle: "Sends notifications for new messages while in the chat list or chat creator",
                     backgroundColor: tileColor,
                   )),
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
