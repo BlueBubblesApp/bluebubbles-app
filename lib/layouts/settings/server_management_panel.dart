@@ -11,6 +11,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/setup/qr_code_scanner.dart';
 import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
@@ -37,6 +38,7 @@ class ServerManagementPanelController extends GetxController {
   final RxnString fetchStatus = RxnString();
   final RxnString serverVersion = RxnString();
   final RxnString macOSVersion = RxnString();
+  final RxnInt serverVersionCode = RxnInt();
 
   // Restart trackers
   int? lastRestart;
@@ -60,6 +62,11 @@ class ServerManagementPanelController extends GetxController {
         latency.value = later - now;
         macOSVersion.value = res['data']['os_version'];
         serverVersion.value = res['data']['server_version'];
+        serverVersionCode.value = serverVersion.value?.split(".").mapIndexed((index, e) {
+          if (index == 0) return int.parse(e) * 100;
+          if (index == 1) return int.parse(e) * 10;
+          return int.parse(e);
+        }).sum;
       });
     }
     super.onInit();
@@ -381,7 +388,8 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                     } else return SizedBox.shrink();
                   }),
                   Obx(() {
-                    if (SettingsManager().settings.enablePrivateAPI.value) {
+                    if (SettingsManager().settings.enablePrivateAPI.value
+                        && (controller.serverVersionCode.value ?? 0) > 29) {
                       return SettingsTile(
                           title: "Restart Private API",
                           subtitle: controller.isRestartingPrivateAPI.value && SocketManager().state.value == SocketState.CONNECTED
