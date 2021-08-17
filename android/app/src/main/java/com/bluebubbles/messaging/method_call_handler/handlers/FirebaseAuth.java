@@ -11,11 +11,10 @@ import com.bluebubbles.messaging.firebase.DBListener;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.firebase.iid.InstanceIdResult;
 
 import java.lang.reflect.Method;
 
@@ -55,10 +54,10 @@ public class FirebaseAuth implements Handler {
         if (app == null) {
             result.error("could_not_initialize", "Failed to initialize, app == null", "");
         }
-        FirebaseInstanceId.getInstance(app).getInstanceId()
-                .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
+        FirebaseMessaging.getInstance().getToken()
+                .addOnCompleteListener(new OnCompleteListener<String>() {
                     @Override
-                    public void onComplete(@NonNull Task<InstanceIdResult> task) {
+                    public void onComplete(@NonNull Task<String> task) {
                         if (task.getResult() == null || !task.isSuccessful()) {
                             Log.d("FCM", "getInstanceId failed", task.getException());
                             try {
@@ -67,14 +66,14 @@ public class FirebaseAuth implements Handler {
                             } catch (IllegalStateException e) {
 
                             }
-                        } else {
+                            return;
+                        }
 
-                            String token = task.getResult().getToken();
-                            Log.d("FCM", "token: " + token);
-                            try {
-                                result.success(token);
-                            } catch (IllegalStateException e) {
-                            }
+                        String token = task.getResult();
+                        Log.d("FCM", "token: " + token);
+                        try {
+                            result.success(token);
+                        } catch (IllegalStateException e) {
                         }
                     }
                 });

@@ -221,7 +221,7 @@ class SetupBloc {
     ContactManager().contacts = [];
     await ContactManager().getContacts(force: true);
     await ChatBloc().refreshChats(force: true);
-
+    await SocketManager().authFCM(force: true);
     closeSync();
   }
 
