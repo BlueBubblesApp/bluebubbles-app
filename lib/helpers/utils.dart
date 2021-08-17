@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
+import 'dart:ui';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
@@ -519,6 +520,15 @@ Future<String> getDeviceName() async {
   }
 
   return deviceName;
+}
+
+/// Contextless way to get device width
+double getDeviceWidth() {
+  double pixelRatio = window.devicePixelRatio;
+
+  //Size in logical pixels
+  Size logicalScreenSize = window.physicalSize / pixelRatio;
+  return logicalScreenSize.width;
 }
 
 String? getFilenameFromUri(String url) {
