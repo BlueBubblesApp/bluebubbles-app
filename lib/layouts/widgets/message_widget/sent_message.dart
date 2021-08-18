@@ -372,30 +372,25 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
     return Row(
       mainAxisSize: MainAxisSize.max,
       mainAxisAlignment: MainAxisAlignment.end,
-      crossAxisAlignment:
-          (skin.value == Skins.iOS) ? CrossAxisAlignment.center : CrossAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        if (skin.value == Skins.iOS ||
-            skin.value == Skins.Material)
-          MessagePopupHolder(
-            message: widget.message,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.end,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: msgRow,
-            ),
+        MessagePopupHolder(
+          message: widget.message,
+          olderMessage: widget.olderMessage,
+          newerMessage: widget.newerMessage,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: msgRow,
           ),
-        if (skin.value == Skins.Samsung)
-          MessagePopupHolder(
-            message: widget.message,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.end,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: msgRow,
-            ),
+          popupChild: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: msgRow,
           ),
+        ),
         if (skin.value != Skins.Samsung && widget.message.guid != widget.olderMessage?.guid)
           MessageTimeStamp(
             message: widget.message,

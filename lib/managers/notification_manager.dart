@@ -121,6 +121,8 @@ class NotificationManager {
   ///
   /// @param [contact] optional parameter of the contact of the message
   void createNotificationFromMessage(Chat chat, Message message, int visibility) async {
+    // sanity check to make sure we don't notify if the chat is muted
+    if (chat.isMuted ?? false) return;
     Uint8List? contactIcon;
 
     // Get the contact name if the message is not from you
