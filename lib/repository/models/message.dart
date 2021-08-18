@@ -7,6 +7,7 @@ import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:get/get.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -34,7 +35,7 @@ class Message {
   String? text;
   String? subject;
   String? country;
-  int? error;
+  final RxInt error = RxInt(0);
   DateTime? dateCreated;
   DateTime? dateRead;
   DateTime? dateDelivered;
@@ -77,7 +78,7 @@ class Message {
       this.text,
       this.subject,
       this.country,
-      this.error = 0,
+      int? error2,
       this.dateCreated,
       this.dateRead,
       this.dateDelivered,
@@ -107,7 +108,9 @@ class Message {
       this.attachments = const [],
       this.associatedMessages = const [],
       this.dateDeleted,
-      this.metadata});
+      this.metadata}) {
+    if (error2 != null) error.value = error2;
+  }
 
   String? get fullText {
     String fullText = this.subject ?? "";
@@ -160,7 +163,7 @@ class Message {
       text: sanitizeString(json["text"]),
       subject: json.containsKey("subject") ? json["subject"] : null,
       country: json.containsKey("country") ? json["country"] : null,
-      error: json.containsKey("error") ? json["error"] : 0,
+      error2: json.containsKey("error") ? json["error"] : 0,
       dateCreated: json.containsKey("dateCreated") ? parseDate(json["dateCreated"]) : null,
       dateRead: json.containsKey("dateRead") ? parseDate(json["dateRead"]) : null,
       dateDelivered: json.containsKey("dateDelivered") ? parseDate(json["dateDelivered"]) : null,
@@ -603,8 +606,8 @@ class Message {
     if (!this.hasReactions && otherMessage.hasReactions) {
       this.hasReactions = otherMessage.hasReactions;
     }
-    if (this.error == 0 && otherMessage.error != 0) {
-      this.error = otherMessage.error;
+    if (this.error.value == 0 && otherMessage.error.value != 0) {
+      this.error.value = otherMessage.error.value;
     }
   }
 

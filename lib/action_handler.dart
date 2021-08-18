@@ -133,7 +133,7 @@ class ActionHandler {
         // If there is an error, replace the temp value with an error
         if (response['status'] != 200) {
           message.guid = message.guid!.replaceAll("temp", "error-${response['error']['message']}");
-          message.error = response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
+          message.error.value = response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
 
           await Message.replaceMessage(tempGuid, message);
           NewMessageManager().updateMessage(chat, tempGuid!, message);
@@ -154,7 +154,7 @@ class ActionHandler {
         String? tempGuid = message.guid;
         message.guid = message.guid!
             .replaceAll("temp", "error-Connection timeout, please check your internet connection and try again");
-        message.error = MessageError.BAD_REQUEST.code;
+        message.error.value = MessageError.BAD_REQUEST.code;
         CurrentChat? currChat = CurrentChat.activeChat;
         if (!LifeCycleManager().isAlive || currChat?.chat.guid != chat.guid) {
           NotificationManager().createFailedToSendMessage();
@@ -237,7 +237,7 @@ class ActionHandler {
   /// ```
   static Future<void> retryMessage(Message message) async {
     // Don't allow us to retry an un-errored message
-    if (message.error == 0) return;
+    if (message.error.value == 0) return;
 
     // Get message's chat
     Chat? chat = await Message.getChat(message);
@@ -285,7 +285,7 @@ class ActionHandler {
 
     // Reset error, guid, and send date
     message.id = null;
-    message.error = 0;
+    message.error.value = 0;
     message.guid = tempGuid;
     message.dateCreated = DateTime.now();
 
@@ -303,7 +303,7 @@ class ActionHandler {
       if (response['status'] != 200) {
         NewMessageManager().removeMessage(chat, message.guid);
         message.guid = message.guid!.replaceAll("temp", "error-${response['error']['message']}");
-        message.error = response['status'] == 400 ? 1001 : 1002;
+        message.error.value = response['status'] == 400 ? 1001 : 1002;
         await Message.replaceMessage(tempGuid, message);
         NewMessageManager().addMessage(chat, message);
       }
