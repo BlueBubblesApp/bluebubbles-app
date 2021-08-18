@@ -801,7 +801,7 @@ class Chat {
         " chat.latestMessageText as latestMessageText,"
         " chat.displayName as displayName"
         " FROM chat"
-        " ORDER BY chat.latestMessageDate DESC LIMIT $limit OFFSET $offset;",
+        " ORDER BY chat.isPinned DESC, chat.latestMessageDate DESC LIMIT $limit OFFSET $offset;",
     );
 
     if (res.isEmpty) return [];
