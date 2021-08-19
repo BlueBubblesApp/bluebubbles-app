@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
@@ -109,6 +110,7 @@ Future<Null> main() async {
     await initializeDateFormatting('fr_FR', null);
     await SettingsManager().init();
     await SettingsManager().getSavedSettings(headless: true);
+    Get.put(AttachmentDownloadService());
   } catch (e) {
     exception = e;
   }

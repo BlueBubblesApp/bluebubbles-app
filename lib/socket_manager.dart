@@ -58,7 +58,6 @@ class SocketManager {
   //Socket io
   IO.Socket? socket;
 
-  Map<String, AttachmentDownloader> attachmentDownloaders = Map();
   Map<String, AttachmentSender> attachmentSenders = Map();
   Map<int, Function> socketProcesses = new Map();
 
@@ -91,17 +90,9 @@ class SocketManager {
   StreamController<String> _attachmentSenderCompleter = StreamController<String>.broadcast();
   Stream<String> get attachmentSenderCompleter => _attachmentSenderCompleter.stream;
 
-  void addAttachmentDownloader(String guid, AttachmentDownloader downloader) {
-    attachmentDownloaders[guid] = downloader;
-  }
-
   void addAttachmentSender(AttachmentSender sender) {
     if (sender.guid == null) return;
     attachmentSenders[sender.guid!] = sender;
-  }
-
-  void finishDownloader(String guid) {
-    attachmentDownloaders.remove(guid);
   }
 
   void finishSender(String attachmentGuid) {

@@ -66,14 +66,14 @@ class _StickersWidgetState extends State<StickersWidget> {
         // Check if the attachment exists
         if (FileSystemEntity.typeSync(pathName) == FileSystemEntityType.notFound) {
           // Download the attachment and when complete, re-render the UI
-          AttachmentDownloader(attachment, onComplete: () {
+          Get.put(AttachmentDownloadController(attachment: attachment, onComplete: () {
             // Make sure it downloaded correctly
             if (FileSystemEntity.typeSync(pathName) == FileSystemEntityType.notFound) {
               // Add the attachment as a sticker, and re-render the UI
               stickers.add(attachment);
               if (this.mounted) setState(() {});
             }
-          });
+          }), tag: attachment.guid);
         } else {
           stickers.add(attachment);
         }
