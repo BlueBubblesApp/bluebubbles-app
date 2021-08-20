@@ -317,12 +317,17 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
 
   Widget _buildDate() => ConstrainedBox(
         constraints: BoxConstraints(maxWidth: 100.0),
-        child: Text(buildDate(widget.chat.latestMessageDate),
-            textAlign: TextAlign.right,
-            style: Theme.of(context).textTheme.subtitle2!.apply(
-                  color: Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
-                ),
-            overflow: TextOverflow.clip),
+        child: FutureBuilder<Message>(
+          future: widget.chat.latestMessage,
+          builder: (context, snapshot) {
+            return Obx(() => Text((snapshot.data?.error.value ?? 0) > 0 ? "Error" : buildDate(widget.chat.latestMessageDate),
+                textAlign: TextAlign.right,
+                style: Theme.of(context).textTheme.subtitle2!.copyWith(
+                      color: (snapshot.data?.error.value ?? 0) > 0 ? Colors.red : Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
+                    ),
+                overflow: TextOverflow.clip));
+          }
+        ),
       );
 
   void onTap() {
