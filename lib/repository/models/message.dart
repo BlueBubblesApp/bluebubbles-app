@@ -327,7 +327,7 @@ class Message {
       "dateDelivered": (this.dateDelivered == null) ? null : this.dateDelivered!.millisecondsSinceEpoch,
       "isArchived": this.isArchived! ? 1 : 0,
       "datePlayed": (this.datePlayed == null) ? null : this.datePlayed!.millisecondsSinceEpoch,
-      "error": this.error,
+      "error": this.error.value,
       "hasReactions": this.hasReactions ? 1 : 0,
       "hasDdResults": this.hasDdResults! ? 1 : 0,
       "metadata": isNullOrEmpty(this.metadata)! ? null : jsonEncode(this.metadata)
@@ -505,7 +505,8 @@ class Message {
   }
 
   bool isUrlPreview() {
-    return this.balloonBundleId != null && this.balloonBundleId == "com.apple.messages.URLBalloonProvider" &&
+    return this.balloonBundleId != null &&
+        this.balloonBundleId == "com.apple.messages.URLBalloonProvider" &&
         this.hasDdResults!;
   }
 

@@ -318,10 +318,11 @@ class Chat {
 
     try {
       newMessage = await message.save();
-    } catch (ex) {
+    } catch (ex, stacktrace) {
       newMessage = await Message.findOne({"guid": message.guid});
       if (newMessage == null) {
         debugPrint(ex.toString());
+        debugPrint(stacktrace.toString());
       }
     }
     bool isNewer = false;
@@ -786,22 +787,22 @@ class Chat {
     final Database db = await DBProvider.db.database;
 
     var res = await db.rawQuery(
-        "SELECT"
-        " chat.ROWID as ROWID,"
-        " chat.originalROWID as originalROWID,"
-        " chat.guid as guid,"
-        " chat.style as style,"
-        " chat.chatIdentifier as chatIdentifier,"
-        " chat.isFiltered as isFiltered,"
-        " chat.isPinned as isPinned,"
-        " chat.isArchived as isArchived,"
-        " chat.isMuted as isMuted,"
-        " chat.hasUnreadMessage as hasUnreadMessage,"
-        " chat.latestMessageDate as latestMessageDate,"
-        " chat.latestMessageText as latestMessageText,"
-        " chat.displayName as displayName"
-        " FROM chat"
-        " ORDER BY chat.isPinned DESC, chat.latestMessageDate DESC LIMIT $limit OFFSET $offset;",
+      "SELECT"
+      " chat.ROWID as ROWID,"
+      " chat.originalROWID as originalROWID,"
+      " chat.guid as guid,"
+      " chat.style as style,"
+      " chat.chatIdentifier as chatIdentifier,"
+      " chat.isFiltered as isFiltered,"
+      " chat.isPinned as isPinned,"
+      " chat.isArchived as isArchived,"
+      " chat.isMuted as isMuted,"
+      " chat.hasUnreadMessage as hasUnreadMessage,"
+      " chat.latestMessageDate as latestMessageDate,"
+      " chat.latestMessageText as latestMessageText,"
+      " chat.displayName as displayName"
+      " FROM chat"
+      " ORDER BY chat.isPinned DESC, chat.latestMessageDate DESC LIMIT $limit OFFSET $offset;",
     );
 
     if (res.isEmpty) return [];

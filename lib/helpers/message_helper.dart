@@ -173,11 +173,16 @@ class MessageHelper {
 
   static Future<void> downloadAttachmentSync(Attachment file) {
     Completer<void> completer = new Completer();
-    Get.put(AttachmentDownloadController(attachment: file, onComplete: () {
-      completer.complete();
-    }, onError: () {
-      completer.completeError(new Error());
-    }), tag: file.guid);
+    Get.put(
+        AttachmentDownloadController(
+            attachment: file,
+            onComplete: () {
+              completer.complete();
+            },
+            onError: () {
+              completer.completeError(new Error());
+            }),
+        tag: file.guid);
 
     return completer.future;
   }
@@ -214,7 +219,9 @@ class MessageHelper {
     if (message.isFromMe! || message.handle == null) return; // Don't notify if the text is from me
 
     CurrentChat? currChat = CurrentChat.activeChat;
-    if (LifeCycleManager().isAlive && ((!SettingsManager().settings.notifyOnChatList.value && currChat == null) || currChat?.chat.guid == chat.guid)) {
+    if (LifeCycleManager().isAlive &&
+        ((!SettingsManager().settings.notifyOnChatList.value && currChat == null) ||
+            currChat?.chat.guid == chat.guid)) {
       // Don't notify if the the chat is the active chat
       return;
     }
