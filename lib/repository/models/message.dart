@@ -621,7 +621,7 @@ class Message {
         "text": sanitizeString(text),
         "subject": subject,
         "country": country,
-        "error": error,
+        "error": error.value,
         "dateCreated": (dateCreated == null) ? null : dateCreated!.millisecondsSinceEpoch,
         "dateRead": (dateRead == null) ? null : dateRead!.millisecondsSinceEpoch,
         "dateDelivered": (dateDelivered == null) ? null : dateDelivered!.millisecondsSinceEpoch,
