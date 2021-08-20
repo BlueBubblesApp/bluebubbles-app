@@ -220,15 +220,14 @@ class AttachmentHelper {
   static dynamic getContent(Attachment attachment, {String? path}) {
     String appDocPath = SettingsManager().appDocDir.path;
     String pathName = path ?? "$appDocPath/attachments/${attachment.guid}/${attachment.transferName}";
-
-    if (SocketManager().attachmentDownloaders.containsKey(attachment.guid)) {
-      return SocketManager().attachmentDownloaders[attachment.guid];
+    if (Get.find<AttachmentDownloadService>().downloaders.contains(attachment.guid)) {
+      return Get.find<AttachmentDownloadController>(tag: attachment.guid);
     } else if (FileSystemEntity.typeSync(pathName) != FileSystemEntityType.notFound ||
         attachment.guid == "redacted-mode-demo-attachment" ||
         attachment.guid!.contains("theme-selector")) {
       return File(pathName);
     } else if (attachment.mimeType == null || attachment.mimeType!.startsWith("text/")) {
-      return AttachmentDownloader(attachment);
+      return Get.put(AttachmentDownloadController(attachment: attachment), tag: attachment.guid);
     } else {
       return attachment;
     }
@@ -263,7 +262,7 @@ class AttachmentHelper {
             (SettingsManager().settings.onlyWifiDownload.value && status == ConnectivityResult.wifi)));
   }
 
-  static Future<void> redownloadAttachment(Attachment attachment, {Function()? onComplete, Function()? onError}) async {
+  static void redownloadAttachment(Attachment attachment, {Function()? onComplete, Function()? onError}) {
     File file = new File(attachment.getPath());
     File compressedFile = new File(attachment.getCompressedPath());
 
@@ -277,7 +276,7 @@ class AttachmentHelper {
     if (cExists) compressedFile.deleteSync();
 
     // Redownload the attachment
-    AttachmentDownloader(attachment, onComplete: onComplete, onError: onError);
+    Get.put(AttachmentDownloadController(attachment: attachment, onComplete: onComplete, onError: onError), tag: attachment.guid);
   }
 
   static Future<Uint8List?> getVideoThumbnail(String filePath) async {

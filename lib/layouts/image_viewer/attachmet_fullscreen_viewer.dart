@@ -172,7 +172,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                             key: Key(attachment.guid ?? attachment.transferName ?? Random().nextInt(100).toString()),
                             attachment: attachment,
                             onPressed: () {
-                              new AttachmentDownloader(attachment);
+                              Get.put(AttachmentDownloadController(attachment: attachment), tag: attachment.guid);
                               content = AttachmentHelper.getContent(attachment);
                               if (this.mounted) setState(() {});
                             },
@@ -181,13 +181,11 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                         ),
                       ],
                     );
-                  } else if (content is AttachmentDownloader) {
-                    content = content;
-                    AttachmentDownloader downloader = content;
+                  } else if (content is AttachmentDownloadController) {
                     if (widget.attachment.mimeType == null) return Container();
-                    ever<Tuple3<num?, File?, bool>>(downloader.attachmentData, (event) {
-                      if (event.item2 != null) {
-                        content = event.item2;
+                    ever<File?>(content.file, (file) {
+                      if (file != null) {
+                        content = file;
                         if (this.mounted) setState(() {});
                       }
                     }, onError: (error) {
@@ -195,14 +193,14 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                       if (this.mounted) setState(() {});
                     });
                     return Obx(() {
-                      if (downloader.attachmentData.value.item3) {
+                      if (content.error.value = true) {
                         return Text(
                           "Error loading",
                           style: Theme.of(context).textTheme.bodyText1,
                         );
                       }
-                      if (downloader.attachmentData.value.item2 != null) {
-                        content = downloader.attachmentData.value.item2;
+                      if (content.file.value != null) {
+                        content = content.file.value;
                         return Container();
                       } else {
                         return KeyedSubtree(
@@ -218,11 +216,11 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: <Widget>[
                                       CircularProgressIndicator(
-                                        value: downloader.attachmentData.value.item1?.toDouble() ?? 0,
+                                        value: content.progress.value?.toDouble() ?? 0,
                                         backgroundColor: Colors.grey,
                                         valueColor: AlwaysStoppedAnimation(Colors.white),
                                       ),
-                                      ((content as AttachmentDownloader).attachment.mimeType != null)
+                                      ((content as AttachmentDownloadController).attachment.mimeType != null)
                                           ? Container(height: 5.0)
                                           : Container(),
                                       (content.attachment.mimeType != null)

@@ -171,7 +171,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                       CurrentChat.of(context)?.clearImageData(widget.attachment);
 
                       showSnackbar('In Progress', 'Redownloading attachment. Please wait...');
-                      await AttachmentHelper.redownloadAttachment(widget.attachment, onComplete: () {
+                      AttachmentHelper.redownloadAttachment(widget.attachment, onComplete: () {
                         initBytes();
                       }, onError: () {
                         Navigator.pop(context);

@@ -197,7 +197,7 @@ class _VideoViewerState extends State<VideoViewer> {
                       CurrentChat.of(context)?.clearImageData(widget.attachment);
 
                       showSnackbar('In Progress', 'Redownloading attachment. Please wait...');
-                      await AttachmentHelper.redownloadAttachment(widget.attachment, onComplete: () async {
+                      AttachmentHelper.redownloadAttachment(widget.attachment, onComplete: () async {
                         controller.dispose();
                         controller = new VideoPlayerController.file(widget.file);
                         await controller.initialize();

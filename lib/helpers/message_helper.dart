@@ -14,6 +14,7 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/widgets.dart';
+import 'package:get/get.dart';
 import 'emoji_regex.dart';
 
 class EmojiConst {
@@ -172,11 +173,11 @@ class MessageHelper {
 
   static Future<void> downloadAttachmentSync(Attachment file) {
     Completer<void> completer = new Completer();
-    new AttachmentDownloader(file, onComplete: () {
+    Get.put(AttachmentDownloadController(attachment: file, onComplete: () {
       completer.complete();
     }, onError: () {
       completer.completeError(new Error());
-    });
+    }), tag: file.guid);
 
     return completer.future;
   }

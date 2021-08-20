@@ -71,9 +71,9 @@ class _UrlPreviewWidgetState extends State<UrlPreviewWidget> with TickerProvider
 
     for (Attachment? attachment in widget.linkPreviews) {
       if (AttachmentHelper.attachmentExists(attachment!)) continue;
-      AttachmentDownloader(attachment, onComplete: () {
+      Get.put(AttachmentDownloadController(attachment: attachment, onComplete: () {
         if (this.mounted) setState(() {});
-      });
+      }), tag: attachment.guid);
     }
 
     if (widget.linkPreviews.length > 0) {

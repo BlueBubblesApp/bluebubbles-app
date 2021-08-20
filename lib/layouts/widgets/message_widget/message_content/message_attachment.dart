@@ -29,10 +29,10 @@ class MessageAttachment extends StatefulWidget {
   final bool isFromMe;
 
   @override
-  _MessageAttachmentState createState() => _MessageAttachmentState();
+  MessageAttachmentState createState() => MessageAttachmentState();
 }
 
-class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKeepAliveClientMixin {
+class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeepAliveClientMixin {
   Widget? attachmentWidget;
   var content;
 
@@ -54,7 +54,7 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
     if (await AttachmentHelper.canAutoDownload() && content is Attachment) {
       if (this.mounted) {
         setState(() {
-          content = new AttachmentDownloader(content);
+          content = Get.put(AttachmentDownloadController(attachment: content), tag: content.guid);
         });
       }
     }
@@ -135,7 +135,7 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
     } else if (content is Attachment) {
       return AttachmentDownloaderWidget(
         onPressed: () {
-          content = new AttachmentDownloader(content);
+          content = Get.put(AttachmentDownloadController(attachment: content), tag: content.guid);
           if (this.mounted) setState(() {});
         },
         attachment: content,
@@ -143,16 +143,15 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
       );
 
       // If it's an AttachmentDownloader, it is currently being downloaded
-    } else if (content is AttachmentDownloader) {
+    } else if (content is AttachmentDownloadController) {
       if (widget.attachment.mimeType == null) return Container();
-      AttachmentDownloader downloader = content;
       return Obx(() {
         // If there is an error, return an error text
-        if (downloader.attachmentData.value.item3) {
+        if (content.error.value) {
           content = widget.attachment;
           return AttachmentDownloaderWidget(
             onPressed: () {
-              content = new AttachmentDownloader(content);
+              content = Get.put(AttachmentDownloadController(attachment: content), tag: content.guid);
               if (this.mounted) setState(() {});
             },
             attachment: content,
@@ -161,8 +160,8 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
         }
 
         // If the snapshot data is a file, we have finished downloading
-        if (downloader.attachmentData.value.item2 != null) {
-          content = downloader.attachmentData.value.item2;
+        if (content.file.value != null) {
+          content = content.file.value;
           return _buildAttachmentWidget();
         }
 
@@ -181,13 +180,13 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
                         height: 40,
                         width: 40,
                         child: CircleProgressBar(
-                          value: downloader.attachmentData.value.item1?.toDouble() ?? 0,
+                          value: content.progress.value?.toDouble() ?? 0,
                           backgroundColor: Colors.grey,
                           foregroundColor: Colors.white,
                         ),
                       ),
                     ),
-                    ((content as AttachmentDownloader).attachment.mimeType != null)
+                    ((content as AttachmentDownloadController).attachment.mimeType != null)
                         ? Container(height: 5.0)
                         : Container(),
                     (content.attachment.mimeType != null)
