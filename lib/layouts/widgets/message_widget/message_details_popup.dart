@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 import 'dart:ui';
 import 'package:bluebubbles/helpers/metadata_helper.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachment.dart';
@@ -253,7 +254,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   Widget buildReactionMenu() {
     Size size = Get.mediaQuery.size;
 
-    double reactionIconSize = ((8.5 / 10 * size.width) / (ReactionTypes.toList().length).toDouble());
+    double reactionIconSize = ((8.5 / 10 * min(size.width, size.height)) / (ReactionTypes.toList().length).toDouble());
     double maxMenuWidth = (ReactionTypes.toList().length * reactionIconSize).toDouble();
     double menuHeight = (reactionIconSize).toDouble();
     double topPadding = -20;

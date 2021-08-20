@@ -212,6 +212,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
 
     // First, add the message sender (if applicable)
     bool isGroup = CurrentChat.of(context)?.chat.isGroup() ?? false;
+    bool addedSender = false;
     bool showSender = SettingsManager().settings.alwaysShowAvatars.value ||
         isGroup ||
         widget.message.guid == "redacted-mode-demo" ||
@@ -225,9 +226,10 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
         Padding(
           padding: EdgeInsets.only(left: 15.0, top: 5.0, bottom: widget.message.getReactions().length > 0 ? 0.0 : 3.0),
           child: Text(getContactName(context, contactTitle, widget.message.handle!.address),
-              style: Theme.of(context).textTheme.subtitle1),
+              style: Theme.of(context).textTheme.subtitle1, maxLines: 1, overflow: TextOverflow.ellipsis,),
         ),
       );
+      addedSender = true;
     }
 
     // Second, add the attachments
@@ -273,10 +275,20 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
       );
     }
 
+    List<Widget> messagePopupColumn = List<Widget>.from(messageColumn);
+    if (!addedSender && isGroup) {
+      messagePopupColumn.insert(0, Padding(
+        padding: EdgeInsets.only(left: 15.0, top: 5.0, bottom: widget.message.getReactions().length > 0 ? 0.0 : 3.0),
+        child: Text(getContactName(context, contactTitle, widget.message.handle!.address),
+            style: Theme.of(context).textTheme.subtitle1, maxLines: 1, overflow: TextOverflow.ellipsis,),
+      ));
+    }
+
     // Now, let's create a row that will be the row with the following:
     // -> Contact avatar
     // -> Message
     List<Widget> msgRow = [];
+    bool addedAvatar = false;
     if (widget.showTail && (showSender || skin.value == Skins.Samsung)) {
       double topPadding = (isGroup) ? 5 : 0;
       if (skin.value == Skins.Samsung) {
@@ -286,6 +298,29 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
       }
 
       msgRow.add(
+        Padding(
+          padding: EdgeInsets.only(left: 5.0, top: topPadding),
+          child: ContactAvatarWidget(
+            handle: widget.message.handle,
+            size: 30,
+            fontSize: 14,
+            borderThickness: 0.1,
+          ),
+        ),
+      );
+      addedAvatar = true;
+    }
+
+    List<Widget> msgPopupRow = List<Widget>.from(msgRow);
+    if (!addedAvatar && (showSender || skin.value == Skins.Samsung)) {
+      double topPadding = (isGroup) ? 5 : 0;
+      if (skin.value == Skins.Samsung) {
+        topPadding = 5.0;
+        if (showSender) topPadding += 18;
+        if (widget.message.hasReactions) topPadding += 20;
+      }
+
+      msgPopupRow.add(
         Padding(
           padding: EdgeInsets.only(left: 5.0, top: topPadding),
           child: ContactAvatarWidget(
@@ -311,6 +346,18 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
       ),
     );
 
+    msgPopupRow.add(
+      Padding(
+        // Padding to shift the bubble up a bit, relative to the avatar
+        padding: EdgeInsets.only(bottom: 0.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: messagePopupColumn,
+        ),
+      ),
+    );
+
     // Finally, create a container row so we can have the swipe timestamp
     return Padding(
       // Add padding when we are showing the avatar
@@ -323,15 +370,17 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
         mainAxisAlignment: (skin.value == Skins.iOS || skin.value == Skins.Material)
             ? MainAxisAlignment.spaceBetween
             : MainAxisAlignment.start,
-        crossAxisAlignment: (skin.value != Skins.Samsung) ? CrossAxisAlignment.center : CrossAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           MessagePopupHolder(
               message: widget.message,
+              olderMessage: widget.olderMessage,
+              newerMessage: widget.newerMessage,
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: (skin.value == Skins.Samsung) ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: msgRow,
                 ),
                 // Add the timestamp for the samsung theme
@@ -349,7 +398,14 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                       useYesterday: true,
                     ),
                   )
-              ])),
+              ]),
+            popupChild: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: msgPopupRow,
+            ),
+          ),
           if ((skin.value != Skins.Samsung && widget.message.guid != widget.olderMessage?.guid))
             MessageTimeStamp(
               message: widget.message,
