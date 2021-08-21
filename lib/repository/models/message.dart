@@ -505,9 +505,9 @@ class Message {
   }
 
   bool isUrlPreview() {
-    return this.balloonBundleId != null &&
-        this.balloonBundleId == "com.apple.messages.URLBalloonProvider" &&
-        this.hasDdResults!;
+    // first condition is for macOS < 11 and second condition is for macOS >= 11
+    return (this.balloonBundleId != null && this.balloonBundleId == "com.apple.messages.URLBalloonProvider" &&
+        this.hasDdResults!) || (this.hasDdResults! && (this.text ?? "").isURL);
   }
 
   bool isInteractive() {
