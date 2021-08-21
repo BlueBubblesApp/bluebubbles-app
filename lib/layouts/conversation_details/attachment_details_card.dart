@@ -41,10 +41,11 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
   }
 
   void subscribeToDownloadStream() {
-    if (SocketManager().attachmentDownloaders.containsKey(widget.attachment.guid)) {
-      ever<Tuple3<num?, File?, bool>>(SocketManager().attachmentDownloaders[widget.attachment.guid]!.attachmentData,
-          (event) {
-        if (event.item2 != null && this.mounted) {
+    if (Get.find<AttachmentDownloadService>().downloaders.contains(widget.attachment.guid)) {
+      AttachmentDownloadController controller = Get.find<AttachmentDownloadController>(tag: widget.attachment.guid);
+      ever<File?>(controller.file,
+          (file) {
+        if (file != null && this.mounted) {
           Future.delayed(Duration(milliseconds: 500), () {
             if (!this.mounted) return;
             setState(() {});
@@ -68,8 +69,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
     return CupertinoButton(
       padding: EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 10),
       onPressed: () async {
-        AttachmentDownloader downloader = new AttachmentDownloader(widget.attachment, autoFetch: false);
-        await downloader.fetchAttachment(widget.attachment);
+        Get.put(AttachmentDownloadController(attachment: widget.attachment), tag: widget.attachment.guid);
         subscribeToDownloadStream();
         if (this.mounted) setState(() {});
       },
@@ -129,34 +129,35 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
             color: Theme.of(context).accentColor,
           ),
           Center(
-            child: !SocketManager().attachmentDownloaders.containsKey(attachment.guid)
+            child: !Get.find<AttachmentDownloadService>().downloaders.contains(attachment.guid)
                 ? buildReadyToDownload(context)
-                : Obx(() {
-                    bool attachmentExists = this.attachmentFile.existsSync();
+                : Builder(
+                    builder: (context) {
+                      bool attachmentExists = this.attachmentFile.existsSync();
 
-                    // If the attachment exists, build the preview
-                    if (attachmentExists) return buildPreview(context);
+                      // If the attachment exists, build the preview
+                      if (attachmentExists) return buildPreview(context);
 
-                    // If the attachment is not being downloaded, show the downloader
-                    if (!SocketManager().attachmentDownloaders.containsKey(attachment.guid)) {
-                      return buildReadyToDownload(context);
-                    }
+                      // If the attachment is not being downloaded, show the downloader
+                      if (!Get.find<AttachmentDownloadService>().downloaders.contains(attachment.guid)) {
+                        return buildReadyToDownload(context);
+                      }
 
-                    Tuple3<num?, File?, bool> data =
-                        SocketManager().attachmentDownloaders[widget.attachment.guid]!.attachmentData.value;
+                      return Obx(() {
+                        AttachmentDownloadController controller = Get.find<AttachmentDownloadController>(tag: attachment.guid);
+                        // If the download is complete, show the preview
+                        if (controller.file.value != null) return buildPreview(context);
 
-                    // If the download is complete, show the preview
-                    if (data.item3) return buildPreview(context);
-
-                    // If all else fails, show the downloader
-                    return Container(
-                        height: 40,
-                        width: 40,
-                        child: CircleProgressBar(
-                            foregroundColor: Colors.white,
-                            backgroundColor: Colors.grey,
-                            value: data.item1?.toDouble() ?? 0));
-                  }),
+                        // If all else fails, show the downloader
+                        return Container(
+                            height: 40,
+                            width: 40,
+                            child: CircleProgressBar(
+                                foregroundColor: Colors.white,
+                                backgroundColor: Colors.grey,
+                                value: controller.progress.value?.toDouble() ?? 0));
+                      });
+                    }),
           ),
         ],
       );

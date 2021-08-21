@@ -45,8 +45,8 @@ class ChatBloc {
 
   int get pageSize {
     return (SettingsManager().settings.denseChatTiles.value || SettingsManager().settings.skin.value != Skins.iOS)
-        ? 12
-        : 10;
+        ? 14
+        : 12;
   }
 
   Future<Chat?> getChat(String? guid) async {

@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 import 'dart:ui';
 import 'package:bluebubbles/helpers/metadata_helper.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachment.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:collection/collection.dart';
@@ -252,7 +254,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   Widget buildReactionMenu() {
     Size size = Get.mediaQuery.size;
 
-    double reactionIconSize = ((8.5 / 10 * size.width) / (ReactionTypes.toList().length).toDouble());
+    double reactionIconSize = ((8.5 / 10 * min(size.width, size.height)) / (ReactionTypes.toList().length).toDouble());
     double maxMenuWidth = (ReactionTypes.toList().length * reactionIconSize).toDouble();
     double menuHeight = (reactionIconSize).toDouble();
     double topPadding = -20;
@@ -589,13 +591,13 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
         Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () async {
+            onTap: () {
               for (Attachment? element in widget.message.attachments!) {
                 CurrentChat.of(context)?.clearImageData(element!);
-                await AttachmentHelper.redownloadAttachment(element!);
-                Navigator.pop(context);
-                setState(() {});
+                AttachmentHelper.redownloadAttachment(element!);
               }
+              setState(() {});
+              Navigator.of(context).pop();
             },
             child: ListTile(
               title: Text(

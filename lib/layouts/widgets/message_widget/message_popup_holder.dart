@@ -1,4 +1,6 @@
 import 'package:bluebubbles/action_handler.dart';
+import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_details_popup.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -8,12 +10,18 @@ import 'package:flutter/services.dart';
 
 class MessagePopupHolder extends StatefulWidget {
   final Widget child;
+  final Widget popupChild;
   final Message message;
+  final Message? olderMessage;
+  final Message? newerMessage;
 
   MessagePopupHolder({
     Key? key,
     required this.child,
+    required this.popupChild,
     required this.message,
+    required this.olderMessage,
+    required this.newerMessage,
   }) : super(key: key);
 
   @override
@@ -30,10 +38,17 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
     RenderBox renderBox = containerKey.currentContext!.findRenderObject() as RenderBox;
     Size size = renderBox.size;
     Offset offset = renderBox.localToGlobal(Offset.zero);
-    setState(() {
-      this.childOffset = Offset(offset.dx, offset.dy);
-      childSize = size;
-    });
+    bool increaseWidth = !MessageHelper.getShowTail(context, widget.message, widget.newerMessage)
+        && (SettingsManager().settings.alwaysShowAvatars.value || (CurrentChat.of(context)?.chat.isGroup() ?? false));
+    bool doNotIncreaseHeight = ((widget.message.isFromMe ?? false)
+        || !(CurrentChat.of(context)?.chat.isGroup() ?? false)
+        || !sameSender(widget.message, widget.olderMessage)
+        || !widget.message.dateCreated!.isWithin(widget.olderMessage!.dateCreated!, minutes: 30));
+    print(doNotIncreaseHeight);
+    this.childOffset = Offset(offset.dx - (increaseWidth ? 35 : 0),
+        offset.dy - (doNotIncreaseHeight ? 0 : widget.message.getReactions().length > 0 ? 20.0 : 23.0));
+    childSize = Size(size.width + (increaseWidth ? 35 : 0),
+        size.height + (doNotIncreaseHeight ? 0 : widget.message.getReactions().length > 0 ? 20.0 : 23.0));
   }
 
   void openMessageDetails() async {
@@ -57,7 +72,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
               opacity: animation,
               child: MessageDetailsPopup(
                 currentChat: currentChat,
-                child: widget.child,
+                child: widget.popupChild,
                 childOffset: childOffset,
                 childSize: childSize,
                 message: widget.message,

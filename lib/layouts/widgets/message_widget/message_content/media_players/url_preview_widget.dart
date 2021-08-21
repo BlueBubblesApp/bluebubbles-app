@@ -22,7 +22,7 @@ class UrlPreviewController extends GetxController with SingleGetTickerProviderMi
   final Rxn<Metadata> data = Rxn<Metadata>();
   final RxBool gotError = false.obs;
   UrlPreviewController({
-    required this.linkPreviews, 
+    required this.linkPreviews,
     required this.message,
     required this.context,
   });
@@ -41,9 +41,9 @@ class UrlPreviewController extends GetxController with SingleGetTickerProviderMi
   void fetchMissingAttachments() {
     for (Attachment? attachment in linkPreviews) {
       if (AttachmentHelper.attachmentExists(attachment!)) continue;
-      AttachmentDownloader(attachment, onComplete: () {
+      Get.put(AttachmentDownloadController(attachment: attachment, onComplete: () {
         update();
-      });
+      }), tag: attachment.guid);
     }
   }
 

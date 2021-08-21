@@ -14,6 +14,7 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/widgets.dart';
+import 'package:get/get.dart';
 import 'emoji_regex.dart';
 
 class EmojiConst {
@@ -172,11 +173,16 @@ class MessageHelper {
 
   static Future<void> downloadAttachmentSync(Attachment file) {
     Completer<void> completer = new Completer();
-    new AttachmentDownloader(file, onComplete: () {
-      completer.complete();
-    }, onError: () {
-      completer.completeError(new Error());
-    });
+    Get.put(
+        AttachmentDownloadController(
+            attachment: file,
+            onComplete: () {
+              completer.complete();
+            },
+            onError: () {
+              completer.completeError(new Error());
+            }),
+        tag: file.guid);
 
     return completer.future;
   }
@@ -213,7 +219,9 @@ class MessageHelper {
     if (message.isFromMe! || message.handle == null) return; // Don't notify if the text is from me
 
     CurrentChat? currChat = CurrentChat.activeChat;
-    if (LifeCycleManager().isAlive && ((!SettingsManager().settings.notifyOnChatList.value && currChat == null) || currChat?.chat.guid == chat.guid)) {
+    if (LifeCycleManager().isAlive &&
+        ((!SettingsManager().settings.notifyOnChatList.value && currChat == null) ||
+            currChat?.chat.guid == chat.guid)) {
       // Don't notify if the the chat is the active chat
       return;
     }

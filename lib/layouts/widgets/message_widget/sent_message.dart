@@ -148,8 +148,8 @@ class SentMessageHelper {
   }
 
   static Widget getErrorWidget(BuildContext context, Message? message, Chat? chat, {double rightPadding = 8.0}) {
-    if (message != null && message.error! > 0) {
-      int? errorCode = message.error != null ? message.error : 0;
+    if (message != null && message.error.value > 0) {
+      int errorCode = message.error.value;
       String errorText = "Server Error. Contact Support.";
       if (errorCode == 22) {
         errorText = "The recipient is not registered with iMessage!";
@@ -359,7 +359,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
                     !isEmptyString(widget.message.fullText))
                 ? 5.0
                 : 0,
-            right: isEmptyString(widget.message.fullText) && widget.message.error == 0 ? 10.0 : 0.0),
+            right: isEmptyString(widget.message.fullText) && widget.message.error.value == 0 ? 10.0 : 0.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -372,30 +372,25 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
     return Row(
       mainAxisSize: MainAxisSize.max,
       mainAxisAlignment: MainAxisAlignment.end,
-      crossAxisAlignment:
-          (skin.value == Skins.iOS) ? CrossAxisAlignment.center : CrossAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        if (skin.value == Skins.iOS ||
-            skin.value == Skins.Material)
-          MessagePopupHolder(
-            message: widget.message,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.end,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: msgRow,
-            ),
+        MessagePopupHolder(
+          message: widget.message,
+          olderMessage: widget.olderMessage,
+          newerMessage: widget.newerMessage,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: msgRow,
           ),
-        if (skin.value == Skins.Samsung)
-          MessagePopupHolder(
-            message: widget.message,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.end,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: msgRow,
-            ),
+          popupChild: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: msgRow,
           ),
+        ),
         if (skin.value != Skins.Samsung && widget.message.guid != widget.olderMessage?.guid)
           MessageTimeStamp(
             message: widget.message,

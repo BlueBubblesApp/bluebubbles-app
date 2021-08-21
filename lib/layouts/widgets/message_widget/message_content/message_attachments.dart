@@ -92,7 +92,7 @@ class _MessageAttachmentsState extends State<MessageAttachments> with TickerProv
           isFromMe: widget.message?.isFromMe ?? false,
         );
 
-        if (widget.message!.error == 0) {
+        if (widget.message!.error.value == 0) {
           content.add(attachmentWidget);
         } else {
           content.add(Row(

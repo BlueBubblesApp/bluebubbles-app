@@ -94,14 +94,14 @@ class AttachmentSender {
         debugPrint("failed to send");
         String? tempGuid = sentMessage!.guid;
         sentMessage!.guid = sentMessage!.guid!.replaceAll("temp", "error-${response['error']['message']}");
-        sentMessage!.error = response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
+        sentMessage!.error.value = response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
 
         await Message.replaceMessage(tempGuid, sentMessage);
         NewMessageManager().updateMessage(_chat, tempGuid!, sentMessage!);
         if (messageWithText != null) {
           tempGuid = messageWithText!.guid;
           messageWithText!.guid = messageWithText!.guid!.replaceAll("temp", "error-${response['error']['message']}");
-          messageWithText!.error =
+          messageWithText!.error.value =
               response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
 
           await Message.replaceMessage(tempGuid, messageWithText);

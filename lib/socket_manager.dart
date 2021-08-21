@@ -58,7 +58,6 @@ class SocketManager {
   //Socket io
   IO.Socket? socket;
 
-  Map<String, AttachmentDownloader> attachmentDownloaders = Map();
   Map<String, AttachmentSender> attachmentSenders = Map();
   Map<int, Function> socketProcesses = new Map();
 
@@ -91,17 +90,9 @@ class SocketManager {
   StreamController<String> _attachmentSenderCompleter = StreamController<String>.broadcast();
   Stream<String> get attachmentSenderCompleter => _attachmentSenderCompleter.stream;
 
-  void addAttachmentDownloader(String guid, AttachmentDownloader downloader) {
-    attachmentDownloaders[guid] = downloader;
-  }
-
   void addAttachmentSender(AttachmentSender sender) {
     if (sender.guid == null) return;
     attachmentSenders[sender.guid!] = sender;
-  }
-
-  void finishDownloader(String guid) {
-    attachmentDownloaders.remove(guid);
   }
 
   void finishSender(String attachmentGuid) {
@@ -337,7 +328,7 @@ class SocketManager {
         Message msg = (await Message.findOne({'guid': message.guid}))!;
 
         // Check if we already have an error, and save if we don't
-        if (msg.error == 0) {
+        if (msg.error.value == 0) {
           // TODO: ADD NOTIFICATION TO USER IF FAILURE
           await message.save();
         }
@@ -356,7 +347,7 @@ class SocketManager {
 
         Message? message = await Message.findOne({"guid": data["tempGuid"]});
         if (message == null) return new Future.value("");
-        message.error = 1003;
+        message.error.value = 1003;
         message.guid = message.guid!.replaceAll("temp", "error-Message Timeout");
         await Message.replaceMessage(data["tempGuid"], message);
         return new Future.value("");
