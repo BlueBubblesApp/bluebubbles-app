@@ -185,7 +185,18 @@ public class NewMessageNotification implements Handler {
                         .setType("NotificationOpen"),
                 Intent.FILL_IN_ACTION);
 
-        // Create intent for dismissing the notification
+        // Create intent for swiping away the notification
+        PendingIntent swipeAwayIntent = PendingIntent.getBroadcast(
+                context,
+                existingNotificationId,
+                new Intent(context, ReplyReceiver.class)
+                        .putExtra("id", existingNotificationId)
+                        .putExtra("chatGuid", chatGuid)
+                        .putExtra("bubble", false)
+                        .setType("swipeAway"),
+                PendingIntent.FLAG_UPDATE_CURRENT);
+
+        // Create intent for dismissing the notification (mark as read)
         PendingIntent dismissIntent = PendingIntent.getBroadcast(
             context,
             existingNotificationId,
@@ -257,6 +268,8 @@ public class NewMessageNotification implements Handler {
                 .setVisibility(visibility)
                 // Sets the intent for when it's clicked
                 .setContentIntent(openIntent)
+                // Sets the intent for when it is swiped away
+                .setDeleteIntent(swipeAwayIntent)
                 // Adds the mark as read action
                 .addAction(dismissAction)
                 // Adds the reply action
