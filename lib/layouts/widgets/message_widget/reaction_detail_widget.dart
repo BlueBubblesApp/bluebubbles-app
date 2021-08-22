@@ -1,6 +1,7 @@
 import 'package:bluebubbles/helpers/redacted_helper.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
@@ -8,11 +9,11 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 class ReactionDetailWidget extends StatefulWidget {
   ReactionDetailWidget({
-    Key key,
-    this.handle,
-    this.message,
+    Key? key,
+    required this.handle,
+    required this.message,
   }) : super(key: key);
-  final Handle handle;
+  final Handle? handle;
   final Message message;
 
   @override
@@ -20,21 +21,21 @@ class ReactionDetailWidget extends StatefulWidget {
 }
 
 class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
-  String contactTitle;
+  String? contactTitle;
 
   @override
   void initState() {
     super.initState();
 
-    contactTitle = widget.message.isFromMe ? "You" : widget.handle.address;
+    contactTitle = widget.message.isFromMe! ? "You" : widget.handle!.address;
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (widget.message.isFromMe || widget.handle == null) return;
+    if (widget.message.isFromMe! || widget.handle == null) return;
 
-    ContactManager().getContactTitle(widget.handle).then((String title) {
+    ContactManager().getContactTitle(widget.handle).then((String? title) {
       if (title != contactTitle) {
         contactTitle = title;
         if (this.mounted) setState(() {});
@@ -44,6 +45,9 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
 
   @override
   Widget build(BuildContext context) {
+    bool hide = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideReactions.value;
+    if (hide) return Container();
+
     Color iconColor = Colors.white;
     if (Theme.of(context).accentColor.computeLuminance() >= 0.179) {
       iconColor = Colors.black.withAlpha(95);
@@ -55,7 +59,7 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 10),
           child: ContactAvatarWidget(
-            handle: widget.message.isFromMe ? null : widget.handle,
+            handle: widget.message.isFromMe! ? null : widget.handle,
             borderThickness: 0.1,
             editable: false,
           ),
@@ -64,7 +68,7 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
           padding: EdgeInsets.only(bottom: 8.0),
           child: Text(
             getContactName(context, contactTitle, widget.handle?.address),
-            style: Theme.of(context).textTheme.bodyText1.apply(fontSizeDelta: -5),
+            style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeDelta: -5),
           ),
         ),
         Container(

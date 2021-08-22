@@ -26,12 +26,25 @@ public class PickFile implements Handler{
 
     @Override
     public void Handle() {
-        Intent intent  = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setType("*/*");
+        String[] mimetypes = {"image/*", "video/*", "file/*", "audio/*", "application/*", "text/*"};
+        
+        Intent getIntent  = new Intent(Intent.ACTION_GET_CONTENT);
+        getIntent.setType("*/*");
+        getIntent.putExtra(Intent.EXTRA_MIME_TYPES, mimetypes);
+        getIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+
+        Intent pickIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        pickIntent.setType("*/*");
+        pickIntent.putExtra(Intent.EXTRA_MIME_TYPES, mimetypes);
+        pickIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+
+        Intent chooserIntent = Intent.createChooser(getIntent, "Select Files");
+        chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[] {pickIntent});
+
         try {
             MainActivity activity = (MainActivity) context;
             activity.result = result;
-            activity.startActivityForResult(intent, PICK_IMAGE);
+            activity.startActivityForResult(chooserIntent, PICK_IMAGE);
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -2,6 +2,7 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:get/get.dart';
 
 class ReactionTypes {
   // ignore: non_constant_identifier_names
@@ -39,7 +40,7 @@ class Reaction {
 
   List<Message> messages = [];
 
-  Reaction({this.reactionType});
+  Reaction({required this.reactionType});
 
   static List<Message> getUniqueReactionMessages(List<Message> messages) {
     List<int> handleCache = [];
@@ -47,16 +48,16 @@ class Reaction {
     List<Message> output = [];
 
     // Sort the messages, putting the latest at the top
-    current.sort((a, b) => -a.dateCreated.compareTo(b.dateCreated));
+    current.sort((a, b) => -a.dateCreated!.compareTo(b.dateCreated!));
 
     // Iterate over the messages and insert the latest reaction for each user
     for (Message msg in current) {
-      int cache = msg.isFromMe ? 0 : msg.handleId;
+      int cache = msg.isFromMe! ? 0 : msg.handleId ?? 0;
       if (!handleCache.contains(cache)) {
         handleCache.add(cache);
 
         // Only add the reaction if it's not a "negative"
-        if (msg.associatedMessageType != null && !msg.associatedMessageType.startsWith("-")) output.add(msg);
+        if (msg.associatedMessageType != null && !msg.associatedMessageType!.startsWith("-")) output.add(msg);
       }
     }
 
@@ -74,7 +75,7 @@ class Reaction {
 
     // Iterate over the messages and insert the latest reaction for each user
     for (Message msg in Reaction.getUniqueReactionMessages(messages)) {
-      reactions[msg.associatedMessageType].addMessage(msg);
+      reactions[msg.associatedMessageType!]!.addMessage(msg);
     }
 
     return reactions;
@@ -88,72 +89,101 @@ class Reaction {
     this.messages.add(message);
   }
 
-  bool hasMyReaction({List<Message> messages}) {
-    for (Message msg in messages ?? this.messages) {
-      if (msg.isFromMe) return true;
-    }
-
-    return false;
-  }
-
-  List<Message> getUniqueReactions({List<Message> messages}) {
-    List<int> cache = [];
-    List<Message> msgs = [];
-    List<Message> current = messages ?? this.messages;
-
-    // Sort the messages
-    current.sort((a, b) => -a.dateCreated.compareTo(b.dateCreated));
-
-    // Iterate over them and get the unique reactions (per participant)
-    for (Message msg in current) {
-      int cached = msg.isFromMe ? 0 : msg.handleId;
-      if (!cache.contains(cached)) {
-        cache.add(cached);
-
-        // Only add the reaction if it's not a "negative"
-        if (!msg.associatedMessageType.startsWith("-")) msgs.add(msg);
-      }
-    }
-
-    return msgs;
-  }
-
-  Widget getSmallWidget(BuildContext context) {
-    if (this.messages.isEmpty) return null;
+  Widget? getSmallWidget(BuildContext context, {Message? message, bool bigPin = false, bool isReactionPicker = true}) {
+    if (this.messages.isEmpty && message == null) return null;
+    if (this.messages.isEmpty && message != null) this.messages = [message];
 
     List<Widget> reactionList = [];
 
     for (int i = 0; i < this.messages.length; i++) {
       Color iconColor = Colors.white;
-      if (!this.messages[i].isFromMe && Theme.of(context).accentColor.computeLuminance() >= 0.179) {
+      if (!this.messages[i].isFromMe! && context.theme.accentColor.computeLuminance() >= 0.179) {
         iconColor = Colors.black.withAlpha(95);
       }
 
       reactionList.add(
         Padding(
           padding: EdgeInsets.fromLTRB(
-            (this.messages[i].isFromMe ? 5.0 : 0.0) + i.toDouble() * 10.0,
-            1.0,
+            (this.messages[i].isFromMe! && isReactionPicker ? 5.0 : 0.0) + i.toDouble() * 10.0,
+            bigPin ? 0 : 1.0,
             0,
             0,
           ),
-          child: Container(
-            height: 28,
-            width: 28,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(100),
-              color: this.messages[i].isFromMe ? Colors.blue : Theme.of(context).accentColor,
-              boxShadow: [
-                new BoxShadow(
-                  blurRadius: 1.0,
-                  color: Colors.black.withOpacity(0.8),
-                )
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.only(top: 8.0, left: 7.0, right: 7.0, bottom: 7.0),
-              child: getReactionIcon(reactionType, iconColor),
-            ),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: <Widget>[
+              if (bigPin)
+                Positioned(
+                  left: -6,
+                  top: 24,
+                  child: Container(
+                    height: 5.5,
+                    width: 5.5,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(100),
+                      color: context.theme.accentColor,
+                      boxShadow: [
+                        new BoxShadow(
+                          blurRadius: 1.0,
+                          color: Colors.black.withOpacity(0.8),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              if (bigPin)
+                Positioned(
+                  top: 15.5,
+                  left: -1.5,
+                  child: Container(
+                    height: 10,
+                    width: 10,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(100),
+                      color: context.theme.accentColor,
+                      boxShadow: [
+                        new BoxShadow(
+                          blurRadius: 1.0,
+                          color: Colors.black.withOpacity(0.8),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              Container(
+                height: bigPin ? 25 : 28,
+                width: bigPin ? 25 : 28,
+                margin: EdgeInsets.only(right: bigPin ? 10 : 0),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(100),
+                  color: this.messages[i].isFromMe! ? context.theme.primaryColor : context.theme.accentColor,
+                  boxShadow: isReactionPicker
+                      ? null
+                      : [
+                          new BoxShadow(
+                            blurRadius: 1.0,
+                            color: Colors.black.withOpacity(0.8),
+                          )
+                        ],
+                ),
+                child: Padding(
+                  padding: bigPin
+                      ? const EdgeInsets.only(
+                          top: 6.0,
+                          left: 5.0,
+                          right: 5.0,
+                          bottom: 5.0,
+                        )
+                      : const EdgeInsets.only(
+                          top: 8.0,
+                          left: 7.0,
+                          right: 7.0,
+                          bottom: 7.0,
+                        ),
+                  child: getReactionIcon(reactionType, iconColor),
+                ),
+              ),
+            ],
           ),
         ),
       );
@@ -161,14 +191,13 @@ class Reaction {
 
     return Stack(
       clipBehavior: Clip.hardEdge,
-      overflow: Overflow.clip,
       fit: StackFit.passthrough,
       alignment: Alignment.centerLeft,
       children: reactionList,
     );
   }
 
-  static Widget getReactionIcon(String reactionType, Color iconColor) {
+  static Widget getReactionIcon(String? reactionType, Color iconColor) {
     return SvgPicture.asset(
       'assets/reactions/$reactionType-black.svg',
       color: reactionType == "love" ? Colors.pink : iconColor,

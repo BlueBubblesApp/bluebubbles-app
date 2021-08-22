@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
@@ -18,10 +21,11 @@ import 'package:bluebubbles/managers/outgoing_queue.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_displaymode/flutter_displaymode.dart';
-import 'package:keyboard_attachable/keyboard_attachable.dart';
+import 'package:get/get.dart';
 import 'package:slugify/slugify.dart';
 
 abstract class ChatSelectorTypes {
@@ -32,44 +36,44 @@ abstract class ChatSelectorTypes {
 
 class ConversationView extends StatefulWidget {
   final List<File> existingAttachments;
-  final String existingText;
+  final String? existingText;
   final List<UniqueContact> selected;
 
   ConversationView({
-    Key key,
+    Key? key,
     this.chat,
-    this.existingAttachments,
+    this.existingAttachments = const [],
     this.existingText,
-    this.isCreator,
+    this.isCreator = false,
     this.onSelect,
     this.selectIcon,
     this.customHeading,
     this.customMessageBloc,
     this.onMessagesViewComplete,
-    this.selected,
+    this.selected = const [],
     this.type = ChatSelectorTypes.ALL,
+    this.showSnackbar = false,
   }) : super(key: key);
 
-  final Chat chat;
-  final Function(List<UniqueContact> items) onSelect;
-  final Widget selectIcon;
-  final String customHeading;
+  final Chat? chat;
+  final Function(List<UniqueContact> items)? onSelect;
+  final Widget? selectIcon;
+  final String? customHeading;
   final String type;
   final bool isCreator;
-  final MessageBloc customMessageBloc;
-  final Function onMessagesViewComplete;
+  final MessageBloc? customMessageBloc;
+  final Function? onMessagesViewComplete;
+  final bool showSnackbar;
 
   @override
   ConversationViewState createState() => ConversationViewState();
 }
 
 class ConversationViewState extends State<ConversationView> with ConversationViewMixin {
-  List<File> existingAttachments;
-  String existingText;
-  List<DisplayMode> modes;
-  DisplayMode currentMode;
-  Brightness brightness;
-  Color previousBackgroundColor;
+  List<File> existingAttachments = [];
+  String? existingText;
+  Brightness? brightness;
+  Color? previousBackgroundColor;
   bool gotBrightness = false;
 
   bool wasCreator = false;
@@ -78,19 +82,19 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   void initState() {
     super.initState();
 
-    this.selected = widget.selected ?? [];
-    this.existingAttachments = widget.existingAttachments;
+    this.selected = widget.selected.isEmpty ? [] : widget.selected;
+    this.existingAttachments = widget.existingAttachments.isEmpty ? [] : widget.existingAttachments;
     this.existingText = widget.existingText;
 
     // Initialize the current chat state
     if (widget.chat != null) {
-      initCurrentChat(widget.chat);
+      initCurrentChat(widget.chat!);
     }
 
-    isCreator = widget.isCreator ?? false;
+    isCreator = widget.isCreator;
     chat = widget.chat;
 
-    if (widget.selected == null) {
+    if (widget.selected.isEmpty) {
       initChatSelector();
     }
     initConversationViewState();
@@ -100,16 +104,25 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       currentChat?.isAlive = true;
     });
 
-    ChatBloc().chatStream.listen((event) async {
+    ever(ChatBloc().chats, (List<Chat> chats) async {
       if (currentChat == null) {
         currentChat = CurrentChat.getCurrentChat(widget.chat);
       }
 
       if (currentChat != null) {
-        Chat _chat = await Chat.findOne({"guid": currentChat.chat.guid});
-        await _chat.getParticipants();
-        currentChat.chat = _chat;
-        if (this.mounted) setState(() {});
+        Chat? _chat = chats.firstWhereOrNull((e) => e.guid == widget.chat?.guid);
+        if (_chat != null) {
+          await _chat.getParticipants();
+          currentChat!.chat = _chat;
+          if (this.mounted) setState(() {});
+        }
+      }
+    });
+
+    SchedulerBinding.instance!.addPostFrameCallback((_) {
+      if (widget.showSnackbar) {
+        showSnackbar('Warning',
+            'Support for creating chats is currently limited on MacOS 11 (Big Sur) and up due to limitations imposed by Apple');
       }
     });
   }
@@ -123,8 +136,8 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   @override
   void dispose() {
     if (currentChat != null) {
-      currentChat.disposeControllers();
-      currentChat.dispose();
+      currentChat!.disposeControllers();
+      currentChat!.dispose();
     }
 
     // Switching chat to null will clear the currently active chat
@@ -133,12 +146,12 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   }
 
   Future<bool> send(List<File> attachments, String text) async {
-    bool isDifferentChat = currentChat == null || currentChat?.chat?.guid != chat?.guid;
+    bool isDifferentChat = currentChat == null || currentChat?.chat.guid != chat?.guid;
 
-    if (isCreator) {
+    if (isCreator!) {
       if (chat == null && selected.length == 1) {
         try {
-          chat = await Chat.findOne({"chatIdentifier": Slugify(selected[0].address, delimiter: '')});
+          chat = await Chat.findOne({"chatIdentifier": slugify(selected[0].address!, delimiter: '')});
         } catch (ex) {}
       }
 
@@ -150,31 +163,31 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
       // If the current chat is null, set it
       if (isDifferentChat) {
-        initCurrentChat(chat);
+        initCurrentChat(chat!);
       }
 
-      bool isDifferentBloc = messageBloc == null || messageBloc?.currentChat?.guid != chat.guid;
+      bool isDifferentBloc = messageBloc == null || messageBloc?.currentChat?.guid != chat!.guid;
 
       // Fetch messages
       if (isDifferentBloc) {
         // Init the states
         messageBloc = initMessageBloc();
-        messageBloc.getMessages();
+        messageBloc!.getMessages();
       }
     } else {
       if (isDifferentChat) {
-        initCurrentChat(chat);
+        initCurrentChat(chat!);
       }
     }
 
-    if (attachments.length > 0) {
+    if (attachments.length > 0 && chat != null) {
       for (int i = 0; i < attachments.length; i++) {
         OutgoingQueue().add(
           new QueueItem(
             event: "send-attachment",
             item: new AttachmentSender(
               attachments[i],
-              chat,
+              chat!,
               // This means to send the text when the last attachment is sent
               // If we switched this to i == 0, then it will be send with the first attachment
               i == attachments.length - 1 ? text : "",
@@ -182,12 +195,12 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
           ),
         );
       }
-    } else {
+    } else if (chat != null) {
       // We include messageBloc here because the bloc listener may not be instantiated yet
-      ActionHandler.sendMessage(chat, text, messageBloc: messageBloc);
+      ActionHandler.sendMessage(chat!, text, messageBloc: messageBloc);
     }
 
-    if (isCreator) {
+    if (isCreator!) {
       isCreator = false;
       wasCreator = true;
       this.existingText = "";
@@ -203,33 +216,42 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       return Padding(
         padding: const EdgeInsets.only(bottom: 55.0),
         child: FloatingActionButton(
-          onPressed: () => widget.onSelect(selected),
+          onPressed: () => widget.onSelect!(selected),
           child: widget.selectIcon ??
               Icon(
                 Icons.check,
-                color: Theme.of(context).textTheme.bodyText1.color,
+                color: Theme.of(context).textTheme.bodyText1!.color,
               ),
           backgroundColor: Theme.of(context).primaryColor,
         ),
       );
-    } else if (currentChat != null &&
-        currentChat.showScrollDown &&
-        (SettingsManager().settings.skin == Skins.Material || SettingsManager().settings.skin == Skins.Samsung)) {
+    }
+
+    return Container();
+  }
+
+  Widget buildScrollToBottomFAB(BuildContext context) {
+    if (currentChat != null &&
+        currentChat!.showScrollDown.value &&
+        (SettingsManager().settings.skin.value == Skins.Material ||
+            SettingsManager().settings.skin.value == Skins.Samsung)) {
       return Padding(
-        padding: const EdgeInsets.only(bottom: 55.0),
+        padding: const EdgeInsets.only(bottom: 15.0),
         child: FloatingActionButton(
-          onPressed: currentChat.scrollToBottom,
+          onPressed: currentChat!.scrollToBottom,
           child: Icon(
             Icons.arrow_downward,
-            color: Theme.of(context).textTheme.bodyText1.color,
+            color: Theme.of(context).textTheme.bodyText1!.color,
           ),
           backgroundColor: Theme.of(context).accentColor,
         ),
       );
-    } else if (currentChat != null && currentChat.showScrollDown && SettingsManager().settings.skin == Skins.IOS) {
+    } else if (currentChat != null &&
+        currentChat!.showScrollDown.value &&
+        SettingsManager().settings.skin.value == Skins.iOS) {
       return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         Padding(
-          padding: EdgeInsets.only(left: 25.0, bottom: 45),
+          padding: EdgeInsets.only(left: 25.0, bottom: 15),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(10.0),
             child: BackdropFilter(
@@ -245,7 +267,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                   padding: EdgeInsets.symmetric(horizontal: 10),
                   child: Center(
                     child: GestureDetector(
-                      onTap: currentChat.scrollToBottom,
+                      onTap: currentChat!.scrollToBottom,
                       child: Text(
                         "\u{2193} Scroll to bottom \u{2193}",
                         textAlign: TextAlign.center,
@@ -260,7 +282,6 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         ),
       ]);
     }
-
     return Container();
   }
 
@@ -270,11 +291,6 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     if (!themeChanged && gotBrightness) return;
 
     previousBackgroundColor = now;
-    if (this.context == null) {
-      brightness = Brightness.light;
-      gotBrightness = true;
-      return;
-    }
 
     bool isDark = now.computeLuminance() < 0.179;
     brightness = isDark ? Brightness.dark : Brightness.light;
@@ -293,7 +309,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
     if (messageBloc == null) {
       messageBloc = initMessageBloc();
-      messageBloc.getMessages();
+      messageBloc!.getMessages();
     }
 
     Widget textField = BlueBubblesTextField(
@@ -306,76 +322,131 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor,
+        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarIconBrightness:
+            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
-        extendBodyBehindAppBar: !isCreator,
-        appBar: !isCreator ? buildConversationViewHeader() : buildChatSelectorHeader(),
-        resizeToAvoidBottomInset: wasCreator,
-        body: FooterLayout(
-          footer: KeyboardAttachable(
-            child: widget.onSelect == null
-                ? (SettingsManager().settings.swipeToCloseKeyboard)
-                    ? GestureDetector(
-                        onPanUpdate: (details) {
-                          if (details.delta.dy > 0 && (currentChat?.keyboardOpen ?? false)) {
-                            EventDispatcher().emit("unfocus-keyboard", null);
-                          } else if (details.delta.dy < 0 && !(currentChat?.keyboardOpen ?? false)) {
-                            EventDispatcher().emit("focus-keyboard", null);
-                          }
-                        },
-                        child: textField)
-                    : textField
-                : Container(),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: <Widget>[
-              if (isCreator)
-                ChatSelectorTextField(
-                  controller: chatSelectorController,
-                  onRemove: (UniqueContact item) {
-                    if (item.isChat) {
-                      selected.removeWhere((e) => (e.chat?.guid ?? null) == item.chat.guid);
-                    } else {
-                      selected.removeWhere((e) => e.address == item.address);
-                    }
-                    fetchCurrentChat();
-                    filterContacts();
-                    resetCursor();
-                    if (this.mounted) setState(() {});
-                  },
-                  onSelected: onSelected,
-                  isCreator: widget.isCreator,
-                  allContacts: contacts,
-                  selectedContacts: selected,
-                ),
-              Expanded(
-                child: (searchQuery.length == 0 || !isCreator) && chat != null
-                    ? MessagesView(
-                        key: new Key(chat?.guid ?? "unknown-chat"),
-                        messageBloc: messageBloc,
-                        showHandle: chat.participants.length > 1,
-                        chat: chat,
-                        initComplete: widget.onMessagesViewComplete,
-                      )
-                    : buildChatSelectorBody(),
+        extendBodyBehindAppBar: !isCreator!,
+        appBar: !isCreator!
+            ? buildConversationViewHeader() as PreferredSizeWidget?
+            : buildChatSelectorHeader() as PreferredSizeWidget?,
+        body: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: <Widget>[
+            if (isCreator!)
+              ChatSelectorTextField(
+                controller: chatSelectorController,
+                onRemove: (UniqueContact item) {
+                  if (item.isChat) {
+                    selected.removeWhere((e) => (e.chat?.guid ?? null) == item.chat!.guid);
+                  } else {
+                    selected.removeWhere((e) => e.address == item.address);
+                  }
+                  fetchCurrentChat();
+                  filterContacts();
+                  resetCursor();
+                  if (this.mounted) setState(() {});
+                },
+                onSelected: onSelected,
+                isCreator: widget.isCreator,
+                allContacts: contacts,
+                selectedContacts: selected,
               ),
-            ],
-          ),
+            Obx(() {
+              if (!ChatBloc().hasChats.value) {
+                return Center(
+                  child: Container(
+                    padding: EdgeInsets.symmetric(vertical: 20.0),
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            "Loading existing chats...",
+                            style: Theme.of(context).textTheme.subtitle1,
+                          ),
+                        ),
+                        buildProgressIndicator(context, size: 15),
+                      ],
+                    ),
+                  ),
+                );
+              } else
+                return SizedBox.shrink();
+            }),
+            Expanded(
+                child: Obx(
+              () => fetchingCurrentChat.value
+                  ? Center(
+                      child: Container(
+                        padding: EdgeInsets.symmetric(vertical: 20.0),
+                        child: Column(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Text(
+                                "Loading chat...",
+                                style: Theme.of(context).textTheme.subtitle1,
+                              ),
+                            ),
+                            buildProgressIndicator(context, size: 15),
+                          ],
+                        ),
+                      ),
+                    )
+                  : (searchQuery.length == 0 || !isCreator!) && chat != null
+                      ? Stack(
+                          alignment: Alignment.bottomCenter,
+                          children: [
+                            MessagesView(
+                              key: new Key(chat?.guid ?? "unknown-chat"),
+                              messageBloc: messageBloc,
+                              showHandle: chat!.participants.length > 1,
+                              chat: chat,
+                              initComplete: widget.onMessagesViewComplete,
+                            ),
+                            currentChat != null
+                                ? Obx(() => AnimatedOpacity(
+                                      duration: Duration(milliseconds: 250),
+                                      opacity: currentChat!.showScrollDown.value ? 1 : 0,
+                                      curve: Curves.easeInOut,
+                                      child: buildScrollToBottomFAB(context),
+                                    ))
+                                : Container(),
+                          ],
+                        )
+                      : buildChatSelectorBody(),
+            )),
+            Obx(() {
+              if (widget.onSelect == null) {
+                if (SettingsManager().settings.swipeToCloseKeyboard.value ||
+                    SettingsManager().settings.swipeToOpenKeyboard.value) {
+                  return GestureDetector(
+                      onPanUpdate: (details) {
+                        if (SettingsManager().settings.swipeToCloseKeyboard.value &&
+                            details.delta.dy > 0 &&
+                            (currentChat?.keyboardOpen ?? false)) {
+                          EventDispatcher().emit("unfocus-keyboard", null);
+                        } else if (SettingsManager().settings.swipeToOpenKeyboard.value &&
+                            details.delta.dy < 0 &&
+                            !(currentChat?.keyboardOpen ?? false)) {
+                          EventDispatcher().emit("focus-keyboard", null);
+                        }
+                      },
+                      child: textField);
+                }
+                return textField;
+              }
+              return Container();
+            }),
+          ],
         ),
         floatingActionButton: currentChat != null
-            ? StreamBuilder<bool>(
-                stream: currentChat.showScrollDownStream.stream,
-                builder: (context, snapshot) {
-                  return AnimatedOpacity(
-                      duration: Duration(milliseconds: 250),
-                      opacity: (snapshot?.data ?? false) ? 1 : 0,
-                      curve: Curves.easeInOut,
-                      child: buildFAB());
-                },
-              )
+            ? AnimatedOpacity(
+                duration: Duration(milliseconds: 250), opacity: 1, curve: Curves.easeInOut, child: buildFAB())
             : null,
       ),
     );

@@ -1,14 +1,18 @@
+import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/layouts/widgets/circle_progress_bar.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:tuple/tuple.dart';
 
 class MediaFile extends StatefulWidget {
   MediaFile({
-    Key key,
-    @required this.child,
-    @required this.attachment,
+    Key? key,
+    required this.child,
+    required this.attachment,
   }) : super(key: key);
   final Widget child;
   final Attachment attachment;
@@ -30,33 +34,32 @@ class _MediaFileState extends State<MediaFile> {
 
   @override
   Widget build(BuildContext context) {
-    final bool hideAttachments = SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachments;
+    final bool hideAttachments = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachments.value;
     final bool hideAttachmentTypes =
-        SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachmentTypes;
+        SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachmentTypes.value;
 
     if (SocketManager().attachmentSenders.containsKey(widget.attachment.guid)) {
       return Stack(
         alignment: Alignment.center,
         children: <Widget>[
           widget.child,
-          StreamBuilder(
-            builder: (context, AsyncSnapshot<double> snapshot) {
-              if (snapshot.hasError) {
-                return Text(
-                  "Unable to send",
-                  style: Theme.of(context).textTheme.bodyText1,
-                );
-              }
-              return CircularProgressIndicator(
-                backgroundColor: Colors.grey,
-                valueColor: AlwaysStoppedAnimation(Colors.white),
-                value: snapshot.hasData
-                    ? snapshot.data
-                    : SocketManager().attachmentSenders[widget.attachment.guid].progress,
+          Obx(() {
+            Tuple2<num?, bool> data = SocketManager().attachmentSenders[widget.attachment.guid]!.attachmentData.value;
+            if (data.item2) {
+              return Text(
+                "Unable to send",
+                style: Theme.of(context).textTheme.bodyText1,
               );
-            },
-            stream: SocketManager().attachmentSenders[widget.attachment.guid].stream,
-          ),
+            }
+
+            return Container(
+                height: 40,
+                width: 40,
+                child: CircleProgressBar(
+                    foregroundColor: Colors.white,
+                    backgroundColor: Colors.grey,
+                    value: data.item1?.toDouble() ?? 0));
+          }),
         ],
       );
     } else {
@@ -64,14 +67,14 @@ class _MediaFileState extends State<MediaFile> {
         widget.child,
         if (widget.attachment.originalROWID == null)
           Container(
-            child: Theme(
+            child: SettingsManager().settings.skin.value == Skins.iOS ? Theme(
               data: ThemeData(
                 cupertinoOverrideTheme: CupertinoThemeData(brightness: Brightness.dark),
               ),
               child: CupertinoActivityIndicator(
                 radius: 10,
               ),
-            ),
+            ) : Container(height: 20, width: 20, child: Center(child: CircularProgressIndicator(strokeWidth: 2,))),
             height: 45,
             width: 45,
             decoration: BoxDecoration(
@@ -88,7 +91,7 @@ class _MediaFileState extends State<MediaFile> {
             child: Container(
               alignment: Alignment.center,
               child: Text(
-                widget.attachment.mimeType,
+                widget.attachment.mimeType!,
                 textAlign: TextAlign.center,
               ),
             ),

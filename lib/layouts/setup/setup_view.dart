@@ -1,17 +1,20 @@
+import 'package:bluebubbles/layouts/setup/battery_optimization/battery_optimization.dart';
 import 'package:bluebubbles/layouts/setup/connecting_alert/failed_to_connect_dialog.dart';
 import 'package:bluebubbles/layouts/setup/prepare_to_download/prepare_to_download.dart';
 import 'package:bluebubbles/layouts/setup/qr_scan/qr_scan.dart';
 import 'package:bluebubbles/layouts/setup/request_contact/request_contacts.dart';
 import 'package:bluebubbles/layouts/setup/setup_mac_app/setup_mac_app.dart';
 import 'package:bluebubbles/layouts/setup/syncing_messages/syncing_messages.dart';
+import 'package:bluebubbles/layouts/setup/theme_selector/theme_selector.dart';
 import 'package:bluebubbles/layouts/setup/welcome_page/welcome_page.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class SetupView extends StatefulWidget {
-  SetupView({Key key}) : super(key: key);
+  SetupView({Key? key}) : super(key: key);
 
   @override
   _SetupViewState createState() => _SetupViewState();
@@ -24,8 +27,8 @@ class _SetupViewState extends State<SetupView> {
   @override
   void initState() {
     super.initState();
-    SocketManager().connectionStateStream.listen((event) {
-      if (!SettingsManager().settings.finishedSetup && controller.page > 3) {
+    ever(SocketManager().state, (event) {
+      if (!SettingsManager().settings.finishedSetup.value && controller.hasClients && controller.page! > 3) {
         switch (event) {
           case SocketState.FAILED:
             showDialog(
@@ -68,6 +71,7 @@ class _SetupViewState extends State<SetupView> {
               controller: controller,
             ),
             RequestContacts(controller: controller),
+            BatteryOptimizationPage(controller: controller),
             SetupMacApp(controller: controller),
             QRScan(
               controller: controller,
@@ -78,15 +82,19 @@ class _SetupViewState extends State<SetupView> {
             SyncingMessages(
               controller: controller,
             ),
+            //ThemeSelector(),
           ],
         ),
         Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.end,
             children: <Widget>[
-              Text(
-                "$currentPage/6",
-                style: Theme.of(context).textTheme.bodyText1,
+              Padding(
+                padding: EdgeInsets.only(bottom: 20),
+                child: Text(
+                  "$currentPage/7",
+                  style: Theme.of(context).textTheme.bodyText1,
+                ),
               ),
             ],
           ),

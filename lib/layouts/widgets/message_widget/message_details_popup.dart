@@ -1,12 +1,19 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 import 'dart:ui';
+import 'package:bluebubbles/helpers/metadata_helper.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachment.dart';
+import 'package:bluebubbles/managers/method_channel_interface.dart';
+import 'package:bluebubbles/repository/models/handle.dart';
+import 'package:collection/collection.dart';
 
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
+import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
@@ -22,30 +29,30 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
-import 'package:clipboard/clipboard.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart' as cupertino;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
-import 'package:fluttertoast/fluttertoast.dart';
+import 'package:get/get.dart';
+import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:sprung/sprung.dart';
 
 class MessageDetailsPopup extends StatefulWidget {
   MessageDetailsPopup({
-    Key key,
-    @required this.message,
-    @required this.childOffset,
-    @required this.childSize,
-    @required this.child,
-    @required this.currentChat,
+    Key? key,
+    required this.message,
+    required this.childOffset,
+    required this.childSize,
+    required this.child,
+    required this.currentChat,
   }) : super(key: key);
-  final Message message;
 
+  final Message message;
   final Offset childOffset;
-  final Size childSize;
+  final Size? childSize;
   final Widget child;
-  final CurrentChat currentChat;
+  final CurrentChat? currentChat;
 
   @override
   MessageDetailsPopupState createState() => MessageDetailsPopupState();
@@ -54,15 +61,15 @@ class MessageDetailsPopup extends StatefulWidget {
 class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerProviderStateMixin {
   List<Widget> reactionWidgets = <Widget>[];
   bool showTools = false;
-  String selfReaction;
-  String currentlySelectedReaction;
-  Completer fetchRequest;
-  CurrentChat currentChat;
-  Chat dmChat;
+  String? selfReaction;
+  String? currentlySelectedReaction;
+  Completer? fetchRequest;
+  CurrentChat? currentChat;
+  Chat? dmChat;
 
-  double messageTopOffset;
-  double topMinimum;
-  double height;
+  late double messageTopOffset;
+  late double topMinimum;
+  double? height;
 
   @override
   void initState() {
@@ -72,10 +79,9 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
     messageTopOffset = widget.childOffset.dy;
     topMinimum = CupertinoNavigationBar().preferredSize.height + (widget.message.hasReactions ? 110 : 50);
 
-    dmChat = ChatBloc().chats.firstWhere(
+    dmChat = ChatBloc().chats.firstWhereOrNull(
           (chat) =>
               !chat.isGroup() && chat.participants.where((handle) => handle.id == widget.message.handleId).length == 1,
-          orElse: () => null,
         );
 
     fetchReactions();
@@ -93,12 +99,11 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   void didChangeDependencies() {
     super.didChangeDependencies();
     fetchReactions();
-    SchedulerBinding.instance.addPostFrameCallback((_) {
+    SchedulerBinding.instance!.addPostFrameCallback((_) {
       if (this.mounted) {
         setState(() {
-          double totalHeight =
-              MediaQuery.of(context).size.height - MediaQuery.of(context).viewInsets.bottom - detailsMenuHeight - 20;
-          double offset = (widget.childOffset.dy + widget.childSize.height) - totalHeight;
+          double totalHeight = context.height - detailsMenuHeight! - 20;
+          double offset = (widget.childOffset.dy + widget.childSize!.height) - totalHeight;
           messageTopOffset = widget.childOffset.dy.clamp(topMinimum + 40, double.infinity);
           if (offset > 0) {
             messageTopOffset -= offset;
@@ -110,8 +115,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   }
 
   Future<void> fetchReactions() async {
-    if (fetchRequest != null && !fetchRequest.isCompleted) {
-      return fetchRequest.future;
+    if (fetchRequest != null && !fetchRequest!.isCompleted) {
+      return fetchRequest!.future;
     }
 
     // Create a new fetch request
@@ -120,7 +125,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
     // If there are no associated messages, return now
     List<Message> reactions = widget.message.getReactions();
     if (reactions.isEmpty) {
-      return fetchRequest.complete();
+      return fetchRequest!.complete();
     }
 
     // Filter down the messages to the unique ones (one per user, newest)
@@ -129,7 +134,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
     reactionWidgets = [];
     for (Message reaction in reactionMessages) {
       await reaction.getHandle();
-      if (reaction.isFromMe) {
+      if (reaction.isFromMe!) {
         selfReaction = reaction.associatedMessageType;
         currentlySelectedReaction = selfReaction;
       }
@@ -142,26 +147,31 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
     }
 
     // If we aren't mounted, get out
-    if (!this.mounted) return fetchRequest.complete();
+    if (!this.mounted) return fetchRequest!.complete();
 
     // Tell the component to re-render
     this.setState(() {});
-    return fetchRequest.complete();
+    return fetchRequest!.complete();
   }
 
   void sendReaction(String type) {
     debugPrint("Sending reaction type: " + type);
-    ActionHandler.sendReaction(widget.currentChat.chat, widget.message, type);
+    ActionHandler.sendReaction(widget.currentChat!.chat, widget.message, type);
     Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
-    bool isSent = !widget.message.guid.startsWith('temp') && !widget.message.guid.startsWith('error');
+    bool isSent = !widget.message.guid!.startsWith('temp') && !widget.message.guid!.startsWith('error');
+    bool hideReactions =
+        SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideReactions.value;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor,
+        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarIconBrightness:
+            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -186,8 +196,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                 top: messageTopOffset,
                 left: widget.childOffset.dx,
                 child: Container(
-                  width: widget.childSize.width,
-                  height: widget.childSize.height,
+                  width: widget.childSize!.width,
+                  height: widget.childSize!.height,
                   child: widget.child,
                 ),
               ),
@@ -197,7 +207,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                 child: AnimatedSize(
                   vsync: this,
                   duration: Duration(milliseconds: 500),
-                  curve: Sprung(damped: Damped.under),
+                  curve: Sprung.underDamped,
                   alignment: Alignment.center,
                   child: reactionWidgets.length > 0
                       ? ClipRRect(
@@ -207,7 +217,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                             child: Container(
                               alignment: Alignment.center,
                               height: 120,
-                              width: MediaQuery.of(context).size.width - 20,
+                              width: context.width - 20,
                               color: Theme.of(context).accentColor,
                               child: Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 0),
@@ -222,7 +232,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                                       return Container();
                                     }
                                   },
-                                  itemCount: reactionWidgets?.length ?? 0,
+                                  itemCount: reactionWidgets.length,
                                 ),
                               ),
                             ),
@@ -232,7 +242,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                 ),
               ),
               // Only show the reaction menu if it's enabled and the message isn't temporary
-              if (SettingsManager().settings.enablePrivateAPI && isSent) buildReactionMenu(),
+              if (SettingsManager().settings.enablePrivateAPI.value && isSent && !hideReactions) buildReactionMenu(),
               buildCopyPasteMenu(),
             ],
           ),
@@ -242,18 +252,16 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   }
 
   Widget buildReactionMenu() {
-    Size size = MediaQuery.of(context).size;
+    Size size = Get.mediaQuery.size;
 
-    double reactionIconSize = ((8.5 / 10 * size.width) / (ReactionTypes.toList().length).toDouble());
+    double reactionIconSize = ((8.5 / 10 * min(size.width, size.height)) / (ReactionTypes.toList().length).toDouble());
     double maxMenuWidth = (ReactionTypes.toList().length * reactionIconSize).toDouble();
     double menuHeight = (reactionIconSize).toDouble();
     double topPadding = -20;
-    double topOffset = (messageTopOffset - menuHeight)
-        .toDouble()
-        .clamp(topMinimum, size.height - MediaQuery.of(context).viewInsets.bottom - 120 - menuHeight);
+    double topOffset = (messageTopOffset - menuHeight).toDouble().clamp(topMinimum, size.height - 120 - menuHeight);
+    bool shiftRight = currentChat!.chat.isGroup() || SettingsManager().settings.alwaysShowAvatars.value;
     double leftOffset =
-        (widget.message.isFromMe ? size.width - maxMenuWidth - 25 : 25 + (currentChat.chat.isGroup() ? 20 : 0))
-            .toDouble();
+        (widget.message.isFromMe! ? size.width - maxMenuWidth - 25 : 25 + (shiftRight ? 20 : 0)).toDouble();
     Color iconColor = Colors.white;
 
     if (Theme.of(context).accentColor.computeLuminance() >= 0.179) {
@@ -294,6 +302,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                         ),
                         child: GestureDetector(
                           onTap: () {
+                            HapticFeedback.lightImpact();
                             sendReaction(selfReaction == e ? "-$e" : e);
                           },
                           onTapDown: (TapDownDetails details) {
@@ -327,26 +336,28 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
 
   bool get showDownload =>
       widget.message.hasAttachments &&
-      widget.message.attachments.where((element) => element.mimeStart != null).length > 0 &&
-      widget.message.attachments.where((element) => AttachmentHelper.getContent(element) is File).length > 0;
+      widget.message.attachments!.where((element) => element!.mimeStart != null).length > 0 &&
+      widget.message.attachments!.where((element) => AttachmentHelper.getContent(element!) is File).length > 0;
 
-  double get detailsMenuHeight {
+  bool get isSent => !widget.message.guid!.startsWith('temp') && !widget.message.guid!.startsWith('error');
+
+  double? get detailsMenuHeight {
     return height;
   }
 
-  set detailsMenuHeight(double value) {
+  set detailsMenuHeight(double? value) {
     this.height = value;
   }
 
   Widget buildCopyPasteMenu() {
-    Size size = MediaQuery.of(context).size;
+    Size size = Get.mediaQuery.size;
 
     double maxMenuWidth = size.width * 2 / 3;
 
-    double maxHeight = size.height - topMinimum - widget.childSize.height;
+    double maxHeight = size.height - topMinimum - widget.childSize!.height;
 
     List<Widget> allActions = [
-      if (widget.currentChat.chat.isGroup() && !widget.message.isFromMe && dmChat != null)
+      if (widget.currentChat!.chat.isGroup() && !widget.message.isFromMe! && dmChat != null)
         Material(
           color: Colors.transparent,
           child: InkWell(
@@ -369,23 +380,48 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
               ),
               trailing: Icon(
                 Icons.open_in_new,
-                color: Theme.of(context).textTheme.bodyText1.color,
+                color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
           ),
         ),
-      if (widget.currentChat.chat.isGroup() && !widget.message.isFromMe && dmChat == null)
+      if (widget.message.isUrlPreview())
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () async {
+              Metadata? data = await MetadataHelper.fetchMetadata(widget.message);
+              MethodChannelInterface().invokeMethod(
+                "open-link",
+                {"link": data?.url ?? widget.message.text, "forceBrowser": true},
+              );
+            },
+            child: ListTile(
+              title: Text(
+                "Open In Browser",
+                style: Theme.of(context).textTheme.bodyText1,
+              ),
+              trailing: Icon(
+                Icons.open_in_browser,
+                color: Theme.of(context).textTheme.bodyText1!.color,
+              ),
+            ),
+          ),
+        ),
+      if (widget.currentChat!.chat.isGroup() && !widget.message.isFromMe! && dmChat == null)
         Material(
           color: Colors.transparent,
           child: InkWell(
             splashColor: Colors.transparent,
             highlightColor: Colors.transparent,
             onTap: () async {
-              String address = widget.message.handle.address;
-              Contact contact = ContactManager().getCachedContactSync(address);
+              bool shouldShowSnackbar = (await SettingsManager().getMacOSVersion())! >= 11;
+              Handle? handle = widget.message.handle;
+              String? address = handle?.address ?? "";
+              Contact? contact = ContactManager().getCachedContactSync(address);
               UniqueContact uniqueContact;
               if (contact == null) {
-                uniqueContact = UniqueContact(address: address, displayName: (await formatPhoneNumber(address)));
+                uniqueContact = UniqueContact(address: address, displayName: (await formatPhoneNumber(handle)));
               } else {
                 uniqueContact = UniqueContact(address: address, displayName: contact.displayName ?? address);
               }
@@ -396,6 +432,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                     return ConversationView(
                       isCreator: true,
                       selected: [uniqueContact],
+                      showSnackbar: shouldShowSnackbar,
                     );
                   },
                 ),
@@ -408,7 +445,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
               ),
               trailing: Icon(
                 Icons.message,
-                color: Theme.of(context).textTheme.bodyText1.color,
+                color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
           ),
@@ -416,7 +453,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
       Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {
+          onTap: () async {
+            bool shouldShowSnackbar = (await SettingsManager().getMacOSVersion())! >= 11;
             Navigator.pushReplacement(
               context,
               cupertino.CupertinoPageRoute(
@@ -424,12 +462,13 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                   List<File> existingAttachments = [];
                   if (!widget.message.isUrlPreview()) {
                     existingAttachments =
-                        widget.message.attachments.map((attachment) => File(attachment.getPath())).toList();
+                        widget.message.attachments!.map((attachment) => File(attachment!.getPath())).toList();
                   }
                   return ConversationView(
                     isCreator: true,
                     existingText: widget.message.text,
                     existingAttachments: existingAttachments,
+                    showSnackbar: shouldShowSnackbar,
                   );
                 },
               ),
@@ -442,7 +481,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             ),
             trailing: Icon(
               Icons.forward,
-              color: Theme.of(context).textTheme.bodyText1.color,
+              color: Theme.of(context).textTheme.bodyText1!.color,
             ),
           ),
         ),
@@ -451,7 +490,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
         color: Colors.transparent,
         child: InkWell(
           onTap: () async {
-            NewMessageManager().removeMessage(widget.currentChat.chat, widget.message.guid);
+            NewMessageManager().removeMessage(widget.currentChat!.chat, widget.message.guid);
             await Message.softDelete({"guid": widget.message.guid});
             Navigator.of(context).pop();
           },
@@ -462,7 +501,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             ),
             trailing: Icon(
               Icons.delete,
-              color: Theme.of(context).textTheme.bodyText1.color,
+              color: Theme.of(context).textTheme.bodyText1!.color,
             ),
           ),
         ),
@@ -472,49 +511,15 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
           color: Colors.transparent,
           child: InkWell(
             onTap: () {
-              FlutterClipboard.copy(widget.message.fullText);
-              FlutterToast flutterToast = FlutterToast(context);
-              Widget toast = ClipRRect(
-                borderRadius: BorderRadius.circular(25.0),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(25.0),
-                      color: Theme.of(context).accentColor.withOpacity(0.1),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          !isEmptyString(widget.message.fullText) ? Icons.check : Icons.close,
-                          color: Theme.of(context).textTheme.bodyText1.color,
-                        ),
-                        SizedBox(
-                          width: 12.0,
-                        ),
-                        Text(
-                          "Copied to clipboard",
-                          style: Theme.of(context).textTheme.bodyText1,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-
-              flutterToast.showToast(
-                child: toast,
-                gravity: ToastGravity.BOTTOM,
-                toastDuration: Duration(seconds: 2),
-              );
+              Clipboard.setData(new ClipboardData(text: widget.message.fullText));
+              Navigator.of(context, rootNavigator: true).pop();
+              showSnackbar("Copied", "Copied to clipboard!", durationMs: 1000);
             },
             child: ListTile(
               title: Text("Copy", style: Theme.of(context).textTheme.bodyText1),
               trailing: Icon(
                 Icons.content_copy,
-                color: Theme.of(context).textTheme.bodyText1.color,
+                color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
           ),
@@ -534,18 +539,18 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                     );
                     Widget content = Container(
                       constraints: BoxConstraints(
-                        maxHeight: MediaQuery.of(context).size.height * 2 / 3,
+                        maxHeight: context.height * 2 / 3,
                       ),
                       child: SingleChildScrollView(
                         physics: ThemeSwitcher.getScrollPhysics(),
                         child: SelectableText(
-                          widget.message.fullText,
+                          widget.message.fullText!,
                           style: Theme.of(context).textTheme.bodyText1,
                         ),
                       ),
                     );
                     List<Widget> actions = <Widget>[
-                      FlatButton(
+                      TextButton(
                         child: Text(
                           "Done",
                           // style: Theme.of(context).textTheme.bodyText1,
@@ -555,7 +560,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                         },
                       ),
                     ];
-                    if (SettingsManager().settings.skin == Skins.IOS) {
+                    if (SettingsManager().settings.skin.value == Skins.iOS) {
                       return CupertinoAlertDialog(
                         title: title,
                         backgroundColor: Theme.of(context).accentColor,
@@ -577,22 +582,22 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
               ),
               trailing: Icon(
                 Icons.content_copy,
-                color: Theme.of(context).textTheme.bodyText1.color,
+                color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
           ),
         ),
-      if (showDownload)
+      if (showDownload && isSent)
         Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () async {
-              for (Attachment element in widget.message.attachments) {
-                CurrentChat.of(context)?.clearImageData(element);
-                await AttachmentHelper.redownloadAttachment(element);
-                Navigator.pop(context);
-                setState(() {});
+            onTap: () {
+              for (Attachment? element in widget.message.attachments!) {
+                CurrentChat.of(context)?.clearImageData(element!);
+                AttachmentHelper.redownloadAttachment(element!);
               }
+              setState(() {});
+              Navigator.of(context).pop();
             },
             child: ListTile(
               title: Text(
@@ -601,7 +606,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
               ),
               trailing: Icon(
                 Icons.refresh,
-                color: Theme.of(context).textTheme.bodyText1.color,
+                color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
           ),
@@ -611,11 +616,16 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
           color: Colors.transparent,
           child: InkWell(
             onTap: () async {
-              for (Attachment element in widget.message.attachments) {
-                dynamic content = AttachmentHelper.getContent(element);
-                if (content is File) {
-                  await AttachmentHelper.saveToGallery(context, content);
+              try {
+                for (Attachment? element in widget.message.attachments!) {
+                  dynamic content = AttachmentHelper.getContent(element!);
+                  if (content is File) {
+                    await AttachmentHelper.saveToGallery(context, content);
+                  }
                 }
+              } catch (ex, trace) {
+                debugPrint(trace.toString());
+                showSnackbar("Download Error", ex.toString());
               }
             },
             child: ListTile(
@@ -625,7 +635,38 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
               ),
               trailing: Icon(
                 Icons.file_download,
-                color: Theme.of(context).textTheme.bodyText1.color,
+                color: Theme.of(context).textTheme.bodyText1!.color,
+              ),
+            ),
+          ),
+        ),
+      if (widget.message.hasAttachments || widget.message.text!.length > 0)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              if (widget.message.hasAttachments && !widget.message.isUrlPreview()) {
+                for (Attachment? element in widget.message.attachments!) {
+                  Share.file(
+                    "${element!.mimeType!.split("/")[0].capitalizeFirst} shared from BlueBubbles: ${element.transferName}",
+                    element.getPath(),
+                  );
+                }
+              } else if (widget.message.text!.length > 0) {
+                Share.text(
+                  "Text shared from BlueBubbles",
+                  widget.message.text!,
+                );
+              }
+            },
+            child: ListTile(
+              title: Text(
+                "Share",
+                style: Theme.of(context).textTheme.bodyText1,
+              ),
+              trailing: Icon(
+                Icons.share,
+                color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
           ),
@@ -675,7 +716,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: moreActions,
                             );
-                            if (SettingsManager().settings.skin == Skins.IOS) {
+                            if (SettingsManager().settings.skin.value == Skins.iOS) {
                               return CupertinoAlertDialog(
                                 backgroundColor: Theme.of(context).accentColor,
                                 content: content,
@@ -691,7 +732,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                       title: Text("More...", style: Theme.of(context).textTheme.bodyText1),
                       trailing: Icon(
                         Icons.more_vert,
-                        color: Theme.of(context).textTheme.bodyText1.color,
+                        color: Theme.of(context).textTheme.bodyText1!.color,
                       ),
                     ),
                   ),
@@ -702,15 +743,15 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
       ),
     );
 
-    double upperLimit = size.height - MediaQuery.of(context).viewInsets.bottom - detailsMenuHeight;
+    double upperLimit = size.height - detailsMenuHeight!;
     if (topMinimum > upperLimit) {
       topMinimum = upperLimit;
     }
 
-    double topOffset = (messageTopOffset + widget.childSize.height).toDouble().clamp(topMinimum, upperLimit);
+    double topOffset = (messageTopOffset + widget.childSize!.height).toDouble().clamp(topMinimum, upperLimit);
+    bool shiftRight = currentChat!.chat.isGroup() || SettingsManager().settings.alwaysShowAvatars.value;
     double leftOffset =
-        (widget.message.isFromMe ? size.width - maxMenuWidth - 15 : 15 + (currentChat.chat.isGroup() ? 35 : 0))
-            .toDouble();
+        (widget.message.isFromMe! ? size.width - maxMenuWidth - 15 : 15 + (shiftRight ? 35 : 0)).toDouble();
     return Positioned(
       top: topOffset + 5,
       left: leftOffset,

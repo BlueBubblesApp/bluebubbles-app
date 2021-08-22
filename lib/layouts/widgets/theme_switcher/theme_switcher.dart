@@ -3,45 +3,46 @@ import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scrol
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class ThemeSwitcher extends StatefulWidget {
-  ThemeSwitcher({Key key, @required this.iOSSkin, @required this.materialSkin, @required this.samsungSkin})
+  ThemeSwitcher({Key? key, required this.iOSSkin, required this.materialSkin, required this.samsungSkin})
       : super(key: key);
   final Widget iOSSkin;
   final Widget materialSkin;
   final Widget samsungSkin;
 
-  static PageRoute buildPageRoute({@required Function(BuildContext context) builder}) {
-    switch (SettingsManager().settings.skin) {
-      case Skins.IOS:
-        return CupertinoPageRoute(builder: builder);
-        break;
+  static PageRoute buildPageRoute({required Function(BuildContext context) builder}) {
+    switch (SettingsManager().settings.skin.value) {
+      case Skins.iOS:
+        return CupertinoPageRoute(builder: builder as Widget Function(BuildContext));
       case Skins.Material:
-        return MaterialPageRoute(builder: builder);
-        break;
+        return MaterialPageRoute(builder: builder as Widget Function(BuildContext));
       case Skins.Samsung:
-        return MaterialPageRoute(builder: builder);
-        break;
+        return MaterialPageRoute(builder: builder as Widget Function(BuildContext));
+      default:
+        return CupertinoPageRoute(builder: builder as Widget Function(BuildContext));
     }
   }
 
   static ScrollPhysics getScrollPhysics() {
-    switch (SettingsManager().settings.skin) {
-      case Skins.IOS:
+    switch (SettingsManager().settings.skin.value) {
+      case Skins.iOS:
         return AlwaysScrollableScrollPhysics(
           parent: CustomBouncingScrollPhysics(),
         );
-        break;
       case Skins.Material:
         return AlwaysScrollableScrollPhysics(
           parent: ClampingScrollPhysics(),
         );
-        break;
       case Skins.Samsung:
         return AlwaysScrollableScrollPhysics(
           parent: ClampingScrollPhysics(),
         );
-        break;
+      default:
+        return AlwaysScrollableScrollPhysics(
+          parent: CustomBouncingScrollPhysics(),
+        );
     }
   }
 
@@ -50,32 +51,25 @@ class ThemeSwitcher extends StatefulWidget {
 }
 
 class _ThemeSwitcherState extends State<ThemeSwitcher> {
-  Skins skin;
 
   @override
   void initState() {
     super.initState();
-    skin = SettingsManager().settings.skin;
-
-    SettingsManager().stream.listen((event) {
-      if (!this.mounted) return;
-
-      if (event.skin != skin) {
-        skin = event.skin;
-        setState(() {});
-      }
-    });
   }
 
   @override
   Widget build(BuildContext context) {
-    switch (skin) {
-      case Skins.IOS:
-        return widget.iOSSkin;
-      case Skins.Material:
-        return widget.materialSkin;
-      case Skins.Samsung:
-        return widget.samsungSkin;
-    }
+    return Obx(() {
+      switch (SettingsManager().settings.skin.value) {
+        case Skins.iOS:
+          return widget.iOSSkin;
+        case Skins.Material:
+          return widget.materialSkin;
+        case Skins.Samsung:
+          return widget.samsungSkin;
+        default:
+          return widget.iOSSkin;
+      }
+    });
   }
 }

@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/attachment_downloader_widget.dart';
@@ -12,27 +14,26 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
 import 'package:bluebubbles/layouts/widgets/circle_progress_bar.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class MessageAttachment extends StatefulWidget {
   MessageAttachment({
-    Key key,
-    @required this.attachment,
-    @required this.updateAttachment,
-    @required this.message,
+    Key? key,
+    required this.attachment,
+    required this.updateAttachment,
+    required this.isFromMe,
   }) : super(key: key);
   final Attachment attachment;
   final Function() updateAttachment;
-  final Message message;
+  final bool isFromMe;
 
   @override
-  _MessageAttachmentState createState() => _MessageAttachmentState();
+  MessageAttachmentState createState() => MessageAttachmentState();
 }
 
-class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKeepAliveClientMixin {
-  Widget attachmentWidget;
+class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeepAliveClientMixin {
+  Widget? attachmentWidget;
   var content;
 
   @override
@@ -43,13 +44,17 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
 
   void updateContent() async {
     // Ge the current attachment content (status)
-    content = AttachmentHelper.getContent(widget.attachment);
+    content = AttachmentHelper.getContent(widget.attachment,
+        path: widget.attachment.guid == "redacted-mode-demo-attachment" ||
+                widget.attachment.guid!.contains("theme-selector")
+            ? widget.attachment.transferName
+            : null);
 
     // If we can download it, do so
     if (await AttachmentHelper.canAutoDownload() && content is Attachment) {
       if (this.mounted) {
         setState(() {
-          content = new AttachmentDownloader(content);
+          content = Get.put(AttachmentDownloadController(attachment: content), tag: content.guid);
         });
       }
     }
@@ -64,8 +69,8 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
       borderRadius: BorderRadius.circular(20),
       child: Container(
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 3 / 4,
-          // maxHeight: 600,
+          maxWidth: context.width * 0.5,
+          maxHeight: context.height * 0.6,
         ),
         child: _buildAttachmentWidget(),
       ),
@@ -75,14 +80,14 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
   Widget _buildAttachmentWidget() {
     // If it's a file, it's already been downlaoded, so just display it
     if (content is File) {
-      String mimeType = widget.attachment.mimeType;
+      String? mimeType = widget.attachment.mimeType;
       if (mimeType != null) mimeType = mimeType.substring(0, mimeType.indexOf("/"));
-      if (mimeType == "image") {
+      if (mimeType == "image" && !widget.attachment.mimeType!.endsWith("tiff")) {
         return MediaFile(
           attachment: widget.attachment,
           child: ImageWidget(
-            attachment: widget.attachment,
             file: content,
+            attachment: widget.attachment,
           ),
         );
       } else if (mimeType == "video") {
@@ -93,10 +98,10 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
             file: content,
           ),
         );
-      } else if (mimeType == "audio" && !widget.attachment.mimeType.contains("caf")) {
+      } else if (mimeType == "audio" && !widget.attachment.mimeType!.contains("caf")) {
         return MediaFile(
           attachment: widget.attachment,
-          child: AudioPlayerWiget(file: content, context: context, width: 250),
+          child: AudioPlayerWiget(file: content, context: context, width: 250, isFromMe: widget.isFromMe),
         );
       } else if (widget.attachment.mimeType == "text/x-vlocation" || widget.attachment.uti == 'public.vlocation') {
         return MediaFile(
@@ -130,82 +135,73 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
     } else if (content is Attachment) {
       return AttachmentDownloaderWidget(
         onPressed: () {
-          content = new AttachmentDownloader(content);
+          content = Get.put(AttachmentDownloadController(attachment: content), tag: content.guid);
           if (this.mounted) setState(() {});
         },
         attachment: content,
-        placeHolder: buildPlaceHolder(),
+        placeHolder: buildPlaceHolder(widget),
       );
 
       // If it's an AttachmentDownloader, it is currently being downloaded
-    } else if (content is AttachmentDownloader) {
+    } else if (content is AttachmentDownloadController) {
       if (widget.attachment.mimeType == null) return Container();
-      return StreamBuilder(
-        stream: content.stream,
-        builder: (BuildContext context, AsyncSnapshot snapshot) {
-          // If there is an error, return an error text
-          if (snapshot.hasError) {
-            content = widget.attachment;
-            return AttachmentDownloaderWidget(
-              onPressed: () {
-                content = new AttachmentDownloader(content);
-                if (this.mounted) setState(() {});
-              },
-              attachment: content,
-              placeHolder: buildPlaceHolder(),
-            );
-          }
+      return Obx(() {
+        // If there is an error, return an error text
+        if (content.error.value) {
+          content = widget.attachment;
+          return AttachmentDownloaderWidget(
+            onPressed: () {
+              content = Get.put(AttachmentDownloadController(attachment: content), tag: content.guid);
+              if (this.mounted) setState(() {});
+            },
+            attachment: content,
+            placeHolder: buildPlaceHolder(widget),
+          );
+        }
 
-          // If the snapshot data is a file, we have finished downloading
-          if (snapshot.data is File) {
-            content = snapshot.data;
-            return _buildAttachmentWidget();
-          }
+        // If the snapshot data is a file, we have finished downloading
+        if (content.file.value != null) {
+          content = content.file.value;
+          return _buildAttachmentWidget();
+        }
 
-          double progress = 0.0;
-          if (snapshot.hasData) {
-            progress = snapshot.data["progress"];
-          } else {
-            progress = content.progress;
-          }
-
-          return Stack(
-            alignment: Alignment.center,
-            children: <Widget>[
-              buildPlaceHolder(),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  Column(
-                    children: <Widget>[
-                      Center(
-                        child: Container(
-                          height: 40,
-                          width: 40,
-                          child: CircleProgressBar(
-                            value: progress == 1.0 ? null : (progress ?? 0),
-                            backgroundColor: Colors.grey,
-                            foregroundColor: Colors.white,
-                          ),
+        return Stack(
+          alignment: Alignment.center,
+          children: <Widget>[
+            buildPlaceHolder(widget),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Center(
+                      child: Container(
+                        height: 40,
+                        width: 40,
+                        child: CircleProgressBar(
+                          value: content.progress.value?.toDouble() ?? 0,
+                          backgroundColor: Colors.grey,
+                          foregroundColor: Colors.white,
                         ),
                       ),
-                      ((content as AttachmentDownloader).attachment.mimeType != null)
-                          ? Container(height: 5.0)
-                          : Container(),
-                      (content.attachment.mimeType != null)
-                          ? Text(
-                              content.attachment.mimeType,
-                              style: Theme.of(context).textTheme.bodyText1,
-                            )
-                          : Container()
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          );
-        },
-      );
+                    ),
+                    ((content as AttachmentDownloadController).attachment.mimeType != null)
+                        ? Container(height: 5.0)
+                        : Container(),
+                    (content.attachment.mimeType != null)
+                        ? Text(
+                            content.attachment.mimeType,
+                            style: Theme.of(context).textTheme.bodyText1,
+                          )
+                        : Container()
+                  ],
+                ),
+              ],
+            ),
+          ],
+        );
+      });
     } else {
       return Text(
         "Error loading",
@@ -215,14 +211,9 @@ class _MessageAttachmentState extends State<MessageAttachment> with AutomaticKee
     }
   }
 
-  Widget buildPlaceHolder() => ClipRRect(
-        borderRadius: BorderRadius.circular(8.0),
-        child: Container(
-          height: 150,
-          width: 200,
-          color: Theme.of(context).accentColor,
-        ),
-      );
+  Widget buildPlaceHolder(MessageAttachment parent) {
+    return buildImagePlaceholder(context, widget.attachment, Container());
+  }
 
   @override
   bool get wantKeepAlive => true;

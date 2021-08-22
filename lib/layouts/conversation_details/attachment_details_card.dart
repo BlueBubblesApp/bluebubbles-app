@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
@@ -14,13 +15,11 @@ import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
-import 'package:image_size_getter/image_size_getter.dart';
 import 'package:path/path.dart';
-import 'package:video_thumbnail/video_thumbnail.dart';
+import 'package:tuple/tuple.dart';
 
 class AttachmentDetailsCard extends StatefulWidget {
-  AttachmentDetailsCard({Key key, this.attachment, this.allAttachments}) : super(key: key);
+  AttachmentDetailsCard({Key? key, required this.attachment, required this.allAttachments}) : super(key: key);
   final Attachment attachment;
   final List<Attachment> allAttachments;
 
@@ -29,27 +28,26 @@ class AttachmentDetailsCard extends StatefulWidget {
 }
 
 class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
-  StreamSubscription downloadStream;
-  Uint8List previewImage;
+  Uint8List? previewImage;
   double aspectRatio = 4 / 3;
+  late File attachmentFile;
 
   @override
   void initState() {
     super.initState();
+
+    attachmentFile = new File(widget.attachment.getPath());
     subscribeToDownloadStream();
   }
 
-  @override
-  void dispose() {
-    if (downloadStream != null) downloadStream.cancel();
-    super.dispose();
-  }
-
   void subscribeToDownloadStream() {
-    if (SocketManager().attachmentDownloaders.containsKey(widget.attachment.guid) && downloadStream == null) {
-      downloadStream = SocketManager().attachmentDownloaders[widget.attachment.guid].stream.listen((event) {
-        if (event is File && this.mounted) {
+    if (Get.find<AttachmentDownloadService>().downloaders.contains(widget.attachment.guid)) {
+      AttachmentDownloadController controller = Get.find<AttachmentDownloadController>(tag: widget.attachment.guid);
+      ever<File?>(controller.file,
+          (file) {
+        if (file != null && this.mounted) {
           Future.delayed(Duration(milliseconds: 500), () {
+            if (!this.mounted) return;
             setState(() {});
           });
         }
@@ -59,14 +57,46 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
 
   void getCompressedImage() {
     String path = AttachmentHelper.getAttachmentPath(widget.attachment);
-    FlutterImageCompress.compressWithFile(path, quality: SettingsManager().compressionQuality).then((data) {
-      if (this.mounted) {
-        setState(() {
-          previewImage = data;
-        });
-      }
+    AttachmentHelper.compressAttachment(widget.attachment, path).then((data) {
+      if (!this.mounted) return;
+      setState(() {
+        previewImage = data;
+      });
     });
   }
+
+  Widget buildReadyToDownload(BuildContext context) {
+    return CupertinoButton(
+      padding: EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 10),
+      onPressed: () async {
+        Get.put(AttachmentDownloadController(attachment: widget.attachment), tag: widget.attachment.guid);
+        subscribeToDownloadStream();
+        if (this.mounted) setState(() {});
+      },
+      color: Colors.transparent,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Text(
+            widget.attachment.getFriendlySize(),
+            style: Theme.of(context).textTheme.bodyText1,
+          ),
+          Icon(Icons.cloud_download, size: 28.0),
+          (widget.attachment.mimeType != null)
+              ? Text(
+                  basename(this.attachmentFile.path),
+                  style: Theme.of(context).textTheme.bodyText1,
+                )
+              : Container()
+        ],
+      ),
+    );
+  }
+
+  Widget buildPreview(BuildContext context) => SizedBox(
+        width: context.width / 2,
+        child: _buildPreview(this.attachmentFile, context),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -75,15 +105,15 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
       "${SettingsManager().appDocDir.path}/attachments/${attachment.guid}/${attachment.transferName}",
     );
     final bool hideAttachments =
-        SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachments;
+        SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachments.value;
     final bool hideAttachmentTypes =
-        SettingsManager().settings.redactedMode && SettingsManager().settings.hideAttachmentTypes;
+        SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachmentTypes.value;
     if (hideAttachments && !hideAttachmentTypes)
       return Container(
         alignment: Alignment.center,
         color: Theme.of(context).accentColor,
         child: Text(
-          widget.attachment.mimeType,
+          widget.attachment.mimeType!,
           textAlign: TextAlign.center,
         ),
       );
@@ -98,82 +128,56 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
           Container(
             color: Theme.of(context).accentColor,
           ),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              !SocketManager().attachmentDownloaders.containsKey(attachment.guid)
-                  ? CupertinoButton(
-                      padding: EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 10),
-                      onPressed: () async {
-                        AttachmentDownloader downloader = new AttachmentDownloader(attachment, autoFetch: false);
-                        await downloader.fetchAttachment(attachment);
-                        subscribeToDownloadStream();
-                        if (this.mounted) setState(() {});
-                      },
-                      color: Colors.transparent,
-                      child: Column(
-                        children: <Widget>[
-                          Text(
-                            attachment.getFriendlySize(),
-                            style: Theme.of(context).textTheme.bodyText1,
-                          ),
-                          Icon(Icons.cloud_download, size: 28.0),
-                          (attachment.mimeType != null)
-                              ? Text(
-                                  basename(file.path),
-                                  style: Theme.of(context).textTheme.bodyText1,
-                                )
-                              : Container()
-                        ],
-                      ),
-                    )
-                  : StreamBuilder<Object>(
-                      stream: SocketManager().attachmentDownloaders[attachment.guid].stream,
-                      builder: (context, snapshot) {
-                        double value = 0;
-                        if (snapshot.hasData) {
-                          if (snapshot.data is Map) {
-                            value = (snapshot.data as Map<String, num>)["progress"].toDouble();
-                          } else if (snapshot.data is File) {
-                            value = 1;
-                          }
-                        }
+          Center(
+            child: !Get.find<AttachmentDownloadService>().downloaders.contains(attachment.guid)
+                ? buildReadyToDownload(context)
+                : Builder(
+                    builder: (context) {
+                      bool attachmentExists = this.attachmentFile.existsSync();
 
+                      // If the attachment exists, build the preview
+                      if (attachmentExists) return buildPreview(context);
+
+                      // If the attachment is not being downloaded, show the downloader
+                      if (!Get.find<AttachmentDownloadService>().downloaders.contains(attachment.guid)) {
+                        return buildReadyToDownload(context);
+                      }
+
+                      return Obx(() {
+                        AttachmentDownloadController controller = Get.find<AttachmentDownloadController>(tag: attachment.guid);
+                        // If the download is complete, show the preview
+                        if (controller.file.value != null) return buildPreview(context);
+
+                        // If all else fails, show the downloader
                         return Container(
                             height: 40,
                             width: 40,
                             child: CircleProgressBar(
-                                foregroundColor: Colors.white, backgroundColor: Colors.grey, value: value));
-                      },
-                    ),
-            ],
+                                foregroundColor: Colors.white,
+                                backgroundColor: Colors.grey,
+                                value: controller.progress.value?.toDouble() ?? 0));
+                      });
+                    }),
           ),
         ],
       );
     } else {
-      return SizedBox(
-        width: MediaQuery.of(context).size.width / 2,
-        child: _buildPreview(file, context),
-      );
+      return buildPreview(context);
     }
   }
 
   Future<void> getVideoPreview(File file) async {
     if (previewImage != null) return;
-    previewImage = await VideoThumbnail.thumbnailData(
-      video: file.path,
-      imageFormat: ImageFormat.JPEG,
-      quality: 50,
-    );
-    Size size = ImageSizeGetter.getSize(MemoryInput(previewImage));
-    widget.attachment.width = size.width;
-    widget.attachment.height = size.height;
+    previewImage = await AttachmentHelper.getVideoThumbnail(file.path);
+    Size size = await AttachmentHelper.getImageSizing("${file.path}.thumbnail");
+    widget.attachment.width = size.width.toInt();
+    widget.attachment.height = size.height.toInt();
     aspectRatio = size.width / size.height;
     if (this.mounted) setState(() {});
   }
 
   Widget _buildPreview(File file, BuildContext context) {
-    if (widget.attachment.mimeType.startsWith("image/")) {
+    if (widget.attachment.mimeType!.startsWith("image/")) {
       if (previewImage == null) {
         getCompressedImage();
       }
@@ -182,23 +186,23 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
         children: <Widget>[
           SizedBox(
             child: Hero(
-                tag: widget.attachment.guid,
+                tag: widget.attachment.guid!,
                 child: (previewImage != null)
                     ? Image.memory(
-                        previewImage,
+                        previewImage!,
                         fit: BoxFit.cover,
                         filterQuality: FilterQuality.low,
                         alignment: Alignment.center,
                       )
                     : Container()),
-            width: MediaQuery.of(context).size.width / 2,
-            height: MediaQuery.of(context).size.width / 2,
+            width: context.width / 2,
+            height: context.width / 2,
           ),
           Material(
             color: Colors.transparent,
             child: InkWell(
               onTap: () {
-                CurrentChat currentChat = CurrentChat.of(context);
+                CurrentChat? currentChat = CurrentChat.of(context);
                 Navigator.of(context).push(
                   ThemeSwitcher.buildPageRoute(
                     builder: (context) => AttachmentFullscreenViewer(
@@ -213,25 +217,25 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
           )
         ],
       );
-    } else if (widget.attachment.mimeType.startsWith("video/")) {
+    } else if (widget.attachment.mimeType!.startsWith("video/")) {
       getVideoPreview(file);
 
       return Stack(
         children: <Widget>[
           SizedBox(
             child: Hero(
-              tag: widget.attachment.guid,
+              tag: widget.attachment.guid!,
               child: previewImage != null
                   ? Image.memory(
-                      previewImage,
+                      previewImage!,
                       fit: BoxFit.cover,
                       filterQuality: FilterQuality.low,
                       alignment: Alignment.center,
                     )
                   : Container(),
             ),
-            width: MediaQuery.of(context).size.width / 2,
-            height: MediaQuery.of(context).size.width / 2,
+            width: context.width / 2,
+            height: context.width / 2,
           ),
           Material(
             color: Colors.transparent,

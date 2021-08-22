@@ -4,14 +4,13 @@ import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
-import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
-import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 enum SetupOutputType { ERROR, LOG }
 
@@ -30,45 +29,54 @@ class SetupOutputData {
 }
 
 class SetupBloc {
-  StreamController<SetupData> _stream = StreamController<SetupData>.broadcast();
-  StreamController<SocketState> _connectionStatusStream = StreamController<SocketState>.broadcast();
-  StreamSubscription connectionSubscription;
+  // Setup as a Singleton
+  static final SetupBloc _setupBloc = SetupBloc._internal();
+  SetupBloc._internal();
+  factory SetupBloc() {
+    return _setupBloc;
+  }
 
-  Stream<SocketState> get conenctionStatus => _connectionStatusStream.stream;
+  final Rxn<SetupData> data = Rxn<SetupData>();
+  final Rxn<SocketState> connectionStatus = Rxn<SocketState>();
+  final RxBool isSyncing = false.obs;
+  Worker? connectionSubscription;
 
   double _progress = 0.0;
   int _currentIndex = 0;
   List chats = [];
-  bool isSyncing = false;
   double numberOfMessagesPerPage = 25;
   bool downloadAttachments = false;
   bool skipEmptyChats = true;
 
-  Stream<SetupData> get stream => _stream.stream;
-
   double get progress => _progress;
-  int processId;
+  int? processId;
 
   List<SetupOutputData> output = [];
 
-  SetupBloc();
-
   Future<void> connectToServer(FCMData data, String serverURL, String password) async {
     Settings settingsCopy = SettingsManager().settings;
-    settingsCopy.serverAddress = getServerAddress(address: serverURL);
-    settingsCopy.guidAuthKey = password;
+    if (SocketManager().state.value == SocketState.CONNECTED && settingsCopy.serverAddress.value == serverURL) {
+      debugPrint("Not reconnecting to server we are already connected to!");
+      return;
+    }
+
+    settingsCopy.serverAddress.value = getServerAddress(address: serverURL) ?? settingsCopy.serverAddress.value;
+    settingsCopy.guidAuthKey.value = password;
 
     await SettingsManager().saveSettings(settingsCopy);
     await SettingsManager().saveFCMData(data);
     await SocketManager().authFCM(catchException: false, force: true);
     await SocketManager().startSocketIO(forceNewConnection: true, catchException: false);
-    connectionSubscription = SocketManager().connectionStateStream.listen((event) {
-      if (_connectionStatusStream.isClosed) return;
-      _connectionStatusStream.sink.add(event);
-      if (isSyncing) {
+    connectionSubscription = ever<SocketState>(SocketManager().state, (event) {
+      connectionStatus.value = event;
+
+      if (isSyncing.value) {
         switch (event) {
           case SocketState.DISCONNECTED:
             addOutput("Disconnected from socket!", SetupOutputType.ERROR);
+            break;
+          case SocketState.CONNECTED:
+            addOutput("Connected to socket!", SetupOutputType.LOG);
             break;
           case SocketState.ERROR:
             addOutput("Socket connection error!", SetupOutputType.ERROR);
@@ -88,25 +96,23 @@ class SetupBloc {
   }
 
   void handleError(String error) {
-    if (!_stream.isClosed) {
-      addOutput(error, SetupOutputType.ERROR);
-      _stream.sink.add(SetupData(-1, output));
-    }
+    addOutput(error, SetupOutputType.ERROR);
+    data.value = SetupData(-1, output);
     closeSync();
   }
 
   Future<void> startFullSync(Settings settings) async {
     // Make sure we aren't already syncing
-    if (isSyncing) return;
+    if (isSyncing.value) return;
 
     // Setup syncing process
     processId = SocketManager().addSocketProcess(([bool finishWithError = false]) {});
-    isSyncing = true;
+    isSyncing.value = true;
 
     // Set the last sync date (for incremental, even though this isn't incremental)
     // We won't try an incremental sync until the last (full) sync date is set
     Settings _settingsCopy = SettingsManager().settings;
-    _settingsCopy.lastIncrementalSync = DateTime.now().millisecondsSinceEpoch;
+    _settingsCopy.lastIncrementalSync.value = DateTime.now().millisecondsSinceEpoch;
     await SettingsManager().saveSettings(_settingsCopy);
 
     // Some safetly logging
@@ -119,7 +125,7 @@ class SetupBloc {
 
     try {
       addOutput("Getting Chats...", SetupOutputType.LOG);
-      List<dynamic> chats = await SocketManager().getChats({});
+      List<Chat> chats = await SocketManager().getChats({});
 
       // If we got chats, cancel the timer
       timer.cancel();
@@ -131,24 +137,25 @@ class SetupBloc {
       }
 
       addOutput("Received initial chat list. Size: ${chats.length}", SetupOutputType.LOG);
-      for (dynamic item in chats) {
-        Chat chat;
+      for (Chat chat in chats) {
+        if (chat.guid == "ERROR") {
+          addOutput("Failed to save chat data, '${chat.displayName}'", SetupOutputType.ERROR);
+        } else {
+          try {
+            if (!(chat.chatIdentifier ?? "").startsWith("urn:biz")) {
+              await chat.save();
 
-        try {
-          chat = Chat.fromMap(item);
-          await chat.save();
+              // Re-match the handles with the contacts
+              await ContactManager().matchHandles();
 
-          // Re-match the handles with the contacts
-          await ContactManager().matchHandles();
-
-          await syncChat(chat);
-          addOutput("Finished syncing chat, '${chat.chatIdentifier}'", SetupOutputType.LOG);
-        } catch (ex, stacktrace) {
-          if (chat != null) {
+              await syncChat(chat);
+              addOutput("Finished syncing chat, '${chat.chatIdentifier}'", SetupOutputType.LOG);
+            } else {
+              addOutput("Skipping syncing chat, '${chat.chatIdentifier}'", SetupOutputType.LOG);
+            }
+          } catch (ex, stacktrace) {
             addOutput("Failed to sync chat, '${chat.chatIdentifier}'", SetupOutputType.ERROR);
             addOutput(stacktrace.toString(), SetupOutputType.ERROR);
-          } else {
-            addOutput("Failed to save chat data, '${item.toString()}'", SetupOutputType.ERROR);
           }
         }
 
@@ -186,8 +193,8 @@ class SetupBloc {
       {"statement": "message.service = 'iMessage'", "args": null}
     ];
 
-    List<dynamic> messages = await SocketManager().getChatMessages(params);
-    addOutput("Received ${messages?.length ?? 0} messages for chat, '${chat.chatIdentifier}'!", SetupOutputType.LOG);
+    List<dynamic> messages = await SocketManager().getChatMessages(params)!;
+    addOutput("Received ${messages.length} messages for chat, '${chat.chatIdentifier}'!", SetupOutputType.LOG);
 
     // Since we got the messages in desc order, we want to reverse it.
     // Reversing it will add older messages before newer one. This should help fix
@@ -198,6 +205,7 @@ class SetupBloc {
 
       // If we want to download the attachments, do it, and wait for them to finish before continuing
       // Commented out because I think this negatively effects sync performance and causes disconnects
+      // todo
       // if (downloadAttachments) {
       //   await MessageHelper.bulkDownloadAttachments(chat, messages.reversed.toList());
       // }
@@ -207,28 +215,27 @@ class SetupBloc {
   void finishSetup() async {
     addOutput("Finished Setup! Cleaning up...", SetupOutputType.LOG);
     Settings _settingsCopy = SettingsManager().settings;
-    _settingsCopy.finishedSetup = true;
+    _settingsCopy.finishedSetup.value = true;
     await SettingsManager().saveSettings(_settingsCopy);
 
     ContactManager().contacts = [];
     await ContactManager().getContacts(force: true);
     await ChatBloc().refreshChats(force: true);
-
-    SocketManager().finishSetup();
+    await SocketManager().authFCM(force: true);
     closeSync();
   }
 
   void addOutput(String _output, SetupOutputType type) {
     debugPrint('[Setup] -> $_output');
     output.add(SetupOutputData(_output, type));
-    _stream.sink.add(SetupData(_progress, output));
+    data.value = SetupData(_progress, output);
   }
 
   Future<void> startIncrementalSync(Settings settings,
-      {String chatGuid, bool saveDate = true, Function onConnectionError, Function onComplete}) async {
+      {String? chatGuid, bool saveDate = true, Function? onConnectionError, Function? onComplete}) async {
     // If we are already syncing, don't sync again
     // Or, if we haven't finished setup, or we aren't connected, don't sync
-    if (isSyncing || !settings.finishedSetup || SocketManager().state != SocketState.CONNECTED) return;
+    if (isSyncing.value || !settings.finishedSetup.value || SocketManager().state.value != SocketState.CONNECTED) return;
 
     // Reset the progress
     _progress = 0;
@@ -237,12 +244,13 @@ class SetupBloc {
     processId = SocketManager().addSocketProcess(([bool finishWithError = false]) {});
 
     // if (onConnectionError != null) this.onConnectionError = onConnectionError;
-    isSyncing = true;
+    isSyncing.value = true;
     _progress = 1;
 
     // Store the time we started syncing
     addOutput("Starting incremental sync for messages since: ${settings.lastIncrementalSync}", SetupOutputType.LOG);
     int syncStart = DateTime.now().millisecondsSinceEpoch;
+    await Future.delayed(Duration(seconds: 3));
 
     // Build request params. We want all details on the messages
     Map<String, dynamic> params = Map();
@@ -252,7 +260,7 @@ class SetupBloc {
 
     params["withBlurhash"] = false; // Maybe we want it?
     params["limit"] = 1000; // This is arbitrary, hopefully there aren't more messages
-    params["after"] = settings.lastIncrementalSync; // Get everything since the last sync
+    params["after"] = settings.lastIncrementalSync.value; // Get everything since the last sync
     params["withChats"] = true; // We want the chats too so we can save them correctly
     params["withAttachments"] = true; // We want the attachment data
     params["withHandle"] = true; // We want to know who sent it
@@ -261,7 +269,7 @@ class SetupBloc {
       {"statement": "message.service = 'iMessage'", "args": null}
     ];
 
-    List<dynamic> messages = await SocketManager().getMessages(params);
+    List<dynamic> messages = await SocketManager().getMessages(params)!;
     if (messages.isEmpty) {
       addOutput("No new messages found during incremental sync", SetupOutputType.LOG);
     } else {
@@ -271,7 +279,7 @@ class SetupBloc {
     if (messages.length > 0) {
       await MessageHelper.bulkAddMessages(null, messages, onProgress: (progress, total) {
         _progress = (progress / total) * 100;
-        _stream.sink.add(SetupData(_progress, output));
+        data.value = SetupData(_progress, output);
       });
 
       // If we want to download the attachments, do it, and wait for them to finish before continuing
@@ -288,13 +296,13 @@ class SetupBloc {
       addOutput("Saving last sync date: $syncStart", SetupOutputType.LOG);
 
       Settings _settingsCopy = SettingsManager().settings;
-      _settingsCopy.lastIncrementalSync = syncStart;
+      _settingsCopy.lastIncrementalSync.value = syncStart;
       SettingsManager().saveSettings(_settingsCopy);
     }
 
-    if (SettingsManager().settings.showIncrementalSync)
+    if (SettingsManager().settings.showIncrementalSync.value)
       // Show a nice lil toast/snackbar
-      EventDispatcher().emit("show-snackbar", {"text": "🔄 Incremental sync complete 🔄"});
+      showSnackbar('Success', '🔄 Incremental sync complete 🔄');
 
     if (onComplete != null) {
       onComplete();
@@ -305,27 +313,20 @@ class SetupBloc {
   }
 
   void closeSync() {
-    isSyncing = false;
+    isSyncing.value = false;
     if (processId != null) SocketManager().finishSocketProcess(processId);
-    _stream.close();
-    _connectionStatusStream.close();
-    _stream = StreamController<SetupData>.broadcast();
-    _connectionStatusStream = StreamController<SocketState>.broadcast();
+    data.value = null;
+    connectionStatus.value = null;
 
     _progress = 0.0;
     _currentIndex = 0;
     chats = [];
-    isSyncing = false;
     numberOfMessagesPerPage = 25;
     downloadAttachments = false;
     skipEmptyChats = true;
     processId = null;
 
     output = [];
-    connectionSubscription?.cancel();
-  }
-
-  void dispose() {
-    _stream.close();
+    connectionSubscription?.dispose();
   }
 }

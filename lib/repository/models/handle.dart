@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:sqflite/sqflite.dart';
@@ -16,33 +17,33 @@ String handleToJson(Handle data) {
 }
 
 class Handle {
-  int id;
-  int originalROWID;
+  int? id;
+  int? originalROWID;
   String address;
-  String country;
-  String color;
-  String uncanonicalizedId;
+  String? country;
+  String? color;
+  String? defaultPhone;
+  String? uncanonicalizedId;
 
   Handle({
     this.id,
     this.originalROWID,
-    this.address,
+    this.address = "",
     this.country,
     this.color,
+    this.defaultPhone,
     this.uncanonicalizedId,
   });
 
   factory Handle.fromMap(Map<String, dynamic> json) {
     var data = new Handle(
       id: json.containsKey("ROWID") ? json["ROWID"] : null,
-      originalROWID:
-          json.containsKey("originalROWID") ? json["originalROWID"] : null,
+      originalROWID: json.containsKey("originalROWID") ? json["originalROWID"] : null,
       address: json["address"],
       country: json.containsKey("country") ? json["country"] : null,
       color: json.containsKey("color") ? json["color"] : null,
-      uncanonicalizedId: json.containsKey("uncanonicalizedId")
-          ? json["uncanonicalizedId"]
-          : null,
+      defaultPhone: json['defaultPhone'],
+      uncanonicalizedId: json.containsKey("uncanonicalizedId") ? json["uncanonicalizedId"] : null,
     );
 
     // Adds fallback getter for the ID
@@ -57,7 +58,7 @@ class Handle {
     final Database db = await DBProvider.db.database;
 
     // Try to find an existing handle before saving it
-    Handle existing = await Handle.findOne({"address": this.address});
+    Handle? existing = await Handle.findOne({"address": this.address});
     if (existing != null) {
       this.id = existing.id;
     }
@@ -88,6 +89,7 @@ class Handle {
         "address": this.address,
         "country": this.country,
         "color": this.color,
+        "defaultPhone": this.defaultPhone,
         "uncanonicalizedId": this.uncanonicalizedId
       };
 
@@ -95,8 +97,7 @@ class Handle {
         params["originalROWID"] = this.originalROWID;
       }
 
-      await db
-          .update("handle", params, where: "ROWID = ?", whereArgs: [this.id]);
+      await db.update("handle", params, where: "ROWID = ?", whereArgs: [this.id]);
     } else {
       await this.save(false);
     }
@@ -104,25 +105,32 @@ class Handle {
     return this;
   }
 
-  Future<Handle> updateColor(String newColor) async {
+  Future<Handle> updateColor(String? newColor) async {
     final Database db = await DBProvider.db.database;
     if (this.id == null) return this;
 
-    await db.update("handle", {"color": newColor},
-        where: "ROWID = ?", whereArgs: [this.id]);
+    await db.update("handle", {"color": newColor}, where: "ROWID = ?", whereArgs: [this.id]);
 
     return this;
   }
 
-  static Future<Handle> findOne(Map<String, dynamic> filters) async {
+  Future<Handle> updateDefaultPhone(String newPhone) async {
+    final Database db = await DBProvider.db.database;
+    if (this.id == null) return this;
+
+    await db.update("handle", {"defaultPhone": newPhone}, where: "ROWID = ?", whereArgs: [this.id]);
+
+    return this;
+  }
+
+  static Future<Handle?> findOne(Map<String, dynamic> filters) async {
     final Database db = await DBProvider.db.database;
 
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];
     filters.values.forEach((filter) => whereArgs.add(filter));
-    var res = await db.query("handle",
-        where: whereParams.join(" AND "), whereArgs: whereArgs, limit: 1);
+    var res = await db.query("handle", where: whereParams.join(" AND "), whereArgs: whereArgs, limit: 1);
 
     if (res.isEmpty) {
       return null;
@@ -131,8 +139,7 @@ class Handle {
     return Handle.fromMap(res.elementAt(0));
   }
 
-  static Future<List<Handle>> find(
-      [Map<String, dynamic> filters = const {}]) async {
+  static Future<List<Handle>> find([Map<String, dynamic> filters = const {}]) async {
     final Database db = await DBProvider.db.database;
 
     List<String> whereParams = [];
@@ -178,6 +185,7 @@ class Handle {
         "address": address,
         "country": country,
         "color": color,
+        "defaultPhone": defaultPhone,
         "uncanonicalizedId": uncanonicalizedId,
       };
 }

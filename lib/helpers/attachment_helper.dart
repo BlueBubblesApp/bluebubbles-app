@@ -1,23 +1,35 @@
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:typed_data';
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/simple_vcard_parser.dart';
+import 'package:contacts_service/contacts_service.dart';
+import 'package:exif/exif.dart';
+import 'package:flutter_native_image/flutter_native_image.dart';
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:connectivity/connectivity.dart';
-import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
+import 'package:image/image.dart' as img;
 import 'package:image_gallery_saver/image_gallery_saver.dart';
-import 'package:image_size_getter/image_size_getter.dart' as IMG;
+import 'package:image_size_getter/file_input.dart';
+import 'package:image_size_getter/image_size_getter.dart' as isg;
 import 'package:permission_handler/permission_handler.dart';
-import 'package:vcard_parser/vcard_parser.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
+
+class AppleLocation {
+  double? longitude;
+  double? latitude;
+  AppleLocation({required this.latitude, required this.longitude});
+}
 
 class AttachmentHelper {
-  static String createAppleLocation(double longitude, double latitude, {iosVersion = "13.4.1"}) {
+  static String createAppleLocation(double? longitude, double? latitude, {iosVersion = "13.4.1"}) {
     List<String> lines = [
       "BEGIN:VCARD",
       "VERSION:3.0",
@@ -33,21 +45,20 @@ class AttachmentHelper {
     return lines.join("\n");
   }
 
-  static Map<String, double> parseAppleLocation(String appleLocation) {
+  static AppleLocation parseAppleLocation(String appleLocation) {
     List<String> lines = appleLocation.split("\n");
-    var emptyLocation = {'longitude': null, 'latitude': null};
 
     try {
-      String url;
+      String? url;
       for (var i in lines) {
         if (i.contains("URL:") || i.contains("URL;")) {
           url = i;
         }
       }
 
-      if (url == null) return emptyLocation;
+      if (url == null) return AppleLocation(latitude: null, longitude: null);
 
-      String query;
+      String? query;
       List<String> opts = ["&q=", "&ll="];
       for (var i in opts) {
         if (url.contains(i)) {
@@ -58,76 +69,80 @@ class AttachmentHelper {
         }
       }
 
-      if (query == null) return emptyLocation;
+      if (query == null) return AppleLocation(latitude: null, longitude: null);
       if (query.contains("&")) {
         query = query.split("&").first;
       }
 
       if (query.contains("\\")) {
-        return {
-          "longitude": double.tryParse((query.split("\\,")[0])),
-          "latitude": double.tryParse(query.split("\\,")[1])
-        };
+        return AppleLocation(
+            latitude: double.tryParse(query.split("\\,")[1]), longitude: double.tryParse(query.split("\\,")[0]));
       } else {
-        return {"longitude": double.tryParse((query.split(",")[0])), "latitude": double.tryParse(query.split(",")[1])};
+        return AppleLocation(
+            latitude: double.tryParse(query.split(",")[1]), longitude: double.tryParse(query.split(",")[0]));
       }
     } catch (ex) {
-      debugPrint("Faled to parse location!");
+      debugPrint("Failed to parse location!");
       debugPrint(ex.toString());
-      return emptyLocation;
+      return AppleLocation(latitude: null, longitude: null);
     }
   }
 
   static Contact parseAppleContact(String appleContact) {
-    Map<String, dynamic> _contact = VcardParser(appleContact).parse();
-    debugPrint(_contact.toString());
+    VCard _contact = VCard(appleContact);
+    _contact.printLines();
 
     Contact contact = Contact();
-    if (_contact.containsKey("N") && _contact["N"].toString().isNotEmpty) {
-      String firstName = (_contact["N"] + " ").split(";")[1];
-      String lastName = _contact["N"].split(";")[0];
-      contact.displayName = firstName + " " + lastName;
-    } else if (_contact.containsKey("FN")) {
-      contact.displayName = _contact["FN"];
-    }
+    contact.displayName = _contact.formattedName;
 
     List<Item> emails = <Item>[];
     List<Item> phones = <Item>[];
-    _contact.keys.forEach((String key) {
-      if (key.contains("EMAIL")) {
-        String label = 'HOME';
+    List<PostalAddress> addresses = <PostalAddress>[];
 
-        // Try to parse out the type of email
-        if (key.contains('type=')) {
-          List<String> splitData = key.split('type=');
-          if (splitData.length >= 2) {
-            label = splitData[2].replaceAll(';', '');
-          }
-        }
-        
-        emails.add(
-          Item(
-            value: (_contact[key] as Map<String, dynamic>)["value"],
-            label: label,
-          ),
-        );
-      } else if (key.contains("TEL")) {
-        phones.add(
-          Item(
-            label: "HOME",
-            value: (_contact[key] as Map<String, dynamic>)["value"],
-          ),
-        );
+    // Parse emails from results
+    for (dynamic email in _contact.typedEmail) {
+      String label = "HOME";
+      if (email.length > 1 && email[1].length > 0 && email[1][1] != null) {
+        label = email[1][1] ?? label;
       }
-    });
-    contact.emails = emails;
+
+      emails.add(new Item(value: email[0], label: label));
+    }
+
+    // Parse phone numbers from results
+    for (dynamic phone in _contact.typedTelephone) {
+      String label = "HOME";
+      if (phone.length > 1 && phone[1].length > 0 && phone[1][1] != null) {
+        label = phone[1][1] ?? label;
+      }
+
+      phones.add(new Item(value: phone[0], label: label));
+    }
+
+    // Parse addresses numbers from results
+    for (dynamic address in _contact.typedAddress) {
+      String street = address[0].length > 0 ? address[0][0] : '';
+      String city = address[0].length > 1 ? address[0][1] : '';
+      String state = address[0].length > 2 ? address[0][2] : '';
+      String country = address[0].length > 3 ? address[0][3] : '';
+
+      String label = "HOME";
+      if (address.length > 1 && address[1].length > 0 && address[1][1] != null) {
+        label = address[1][1] ?? label;
+      }
+
+      addresses.add(new PostalAddress(label: label, street: street, city: city, region: state, country: country));
+    }
+
     contact.phones = phones;
+    contact.postalAddresses = addresses;
+    contact.emails = emails;
 
     return contact;
   }
 
   static String getPreviewPath(Attachment attachment) {
-    String fileName = attachment.transferName;
+    String fileName = attachment.transferName ?? randomString(8);
     String appDocPath = SettingsManager().appDocDir.path;
     String pathName = AttachmentHelper.getAttachmentPath(attachment);
 
@@ -151,48 +166,39 @@ class AttachmentHelper {
     double width = attachment.width?.toDouble() ?? 0.0;
     double factor = attachment.height?.toDouble() ?? 0.0;
     if (attachment.width == null || attachment.width == 0 || attachment.height == null || attachment.height == 0) {
-      width = MediaQuery.of(context).size.width;
+      width = context.width;
       factor = 2;
     }
 
     return (width / factor) / width;
   }
 
-  static Future<void> saveToGallery(BuildContext context, File file) async {
-    if (await Permission.storage.request().isGranted) {
-      await ImageGallerySaver.saveFile(file.absolute.path);
-      FlutterToast(context).showToast(
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(25.0),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(25.0),
-                color: Theme.of(context).accentColor.withOpacity(0.1),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.check,
-                    color: Theme.of(context).textTheme.bodyText1.color,
-                  ),
-                  SizedBox(
-                    width: 12.0,
-                  ),
-                  Text(
-                    "Saved to gallery",
-                    style: Theme.of(context).textTheme.bodyText1,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
+  static Future<void> saveToGallery(BuildContext context, File? file) async {
+    Function showDeniedSnackbar = (String? err) {
+      showSnackbar("Save Failed", err ?? "Failed to save attachment!");
+    };
+
+    if (file == null) {
+      return showSnackbar("Save Failed", "No file to save!");
     }
+
+    var hasPermissions = await Permission.storage.isGranted;
+    var permDenied = await Permission.storage.isPermanentlyDenied;
+
+    // If we don't have the permission, but it isn't permanently denied, prompt the user
+    if (!hasPermissions && !permDenied) {
+      PermissionStatus response = await Permission.storage.request();
+      hasPermissions = response.isGranted;
+      permDenied = response.isPermanentlyDenied;
+    }
+
+    // If we still don't have the permission or we are permanently denied, show the snackbar error
+    if (!hasPermissions || permDenied) {
+      return showDeniedSnackbar("BlueBubbles does not have the required permissions!");
+    }
+
+    await ImageGallerySaver.saveFile(file.absolute.path);
+    showSnackbar('Success', 'Saved attachment!');
   }
 
   static String getBaseAttachmentsPath() {
@@ -201,7 +207,7 @@ class AttachmentHelper {
   }
 
   static String getAttachmentPath(Attachment attachment) {
-    String fileName = attachment.transferName;
+    String fileName = attachment.transferName ?? randomString(8);
     return "${getBaseAttachmentsPath()}/${attachment.guid}/$fileName";
   }
 
@@ -211,23 +217,24 @@ class AttachmentHelper {
     return !(FileSystemEntity.typeSync(pathName) == FileSystemEntityType.notFound);
   }
 
-  static dynamic getContent(Attachment attachment, {String path}) {
+  static dynamic getContent(Attachment attachment, {String? path}) {
     String appDocPath = SettingsManager().appDocDir.path;
     String pathName = path ?? "$appDocPath/attachments/${attachment.guid}/${attachment.transferName}";
-
-    if (SocketManager().attachmentDownloaders.containsKey(attachment.guid)) {
-      return SocketManager().attachmentDownloaders[attachment.guid];
-    } else if (FileSystemEntity.typeSync(pathName) != FileSystemEntityType.notFound) {
+    if (Get.find<AttachmentDownloadService>().downloaders.contains(attachment.guid)) {
+      return Get.find<AttachmentDownloadController>(tag: attachment.guid);
+    } else if (FileSystemEntity.typeSync(pathName) != FileSystemEntityType.notFound ||
+        attachment.guid == "redacted-mode-demo-attachment" ||
+        attachment.guid!.contains("theme-selector")) {
       return File(pathName);
-    } else if (attachment.mimeType == null || attachment.mimeType.startsWith("text/")) {
-      return AttachmentDownloader(attachment);
+    } else if (attachment.mimeType == null || attachment.mimeType!.startsWith("text/")) {
+      return Get.put(AttachmentDownloadController(attachment: attachment), tag: attachment.guid);
     } else {
       return attachment;
     }
   }
 
   static IconData getIcon(String mimeType) {
-    if (mimeType == null) return Icons.open_in_new;
+    if (mimeType.isEmpty) return Icons.open_in_new;
     if (mimeType == "application/pdf") {
       return Icons.picture_as_pdf;
     } else if (mimeType == "application/zip") {
@@ -250,55 +257,283 @@ class AttachmentHelper {
     // If auto-download is enabled
     // and (only wifi download is disabled or
     // only wifi download enabled, and we have wifi)
-    return (SettingsManager().settings.autoDownload &&
-        (!SettingsManager().settings.onlyWifiDownload ||
-            (SettingsManager().settings.onlyWifiDownload && status == ConnectivityResult.wifi)));
+    return (SettingsManager().settings.autoDownload.value &&
+        (!SettingsManager().settings.onlyWifiDownload.value ||
+            (SettingsManager().settings.onlyWifiDownload.value && status == ConnectivityResult.wifi)));
   }
 
-  static Future<void> setDimensions(Attachment attachment, {Uint8List data}) async {
-    // Handle break cases
-    if (attachment.width != null && attachment.height != null && attachment.height != 0 && attachment.width != 0)
-      return;
-    if (attachment.mimeType == null) return;
+  static void redownloadAttachment(Attachment attachment, {Function()? onComplete, Function()? onError}) {
+    File file = new File(attachment.getPath());
+    File compressedFile = new File(attachment.getCompressedPath());
+
+    // If neither exist, don't do anything
+    bool fExists = file.existsSync();
+    bool cExists = compressedFile.existsSync();
+    if (!fExists && !cExists) return;
+
+    // Delete them if they exist
+    if (fExists) file.deleteSync();
+    if (cExists) compressedFile.deleteSync();
+
+    // Redownload the attachment
+    Get.put(AttachmentDownloadController(attachment: attachment, onComplete: onComplete, onError: onError), tag: attachment.guid);
+  }
+
+  static Future<Uint8List?> getVideoThumbnail(String filePath) async {
+    File cachedFile = new File("$filePath.thumbnail");
+    if (cachedFile.existsSync()) {
+      return cachedFile.readAsBytes();
+    }
+    Uint8List? thumbnail = await VideoThumbnail.thumbnailData(
+      video: filePath,
+      imageFormat: ImageFormat.JPEG,
+      quality: SettingsManager().compressionQuality,
+    );
+    if (thumbnail != null) {
+      cachedFile.writeAsBytes(thumbnail);
+    }
+    return thumbnail;
+  }
+
+  static Future<Size> getImageSizingFallback(String filePath) async {
+    try {
+      isg.Size size = isg.ImageSizeGetter.getSize(FileInput(File(filePath)));
+      return Size(size.width.toDouble(), size.height.toDouble());
+    } catch (ex) {
+      return Size(0, 0);
+    }
+  }
+
+  static Future<Size> getImageSizing(String filePath, {ImageProperties? properties}) async {
+    try {
+      ImageProperties size = properties ?? await FlutterNativeImage.getImageProperties(filePath);
+      double width = (size.width ?? 0).toDouble();
+      double height = (size.height ?? 0).toDouble();
+
+      if (width == 0 || height == 0) {
+        return AttachmentHelper.getImageSizingFallback(filePath);
+      }
+
+      return Size(width, height);
+    } catch (_) {
+      return AttachmentHelper.getImageSizingFallback(filePath);
+    }
+  }
+
+  static String getTempPath() {
+    String dir = SettingsManager().appDocDir.path;
+    Directory tempAssets = Directory("$dir/tempAssets");
+    if (!tempAssets.existsSync()) {
+      tempAssets.createSync();
+    }
+
+    return tempAssets.absolute.path;
+  }
+
+  static File saveTempFile(String filename, Uint8List bytes) {
+    String tempPath = AttachmentHelper.getTempPath();
+    File newFile = new File("$tempPath/$filename");
+    newFile.writeAsBytesSync(bytes, mode: FileMode.write);
+    return newFile;
+  }
+
+  static File tryCopyTempFile(File oldFile) {
+    // Pull the filename from the Uri. If we can't, just return the original file
+    String? ogFilename = getFilenameFromUri(oldFile.absolute.path);
+    if (ogFilename == null) return oldFile;
+
+    // Build the new path
+    String newPath = '${AttachmentHelper.getTempPath()}/$ogFilename';
+
+    // If the paths are the same, return the original file
+    if (oldFile.absolute.path == newPath) return oldFile;
+
+    // Otherwise, copy the file to the new path
+    return oldFile.copySync(newPath);
+  }
+
+  static Future<Uint8List?> compressAttachment(Attachment attachment, String filePath,
+      {int? qualityOverride, bool getActualPath = true}) async {
+    if (attachment.mimeType == null) return null;
+    if (attachment.metadata == null) {
+      attachment.metadata = {};
+    }
 
     // Make sure the attachment is an image or video
-    String mimeStart = attachment.mimeType.split("/").first;
-    if (!["image", "video"].contains(mimeStart)) return;
+    String mimeStart = attachment.mimeType!.split("/").first;
+    if (!["image", "video"].contains(mimeStart)) return null;
 
-    Uint8List previewData = data;
-    if (data == null) {
-      previewData = new File(AttachmentHelper.getAttachmentPath(attachment)).readAsBytesSync();
+    // If we want the actual path, get it
+    if (getActualPath) {
+      filePath = AttachmentHelper.getAttachmentPath(attachment);
     }
 
-    if (attachment.mimeType == "image/gif") {
-      Size size = getGifDimensions(previewData);
+    File originalFile = new File(filePath);
 
-      if (size.width != 0 && size.height != 0) {
-        attachment.width = size.width.toInt();
-        attachment.height = size.height.toInt();
+    // If we don't get the actual path, it's a dummy "attachment" and we need to copy it locally
+    if (!getActualPath) {
+      originalFile = tryCopyTempFile(originalFile);
+      filePath = originalFile.absolute.path;
+    }
+
+    // Check if the compressed file exists, and return it if it does
+    int quality = qualityOverride ?? SettingsManager().compressionQuality;
+    File cachedFile = new File("$filePath.${quality.toString()}.compressed");
+    if (cachedFile.existsSync() && cachedFile.statSync().size != 0) {
+      return cachedFile.readAsBytes();
+    }
+
+    // Get dimensions and preview images
+    Uint8List? previewData;
+    if (attachment.mimeType == "image/gif") {
+      // For GIFs, just load the entire thing
+      previewData = originalFile.readAsBytesSync();
+
+      try {
+        Size size = getGifDimensions(previewData);
+        if (size.width != 0 && size.height != 0) {
+          attachment.width = size.width.toInt();
+          attachment.height = size.height.toInt();
+        }
+      } catch (ex) {
+        debugPrint('Failed to get GIF dimensions! Error: ${ex.toString()}');
       }
     } else if (mimeStart == "image") {
-      IMG.Size size = IMG.ImageSizeGetter.getSize(IMG.MemoryInput(previewData));
-      if (size.width != 0 && size.height != 0) {
-        attachment.width = size.width;
-        attachment.height = size.height;
+      // For images, load properties
+      try {
+        ImageProperties props = await FlutterNativeImage.getImageProperties(filePath);
+        Size size = await getImageSizing(filePath, properties: props);
+        if (size.width != 0 && size.height != 0) {
+          attachment.width = size.width.toInt();
+          attachment.height = size.height.toInt();
+        }
+
+        String orientation = props.orientation.toString();
+        if (orientation == '0') {
+          attachment.metadata!['orientation'] = 'landscape';
+        } else if (orientation == '1') {
+          attachment.metadata!['orientation'] = 'portrait';
+        }
+      } catch (ex) {
+        debugPrint('Failed to get Image Properties! Error: ${ex.toString()}');
       }
     } else if (mimeStart == "video") {
-      IMG.Size size = await getVideoDimensions(attachment);
-      if (size.width != 0 && size.height != 0) {
-        attachment.width = size.width;
-        attachment.height = size.height;
+      // For videos, load the thumbnail
+      try {
+        previewData = await getVideoThumbnail(filePath);
+        Size size = await getVideoDimensions(filePath);
+        if (size.width != 0 && size.height != 0) {
+          attachment.width = size.width.toInt();
+          attachment.height = size.height.toInt();
+        }
+      } catch (ex) {
+        debugPrint('Failed to get video thumbnail! Error: ${ex.toString()}');
       }
+    }
+
+    // Map the EXIF to the metadata
+    try {
+      Map<String, IfdTag> exif = await readExifFromFile(new File(filePath));
+      for (var item in exif.entries) {
+        attachment.metadata![item.key] = item.value.printable;
+      }
+    } catch (ex) {
+      debugPrint('Failed to read EXIF data: ${ex.toString()}');
+    }
+
+    // If the preview data is null, compress the file
+    if (previewData == null) {
+      // Compress the file
+      ReceivePort receivePort = ReceivePort();
+      debugPrint("Spawning isolate...");
+      // if we don't have a valid width use the max image width
+      // if the image width is less than the max width already don't bother
+      // compressing it because it is already low quality
+      // otherwise use the current width multiplied by preview quality
+      late int compressWidth;
+      if (attachment.width == null) {
+        compressWidth = getDeviceWidth() ~/ 2;
+      } else if (attachment.width! < getDeviceWidth() ~/ 2) {
+        compressWidth = attachment.width!;
+      } else {
+        compressWidth = (attachment.width! * quality * 0.01).toInt();
+        // make sure the compressed image will not be unnecessarily shrunken
+        if (compressWidth < getDeviceWidth() ~/ 2) {
+          compressWidth = getDeviceWidth() ~/ 2;
+        }
+      }
+      await Isolate.spawn(
+          resizeIsolate,
+          ResizeArgs(filePath, receivePort.sendPort, compressWidth),
+          errorsAreFatal: false,
+      );
+
+      var received = await receivePort.first;
+      debugPrint("Compressing via ${received is String ? "FlutterNativeImage" : "image"} plugin");
+      if (received is String) {
+        File compressedFile = await FlutterNativeImage.compressImage(filePath,
+            quality: quality,
+            targetWidth: attachment.width == null ? 0 : attachment.width!,
+            targetHeight: attachment.height == null ? 0 : attachment.height!);
+
+        // Read the compressed data, then cache it
+        previewData = await compressedFile.readAsBytes();
+      } else {
+        try {
+          previewData = Uint8List.fromList(img.encodeNamedImage(received as img.Image, filePath.split("/").last) ?? []);
+        } catch (e) {
+          File compressedFile = await FlutterNativeImage.compressImage(filePath,
+              quality: quality,
+              targetWidth: attachment.width == null ? 0 : attachment.width!,
+              targetHeight: attachment.height == null ? 0 : attachment.height!);
+
+          // Read the compressed data, then cache it
+          previewData = await compressedFile.readAsBytes();
+        }
+      }
+    }
+    debugPrint("Got previewData: ${previewData.isNotEmpty}");
+    // As long as we have preview data now, save it
+    cachedFile.writeAsBytes(previewData);
+
+    // If we should update the attachment data, do it right before we return, no awaiting
+    attachment.update();
+
+    // Return the bytes
+    return previewData;
+  }
+
+  static void resizeIsolate(ResizeArgs args) {
+    try {
+      debugPrint("Decoding image...");
+      img.Image image = img.decodeImage(File(args.path).readAsBytesSync())!;
+      debugPrint("Resizing image...");
+      img.Image resized = img.copyResize(image, width: args.width);
+      args.sendPort.send(resized);
+    } catch (e) {
+      e.printError();
+      args.sendPort.send("failed");
     }
   }
 
-  static Future<void> redownloadAttachment(Attachment attachment, {Function() onComplete, Function() onError}) async {
-    // 1. Delete the old file
-    File file = new File(attachment.getPath());
-    if (!file.existsSync()) return;
-    file.deleteSync();
+  static double getAspectRatio(int? height, int? width, {BuildContext? context}) {
+    double aspectRatio = 0.78;
+    int aHeight = height ?? context?.height.toInt() ?? 0;
+    int aWidth = width ?? context?.width.toInt() ?? 0;
 
-    // 2. Redownload the attachment
-    AttachmentDownloader(attachment, onComplete: onComplete, onError: onError);
+    // If we somehow end up with 0 for either the height or width, return the default (16:9)
+    if (aHeight == 0 || aWidth == 0) {
+      return aspectRatio;
+    }
+
+    return (aWidth / aHeight).abs();
   }
+}
+
+class ResizeArgs {
+  final String path;
+  final SendPort sendPort;
+  final int width;
+
+  ResizeArgs(this.path, this.sendPort, this.width);
 }

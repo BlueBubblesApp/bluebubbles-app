@@ -1,4 +1,6 @@
-Map<String, String> codeMap = {};
+import 'package:collection/collection.dart';
+
+List<CountryCode> countryCodes = [];
 
 List<Map<String, String>> codes = [
   {
@@ -1238,11 +1240,25 @@ List<Map<String, String>> codes = [
   },
 ];
 
-Map<String, String> getCodeMap() {
-  if (codeMap.length > 0) return codeMap;
-  for (var item in codes) {
-    codeMap[item["code"]] = item["dial_code"];
+List<CountryCode> getCountryCodes() {
+  if (countryCodes.length > 0) return countryCodes;
+  for (Map<String, String> item in codes) {
+    if (countryCodes.firstWhereOrNull((element) => element.code == item['code']) == null) {
+      countryCodes.add(CountryCode(name: item["name"]!, code: item["code"]!, dialCode: item["dial_code"]!));
+    }
   }
 
-  return codeMap;
+  return countryCodes;
+}
+
+class CountryCode {
+  String name;
+  String code;
+  String dialCode;
+
+  CountryCode({
+    required this.name,
+    required this.code,
+    required this.dialCode,
+  });
 }

@@ -1,91 +1,61 @@
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/themes.dart';
+import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:flutter/gestures.dart';
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/event_dispatcher.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-class AboutPanel extends StatefulWidget {
-  AboutPanel({Key key}) : super(key: key);
-
-  @override
-  _AboutPanelState createState() => _AboutPanelState();
-}
-
-class _AboutPanelState extends State<AboutPanel> {
-  Brightness brightness;
-  bool gotBrightness = false;
-  Color previousBackgroundColor;
-
-  @override
-  void initState() {
-    super.initState();
-
-    // Listen for any incoming events
-    EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (!event.containsKey("type")) return;
-
-      if (event["type"] == 'theme-update' && this.mounted) {
-        setState(() {
-          gotBrightness = false;
-        });
-      }
-    });
-  }
-
-  void loadBrightness() {
-    Color now = Theme.of(context).backgroundColor;
-    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
-    if (!themeChanged && gotBrightness) return;
-
-    previousBackgroundColor = now;
-    if (this.context == null) {
-      brightness = Brightness.light;
-      gotBrightness = true;
-      return;
-    }
-
-    bool isDark = now.computeLuminance() < 0.179;
-    brightness = isDark ? Brightness.dark : Brightness.light;
-    gotBrightness = true;
-    if (this.mounted) setState(() {});
-  }
+class AboutPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    loadBrightness();
+    final iosSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
+    final materialSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
+    Color headerColor;
+    Color tileColor;
+    if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance()
+        || SettingsManager().settings.skin.value != Skins.iOS) {
+      headerColor = Theme.of(context).accentColor;
+      tileColor = Theme.of(context).backgroundColor;
+    } else {
+      headerColor = Theme.of(context).backgroundColor;
+      tileColor = Theme.of(context).accentColor;
+    }
+    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
+      tileColor = headerColor;
+    }
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor,
+        systemNavigationBarColor: headerColor, // navigation bar color
+        systemNavigationBarIconBrightness:
+        headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
-        // extendBodyBehindAppBar: true,
-        backgroundColor: Theme.of(context).backgroundColor,
+        backgroundColor: SettingsManager().settings.skin.value != Skins.iOS ? tileColor : headerColor,
         appBar: PreferredSize(
-          preferredSize: Size(MediaQuery.of(context).size.width, 80),
+          preferredSize: Size(context.width, 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
-                brightness: brightness,
+                brightness: ThemeData.estimateBrightnessForColor(headerColor),
                 toolbarHeight: 100.0,
                 elevation: 0,
-                leading: IconButton(
-                  icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
-                      color: Theme.of(context).primaryColor),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
-                backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
+                leading: buildBackButton(context),
+                backgroundColor: headerColor.withOpacity(0.5),
                 title: Text(
                   "About & Links",
                   style: Theme.of(context).textTheme.headline1,
@@ -101,38 +71,99 @@ class _AboutPanelState extends State<AboutPanel> {
             SliverList(
               delegate: SliverChildListDelegate(
                 <Widget>[
-                  Container(padding: EdgeInsets.only(top: 5.0)),
+                  Container(
+                      height: SettingsManager().settings.skin.value == Skins.iOS ? 30 : 40,
+                      alignment: Alignment.bottomLeft,
+                      decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
+                        color: headerColor,
+                        border: Border(
+                            bottom: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
+                        ),
+                      ) : BoxDecoration(
+                        color: tileColor,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0, left: 15),
+                        child: Text("Links".psCapitalize, style: SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
+                      )
+                  ),
+                  Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
                   SettingsTile(
-                    title: "Donations",
+                    backgroundColor: tileColor,
+                    title: "Support Us",
                     onTap: () {
-                      MethodChannelInterface().invokeMethod("open-link", {"link": "https://bluebubbles.app/donate/"});
+                      MethodChannelInterface().invokeMethod("open-link", {"link": "https://bluebubbles.app/donate/", "forceBrowser": false});
                     },
-                    trailing: Icon(
-                      Icons.attach_money,
-                      color: Theme.of(context).primaryColor,
+                    leading: SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.money_dollar_circle,
+                      materialIcon: Icons.attach_money,
+                    ),
+                  ),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
                     ),
                   ),
                   SettingsTile(
+                    backgroundColor: tileColor,
                     title: "Website",
                     onTap: () {
-                      MethodChannelInterface().invokeMethod("open-link", {"link": "https://bluebubbles.app/"});
+                      MethodChannelInterface().invokeMethod("open-link", {"link": "https://bluebubbles.app/", "forceBrowser": false});
                     },
-                    trailing: Icon(
-                      Icons.link,
-                      color: Theme.of(context).primaryColor,
+                    leading: SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.globe,
+                      materialIcon: Icons.language,
+                    ),
+                  ),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
                     ),
                   ),
                   SettingsTile(
+                    backgroundColor: tileColor,
                     title: "Source Code",
                     onTap: () {
-                      MethodChannelInterface().invokeMethod("open-link", {"link": "https://github.com/BlueBubblesApp"});
+                      MethodChannelInterface().invokeMethod("open-link", {"link": "https://github.com/BlueBubblesApp", "forceBrowser": false});
                     },
-                    trailing: Icon(
-                      Icons.code,
-                      color: Theme.of(context).primaryColor,
+                    leading: SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.chevron_left_slash_chevron_right,
+                      materialIcon: Icons.code,
+                    ),
+                  ),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
                     ),
                   ),
                   SettingsTile(
+                    backgroundColor: tileColor,
+                    title: "Join Our Discord",
+                    onTap: () {
+                      MethodChannelInterface().invokeMethod("open-link", {"link": "https://discord.gg/hbx7EhNFjp", "forceBrowser": false});
+                    },
+                    leading: SvgPicture.asset(
+                      "assets/icon/discord.svg",
+                      color: HexColor("#7289DA"),
+                      alignment: Alignment.centerRight,
+                      width: 32,
+                    ),
+                  ),
+                  SettingsHeader(
+                      headerColor: headerColor,
+                      tileColor: tileColor,
+                      iosSubtitle: iosSubtitle,
+                      materialSubtitle: materialSubtitle,
+                      text: "Info"
+                  ),
+                  SettingsTile(
+                    backgroundColor: tileColor,
                     title: "Changelog",
                     onTap: () async {
                       String changelog =
@@ -155,16 +186,20 @@ class _AboutPanelState extends State<AboutPanel> {
                               ).copyWith(
                                 h1: Theme.of(context)
                                     .textTheme
-                                    .headline1
+                                    .headline1!
                                     .copyWith(fontSize: 20, fontWeight: FontWeight.bold),
                                 h2: Theme.of(context)
                                     .textTheme
-                                    .headline2
+                                    .headline2!
                                     .copyWith(fontSize: 18, fontWeight: FontWeight.bold),
                                 h3: Theme.of(context)
                                     .textTheme
-                                    .headline3
-                                    .copyWith(fontSize: 17, fontWeight: FontWeight.bold),
+                                    .headline3!
+                                    .copyWith(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.bold,
+                                      color: Theme.of(context).textTheme.headline1?.color,
+                                ),
                               ),
                             ),
                             backgroundColor: Theme.of(context).backgroundColor,
@@ -179,24 +214,20 @@ class _AboutPanelState extends State<AboutPanel> {
                         ),
                       );
                     },
-                    trailing: Icon(
-                      Icons.code,
-                      color: Theme.of(context).primaryColor,
+                    leading: SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.doc_plaintext,
+                      materialIcon: Icons.article,
+                    ),
+                  ),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
                     ),
                   ),
                   SettingsTile(
-                    title: "Join Our Discord",
-                    onTap: () {
-                      MethodChannelInterface().invokeMethod("open-link", {"link": "https://discord.gg/hbx7EhNFjp"});
-                    },
-                    trailing: SvgPicture.asset(
-                      "assets/icon/discord.svg",
-                      color: HexColor("#7289DA"),
-                      alignment: Alignment.centerRight,
-                      width: 30,
-                    ),
-                  ),
-                  SettingsTile(
+                    backgroundColor: tileColor,
                     title: "Developers",
                     onTap: () {
                       showDialog(
@@ -209,8 +240,8 @@ class _AboutPanelState extends State<AboutPanel> {
                           ),
                           backgroundColor: Theme.of(context).accentColor,
                           content: SizedBox(
-                            width: MediaQuery.of(context).size.width * 3 / 5,
-                            height: MediaQuery.of(context).size.height * 1 / 9,
+                            width: context.width * 3 / 5,
+                            height: context.height * 1 / 9,
                             child: ListView(
                               physics: AlwaysScrollableScrollPhysics(
                                 parent: BouncingScrollPhysics(),
@@ -219,9 +250,40 @@ class _AboutPanelState extends State<AboutPanel> {
                                 Container(
                                   alignment: Alignment.center,
                                   padding: EdgeInsets.all(8),
-                                  child: Text(
-                                    "Zach",
-                                    style: Theme.of(context).textTheme.bodyText1,
+                                  child: RichText(
+                                    text: TextSpan(
+                                        text: "Zach",
+                                        style: TextStyle(decoration: TextDecoration.underline, color: Colors.blue),
+                                        recognizer: TapGestureRecognizer()..onTap = () {
+                                          MethodChannelInterface().invokeMethod("open-link", {"link": "https://github.com/zlshames", "forceBrowser": false});
+                                        }
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  alignment: Alignment.center,
+                                  padding: EdgeInsets.all(8),
+                                  child: RichText(
+                                    text: TextSpan(
+                                        text: "Tanay",
+                                        style: TextStyle(decoration: TextDecoration.underline, color: Colors.blue),
+                                        recognizer: TapGestureRecognizer()..onTap = () {
+                                          MethodChannelInterface().invokeMethod("open-link", {"link": "https://github.com/tneotia", "forceBrowser": false});
+                                        }
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  alignment: Alignment.center,
+                                  padding: EdgeInsets.all(8),
+                                  child: RichText(
+                                    text: TextSpan(
+                                        text: "Joel",
+                                        style: TextStyle(decoration: TextDecoration.underline, color: Colors.blue),
+                                        recognizer: TapGestureRecognizer()..onTap = () {
+                                          MethodChannelInterface().invokeMethod("open-link", {"link": "https://github.com/jjoelj", "forceBrowser": false});
+                                        }
+                                    ),
                                   ),
                                 ),
                                 Container(
@@ -236,10 +298,10 @@ class _AboutPanelState extends State<AboutPanel> {
                             ),
                           ),
                           actions: [
-                            FlatButton(
+                            TextButton(
                               child: Text(
                                 "Close",
-                                style: Theme.of(context).textTheme.bodyText1.copyWith(
+                                style: Theme.of(context).textTheme.bodyText1!.copyWith(
                                       color: Theme.of(context).primaryColor,
                                     ),
                               ),
@@ -249,28 +311,95 @@ class _AboutPanelState extends State<AboutPanel> {
                         ),
                       );
                     },
-                    trailing: Icon(
-                      Icons.info_outline,
-                      color: Theme.of(context).primaryColor,
+                    leading: SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.person_alt,
+                      materialIcon: Icons.person,
+                    ),
+                  ),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
                     ),
                   ),
                   SettingsTile(
+                    backgroundColor: tileColor,
                     title: "About",
                     onTap: () {
-                      showAboutDialog(
+                      showDialog<void>(
                         context: context,
-                        applicationName: "BlueBubbles",
-                        applicationIcon: Image.asset(
-                          "assets/icon/icon.png",
-                          width: 30,
-                          height: 30,
-                        ),
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            scrollable: true,
+                            content: ListBody(
+                              children: <Widget>[
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: <Widget>[
+                                    IconTheme(data: Theme.of(context).iconTheme, child: Image.asset(
+                                      "assets/icon/icon.png",
+                                      width: 30,
+                                      height: 30,
+                                    ),),
+                                    Expanded(
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                                        child: ListBody(
+                                          children: <Widget>[
+                                            Text("BlueBubbles", style: Theme.of(context).textTheme.headline5),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            actions: <Widget>[
+                              TextButton(
+                                child: Text(MaterialLocalizations.of(context).viewLicensesButtonLabel),
+                                onPressed: () {
+                                  Navigator.of(context).push(MaterialPageRoute<void>(
+                                    builder: (BuildContext context) => Theme(
+                                      data: whiteLightTheme,
+                                      child: LicensePage(
+                                        applicationName: "BlueBubbles",
+                                        applicationIcon: Image.asset(
+                                          "assets/icon/icon.png",
+                                          width: 30,
+                                          height: 30,
+                                        ),
+                                      ),
+                                    ),
+                                  ));
+                                },
+                              ),
+                              TextButton(
+                                child: Text(MaterialLocalizations.of(context).closeButtonLabel),
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                              ),
+                            ],
+                          );
+                        },
                       );
                     },
-                    trailing: Icon(
-                      Icons.info_outline,
-                      color: Theme.of(context).primaryColor,
+                    leading: SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.info_circle,
+                      materialIcon: Icons.info,
                     ),
+                  ),
+                  Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
+                  Container(
+                    height: 30,
+                    decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
+                      color: headerColor,
+                      border: Border(
+                          top: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
+                      ),
+                    ) : null,
                   ),
                 ],
               ),

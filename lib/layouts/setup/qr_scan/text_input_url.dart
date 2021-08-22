@@ -6,9 +6,10 @@ import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class TextInputURL extends StatefulWidget {
-  TextInputURL({Key key, @required this.onConnect, @required this.onClose}) : super(key: key);
+  TextInputURL({Key? key, required this.onConnect, required this.onClose}) : super(key: key);
   final Function() onConnect;
   final Function() onClose;
 
@@ -18,9 +19,9 @@ class TextInputURL extends StatefulWidget {
 
 class _TextInputURLState extends State<TextInputURL> {
   bool connecting = false;
-  TextEditingController urlController;
-  TextEditingController passwordController;
-  String error;
+  late TextEditingController urlController;
+  late TextEditingController passwordController;
+  String? error;
 
   @override
   void initState() {
@@ -32,15 +33,15 @@ class _TextInputURLState extends State<TextInputURL> {
   void connect(String url, String password) async {
     SocketManager().closeSocket(force: true);
     Settings copy = SettingsManager().settings;
-    String addr = getServerAddress(address: url);
+    String? addr = getServerAddress(address: url);
     if (addr == null) {
       error = "Server address is invalid!";
       if (this.mounted) setState(() {});
       return;
     }
 
-    copy.serverAddress = addr;
-    copy.guidAuthKey = password;
+    copy.serverAddress.value = addr;
+    copy.guidAuthKey.value = password;
     await SettingsManager().saveSettings(copy);
     try {
       await SocketManager().startSocketIO(forceNewConnection: true, catchException: false);
@@ -57,7 +58,7 @@ class _TextInputURLState extends State<TextInputURL> {
         if (this.mounted) setState(() {});
         return;
       }
-      FCMData copy = SettingsManager().fcmData;
+      FCMData? copy = SettingsManager().fcmData;
       Map<String, dynamic> data = _data["data"];
       copy = FCMData.fromMap(data);
 
@@ -98,15 +99,19 @@ class _TextInputURLState extends State<TextInputURL> {
           ],
         ),
         actions: [
-          FlatButton(
+          TextButton(
             child: Text("OK"),
             onPressed: () {
+              if (urlController.text == "googleplaytest" && passwordController.text == "googleplaytest") {
+                Get.toNamed("/testing-mode");
+                return;
+              }
               connect(urlController.text, passwordController.text);
               connecting = true;
               if (this.mounted) setState(() {});
             },
           ),
-          FlatButton(
+          TextButton(
             child: Text("Cancel"),
             onPressed: widget.onClose,
           )

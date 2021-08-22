@@ -1,19 +1,19 @@
 import 'dart:ui';
 
-import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/scheduled.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 
-List<dynamic> timeOptions = [
+List<List<dynamic>> timeOptions = [
   [300, "5 Minutes"],
   [1800, "30 Minutes"],
   [3600, "1 Hour"],
@@ -24,21 +24,19 @@ List<dynamic> timeOptions = [
 class SchedulePanel extends StatefulWidget {
   final Chat chat;
 
-  SchedulePanel({Key key, this.chat}) : super(key: key);
+  SchedulePanel({Key? key, required this.chat}) : super(key: key);
 
   @override
   _SchedulePanelState createState() => _SchedulePanelState();
 }
 
 class _SchedulePanelState extends State<SchedulePanel> {
-  Chat _chat;
-  String title;
-  TextEditingController messageController;
-  TextEditingController customController;
-  bool customTime;
-  int scheduleSeconds = 300;
-  TimeOfDay messageTime;
-  DateTime messageDate;
+  Chat? _chat;
+  String? title;
+  late TextEditingController messageController;
+  int? scheduleSeconds = 300;
+  TimeOfDay? messageTime;
+  DateTime? messageDate;
   List<String> errors = [];
 
   @override
@@ -56,7 +54,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
     });
   }
 
-  void fetchChatTitle(Chat chat) {
+  void fetchChatTitle(Chat? chat) {
     if (chat == null) return;
 
     getFullChatTitle(chat).then((String title) {
@@ -67,12 +65,12 @@ class _SchedulePanelState extends State<SchedulePanel> {
     });
   }
 
-  void setChat(Chat chat) {
+  void setChat(Chat? chat) {
     if (chat == null) return;
 
-    if (_chat == null || _chat.guid != chat.guid) {
+    if (_chat == null || _chat!.guid != chat.guid) {
       _chat = chat;
-      title = isNullOrEmpty(chat.displayName) ? chat.chatIdentifier : chat.displayName;
+      title = isNullOrEmpty(chat.displayName)! ? chat.chatIdentifier : chat.displayName;
 
       fetchChatTitle(_chat);
     }
@@ -89,7 +87,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
 
     if (scheduleSeconds == -1) {
       if (messageDate != null && messageTime != null) {
-        output = "${messageDate.year}-${messageDate.month}-${messageDate.day} ${messageTime.format(context)}";
+        output = "${messageDate!.year}-${messageDate!.month}-${messageDate!.day} ${messageTime!.format(context)}";
       }
       return "Custom: $output";
     } else {
@@ -101,25 +99,22 @@ class _SchedulePanelState extends State<SchedulePanel> {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor,
+        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarIconBrightness:
+            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
         appBar: PreferredSize(
-          preferredSize: Size(MediaQuery.of(context).size.width, 80),
+          preferredSize: Size(context.width, 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
                 brightness: getBrightness(context),
                 toolbarHeight: 100.0,
                 elevation: 0,
-                leading: IconButton(
-                  icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
-                      color: Theme.of(context).primaryColor),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
+                leading: buildBackButton(context),
                 backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
                 title: Text(
                   "Message Scheduler",
@@ -141,12 +136,12 @@ class _SchedulePanelState extends State<SchedulePanel> {
                   (_chat != null)
                       ? SettingsTile(
                           title: "Selected chat",
-                          subTitle: title,
+                          subtitle: title,
                           trailing: Icon(Icons.timer, color: Theme.of(context).primaryColor.withAlpha(200)),
                         )
                       : SettingsTile(
                           title: "Select a chat to schedule a message for",
-                          subTitle: 'Tap here',
+                          subtitle: 'Tap here',
                           trailing: Icon(Icons.chat_bubble, color: Theme.of(context).primaryColor.withAlpha(200)),
                           onTap: () async {
                             Navigator.of(context).push(
@@ -172,10 +167,11 @@ class _SchedulePanelState extends State<SchedulePanel> {
                           },
                         ),
                   SettingsTextField(title: "Enter a message", controller: this.messageController),
-                  SettingsOptions<dynamic>(
+                  SettingsOptions<List<dynamic>>(
                     initial: timeOptions.first,
                     subtitle: getTimeText(context),
                     onChanged: (val) async {
+                      if (val == null) return;
                       scheduleSeconds = val[0];
 
                       if (val[0] == -1) {
@@ -195,12 +191,11 @@ class _SchedulePanelState extends State<SchedulePanel> {
                     options: timeOptions,
                     textProcessing: (val) => val[1],
                     title: "When should we send it?",
-                    showDivider: (scheduleSeconds != -1),
                   ),
                   Center(
                       child: Text(
-                    isNullOrEmpty(errors) ? "" : errors.join("\n"),
-                    style: Theme.of(context).textTheme.bodyText1.apply(color: Colors.red[300]),
+                    isNullOrEmpty(errors)! ? "" : errors.join("\n"),
+                    style: Theme.of(context).textTheme.bodyText1!.apply(color: Colors.red[300]),
                     textAlign: TextAlign.center,
                   ))
                 ],
@@ -229,13 +224,13 @@ class _SchedulePanelState extends State<SchedulePanel> {
               DateTime occurs;
               if (scheduleSeconds == -1) {
                 occurs = new DateTime(
-                    messageDate.year, messageDate.month, messageDate.day, messageTime.hour, messageTime.minute);
+                    messageDate!.year, messageDate!.month, messageDate!.day, messageTime!.hour, messageTime!.minute);
               } else {
-                occurs = DateTime.now().add(Duration(seconds: scheduleSeconds));
+                occurs = DateTime.now().add(Duration(seconds: scheduleSeconds!));
               }
 
               ScheduledMessage scheduled = new ScheduledMessage(
-                  chatGuid: _chat.guid, message: messageController.text, epochTime: occurs.millisecondsSinceEpoch);
+                  chatGuid: _chat!.guid, message: messageController.text, epochTime: occurs.millisecondsSinceEpoch);
 
               await scheduled.save();
               Navigator.of(context).pop();

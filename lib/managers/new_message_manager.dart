@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
-import 'package:flutter/material.dart';
 
 class NewMessageType {
   // ignore: non_constant_identifier_names
@@ -18,8 +17,7 @@ class NewMessageEvent {
   String type;
   Map<String, dynamic> event;
 
-  NewMessageEvent(
-      {@required this.chatGuid, @required this.type, @required this.event});
+  NewMessageEvent({required this.chatGuid, required this.type, required this.event});
 }
 
 class NewMessageManager {
@@ -39,15 +37,14 @@ class NewMessageManager {
   //   }
   // }
 
-  StreamController<NewMessageEvent> _stream =
-      new StreamController<NewMessageEvent>.broadcast();
+  StreamController<NewMessageEvent> _stream = new StreamController<NewMessageEvent>.broadcast();
 
   Stream<NewMessageEvent> get stream => _stream.stream;
 
-  void removeMessage(Chat chat, String guid) {
+  void removeMessage(Chat chat, String? guid) {
     _stream.sink.add(
       NewMessageEvent(
-        chatGuid: chat.guid,
+        chatGuid: chat.guid!,
         type: NewMessageType.REMOVE,
         event: {"guid": guid},
       ),
@@ -57,28 +54,23 @@ class NewMessageManager {
   void updateMessage(Chat chat, String oldGuid, Message message) {
     // If the message is not from yourself, we don't need an update
     // Theoretically, addMessage will be called for all incoming messages
-    if (!message.isFromMe) return;
+    if (!message.isFromMe!) return;
 
     _stream.sink.add(
       NewMessageEvent(
-        chatGuid: chat.guid,
+        chatGuid: chat.guid!,
         type: NewMessageType.UPDATE,
         event: {"oldGuid": oldGuid, "message": message},
       ),
     );
   }
 
-  void addMessage(Chat chat, Message message, {bool outgoing = false}) {
-    if (chat == null) {
-      debugPrint("No chat provided to NewMessageManager!");
-      return;
-    }
-
+  void addMessage(Chat chat, Message message, {bool outgoing = false, bool shouldNotAnimate = false}) {
     _stream.sink.add(
       NewMessageEvent(
-        chatGuid: chat.guid,
+        chatGuid: chat.guid!,
         type: NewMessageType.ADD,
-        event: {"message": message, "outgoing": outgoing, "chat": chat},
+        event: {"message": message, "outgoing": outgoing, "chat": chat, "shouldNotAnimate": shouldNotAnimate},
       ),
     );
   }

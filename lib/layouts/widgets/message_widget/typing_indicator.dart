@@ -1,20 +1,30 @@
 import 'dart:math' as Math;
 
-import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/layouts/setup/theme_selector/theme_selector.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class TypingIndicator extends StatefulWidget {
-  TypingIndicator({Key key, this.visible}) : super(key: key);
+  TypingIndicator({
+    Key? key,
+    this.visible = false,
+    this.bigPin = false,
+  }) : super(key: key);
   final bool visible;
+  final bool bigPin;
 
   @override
   _TypingIndicatorState createState() => _TypingIndicatorState();
 }
 
 class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderStateMixin {
-  AnimationController _controller;
-  Animation animation;
+  late AnimationController _controller;
+  late Animation animation;
+  final Rx<Skins> skin = Rx<Skins>(SettingsManager().settings.skin.value);
 
   @override
   void initState() {
@@ -47,6 +57,9 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    if (Skin.of(context) != null) {
+      skin.value = Skin.of(context)!.skin;
+    }
     return AnimatedSize(
       vsync: this,
       duration: Duration(milliseconds: 200),
@@ -57,32 +70,34 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
                 Stack(
                   alignment: Alignment.bottomLeft,
                   children: [
-                    Container(
-                      margin: EdgeInsets.only(left: 2),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).accentColor,
-                        borderRadius: BorderRadius.circular(40),
+                    if (skin.value == Skins.iOS)
+                      Container(
+                        margin: EdgeInsets.only(left: widget.bigPin ? 18 : 2),
+                        decoration: BoxDecoration(
+                          color: context.theme.accentColor,
+                          borderRadius: BorderRadius.circular(40),
+                        ),
+                        width: 10,
+                        height: 10,
                       ),
-                      width: 10,
-                      height: 10,
-                    ),
-                    Container(
-                      margin: EdgeInsets.only(left: 9, bottom: 10),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).accentColor,
-                        borderRadius: BorderRadius.circular(40),
+                    if (skin.value == Skins.iOS)
+                      Container(
+                        margin: EdgeInsets.only(left: 9, bottom: 10),
+                        decoration: BoxDecoration(
+                          color: context.theme.accentColor,
+                          borderRadius: BorderRadius.circular(40),
+                        ),
+                        width: 15,
+                        height: 15,
                       ),
-                      width: 15,
-                      height: 15,
-                    ),
                     Container(
                       margin: EdgeInsets.only(
                         left: 10,
                         right: 10,
-                        bottom: 13,
+                        bottom: skin.value == Skins.iOS ? 13 : 5,
                       ),
                       constraints: BoxConstraints(
-                        maxWidth: MediaQuery.of(context).size.width * MessageWidgetMixin.MAX_SIZE,
+                        maxWidth: context.width * MessageWidgetMixin.MAX_SIZE,
                       ),
                       padding: EdgeInsets.symmetric(
                         vertical: 8,
@@ -90,7 +105,7 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
                       ),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(20),
-                        color: Theme.of(context).accentColor,
+                        color: context.theme.accentColor,
                       ),
                       child: Stack(
                         alignment: Alignment.center,
@@ -120,7 +135,7 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
         builder: (context, child) {
           return Container(
             decoration: BoxDecoration(
-              color: Theme.of(context).accentColor.lightenOrDarken(
+              color: context.theme.accentColor.lightenOrDarken(
                   (Math.sin(animation.value + (index) * Math.pi / 4).abs() * 20).clamp(1, 20).toDouble()),
               borderRadius: BorderRadius.circular(30),
             ),

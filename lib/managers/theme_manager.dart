@@ -13,11 +13,11 @@ class ThemeManager {
   ThemeManager._internal();
 
   ScrollPhysics get scrollPhysics {
-    if (SettingsManager().settings.skin == Skins.Material || SettingsManager().settings.skin == Skins.Samsung) {
+    if (SettingsManager().settings.skin.value == Skins.Material || SettingsManager().settings.skin.value == Skins.Samsung) {
       return AlwaysScrollableScrollPhysics(
         parent: ClampingScrollPhysics(),
       );
-    } else if (SettingsManager().settings.skin == Skins.IOS) {
+    } else if (SettingsManager().settings.skin.value == Skins.iOS) {
       return AlwaysScrollableScrollPhysics(
         parent: CustomBouncingScrollPhysics(),
       );

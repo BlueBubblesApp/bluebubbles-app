@@ -10,8 +10,11 @@ import androidx.annotation.RequiresApi;
 import com.bluebubbles.messaging.MainActivity;
 import com.bluebubbles.messaging.method_call_handler.handlers.AlarmScheduler;
 import com.bluebubbles.messaging.method_call_handler.handlers.ClearChatNotifs;
+import com.bluebubbles.messaging.method_call_handler.handlers.ClearFailedToSend;
 import com.bluebubbles.messaging.method_call_handler.handlers.ClearSocketIssue;
 import com.bluebubbles.messaging.method_call_handler.handlers.CreateNotificationChannel;
+import com.bluebubbles.messaging.method_call_handler.handlers.DownloadHandler;
+import com.bluebubbles.messaging.method_call_handler.handlers.FailedToSend;
 import com.bluebubbles.messaging.method_call_handler.handlers.FetchMessagesHandler;
 import com.bluebubbles.messaging.method_call_handler.handlers.FirebaseAuth;
 import com.bluebubbles.messaging.method_call_handler.handlers.GetLastLocation;
@@ -24,9 +27,10 @@ import com.bluebubbles.messaging.method_call_handler.handlers.OpenLink;
 import com.bluebubbles.messaging.method_call_handler.handlers.PickFile;
 import com.bluebubbles.messaging.method_call_handler.handlers.PushShareTargets;
 import com.bluebubbles.messaging.method_call_handler.handlers.SaveToFile;
-import com.bluebubbles.messaging.method_call_handler.handlers.ShareFile;
 import com.bluebubbles.messaging.method_call_handler.handlers.SocketIssueWarning;
 import com.bluebubbles.messaging.method_call_handler.handlers.SetNextRestart;
+import com.bluebubbles.messaging.method_call_handler.handlers.OpenContactForm;
+import com.bluebubbles.messaging.method_call_handler.handlers.ViewContactForm;
 import com.bluebubbles.messaging.workers.DartWorker;
 
 import io.flutter.plugin.common.MethodCall;
@@ -67,15 +71,13 @@ public class MethodCallHandler {
         } else if(call.method.equals(PushShareTargets.TAG)) {
             new PushShareTargets(context, call, result).Handle();
         } else if (call.method.equals("get-starting-intent")) {
-            String intent = ((MainActivity) context).getIntent().getStringExtra("chatGUID");
-            ((MainActivity) context).getIntent().putExtra("chatGUID", (String) null);
+            String intent = ((MainActivity) context).getIntent().getStringExtra("chatGuid");
+            ((MainActivity) context).getIntent().putExtra("chatGuid", (String) null);
             result.success(intent);
         } else if (call.method.equals(InitializeBackgroundHandle.TAG)) {
             new InitializeBackgroundHandle(context, call, result).Handle();
         } else if (call.method.equals(GetServerUrl.TAG)) {
             new GetServerUrl(context, call, result).Handle();
-        } else if (call.method.equals(ShareFile.TAG)) {
-            new ShareFile(context, call, result).Handle();
         } else if (call.method.equals(PickFile.TAG)) {
             new PickFile(context, call, result).Handle();
         } else if(call.method.equals(OpenCamera.TAG)) {
@@ -84,6 +86,16 @@ public class MethodCallHandler {
             new AlarmScheduler(context, call, result).Handle();
         } else if (call.method.equals(SetNextRestart.TAG)) {
             new SetNextRestart(context, call, result).Handle();
+        } else if (call.method.equals(DownloadHandler.TAG)) {
+            new DownloadHandler(context, call, result).Handle();
+        } else if (call.method.equals(OpenContactForm.TAG)) {
+            new OpenContactForm(context, call, result).Handle();
+        } else if (call.method.equals(ViewContactForm.TAG)) {
+            new ViewContactForm(context, call, result).Handle();
+        } else if (call.method.equals(FailedToSend.TAG)) {
+            new FailedToSend(context, call, result).Handle();
+        } else if (call.method.equals(ClearFailedToSend.TAG)) {
+            new ClearFailedToSend(context, call, result).Handle();
         } else {
             result.notImplemented();
         }

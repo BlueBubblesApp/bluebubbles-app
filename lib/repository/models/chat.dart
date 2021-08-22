@@ -12,6 +12,7 @@ import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:get/get.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/widgets.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
@@ -33,8 +34,8 @@ String chatToJson(Chat data) {
 }
 
 Future<String> getFullChatTitle(Chat _chat) async {
-  String title = "";
-  if (isNullOrEmpty(_chat.displayName)) {
+  String? title = "";
+  if (isNullOrEmpty(_chat.displayName)!) {
     Chat chat = await _chat.getParticipants();
 
     // If there are no participants, try to get them from the server
@@ -45,16 +46,12 @@ Future<String> getFullChatTitle(Chat _chat) async {
 
     List<String> titles = [];
     for (int i = 0; i < chat.participants.length; i++) {
-      String name = await ContactManager().getContactTitle(chat.participants[i]);
+      String? name = await ContactManager().getContactTitle(chat.participants[i]);
 
-      String test = name.replaceAll(RegExp(r'[-() \.]'), '');
-      test = test.replaceAll(RegExp(r'[^0-9]'), "").trim();
-      bool isNumber = test.length > 0;
-
-      if (chat.participants.length > 1 && !isNumber) {
+      if (chat.participants.length > 1 && !name!.isPhoneNumber) {
         name = name.trim().split(" ")[0];
       } else {
-        name = name.trim();
+        name = name!.trim();
       }
 
       titles.add(name);
@@ -76,13 +73,13 @@ Future<String> getFullChatTitle(Chat _chat) async {
     title = _chat.displayName;
   }
 
-  return title;
+  return title!;
 }
 
-Future<String> getShortChatTitle(Chat _chat) async {
+Future<String?> getShortChatTitle(Chat _chat) async {
   if (_chat.participants.length == 1) {
     return await ContactManager().getContactTitle(_chat.participants[0]);
-  } else if (_chat.displayName != null && _chat.displayName.length != 0) {
+  } else if (_chat.displayName != null && _chat.displayName!.length != 0) {
     return _chat.displayName;
   } else {
     return "${_chat.participants.length} people";
@@ -90,23 +87,23 @@ Future<String> getShortChatTitle(Chat _chat) async {
 }
 
 class Chat {
-  int id;
-  int originalROWID;
-  String guid;
-  int style;
-  String chatIdentifier;
-  bool isArchived;
-  bool isFiltered;
-  bool isMuted;
-  bool isPinned;
-  bool hasUnreadMessage;
-  DateTime latestMessageDate;
-  String latestMessageText;
-  String fakeLatestMessageText;
-  String title;
-  String displayName;
+  int? id;
+  int? originalROWID;
+  String? guid;
+  int? style;
+  String? chatIdentifier;
+  bool? isArchived;
+  bool? isFiltered;
+  bool? isMuted;
+  bool? isPinned;
+  bool? hasUnreadMessage;
+  DateTime? latestMessageDate;
+  String? latestMessageText;
+  String? fakeLatestMessageText;
+  String? title;
+  String? displayName;
   List<Handle> participants = [];
-  List<String> fakeParticipants = [];
+  List<String?> fakeParticipants = [];
 
   Chat({
     this.id,
@@ -129,7 +126,7 @@ class Chat {
 
   factory Chat.fromMap(Map<String, dynamic> json) {
     List<Handle> participants = [];
-    List<String> fakeParticipants = [];
+    List<String?> fakeParticipants = [];
     if (json.containsKey('participants')) {
       (json['participants'] as List<dynamic>).forEach((item) {
         participants.add(Handle.fromMap(item));
@@ -188,11 +185,12 @@ class Chat {
     final Database db = await DBProvider.db.database;
 
     // Try to find an existing chat before saving it
-    Chat existing = await Chat.findOne({"guid": this.guid});
+    Chat? existing = await Chat.findOne({"guid": this.guid});
     if (existing != null) {
       this.id = existing.id;
       if (!updateLocalVals) {
         this.isMuted = existing.isMuted;
+        this.isPinned = existing.isPinned;
         this.isArchived = existing.isArchived;
         this.hasUnreadMessage = existing.hasUnreadMessage;
       }
@@ -222,14 +220,14 @@ class Chat {
     return this;
   }
 
-  Future<Chat> changeName(String name) async {
+  Future<Chat> changeName(String? name) async {
     final Database db = await DBProvider.db.database;
     await db.update("chat", {'displayName': name}, where: "ROWID = ?", whereArgs: [this.id]);
     this.displayName = name;
     return this;
   }
 
-  Future<String> getTitle() async {
+  Future<String?> getTitle() async {
     this.title = await getFullChatTitle(this);
     return this.title;
   }
@@ -241,11 +239,8 @@ class Chat {
   Future<Chat> update() async {
     final Database db = await DBProvider.db.database;
 
-    Map<String, dynamic> params = {
-      "isArchived": this.isArchived ? 1 : 0,
-      "isMuted": this.isMuted ? 1 : 0,
-      "isFiltered": this.isFiltered ? 1 : 0
-    };
+    // isArchived, isMuted, and isPinned should only be updated by using the helper methods
+    Map<String, dynamic> params = {"isFiltered": this.isFiltered! ? 1 : 0};
 
     if (this.originalROWID != null) {
       params["originalROWID"] = this.originalROWID;
@@ -253,10 +248,10 @@ class Chat {
 
     // Only update the latestMessage info if it's not null,
     // and it's not some time in the future
-    dynamic now = DateTime.now().toUtc().millisecondsSinceEpoch;
-    if (this.latestMessageDate != null && now > this.latestMessageDate.millisecondsSinceEpoch) {
+    int now = DateTime.now().toUtc().millisecondsSinceEpoch;
+    if (this.latestMessageDate != null && now > this.latestMessageDate!.millisecondsSinceEpoch) {
       params["latestMessageText"] = this.latestMessageText;
-      params["latestMessageDate"] = this.latestMessageDate.millisecondsSinceEpoch;
+      params["latestMessageDate"] = this.latestMessageDate!.millisecondsSinceEpoch;
     }
 
     // Add display name if it's been updated
@@ -286,30 +281,31 @@ class Chat {
     await db.delete("chat_message_join", where: "chatId = ?", whereArgs: [chat.id]);
   }
 
-  Future<Chat> setUnreadStatus(bool hasUnreadMessage) async {
+  Future<Chat> toggleHasUnread(bool hasUnread) async {
     final Database db = await DBProvider.db.database;
-    if (hasUnreadMessage) {
-      if (CurrentChat.isActive(this.guid)) {
+    if (hasUnread) {
+      if (CurrentChat.isActive(this.guid!)) {
         return this;
       }
     }
-    this.hasUnreadMessage = hasUnreadMessage;
+
+    this.hasUnreadMessage = hasUnread;
     Map<String, dynamic> params = {
-      "hasUnreadMessage": this.hasUnreadMessage ? 1 : 0,
+      "hasUnreadMessage": this.hasUnreadMessage! ? 1 : 0,
     };
 
     // If it already exists, update it
     if (this.id != null) {
       await db.update("chat", params, where: "ROWID = ?", whereArgs: [this.id]);
-    } else {
-      await this.save(updateIfAbsent: false);
     }
-    if (hasUnreadMessage) {
+
+    if (hasUnread) {
       EventDispatcher().emit("add-unread-chat", {"chatGuid": this.guid});
     } else {
       EventDispatcher().emit("remove-unread-chat", {"chatGuid": this.guid});
     }
 
+    ChatBloc().updateUnreads();
     return this;
   }
 
@@ -317,25 +313,26 @@ class Chat {
     final Database db = await DBProvider.db.database;
 
     // Save the message
-    Message existing = await Message.findOne({"guid": message.guid});
-    Message newMessage;
+    Message? existing = await Message.findOne({"guid": message.guid});
+    Message? newMessage;
 
     try {
       newMessage = await message.save();
-    } catch (ex) {
+    } catch (ex, stacktrace) {
       newMessage = await Message.findOne({"guid": message.guid});
       if (newMessage == null) {
         debugPrint(ex.toString());
+        debugPrint(stacktrace.toString());
       }
     }
     bool isNewer = false;
 
     // If the message was saved correctly, update this chat's latestMessage info,
     // but only if the incoming message's date is newer
-    if (newMessage.id != null && checkForMessageText) {
+    if (newMessage!.id != null && checkForMessageText) {
       if (this.latestMessageDate == null) {
         isNewer = true;
-      } else if (this.latestMessageDate.millisecondsSinceEpoch < message.dateCreated.millisecondsSinceEpoch) {
+      } else if (this.latestMessageDate!.millisecondsSinceEpoch < message.dateCreated!.millisecondsSinceEpoch) {
         isNewer = true;
       }
     }
@@ -347,8 +344,8 @@ class Chat {
     }
 
     // Save any attachments
-    for (Attachment attachment in message.attachments ?? []) {
-      await attachment.save(newMessage);
+    for (Attachment? attachment in message.attachments ?? []) {
+      await attachment!.save(newMessage);
     }
 
     // Save the chat.
@@ -367,10 +364,10 @@ class Chat {
     if (checkForMessageText && changeUnreadStatus && isNewer && existing == null) {
       // If the message is from me, mark it unread
       // If the message is not from the same chat as the current chat, mark unread
-      if (message.isFromMe) {
-        await this.setUnreadStatus(false);
-      } else if (!CurrentChat.isActive(this.guid)) {
-        await this.setUnreadStatus(true);
+      if (message.isFromMe!) {
+        await this.toggleHasUnread(false);
+      } else if (!CurrentChat.isActive(this.guid!)) {
+        await this.toggleHasUnread(true);
       }
     }
 
@@ -387,23 +384,23 @@ class Chat {
 
     // If this is a message preview and we don't already have metadata for this, get it
     if (message.isUrlPreview() && !MetadataHelper.mapIsNotEmpty(message.metadata)) {
-      MetadataHelper.fetchMetadata(message).then((Metadata meta) async {
+      MetadataHelper.fetchMetadata(message).then((Metadata? meta) async {
         // If the metadata is empty, don't do anything
         if (!MetadataHelper.isNotEmpty(meta)) return;
 
         // Save the metadata to the object
-        message.metadata = meta.toJson();
+        message.metadata = meta!.toJson();
 
         // If pre-caching is enabled, fetch the image and save it
-        if (SettingsManager().settings.preCachePreviewImages &&
-            message.metadata.containsKey("image") &&
-            !isNullOrEmpty(message.metadata["image"])) {
+        if (SettingsManager().settings.preCachePreviewImages.value &&
+            message.metadata!.containsKey("image") &&
+            !isNullOrEmpty(message.metadata!["image"])!) {
           // Save from URL
-          File newFile = await saveImageFromUrl(message.guid, message.metadata["image"]);
+          File? newFile = await saveImageFromUrl(message.guid!, message.metadata!["image"]);
 
           // If we downloaded a file, set the new metadata path
           if (newFile != null && newFile.existsSync()) {
-            message.metadata["image"] = newFile.path;
+            message.metadata!["image"] = newFile.path;
           }
         }
 
@@ -454,10 +451,11 @@ class Chat {
     });
   }
 
-  static Future<int> count() async {
+  static Future<int?> count() async {
     final Database db = await DBProvider.db.database;
-    dynamic test = await db.rawQuery("SELECT COUNT(*) FROM chat;");
-    return (test[0] as Map<String, dynamic>)['COUNT(*)'];
+
+    List<Map<String, dynamic>> test = await db.rawQuery("SELECT COUNT(*) FROM chat;");
+    return test[0]['COUNT(*)'];
   }
 
   static Future<List<Attachment>> getAttachments(Chat chat, {int offset = 0, int limit = 25}) async {
@@ -486,9 +484,8 @@ class Chat {
 
     // Execute the query
     var res = await db.rawQuery("$query;", [chat.id]);
-    if (res == null) return [];
     List<Attachment> attachments = res.map((attachment) => Attachment.fromMap(attachment)).where((element) {
-      String mimeType = element.mimeType;
+      String? mimeType = element.mimeType;
       if (mimeType == null) return false;
       mimeType = mimeType.substring(0, mimeType.indexOf("/"));
       return mimeType == "image" || mimeType == "video";
@@ -502,15 +499,15 @@ class Chat {
 
   static Map<String, Completer<List<Message>>> _getMessagesRequests = {};
 
-  static Future<List<Message>> getMessagesSingleton(Chat chat,
+  static Future<List<Message>> getMessagesSingleton(Chat? chat,
       {bool reactionsOnly = false, int offset = 0, int limit = 25, bool includeDeleted: false}) async {
     if (chat == null) return [];
 
-    String req = "${chat?.guid}-$offset-$limit-$reactionsOnly-$includeDeleted";
+    String req = "${chat.guid}-$offset-$limit-$reactionsOnly-$includeDeleted";
 
     // If a current request is in progress, return that future
-    if (_getMessagesRequests.containsKey(req) && !_getMessagesRequests[req].isCompleted)
-      return _getMessagesRequests[req].future;
+    if (_getMessagesRequests.containsKey(req) && !_getMessagesRequests[req]!.isCompleted)
+      return _getMessagesRequests[req]!.future;
 
     _getMessagesRequests[req] = new Completer();
 
@@ -518,13 +515,13 @@ class Chat {
       List<Message> messages = await Chat.getMessages(chat,
           reactionsOnly: reactionsOnly, offset: offset, limit: limit, includeDeleted: includeDeleted);
 
-      if (_getMessagesRequests.containsKey(req) && !_getMessagesRequests[req].isCompleted)
-        _getMessagesRequests[req].complete(messages);
+      if (_getMessagesRequests.containsKey(req) && !_getMessagesRequests[req]!.isCompleted)
+        _getMessagesRequests[req]!.complete(messages);
     } catch (ex) {
-      debugPrint(ex);
+      debugPrint(ex.toString());
 
-      if (_getMessagesRequests.containsKey(req) && !_getMessagesRequests[req].isCompleted)
-        _getMessagesRequests[req].completeError(ex);
+      if (_getMessagesRequests.containsKey(req) && !_getMessagesRequests[req]!.isCompleted)
+        _getMessagesRequests[req]!.completeError(ex);
     }
 
     // Remove the request from the "cache" after 10 seconds
@@ -535,7 +532,7 @@ class Chat {
     });
 
     if (_getMessagesRequests.containsKey(req)) {
-      return _getMessagesRequests[req].future;
+      return _getMessagesRequests[req]!.future;
     } else {
       return [];
     }
@@ -588,6 +585,7 @@ class Chat {
         " handle.address AS handleAddress,"
         " handle.country AS handleCountry,"
         " handle.color AS handleColor,"
+        " handle.defaultPhone AS defaultPhone,"
         " handle.uncanonicalizedId AS handleUncanonicalizedId"
         " FROM message"
         " JOIN chat_message_join AS cmj ON message.ROWID = cmj.messageId"
@@ -646,7 +644,7 @@ class Chat {
         });
       }
       for (int j = 0; j < output.length; j++) {
-        if (output[j].id < msg.id) {
+        if (output[j].id! < msg.id!) {
           output.insert(j, msg);
           break;
         }
@@ -667,6 +665,7 @@ class Chat {
         " handle.address AS address,"
         " handle.country AS country,"
         " handle.color AS color,"
+        " handle.defaultPhone AS defaultPhone,"
         " handle.uncanonicalizedId AS uncanonicalizedId"
         " FROM chat"
         " JOIN chat_handle_join AS chj ON chat.ROWID = chj.chatId"
@@ -719,29 +718,40 @@ class Chat {
     this.participants.retainWhere((element) => ids.remove(element.address));
   }
 
-  Future<Chat> pin() async {
+  Future<Chat> togglePin(bool isPinned) async {
     final Database db = await DBProvider.db.database;
     if (this.id == null) return this;
 
-    this.isPinned = true;
-    await db.update("chat", {"isPinned": 1}, where: "ROWID = ?", whereArgs: [this.id]);
+    this.isPinned = isPinned;
+    await db.update("chat", {"isPinned": isPinned ? 1 : 0}, where: "ROWID = ?", whereArgs: [this.id]);
 
-    ChatBloc()?.updateChat(this);
+    ChatBloc().updateChat(this);
     return this;
   }
 
-  Future<Chat> unpin() async {
+  Future<Chat> toggleMute(bool isMuted) async {
     final Database db = await DBProvider.db.database;
     if (this.id == null) return this;
 
-    this.isPinned = false;
-    await db.update("chat", {"isPinned": 0}, where: "ROWID = ?", whereArgs: [this.id]);
+    this.isMuted = isMuted;
+    await db.update("chat", {"isMuted": isMuted ? 1 : 0}, where: "ROWID = ?", whereArgs: [this.id]);
 
-    ChatBloc()?.updateChat(this);
+    ChatBloc().updateChat(this);
     return this;
   }
 
-  static Future<Chat> findOne(Map<String, dynamic> filters) async {
+  Future<Chat> toggleArchived(bool isArchived) async {
+    final Database db = await DBProvider.db.database;
+    if (this.id == null) return this;
+
+    this.isArchived = isArchived;
+    await db.update("chat", {"isArchived": isArchived ? 1 : 0}, where: "ROWID = ?", whereArgs: [this.id]);
+
+    ChatBloc().updateChat(this);
+    return this;
+  }
+
+  static Future<Chat?> findOne(Map<String, dynamic> filters) async {
     final Database db = await DBProvider.db.database;
 
     List<String> whereParams = [];
@@ -773,34 +783,34 @@ class Chat {
     return (res.isNotEmpty) ? res.map((c) => Chat.fromMap(c)).toList() : [];
   }
 
-  static Future<List<Chat>> getChats({bool archived = false, int limit = 15, int offset = 0}) async {
+  static Future<List<Chat>> getChats({int limit = 15, int offset = 0}) async {
     final Database db = await DBProvider.db.database;
 
     var res = await db.rawQuery(
-        "SELECT"
-        " chat.ROWID as ROWID,"
-        " chat.originalROWID as originalROWID,"
-        " chat.guid as guid,"
-        " chat.style as style,"
-        " chat.chatIdentifier as chatIdentifier,"
-        " chat.isFiltered as isFiltered,"
-        " chat.isPinned as isPinned,"
-        " chat.isArchived as isArchived,"
-        " chat.isMuted as isMuted,"
-        " chat.hasUnreadMessage as hasUnreadMessage,"
-        " chat.latestMessageDate as latestMessageDate,"
-        " chat.latestMessageText as latestMessageText,"
-        " chat.displayName as displayName"
-        " FROM chat"
-        " WHERE chat.isArchived = ? ORDER BY chat.latestMessageDate DESC LIMIT $limit OFFSET $offset;",
-        [archived ? 1 : 0]);
+      "SELECT"
+      " chat.ROWID as ROWID,"
+      " chat.originalROWID as originalROWID,"
+      " chat.guid as guid,"
+      " chat.style as style,"
+      " chat.chatIdentifier as chatIdentifier,"
+      " chat.isFiltered as isFiltered,"
+      " chat.isPinned as isPinned,"
+      " chat.isArchived as isArchived,"
+      " chat.isMuted as isMuted,"
+      " chat.hasUnreadMessage as hasUnreadMessage,"
+      " chat.latestMessageDate as latestMessageDate,"
+      " chat.latestMessageText as latestMessageText,"
+      " chat.displayName as displayName"
+      " FROM chat"
+      " ORDER BY chat.isPinned DESC, chat.latestMessageDate DESC LIMIT $limit OFFSET $offset;",
+    );
 
     if (res.isEmpty) return [];
 
     Iterable<Chat> output = res.map((c) => Chat.fromMap(c));
-    bool shouldFilter = !SettingsManager().settings.filteredChatList;
+    bool shouldFilter = !SettingsManager().settings.filteredChatList.value;
     if (shouldFilter) {
-      output = output.where((item) => !item.isFiltered);
+      output = output.where((item) => !item.isFiltered!);
     }
 
     return output.toList();
@@ -812,6 +822,7 @@ class Chat {
 
   Future<void> clearTranscript() async {
     final Database db = await DBProvider.db.database;
+
     await db.rawQuery(
         "UPDATE message "
         "SET dateDeleted = ${DateTime.now().toUtc().millisecondsSinceEpoch} "
@@ -825,13 +836,22 @@ class Chat {
         [this.guid]);
   }
 
-  static int sort(Chat a, Chat b) {
-    if (!a.isPinned && b.isPinned) return 1;
-    if (a.isPinned && !b.isPinned) return -1;
-    if (a.latestMessageDate == null && b.latestMessageDate == null) return 0;
+  Future<Message> get latestMessage async {
+    List<Message> latests = await Chat.getMessages(this, limit: 1);
+    Message message = latests.first;
+    if (message.hasAttachments) {
+      await message.fetchAttachments();
+    }
+    return message;
+  }
+
+  static int sort(Chat? a, Chat? b) {
+    if (!a!.isPinned! && b!.isPinned!) return 1;
+    if (a.isPinned! && !b!.isPinned!) return -1;
+    if (a.latestMessageDate == null && b!.latestMessageDate == null) return 0;
     if (a.latestMessageDate == null) return 1;
-    if (b.latestMessageDate == null) return -1;
-    return -a.latestMessageDate.compareTo(b.latestMessageDate);
+    if (b!.latestMessageDate == null) return -1;
+    return -a.latestMessageDate!.compareTo(b.latestMessageDate!);
   }
 
   static flush() async {
@@ -845,14 +865,14 @@ class Chat {
         "guid": guid,
         "style": style,
         "chatIdentifier": chatIdentifier,
-        "isArchived": isArchived ? 1 : 0,
-        "isFiltered": isFiltered ? 1 : 0,
-        "isMuted": isMuted ? 1 : 0,
-        "isPinned": isPinned ? 1 : 0,
+        "isArchived": isArchived! ? 1 : 0,
+        "isFiltered": isFiltered! ? 1 : 0,
+        "isMuted": isMuted! ? 1 : 0,
+        "isPinned": isPinned! ? 1 : 0,
         "displayName": displayName,
         "participants": participants.map((item) => item.toMap()),
-        "hasUnreadMessage": hasUnreadMessage ? 1 : 0,
-        "latestMessageDate": latestMessageDate != null ? latestMessageDate.millisecondsSinceEpoch : 0,
+        "hasUnreadMessage": hasUnreadMessage! ? 1 : 0,
+        "latestMessageDate": latestMessageDate != null ? latestMessageDate!.millisecondsSinceEpoch : 0,
         "latestMessageText": latestMessageText
       };
 }

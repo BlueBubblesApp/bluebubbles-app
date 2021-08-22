@@ -1,20 +1,23 @@
+import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:collection/collection.dart';
+import 'package:contacts_service/contacts_service.dart';
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/contact_selector_custom_cupertino_textfield.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
-import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class ChatSelectorTextField extends StatefulWidget {
   ChatSelectorTextField({
-    Key key,
-    @required this.controller,
-    @required this.onRemove,
-    @required this.selectedContacts,
-    @required this.allContacts,
-    @required this.isCreator,
-    @required this.onSelected,
+    Key? key,
+    required this.controller,
+    required this.onRemove,
+    required this.selectedContacts,
+    required this.allContacts,
+    required this.isCreator,
+    required this.onSelected,
   }) : super(key: key);
   final TextEditingController controller;
   final Function(UniqueContact) onRemove;
@@ -28,7 +31,7 @@ class ChatSelectorTextField extends StatefulWidget {
 }
 
 class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
-  FocusNode inputFieldNode;
+  late FocusNode inputFieldNode;
 
   @override
   void initState() {
@@ -45,7 +48,10 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
   @override
   Widget build(BuildContext context) {
     List<Widget> items = [];
-    for (UniqueContact contact in widget.selectedContacts) {
+    final bool redactedMode = SettingsManager().settings.redactedMode.value;
+    final bool hideInfo = redactedMode && SettingsManager().settings.hideContactInfo.value;
+    final bool generateName = redactedMode && SettingsManager().settings.generateFakeContactNames.value;
+    widget.selectedContacts.forEachIndexed((index, contact) {
       items.add(
         GestureDetector(
           onTap: () {
@@ -62,7 +68,13 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
                   mainAxisAlignment: MainAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    Text(contact.displayName.trim(), style: Theme.of(context).textTheme.bodyText1),
+                    Text(
+                        generateName
+                            ? ContactManager().handleToFakeName[contact.address] ?? "Person ${index + 1}"
+                            : hideInfo
+                                ? "          "
+                                : contact.displayName!.trim(),
+                        style: Theme.of(context).textTheme.bodyText1),
                     SizedBox(
                       width: 5.0,
                     ),
@@ -78,7 +90,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
           ),
         ),
       );
-    }
+    });
 
     // Add the next text field
     items.add(
@@ -90,21 +102,17 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
           onSubmitted: (String done) async {
             FocusScope.of(context).requestFocus(inputFieldNode);
             if (done.isEmpty) return;
-            if (isValidAddress(done)) {
-              Contact contact = ContactManager().getCachedContactSync(done);
+            done = done.trim();
+            if (done.isEmail || done.isPhoneNumber) {
+              Contact? contact = ContactManager().getCachedContactSync(done);
               if (contact == null) {
-                widget
-                    .onSelected(new UniqueContact(address: done, displayName: (await formatPhoneNumber(done)) ?? done));
+                widget.onSelected(new UniqueContact(address: done, displayName: await formatPhoneNumber(done)));
               } else {
                 widget.onSelected(new UniqueContact(address: done, displayName: contact.displayName ?? done));
               }
             } else {
               if (widget.allContacts.isEmpty) {
-                Scaffold.of(context).showSnackBar(SnackBar(
-                  content: Text("Invalid Number/Email, $done"),
-                  duration: Duration(milliseconds: 500),
-                ));
-
+                showSnackbar('Error', "Invalid Number/Email, $done");
                 // This is 4 chars due to invisible character
               } else if (widget.controller.text.length >= 4) {
                 widget.onSelected(widget.allContacts[0]);
@@ -116,10 +124,10 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
           maxLines: 1,
           autocorrect: false,
           placeholder: "  Type a name...",
-          placeholderStyle: Theme.of(context).textTheme.subtitle1,
+          placeholderStyle: Theme.of(context).textTheme.subtitle1!,
           padding: EdgeInsets.only(right: 5.0, top: 2.0, bottom: 2.0),
           autofocus: true,
-          style: Theme.of(context).textTheme.bodyText1.apply(
+          style: Theme.of(context).textTheme.bodyText1!.apply(
                 color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.light
                     ? Colors.black
                     : Colors.white,

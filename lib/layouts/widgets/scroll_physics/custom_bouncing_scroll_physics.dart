@@ -30,11 +30,11 @@ import 'package:flutter/material.dart';
 ///    of different types to get the desired scroll physics.
 class CustomBouncingScrollPhysics extends ScrollPhysics {
   /// Creates scroll physics that bounce back from the edge.
-  const CustomBouncingScrollPhysics({ScrollPhysics parent}) : super(parent: parent);
+  const CustomBouncingScrollPhysics({ScrollPhysics? parent}) : super(parent: parent);
   static const double kMinFlingVelocity = 50.0; // Logical pixels / second
 
   @override
-  CustomBouncingScrollPhysics applyTo(ScrollPhysics ancestor) {
+  CustomBouncingScrollPhysics applyTo(ScrollPhysics? ancestor) {
     return CustomBouncingScrollPhysics(parent: buildParent(ancestor));
   }
 
@@ -85,13 +85,13 @@ class CustomBouncingScrollPhysics extends ScrollPhysics {
   double applyBoundaryConditions(ScrollMetrics position, double value) => 0.0;
 
   @override
-  Simulation createBallisticSimulation(ScrollMetrics position, double velocity) {
+  Simulation? createBallisticSimulation(ScrollMetrics position, double velocity) {
     final Tolerance tolerance = this.tolerance;
     if (velocity.abs() >= tolerance.velocity || position.outOfRange) {
       return BouncingScrollSimulation(
         spring: spring,
         position: position.pixels,
-        velocity: velocity * SettingsManager().settings.scrollVelocity ?? 0.90,
+        velocity: velocity * SettingsManager().settings.scrollVelocity.value,
         // 0.90 is the default
         leadingExtent: position.minScrollExtent,
         trailingExtent: position.maxScrollExtent,

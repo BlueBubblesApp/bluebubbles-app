@@ -5,30 +5,30 @@ import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class WelcomePage extends StatefulWidget {
-  WelcomePage({Key key, this.controller}) : super(key: key);
-  final PageController controller;
+  WelcomePage({Key? key, this.controller}) : super(key: key);
+  final PageController? controller;
 
   @override
   _WelcomePageState createState() => _WelcomePageState();
 }
 
 class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin {
-  AnimationController _titleController;
-  AnimationController _subtitleController;
+  late AnimationController _titleController;
+  late AnimationController _subtitleController;
 
   // Animation<double> opacityTitle;
-  Animation<double> opacityTitle;
-  Animation<Offset> titleOffset;
-  Animation<double> opacitySubtitle;
-  Animation<Offset> subtitleOffset;
-  Animation<double> opacityButton;
+  late Animation<double> opacityTitle;
+  late Animation<Offset> titleOffset;
+  late Animation<double> opacitySubtitle;
+  late Animation<Offset> subtitleOffset;
+  late Animation<double> opacityButton;
 
   @override
   void initState() {
     super.initState();
     _titleController = AnimationController(duration: const Duration(milliseconds: 2000), vsync: this);
 
-    SchedulerBinding.instance.addPostFrameCallback((_) async {
+    SchedulerBinding.instance!.addPostFrameCallback((_) async {
       await animateTitle();
       await animateSubtitle();
     });
@@ -63,6 +63,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
   @override
   void dispose() {
     _titleController.dispose();
+    _subtitleController.dispose();
     super.dispose();
   }
 
@@ -70,7 +71,9 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).accentColor,
+        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
         backgroundColor: Theme.of(context).accentColor,
@@ -84,7 +87,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                   opacity: opacityTitle,
                   child: Text(
                     "Welcome to BlueBubbles",
-                    style: Theme.of(context).textTheme.headline1.apply(
+                    style: Theme.of(context).textTheme.headline1!.apply(
                           fontSizeDelta: 7,
                         ),
                   ),
@@ -110,13 +113,13 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                           child: SizedBox(width: 60, height: 60, child: Icon(Icons.arrow_forward, color: Colors.white)),
                           onTap: () async {
                             if (await Permission.contacts.isGranted) {
-                              widget.controller.animateToPage(
+                              widget.controller!.animateToPage(
                                 2,
                                 duration: Duration(milliseconds: 300),
                                 curve: Curves.easeInOut,
                               );
                             } else {
-                              widget.controller.nextPage(
+                              widget.controller!.nextPage(
                                 duration: Duration(milliseconds: 300),
                                 curve: Curves.easeInOut,
                               );

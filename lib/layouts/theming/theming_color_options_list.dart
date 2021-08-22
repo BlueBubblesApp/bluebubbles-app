@@ -1,24 +1,28 @@
+import 'dart:async';
+
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/themes.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/theming/theming_color_selector.dart';
-import 'package:bluebubbles/layouts/theming/theming_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/theme_object.dart';
+import 'package:get/get.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class ThemingColorOptionsList extends StatefulWidget {
-  ThemingColorOptionsList({Key key, this.isDarkMode, this.controller}) : super(key: key);
+  ThemingColorOptionsList({Key? key, required this.isDarkMode, required this.controller}) : super(key: key);
   final bool isDarkMode;
-  final EditController controller;
+  final StreamController controller;
 
   @override
   _ThemingColorOptionsListState createState() => _ThemingColorOptionsListState();
 }
 
 class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
-  ThemeObject currentTheme;
+  ThemeObject? currentTheme;
   List<ThemeObject> allThemes = [];
   bool editable = false;
 
@@ -26,23 +30,18 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
   void initState() {
     super.initState();
     widget.controller.stream.listen((event) {
-      if (!currentTheme.isPreset) {
-        Scaffold.of(context).hideCurrentSnackBar();
-        Scaffold.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Click on an item to customize"),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+      if (!currentTheme!.isPreset) {
+        showSnackbar('Customization', "Click on an item to customize");
         return;
       }
+
       BuildContext _context = context;
       showDialog(
         context: context,
         builder: (context) => NewThemeCreateAlert(
           onCreate: (String name) async {
             Navigator.of(context).pop();
-            ThemeObject newTheme = new ThemeObject(data: currentTheme.themeData, name: name);
+            ThemeObject newTheme = new ThemeObject(data: currentTheme!.themeData, name: name);
             allThemes.add(newTheme);
             currentTheme = newTheme;
             if (widget.isDarkMode) {
@@ -69,7 +68,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
     } else {
       currentTheme = await ThemeObject.getLightTheme();
     }
-    await currentTheme.fetchData();
+    await currentTheme!.fetchData();
 
     allThemes = await ThemeObject.getThemes();
     for (ThemeObject theme in allThemes) {
@@ -81,7 +80,20 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
 
   @override
   Widget build(BuildContext context) {
-    editable = currentTheme != null && !currentTheme.isPreset;
+    editable = currentTheme != null && !currentTheme!.isPreset;
+    Color headerColor;
+    Color tileColor;
+    if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance()
+        || SettingsManager().settings.skin.value != Skins.iOS) {
+      headerColor = Theme.of(context).accentColor;
+      tileColor = Theme.of(context).backgroundColor;
+    } else {
+      headerColor = Theme.of(context).backgroundColor;
+      tileColor = Theme.of(context).accentColor;
+    }
+    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
+      tileColor = headerColor;
+    }
     return currentTheme != null
         ? CustomScrollView(
             physics: ThemeSwitcher.getScrollPhysics(),
@@ -92,7 +104,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                   child: Container(
                     child: Text(
                       widget.isDarkMode ? "Dark Theme" : "Light Theme",
-                      style: whiteLightTheme.textTheme.headline1,
+                      style: Theme.of(context).textTheme.headline1,
                     ),
                   ),
                 ),
@@ -103,35 +115,48 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                   children: [
                     Padding(
                       padding: const EdgeInsets.all(8.0),
-                      child: DropdownButton<ThemeObject>(
-                        isExpanded: false,
-                        dropdownColor: whiteLightTheme.accentColor,
-                        items: allThemes
-                            .map(
-                              (e) => DropdownMenuItem(
-                                child: Text(
-                                  e.name.toUpperCase().replaceAll("_", " "),
-                                ),
-                                value: e,
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (value) async {
-                          value.data = value.themeData;
-                          await value.save();
-                          if (widget.isDarkMode) {
-                            SettingsManager().saveSelectedTheme(context, selectedDarkTheme: value);
-                          } else {
-                            SettingsManager().saveSelectedTheme(context, selectedLightTheme: value);
-                          }
-                          currentTheme = value;
-                          editable = currentTheme != null && !currentTheme.isPreset;
-                          setState(() {});
-                        },
-                        value: currentTheme,
-                        hint: Text(
-                          "Preset",
-                          style: whiteLightTheme.textTheme.bodyText1,
+                      child: Container(
+                        width: context.width - 16,
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(5.0),
+                            color: headerColor,
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<ThemeObject>(
+                            dropdownColor: tileColor,
+                            items: allThemes
+                                .map(
+                                  (e) => DropdownMenuItem(
+                                    child: Text(
+                                      e.name!.toUpperCase().replaceAll("_", " "),
+                                      style: Theme.of(context).textTheme.bodyText1,
+                                    ),
+                                    value: e,
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (value) async {
+                              value!.data = value.themeData;
+                              await value.save();
+
+                              if (widget.isDarkMode) {
+                                SettingsManager().saveSelectedTheme(context, selectedDarkTheme: value);
+                              } else {
+                                SettingsManager().saveSelectedTheme(context, selectedLightTheme: value);
+                              }
+                              currentTheme = value;
+                              editable = currentTheme != null && !currentTheme!.isPreset;
+                              setState(() {});
+
+                              EventDispatcher().emit('theme-update', null);
+                            },
+                            value: currentTheme,
+                            hint: Text(
+                              "Preset",
+                              style: Theme.of(context).textTheme.bodyText1,
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -142,8 +167,8 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
                     return ThemingColorSelector(
-                      currentTheme: currentTheme,
-                      entry: currentTheme.entries[index],
+                      currentTheme: currentTheme!,
+                      entry: currentTheme!.entries[index],
                       editable: editable,
                     );
                   },
@@ -153,17 +178,19 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                   crossAxisCount: 2,
                 ),
               ),
-              if (!currentTheme.isPreset)
+              if (!currentTheme!.isPreset)
                 SliverToBoxAdapter(
-                  child: FlatButton(
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      backgroundColor: Theme.of(context).accentColor,
+                    ),
                     child: Text(
                       "Delete",
                       style: TextStyle(color: Colors.red),
                     ),
-                    color: whiteLightTheme.accentColor,
                     onPressed: () async {
                       allThemes.removeWhere((element) => element == this.currentTheme);
-                      await this.currentTheme.delete();
+                      await this.currentTheme!.delete();
                       this.currentTheme =
                           widget.isDarkMode ? await ThemeObject.getDarkTheme() : await ThemeObject.getLightTheme();
                       allThemes = await ThemeObject.getThemes();
@@ -191,7 +218,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
 }
 
 class NewThemeCreateAlert extends StatefulWidget {
-  NewThemeCreateAlert({Key key, this.onCreate, this.onCancel}) : super(key: key);
+  NewThemeCreateAlert({Key? key, required this.onCreate, required this.onCancel}) : super(key: key);
   final Function(String name) onCreate;
   final Function() onCancel;
 
@@ -207,7 +234,7 @@ class _NewThemeCreateAlertState extends State<NewThemeCreateAlert> {
   Widget build(BuildContext context) {
     return AlertDialog(
       actions: [
-        FlatButton(
+        TextButton(
           child: Text("OK"),
           onPressed: () async {
             if ((await ThemeObject.findOne({"name": controller.text})) != null || controller.text.isEmpty) {
@@ -219,7 +246,7 @@ class _NewThemeCreateAlertState extends State<NewThemeCreateAlert> {
             }
           },
         ),
-        FlatButton(
+        TextButton(
           child: Text("Cancel"),
           onPressed: widget.onCancel,
         )

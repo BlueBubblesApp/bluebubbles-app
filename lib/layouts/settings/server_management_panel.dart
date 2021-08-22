@@ -1,7 +1,19 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/themes.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/setup/qr_code_scanner.dart';
+import 'package:bluebubbles/repository/models/fcm_data.dart';
+import 'package:bluebubbles/repository/models/settings.dart';
+import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
+import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
@@ -14,71 +26,104 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class ServerManagementPanel extends StatefulWidget {
-  ServerManagementPanel({Key key}) : super(key: key);
-
+class ServerManagementPanelBinding extends Bindings {
   @override
-  _ServerManagementPanelState createState() => _ServerManagementPanelState();
+  void dependencies() {
+    Get.lazyPut<ServerManagementPanelController>(() => ServerManagementPanelController());
+  }
 }
 
-class _ServerManagementPanelState extends State<ServerManagementPanel> {
-  int latency;
-  String fetchStatus;
-  Brightness brightness;
-  Color previousBackgroundColor;
-  bool gotBrightness = false;
+class ServerManagementPanelController extends GetxController {
+  final RxnInt latency = RxnInt();
+  final RxnString fetchStatus = RxnString();
+  final RxnString serverVersion = RxnString();
+  final RxnString macOSVersion = RxnString();
+  final RxnInt serverVersionCode = RxnInt();
 
   // Restart trackers
-  int lastRestart;
-  int lastRestartMessages;
-  bool isRestarting = false;
-  bool isRestartingMessages = false;
+  int? lastRestart;
+  int? lastRestartMessages;
+  int? lastRestartPrivateAPI;
+  final RxBool isRestarting = false.obs;
+  final RxBool isRestartingMessages = false.obs;
+  final RxBool isRestartingPrivateAPI = false.obs;
 
-  void loadBrightness() {
-    Color now = Theme.of(context).backgroundColor;
-    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
-    if (!themeChanged && gotBrightness) return;
+  late Settings _settingsCopy;
+  FCMData? _fcmDataCopy;
 
-    previousBackgroundColor = now;
-    if (this.context == null) {
-      brightness = Brightness.light;
-      gotBrightness = true;
-      return;
+  @override
+  void onInit() {
+    _settingsCopy = SettingsManager().settings;
+    _fcmDataCopy = SettingsManager().fcmData;
+    if (SocketManager().state.value == SocketState.CONNECTED) {
+      int now = DateTime.now().toUtc().millisecondsSinceEpoch;
+      SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
+        int later = DateTime.now().toUtc().millisecondsSinceEpoch;
+        latency.value = later - now;
+        macOSVersion.value = res['data']['os_version'];
+        serverVersion.value = res['data']['server_version'];
+        serverVersionCode.value = serverVersion.value?.split(".").mapIndexed((index, e) {
+          if (index == 0) return int.parse(e) * 100;
+          if (index == 1) return int.parse(e) * 10;
+          return int.parse(e);
+        }).sum;
+      });
     }
+    super.onInit();
+  }
 
-    bool isDark = now.computeLuminance() < 0.179;
-    brightness = isDark ? Brightness.dark : Brightness.light;
-    gotBrightness = true;
-    if (this.mounted) setState(() {});
+  void saveSettings() async {
+    await SettingsManager().saveSettings(_settingsCopy);
   }
 
   @override
+  void dispose() {
+    saveSettings();
+    super.dispose();
+  }
+}
+
+class ServerManagementPanel extends GetView<ServerManagementPanelController> {
+
+  @override
   Widget build(BuildContext context) {
-    loadBrightness();
+    final iosSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
+    final materialSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
+    Color headerColor;
+    Color tileColor;
+    if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance()
+        || SettingsManager().settings.skin.value != Skins.iOS) {
+      headerColor = Theme.of(context).accentColor;
+      tileColor = Theme.of(context).backgroundColor;
+    } else {
+      headerColor = Theme.of(context).backgroundColor;
+      tileColor = Theme.of(context).accentColor;
+    }
+    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
+      tileColor = headerColor;
+    }
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor,
+        systemNavigationBarColor: headerColor, // navigation bar color
+        systemNavigationBarIconBrightness:
+        headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
-        backgroundColor: Theme.of(context).backgroundColor,
+        backgroundColor: SettingsManager().settings.skin.value != Skins.iOS ? tileColor : headerColor,
         appBar: PreferredSize(
-          preferredSize: Size(MediaQuery.of(context).size.width, 80),
+          preferredSize: Size(context.width, 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
-                brightness: brightness,
+                brightness: ThemeData.estimateBrightnessForColor(headerColor),
                 toolbarHeight: 100.0,
                 elevation: 0,
-                leading: IconButton(
-                  icon: Icon(SettingsManager().settings.skin == Skins.IOS ? Icons.arrow_back_ios : Icons.arrow_back,
-                      color: Theme.of(context).primaryColor),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
-                backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
+                leading: buildBackButton(context),
+                backgroundColor: headerColor.withOpacity(0.5),
                 title: Text(
-                  "Server Management",
+                  "Connection & Server Management",
                   style: Theme.of(context).textTheme.headline1,
                 ),
               ),
@@ -92,250 +137,341 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
             SliverList(
               delegate: SliverChildListDelegate(
                 <Widget>[
-                  Container(padding: EdgeInsets.only(top: 5.0)),
-                  StreamBuilder(
-                      stream: SocketManager().connectionStateStream,
-                      builder: (context, AsyncSnapshot<SocketState> snapshot) {
-                        SocketState connectionStatus;
-                        if (snapshot.hasData) {
-                          connectionStatus = snapshot.data;
-                        } else {
-                          connectionStatus = SocketManager().state;
-                        }
-                        String subtitle;
+                  Container(
+                      height: SettingsManager().settings.skin.value == Skins.iOS ? 30 : 40,
+                      alignment: Alignment.bottomLeft,
+                      decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
+                        color: headerColor,
+                        border: Border(
+                            bottom: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
+                        ),
+                      ) : BoxDecoration(
+                        color: tileColor,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0, left: 15),
+                        child: Text("Connection & Server Details".psCapitalize, style: SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
+                      )
+                  ),
+                  Obx(() {
+                    bool redact = SettingsManager().settings.redactedMode.value;
+                    return Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
+                          child: SelectableText.rich(
+                            TextSpan(
+                                children: [
+                                  TextSpan(text: "Connection Status: "),
+                                  TextSpan(text: describeEnum(SocketManager().state.value), style: TextStyle(color: getIndicatorColor(SocketManager().state.value))),
+                                  TextSpan(text: "\n\n"),
+                                  TextSpan(text: "Server URL: ${redact ? "Redacted" : controller._settingsCopy.serverAddress}"),
+                                  TextSpan(text: "\n\n"),
+                                  TextSpan(text: "Latency: ${redact ? "Redacted" : ((controller.latency.value ?? "N/A").toString() + " ms")}"),
+                                  TextSpan(text: "\n\n"),
+                                  TextSpan(text: "Server Version: ${redact ? "Redacted" : (controller.serverVersion.value ?? "N/A")}"),
+                                  TextSpan(text: "\n\n"),
+                                  TextSpan(text: "macOS Version: ${redact ? "Redacted" : (controller.macOSVersion.value ?? "N/A")}"),
+                                  TextSpan(text: "\n\n"),
+                                  TextSpan(text: "Tap to update values...", style: TextStyle(fontStyle: FontStyle.italic)),
+                                ]
+                            ),
+                            onTap: () {
+                              if (SocketManager().state.value != SocketState.CONNECTED) return;
 
-                        switch (connectionStatus) {
-                          case SocketState.CONNECTED:
-                            subtitle = "Connected (Tap to test latency)";
-                            break;
-                          default:
-                            subtitle = "Disconnected (Nothing to do)";
-                        }
-
-                        return SettingsTile(
-                          title: "Test Latency",
-                          subTitle: subtitle,
-                          onTap: () async {
-                            if (![SocketState.CONNECTED].contains(connectionStatus)) return;
-
-                            int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-                            SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
-                              int later = DateTime.now().toUtc().millisecondsSinceEpoch;
-                              if (this.mounted) {
-                                setState(() {
-                                  latency = later - now;
-                                });
-                              }
-                            });
-                          },
-                          trailing: Text((latency == null) ? "N/A" : "$latency ms"),
-                        );
-                      }),
-                  StreamBuilder(
-                      stream: SocketManager().connectionStateStream,
-                      builder: (context, AsyncSnapshot<SocketState> snapshot) {
-                        SocketState connectionStatus;
-                        if (snapshot.hasData) {
-                          connectionStatus = snapshot.data;
-                        } else {
-                          connectionStatus = SocketManager().state;
-                        }
-                        String subtitle;
-
-                        switch (connectionStatus) {
-                          case SocketState.CONNECTED:
-                            subtitle = "Tap to manually sync messages";
-                            break;
-                          default:
-                            subtitle = "Disconnected (Nothing to do)";
-                        }
-
-                        return SettingsTile(
-                            title: "Manually Sync Messages",
-                            subTitle: subtitle,
-                            onTap: () async {
-                              showDialog(
-                                context: context,
-                                builder: (context) => SyncDialog(),
-                              );
-                            });
-                      }),
-                  StreamBuilder(
-                      stream: SocketManager().connectionStateStream,
-                      builder: (context, AsyncSnapshot<SocketState> snapshot) {
-                        SocketState connectionStatus;
-                        if (snapshot.hasData) {
-                          connectionStatus = snapshot.data;
-                        } else {
-                          connectionStatus = SocketManager().state;
-                        }
-                        String subtitle;
-
-                        if (fetchStatus == null) {
-                          switch (connectionStatus) {
-                            case SocketState.CONNECTED:
-                              subtitle = "Connected (Tap to fetch logs)";
-                              break;
-                            default:
-                              subtitle = "Disconnected (Nothing to do)";
-                          }
-                        } else {
-                          subtitle = fetchStatus;
-                        }
-
-                        return SettingsTile(
-                          title: "Fetch Server Logs & Share",
-                          subTitle: subtitle,
-                          onTap: () {
-                            if (![SocketState.CONNECTED].contains(connectionStatus)) return;
-
-                            if (this.mounted) {
-                              setState(() {
-                                fetchStatus = "Fetching logs, please wait...";
-                              });
-                            }
-
-                            SocketManager().sendMessage("get-logs", {"count": 500}, (Map<String, dynamic> res) {
-                              if (res['status'] != 200) {
-                                if (this.mounted) {
-                                  setState(() {
-                                    fetchStatus = "Failed to fetch logs!";
-                                  });
-                                }
-
-                                return;
-                              }
-
-                              String appDocPath = SettingsManager().appDocDir.path;
-                              File logFile = new File("$appDocPath/attachments/main.log");
-
-                              if (logFile.existsSync()) {
-                                logFile.deleteSync();
-                              }
-
-                              logFile.writeAsStringSync(res['data']);
-
-                              try {
-                                Share.file("BlueBubbles Server Log", "main.log", logFile.absolute.path, "text/log");
-
-                                if (this.mounted) {
-                                  setState(() {
-                                    fetchStatus = null;
-                                  });
-                                }
-                              } catch (ex) {
-                                if (this.mounted) {
-                                  setState(() {
-                                    fetchStatus = "Failed to share file! ${ex.toString()}";
-                                  });
-                                }
-                              }
-                            });
-                          },
-                        );
-                      }),
-                  StreamBuilder(
-                      stream: SocketManager().connectionStateStream,
-                      builder: (context, AsyncSnapshot<SocketState> snapshot) {
-                        SocketState connectionStatus;
-                        if (snapshot.hasData) {
-                          connectionStatus = snapshot.data;
-                        } else {
-                          connectionStatus = SocketManager().state;
-                        }
-                        String subtitle;
-
-                        if (fetchStatus == null) {
-                          switch (connectionStatus) {
-                            case SocketState.CONNECTED:
-                              subtitle = (isRestartingMessages)
-                                  ? "Restart in progress..."
-                                  : "Instruct the server to restart the iMessage app.";
-                              break;
-                            default:
-                              subtitle = "Disconnected (Nothing to do)";
-                          }
-                        } else {
-                          subtitle = fetchStatus;
-                        }
-
-                        return SettingsTile(
-                            title: "Restart iMessage",
-                            subTitle: subtitle,
-                            onTap: () async {
-                              if (![SocketState.CONNECTED].contains(connectionStatus) || isRestartingMessages) return;
-
-                              if (this.mounted && !isRestartingMessages)
-                                setState(() {
-                                  isRestartingMessages = true;
-                                });
-
-                              // Prevent restarting more than once every 30 seconds
                               int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-                              if (lastRestartMessages != null && now - lastRestartMessages < 1000 * 30) return;
-
-                              // Save the last time we restarted
-                              lastRestartMessages = now;
-
-                              // Create a temporary functon so we can call it easily
-                              Function stopRestarting = () {
-                                if (this.mounted && isRestartingMessages) {
-                                  setState(() {
-                                    isRestartingMessages = false;
-                                  });
-                                }
-                              };
-
-                              // Execute the restart
-                              try {
-                                // If it fails or there is an endpoint error, stop the loader
-                                await SocketManager().sendMessage("restart-imessage", null, (_) {
-                                  stopRestarting();
-                                }).catchError(() {
-                                  stopRestarting();
-                                });
-                              } finally {
-                                stopRestarting();
-                              }
+                              SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
+                                int later = DateTime.now().toUtc().millisecondsSinceEpoch;
+                                controller.latency.value = later - now;
+                              });
+                              SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
+                                controller.macOSVersion.value = res['data']['os_version'];
+                                controller.serverVersion.value = res['data']['server_version'];
+                              });
                             },
-                            trailing: (!isRestartingMessages)
-                                ? Icon(Icons.refresh, color: Theme.of(context).primaryColor)
-                                : Container(
-                                    constraints: BoxConstraints(
-                                      maxHeight: 20,
-                                      maxWidth: 20,
-                                    ),
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 3,
-                                      valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
-                                    )));
-                      }),
+                          ),
+                        )
+                    );
+                  }),
+                  SettingsHeader(
+                      headerColor: headerColor,
+                      tileColor: tileColor,
+                      iosSubtitle: iosSubtitle,
+                      materialSubtitle: materialSubtitle,
+                      text: "Connection & Sync"
+                  ),
                   SettingsTile(
-                      title: "Restart Server",
-                      subTitle: (isRestarting)
-                          ? "Restart in progress..."
-                          : "Instruct the server to restart. This will disconnect you briefly.",
-                      onTap: () async {
-                        if (isRestarting) return;
+                    title: "Re-configure with BlueBubbles Server",
+                    subtitle: "Scan QR code",
+                    leading: SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.gear,
+                      materialIcon: Icons.room_preferences,
+                    ),
+                    backgroundColor: tileColor,
+                    onTap: () async {
+                      var fcmData;
+                      try {
+                        fcmData = jsonDecode(
+                          await Navigator.of(context).push(
+                            CupertinoPageRoute(
+                              builder: (BuildContext context) {
+                                return QRCodeScanner();
+                              },
+                            ),
+                          ),
+                        );
+                      } catch (e) {
+                        return;
+                      }
+                      if (fcmData != null && fcmData[0] != null && getServerAddress(address: fcmData[1]) != null) {
+                        controller._fcmDataCopy = FCMData(
+                          projectID: fcmData[2],
+                          storageBucket: fcmData[3],
+                          apiKey: fcmData[4],
+                          firebaseURL: fcmData[5],
+                          clientID: fcmData[6],
+                          applicationID: fcmData[7],
+                        );
+                        controller._settingsCopy.guidAuthKey.value = fcmData[0];
+                        controller._settingsCopy.serverAddress.value = getServerAddress(address: fcmData[1])!;
 
-                        if (this.mounted && !isRestarting)
-                          setState(() {
-                            isRestarting = true;
-                          });
+                        SettingsManager().saveSettings(controller._settingsCopy);
+                        SettingsManager().saveFCMData(controller._fcmDataCopy!);
+                        SocketManager().authFCM();
+                      }
+                    },
+                  ),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
+                    ),
+                  ),
+                  Obx(() {
+                    String subtitle;
+
+                    switch (SocketManager().state.value) {
+                      case SocketState.CONNECTED:
+                        subtitle = "Tap to sync messages";
+                        break;
+                      default:
+                        subtitle = "Disconnected, cannot sync";
+                    }
+
+                    return SettingsTile(
+                        title: "Manually Sync Messages",
+                        subtitle: subtitle,
+                        backgroundColor: tileColor,
+                        leading: SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.arrow_2_circlepath,
+                          materialIcon: Icons.sync,
+                        ),
+                        onTap: () async {
+                          showDialog(
+                            context: context,
+                            builder: (context) => SyncDialog(),
+                          );
+                        });
+                  }),
+                  SettingsHeader(
+                      headerColor: headerColor,
+                      tileColor: tileColor,
+                      iosSubtitle: iosSubtitle,
+                      materialSubtitle: materialSubtitle,
+                      text: "Server Actions"
+                  ),
+                  Obx(() => SettingsTile(
+                    title: "Fetch & Share Server Logs",
+                    subtitle: controller.fetchStatus.value
+                        ?? (SocketManager().state.value == SocketState.CONNECTED ? "Tap to fetch logs" : "Disconnected, cannot fetch logs"),
+                    backgroundColor: tileColor,
+                    leading: SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.doc_plaintext,
+                      materialIcon: Icons.article,
+                    ),
+                    onTap: () {
+                      if (![SocketState.CONNECTED].contains(SocketManager().state.value)) return;
+
+                      controller.fetchStatus.value = "Fetching logs, please wait...";
+
+                      SocketManager().sendMessage("get-logs", {"count": 500}, (Map<String, dynamic> res) {
+                        if (res['status'] != 200) {
+                          controller.fetchStatus.value = "Failed to fetch logs!";
+
+                          return;
+                        }
+
+                        String appDocPath = SettingsManager().appDocDir.path;
+                        File logFile = new File("$appDocPath/attachments/main.log");
+
+                        if (logFile.existsSync()) {
+                          logFile.deleteSync();
+                        }
+
+                        logFile.writeAsStringSync(res['data']);
+
+                        try {
+                          Share.file("BlueBubbles Server Log", logFile.absolute.path);
+                          controller.fetchStatus.value = null;
+                        } catch (ex) {
+                          controller.fetchStatus.value = "Failed to share file! ${ex.toString()}";
+                        }
+                      });
+                    },
+                  )),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
+                    ),
+                  ),
+                  Obx(() => SettingsTile(
+                      title: "Restart iMessage",
+                      subtitle: controller.isRestartingMessages.value && SocketManager().state.value == SocketState.CONNECTED
+                          ? "Restart in progress..." : SocketManager().state.value == SocketState.CONNECTED ? "Restart the iMessage app" : "Disconnected, cannot restart",
+                      backgroundColor: tileColor,
+                      leading: SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.chat_bubble,
+                        materialIcon: Icons.sms,
+                      ),
+                      onTap: () async {
+                        if (![SocketState.CONNECTED].contains(SocketManager().state.value) || controller.isRestartingMessages.value) return;
+
+                        controller.isRestartingMessages.value = true;
 
                         // Prevent restarting more than once every 30 seconds
                         int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-                        if (lastRestart != null && now - lastRestart < 1000 * 30) return;
+                        if (controller.lastRestartMessages != null && now - controller.lastRestartMessages! < 1000 * 30) return;
 
                         // Save the last time we restarted
-                        lastRestart = now;
+                        controller.lastRestartMessages = now;
+
+                        // Create a temporary functon so we can call it easily
+                        Function stopRestarting = () {
+                          controller.isRestartingMessages.value = false;
+                        };
+
+                        // Execute the restart
+                        try {
+                          // If it fails or there is an endpoint error, stop the loader
+                          await SocketManager().sendMessage("restart-messages-app", null, (_) {
+                            stopRestarting();
+                          }).catchError((_) {
+                            stopRestarting();
+                          });
+                        } finally {
+                          stopRestarting();
+                        }
+                      },
+                      trailing: (!controller.isRestartingMessages.value)
+                          ? Icon(Icons.refresh, color: Colors.grey)
+                          : Container(
+                          constraints: BoxConstraints(
+                            maxHeight: 20,
+                            maxWidth: 20,
+                          ),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 3,
+                            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                          )))),
+                  Obx(() {
+                    if (SettingsManager().settings.enablePrivateAPI.value) {
+                      return Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 65.0),
+                          child: SettingsDivider(color: headerColor),
+                        ),
+                      );
+                    } else return SizedBox.shrink();
+                  }),
+                  Obx(() {
+                    if (SettingsManager().settings.enablePrivateAPI.value
+                        && (controller.serverVersionCode.value ?? 0) > 29) {
+                      return SettingsTile(
+                          title: "Restart Private API",
+                          subtitle: controller.isRestartingPrivateAPI.value && SocketManager().state.value == SocketState.CONNECTED
+                              ? "Restart in progress..." : SocketManager().state.value == SocketState.CONNECTED ? "Restart the Private API" : "Disconnected, cannot restart",
+                          backgroundColor: tileColor,
+                          leading: SettingsLeadingIcon(
+                            iosIcon: CupertinoIcons.exclamationmark_shield,
+                            materialIcon: Icons.gpp_maybe,
+                          ),
+                          onTap: () async {
+                            if (![SocketState.CONNECTED].contains(SocketManager().state.value) || controller.isRestartingPrivateAPI.value) return;
+
+                            controller.isRestartingPrivateAPI.value = true;
+
+                            // Prevent restarting more than once every 30 seconds
+                            int now = DateTime.now().toUtc().millisecondsSinceEpoch;
+                            if (controller.lastRestartPrivateAPI != null && now - controller.lastRestartPrivateAPI! < 1000 * 30) return;
+
+                            // Save the last time we restarted
+                            controller.lastRestartPrivateAPI = now;
+
+                            // Create a temporary functon so we can call it easily
+                            Function stopRestarting = () {
+                              controller.isRestartingPrivateAPI.value = false;
+                            };
+
+                            // Execute the restart
+                            try {
+                              // If it fails or there is an endpoint error, stop the loader
+                              await SocketManager().sendMessage("restart-private-api", null, (_) {
+                                stopRestarting();
+                              }).catchError((_) {
+                                stopRestarting();
+                              });
+                            } finally {
+                              stopRestarting();
+                            }
+                          },
+                          trailing: (!controller.isRestartingPrivateAPI.value)
+                              ? Icon(Icons.refresh, color: Colors.grey)
+                              : Container(
+                              constraints: BoxConstraints(
+                                maxHeight: 20,
+                                maxWidth: 20,
+                              ),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 3,
+                                valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                              )));
+                    } else return SizedBox.shrink();
+                  }),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
+                    ),
+                  ),
+                  Obx(() => SettingsTile(
+                      title: "Restart BlueBubbles Server",
+                      subtitle: (controller.isRestarting.value)
+                          ? "Restart in progress..."
+                          : "This will briefly disconnect you",
+                      backgroundColor: tileColor,
+                      leading: SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.desktopcomputer,
+                        materialIcon: Icons.dvr,
+                      ),
+                      onTap: () async {
+                        if (controller.isRestarting.value) return;
+
+                        controller.isRestarting.value = true;
+
+                        // Prevent restarting more than once every 30 seconds
+                        int now = DateTime.now().toUtc().millisecondsSinceEpoch;
+                        if (controller.lastRestart != null && now - controller.lastRestart! < 1000 * 30) return;
+
+                        // Save the last time we restarted
+                        controller.lastRestart = now;
 
                         Function stopRestarting = () {
-                          if (this.mounted && isRestarting) {
-                            setState(() {
-                              isRestarting = false;
-                            });
-                          }
+                          controller.isRestarting.value = false;
                         };
 
                         // Perform the restart
@@ -351,8 +487,8 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                           stopRestarting();
                         });
                       },
-                      trailing: (!isRestarting)
-                          ? Icon(Icons.refresh, color: Theme.of(context).primaryColor)
+                      trailing: (!controller.isRestarting.value)
+                          ? Icon(Icons.refresh, color: Colors.grey)
                           : Container(
                               constraints: BoxConstraints(
                                 maxHeight: 20,
@@ -361,7 +497,17 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
                               child: CircularProgressIndicator(
                                 strokeWidth: 3,
                                 valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
-                              )))
+                              )))),
+                  Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
+                  Container(
+                    height: 30,
+                    decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
+                      color: headerColor,
+                      border: Border(
+                          top: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
+                      ),
+                    ) : null,
+                  ),
                 ],
               ),
             ),
@@ -378,25 +524,25 @@ class _ServerManagementPanelState extends State<ServerManagementPanel> {
 }
 
 class SyncDialog extends StatefulWidget {
-  SyncDialog({Key key}) : super(key: key);
+  SyncDialog({Key? key}) : super(key: key);
 
   @override
   _SyncDialogState createState() => _SyncDialogState();
 }
 
 class _SyncDialogState extends State<SyncDialog> {
-  String errorCode;
+  String? errorCode;
   bool finished = false;
-  String message;
-  double progress;
-  Duration lookback;
+  String? message;
+  double? progress;
+  Duration? lookback;
   int page = 0;
 
   void syncMessages() async {
     if (lookback == null) return;
 
-    DateTime now = DateTime.now().toUtc().subtract(lookback);
-    SocketManager().fetchMessages(null, after: now.millisecondsSinceEpoch).then((List<dynamic> messages) {
+    DateTime now = DateTime.now().toUtc().subtract(lookback!);
+    SocketManager().fetchMessages(null, after: now.millisecondsSinceEpoch)!.then((dynamic messages) {
       if (this.mounted) {
         setState(() {
           message = "Adding ${messages.length} messages...";
@@ -417,10 +563,12 @@ class _SyncDialogState extends State<SyncDialog> {
       }).then((List<Message> items) {
         onFinish(true, items.length);
       });
-    }).catchError((_) => onFinish(false, 0));
+    }).catchError((_) {
+      onFinish(false, 0);
+    });
   }
 
-  void onFinish([bool success = true, int total]) {
+  void onFinish([bool success = true, int? total]) {
     if (!this.mounted) return;
 
     this.progress = 100;
@@ -433,7 +581,7 @@ class _SyncDialogState extends State<SyncDialog> {
     String title = errorCode != null ? "Error!" : message ?? "";
     Widget content = Container();
     if (errorCode != null) {
-      content = Text(errorCode);
+      content = Text(errorCode!);
     } else {
       content = Container(
         height: 5,
@@ -448,13 +596,13 @@ class _SyncDialogState extends State<SyncDialog> {
     }
 
     List<Widget> actions = [
-      FlatButton(
+      TextButton(
         onPressed: () {
           Navigator.of(context).pop();
         },
         child: Text(
           "Ok",
-          style: Theme.of(context).textTheme.bodyText1.apply(
+          style: Theme.of(context).textTheme.bodyText1!.apply(
                 color: Theme.of(context).primaryColor,
               ),
         ),
@@ -477,7 +625,7 @@ class _SyncDialogState extends State<SyncDialog> {
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 20.0),
             child: Slider(
-              value: lookback?.inDays?.toDouble() ?? 1.0,
+              value: lookback?.inDays.toDouble() ?? 1.0,
               onChanged: (double value) {
                 if (!this.mounted) return;
 
@@ -485,7 +633,7 @@ class _SyncDialogState extends State<SyncDialog> {
                   lookback = new Duration(days: value.toInt());
                 });
               },
-              label: lookback?.inDays?.toString() ?? "1",
+              label: lookback?.inDays.toString() ?? "1",
               divisions: 29,
               min: 1,
               max: 30,
@@ -495,7 +643,7 @@ class _SyncDialogState extends State<SyncDialog> {
       );
 
       actions = [
-        FlatButton(
+        TextButton(
           onPressed: () {
             if (!this.mounted) return;
             if (lookback == null) lookback = new Duration(days: 1);
@@ -506,7 +654,7 @@ class _SyncDialogState extends State<SyncDialog> {
           },
           child: Text(
             "Sync",
-            style: Theme.of(context).textTheme.bodyText1.apply(
+            style: Theme.of(context).textTheme.bodyText1!.apply(
                   color: Theme.of(context).primaryColor,
                 ),
           ),

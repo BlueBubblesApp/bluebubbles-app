@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:bluebubbles/helpers/themes.dart';
@@ -31,16 +32,16 @@ class DBUpgradeItem {
   int addedInVersion;
   Function(Database) upgrade;
 
-  DBUpgradeItem({@required this.addedInVersion, @required this.upgrade});
+  DBUpgradeItem({required this.addedInVersion, required this.upgrade});
 }
 
 class DBProvider {
   DBProvider._();
   static final DBProvider db = DBProvider._();
 
-  static Database _database;
+  static Database? _database;
   static String _path = "";
-  static int currentVersion = 8;
+  static int currentVersion = 9;
 
   /// Contains list of functions to invoke when going from a previous to the current database verison
   /// The previous version is always [key - 1], for example for key 2, it will be the upgrade scheme from version 1 to version 2
@@ -95,19 +96,24 @@ class DBProvider {
         upgrade: (Database db) {
           db.execute("ALTER TABLE handle ADD COLUMN color TEXT DEFAULT NULL;");
         }),
+    new DBUpgradeItem(
+        addedInVersion: 9,
+        upgrade: (Database db) {
+          db.execute("ALTER TABLE handle ADD COLUMN defaultPhone TEXT DEFAULT NULL;");
+        }),
   ];
 
   Future<Database> get database async {
-    if (_database != null) return _database;
+    if (_database != null) return _database!;
 
     // if _database is null we instantiate it
     _database = await initDB();
-    return _database;
+    return _database!;
   }
 
   String get path => _path;
 
-  initDB() async {
+  Future<Database> initDB() async {
     Directory documentsDirectory = await getApplicationDocumentsDirectory();
     _path = join(documentsDirectory.path, "chat.db");
     return await openDatabase(_path,
@@ -146,7 +152,6 @@ class DBProvider {
 
   static Future<void> deleteDB() async {
     Database db = await DBProvider.db.database;
-
     // Remove base tables
     await Handle.flush();
     await Chat.flush();
@@ -237,6 +242,7 @@ class DBProvider {
         "address TEXT UNIQUE NOT NULL,"
         "country TEXT DEFAULT NULL,"
         "color TEXT DEFAULT NULL,"
+        "defaultPhone TEXT DEFAULT NULL,"
         "uncanonicalizedId TEXT DEFAULT NULL"
         ");");
   }

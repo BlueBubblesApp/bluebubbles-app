@@ -10,19 +10,19 @@ import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:share_plus/share_plus.dart' as sp;
 
 class Share {
-  static const MethodChannel _channel = const MethodChannel('com.bluebubbles.messaging');
-
   /// Share a file with other apps.
-  static Future<void> file(String subject, String filename, String filepath, String mimeType) async {
-    Map<String, dynamic> argsMap = Map<String, dynamic>();
+  static void file(String subject, String filepath) async {
+    sp.Share.shareFiles([filepath], text: subject);
+  }
 
-    argsMap.addAll({'subject': '$subject', 'filename': '$filename', 'filepath': '$filepath', 'mimeType': '$mimeType'});
-    await _channel.invokeMethod('share-file', argsMap);
+  /// Share text with other apps.
+  static void text(String subject, String text) {
+    sp.Share.share(text, subject: subject);
   }
 
   static Future<void> location(Chat chat) async {

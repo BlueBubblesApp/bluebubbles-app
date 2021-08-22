@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/config_entry.dart';
 import 'package:sqflite/sqflite.dart';
@@ -28,9 +30,7 @@ class FCMData {
       storageBucket: projectInfo["storage_bucket"],
       apiKey: client["api_key"][0]["current_key"],
       firebaseURL: projectInfo["firebase_url"],
-      clientID: clientID.contains("-")
-          ? clientID.substring(0, clientID.indexOf("-"))
-          : clientID,
+      clientID: clientID.contains("-") ? clientID.substring(0, clientID.indexOf("-")) : clientID,
       applicationID: client["client_info"]["mobilesdk_app_id"],
     );
   }
@@ -55,7 +55,7 @@ class FCMData {
     return data;
   }
 
-  Future<FCMData> save({Database database}) async {
+  Future<FCMData> save({Database? database}) async {
     List<ConfigEntry> entries = this.toEntries();
     for (ConfigEntry entry in entries) {
       await entry.save("fcm", database: database);
@@ -64,7 +64,7 @@ class FCMData {
   }
 
   static Future<FCMData> getFCM() async {
-    Database db = await DBProvider.db.database;
+    Database? db = await DBProvider.db.database;
 
     List<Map<String, dynamic>> result = await db.query("fcm");
     if (result.isEmpty) return new FCMData();
@@ -85,28 +85,12 @@ class FCMData {
       };
 
   List<ConfigEntry> toEntries() => [
-        ConfigEntry(
-            name: "projectID",
-            value: this.projectID,
-            type: this.projectID.runtimeType),
-        ConfigEntry(
-            name: "storageBucket",
-            value: this.storageBucket,
-            type: this.storageBucket.runtimeType),
-        ConfigEntry(
-            name: "apiKey", value: this.apiKey, type: this.apiKey.runtimeType),
-        ConfigEntry(
-            name: "firebaseURL",
-            value: this.firebaseURL,
-            type: this.firebaseURL.runtimeType),
-        ConfigEntry(
-            name: "clientID",
-            value: this.clientID,
-            type: this.clientID.runtimeType),
-        ConfigEntry(
-            name: "applicationID",
-            value: this.applicationID,
-            type: this.applicationID.runtimeType),
+        ConfigEntry(name: "projectID", value: this.projectID, type: this.projectID.runtimeType),
+        ConfigEntry(name: "storageBucket", value: this.storageBucket, type: this.storageBucket.runtimeType),
+        ConfigEntry(name: "apiKey", value: this.apiKey, type: this.apiKey.runtimeType),
+        ConfigEntry(name: "firebaseURL", value: this.firebaseURL, type: this.firebaseURL.runtimeType),
+        ConfigEntry(name: "clientID", value: this.clientID, type: this.clientID.runtimeType),
+        ConfigEntry(name: "applicationID", value: this.applicationID, type: this.applicationID.runtimeType),
       ];
   bool get isNull =>
       this.projectID == null ||

@@ -11,47 +11,29 @@ import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../repository/models/chat.dart';
 import '../repository/models/handle.dart';
 
 class ChatBloc {
-  // Stream controller is the 'Admin' that manages
-  // the state of our stream of data like adding
-  // new data, change the state of the stream
-  // and broadcast it to observers/subscribers
-  final _chatController = StreamController<List<Chat>>.broadcast();
-  final _tileValController = StreamController<Map<String, Map<String, dynamic>>>.broadcast();
+  static StreamSubscription<NewMessageEvent>? _messageSubscription;
 
-  Stream<List<Chat>> get chatStream => _chatController.stream;
+  final RxList<Chat> _chats = <Chat>[].obs;
 
-  Stream<Map<String, Map<String, dynamic>>> get tileStream => _tileValController.stream;
+  RxList<Chat> get chats => _chats;
+  final RxInt _unreads = 0.obs;
 
-  final _archivedChatController = StreamController<List<Chat>>.broadcast();
+  RxInt get unreads => _unreads;
 
-  Stream<List<Chat>> get archivedChatStream => _archivedChatController.stream;
+  final RxBool hasChats = false.obs;
+  final RxBool loadedChats = false.obs;
 
-  static StreamSubscription<NewMessageEvent> _messageSubscription;
-
-  List<Chat> _chats = [];
-  bool _hasChats;
-  bool get hasChats => _hasChats == null || _hasChats;
-
-  // Remove duplicates when this gets accessed
-  List<Chat> get chats {
-    final ids = _chats.map((e) => e.guid).toSet();
-    _chats.retainWhere((element) => ids.remove(element.guid));
-    return _chats;
+  void updateUnreads() {
+    _unreads.value = chats.where((element) => element.hasUnreadMessage ?? false).map((e) => e.guid).toList().length;
   }
 
-  List<Chat> _archivedChats = [];
-  List<Chat> get archivedChats {
-    final ids = _archivedChats.map((e) => e.guid).toSet();
-    _archivedChats.retainWhere((element) => ids.remove(element.guid));
-    return _archivedChats;
-  }
-
-  Completer<void> chatRequest;
+  Completer<void>? chatRequest;
 
   static final ChatBloc _chatBloc = ChatBloc._internal();
 
@@ -62,17 +44,19 @@ class ChatBloc {
   }
 
   int get pageSize {
-    return (SettingsManager().settings.denseChatTiles || SettingsManager().settings.skin != Skins.IOS) ? 12 : 10;
+    return (SettingsManager().settings.denseChatTiles.value || SettingsManager().settings.skin.value != Skins.iOS)
+        ? 14
+        : 12;
   }
 
-  Future<Chat> getChat(String guid) async {
+  Future<Chat?> getChat(String? guid) async {
     if (guid == null) return null;
-    if (_chats == null) {
+    if (_chats.isEmpty) {
       await this.refreshChats();
     }
 
-    for (Chat chat in _chats) {
-      if (chat.guid == guid) return chat;
+    for (Chat? chat in _chats) {
+      if (chat!.guid == guid) return chat;
     }
 
     return null;
@@ -80,13 +64,13 @@ class ChatBloc {
 
   Future<void> refreshChats({bool force = false}) async {
     // If we are fetching the contacts, return the current future so we can await it
-    if (!force && chatRequest != null && !chatRequest.isCompleted) {
-      return chatRequest.future;
+    if (!force && chatRequest != null && !chatRequest!.isCompleted) {
+      return chatRequest!.future;
     }
 
     // If we force a reload, we should wait until the previous one is finished
-    if (force && chatRequest != null && !chatRequest.isCompleted) {
-      await chatRequest.future;
+    if (force && chatRequest != null && !chatRequest!.isCompleted) {
+      await chatRequest!.future;
     }
 
     chatRequest = new Completer<void>();
@@ -102,15 +86,13 @@ class ChatBloc {
 
     // Fetch the first x chats
     getChatBatches();
-    getChatBatches(archived: true);
   }
 
   /// Inserts a [chat] into the chat bloc based on the lastMessage data
   Future<void> updateChatPosition(Chat chat) async {
-    if (chat == null) return;
-    if (isNullOrEmpty(_chats)) {
+    if (isNullOrEmpty(_chats)!) {
       await this.refreshChats();
-      if (isNullOrEmpty(_chats)) return;
+      if (isNullOrEmpty(_chats)!) return;
     }
 
     int currentIndex = -1;
@@ -118,13 +100,13 @@ class ChatBloc {
 
     // Get the current index of the chat, (if there),
     // and figure out if we need to update the chat.
-    for (int i = 0; i < (_chats ?? []).length; i++) {
+    for (int i = 0; i < _chats.length; i++) {
       // Skip over non-matching chats
       if (_chats[i].guid != chat.guid) continue;
 
       // Don't move/update the chat if the latest message for it is newer than the incoming one
-      int latest = chat.latestMessageDate != null ? chat.latestMessageDate.millisecondsSinceEpoch : 0;
-      if (_chats[i].latestMessageDate != null && _chats[i].latestMessageDate.millisecondsSinceEpoch > latest ?? 0) {
+      int latest = chat.latestMessageDate != null ? chat.latestMessageDate!.millisecondsSinceEpoch : 0;
+      if (_chats[i].latestMessageDate != null && _chats[i].latestMessageDate!.millisecondsSinceEpoch > latest) {
         shouldUpdate = false;
       }
 
@@ -136,7 +118,7 @@ class ChatBloc {
     // If we shouldn't update the bloc because the message is older, return here
     if (!shouldUpdate) return;
 
-    if (isNullOrEmpty(chat.title)) {
+    if (isNullOrEmpty(chat.title)!) {
       await chat.getTitle();
     }
 
@@ -145,9 +127,8 @@ class ChatBloc {
       for (int i = 0; i < _chats.length; i++) {
         // If the chat is older, that's where we want to insert
         if (_chats[i].latestMessageDate == null ||
-                chat.latestMessageDate == null ||
-                _chats[i].latestMessageDate.millisecondsSinceEpoch < chat.latestMessageDate.millisecondsSinceEpoch ??
-            0) {
+            chat.latestMessageDate == null ||
+            _chats[i].latestMessageDate!.millisecondsSinceEpoch < chat.latestMessageDate!.millisecondsSinceEpoch) {
           _chats.insert(i, chat);
           break;
         }
@@ -157,24 +138,41 @@ class ChatBloc {
       _chats[currentIndex] = chat;
     }
 
-    // Update the sink so all listeners get the new chat list
-    await this.addToSink(this.chats);
+    for (int i = 0; i < _chats.length; i++) {
+      if (isNullOrEmpty(_chats[i].participants)!) {
+        await _chats[i].getParticipants();
+      }
+    }
+
     await updateShareTarget(chat);
+    _chats.sort(Chat.sort);
   }
 
   Future<void> markAllAsRead() async {
     // Enumerate the unread chats
-    List<Chat> unread = this.chats.where((element) => element.hasUnreadMessage).toList();
+    List<Chat> unread = this.chats.where((element) => element.hasUnreadMessage!).toList();
 
     // Mark them as unread
     for (Chat chat in unread) {
-      await chat.setUnreadStatus(false);
+      await chat.toggleHasUnread(false);
+
+      // Remove from notification shade
+      MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
     }
 
     // Update their position in the chat list
     for (Chat chat in unread) {
       this.updateChatPosition(chat);
     }
+  }
+
+  Future<void> toggleChatUnread(Chat chat, bool isUnread) async {
+    await chat.toggleHasUnread(isUnread);
+
+    // Remove from notification shade
+    MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
+
+    this.updateChatPosition(chat);
   }
 
   Future<void> updateAllShareTargets() async {
@@ -188,12 +186,12 @@ class ChatBloc {
   }
 
   Future<void> updateShareTarget(Chat chat) async {
-    Uint8List icon;
-    Contact contact =
+    Uint8List? icon;
+    Contact? contact =
         chat.participants.length == 1 ? await ContactManager().getCachedContact(chat.participants.first) : null;
     try {
       // If there is a contact specified, we can use it's avatar
-      if (contact != null && contact.avatar.isNotEmpty) {
+      if (contact != null && contact.avatar!.isNotEmpty) {
         icon = contact.avatar;
         // Otherwise if there isn't, we use the [defaultAvatar]
       } else {
@@ -210,12 +208,12 @@ class ChatBloc {
     }
 
     // If we don't have a title, try to get it
-    if (isNullOrEmpty(chat.title)) {
+    if (isNullOrEmpty(chat.title)!) {
       await chat.getTitle();
     }
 
     // If we still don't have a title, bye felicia
-    if (isNullOrEmpty(chat.title)) return;
+    if (isNullOrEmpty(chat.title)!) return;
 
     try {
       await MethodChannelInterface().invokeMethod("push-share-targets", {
@@ -247,70 +245,46 @@ class ChatBloc {
     return NewMessageManager().stream.listen(handleMessageAction);
   }
 
-  Future<void> getChatBatches({int batchSize = 10, bool archived = false}) async {
-    int count = await Chat.count();
+  Future<void> getChatBatches({int batchSize = 10}) async {
+    int count = (await Chat.count()) ?? 0;
     if (count == 0) {
-      _hasChats = false;
+      hasChats.value = false;
     } else {
-      _hasChats = true;
+      hasChats.value = true;
     }
 
     // Reset chat lists
-    if (archived) {
-      _archivedChats = [];
-    } else {
-      _chats = [];
-    }
+    List<Chat> newChats = [];
 
     int batches = (count < batchSize) ? batchSize : (count / batchSize).ceil();
     for (int i = 0; i < batches; i++) {
-      List<Chat> chats = await Chat.getChats(limit: batchSize, offset: i * batchSize, archived: archived);
+      List<Chat> chats = await Chat.getChats(limit: batchSize, offset: i * batchSize);
       if (chats.length == 0) break;
 
       for (Chat chat in chats) {
-        bool existing = false;
-        for (Chat existingChat in (archived ? _archivedChats : _chats)) {
-          if (existingChat.guid == chat.guid) {
-            existing = true;
-            break;
-          }
-        }
-
-        if (existing) continue;
-        if (archived) {
-          _archivedChats.add(chat);
-        } else {
-          _chats.add(chat);
-        }
+        newChats.add(chat);
 
         await initTileValsForChat(chat);
       }
 
-      await this.addToSink((archived) ? this.archivedChats : this.chats, archived: archived);
+      for (int i = 0; i < newChats.length; i++) {
+        if (isNullOrEmpty(newChats[i].participants)!) {
+          await newChats[i].getParticipants();
+        }
+      }
+
+      if (newChats.length != 0) {
+        _chats.value = newChats;
+        _chats.sort(Chat.sort);
+      }
     }
 
-    // If this is for archived chats, return now
-    if (archived) return;
-
-    // For non-archived chats, do some more processing
-    debugPrint("[ChatBloc] -> Finished fetching chats (${_chats.length}). (archived: $archived)");
+    debugPrint("[ChatBloc] -> Finished fetching chats (${_chats.length}).");
     await updateAllShareTargets();
 
-    if (chatRequest != null && !chatRequest.isCompleted) {
-      chatRequest.complete();
-    }
-  }
-
-  /// Used to initialize all the values of the set List of [chat]s
-  /// @param chats list of chats to initialize values for
-  /// @param addToSink optional param whether to update the stream after initalizing all the values of the chat, defaults to true
-  Future<void> initTileVals(List<Chat> chats, [bool addToSink = true]) async {
-    for (int i = 0; i < chats.length; i++) {
-      await initTileValsForChat(chats[i]);
-    }
-
-    if (addToSink) {
-      await this.addToSink(this.chats);
+    if (chatRequest != null && !chatRequest!.isCompleted) {
+      chatRequest!.complete();
+      loadedChats.value = true;
     }
   }
 
@@ -324,41 +298,32 @@ class ChatBloc {
   }
 
   void archiveChat(Chat chat) async {
-    _chats.removeWhere((element) => element.guid == chat.guid);
-    _archivedChats.add(chat);
-    chat.isArchived = true;
-    await chat.save(updateLocalVals: true);
+    _chats.firstWhere((element) => element.guid == chat.guid).isArchived = true;
+    await chat.toggleArchived(true);
     initTileValsForChat(chat);
-    await this.addToSink(this.chats);
-    _archivedChatController.sink.add(_archivedChats);
   }
 
   void unArchiveChat(Chat chat) async {
-    _archivedChats.removeWhere((element) => element.guid == chat.guid);
-    chat.isArchived = false;
-    await chat.save(updateLocalVals: true);
-    await initTileValsForChat(chat);
-    _chats.add(chat);
-    _archivedChatController.sink.add(_archivedChats);
-    await this.addToSink(this.chats);
+    _chats.firstWhere((element) => element.guid == chat.guid).isArchived = false;
+    await chat.toggleArchived(false);
+    initTileValsForChat(chat);
   }
 
   void deleteChat(Chat chat) async {
-    _archivedChats.removeWhere((element) => element.id == chat.id);
     _chats.removeWhere((element) => element.id == chat.id);
-    _archivedChatController.sink.add(_archivedChats);
-    await this.addToSink(this.chats);
   }
 
   void updateTileVals(Chat chat, Map<String, dynamic> chatMap, Map<String, Map<String, dynamic>> map) {
     if (map.containsKey(chat.guid)) {
       map.remove(chat.guid);
     }
-    map[chat.guid] = chatMap;
+    if (chat.guid != null) {
+      map[chat.guid!] = chatMap;
+    }
   }
 
   void updateChat(Chat chat) async {
-    if (_chats == null) await refreshChats();
+    if (_chats.isEmpty) await refreshChats();
 
     for (int i = 0; i < _chats.length; i++) {
       Chat _chat = _chats[i];
@@ -367,8 +332,12 @@ class ChatBloc {
         await initTileValsForChat(chats[i]);
       }
     }
-
-    await this.addToSink(this.chats);
+    for (int i = 0; i < _chats.length; i++) {
+      if (isNullOrEmpty(_chats[i].participants)!) {
+        await _chats[i].getParticipants();
+      }
+    }
+    _chats.sort(Chat.sort);
   }
 
   addChat(Chat chat) async {
@@ -390,24 +359,32 @@ class ChatBloc {
     refreshChats();
   }
 
-  Future<void> addToSink(List<Chat> chats, {bool archived = false}) async {
-    for (int i = 0; i < chats.length; i++) {
-      if (isNullOrEmpty(chats[i].participants)) {
-        await chats[i].getParticipants();
-      }
-    }
+  dispose() {
+    _messageSubscription?.cancel();
+  }
+}
 
-    if (archived && !_archivedChatController.isClosed) {
-      _archivedChatController.sink.add(chats);
-    } else if (!_chatController.isClosed) {
-      _chatController.sink.add(chats);
-    }
+extension Helpers on RxList<Chat> {
+  /// Helper to return archived chats or all chats depending on the bool passed to it
+  /// This helps reduce a vast amount of code in build methods so the widgets can
+  /// update without StreamBuilders
+  RxList<Chat> archivedHelper(bool archived) {
+    if (archived)
+      return this.where((e) => e.isArchived ?? false).toList().obs;
+    else
+      return this.where((e) => !(e.isArchived ?? false)).toList().obs;
   }
 
-  dispose() {
-    _chatController?.close();
-    _tileValController?.close();
-    _archivedChatController?.close();
-    _messageSubscription?.cancel();
+  RxList<Chat> bigPinHelper(bool pinned) {
+    if (pinned)
+      return this
+          .where((e) => SettingsManager().settings.skin.value == Skins.iOS ? (e.isPinned ?? false) : true)
+          .toList()
+          .obs;
+    else
+      return this
+          .where((e) => SettingsManager().settings.skin.value == Skins.iOS ? !(e.isPinned ?? false) : true)
+          .toList()
+          .obs;
   }
 }

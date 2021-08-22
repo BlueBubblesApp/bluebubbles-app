@@ -1,3 +1,5 @@
+import 'package:get/get.dart';
+
 /// Helper class to convert db values given a type and a value
 class DBConverter {
   static const Map<Type, String> types = {
@@ -5,19 +7,21 @@ class DBConverter {
     double: "double",
     int: "int",
     String: "string",
+    RxBool: "bool",
+    RxDouble: "double",
+    RxInt: "int",
+    RxString: "string",
   };
 
-  static Type getType(String type) {
-    return types.containsValue(type)
-        ? types.keys.firstWhere((key) => types[key] == type)
-        : null;
+  static Type? getType(String type) {
+    return types.containsValue(type) ? types.keys.firstWhere((key) => types[key] == type) : null;
   }
 
-  static String getStringType(Type type) {
-    return types.containsKey(type) ? types[type] : null;
+  static String? getStringType(Type? type) {
+    return types.containsKey(type) ? types[type!] : null;
   }
 
-  static String getString(dynamic value) {
+  static String? getString(dynamic value) {
     if (value.runtimeType == bool) {
       return value ? "1" : "0";
     } else if (value.runtimeType == double) {

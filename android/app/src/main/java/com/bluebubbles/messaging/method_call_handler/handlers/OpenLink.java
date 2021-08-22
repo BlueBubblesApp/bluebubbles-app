@@ -1,5 +1,6 @@
 package com.bluebubbles.messaging.method_call_handler.handlers;
 
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -22,7 +23,21 @@ public class OpenLink implements Handler {
 
     @Override
     public void Handle() {
-        context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(call.argument("link"))));
+        Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(call.argument("link")));
+        if ((Boolean) call.argument("forceBrowser")) {
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            i.setPackage("com.android.chrome");
+            try {
+                context.startActivity(i);
+            } catch (ActivityNotFoundException e) {
+                // Chrome is probably not installed
+                // Try with the default browser
+                i.setPackage(null);
+                context.startActivity(i);
+            }
+        } else {
+            context.startActivity(i);
+        }
         result.success("");
     }
 }

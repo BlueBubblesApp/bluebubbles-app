@@ -14,28 +14,28 @@ abstract class MessageWidgetMixin {
   bool hasHyperlinks = false;
   static const double MAX_SIZE = 3 / 5;
 
-  Future<void> initMessageState(Message message, bool showHandle) async {
-    this.hasHyperlinks = parseLinks(message.text).isNotEmpty;
+  Future<void> initMessageState(Message message, bool? showHandle) async {
+    this.hasHyperlinks = parseLinks(message.text!).isNotEmpty;
     await getContactTitle(message, showHandle);
   }
 
-  Future<void> getContactTitle(Message message, bool showHandle) async {
-    if (message.handle == null || !showHandle) return;
+  Future<void> getContactTitle(Message message, bool? showHandle) async {
+    if (message.handle == null || !showHandle!) return;
 
-    String title = await ContactManager().getContactTitle(message.handle);
+    String? title = await ContactManager().getContactTitle(message.handle);
 
     if (title != contactTitle) {
-      contactTitle = title;
+      contactTitle = title ?? "";
     }
   }
 
   /// Adds reacts to a [message] widget
   Widget addReactionsToWidget(
-      {@required Widget messageWidget, @required Widget reactions, @required Message message, bool shouldShow = true}) {
+      {required Widget messageWidget, required Widget reactions, required Message? message, bool shouldShow = true}) {
     if (!shouldShow) return messageWidget;
 
     return Stack(
-      alignment: message.isFromMe ? AlignmentDirectional.topStart : AlignmentDirectional.topEnd,
+      alignment: message!.isFromMe! ? AlignmentDirectional.topStart : AlignmentDirectional.topEnd,
       children: [
         messageWidget,
         reactions,
@@ -44,7 +44,7 @@ abstract class MessageWidgetMixin {
   }
 
   /// Adds reacts to a [message] widget
-  Widget addStickersToWidget({@required Widget message, @required Widget stickers, @required bool isFromMe}) {
+  Widget addStickersToWidget({required Widget message, required Widget stickers, required bool isFromMe}) {
     return Stack(
       alignment: (isFromMe) ? AlignmentDirectional.bottomEnd : AlignmentDirectional.bottomStart,
       children: [
@@ -54,18 +54,18 @@ abstract class MessageWidgetMixin {
     );
   }
 
-  static List<InlineSpan> buildMessageSpans(BuildContext context, Message message, {List<Color> colors: const []}) {
+  static List<InlineSpan> buildMessageSpans(BuildContext context, Message? message, {List<Color>? colors: const []}) {
     List<InlineSpan> textSpans = <InlineSpan>[];
 
     final bool generateContent =
-        SettingsManager().settings.redactedMode && SettingsManager().settings.generateFakeMessageContent;
-    final bool hideContent =
-        SettingsManager().settings.redactedMode && SettingsManager().settings.hideMessageContent && !generateContent;
+        SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeMessageContent.value;
+    final bool hideContent = (message?.guid?.contains("theme-selector") ?? false) ||
+        (SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value && !generateContent);
 
     if (message != null && !isEmptyString(message.text)) {
       RegExp exp = new RegExp(
           r'((https?://)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9/()@:%_.~#?&=*\[\]]*)\b');
-      List<RegExpMatch> matches = exp.allMatches(message.text).toList();
+      List<RegExpMatch> matches = exp.allMatches(message.text!).toList();
 
       List<int> linkIndexMatches = <int>[];
       matches.forEach((match) {
@@ -73,35 +73,35 @@ abstract class MessageWidgetMixin {
         linkIndexMatches.add(match.end);
       });
 
-      TextStyle textStyle = Theme.of(context).textTheme.bodyText2;
-      if (!message.isFromMe) {
-        if (SettingsManager().settings.colorfulBubbles) {
-          if (!isNullOrEmpty(colors)) {
-            bool dark = colors[0].computeLuminance() < 0.179;
+      TextStyle? textStyle = Theme.of(context).textTheme.bodyText2;
+      if (!message.isFromMe!) {
+        if (SettingsManager().settings.colorfulBubbles.value) {
+          if (!isNullOrEmpty(colors)!) {
+            bool dark = colors![0].computeLuminance() < 0.179;
             if (!dark) {
               textStyle = Theme.of(context)
                   .textTheme
-                  .bodyText2
-                  .apply(color: hideContent ? Colors.transparent : darken(colors[0], 0.35));
+                  .bodyText2!
+                  .apply(color: hideContent ? Colors.transparent : colors[0].darkenAmount(0.35));
             } else {
               textStyle = Theme.of(context).textTheme.bodyText2;
-              if (hideContent) textStyle = textStyle.apply(color: Colors.transparent);
+              if (hideContent) textStyle = textStyle!.apply(color: Colors.transparent);
             }
           } else {
-            textStyle = Theme.of(context).textTheme.bodyText2.apply(
+            textStyle = Theme.of(context).textTheme.bodyText2!.apply(
                 color: hideContent
                     ? Colors.transparent
-                    : darken(toColorGradient(message?.handle?.address ?? "")[0], 0.35));
+                    : toColorGradient(message.handle?.address ?? "")[0].darkenAmount(0.35));
           }
-        } else if (hideContent) textStyle = textStyle.apply(color: Colors.transparent);
+        } else if (hideContent) textStyle = textStyle!.apply(color: Colors.transparent);
       } else {
-        textStyle = textStyle.apply(color: hideContent ? Colors.transparent : Colors.white);
+        textStyle = textStyle!.apply(color: hideContent ? Colors.transparent : Colors.white);
       }
 
-      if (!isNullOrEmpty(message.subject)) {
-        TextStyle _textStyle = message.isFromMe
-            ? textStyle.apply(color: Colors.white, fontWeightDelta: 2)
-            : textStyle.apply(fontWeightDelta: 2);
+      if (!isNullOrEmpty(message.subject)!) {
+        TextStyle _textStyle = message.isFromMe!
+            ? textStyle!.apply(color: Colors.white, fontWeightDelta: 2)
+            : textStyle!.apply(fontWeightDelta: 2);
         if (hideContent) {
           _textStyle = _textStyle.apply(color: Colors.transparent);
         }
@@ -118,19 +118,19 @@ abstract class MessageWidgetMixin {
           if (i == 0) {
             textSpans.add(
               TextSpan(
-                text: message.text.substring(0, linkIndexMatches[i]),
+                text: message.text!.substring(0, linkIndexMatches[i]),
                 style: textStyle,
               ),
             );
           } else if (i == linkIndexMatches.length && i - 1 >= 0) {
             textSpans.add(
               TextSpan(
-                text: message.text.substring(linkIndexMatches[i - 1], message.text.length),
+                text: message.text!.substring(linkIndexMatches[i - 1], message.text!.length),
                 style: textStyle,
               ),
             );
           } else if (i - 1 >= 0) {
-            String text = message.text.substring(linkIndexMatches[i - 1], linkIndexMatches[i]);
+            String text = message.text!.substring(linkIndexMatches[i - 1], linkIndexMatches[i]);
             if (exp.hasMatch(text)) {
               textSpans.add(
                 TextSpan(
@@ -142,9 +142,9 @@ abstract class MessageWidgetMixin {
                         url = "http://" + url;
                       }
 
-                      MethodChannelInterface().invokeMethod("open-link", {"link": url});
+                      MethodChannelInterface().invokeMethod("open-link", {"link": url, "forceBrowser": false});
                     },
-                  style: textStyle.apply(decoration: TextDecoration.underline),
+                  style: textStyle!.apply(decoration: TextDecoration.underline),
                 ),
               );
             } else {
@@ -167,7 +167,7 @@ abstract class MessageWidgetMixin {
       }
 
       if (generateContent) {
-        String generatedText = faker.lorem.words(message.text.split(" ").length).join(" ");
+        String generatedText = faker.lorem.words(message.text!.split(" ").length).join(" ");
         return [TextSpan(text: generatedText, style: textStyle)];
       }
     }

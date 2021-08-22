@@ -5,7 +5,7 @@ class QueueItem {
   String event;
   dynamic item;
 
-  QueueItem({this.event, this.item});
+  QueueItem({required this.event, this.item});
 }
 
 abstract class QueueManager {
