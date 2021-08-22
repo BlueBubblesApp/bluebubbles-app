@@ -236,10 +236,19 @@ class ThemePanel extends GetView<ThemePanelController> {
                       title: "Custom Avatar Colors",
                       trailing: nextIcon,
                       onTap: () async {
-                        Get.toNamed("/settings/custom-avatar-panel");
+                        Get.toNamed("/settings/custom-avatar-color-panel");
                       },
                       backgroundColor: tileColor,
                       subtitle: "Customize the color for different avatars",
+                    ),
+                    SettingsTile(
+                      title: "Custom Avatars",
+                      trailing: nextIcon,
+                      onTap: () async {
+                        Get.toNamed("/settings/custom-avatar-panel");
+                      },
+                      backgroundColor: tileColor,
+                      subtitle: "Customize the avatar for different chats",
                     ),
                     Obx(() {
                       if (controller.refreshRates.length > 2)

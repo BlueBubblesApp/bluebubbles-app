@@ -104,6 +104,7 @@ class Chat {
   String? displayName;
   List<Handle> participants = [];
   List<String?> fakeParticipants = [];
+  final RxnString customAvatarPath = RxnString();
 
   Chat({
     this.id,
@@ -873,6 +874,7 @@ class Chat {
         "participants": participants.map((item) => item.toMap()),
         "hasUnreadMessage": hasUnreadMessage! ? 1 : 0,
         "latestMessageDate": latestMessageDate != null ? latestMessageDate!.millisecondsSinceEpoch : 0,
-        "latestMessageText": latestMessageText
+        "latestMessageText": latestMessageText,
+        "customAvatarPath": customAvatarPath,
       };
 }

@@ -41,7 +41,7 @@ class DBProvider {
 
   static Database? _database;
   static String _path = "";
-  static int currentVersion = 9;
+  static int currentVersion = 10;
 
   /// Contains list of functions to invoke when going from a previous to the current database verison
   /// The previous version is always [key - 1], for example for key 2, it will be the upgrade scheme from version 1 to version 2
@@ -100,6 +100,12 @@ class DBProvider {
         addedInVersion: 9,
         upgrade: (Database db) {
           db.execute("ALTER TABLE handle ADD COLUMN defaultPhone TEXT DEFAULT NULL;");
+        }),
+    new DBUpgradeItem(
+        addedInVersion: 10,
+        upgrade: (Database db) {
+          db.execute(
+              "ALTER TABLE chat ADD COLUMN customAvatarPath TEXT DEFAULT NULL;");
         }),
   ];
 
