@@ -12,15 +12,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
-class CropSample extends StatefulWidget {
+class AvatarCrop extends StatefulWidget {
   final int index;
-  CropSample({required this.index});
+  AvatarCrop({required this.index});
 
   @override
-  _CropSampleState createState() => _CropSampleState();
+  _AvatarCropState createState() => _AvatarCropState();
 }
 
-class _CropSampleState extends State<CropSample> {
+class _AvatarCropState extends State<AvatarCrop> {
 
   final _cropController = CropController();
   Uint8List? _imageData;

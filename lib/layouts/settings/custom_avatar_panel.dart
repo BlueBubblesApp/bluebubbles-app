@@ -167,13 +167,13 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
                                                 .apply(color: Theme.of(context).primaryColor)),
                                         onPressed: () {
                                           Navigator.of(context).pop();
-                                          Get.to(() => CropSample(index: index));
+                                          Get.to(() => AvatarCrop(index: index));
                                         }),
                                   ]);
                             },
                           );
                         } else {
-                          Get.to(() => CropSample(index: index));
+                          Get.to(() => AvatarCrop(index: index));
                         }
                       },
                     );
