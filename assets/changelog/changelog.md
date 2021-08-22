@@ -8,7 +8,6 @@ Below are the last few BlueBubbles App release changelogs
 
 - Redesigned pinned chats for iOS theme
 - Huge settings UI overhaul
-- Android Auto support
 - Notification improvements
 - Performance and reliability improvements
 - Lots of small new features and UI / UX improvements
