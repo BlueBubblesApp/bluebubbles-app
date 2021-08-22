@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
 
@@ -50,6 +51,26 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
 
     return Obx(
       () {
+        if (widget.chat.customAvatarPath.value != null) {
+          return Stack(
+            children: [
+              Container(
+                width: widget.size,
+                height: widget.size,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(widget.size / 2),
+                  color: context.theme.accentColor.withOpacity(0.6),
+                ),
+              ),
+              CircleAvatar(
+                key: Key("${participants.first.address}-avatar"),
+                radius: widget.size / 2,
+                backgroundImage: FileImage(File(widget.chat.customAvatarPath.value!)),
+              ),
+            ]
+          );
+        }
+
         int maxAvatars = SettingsManager().settings.maxAvatarsInGroupWidget.value;
 
         return Container(

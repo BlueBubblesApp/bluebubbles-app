@@ -118,12 +118,15 @@ class Chat {
     this.isMuted,
     this.hasUnreadMessage,
     this.displayName,
+    String? customAvatar,
     this.participants = const [],
     this.fakeParticipants = const [],
     this.latestMessageDate,
     this.latestMessageText,
     this.fakeLatestMessageText,
-  });
+  }) {
+    customAvatarPath.value = customAvatar;
+  }
 
   factory Chat.fromMap(Map<String, dynamic> json) {
     List<Handle> participants = [];
@@ -170,6 +173,7 @@ class Chat {
           ? new DateTime.fromMillisecondsSinceEpoch(json['latestMessageDate'] as int)
           : null,
       displayName: json.containsKey("displayName") ? json["displayName"] : null,
+      customAvatar: json['customAvatarPath'],
       participants: participants,
       fakeParticipants: fakeParticipants,
     );
@@ -259,6 +263,8 @@ class Chat {
     if (this.displayName != null) {
       params["displayName"] = this.displayName;
     }
+
+    params["customAvatarPath"] = this.customAvatarPath.value;
 
     // If it already exists, update it
     if (this.id != null) {
@@ -801,7 +807,8 @@ class Chat {
       " chat.hasUnreadMessage as hasUnreadMessage,"
       " chat.latestMessageDate as latestMessageDate,"
       " chat.latestMessageText as latestMessageText,"
-      " chat.displayName as displayName"
+      " chat.displayName as displayName,"
+      " chat.customAvatarPath as customAvatarPath"
       " FROM chat"
       " ORDER BY chat.isPinned DESC, chat.latestMessageDate DESC LIMIT $limit OFFSET $offset;",
     );
@@ -875,6 +882,6 @@ class Chat {
         "hasUnreadMessage": hasUnreadMessage! ? 1 : 0,
         "latestMessageDate": latestMessageDate != null ? latestMessageDate!.millisecondsSinceEpoch : 0,
         "latestMessageText": latestMessageText,
-        "customAvatarPath": customAvatarPath,
+        "customAvatarPath": customAvatarPath.value,
       };
 }

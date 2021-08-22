@@ -1,19 +1,13 @@
-import 'dart:async';
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_tile.dart';
 import 'package:bluebubbles/layouts/widgets/avatar_crop.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:get/get.dart';
-import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/settings/settings_panel.dart';
-import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -159,7 +153,10 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
                                                 .subtitle1!
                                                 .apply(color: Theme.of(context).primaryColor)),
                                         onPressed: () {
+                                          File file = new File(ChatBloc().chats[index].customAvatarPath.value!);
+                                          file.delete();
                                           ChatBloc().chats[index].customAvatarPath.value = null;
+                                          ChatBloc().chats[index].save();
                                           Navigator.of(context).pop();
                                         }),
                                     TextButton(
@@ -169,14 +166,14 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
                                                 .subtitle1!
                                                 .apply(color: Theme.of(context).primaryColor)),
                                         onPressed: () {
-                                          Get.to(CropSample(chat: ChatBloc().chats[index]));
                                           Navigator.of(context).pop();
+                                          Get.to(() => CropSample(index: index));
                                         }),
                                   ]);
                             },
                           );
                         } else {
-                          Get.to(CropSample(chat: ChatBloc().chats[index]));
+                          Get.to(() => CropSample(index: index));
                         }
                       },
                     );
