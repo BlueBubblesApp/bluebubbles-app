@@ -249,15 +249,23 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
 
     // Third, let's add the actual message we want to show
     Widget? message;
-    if (widget.message.isUrlPreview()) {
-      message = Padding(
-        padding: EdgeInsets.only(left: 10.0),
-        child: widget.urlPreviewWidget,
-      );
-    } else if (widget.message.isInteractive()) {
+    if (widget.message.isInteractive()) {
       message = Padding(padding: EdgeInsets.only(left: 10.0), child: BalloonBundleWidget(message: widget.message));
     } else if (widget.message.hasText()) {
       message = _buildMessageWithTail(widget.message);
+      if (widget.message.hasUrl()) {
+        message = Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: EdgeInsets.only(left: 10.0),
+              child: widget.urlPreviewWidget,
+            ),
+            message,
+          ]
+        );
+      }
     }
 
     // Fourth, let's add any reactions or stickers to the widget
