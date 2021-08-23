@@ -86,7 +86,9 @@ class AttachmentDownloadController extends GetxController {
         return;
       }
 
-      if (index + 1 != total) {
+      int? numBytes = attachmentResponse["byteLength"];
+
+      if (numBytes == chunkSize) {
         // Calculate some stats
         double progress = ((index + 1) / total).clamp(0, 1).toDouble();
         debugPrint("Progress: ${(progress * 100).round()}% of the attachment");
