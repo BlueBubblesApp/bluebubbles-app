@@ -113,6 +113,24 @@ public class ReplyReceiver extends BroadcastReceiver {
             } else {
                 NotificationWorker.createWorker(context.getApplicationContext(), "alarm-wake", params);
             }
+        } else if (intent.getType().equals("swipeAway")) {
+            existingId = intent.getExtras().getInt("id");
+            // Clear the chat notification by finding the notification by Tag/ID and cancelling it
+            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
+            NotificationManager manager = (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
+            for (StatusBarNotification statusBarNotification : manager.getActiveNotifications()) {
+                if (NewMessageNotification.notificationTag.equals(statusBarNotification.getTag()) && statusBarNotification.getId() == existingId) {
+                    notificationManager.cancel(NewMessageNotification.notificationTag, existingId);
+                }
+            }
+
+            // If there are no more notifications (only the group is left). Clear the group
+            StatusBarNotification[] notifications = manager.getActiveNotifications();
+            Log.d(TAG, "Leftover Notifications: " + notifications.length);
+            if (manager.getActiveNotifications().length == 1 && notifications[0].getId() == -1) {
+                Log.d(TAG, "Cancelling the notification group...");
+                notificationManager.cancel(-1);
+            }
         }
     }
 }
