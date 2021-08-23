@@ -267,7 +267,7 @@ class DBProvider {
         "hasUnreadMessage INTEGER DEFAULT 0,"
         "latestMessageDate INTEGER DEFAULT 0,"
         "latestMessageText TEXT,"
-        "displayName TEXT DEFAULT NULL"
+        "displayName TEXT DEFAULT NULL,"
         "customAvatarPath TEXT DEFAULT NULL"
         ");");
   }
