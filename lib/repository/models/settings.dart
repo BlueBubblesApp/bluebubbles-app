@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/config_entry.dart';
 import 'package:flutter/material.dart';
@@ -656,4 +657,157 @@ class Settings {
         //     value: this.emojiFontFamily,
         //     type: this.emojiFontFamily.runtimeType),
       ];
+
+  Map<String, dynamic> toMap() {
+    return {
+      'chunkSize': this.chunkSize.value,
+      'autoDownload': this.autoDownload.value,
+      'onlyWifiDownload': this.onlyWifiDownload.value,
+      'autoOpenKeyboard': this.autoOpenKeyboard.value,
+      'hideTextPreviews': this.hideTextPreviews.value,
+      'showIncrementalSync': this.showIncrementalSync.value,
+      'lowMemoryMode': this.lowMemoryMode.value,
+      'lastIncrementalSync': this.lastIncrementalSync.value,
+      'refreshRate': this.refreshRate.value,
+      'colorfulAvatars': this.colorfulAvatars.value,
+      'colorfulBubbles': this.colorfulBubbles.value,
+      'hideDividers': this.hideDividers.value,
+      'scrollVelocity': this.scrollVelocity.value,
+      'sendWithReturn': this.sendWithReturn.value,
+      'doubleTapForDetails': this.doubleTapForDetails.value,
+      'denseChatTiles': this.denseChatTiles.value,
+      'smartReply': this.smartReply.value,
+      'reducedForehead': this.reducedForehead.value,
+      'preCachePreviewImages': this.preCachePreviewImages.value,
+      'showConnectionIndicator': this.showConnectionIndicator.value,
+      'showSyncIndicator': this.showSyncIndicator.value,
+      'sendDelay': this.sendDelay.value,
+      'recipientAsPlaceholder': this.recipientAsPlaceholder.value,
+      'hideKeyboardOnScroll': this.hideKeyboardOnScroll.value,
+      'moveChatCreatorToHeader': this.moveChatCreatorToHeader.value,
+      'swipeToCloseKeyboard': this.swipeToCloseKeyboard.value,
+      'swipeToOpenKeyboard': this.swipeToOpenKeyboard.value,
+      'openKeyboardOnSTB': this.openKeyboardOnSTB.value,
+      'swipableConversationTiles': this.swipableConversationTiles.value,
+      'colorblindMode': this.colorblindMode.value,
+      'showDeliveryTimestamps': this.showDeliveryTimestamps.value,
+      'previewCompressionQuality': this.previewCompressionQuality.value,
+      'filteredChatList': this.filteredChatList.value,
+      'startVideosMuted': this.startVideosMuted.value,
+      'startVideosMutedFullscreen': this.startVideosMutedFullscreen.value,
+      'use24HrFormat': this.use24HrFormat.value,
+      'alwaysShowAvatars': this.alwaysShowAvatars.value,
+      'notifyOnChatList': this.notifyOnChatList.value,
+      'enablePrivateAPI': this.enablePrivateAPI.value,
+      'privateSendTypingIndicators': this.privateSendTypingIndicators.value,
+      'privateMarkChatAsRead': this.privateMarkChatAsRead.value,
+      'privateManualMarkAsRead': this.privateManualMarkAsRead.value,
+      'redactedMode': this.redactedMode.value,
+      'hideMessageContent': this.hideMessageContent.value,
+      'hideReactions': this.hideReactions.value,
+      'hideAttachments': this.hideAttachments.value,
+      'hideEmojis': this.hideEmojis.value,
+      'hideAttachmentTypes': this.hideAttachmentTypes.value,
+      'hideContactPhotos': this.hideContactPhotos.value,
+      'hideContactInfo': this.hideContactInfo.value,
+      'removeLetterAvatars': this.removeLetterAvatars.value,
+      'generateFakeContactNames': this.generateFakeContactNames.value,
+      'generateFakeMessageContent': this.generateFakeMessageContent.value,
+      'enableQuickTapback': this.enableQuickTapback.value,
+      'quickTapbackType': this.quickTapbackType.value,
+      'iosShowPin': this.iosShowPin.value,
+      'iosShowAlert': this.iosShowAlert.value,
+      'iosShowDelete': this.iosShowDelete.value,
+      'iosShowMarkRead': this.iosShowMarkRead.value,
+      'iosShowArchive': this.iosShowArchive.value,
+      'materialRightAction': this.materialRightAction.value.index,
+      'materialLeftAction': this.materialLeftAction.value.index,
+      'shouldSecure': this.shouldSecure.value,
+      'securityLevel': this.securityLevel.value.index,
+      'skin': this.skin.value.index,
+      'theme': this.theme.value.index,
+      'fullscreenViewerSwipeDir': this.fullscreenViewerSwipeDir.value.index,
+      'pinRowsPortrait': this.pinRowsPortrait.value,
+      'pinColumnsPortrait': this.pinColumnsPortrait.value,
+      'pinRowsLandscape': this.pinRowsLandscape.value,
+      'pinColumnsLandscape': this.pinColumnsLandscape.value,
+      'maxAvatarsInGroupWidget': this.maxAvatarsInGroupWidget.value,
+    };
+  }
+
+  static void updateFromMap(Map<String, dynamic> map) {
+    SettingsManager().settings.chunkSize.value = map['chunkSize'];
+    SettingsManager().settings.autoDownload.value = map['autoDownload'];
+    SettingsManager().settings.onlyWifiDownload.value = map['onlyWifiDownload'];
+    SettingsManager().settings.autoOpenKeyboard.value = map['autoOpenKeyboard'];
+    SettingsManager().settings.hideTextPreviews.value = map['hideTextPreviews'];
+    SettingsManager().settings.showIncrementalSync.value = map['showIncrementalSync'];
+    SettingsManager().settings.lowMemoryMode.value = map['lowMemoryMode'];
+    SettingsManager().settings.lastIncrementalSync.value = map['lastIncrementalSync'];
+    SettingsManager().settings.refreshRate.value = map['refreshRate'];
+    SettingsManager().settings.colorfulAvatars.value = map['colorfulAvatars'];
+    SettingsManager().settings.colorfulBubbles.value = map['colorfulBubbles'];
+    SettingsManager().settings.hideDividers.value = map['hideDividers'];
+    SettingsManager().settings.scrollVelocity.value = map['scrollVelocity'];
+    SettingsManager().settings.sendWithReturn.value = map['sendWithReturn'];
+    SettingsManager().settings.doubleTapForDetails.value = map['doubleTapForDetails'];
+    SettingsManager().settings.denseChatTiles.value = map['denseChatTiles'];
+    SettingsManager().settings.smartReply.value = map['smartReply'];
+    SettingsManager().settings.reducedForehead.value = map['reducedForehead'];
+    SettingsManager().settings.preCachePreviewImages.value = map['preCachePreviewImages'];
+    SettingsManager().settings.showConnectionIndicator.value = map['showConnectionIndicator'];
+    SettingsManager().settings.showSyncIndicator.value = map['showSyncIndicator'];
+    SettingsManager().settings.sendDelay.value = map['sendDelay'];
+    SettingsManager().settings.recipientAsPlaceholder.value = map['recipientAsPlaceholder'];
+    SettingsManager().settings.hideKeyboardOnScroll.value = map['hideKeyboardOnScroll'];
+    SettingsManager().settings.moveChatCreatorToHeader.value = map['moveChatCreatorToHeader'];
+    SettingsManager().settings.swipeToCloseKeyboard.value = map['swipeToCloseKeyboard'];
+    SettingsManager().settings.swipeToOpenKeyboard.value = map['swipeToOpenKeyboard'];
+    SettingsManager().settings.openKeyboardOnSTB.value = map['openKeyboardOnSTB'];
+    SettingsManager().settings.swipableConversationTiles.value = map['swipableConversationTiles'];
+    SettingsManager().settings.colorblindMode.value = map['colorblindMode'];
+    SettingsManager().settings.showDeliveryTimestamps.value = map['showDeliveryTimestamps'];
+    SettingsManager().settings.previewCompressionQuality.value = map['previewCompressionQuality'];
+    SettingsManager().settings.filteredChatList.value = map['filteredChatList'];
+    SettingsManager().settings.startVideosMuted.value = map['startVideosMuted'];
+    SettingsManager().settings.startVideosMutedFullscreen.value = map['startVideosMutedFullscreen'];
+    SettingsManager().settings.use24HrFormat.value = map['use24HrFormat'];
+    SettingsManager().settings.alwaysShowAvatars.value = map['alwaysShowAvatars'];
+    SettingsManager().settings.notifyOnChatList.value = map['notifyOnChatList'];
+    SettingsManager().settings.enablePrivateAPI.value = map['enablePrivateAPI'];
+    SettingsManager().settings.privateSendTypingIndicators.value = map['privateSendTypingIndicators'];
+    SettingsManager().settings.privateMarkChatAsRead.value = map['privateMarkChatAsRead'];
+    SettingsManager().settings.privateManualMarkAsRead.value = map['privateManualMarkAsRead'];
+    SettingsManager().settings.redactedMode.value = map['redactedMode'];
+    SettingsManager().settings.hideMessageContent.value = map['hideMessageContent'];
+    SettingsManager().settings.hideReactions.value = map['hideReactions'];
+    SettingsManager().settings.hideAttachments.value = map['hideAttachments'];
+    SettingsManager().settings.hideEmojis.value = map['hideEmojis'];
+    SettingsManager().settings.hideAttachmentTypes.value = map['hideAttachmentTypes'];
+    SettingsManager().settings.hideContactPhotos.value = map['hideContactPhotos'];
+    SettingsManager().settings.hideContactInfo.value = map['hideContactInfo'];
+    SettingsManager().settings.removeLetterAvatars.value = map['removeLetterAvatars'];
+    SettingsManager().settings.generateFakeContactNames.value = map['generateFakeContactNames'];
+    SettingsManager().settings.generateFakeMessageContent.value = map['generateFakeMessageContent'];
+    SettingsManager().settings.enableQuickTapback.value = map['enableQuickTapback'];
+    SettingsManager().settings.quickTapbackType.value = map['quickTapbackType'];
+    SettingsManager().settings.iosShowPin.value = map['iosShowPin'];
+    SettingsManager().settings.iosShowAlert.value = map['iosShowAlert'];
+    SettingsManager().settings.iosShowDelete.value = map['iosShowDelete'];
+    SettingsManager().settings.iosShowMarkRead.value = map['iosShowMarkRead'];
+    SettingsManager().settings.iosShowArchive.value = map['iosShowArchive'];
+    SettingsManager().settings.materialRightAction.value = MaterialSwipeAction.values[map['materialRightAction']];
+    SettingsManager().settings.materialLeftAction.value = MaterialSwipeAction.values[map['materialLeftAction']];
+    SettingsManager().settings.shouldSecure.value = map['shouldSecure'];
+    SettingsManager().settings.securityLevel.value = SecurityLevel.values[map['securityLevel']];
+    SettingsManager().settings.skin.value = Skins.values[map['skin']];
+    SettingsManager().settings.theme.value = ThemeMode.values[map['theme']];
+    SettingsManager().settings.fullscreenViewerSwipeDir.value = SwipeDirection.values[map['fullscreenViewerSwipeDir']];
+    SettingsManager().settings.pinRowsPortrait.value = map['pinRowsPortrait'];
+    SettingsManager().settings.pinColumnsPortrait.value = map['pinColumnsPortrait'];
+    SettingsManager().settings.pinRowsLandscape.value = map['pinRowsLandscape'];
+    SettingsManager().settings.pinColumnsLandscape.value = map['pinColumnsLandscape'];
+    SettingsManager().settings.maxAvatarsInGroupWidget.value = map['maxAvatarsInGroupWidget'];
+    SettingsManager().settings.save();
+  }
 }
