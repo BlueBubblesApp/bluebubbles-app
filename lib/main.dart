@@ -11,6 +11,7 @@ import 'package:bluebubbles/layouts/settings/about_panel.dart';
 import 'package:bluebubbles/layouts/settings/attachment_panel.dart';
 import 'package:bluebubbles/layouts/settings/chat_list_panel.dart';
 import 'package:bluebubbles/layouts/settings/conversation_panel.dart';
+import 'package:bluebubbles/layouts/settings/custom_avatar_color_panel.dart';
 import 'package:bluebubbles/layouts/settings/custom_avatar_panel.dart';
 import 'package:bluebubbles/layouts/settings/private_api_panel.dart';
 import 'package:bluebubbles/layouts/settings/redacted_mode_panel.dart';
@@ -236,6 +237,10 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
           GetPage(page: () => AttachmentPanel(), name: "/settings/attachment-panel"),
           GetPage(page: () => ChatListPanel(), name: "/settings/chat-list-panel"),
           GetPage(page: () => ConversationPanel(), name: "/settings/conversation-panel"),
+          GetPage(
+              page: () => CustomAvatarColorPanel(),
+              name: "/settings/custom-avatar-color-panel",
+              binding: CustomAvatarColorPanelBinding()),
           GetPage(
               page: () => CustomAvatarPanel(),
               name: "/settings/custom-avatar-panel",

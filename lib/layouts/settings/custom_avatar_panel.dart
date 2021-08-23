@@ -1,15 +1,13 @@
-import 'dart:async';
+import 'dart:io';
 import 'dart:ui';
 
+import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/layouts/conversation_list/conversation_tile.dart';
+import 'package:bluebubbles/layouts/widgets/avatar_crop.dart';
 import 'package:get/get.dart';
-import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/settings/settings_panel.dart';
-import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -24,37 +22,11 @@ class CustomAvatarPanelBinding implements Bindings {
 
 class CustomAvatarPanelController extends GetxController {
   late Settings _settingsCopy;
-  bool isFetching = false;
-  final RxList<Widget> handleWidgets = <Widget>[].obs;
 
   @override
   void onInit() {
     super.onInit();
     _settingsCopy = SettingsManager().settings;
-    getCustomHandles();
-  }
-
-  Future<void> getCustomHandles({force: false}) async {
-    // If we are already fetching or have results,
-    if (!false && (isFetching || !isNullOrEmpty(this.handleWidgets)!)) return;
-    List<Handle> handles = await Handle.find();
-    if (isNullOrEmpty(handles)!) return;
-
-    // Filter handles down by ones with colors
-    handles = handles.where((element) => element.color != null).toList();
-
-    List<Widget> items = [];
-    for (var item in handles) {
-      items.add(SettingsTile(
-        title: ContactManager().getCachedContactSync(item.address)?.displayName ?? await formatPhoneNumber(item),
-        subtitle: "Tap avatar to change color",
-        trailing: ContactAvatarWidget(handle: item),
-      ));
-    }
-
-    if (!isNullOrEmpty(items)!) {
-      this.handleWidgets.value = items;
-    }
   }
 
   @override
@@ -87,7 +59,7 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
                 leading: buildBackButton(context),
                 backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
                 title: Text(
-                  "Custom Avatar Colors",
+                  "Custom Avatars",
                   style: Theme.of(context).textTheme.headline1,
                 ),
               ),
@@ -100,22 +72,116 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
             parent: CustomBouncingScrollPhysics(),
           ),
           slivers: <Widget>[
-            Obx(() => SliverList(
-                  delegate: SliverChildListDelegate(
-                    <Widget>[
-                      Container(padding: EdgeInsets.only(top: 5.0)),
-                      if (controller.handleWidgets.length == 0)
-                        Container(
-                            padding: EdgeInsets.all(30),
+            Obx(() {
+              if (!ChatBloc().hasChats.value) {
+                return SliverToBoxAdapter(
+                  child: Center(
+                    child: Container(
+                      padding: EdgeInsets.only(top: 50.0),
+                      child: Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
                             child: Text(
-                              "No avatars have been customized! To get started, turn on colorful avatars and tap an avatar in the conversation details page.",
-                              style: Theme.of(context).textTheme.subtitle1?.copyWith(height: 1.5),
-                              textAlign: TextAlign.center,
-                            )),
-                      for (Widget handleWidget in controller.handleWidgets) handleWidget
-                    ],
+                              "Loading chats...",
+                              style: Theme.of(context).textTheme.subtitle1,
+                            ),
+                          ),
+                          buildProgressIndicator(context, size: 15),
+                        ],
+                      ),
+                    ),
                   ),
-                )),
+                );
+              }
+              if (ChatBloc().hasChats.value && ChatBloc().chats.isEmpty) {
+                return SliverToBoxAdapter(
+                  child: Center(
+                    child: Container(
+                      padding: EdgeInsets.only(top: 50.0),
+                      child: Text(
+                        "You have no chats :(",
+                        style: Theme.of(context).textTheme.subtitle1,
+                      ),
+                    ),
+                  ),
+                );
+              }
+
+              return SliverList(
+                delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                    return ConversationTile(
+                      key: Key(
+                          ChatBloc().chats[index].guid.toString()),
+                      chat: ChatBloc().chats[index],
+                      inSelectMode: true,
+                      onSelect: (_) {
+                        if (ChatBloc().chats[index].customAvatarPath.value != null) {
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                  backgroundColor: Theme.of(context).accentColor,
+                                  title: new Text("Custom Avatar",
+                                      style:
+                                      TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
+                                  content: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                          "You have already set a custom avatar for this chat. What would you like to do?",
+                                          style: Theme.of(context).textTheme.bodyText1),
+                                    ],
+                                  ),
+                                  actions: <Widget>[
+                                    TextButton(
+                                        child: Text("Cancel",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle1!
+                                                .apply(color: Theme.of(context).primaryColor)),
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                        }),
+                                    TextButton(
+                                        child: Text("Reset",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle1!
+                                                .apply(color: Theme.of(context).primaryColor)),
+                                        onPressed: () {
+                                          File file = new File(ChatBloc().chats[index].customAvatarPath.value!);
+                                          file.delete();
+                                          ChatBloc().chats[index].customAvatarPath.value = null;
+                                          ChatBloc().chats[index].save();
+                                          Navigator.of(context).pop();
+                                        }),
+                                    TextButton(
+                                        child: Text("Set New",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle1!
+                                                .apply(color: Theme.of(context).primaryColor)),
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                          Get.to(() => AvatarCrop(index: index));
+                                        }),
+                                  ]);
+                            },
+                          );
+                        } else {
+                          Get.to(() => AvatarCrop(index: index));
+                        }
+                      },
+                    );
+                  },
+                  childCount: ChatBloc().chats.length,
+                ),
+              );
+            }),
             SliverList(
               delegate: SliverChildListDelegate(
                 <Widget>[],

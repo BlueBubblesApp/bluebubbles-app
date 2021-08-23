@@ -7,6 +7,7 @@ import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/layouts/image_viewer/image_viewer.dart';
 import 'package:bluebubbles/layouts/image_viewer/video_viewer.dart';
+import 'package:bluebubbles/layouts/widgets/CustomDismissible.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/attachment_downloader_widget.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
@@ -135,122 +136,131 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                 reverse: SettingsManager().settings.fullscreenViewerSwipeDir.value == SwipeDirection.RIGHT,
                 itemCount: widget.currentChat?.chatAttachments.length ?? 1,
                 itemBuilder: (BuildContext context, int index) {
-                  debugPrint("Showing index: " + index.toString());
-                  Attachment attachment =
-                      widget.currentChat != null ? widget.currentChat!.chatAttachments[index] : widget.attachment;
-                  String mimeType = attachment.mimeType!;
-                  mimeType = mimeType.substring(0, mimeType.indexOf("/"));
-                  dynamic content = AttachmentHelper.getContent(attachment,
-                      path: attachment.guid == null ? attachment.transferName : null);
+                  return CustomDismissible(
+                    direction: physics is NeverScrollableScrollPhysics ? CustomDismissDirection.none : CustomDismissDirection.vertical,
+                    key: Key('${widget.currentChat != null ? widget.currentChat!.chatAttachments[index].guid : widget.attachment.guid}'),
+                    onDismissed: (_) => Navigator.of(context).pop(),
+                    child: Builder(
+                      builder: (_) {
+                        debugPrint("Showing index: " + index.toString());
+                        Attachment attachment =
+                        widget.currentChat != null ? widget.currentChat!.chatAttachments[index] : widget.attachment;
+                        String mimeType = attachment.mimeType!;
+                        mimeType = mimeType.substring(0, mimeType.indexOf("/"));
+                        dynamic content = AttachmentHelper.getContent(attachment,
+                            path: attachment.guid == null ? attachment.transferName : null);
 
-                  String viewerKey = attachment.guid ?? attachment.transferName ?? Random().nextInt(100).toString();
+                        String viewerKey = attachment.guid ?? attachment.transferName ?? Random().nextInt(100).toString();
 
-                  if (content is File) {
-                    content = content;
-                    if (mimeType == "image") {
-                      return ImageViewer(
-                        key: Key(viewerKey),
-                        attachment: attachment,
-                        file: content,
-                        showInteractions: widget.showInteractions,
-                      );
-                    } else if (mimeType == "video") {
-                      return VideoViewer(
-                        key: Key(viewerKey),
-                        file: content,
-                        attachment: attachment,
-                        showInteractions: widget.showInteractions,
-                      );
-                    }
-                  } else if (content is Attachment) {
-                    content = content;
-                    return Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Center(
-                          child: AttachmentDownloaderWidget(
-                            key: Key(attachment.guid ?? attachment.transferName ?? Random().nextInt(100).toString()),
-                            attachment: attachment,
-                            onPressed: () {
-                              Get.put(AttachmentDownloadController(attachment: attachment), tag: attachment.guid);
-                              content = AttachmentHelper.getContent(attachment);
-                              if (this.mounted) setState(() {});
-                            },
-                            placeHolder: placeHolder,
-                          ),
-                        ),
-                      ],
-                    );
-                  } else if (content is AttachmentDownloadController) {
-                    if (widget.attachment.mimeType == null) return Container();
-                    ever<File?>(content.file, (file) {
-                      if (file != null) {
-                        content = file;
-                        if (this.mounted) setState(() {});
-                      }
-                    }, onError: (error) {
-                      content = widget.attachment;
-                      if (this.mounted) setState(() {});
-                    });
-                    return Obx(() {
-                      if (content.error.value = true) {
-                        return Text(
-                          "Error loading",
-                          style: Theme.of(context).textTheme.bodyText1,
-                        );
-                      }
-                      if (content.file.value != null) {
-                        content = content.file.value;
-                        return Container();
-                      } else {
-                        return KeyedSubtree(
-                          key: Key(viewerKey),
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: <Widget>[
-                              placeHolder,
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: <Widget>[
-                                  Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: <Widget>[
-                                      CircularProgressIndicator(
-                                        value: content.progress.value?.toDouble() ?? 0,
-                                        backgroundColor: Colors.grey,
-                                        valueColor: AlwaysStoppedAnimation(Colors.white),
-                                      ),
-                                      ((content as AttachmentDownloadController).attachment.mimeType != null)
-                                          ? Container(height: 5.0)
-                                          : Container(),
-                                      (content.attachment.mimeType != null)
-                                          ? Text(
-                                        content.attachment.mimeType,
-                                        style: Theme.of(context).textTheme.bodyText1,
-                                      )
-                                          : Container()
-                                    ],
-                                  ),
-                                ],
+                        if (content is File) {
+                          content = content;
+                          if (mimeType == "image") {
+                            return ImageViewer(
+                              key: Key(viewerKey),
+                              attachment: attachment,
+                              file: content,
+                              showInteractions: widget.showInteractions,
+                            );
+                          } else if (mimeType == "video") {
+                            return VideoViewer(
+                              key: Key(viewerKey),
+                              file: content,
+                              attachment: attachment,
+                              showInteractions: widget.showInteractions,
+                            );
+                          }
+                        } else if (content is Attachment) {
+                          content = content;
+                          return Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Center(
+                                child: AttachmentDownloaderWidget(
+                                  key: Key(attachment.guid ?? attachment.transferName ?? Random().nextInt(100).toString()),
+                                  attachment: attachment,
+                                  onPressed: () {
+                                    Get.put(AttachmentDownloadController(attachment: attachment), tag: attachment.guid);
+                                    content = AttachmentHelper.getContent(attachment);
+                                    if (this.mounted) setState(() {});
+                                  },
+                                  placeHolder: placeHolder,
+                                ),
                               ),
                             ],
-                          ),
-                        );
-                      }
-                    });
-                  } else {
-                    return Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          "Error loading",
-                          style: Theme.of(context).textTheme.bodyText1,
-                        ),
-                      ],
-                    );
-                  }
+                          );
+                        } else if (content is AttachmentDownloadController) {
+                          if (widget.attachment.mimeType == null) return Container();
+                          ever<File?>(content.file, (file) {
+                            if (file != null) {
+                              content = file;
+                              if (this.mounted) setState(() {});
+                            }
+                          }, onError: (error) {
+                            content = widget.attachment;
+                            if (this.mounted) setState(() {});
+                          });
+                          return Obx(() {
+                            if (content.error.value = true) {
+                              return Text(
+                                "Error loading",
+                                style: Theme.of(context).textTheme.bodyText1,
+                              );
+                            }
+                            if (content.file.value != null) {
+                              content = content.file.value;
+                              return Container();
+                            } else {
+                              return KeyedSubtree(
+                                key: Key(viewerKey),
+                                child: Stack(
+                                  alignment: Alignment.center,
+                                  children: <Widget>[
+                                    placeHolder,
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: <Widget>[
+                                        Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: <Widget>[
+                                            CircularProgressIndicator(
+                                              value: content.progress.value?.toDouble() ?? 0,
+                                              backgroundColor: Colors.grey,
+                                              valueColor: AlwaysStoppedAnimation(Colors.white),
+                                            ),
+                                            ((content as AttachmentDownloadController).attachment.mimeType != null)
+                                                ? Container(height: 5.0)
+                                                : Container(),
+                                            (content.attachment.mimeType != null)
+                                                ? Text(
+                                              content.attachment.mimeType,
+                                              style: Theme.of(context).textTheme.bodyText1,
+                                            )
+                                                : Container()
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+                          });
+                        } else {
+                          return Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                "Error loading",
+                                style: Theme.of(context).textTheme.bodyText1,
+                              ),
+                            ],
+                          );
+                        }
 
-                  return Container();
+                        return Container();
+                      }
+                    ),
+                  );
                 },
                 onPageChanged: (int val) => currentIndex = val,
                 controller: controller,
