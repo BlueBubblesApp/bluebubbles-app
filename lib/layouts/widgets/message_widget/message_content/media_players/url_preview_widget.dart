@@ -163,13 +163,14 @@ class UrlPreviewWidget extends StatelessWidget {
                       }),
                       Obx(() => controller.data.value != null && controller.data.value!.description != null
                         ? Padding(
-                          padding: EdgeInsets.only(top: 5.0, bottom: 10.0),
+                          padding: EdgeInsets.only(top: 5.0),
                           child: Text(
                             controller.data.value!.description!,
                             maxLines: 3,
                             overflow: TextOverflow.ellipsis,
                             style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeDelta: -5),
                         )) : Container()),
+                      SizedBox(height: 10),
                     ],
                   ),
                 ),
