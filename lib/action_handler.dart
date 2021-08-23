@@ -42,46 +42,15 @@ class ActionHandler {
       {MessageBloc? messageBloc, List<Attachment> attachments = const []}) async {
     if (isNullOrEmpty(text, trimString: true)!) return;
 
-    List<Message> messages = <Message>[];
-
-    // Check for URLs
-    int index = text.indexOf("https://");
-    if (index == -1) {
-      index = text.indexOf("http://");
-    }
-    String mainText = text;
-    String secondaryText = text;
-    if (index > 0
-        && text[index - 1].trim().isNotEmpty
-        && text.substring(index, text.length).isURL) {
-      mainText = text.substring(0, index);
-      secondaryText = text.substring(index, text.length);
-    }
-
     // Create the main message
-    Message mainMsg = Message(
-      text: mainText.trim(),
+    Message message = Message(
+      text: text.trim(),
       dateCreated: DateTime.now(),
       hasAttachments: attachments.length > 0 ? true : false,
     );
 
     // Generate a Temp GUID
-    mainMsg.generateTempGuid();
-
-    if (mainMsg.text!.trim().length > 0) messages.add(mainMsg);
-
-    // If there is a link, build the link message
-    if (mainText != secondaryText) {
-      Message secondaryMessage = Message(
-        text: secondaryText.trim(),
-        dateCreated: DateTime.now(),
-        hasAttachments: false,
-      );
-
-      // Generate a Temp GUID
-      secondaryMessage.generateTempGuid();
-      messages.add(secondaryMessage);
-    }
+    message.generateTempGuid();
 
     // Make sure to save the chat
     // If we already have the ID, we don't have to wait to resave it
@@ -91,18 +60,15 @@ class ActionHandler {
       chat.save();
     }
 
-    // Send all the messages
-    messages.forEachIndexed((index, message) async {
-      // Add the message to the UI and DB
-      NewMessageManager().addMessage(chat, message, outgoing: true, shouldNotAnimate: index > 0);
-      chat.addMessage(message);
+    // Add the message to the UI and DB
+    NewMessageManager().addMessage(chat, message, outgoing: true);
+    chat.addMessage(message);
 
-      // Create params for the queue item
-      Map<String, dynamic> params = {"chat": chat, "message": message};
+    // Create params for the queue item
+    Map<String, dynamic> params = {"chat": chat, "message": message};
 
-      // Add the message send to the queue
-      await OutgoingQueue().add(new QueueItem(event: "send-message", item: params));
-    });
+    // Add the message send to the queue
+    await OutgoingQueue().add(new QueueItem(event: "send-message", item: params));
   }
 
   static Future<void> sendMessageHelper(Chat chat, Message message) async {

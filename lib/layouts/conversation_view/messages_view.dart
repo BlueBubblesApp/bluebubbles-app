@@ -208,7 +208,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
         NotificationManager().switchChat(CurrentChat.of(context)?.chat);
       }
       currentChat!.getAttachmentsForMessage(event.message);
-      if (event.outGoing && !(event.data['shouldNotAnimate'] ?? false)) {
+      if (event.outGoing) {
         currentChat!.sentMessages.add(event.message);
         Future.delayed(SendWidget.SEND_DURATION * 2, () {
           currentChat!.sentMessages.removeWhere((element) => element!.guid == event.message!.guid);
@@ -240,7 +240,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
         _listKey!.currentState!.insertItem(
           event.index != null ? event.index! : 0,
           duration: isNewMessage
-              ? event.outGoing && !(event.data['shouldNotAnimate'] ?? false)
+              ? event.outGoing
                   ? Duration(milliseconds: 500)
                   : animationDuration
               : Duration(milliseconds: 0),

@@ -508,22 +508,7 @@ class Message {
   bool hasUrl() {
     if (text == null) return false;
     List<String> splits = this.text!.split(" ");
-    bool hasFormattedUrl = splits.firstWhereOrNull((element) => element.isURL) != null;
-    if (hasFormattedUrl) return true;
-    bool hasUrl = false;
-    for (String e in splits) {
-      int index = e.indexOf("https://");
-      if (index == -1) {
-        index = e.indexOf("http://");
-      }
-      if (index > 0
-          && e[index - 1].trim().isNotEmpty
-          && e.substring(index, e.length).isURL) {
-        hasUrl = true;
-        break;
-      }
-    }
-    return hasUrl;
+    return splits.firstWhereOrNull((element) => element.isURL) != null;
   }
 
   bool isUrlPreview() {
@@ -535,22 +520,7 @@ class Message {
   String? getUrl() {
     if (text == null) return null;
     List<String> splits = this.text!.split(" ");
-    String? formattedUrl = splits.firstWhereOrNull((element) => element.isURL);
-    if (formattedUrl != null) return formattedUrl;
-    String? url;
-    for (String e in splits) {
-      int index = e.indexOf("https://");
-      if (index == -1) {
-        index = e.indexOf("http://");
-      }
-      if (index > 0
-          && e[index - 1].trim().isNotEmpty
-          && e.substring(index, e.length).isURL) {
-        url = e.substring(index, e.length);
-        break;
-      }
-    }
-    return url;
+    return splits.firstWhereOrNull((element) => element.isURL);
   }
 
   bool isInteractive() {
