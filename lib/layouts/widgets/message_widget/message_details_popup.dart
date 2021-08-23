@@ -385,7 +385,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             ),
           ),
         ),
-      if (widget.message.isUrlPreview())
+      if (widget.message.hasUrl())
         Material(
           color: Colors.transparent,
           child: InkWell(

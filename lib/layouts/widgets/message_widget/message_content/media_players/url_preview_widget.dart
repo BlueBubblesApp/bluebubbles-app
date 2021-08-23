@@ -119,7 +119,6 @@ class UrlPreviewWidget extends StatelessWidget {
 
         List<Widget> items = [
           Obx(() {
-            print(linkPreviews);
             if (controller.data.value?.image != null && controller.data.value!.image!.isNotEmpty && linkPreviews.length <= 1) {
               if (controller.data.value!.image!.startsWith("/")) {
                 return Image.file(new File(controller.data.value!.image!),
@@ -146,7 +145,6 @@ class UrlPreviewWidget extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Obx(() {
-                        print(controller.data.value?.toMap());
                         if (controller.data.value == null && !controller.gotError.value) {
                           return Text("Loading Preview...", style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2));
                         } else if (controller.data.value != null && controller.data.value!.title != null && controller.data.value!.title != "Image Preview") {
@@ -165,22 +163,13 @@ class UrlPreviewWidget extends StatelessWidget {
                       }),
                       Obx(() => controller.data.value != null && controller.data.value!.description != null
                         ? Padding(
-                          padding: EdgeInsets.only(top: 5.0),
+                          padding: EdgeInsets.only(top: 5.0, bottom: 10.0),
                           child: Text(
                             controller.data.value!.description!,
                             maxLines: 3,
                             overflow: TextOverflow.ellipsis,
                             style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeDelta: -5),
                         )) : Container()),
-                      Obx(() => Padding(
-                        padding: EdgeInsets.only(top: (controller.data.value?.title == "Image Preview" ? 0 : 5.0), bottom: 10.0),
-                        child: Text(
-                          message.text!.replaceAll("https://", "").replaceAll("http://", "").toLowerCase(),
-                          style: Theme.of(context).textTheme.subtitle2,
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                        ),
-                      )),
                     ],
                   ),
                 ),

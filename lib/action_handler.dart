@@ -45,31 +45,17 @@ class ActionHandler {
     List<Message> messages = <Message>[];
 
     // Check for URLs
-    RegExpMatch? linkMatch;
-    String? linkMsg;
-    List<RegExpMatch> matches = parseLinks(text);
-
-    // Get the first match (if it exists)
-    if (matches.length > 0) {
-      linkMatch = matches.first;
-      linkMsg = text.substring(linkMatch.start, linkMatch.end).trim();
+    int index = text.indexOf("https://");
+    if (index == -1) {
+      index = text.indexOf("http://");
     }
-
-    // Figure out of the message starts or ends with the link
-    // In either case, we want to split up the messages
-    bool shouldSplitEnd = linkMatch != null && text.endsWith(linkMsg!);
-    bool shouldSplitStart = linkMatch != null && text.startsWith(linkMsg!);
-    bool shouldSplit = shouldSplitEnd || shouldSplitStart;
-
-    // Split up the messages depending on if the link is at the start or end
     String mainText = text;
     String secondaryText = text;
-    if (shouldSplitEnd) {
-      mainText = text.substring(0, linkMatch.start);
-      secondaryText = text.substring(linkMatch.start, linkMatch.end);
-    } else if (shouldSplitStart) {
-      mainText = text.substring(linkMatch.start, linkMatch.end);
-      secondaryText = text.substring(linkMatch.end);
+    if (index > 0
+        && text[index - 1].trim().isNotEmpty
+        && text.substring(index, text.length).isURL) {
+      mainText = text.substring(0, index);
+      secondaryText = text.substring(index, text.length);
     }
 
     // Create the main message
@@ -85,7 +71,7 @@ class ActionHandler {
     if (mainMsg.text!.trim().length > 0) messages.add(mainMsg);
 
     // If there is a link, build the link message
-    if (shouldSplit) {
+    if (mainText != secondaryText) {
       Message secondaryMessage = Message(
         text: secondaryText.trim(),
         dateCreated: DateTime.now(),

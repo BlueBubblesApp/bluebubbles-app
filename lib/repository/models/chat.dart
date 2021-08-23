@@ -383,7 +383,7 @@ class Chat {
     }
 
     // If this is a message preview and we don't already have metadata for this, get it
-    if (message.isUrlPreview() && !MetadataHelper.mapIsNotEmpty(message.metadata)) {
+    if (message.hasUrl() && !MetadataHelper.mapIsNotEmpty(message.metadata)) {
       MetadataHelper.fetchMetadata(message).then((Metadata? meta) async {
         // If the metadata is empty, don't do anything
         if (!MetadataHelper.isNotEmpty(meta)) return;
