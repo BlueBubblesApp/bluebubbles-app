@@ -1,8 +1,15 @@
+import 'dart:convert';
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/managers/method_channel_interface.dart';
+import 'package:bluebubbles/repository/models/theme_entry.dart';
+import 'package:bluebubbles/repository/models/theme_object.dart';
+import 'package:collection/collection.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
@@ -374,7 +381,238 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       tileColor: tileColor,
                       iosSubtitle: iosSubtitle,
                       materialSubtitle: materialSubtitle,
-                      text: "Reset"
+                      text: "Backup and Reset"
+                  ),
+                  SettingsTile(
+                    backgroundColor: tileColor,
+                    onTap: () {
+                      Get.defaultDialog(
+                        title: "Backup and Restore",
+                        titleStyle: Theme.of(context).textTheme.headline1,
+                        confirm: Container(height: 0, width: 0),
+                        cancel: Container(height: 0, width: 0),
+                        content: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: <Widget>[
+                              SizedBox(
+                                height: 15.0,
+                              ),
+                              Text("Load / Save Locally", style: Theme.of(context).textTheme.subtitle1),
+                              Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                                child: Container(color: Colors.grey, height: 0.5),
+                              ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      primary: Theme.of(context).primaryColor,
+                                    ),
+                                    onPressed: () async {
+                                      String directoryPath = "/storage/emulated/0/Download/BlueBubbles-settings-";
+                                      DateTime now = DateTime.now().toLocal();
+                                      String filePath = directoryPath + "${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}" + ".json";
+                                      File file = File(filePath);
+                                      await file.create(recursive: true);
+                                      Map<String, dynamic> json = SettingsManager().settings.toMap();
+                                      String jsonString = jsonEncode(json);
+                                      await file.writeAsString(jsonString);
+                                      Get.back();
+                                      showSnackbar(
+                                        "Success",
+                                        "Settings exported successfully to downloads folder",
+                                        durationMs: 2000,
+                                        button: TextButton(
+                                          style: TextButton.styleFrom(
+                                            backgroundColor: Get.theme.accentColor,
+                                          ),
+                                          onPressed: () {
+                                            Share.file("BlueBubbles Settings", filePath);
+                                          },
+                                          child: Text("SHARE", style: TextStyle(color: Theme.of(context).primaryColor)),
+                                        ),
+                                      );
+                                    },
+                                    child: Text(
+                                      "Save Settings",
+                                      style: TextStyle(
+                                        color: Theme.of(context).textTheme.bodyText1!.color,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 10),
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        side: BorderSide(color: Theme.of(context).primaryColor)
+                                      ),
+                                      primary: Theme.of(context).backgroundColor,
+                                    ),
+                                    onPressed: () async {
+                                      List<dynamic>? res = await MethodChannelInterface().invokeMethod("pick-file", {
+                                        "mimeTypes": ["application/json"],
+                                        "allowMultiple": false,
+                                      });
+                                      if (res == null || res.isEmpty) return;
+
+                                      try {
+                                        String jsonString = await File(res.first.toString()).readAsString();
+                                        Map<String, dynamic> json = jsonDecode(jsonString);
+                                        Settings.updateFromMap(json);
+                                        Get.back();
+                                        showSnackbar("Success", "Settings restored successfully");
+                                      } catch (_) {
+                                        Get.back();
+                                        showSnackbar("Error", "Something went wrong");
+                                      }
+                                    },
+                                    child: Text(
+                                      "Load Settings",
+                                      style: TextStyle(
+                                        color: Theme.of(context).textTheme.bodyText1!.color,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      primary: Theme.of(context).primaryColor,
+                                    ),
+                                    onPressed: () async {
+                                      List<ThemeObject> allThemes = await ThemeObject.getThemes();
+                                      String jsonStr = "[";
+                                      allThemes.forEachIndexed((index, e) async {
+                                        String entryJson = "[";
+                                        await e.fetchData();
+                                        e.entries.forEachIndexed((index, e2) {
+                                          entryJson = entryJson + "${jsonEncode(e2.toMap())}";
+                                          if (index != e.entries.length - 1) {
+                                            entryJson = entryJson + ",";
+                                          } else {
+                                            entryJson = entryJson + "]";
+                                          }
+                                        });
+                                        Map<String, dynamic> map = e.toMap();
+                                        print(entryJson);
+                                        map['entries'] = jsonDecode(entryJson);
+                                        jsonStr = jsonStr + "${jsonEncode(map)}";
+                                        if (index != allThemes.length - 1) {
+                                          jsonStr = jsonStr + ",";
+                                        } else {
+                                          jsonStr = jsonStr + "]";
+                                        }
+                                      });
+                                      String directoryPath = "/storage/emulated/0/Download/BlueBubbles-theming-";
+                                      DateTime now = DateTime.now().toLocal();
+                                      String filePath = directoryPath + "${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}" + ".json";
+                                      File file = File(filePath);
+                                      await file.create(recursive: true);
+                                      await file.writeAsString(jsonStr);
+                                      Get.back();
+                                      showSnackbar(
+                                        "Success",
+                                        "Theming exported successfully to downloads folder",
+                                        durationMs: 2000,
+                                        button: TextButton(
+                                          style: TextButton.styleFrom(
+                                            backgroundColor: Get.theme.accentColor,
+                                          ),
+                                          onPressed: () {
+                                            Share.file("BlueBubbles Theming", filePath);
+                                          },
+                                          child: Text("SHARE", style: TextStyle(color: Theme.of(context).primaryColor)),
+                                        ),
+                                      );
+                                    },
+                                    child: Text(
+                                      "Save Theming",
+                                      style: TextStyle(
+                                        color: Theme.of(context).textTheme.bodyText1!.color,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 10),
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(10),
+                                          side: BorderSide(color: Theme.of(context).primaryColor)
+                                      ),
+                                      primary: Theme.of(context).backgroundColor,
+                                    ),
+                                    onPressed: () async {
+                                      List<dynamic>? res = await MethodChannelInterface().invokeMethod("pick-file", {
+                                        "mimeTypes": ["application/json"],
+                                        "allowMultiple": false,
+                                      });
+                                      if (res == null || res.isEmpty) return;
+
+                                      try {
+                                        String jsonString = await File(res.first.toString()).readAsString();
+                                        List<dynamic> json = jsonDecode(jsonString);
+                                        for (var e in json) {
+                                          ThemeObject object = ThemeObject.fromMap(e);
+                                          List<dynamic> entriesJson = e['entries'];
+                                          List<ThemeEntry> entries = [];
+                                          for (var e2 in entriesJson) {
+                                            entries.add(ThemeEntry.fromMap(e2));
+                                          }
+                                          object.entries = entries;
+                                          object.data = object.themeData;
+                                          await object.save();
+                                        }
+                                        await SettingsManager().saveSelectedTheme(context);
+                                        Get.back();
+                                        showSnackbar("Success", "Theming restored successfully");
+                                      } catch (_) {
+                                        Get.back();
+                                        showSnackbar("Error", "Something went wrong");
+                                      }
+                                    },
+                                    child: Text(
+                                      "Load Theming",
+                                      style: TextStyle(
+                                        color: Theme.of(context).textTheme.bodyText1!.color,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ]
+                        ),
+                        barrierDismissible: true,
+                        backgroundColor: Theme.of(context).backgroundColor,
+                      );
+                    },
+                    leading: SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.cloud_upload,
+                      materialIcon: Icons.backup,
+                    ),
+                    title: "Backup & Restore",
+                    subtitle: "Backup and restore all app settings",
+                  ),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
+                    ),
                   ),
                   SettingsTile(
                     backgroundColor: tileColor,

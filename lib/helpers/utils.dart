@@ -193,7 +193,7 @@ String randomString(int length) {
 }
 
 void showSnackbar(String title, String message,
-    {int animationMs = 250, int durationMs = 1500, Function(GetBar<Object>)? onTap}) {
+    {int animationMs = 250, int durationMs = 1500, Function(GetBar<Object>)? onTap, TextButton? button}) {
   Get.snackbar(title, message,
       snackPosition: SnackPosition.BOTTOM,
       colorText: Get.textTheme.bodyText1!.color,
@@ -203,6 +203,7 @@ void showSnackbar(String title, String message,
       isDismissible: false,
       duration: Duration(milliseconds: durationMs),
       animationDuration: Duration(milliseconds: animationMs),
+      mainButton: button,
       onTap: onTap ??
           (GetBar<Object> bar) {
             if (Get.isSnackbarOpen ?? false) Get.back();
