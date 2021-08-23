@@ -125,6 +125,10 @@ class _ConversationListState extends State<ConversationList> {
 
   void sortChats() {
     ChatBloc().chats.sort((a, b) {
+      if (a.pinIndex.value != null && b.pinIndex.value != null)
+        return a.pinIndex.value!.compareTo(b.pinIndex.value!);
+      if (b.pinIndex.value != null) return 1;
+      if (a.pinIndex.value != null) return -1;
       if (!a.isPinned! && b.isPinned!) return 1;
       if (a.isPinned! && !b.isPinned!) return -1;
       if (a.latestMessageDate == null && b.latestMessageDate == null) return 0;

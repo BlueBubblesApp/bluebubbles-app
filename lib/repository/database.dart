@@ -41,7 +41,7 @@ class DBProvider {
 
   static Database? _database;
   static String _path = "";
-  static int currentVersion = 10;
+  static int currentVersion = 11;
 
   /// Contains list of functions to invoke when going from a previous to the current database verison
   /// The previous version is always [key - 1], for example for key 2, it will be the upgrade scheme from version 1 to version 2
@@ -106,6 +106,12 @@ class DBProvider {
         upgrade: (Database db) {
           db.execute(
               "ALTER TABLE chat ADD COLUMN customAvatarPath TEXT DEFAULT NULL;");
+        }),
+    new DBUpgradeItem(
+        addedInVersion: 11,
+        upgrade: (Database db) {
+          db.execute(
+              "ALTER TABLE chat ADD COLUMN pinIndex INTEGER DEFAULT NULL;");
         }),
   ];
 
@@ -268,7 +274,8 @@ class DBProvider {
         "latestMessageDate INTEGER DEFAULT 0,"
         "latestMessageText TEXT,"
         "displayName TEXT DEFAULT NULL,"
-        "customAvatarPath TEXT DEFAULT NULL"
+        "customAvatarPath TEXT DEFAULT NULL,"
+        "pinIndex INTEGER DEFAULT NULL"
         ");");
   }
 
