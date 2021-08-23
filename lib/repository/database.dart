@@ -268,6 +268,7 @@ class DBProvider {
         "latestMessageDate INTEGER DEFAULT 0,"
         "latestMessageText TEXT,"
         "displayName TEXT DEFAULT NULL"
+        "customAvatarPath TEXT DEFAULT NULL"
         ");");
   }
 
