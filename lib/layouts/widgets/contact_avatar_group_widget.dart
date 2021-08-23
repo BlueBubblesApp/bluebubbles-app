@@ -59,13 +59,13 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
                 height: widget.size,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(widget.size / 2),
-                  color: context.theme.accentColor.withOpacity(0.6),
                 ),
               ),
               CircleAvatar(
                 key: Key("${participants.first.address}-avatar"),
                 radius: widget.size / 2,
                 backgroundImage: FileImage(File(widget.chat.customAvatarPath.value!)),
+                backgroundColor: Colors.transparent,
               ),
             ]
           );

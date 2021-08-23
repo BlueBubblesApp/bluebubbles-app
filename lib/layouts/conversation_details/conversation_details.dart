@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -7,6 +8,7 @@ import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/conversation_details/attachment_details_card.dart';
 import 'package:bluebubbles/layouts/conversation_details/contact_tile.dart';
+import 'package:bluebubbles/layouts/widgets/avatar_crop.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -305,6 +307,85 @@ class _ConversationDetailsState extends State<ConversationDetails> {
             ),
             SliverPadding(
               padding: EdgeInsets.symmetric(vertical: 20),
+            ),
+            SliverToBoxAdapter(
+              child: InkWell(
+                onTap: () async {
+                  if (chat.customAvatarPath.value != null) {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                            backgroundColor: Theme.of(context).accentColor,
+                            title: new Text("Custom Avatar",
+                                style:
+                                TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
+                            content: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                    "You have already set a custom avatar for this chat. What would you like to do?",
+                                    style: Theme.of(context).textTheme.bodyText1),
+                              ],
+                            ),
+                            actions: <Widget>[
+                              TextButton(
+                                  child: Text("Cancel",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .subtitle1!
+                                          .apply(color: Theme.of(context).primaryColor)),
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  }),
+                              TextButton(
+                                  child: Text("Reset",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .subtitle1!
+                                          .apply(color: Theme.of(context).primaryColor)),
+                                  onPressed: () {
+                                    File file = new File(chat.customAvatarPath.value!);
+                                    file.delete();
+                                    chat.customAvatarPath.value = null;
+                                    chat.save();
+                                    Navigator.of(context).pop();
+                                  }),
+                              TextButton(
+                                  child: Text("Set New",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .subtitle1!
+                                          .apply(color: Theme.of(context).primaryColor)),
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                    Get.to(() => AvatarCrop(chat: chat));
+                                  }),
+                            ]);
+                      },
+                    );
+                  } else {
+                    Get.to(() => AvatarCrop(chat: chat));
+                  }
+                },
+                child: ListTile(
+                  leading: Text(
+                    "Change chat avatar",
+                    style: TextStyle(
+                      color: Theme.of(context).primaryColor,
+                    ),
+                  ),
+                  trailing: Padding(
+                    padding: EdgeInsets.only(right: 15),
+                    child: Icon(
+                      Icons.person,
+                      color: Theme.of(context).primaryColor,
+                    ),
+                  ),
+                ),
+              ),
             ),
             SliverToBoxAdapter(
               child: InkWell(
