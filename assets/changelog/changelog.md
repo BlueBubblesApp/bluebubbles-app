@@ -2,6 +2,21 @@
 
 Below are the last few BlueBubbles App release changelogs
 
+## v1.4.0
+
+### New Features
+
+* Ability to set custom chat icons/logos (local-only)
+  - This does not effect other members of the chat
+* Ability to swipe away (down) full screen image/attachment viewer
+* Ability to export/import settings (and themes) to/from phone storage
+
+### Bug Fixes
+
+* Fixes some issues with DDNS providers (and probably some Ngrok/LocalTunnel connections)
+* Fixes issue with webp/tiff images loading improperly
+* Fixes issue where the summary notification would persist even if there were no notifications left
+
 ## v1.3.0
 
 ### The Big Stuff
