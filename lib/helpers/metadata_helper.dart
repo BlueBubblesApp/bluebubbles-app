@@ -58,7 +58,7 @@ class MetadataHelper {
     _metaCache[message.guid!] = completer;
 
     // Make sure there is a schema with the URL
-    String url = message.text!;
+    String url = message.getUrl()!;
     if (!url.toLowerCase().startsWith("http://") && !url.toLowerCase().startsWith("https://")) {
       url = "https://" + url;
     }
