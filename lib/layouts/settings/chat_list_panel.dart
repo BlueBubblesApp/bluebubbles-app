@@ -329,12 +329,10 @@ class ChatListPanel extends StatelessWidget {
                                   child: Container(
                                     height: 60,
                                     width: context.width / 5 - 8,
-                                    child: IconSlideAction(
-                                      caption: 'Pin',
-                                      color: Colors.yellow[800],
-                                      foregroundColor: Theme.of(context).textTheme.bodyText1!.color,
-                                      icon: Icons.star,
-                                      onTap: () async {
+                                    color: Colors.yellow[800],
+                                    child: IconButton(
+                                      icon: Icon(Icons.star, color: Colors.white),
+                                      onPressed: () async {
                                         SettingsManager().settings.iosShowPin.value =
                                             !SettingsManager().settings.iosShowPin.value;
                                         saveSettings();
@@ -349,7 +347,11 @@ class ChatListPanel extends StatelessWidget {
                                               ? Theme.of(context).primaryColor
                                               : tileColor,
                                           border: Border.all(
-                                              color: CupertinoColors.systemGrey, style: BorderStyle.solid, width: 1),
+                                              color: SettingsManager().settings.iosShowPin.value
+                                              ? Theme.of(context).primaryColor
+                                              : CupertinoColors.systemGrey,
+                                          style: BorderStyle.solid,
+                                          width: 1),
                                           borderRadius: BorderRadius.all(Radius.circular(25))),
                                       child: Padding(
                                         padding: const EdgeInsets.all(3.0),
@@ -381,11 +383,9 @@ class ChatListPanel extends StatelessWidget {
                                           height: 60,
                                           color: Colors.purple[700],
                                           width: context.width / 5 - 8,
-                                          child: IconSlideAction(
-                                            caption: 'Hide Alerts',
-                                            color: Colors.purple[700],
-                                            icon: Icons.notifications_off,
-                                            onTap: () async {
+                                          child: IconButton(
+                                            icon: Icon(Icons.notifications_off, color: Colors.white),
+                                            onPressed: () async {
                                               SettingsManager().settings.iosShowAlert.value =
                                                   !SettingsManager().settings.iosShowAlert.value;
                                               saveSettings();
@@ -400,7 +400,9 @@ class ChatListPanel extends StatelessWidget {
                                                     ? Theme.of(context).primaryColor
                                                     : tileColor,
                                                 border: Border.all(
-                                                    color: CupertinoColors.systemGrey,
+                                                    color: SettingsManager().settings.iosShowAlert.value
+                                                        ? Theme.of(context).primaryColor
+                                                        : CupertinoColors.systemGrey,
                                                     style: BorderStyle.solid,
                                                     width: 1),
                                                 borderRadius: BorderRadius.all(Radius.circular(25))),
@@ -428,11 +430,9 @@ class ChatListPanel extends StatelessWidget {
                                           height: 60,
                                           color: Colors.red,
                                           width: context.width / 5 - 8,
-                                          child: IconSlideAction(
-                                            caption: "Delete",
-                                            color: Colors.red,
-                                            icon: Icons.delete_forever,
-                                            onTap: () async {
+                                          child: IconButton(
+                                            icon: Icon(Icons.delete_forever, color: Colors.white),
+                                            onPressed: () async {
                                               SettingsManager().settings.iosShowDelete.value =
                                                   !SettingsManager().settings.iosShowDelete.value;
                                               saveSettings();
@@ -447,7 +447,9 @@ class ChatListPanel extends StatelessWidget {
                                                     ? Theme.of(context).primaryColor
                                                     : tileColor,
                                                 border: Border.all(
-                                                    color: CupertinoColors.systemGrey,
+                                                    color: SettingsManager().settings.iosShowDelete.value
+                                                        ? Theme.of(context).primaryColor
+                                                        : CupertinoColors.systemGrey,
                                                     style: BorderStyle.solid,
                                                     width: 1),
                                                 borderRadius: BorderRadius.all(Radius.circular(25))),
@@ -475,11 +477,9 @@ class ChatListPanel extends StatelessWidget {
                                           height: 60,
                                           color: Colors.blue,
                                           width: context.width / 5 - 8,
-                                          child: IconSlideAction(
-                                            caption: 'Mark Read',
-                                            color: Colors.blue,
-                                            icon: Icons.mark_chat_read,
-                                            onTap: () {
+                                          child: IconButton(
+                                            icon: Icon(Icons.mark_chat_read, color: Colors.white),
+                                            onPressed: () {
                                               SettingsManager().settings.iosShowMarkRead.value =
                                                   !SettingsManager().settings.iosShowMarkRead.value;
                                               saveSettings();
@@ -495,7 +495,9 @@ class ChatListPanel extends StatelessWidget {
                                                     ? Theme.of(context).primaryColor
                                                     : tileColor,
                                                 border: Border.all(
-                                                    color: CupertinoColors.systemGrey,
+                                                    color: SettingsManager().settings.iosShowMarkRead.value
+                                                        ? Theme.of(context).primaryColor
+                                                        : CupertinoColors.systemGrey,
                                                     style: BorderStyle.solid,
                                                     width: 1),
                                                 borderRadius: BorderRadius.all(Radius.circular(25))),
@@ -523,11 +525,9 @@ class ChatListPanel extends StatelessWidget {
                                           height: 60,
                                           color: Colors.red,
                                           width: context.width / 5 - 8,
-                                          child: IconSlideAction(
-                                            caption: 'Archive',
-                                            color: Colors.red,
-                                            icon: Icons.archive,
-                                            onTap: () {
+                                          child: IconButton(
+                                            icon: Icon(Icons.archive, color: Colors.white),
+                                            onPressed: () {
                                               SettingsManager().settings.iosShowArchive.value =
                                                   !SettingsManager().settings.iosShowArchive.value;
                                               saveSettings();
@@ -542,7 +542,9 @@ class ChatListPanel extends StatelessWidget {
                                                     ? Theme.of(context).primaryColor
                                                     : tileColor,
                                                 border: Border.all(
-                                                    color: CupertinoColors.systemGrey,
+                                                    color: SettingsManager().settings.iosShowArchive.value
+                                                        ? Theme.of(context).primaryColor
+                                                        : CupertinoColors.systemGrey,
                                                     style: BorderStyle.solid,
                                                     width: 1),
                                                 borderRadius: BorderRadius.all(Radius.circular(25))),
