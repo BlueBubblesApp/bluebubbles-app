@@ -170,7 +170,15 @@ class UrlPreviewWidget extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeDelta: -5),
                         )) : Container()),
-                      SizedBox(height: 10),
+                      Obx(() => Padding(
+                        padding: EdgeInsets.only(top: (controller.data.value?.title == "Image Preview" ? 0 : 5.0), bottom: 10.0),
+                        child: Text(
+                          Uri.tryParse(message.text!)?.host ?? "",
+                          style: Theme.of(context).textTheme.subtitle2,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      )),
                     ],
                   ),
                 ),
