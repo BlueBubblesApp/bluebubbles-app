@@ -42,15 +42,60 @@ class ActionHandler {
       {MessageBloc? messageBloc, List<Attachment> attachments = const []}) async {
     if (isNullOrEmpty(text, trimString: true)!) return;
 
+    List<Message> messages = <Message>[];
+
+    // Check for URLs
+    RegExpMatch? linkMatch;
+    String? linkMsg;
+    List<RegExpMatch> matches = parseLinks(text);
+
+    // Get the first match (if it exists)
+    if (matches.length > 0) {
+      linkMatch = matches.first;
+      linkMsg = text.substring(linkMatch.start, linkMatch.end).trim();
+    }
+
+    // Figure out of the message starts or ends with the link
+    // In either case, we want to split up the messages
+    bool shouldSplitEnd = linkMatch != null && text.endsWith(linkMsg!);
+    bool shouldSplitStart = linkMatch != null && text.startsWith(linkMsg!);
+    bool shouldSplit = shouldSplitEnd || shouldSplitStart;
+
+    // Split up the messages depending on if the link is at the start or end
+    String mainText = text;
+    String secondaryText = text;
+    if (shouldSplitEnd) {
+      mainText = text.substring(0, linkMatch.start);
+      secondaryText = text.substring(linkMatch.start, linkMatch.end);
+    } else if (shouldSplitStart) {
+      mainText = text.substring(linkMatch.start, linkMatch.end);
+      secondaryText = text.substring(linkMatch.end);
+    }
+
     // Create the main message
-    Message message = Message(
-      text: text.trim(),
+    Message mainMsg = Message(
+      text: mainText.trim(),
       dateCreated: DateTime.now(),
       hasAttachments: attachments.length > 0 ? true : false,
     );
 
     // Generate a Temp GUID
-    message.generateTempGuid();
+    mainMsg.generateTempGuid();
+
+    if (mainMsg.text!.trim().length > 0) messages.add(mainMsg);
+
+    // If there is a link, build the link message
+    if (shouldSplit) {
+      Message secondaryMessage = Message(
+        text: secondaryText.trim(),
+        dateCreated: DateTime.now(),
+        hasAttachments: false,
+      );
+
+      // Generate a Temp GUID
+      secondaryMessage.generateTempGuid();
+      messages.add(secondaryMessage);
+    }
 
     // Make sure to save the chat
     // If we already have the ID, we don't have to wait to resave it
@@ -60,15 +105,18 @@ class ActionHandler {
       chat.save();
     }
 
-    // Add the message to the UI and DB
-    NewMessageManager().addMessage(chat, message, outgoing: true);
-    chat.addMessage(message);
+    // Send all the messages
+    messages.forEachIndexed((index, message) async {
+      // Add the message to the UI and DB
+      NewMessageManager().addMessage(chat, message, outgoing: true, shouldNotAnimate: index > 0);
+      chat.addMessage(message);
 
-    // Create params for the queue item
-    Map<String, dynamic> params = {"chat": chat, "message": message};
+      // Create params for the queue item
+      Map<String, dynamic> params = {"chat": chat, "message": message};
 
-    // Add the message send to the queue
-    await OutgoingQueue().add(new QueueItem(event: "send-message", item: params));
+      // Add the message send to the queue
+      await OutgoingQueue().add(new QueueItem(event: "send-message", item: params));
+    });
   }
 
   static Future<void> sendMessageHelper(Chat chat, Message message) async {
