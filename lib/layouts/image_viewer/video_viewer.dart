@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:chewie/chewie.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
@@ -28,25 +30,34 @@ class VideoViewer extends StatefulWidget {
 }
 
 class _VideoViewerState extends State<VideoViewer> {
-  StreamController<double> videoProgressStream = StreamController();
   bool showPlayPauseOverlay = false;
   Timer? hideOverlayTimer;
   late VideoPlayerController controller;
+  ChewieController? chewieController;
   PlayerStatus status = PlayerStatus.NONE;
   bool hasListener = false;
   final RxBool isReloading = false.obs;
+  Timer? _debounce;
 
   @override
   void initState() {
     super.initState();
-    controller = new VideoPlayerController.file(widget.file);
-    controller.setVolume(SettingsManager().settings.startVideosMutedFullscreen.value ? 0 : 1);
-    this.createListener(controller);
-    showPlayPauseOverlay = !controller.value.isPlaying;
+    initControllers();
   }
 
-  void setVideoProgress(double value) {
-    if (!videoProgressStream.isClosed) videoProgressStream.sink.add(value);
+  void initControllers() async {
+    controller = new VideoPlayerController.file(widget.file);
+    controller.setVolume(SettingsManager().settings.startVideosMutedFullscreen.value ? 0 : 1);
+    await controller.initialize();
+    chewieController = ChewieController(
+      videoPlayerController: controller,
+      aspectRatio: controller.value.aspectRatio,
+      allowFullScreen: false,
+      allowMuting: false,
+    );
+    setState(() {});
+    this.createListener(controller);
+    showPlayPauseOverlay = !controller.value.isPlaying;
   }
 
   void createListener(VideoPlayerController? controller) {
@@ -55,11 +66,6 @@ class _VideoViewerState extends State<VideoViewer> {
     controller.addListener(() async {
       // Get the current status
       PlayerStatus currentStatus = await getControllerStatus(controller);
-      // If we are playing, update the video progress
-      if (this.status == PlayerStatus.PLAYING) {
-        Duration pos = controller.value.position;
-        this.setVideoProgress(pos.inMilliseconds.toDouble());
-      }
 
       // If the status hasn't changed, don't do anything
       if (currentStatus == status) return;
@@ -70,7 +76,6 @@ class _VideoViewerState extends State<VideoViewer> {
         showPlayPauseOverlay = true;
         await controller.pause();
         await controller.seekTo(Duration());
-        this.setVideoProgress(0);
       }
 
       if (this.mounted) setState(() {});
@@ -80,16 +85,10 @@ class _VideoViewerState extends State<VideoViewer> {
   }
 
   @override
-  void didChangeDependencies() async {
-    super.didChangeDependencies();
-    await controller.initialize();
-    if (this.mounted) setState(() {});
-  }
-
-  @override
   void dispose() {
-    videoProgressStream.close();
+    _debounce?.cancel();
     controller.dispose();
+    chewieController?.dispose();
     super.dispose();
   }
 
@@ -199,10 +198,17 @@ class _VideoViewerState extends State<VideoViewer> {
                       showSnackbar('In Progress', 'Redownloading attachment. Please wait...');
                       AttachmentHelper.redownloadAttachment(widget.attachment, onComplete: () async {
                         controller.dispose();
+                        chewieController?.dispose();
                         controller = new VideoPlayerController.file(widget.file);
                         await controller.initialize();
                         isReloading.value = false;
                         controller.setVolume(SettingsManager().settings.startVideosMutedFullscreen.value ? 0 : 1);
+                        chewieController = ChewieController(
+                          videoPlayerController: controller,
+                          aspectRatio: controller.value.aspectRatio,
+                          allowFullScreen: false,
+                          allowMuting: false,
+                        );
                         this.createListener(controller);
                         showPlayPauseOverlay = !controller.value.isPlaying;
                       }, onError: () {
@@ -245,6 +251,19 @@ class _VideoViewerState extends State<VideoViewer> {
                     ),
                   ),
                 ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 40.0),
+                  child: CupertinoButton(
+                    padding: EdgeInsets.symmetric(horizontal: 5),
+                    onPressed: () async {
+                      controller.setVolume(controller.value.volume != 0.0 ? 0.0 : 1.0);
+                    },
+                    child: Icon(
+                      controller.value.volume == 0.0 ? Icons.volume_mute : Icons.volume_up,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
               ],
             ),
           ])),
@@ -259,175 +278,59 @@ class _VideoViewerState extends State<VideoViewer> {
       ),
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
-        body: Stack(
-          alignment: Alignment.bottomCenter,
-          children: <Widget>[
-            Obx(() {
-              if (!isReloading.value)
-                return GestureDetector(
-                  behavior: HitTestBehavior.translucent,
-                  onTap: () {
-                    if (!this.mounted) return;
-
-                    setState(() {
-                      showPlayPauseOverlay = !showPlayPauseOverlay;
-                      resetTimer();
-                      setTimer();
-                    });
-                  },
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: <Widget>[
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          Container(
-                            constraints: BoxConstraints(
-                              maxHeight: context.height,
-                              maxWidth: context.width,
-                            ),
-                            child: AspectRatio(
-                              aspectRatio: controller.value.aspectRatio,
-                              child: Stack(
-                                children: <Widget>[
-                                  VideoPlayer(controller),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
+        body: Listener(
+          onPointerUp: (_) async {
+            setState(() {
+              showPlayPauseOverlay = true;
+            });
+            debounceOverlay();
+          },
+          child: Stack(
+            alignment: Alignment.bottomCenter,
+            children: <Widget>[
+              Obx(() {
+                if (!isReloading.value && chewieController != null)
+                  return SafeArea(
+                    child: Center(
+                      child: Theme(
+                        data: Theme.of(context).copyWith(
+                            platform: SettingsManager().settings.skin.value == Skins.iOS ? TargetPlatform.iOS : TargetPlatform.android,
+                            dialogBackgroundColor: Theme.of(context).accentColor,
+                            iconTheme: Theme.of(context).iconTheme.copyWith(color: Theme.of(context).textTheme.bodyText1?.color)),
+                        child: Chewie(
+                          controller: chewieController!,
+                        ),
                       ),
-                      AnimatedOpacity(
-                        opacity: showPlayPauseOverlay ? 1 : 0,
-                        duration: Duration(milliseconds: 250),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: HexColor('26262a').withOpacity(0.5),
-                            borderRadius: BorderRadius.circular(40),
-                          ),
-                          padding: EdgeInsets.all(10),
-                          child: controller.value.isPlaying ? GestureDetector(
-                            child: Icon(
-                              Icons.pause,
-                              color: Colors.white,
-                              size: 45,
-                            ),
-                            onTap: () {
-                              controller.pause();
-                              if (this.mounted) setState(() {});
-                              resetTimer();
-                              setTimer();
-                            },
-                          ) : GestureDetector(
-                            child: Icon(
-                              Icons.play_arrow,
-                              color: Colors.white,
-                              size: 45,
-                            ),
-                            onTap: () {
-                              controller.play();
-                              resetTimer();
-                              setTimer();
-                              if (this.mounted) setState(() {});
-                            },
-                          ),
-                        ),
-                      )
-                    ],
-                  ),
-                );
-              else return Center(
-                child: CircularProgressIndicator(
-                  backgroundColor: Theme.of(context).accentColor,
-                  valueColor: AlwaysStoppedAnimation(Theme.of(context).primaryColor),
-                ),
-              );
-            }),
-            if (widget.showInteractions)
-              Positioned(
-                top: 0,
-                left: 0,
-                child: overlay,
-              ),
-            StreamBuilder(
-              stream: videoProgressStream.stream,
-              builder: (context, AsyncSnapshot<double> snapshot) {
-                return AbsorbPointer(
-                  absorbing: !showPlayPauseOverlay,
-                  child: AnimatedOpacity(
-                    opacity: showPlayPauseOverlay ? 1 : 0,
-                    duration: Duration(milliseconds: 500),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: SizedBox(
-                            height: context.height * 1 / 10,
-                            child: Slider(
-                              min: 0,
-                              max: controller.value.duration.inMilliseconds.toDouble(),
-                              onChangeStart: (value) {
-                                controller.pause();
-                                videoProgressStream.sink.add(value);
-                                controller.seekTo(Duration(milliseconds: value.toInt()));
-                                resetTimer();
-                              },
-                              onChanged: (double value) async {
-                                // controller.pause();
-                                videoProgressStream.sink.add(value);
-
-                                if ((await controller.position)!.inMilliseconds != value.toInt()) {
-                                  controller.seekTo(Duration(milliseconds: value.toInt()));
-                                }
-                              },
-                              onChangeEnd: (double value) {
-                                controller.play();
-                                videoProgressStream.sink.add(value);
-
-                                controller.seekTo(Duration(milliseconds: value.toInt()));
-                                setTimer();
-                              },
-                              value: (snapshot.hasData ? snapshot.data : 0.0)!
-                                  .clamp(0, controller.value.duration.inMilliseconds)
-                                  .toDouble(),
-                            ),
-                          ),
-                        ),
-                        GestureDetector(
-                          child: Padding(
-                            padding: const EdgeInsets.only(right: 20.0),
-                            child: Icon(
-                              controller.value.volume == 0.0 ? Icons.volume_mute : Icons.volume_up,
-                              color: Theme.of(context).primaryColor,
-                            ),
-                          ),
-                          onTap: () {
-                            controller.setVolume(controller.value.volume != 0.0 ? 0.0 : 1.0);
-                          },
-                        ),
-                      ],
                     ),
+                  );
+                else return Center(
+                  child: CircularProgressIndicator(
+                    backgroundColor: Theme.of(context).accentColor,
+                    valueColor: AlwaysStoppedAnimation(Theme.of(context).primaryColor),
                   ),
                 );
-              },
-            )
-          ],
+              }),
+              if (widget.showInteractions)
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  child: AbsorbPointer(
+                      absorbing: !showPlayPauseOverlay,
+                      child: overlay),
+                ),
+            ],
+          )
         ),
       ),
     );
   }
 
-  void resetTimer() {
-    if (hideOverlayTimer != null) hideOverlayTimer!.cancel();
-  }
-
-  void setTimer() {
-    if (showPlayPauseOverlay) {
-      hideOverlayTimer = Timer(Duration(seconds: 3), () {
-        if (this.mounted)
-          setState(() {
-            showPlayPauseOverlay = false;
-          });
+  debounceOverlay() {
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(seconds: 3), () {
+      setState(() {
+        showPlayPauseOverlay = false;
       });
-    }
+    });
   }
 }
