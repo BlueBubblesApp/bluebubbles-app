@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/theming/avatar_color_picker_popup.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:contacts_service/contacts_service.dart';
+import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -149,39 +149,75 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
     }
   }
 
-  void onAvatarTap() {
-    if (widget.onTap != null) widget.onTap!();
+  void onAvatarTap() async {
+    if (widget.onTap != null) {
+      widget.onTap!();
+      return;
+    }
     if (!widget.editable || !SettingsManager().settings.colorfulAvatars.value || widget.handle == null) return;
-    showDialog(
-      context: context,
-      builder: (context) => AvatarColorPickerPopup(
-        handle: widget.handle!,
-        onReset: () async {
-          widget.handle!.color = null;
-          await widget.handle!.update();
-          ContactManager().colorStreamObject.sink.add({widget.handle!.address: null});
-        },
-        onSet: (Color? color) async {
-          if (color == null) return;
-
-          // Check if the color is the same as the real gradient, and if so, set it to null
-          // Because it is not custom, then just use the regular gradient
-          List gradient = toColorGradient(widget.handle?.address ?? "");
-          if (!isNullOrEmpty(gradient)! && gradient[0] == color) {
-            widget.handle!.color = null;
-          } else {
-            widget.handle!.color = color.value.toRadixString(16);
-          }
-
-          await widget.handle!.updateColor(widget.handle!.color);
-
-          ContactManager()
-              .colorStreamObject
-              .sink
-              .add({widget.handle!.address: widget.handle?.color == null ? null : HexColor(widget.handle!.color!)});
-        },
+    bool didReset = false;
+    final Color color = await showColorPickerDialog(
+      context,
+      widget.handle?.color != null ? HexColor(widget.handle!.color!) : toColorGradient(widget.handle!.address)[0],
+      title: Container(
+          width: context.width - 112,
+          child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Choose a Color',
+                    style: Theme.of(context).textTheme.headline6),
+                TextButton(
+                  onPressed: () async {
+                    didReset = true;
+                    Navigator.of(context).pop();
+                    widget.handle!.color = null;
+                    await widget.handle!.update();
+                    ContactManager().colorStreamObject.sink.add({widget.handle!.address: null});
+                  },
+                  child: Text("RESET"),
+                )
+              ]
+          )
       ),
+      width: 40,
+      height: 40,
+      spacing: 0,
+      runSpacing: 0,
+      borderRadius: 0,
+      wheelDiameter: 165,
+      enableOpacity: false,
+      showColorCode: true,
+      colorCodeHasColor: true,
+      pickersEnabled: <ColorPickerType, bool>{
+        ColorPickerType.wheel: true,
+      },
+      copyPasteBehavior: const ColorPickerCopyPasteBehavior(
+        parseShortHexCode: true,
+      ),
+      actionButtons: const ColorPickerActionButtons(
+        dialogActionButtons: true,
+      ),
+      constraints: BoxConstraints(
+          minHeight: 480, minWidth: context.width - 70, maxWidth: context.width - 70),
     );
+
+    if (didReset) return;
+
+    // Check if the color is the same as the real gradient, and if so, set it to null
+    // Because it is not custom, then just use the regular gradient
+    List gradient = toColorGradient(widget.handle?.address ?? "");
+    if (!isNullOrEmpty(gradient)! && gradient[0] == color) {
+      widget.handle!.color = null;
+    } else {
+      widget.handle!.color = color.value.toRadixString(16);
+    }
+
+    await widget.handle!.updateColor(widget.handle!.color);
+
+    ContactManager()
+        .colorStreamObject
+        .sink
+        .add({widget.handle!.address: widget.handle?.color == null ? null : HexColor(widget.handle!.color!)});
   }
 
   @override
