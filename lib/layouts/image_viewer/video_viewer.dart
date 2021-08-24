@@ -54,6 +54,16 @@ class _VideoViewerState extends State<VideoViewer> {
       aspectRatio: controller.value.aspectRatio,
       allowFullScreen: false,
       allowMuting: false,
+      materialProgressColors: ChewieProgressColors(
+          playedColor: Theme.of(context).primaryColor,
+          handleColor: Theme.of(context).primaryColor,
+          bufferedColor: Theme.of(context).backgroundColor,
+          backgroundColor: Theme.of(context).disabledColor),
+      cupertinoProgressColors: ChewieProgressColors(
+          playedColor: Theme.of(context).primaryColor,
+          handleColor: Theme.of(context).primaryColor,
+          bufferedColor: Theme.of(context).backgroundColor,
+          backgroundColor: Theme.of(context).disabledColor),
     );
     setState(() {});
     this.createListener(controller);
@@ -208,6 +218,16 @@ class _VideoViewerState extends State<VideoViewer> {
                           aspectRatio: controller.value.aspectRatio,
                           allowFullScreen: false,
                           allowMuting: false,
+                          materialProgressColors: ChewieProgressColors(
+                              playedColor: Theme.of(context).primaryColor,
+                              handleColor: Theme.of(context).primaryColor,
+                              bufferedColor: Theme.of(context).backgroundColor,
+                              backgroundColor: Theme.of(context).disabledColor),
+                          cupertinoProgressColors: ChewieProgressColors(
+                              playedColor: Theme.of(context).primaryColor,
+                              handleColor: Theme.of(context).primaryColor,
+                              bufferedColor: Theme.of(context).backgroundColor,
+                              backgroundColor: Theme.of(context).disabledColor),
                         );
                         this.createListener(controller);
                         showPlayPauseOverlay = !controller.value.isPlaying;
