@@ -202,7 +202,7 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
 
     // If this is a URL preview and we don't have attachments, we need to get them
     List<Attachment?> nullAttachments = _message.getPreviewAttachments();
-    if (_message.isUrlPreview() && nullAttachments.isEmpty) {
+    if (_message.hasUrl() && nullAttachments.isEmpty) {
       if (lastRequestCount != nullAttachments.length) {
         lastRequestCount = nullAttachments.length;
 
