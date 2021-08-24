@@ -7,14 +7,17 @@ import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:crop_your_image/crop_your_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:mime/mime.dart';
 
 class AvatarCrop extends StatefulWidget {
-  final int index;
-  AvatarCrop({required this.index});
+  final int? index;
+  final Chat? chat;
+  AvatarCrop({this.index, this.chat});
 
   @override
   _AvatarCropState createState() => _AvatarCropState();
@@ -25,6 +28,31 @@ class _AvatarCropState extends State<AvatarCrop> {
   final _cropController = CropController();
   Uint8List? _imageData;
   bool _isLoading = true;
+
+  void onCropped(Uint8List croppedData) async {
+    String appDocPath = SettingsManager().appDocDir.path;
+    if (widget.index != null) {
+      File file = new File(ChatBloc().chats[widget.index!].customAvatarPath.value ?? "$appDocPath/avatars/${ChatBloc().chats[widget.index!].guid!.characters.where((char) => char.isAlphabetOnly).join()}/avatar.jpg");
+      if (ChatBloc().chats[widget.index!].customAvatarPath.value == null) {
+        await file.create(recursive: true);
+      }
+      await file.writeAsBytes(croppedData);
+      ChatBloc().chats[widget.index!].customAvatarPath.value = file.path;
+      ChatBloc().chats[widget.index!].save();
+      Get.back(closeOverlays: true);
+      showSnackbar("Notice", "Custom chat avatar saved successfully");
+    } else {
+      File file = new File(widget.chat!.customAvatarPath.value ?? "$appDocPath/avatars/${widget.chat!.guid!.characters.where((char) => char.isAlphabetOnly).join()}/avatar.jpg");
+      if (widget.chat!.customAvatarPath.value == null) {
+        await file.create(recursive: true);
+      }
+      await file.writeAsBytes(croppedData);
+      widget.chat!.customAvatarPath.value = file.path;
+      widget.chat!.save();
+      Get.back(closeOverlays: true);
+      showSnackbar("Notice", "Custom chat avatar saved successfully");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -99,18 +127,7 @@ class _AvatarCropState extends State<AvatarCrop> {
                     child: Crop(
                         controller: _cropController,
                         image: _imageData!,
-                        onCropped: (croppedData) async {
-                          String appDocPath = SettingsManager().appDocDir.path;
-                          File file = new File(ChatBloc().chats[widget.index].customAvatarPath.value ?? "$appDocPath/avatars/${ChatBloc().chats[widget.index].guid!.characters.where((char) => char.isAlphabetOnly).join()}/avatar.jpg");
-                          if (ChatBloc().chats[widget.index].customAvatarPath.value == null) {
-                            await file.create(recursive: true);
-                          }
-                          await file.writeAsBytes(croppedData);
-                          ChatBloc().chats[widget.index].customAvatarPath.trigger(file.path);
-                          ChatBloc().chats[widget.index].save();
-                          Get.back(closeOverlays: true);
-                          showSnackbar("Notice", "Custom chat avatar saved successfully");
-                        },
+                        onCropped: onCropped,
                         onStatusChanged: (status) {
                           if (status == CropStatus.ready || status == CropStatus.cropping) {
                             setState(() {
@@ -138,8 +155,9 @@ class _AvatarCropState extends State<AvatarCrop> {
                   style: ElevatedButton.styleFrom(
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
+                        side: BorderSide(color: Theme.of(context).primaryColor)
                     ),
-                    primary: Theme.of(context).primaryColor,
+                    primary: Theme.of(context).backgroundColor,
                   ),
                   onPressed: () async {
                     List<dynamic>? res = await MethodChannelInterface().invokeMethod("pick-file", {
@@ -148,12 +166,34 @@ class _AvatarCropState extends State<AvatarCrop> {
                     });
                     if (res == null || res.isEmpty) return;
 
-                    setState(() {
-                      _imageData = File(res.first.toString()).readAsBytesSync();
-                    });
+                    File file = File(res.first.toString());
+                    if (lookupMimeType(file.path)?.endsWith("gif") ?? false) {
+                      Get.defaultDialog(
+                        title: "Saving avatar...",
+                        titleStyle: Theme.of(context).textTheme.headline1,
+                        confirm: Container(height: 0, width: 0),
+                        cancel: Container(height: 0, width: 0),
+                        content: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: <Widget>[
+                              SizedBox(
+                                height: 15.0,
+                              ),
+                              buildProgressIndicator(context),
+                            ]
+                        ),
+                        barrierDismissible: false,
+                        backgroundColor: Theme.of(context).backgroundColor,
+                      );
+                      onCropped(file.readAsBytesSync());
+                    } else {
+                      setState(() {
+                        _imageData = file.readAsBytesSync();
+                      });
+                    }
                   },
                   child: Text(
-                    "Pick Image",
+                    _imageData != null ? "Pick New Image" : "Pick Image",
                     style: TextStyle(
                       color: Theme.of(context).textTheme.bodyText1!.color,
                       fontSize: 13,
