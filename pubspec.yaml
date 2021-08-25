@@ -83,6 +83,7 @@ dependencies:
   image: ^3.0.2
   crop_your_image: ^0.6.0+1
   chewie: ^1.2.2
+  simple_animations: ^3.1.1
 
 dev_dependencies:
   build_runner: ^2.1.1
