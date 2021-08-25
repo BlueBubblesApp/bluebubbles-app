@@ -460,11 +460,7 @@ class ActionHandler {
 
         await chat.getParticipants();
         // Handle the notification based on the message and chat
-        await MessageHelper.handleNotification(message, chat, force: isHeadless);
-
-        if (isHeadless) {
-          MethodChannelInterface().closeThread();
-        }
+        await MessageHelper.handleNotification(message, chat);
 
         debugPrint("(Message status) New message: [${message.text}] - [${message.guid}]");
         await chat.addMessage(message);
