@@ -45,7 +45,6 @@ import static com.bluebubbles.messaging.method_call_handler.handlers.InitializeB
 
 public class FCMWorker extends Worker implements DartWorker {
 
-    private FlutterEngine backgroundEngine;
     private MethodChannel backgroundChannel;
     private Context context;
 
@@ -61,7 +60,7 @@ public class FCMWorker extends Worker implements DartWorker {
     @Override
     public Result doWork() {
         String type = getInputData().getString("type");
-        Log.d("work", "Do work");
+        Log.d("BlueBubblesApp", "Doing work");
         if (type.equals("new-message") || type.equals("updated-message")) {
 
             getBackgroundChannel();
@@ -70,6 +69,7 @@ public class FCMWorker extends Worker implements DartWorker {
             // The backgroundChannel is manually closed through dart code
             while (backgroundChannel != null && !isStopped()) {
             }
+            Log.d("BlueBubblesApp", "Successfully sent notification to Dart");
             return Result.success();
         } else {
 
@@ -89,16 +89,22 @@ public class FCMWorker extends Worker implements DartWorker {
     @RequiresApi(api = Build.VERSION_CODES.P)
     private void initHeadlessThread() {
         Context context = (this.context != null) ? this.context : getApplicationContext();
+        Log.d("BlueBubblesApp", "Starting FlutterMain");
         FlutterMain.startInitialization(context);
         FlutterMain.ensureInitializationComplete(getApplicationContext(), null);
 
+        Log.d("BlueBubblesApp", "Getting FlutterApplicationInfo");
         FlutterApplicationInfo info = ApplicationInfoLoader.load(context);
+        Log.d("BlueBubblesApp", "Getting flutterAssetsDir");
         String appBundlePath = info.flutterAssetsDir;
+        Log.d("BlueBubblesApp", "Getting assets");
         AssetManager assets = context.getAssets();
 
         if (engine == null) {
+            Log.d("BlueBubblesApp", "Getting FlutterEngine and DartExecutor");
             engine = new FlutterEngine(context);
             DartExecutor executor = engine.getDartExecutor();
+            Log.d("BlueBubblesApp", "Getting callbackHandle and CallbackInformation");
             Long callbackHandle = context.getSharedPreferences(BACKGROUND_SERVICE_SHARED_PREF, Context.MODE_PRIVATE).getLong(BACKGROUND_HANDLE_SHARED_PREF_KEY, -1);
             FlutterCallbackInformation callbackInformation = FlutterCallbackInformation.lookupCallbackInformation(callbackHandle);
 
@@ -107,6 +113,7 @@ public class FCMWorker extends Worker implements DartWorker {
                 return;
             }
 
+            Log.d("BlueBubblesApp", "Executing Dart callback");
             DartExecutor.DartCallback dartCallback = new DartExecutor.DartCallback(
                 assets,
                 appBundlePath,
@@ -114,6 +121,7 @@ public class FCMWorker extends Worker implements DartWorker {
             );
             executor.executeDartCallback(dartCallback);
 
+            Log.d("BlueBubblesApp", "Setting MethodCall handler");
             backgroundChannel = new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), "background_isolate");
             backgroundChannel.setMethodCallHandler((call, result) -> MethodCallHandler.methodCallHandler(call, result, context, this));
         }
@@ -142,6 +150,7 @@ public class FCMWorker extends Worker implements DartWorker {
     private void invokeMethod() {
         Handler handler = new Handler(Looper.getMainLooper());
         synchronized (handler) {
+            Log.d("BlueBubblesApp", "Invoking backgroundChannel method");
             NotifyRunnable runnable = new NotifyRunnable(handler, () -> backgroundChannel.invokeMethod(getInputData().getString("type"), getInputData().getString("data")));
             handler.post(runnable);
             while (!runnable.isFinished()) {
@@ -186,6 +195,7 @@ public class FCMWorker extends Worker implements DartWorker {
                 )
                 .addTag(FCMWorker.TAG)
                 .build();
+        Log.d("BlueBubblesApp", "Queuing work request...");
         WorkManager.getInstance(context).enqueueUniqueWork(FCMWorker.TAG, ExistingWorkPolicy.APPEND_OR_REPLACE, fcmwork);
     }
 }

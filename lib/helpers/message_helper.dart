@@ -205,27 +205,33 @@ class MessageHelper {
     // See if there is an existing message for the given GUID
     Message? existingMessage;
     if (!force) existingMessage = await Message.findOne({"guid": message.guid});
-
+    print("checking if processed ${message.guid}");
     // If we've already processed the GUID, skip it
     if (NotificationManager().hasProcessed(message.guid!)) return;
-
+    print("adding processed ${message.guid}");
     // Add the message to the "processed" list
     NotificationManager().addProcessed(message.guid!);
-
+    print("checking if setup ${message.guid}");
     // Handle all the cases that would mean we don't show the notification
     if (!SettingsManager().settings.finishedSetup.value) return; // Don't notify if not fully setup
+    print("checking if existing message ${message.guid}");
     if (existingMessage != null) return;
+    print("checking if muted ${message.guid}");
     if (chat.isMuted!) return; // Don''t notify if the chat is muted
+    print("checking if from me or no handle ${message.guid}");
+    print(message.isFromMe!);
+    print(message.handle);
     if (message.isFromMe! || message.handle == null) return; // Don't notify if the text is from me
 
     CurrentChat? currChat = CurrentChat.activeChat;
+    print("checking if alive or other stuffs ${message.guid}");
     if (LifeCycleManager().isAlive &&
         ((!SettingsManager().settings.notifyOnChatList.value && currChat == null) ||
             currChat?.chat.guid == chat.guid)) {
       // Don't notify if the the chat is the active chat
       return;
     }
-
+    print("creating notif ${message.guid}");
     NotificationManager().createNotificationFromMessage(chat, message, visibility);
   }
 

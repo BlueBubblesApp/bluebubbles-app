@@ -21,6 +21,7 @@ class IncomingQueue extends QueueManager {
       case HANDLE_MESSAGE_EVENT:
         {
           Map<String, dynamic> params = item.item;
+          print(params["isHeadless"]);
           await ActionHandler.handleMessage(params["data"],
               createAttachmentNotification:
                   params.containsKey("createAttachmentNotification") ? params["createAttachmentNotification"] : false,
