@@ -32,8 +32,8 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:simple_animations/simple_animations.dart';
 import 'package:slugify/slugify.dart';
-import 'package:tuple/tuple.dart';
 
 abstract class ChatSelectorTypes {
   static const String ALL = "ALL";
@@ -82,7 +82,9 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   Brightness? brightness;
   Color? previousBackgroundColor;
   bool gotBrightness = false;
-  Tuple2<Message?, double?> message = Tuple2(null, null);
+  Message? message;
+  Tween<double> tween = Tween<double>(begin: 1, end: 0);
+  CustomAnimationControl controller = CustomAnimationControl.stop;
   bool wasCreator = false;
 
   @override
@@ -140,24 +142,22 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
         if (event.type == MessageBlocEventType.insert && this.mounted && event.outGoing) {
           final constraints = BoxConstraints(
-            maxWidth: context.width,
-            minHeight: 0.0,
-            minWidth: 0.0,
+            maxWidth: context.width * MessageWidgetMixin.MAX_SIZE,
+            minHeight: Theme.of(context).textTheme.bodyText2!.fontSize!,
+            maxHeight: Theme.of(context).textTheme.bodyText2!.fontSize!,
           );
-
-          RenderParagraph renderParagraph = RenderParagraph(
-            TextSpan(
+          final renderParagraph = RichText(
+            text: TextSpan(
               text: event.message!.text,
-              style: Theme.of(context).textTheme.bodyText1!,
+              style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
             ),
-            textDirection: TextDirection.ltr,
             maxLines: 1,
-          );
-          renderParagraph.layout(constraints);
-          double textlen = renderParagraph.getMinIntrinsicWidth(Theme.of(context).textTheme.bodyText1!.fontSize!).ceilToDouble();
-
+          ).createRenderObject(context);
+          final size = renderParagraph.getDryLayout(constraints);
           setState(() {
-            message = Tuple2(event.message, textlen + 50);
+            tween = Tween<double>(begin: context.width - 30, end: min(size.width + 68, context.width * MessageWidgetMixin.MAX_SIZE + 20));
+            controller = CustomAnimationControl.play;
+            message = event.message;
           });
         }
       });
@@ -509,40 +509,47 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                       ]
                     ),
                     AnimatedPositioned(
-                      duration: Duration(milliseconds: 300),
-                      bottom: message.item1 != null ? 62 : 10,
+                      duration: Duration(milliseconds: 200),
+                      bottom: message != null ? 62 : 10,
                       right: 5,
-                      width: message.item1 != null ? min(message.item2!, context.width * MessageWidgetMixin.MAX_SIZE) : context.width - 30,
+                      curve: Curves.easeIn,
                       onEnd: () {
                         setState(() {
-                          message = Tuple2(null, null);
+                          tween = Tween<double>(begin: 1, end: 0);
+                          controller = CustomAnimationControl.stop;
+                          message = null;
                         });
                       },
-                      child: LayoutBuilder(
-                        builder: (_, constraints) {
-                          return Visibility(
-                            visible: message.item1 != null,
-                            child: SentMessageHelper.buildMessageWithTail(
-                              context,
-                              message.item1,
-                              true,
-                              false,
-                              message.item1?.isBigEmoji() ?? false,
-                              currentChat: currentChat,
-                              customWidth: constraints.maxWidth,
-                              customColor: (message.item1?.hasAttachments ?? false)
-                                  && (message.item1?.text?.isEmpty ?? true) ?
-                              Colors.transparent : null,
-                              customContent: (message.item1?.hasAttachments ?? false)
-                                  && (message.item1?.text?.isEmpty ?? true) ?
-                              MessageAttachments(
-                                message: message.item1,
-                                showTail: true,
-                                showHandle: false,
-                              ) : null
-                            ),
-                          );
-                        }
+                      child: Visibility(
+                        visible: message != null,
+                        child: CustomAnimation<double>(
+                            control: controller,
+                            tween: tween,
+                            duration: Duration(milliseconds: 100),
+                            builder: (context, child, value) {
+                              return SentMessageHelper.buildMessageWithTail(
+                                context,
+                                message,
+                                true,
+                                false,
+                                message?.isBigEmoji() ?? false,
+                                currentChat: currentChat,
+                                customWidth: (message?.hasAttachments ?? false)
+                                    && (message?.text?.isEmpty ?? true) ? null : value,
+                                customColor: (message?.hasAttachments ?? false)
+                                    && (message?.text?.isEmpty ?? true) ?
+                                Colors.transparent : null,
+                                customContent: child,
+                              );
+                            },
+                            child: (message?.hasAttachments ?? false)
+                                && (message?.text?.isEmpty ?? true) ?
+                            MessageAttachments(
+                              message: message,
+                              showTail: true,
+                              showHandle: false,
+                            ) : null
+                        ),
                       ),
                     ),
                   ]

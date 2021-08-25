@@ -97,6 +97,9 @@ class SentMessageHelper {
             builder: (_, constraints) {
               return Container(
                 width: customWidth != null ? constraints.maxWidth : null,
+                constraints: customWidth == null ? BoxConstraints(
+                  maxWidth: context.width * MessageWidgetMixin.MAX_SIZE + (!padding ? 100 : 0),
+                ) : null,
                 margin: EdgeInsets.only(
                   top: hasReactions && margin ? 18 : 0,
                   left: margin ? 10 : 0,
@@ -137,7 +140,7 @@ class SentMessageHelper {
                     ? RichText(
                   text: TextSpan(
                     children: MessageWidgetMixin.buildMessageSpans(context, message),
-                    style: Theme.of(context).textTheme.bodyText1!.apply(color: Colors.white),
+                    style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
                   ),
                 )
                     : customContent,
@@ -152,15 +155,18 @@ class SentMessageHelper {
     return Container(
       width: customWidth != null ? customWidth - (showTail ? 20 : 0) : null,
       constraints: BoxConstraints(
-        maxWidth: customWidth != null ? customWidth - (showTail ? 20 : 0) : context.width * MessageWidgetMixin.MAX_SIZE + (!padding ? 100 : 0),
+        maxWidth: customWidth != null ? customWidth - (showTail ? 20 : 0) : context.width * MessageWidgetMixin.MAX_SIZE + (!padding ? 100 : 0) + 20,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: msg
-          ),
+          if (customWidth != null)
+            Expanded(
+              child: msg
+            ),
+          if (customWidth == null)
+            msg,
           getErrorWidget(
             context,
             message,
