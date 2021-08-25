@@ -120,7 +120,7 @@ class NotificationManager {
   /// @param [handle] optional parameter of the handle of the message
   ///
   /// @param [contact] optional parameter of the contact of the message
-  void createNotificationFromMessage(Chat chat, Message message, int visibility) async {
+  Future<void> createNotificationFromMessage(Chat chat, Message message, int visibility) async {
     // sanity check to make sure we don't notify if the chat is muted
     if (chat.isMuted ?? false) return;
     Uint8List? contactIcon;
@@ -178,11 +178,11 @@ class NotificationManager {
       chatTitle = isGroup ? 'Group Chat' : 'iMessage Chat';
     }
 
-    createNewMessageNotification(chat.guid!, isGroup, chatTitle, contactIcon, contactName, contactIcon, messageText,
+    await createNewMessageNotification(chat.guid!, isGroup, chatTitle, contactIcon, contactName, contactIcon, messageText,
         message.dateCreated ?? DateTime.now(), message.isFromMe ?? false, visibility, chat.id ?? Random().nextInt(9998) + 1);
   }
 
-  void createNewMessageNotification(
+  Future<void> createNewMessageNotification(
       String chatGuid,
       bool chatIsGroup,
       String chatTitle,
@@ -193,8 +193,8 @@ class NotificationManager {
       DateTime messageDate,
       bool messageIsFromMe,
       int visibility,
-      int summaryId) {
-    MethodChannelInterface().platform.invokeMethod("new-message-notification", {
+      int summaryId) async {
+    await MethodChannelInterface().platform.invokeMethod("new-message-notification", {
       "CHANNEL_ID": NEW_MESSAGE_CHANNEL,
       "CHANNEL_NAME": "New Messages",
       "notificationId": Random().nextInt(9998) + 1,

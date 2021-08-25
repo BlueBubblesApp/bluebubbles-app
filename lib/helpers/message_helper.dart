@@ -232,7 +232,8 @@ class MessageHelper {
       return;
     }
     print("creating notif ${message.guid}");
-    NotificationManager().createNotificationFromMessage(chat, message, visibility);
+    await NotificationManager().createNotificationFromMessage(chat, message, visibility);
+    print("created notif ${message.guid}");
   }
 
   /// A synchronous notification text method for big pins to display new attachments
