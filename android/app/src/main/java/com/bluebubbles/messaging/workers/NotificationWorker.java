@@ -42,6 +42,7 @@ import io.flutter.embedding.engine.dart.DartExecutor;
 import io.flutter.embedding.engine.dart.DartExecutor.DartCallback;
 
 import static com.bluebubbles.messaging.MainActivity.engine;
+import static com.bluebubbles.messaging.MainActivity.CHANNEL;
 import static com.bluebubbles.messaging.method_call_handler.handlers.InitializeBackgroundHandle.BACKGROUND_HANDLE_SHARED_PREF_KEY;
 import static com.bluebubbles.messaging.method_call_handler.handlers.InitializeBackgroundHandle.BACKGROUND_SERVICE_SHARED_PREF;
 
@@ -115,7 +116,7 @@ public class NotificationWorker extends Worker implements DartWorker {
             );
             executor.executeDartCallback(dartCallback);
 
-            backgroundChannel = new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), "background_isolate");
+            backgroundChannel = new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL);
             backgroundChannel.setMethodCallHandler((call, result) -> MethodCallHandler.methodCallHandler(call, result, context, this));
         }
     }

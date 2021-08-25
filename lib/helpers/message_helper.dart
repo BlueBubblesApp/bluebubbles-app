@@ -205,13 +205,10 @@ class MessageHelper {
     // See if there is an existing message for the given GUID
     Message? existingMessage;
     if (!force) existingMessage = await Message.findOne({"guid": message.guid});
-
     // If we've already processed the GUID, skip it
     if (NotificationManager().hasProcessed(message.guid!)) return;
-
     // Add the message to the "processed" list
     NotificationManager().addProcessed(message.guid!);
-
     // Handle all the cases that would mean we don't show the notification
     if (!SettingsManager().settings.finishedSetup.value) return; // Don't notify if not fully setup
     if (existingMessage != null) return;
@@ -225,8 +222,7 @@ class MessageHelper {
       // Don't notify if the the chat is the active chat
       return;
     }
-
-    NotificationManager().createNotificationFromMessage(chat, message, visibility);
+    await NotificationManager().createNotificationFromMessage(chat, message, visibility);
   }
 
   /// A synchronous notification text method for big pins to display new attachments

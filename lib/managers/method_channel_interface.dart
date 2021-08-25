@@ -57,6 +57,7 @@ class MethodChannelInterface {
 
     // We set the handler for all of the method calls from the platform to be the [callHandler]
     platform.setMethodCallHandler(_callHandler);
+    platform.invokeMethod<void>('MessagingBackground#initialized');
   }
 
   /// Helper method to invoke a method in the native code
@@ -88,11 +89,12 @@ class MethodChannelInterface {
 
         return new Future.value("");
       case "new-message":
+        print("Received new message from FCM");
         // Retreive the data for this message as a json
         Map<String, dynamic>? data = jsonDecode(call.arguments);
 
         // Add it to the queue with the data as the item
-        IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_MESSAGE_EVENT, item: {"data": data}));
+        IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_MESSAGE_EVENT, item: {"data": data, "isHeadless": true}));
 
         return new Future.value("");
       case "updated-message":
