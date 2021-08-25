@@ -13,6 +13,7 @@ import 'package:bluebubbles/layouts/settings/chat_list_panel.dart';
 import 'package:bluebubbles/layouts/settings/conversation_panel.dart';
 import 'package:bluebubbles/layouts/settings/custom_avatar_color_panel.dart';
 import 'package:bluebubbles/layouts/settings/custom_avatar_panel.dart';
+import 'package:bluebubbles/layouts/settings/pinned_order_panel.dart';
 import 'package:bluebubbles/layouts/settings/private_api_panel.dart';
 import 'package:bluebubbles/layouts/settings/redacted_mode_panel.dart';
 import 'package:bluebubbles/layouts/settings/server_management_panel.dart';
@@ -245,6 +246,7 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
               page: () => CustomAvatarPanel(),
               name: "/settings/custom-avatar-panel",
               binding: CustomAvatarPanelBinding()),
+          GetPage(page: () => PinnedOrderPanel(), name: "/settings/pinned-order-panel"),
           GetPage(
               page: () => PrivateAPIPanel(), name: "/settings/private-api-panel", binding: PrivateAPIPanelBinding()),
           GetPage(page: () => RedactedModePanel(), name: "/settings/redacted-mode-panel"),

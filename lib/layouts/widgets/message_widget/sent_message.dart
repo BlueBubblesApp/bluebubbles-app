@@ -289,12 +289,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
 
     // Third, let's add the message or URL preview
     Widget? message;
-    if (widget.message.isUrlPreview()) {
-      message = Padding(
-        padding: EdgeInsets.only(left: 10.0),
-        child: widget.urlPreviewWidget,
-      );
-    } else if (widget.message.balloonBundleId != null &&
+    if (widget.message.balloonBundleId != null &&
         widget.message.balloonBundleId != 'com.apple.messages.URLBalloonProvider') {
       message = BalloonBundleWidget(message: widget.message);
     } else if (!isEmptyString(widget.message.text)) {
@@ -308,6 +303,19 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
             type: MaterialType.transparency,
             child: message,
           ),
+        );
+      }
+      if (widget.message.hasUrl()) {
+        message = Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Padding(
+              padding: EdgeInsets.only(right: 5.0),
+              child: widget.urlPreviewWidget,
+            ),
+            message,
+          ]
         );
       }
     }

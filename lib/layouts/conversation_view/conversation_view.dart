@@ -69,7 +69,7 @@ class ConversationView extends StatefulWidget {
   ConversationViewState createState() => ConversationViewState();
 }
 
-class ConversationViewState extends State<ConversationView> with ConversationViewMixin {
+class ConversationViewState extends State<ConversationView> with ConversationViewMixin, WidgetsBindingObserver {
   List<File> existingAttachments = [];
   String? existingText;
   Brightness? brightness;
@@ -125,12 +125,24 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
             'Support for creating chats is currently limited on MacOS 11 (Big Sur) and up due to limitations imposed by Apple');
       }
     });
+
+    // Bind the lifecycle events
+    WidgetsBinding.instance!.addObserver(this);
   }
 
   @override
   void didChangeDependencies() async {
     super.didChangeDependencies();
     didChangeDependenciesConversationView();
+  }
+
+  /// Called when the app is either closed or opened or paused
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused && mounted) {
+      debugPrint("Removing CurrentChat imageData");
+      CurrentChat.of(context)?.imageData.clear();
+    }
   }
 
   @override

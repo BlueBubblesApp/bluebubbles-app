@@ -309,6 +309,32 @@ class ChatBloc {
     initTileValsForChat(chat);
   }
 
+  void removePinIndices() async {
+    _chats.bigPinHelper(true).forEach((element) {
+      element.pinIndex.value = null;
+      element.save();
+    });
+    _chats.sort(Chat.sort);
+  }
+
+  void updateChatPinIndex(int oldIndex, int newIndex) async {
+    final item = _chats.bigPinHelper(true)[oldIndex];
+    if (newIndex > oldIndex) {
+      newIndex = newIndex - 1;
+      _chats.bigPinHelper(true).where((p0) => p0.pinIndex.value != null && p0.pinIndex.value! <= newIndex).forEach((element) {
+        element.pinIndex.value = element.pinIndex.value! - 1;
+      });
+      item.pinIndex.value = newIndex;
+    } else {
+      _chats.bigPinHelper(true).where((p0) => p0.pinIndex.value != null && p0.pinIndex.value! >= newIndex).forEach((element) {
+        element.pinIndex.value = element.pinIndex.value! + 1;
+      });
+      item.pinIndex.value = newIndex;
+    }
+    _chats.sort(Chat.sort);
+    await item.save();
+  }
+
   void deleteChat(Chat chat) async {
     _chats.removeWhere((element) => element.id == chat.id);
   }

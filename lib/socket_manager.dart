@@ -237,7 +237,7 @@ class SocketManager {
           serverAddress,
           OptionBuilder()
               .setQuery({"guid": encodeUri(SettingsManager().settings.guidAuthKey.value)})
-              .setTransports(['websocket'])
+              .setTransports(['websocket', 'polling'])
               .enableAutoConnect()
               .disableForceNewConnection()
               .enableReconnection()

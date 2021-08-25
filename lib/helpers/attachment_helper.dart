@@ -440,7 +440,7 @@ class AttachmentHelper {
     } catch (ex) {
       debugPrint('Failed to read EXIF data: ${ex.toString()}');
     }
-
+    bool usedFallback = false;
     // If the preview data is null, compress the file
     if (previewData == null) {
       // Compress the file
@@ -478,10 +478,12 @@ class AttachmentHelper {
 
         // Read the compressed data, then cache it
         previewData = await compressedFile.readAsBytes();
+        usedFallback = true;
       } else {
         try {
           previewData = Uint8List.fromList(img.encodeNamedImage(received as img.Image, filePath.split("/").last) ?? []);
         } catch (e) {
+          debugPrint("Compression via image plugin failed, using fallback...");
           File compressedFile = await FlutterNativeImage.compressImage(filePath,
               quality: quality,
               targetWidth: attachment.width == null ? 0 : attachment.width!,
@@ -489,8 +491,20 @@ class AttachmentHelper {
 
           // Read the compressed data, then cache it
           previewData = await compressedFile.readAsBytes();
+          usedFallback = true;
         }
       }
+    }
+    if (previewData.isEmpty && !usedFallback) {
+      debugPrint("Compression via image plugin failed, using fallback...");
+      File compressedFile = await FlutterNativeImage.compressImage(filePath,
+          quality: quality,
+          targetWidth: attachment.width == null ? 0 : attachment.width!,
+          targetHeight: attachment.height == null ? 0 : attachment.height!);
+
+      // Read the compressed data, then cache it
+      previewData = await compressedFile.readAsBytes();
+      usedFallback = true;
     }
     debugPrint("Got previewData: ${previewData.isNotEmpty}");
     // As long as we have preview data now, save it

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:collection/src/iterable_extensions.dart';
 import 'package:crypto/crypto.dart' as crypto;
 
 import 'package:bluebubbles/helpers/message_helper.dart';
@@ -399,7 +400,8 @@ class Message {
         " chat.chatIdentifier AS chatIdentifier,"
         " chat.isArchived AS isArchived,"
         " chat.displayName AS displayName,"
-        " chat.customAvatarPath AS customAvatarPath"
+        " chat.customAvatarPath AS customAvatarPath,"
+        " chat.pinIndex AS pinIndex"
         " FROM chat"
         " JOIN chat_message_join AS cmj ON chat.ROWID = cmj.chatId"
         " JOIN message ON message.ROWID = cmj.messageId"
@@ -505,10 +507,22 @@ class Message {
     await db.delete("message");
   }
 
+  bool hasUrl() {
+    if (text == null) return false;
+    List<String> splits = this.text!.split(" ");
+    return splits.firstWhereOrNull((element) => element.isURL) != null;
+  }
+
   bool isUrlPreview() {
     // first condition is for macOS < 11 and second condition is for macOS >= 11
     return (this.balloonBundleId != null && this.balloonBundleId == "com.apple.messages.URLBalloonProvider" &&
         this.hasDdResults!) || (this.hasDdResults! && (this.text ?? "").isURL);
+  }
+
+  String? getUrl() {
+    if (text == null) return null;
+    List<String> splits = this.text!.split(" ");
+    return splits.firstWhereOrNull((element) => element.isURL);
   }
 
   bool isInteractive() {
