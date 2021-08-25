@@ -155,7 +155,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
           ).createRenderObject(context);
           final size = renderParagraph.getDryLayout(constraints);
           setState(() {
-            tween = Tween<double>(begin: context.width - 30, end: min(size.width + 68, context.width * MessageWidgetMixin.MAX_SIZE + 20));
+            tween = Tween<double>(begin: context.width - 30, end: min(size.width + 68, context.width * MessageWidgetMixin.MAX_SIZE + 40));
             controller = CustomAnimationControl.play;
             message = event.message;
           });
@@ -509,7 +509,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                       ]
                     ),
                     AnimatedPositioned(
-                      duration: Duration(milliseconds: 200),
+                      duration: Duration(milliseconds: 300),
                       bottom: message != null ? 62 : 10,
                       right: 5,
                       curve: Curves.easeIn,
@@ -525,7 +525,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                         child: CustomAnimation<double>(
                             control: controller,
                             tween: tween,
-                            duration: Duration(milliseconds: 100),
+                            duration: Duration(milliseconds: 200),
                             builder: (context, child, value) {
                               return SentMessageHelper.buildMessageWithTail(
                                 context,
