@@ -309,6 +309,7 @@ public class MainActivity extends FlutterFragmentActivity {
     @Override
     protected void onStop() {
         Log.d("MainActivity", "Stopping Activity (isFinishing: " + isFinishing() + ")");
+        engine = null;
         super.onStop();
     }
 

@@ -22,19 +22,27 @@ public class FirebaseMessagingService extends com.google.firebase.messaging.Fire
 
     @Override
     public void onCreate() {
-        Log.d("isolate", "firebase service spawned");
+        Log.d("BlueBubblesApp", "FCM service spawned");
+        super.onCreate();
     }
 
     @Override
     public void onDestroy() {
-        Log.d("isolate", "firebase service destroyed");
+        Log.d("BlueBubblesApp", "FCM service destroyed");
         super.onDestroy();
+    }
+
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        Log.d("BlueBubblesApp", "FCM task removed");
+        super.onTaskRemoved(rootIntent);
     }
 
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
         if (remoteMessage == null) return;
-
+        Log.d("BlueBubblesApp", "Received new message from FCM");
+        Log.d("BlueBubblesApp", "Message type: " + remoteMessage.getData().get("type"));
         // Check if message contains a data payload.
         if (remoteMessage.getData().size() > 0 && !remoteMessage.getData().get("type").equals("new-server")) {
             Intent intent = new Intent("MyData");
@@ -44,21 +52,13 @@ public class FirebaseMessagingService extends com.google.firebase.messaging.Fire
                 @Override
                 public void run() {
                     if (engine != null) {
+                        Log.d("BlueBubblesApp", "Invoking method of type: " + intent.getExtras().getString("type"));
                         new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod(intent.getExtras().getString("type"), intent.getExtras().getString("data"));
                     }
                 }
             });
+            Log.d("BlueBubblesApp", "Creating FCM worker");
             FCMWorker.createWorker(getApplicationContext(), remoteMessage.getData().get("type"), remoteMessage.getData().get("data"));
-
         }
     }
-
-
-    @Override
-    public void onTaskRemoved(Intent rootIntent) {
-        Log.d("firebase", "task removed");
-        super.onTaskRemoved(rootIntent);
-    }
-
-
 }
