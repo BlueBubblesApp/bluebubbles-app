@@ -93,7 +93,10 @@ public class MainActivity extends FlutterFragmentActivity {
             if (type.equals("NotificationOpen") || type.equals("DirectShare")) {
                 Log.d("Notifications", "Tapped on notification with ID: " + intent.getExtras().getInt("id"));
                 startingChat = intent.getStringExtra("chatGuid");
-
+                // just in case
+                if (engine == null) {
+                    engine = new FlutterEngine(getApplicationContext());
+                }
                 Log.d("Notifications", "Opening Chat with GUID: " + startingChat);
                 new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("ChatOpen", intent.getExtras().getString("chatGuid"));
             } else if (type.equals(SocketIssueWarning.TYPE)) {
@@ -309,7 +312,6 @@ public class MainActivity extends FlutterFragmentActivity {
     @Override
     protected void onStop() {
         Log.d("MainActivity", "Stopping Activity (isFinishing: " + isFinishing() + ")");
-        engine = null;
         super.onStop();
     }
 
