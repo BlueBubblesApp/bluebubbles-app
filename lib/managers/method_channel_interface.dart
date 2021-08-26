@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/testing_mode.dart';
@@ -89,7 +90,7 @@ class MethodChannelInterface {
 
         return new Future.value("");
       case "new-message":
-        print("Received new message from FCM");
+        Logger.instance.log("Received new message from FCM");
         // Retreive the data for this message as a json
         Map<String, dynamic>? data = jsonDecode(call.arguments);
 

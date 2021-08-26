@@ -66,40 +66,6 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
   void initState() {
     super.initState();
     fetchParticipants();
-    // Listen for changes in the group
-    NewMessageManager().stream.listen((NewMessageEvent event) async {
-      // Make sure we have the required data to qualify for this tile
-      if (event.chatGuid != widget.chat.guid) return;
-      if (!event.event.containsKey("message")) return;
-      if (widget.chat.guid == null) return;
-      // Make sure the message is a group event
-      Message message = event.event["message"];
-      if (!message.isGroupEvent()) return;
-
-      // If it's a group event, let's fetch the new information and save it
-      try {
-        await fetchChatSingleton(widget.chat.guid!);
-      } catch (ex) {
-        debugPrint(ex.toString());
-      }
-
-      this.setNewChatData(forceUpdate: true);
-    });
-  }
-
-  void setNewChatData({forceUpdate: false}) async {
-    // Save the current participant list and get the latest
-    List<Handle> ogParticipants = widget.chat.participants;
-    await widget.chat.getParticipants();
-
-    // Save the current title and generate the new one
-    String? ogTitle = widget.chat.title;
-    await widget.chat.getTitle();
-
-    // If the original data is different, update the state
-    if (ogTitle != widget.chat.title || ogParticipants.length != widget.chat.participants.length || forceUpdate) {
-      if (this.mounted) setState(() {});
-    }
   }
 
   Future<void> fetchParticipants() async {

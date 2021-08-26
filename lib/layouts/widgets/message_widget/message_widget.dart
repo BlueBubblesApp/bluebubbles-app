@@ -104,6 +104,7 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
         // If the associated message GUID matches this one, fetch associated messages
         if (fetchAssoc) fetchAssociatedMessages(forceReload: true);
         if (fetchAttach) fetchAttachments(forceReload: true);
+        if (!fetchAssoc && !fetchAttach) setState(() {});
       } else if (data.type == NewMessageType.UPDATE) {
         String? oldGuid = data.event["oldGuid"];
         // If the guid does not match our current guid, then it's not meant for us

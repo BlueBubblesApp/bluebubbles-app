@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
@@ -113,6 +114,7 @@ Future<Null> main() async {
     await SettingsManager().init();
     await SettingsManager().getSavedSettings(headless: true);
     Get.put(AttachmentDownloadService());
+    Get.put(Logger());
   } catch (e) {
     exception = e;
   }
