@@ -91,7 +91,7 @@ class MyHttpOverrides extends HttpOverrides {
   }
 }
 
-Future<Null> main() async {
+main() async {
   HttpOverrides.global = new MyHttpOverrides();
 
   // This captures errors reported by the Flutter framework.
@@ -112,7 +112,7 @@ Future<Null> main() async {
     await DBProvider.db.initDB();
     await initializeDateFormatting('fr_FR', null);
     await SettingsManager().init();
-    await SettingsManager().getSavedSettings(headless: true);
+    await SettingsManager().getSavedSettings();
     Get.put(AttachmentDownloadService());
     Get.put(Logger());
   } catch (e) {

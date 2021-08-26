@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
@@ -13,23 +14,30 @@ import 'package:get/get.dart';
 
 abstract class BackgroundIsolateInterface {
   static void initialize() {
+    // get callback handle for the callback function
     CallbackHandle callbackHandle =
         PluginUtilities.getCallbackHandle(callbackHandler)!;
+    // pass the handle down to Java
     MethodChannelInterface().invokeMethod("initialize-background-handle",
         {"handle": callbackHandle.toRawHandle()});
   }
 }
 
-callbackHandler() async {
+/// This function is called from Java when the [FlutterEngine] is null
+void callbackHandler() async {
   debugPrint("(ISOLATE) Starting up...");
+  // we initialize the [MethodChannel] to receive new messages from Java
   MethodChannel _backgroundChannel = MethodChannel("com.bluebubbles.messaging");
   WidgetsFlutterBinding.ensureInitialized();
-  await DBProvider.db.initDB();
-  await SettingsManager().init();
-  await SettingsManager().getSavedSettings(headless: true);
-  Get.put(AttachmentDownloadService());
-  Get.put(Logger());
-  await ContactManager().getContacts(headless: true);
-  MethodChannelInterface().init(customChannel: _backgroundChannel);
-  await SocketManager().refreshConnection(connectToSocket: false);
+  // don't run this if the app is active to avoid double-initializing our managers
+  if (!LifeCycleManager().isAlive) {
+    await DBProvider.db.initDB();
+    await SettingsManager().init();
+    await SettingsManager().getSavedSettings();
+    Get.put(AttachmentDownloadService());
+    Get.put(Logger());
+    await ContactManager().getContacts(headless: true);
+    MethodChannelInterface().init(customChannel: _backgroundChannel);
+    await SocketManager().refreshConnection(connectToSocket: false);
+  }
 }
