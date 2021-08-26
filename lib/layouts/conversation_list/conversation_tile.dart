@@ -132,7 +132,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
                 icon: widget.chat.isPinned! ? Icons.star_outline : Icons.star,
                 onTap: () async {
                   await widget.chat.togglePin(!widget.chat.isPinned!);
-                  EventDispatcher().emit("refresh", null);
+                  EventDispatcher.instance.emit("refresh", null);
                   if (this.mounted) setState(() {});
                 },
               ),

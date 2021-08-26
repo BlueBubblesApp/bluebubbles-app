@@ -111,7 +111,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     }
     initConversationViewState();
 
-    LifeCycleManager().stream.listen((event) {
+    LifeCycleManager.instance.stream.listen((event) {
       if (!this.mounted) return;
       currentChat?.isAlive = true;
     });
@@ -508,11 +508,11 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                                     if (SettingsManager().settings.swipeToCloseKeyboard.value &&
                                         details.delta.dy > 0 &&
                                         (currentChat?.keyboardOpen ?? false)) {
-                                      EventDispatcher().emit("unfocus-keyboard", null);
+                                      EventDispatcher.instance.emit("unfocus-keyboard", null);
                                     } else if (SettingsManager().settings.swipeToOpenKeyboard.value &&
                                         details.delta.dy < 0 &&
                                         !(currentChat?.keyboardOpen ?? false)) {
-                                      EventDispatcher().emit("focus-keyboard", null);
+                                      EventDispatcher.instance.emit("focus-keyboard", null);
                                     }
                                   },
                                   child: textField);

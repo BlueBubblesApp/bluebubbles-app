@@ -84,7 +84,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         .map((e) => e.guid)
         .toList();
 
-    EventDispatcher().stream.listen((Map<String, dynamic> event) {
+    EventDispatcher.instance.stream.listen((Map<String, dynamic> event) {
       if (!["add-unread-chat", "remove-unread-chat", "refresh-messagebloc"].contains(event["type"])) return;
       if (!event["data"].containsKey("chatGuid")) return;
 

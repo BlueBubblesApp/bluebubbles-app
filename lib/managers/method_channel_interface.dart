@@ -14,7 +14,6 @@ import 'package:bluebubbles/managers/alarm_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
-import 'package:bluebubbles/managers/navigator_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -205,7 +204,7 @@ class MethodChannelInterface {
         }
 
         // Go to the new chat creator with all of these attachments to select a chat in case it wasn't a direct share
-        NavigatorManager().navigatorKey.currentState!.pushAndRemoveUntil(
+        Get.offUntil(
               ThemeSwitcher.buildPageRoute(
                 builder: (context) => ConversationView(
                   existingAttachments: attachments,
@@ -243,7 +242,7 @@ class MethodChannelInterface {
           }
         }
         // Navigate to the new chat creator with the specified text
-        NavigatorManager().navigatorKey.currentState!.pushAndRemoveUntil(
+        Get.offUntil(
               ThemeSwitcher.buildPageRoute(
                 builder: (context) => ConversationView(
                   existingText: text,
@@ -275,7 +274,7 @@ class MethodChannelInterface {
 
   Future<void> openChat(String id, {List<File> existingAttachments = const [], String? existingText}) async {
     if (id == "-1") {
-      NavigatorManager().navigatorKey.currentState!.popUntil((route) => route.isFirst);
+      Get.until((route) => route.isFirst);
       return;
     }
     if (CurrentChat.activeChat?.chat.guid == id) {
@@ -285,11 +284,11 @@ class MethodChannelInterface {
         data.attachments.addAll(existingAttachments);
         final ids = data.attachments.map((e) => e.path).toSet();
         data.attachments.retainWhere((element) => ids.remove(element.path));
-        EventDispatcher().emit("text-field-update-attachments", null);
+        EventDispatcher.instance.emit("text-field-update-attachments", null);
       }
       if (existingText != null) {
         data?.controller.text = existingText;
-        EventDispatcher().emit("text-field-update-text", null);
+        EventDispatcher.instance.emit("text-field-update-text", null);
       }
       return;
     }
@@ -309,8 +308,7 @@ class MethodChannelInterface {
 
       // if (!CurrentChat.isActive(openedChat.guid))
       // Actually navigate to the chat page
-      NavigatorManager().navigatorKey.currentState!
-        ..pushAndRemoveUntil(
+      Get.offUntil(
           ThemeSwitcher.buildPageRoute(
             builder: (context) => ConversationView(
               chat: openedChat,

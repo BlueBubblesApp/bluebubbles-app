@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -30,12 +31,14 @@ void callbackHandler() async {
   MethodChannel _backgroundChannel = MethodChannel("com.bluebubbles.messaging");
   WidgetsFlutterBinding.ensureInitialized();
   // don't run this if the app is active to avoid double-initializing our managers
-  if (!LifeCycleManager().isAlive) {
+  if (!LifeCycleManager.instance.isAlive) {
     await DBProvider.db.initDB();
     await SettingsManager().init();
     await SettingsManager().getSavedSettings();
     Get.put(AttachmentDownloadService());
     Get.put(Logger());
+    Get.put(LifeCycleManager());
+    Get.put(EventDispatcher());
     await ContactManager().getContacts(headless: true);
     MethodChannelInterface().init(customChannel: _backgroundChannel);
     await SocketManager().refreshConnection(connectToSocket: false);

@@ -32,7 +32,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
     super.initState();
     getAttachments();
     // If the app is reopened, then update the attachments
-    LifeCycleManager().stream.listen((event) async {
+    LifeCycleManager.instance.stream.listen((event) async {
       if (event && widget.visible) getAttachments();
     });
   }

@@ -75,7 +75,7 @@ class CurrentChat {
   CurrentChat(this.chat) {
     messageMarkers = new MessageMarkers(this.chat);
 
-    EventDispatcher().stream.listen((Map<String, dynamic> event) {
+    EventDispatcher.instance.stream.listen((Map<String, dynamic> event) {
       if (!event.containsKey("type")) return;
 
       // Track the offset for when the keyboard is opened
@@ -125,7 +125,7 @@ class CurrentChat {
       if (keyboardOpen &&
           SettingsManager().settings.hideKeyboardOnScroll.value &&
           scrollController.offset > keyboardOpenOffset + 100) {
-        EventDispatcher().emit("unfocus-keyboard", null);
+        EventDispatcher.instance.emit("unfocus-keyboard", null);
       }
 
       if (showScrollDown.value && scrollController.offset >= 500) return;
@@ -345,7 +345,7 @@ class CurrentChat {
     );
 
     if (SettingsManager().settings.openKeyboardOnSTB.value) {
-      EventDispatcher().emit("focus-keyboard", null);
+      EventDispatcher.instance.emit("focus-keyboard", null);
       keyboardOpenOffset = 0;
     }
   }

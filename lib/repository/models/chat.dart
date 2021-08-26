@@ -313,9 +313,9 @@ class Chat {
     }
 
     if (hasUnread) {
-      EventDispatcher().emit("add-unread-chat", {"chatGuid": this.guid});
+      EventDispatcher.instance.emit("add-unread-chat", {"chatGuid": this.guid});
     } else {
-      EventDispatcher().emit("remove-unread-chat", {"chatGuid": this.guid});
+      EventDispatcher.instance.emit("remove-unread-chat", {"chatGuid": this.guid});
     }
 
     ChatBloc().updateUnreads();

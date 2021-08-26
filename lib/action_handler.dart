@@ -103,7 +103,7 @@ class ActionHandler {
             .replaceAll("temp", "error-Connection timeout, please check your internet connection and try again");
         message.error.value = MessageError.BAD_REQUEST.code;
         CurrentChat? currChat = CurrentChat.activeChat;
-        if (!LifeCycleManager().isAlive || currChat?.chat.guid != chat.guid) {
+        if (!LifeCycleManager.instance.isAlive || currChat?.chat.guid != chat.guid) {
           NotificationManager().createFailedToSendMessage();
         }
         await Message.replaceMessage(tempGuid, message);

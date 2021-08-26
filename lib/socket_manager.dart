@@ -148,7 +148,7 @@ class SocketManager {
               value(true);
             });
             socketProcesses = new Map();
-            if (!LifeCycleManager().isAlive) {
+            if (!LifeCycleManager.instance.isAlive) {
               closeSocket(force: true);
             }
           });
@@ -163,16 +163,16 @@ class SocketManager {
         state.value = SocketState.DISCONNECTED;
         Timer t;
         t = Timer(const Duration(seconds: 5), () {
-          if (state.value == SocketState.DISCONNECTED && LifeCycleManager().isAlive && !Get.isSnackbarOpen!) {
+          if (state.value == SocketState.DISCONNECTED && LifeCycleManager.instance.isAlive && !Get.isSnackbarOpen!) {
             showSnackbar('Socket Disconnected', 'You are not longer connected to the socket 🔌');
           }
         });
-        LifeCycleManager().stream.listen((event) {
+        LifeCycleManager.instance.stream.listen((event) {
           if (!event && t.isActive) {
             t.cancel();
           } else {
             t = Timer(const Duration(seconds: 5), () {
-              if (state.value == SocketState.DISCONNECTED && LifeCycleManager().isAlive && !Get.isSnackbarOpen!) {
+              if (state.value == SocketState.DISCONNECTED && LifeCycleManager.instance.isAlive && !Get.isSnackbarOpen!) {
                 showSnackbar('Socket Disconnected', 'You are not longer connected to the socket 🔌');
               }
             });

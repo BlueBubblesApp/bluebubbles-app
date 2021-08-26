@@ -90,7 +90,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
 
     smartReplyController = StreamController<List<String>>.broadcast();
 
-    EventDispatcher().stream.listen((Map<String, dynamic> event) {
+    EventDispatcher.instance.stream.listen((Map<String, dynamic> event) {
       if (!this.mounted) return;
       if (!event.containsKey("type")) return;
 
@@ -203,7 +203,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     }
 
     if (event.type == MessageBlocEventType.insert && this.mounted) {
-      if (LifeCycleManager().isAlive && !event.outGoing) {
+      if (LifeCycleManager.instance.isAlive && !event.outGoing) {
         NotificationManager().switchChat(CurrentChat.of(context)?.chat);
       }
 

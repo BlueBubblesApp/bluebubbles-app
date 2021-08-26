@@ -43,7 +43,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
     super.initState();
 
     // Listen for any incoming events
-    EventDispatcher().stream.listen((Map<String, dynamic> event) {
+    EventDispatcher.instance.stream.listen((Map<String, dynamic> event) {
       if (!event.containsKey("type")) return;
       if (event["type"] == 'theme-update' && this.mounted) {
         setState(() {});
