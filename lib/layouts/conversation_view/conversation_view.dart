@@ -84,8 +84,10 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   bool gotBrightness = false;
   Message? message;
   Tween<double> tween = Tween<double>(begin: 1, end: 0);
+  double offset = 0;
   CustomAnimationControl controller = CustomAnimationControl.stop;
   bool wasCreator = false;
+  GlobalKey key = GlobalKey();
 
   @override
   void initState() {
@@ -128,6 +130,17 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       }
     });
 
+    EventDispatcher().stream.listen((event) async {
+      if (!event.containsKey("type")) return;
+      if (event["type"] == "keyboard-status") {
+        await Future.delayed(Duration(milliseconds: 500));
+        final textFieldSize = (key.currentContext!.findRenderObject()! as RenderBox).size.height;
+        setState(() {
+          offset = textFieldSize > 300 ? 300 : 0;
+        });
+      }
+    });
+
     if (widget.chat != null && messageBloc == null) {
       messageBloc = MessageBloc(widget.chat);
     }
@@ -154,11 +167,12 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
             maxLines: 1,
           ).createRenderObject(context);
           final size = renderParagraph.getDryLayout(constraints);
-          setState(() {
-            tween = Tween<double>(begin: context.width - 30, end: min(size.width + 68, context.width * MessageWidgetMixin.MAX_SIZE + 40));
-            controller = CustomAnimationControl.play;
-            message = event.message;
-          });
+          if (!(message?.hasAttachments ?? false) && !(message?.text?.isEmpty ?? false))
+            setState(() {
+              tween = Tween<double>(begin: context.width - 30, end: min(size.width + 68, context.width * MessageWidgetMixin.MAX_SIZE + 40));
+              controller = CustomAnimationControl.play;
+              message = event.message;
+            });
         }
       });
     }
@@ -369,6 +383,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     }
 
     Widget textField = BlueBubblesTextField(
+      key: key,
       onSend: send,
       wasCreator: wasCreator,
       isCreator: isCreator,
@@ -510,7 +525,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                     ),
                     AnimatedPositioned(
                       duration: Duration(milliseconds: 300),
-                      bottom: message != null ? 62 : 10,
+                      bottom: message != null ? 62 + offset : 10 + offset,
                       right: 5,
                       curve: Curves.easeIn,
                       onEnd: () {
