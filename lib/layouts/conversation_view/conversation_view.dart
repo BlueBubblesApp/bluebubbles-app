@@ -134,9 +134,11 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     KeyboardVisibilityController().onChange.listen((bool visible) async {
       await Future.delayed(Duration(milliseconds: 500));
       final textFieldSize = (key.currentContext?.findRenderObject() as RenderBox?)?.size.height;
-      setState(() {
-        offset = (textFieldSize ?? 0) > 300 ? 300 : 0;
-      });
+      if (mounted) {
+        setState(() {
+          offset = (textFieldSize ?? 0) > 300 ? 300 : 0;
+        });
+      }
     });
 
     if (widget.chat != null && messageBloc == null) {
