@@ -365,7 +365,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     bool showMenu = showShareMenu.value;
 
     // If the image picker is already open, close it, and return
-    if (!showMenu) FocusScope.of(context).requestFocus(new FocusNode());
+    if (!showMenu) {
+      focusNode!.unfocus();
+    }
     if (!showMenu && !(await PhotoManager.requestPermission())) {
       showShareMenu.value = false;
       return;

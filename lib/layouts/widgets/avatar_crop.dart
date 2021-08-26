@@ -32,7 +32,7 @@ class _AvatarCropState extends State<AvatarCrop> {
   void onCropped(Uint8List croppedData) async {
     String appDocPath = SettingsManager().appDocDir.path;
     if (widget.index != null) {
-      File file = new File(ChatBloc().chats[widget.index!].customAvatarPath.value ?? "$appDocPath/avatars/${ChatBloc().chats[widget.index!].guid!.characters.where((char) => char.isAlphabetOnly).join()}/avatar.jpg");
+      File file = new File(ChatBloc().chats[widget.index!].customAvatarPath.value ?? "$appDocPath/avatars/${ChatBloc().chats[widget.index!].guid!.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar.jpg");
       if (ChatBloc().chats[widget.index!].customAvatarPath.value == null) {
         await file.create(recursive: true);
       }
@@ -42,7 +42,7 @@ class _AvatarCropState extends State<AvatarCrop> {
       Get.back(closeOverlays: true);
       showSnackbar("Notice", "Custom chat avatar saved successfully");
     } else {
-      File file = new File(widget.chat!.customAvatarPath.value ?? "$appDocPath/avatars/${widget.chat!.guid!.characters.where((char) => char.isAlphabetOnly).join()}/avatar.jpg");
+      File file = new File(widget.chat!.customAvatarPath.value ?? "$appDocPath/avatars/${widget.chat!.guid!.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar.jpg");
       if (widget.chat!.customAvatarPath.value == null) {
         await file.create(recursive: true);
       }
