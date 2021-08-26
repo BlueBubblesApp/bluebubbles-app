@@ -68,8 +68,7 @@ public class FCMWorker extends Worker implements DartWorker {
         if (type.equals("new-message") || type.equals("updated-message")) {
 
             getBackgroundChannel();
-            final CountDownLatch latch = new CountDownLatch(1);
-            FirebaseMessagingService.sendCallback(getInputData().getString("type"), getInputData().getString("data"), latch);
+            // changed FCM messaging structure so currently nothing is sent to Dart here
             // We don't want to finish this worker until we know the backgroundChannel is finished
             // The backgroundChannel is manually closed through dart code
             while (backgroundChannel != null && !isStopped()) {
