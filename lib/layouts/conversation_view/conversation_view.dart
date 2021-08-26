@@ -31,6 +31,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:get/get.dart';
 import 'package:simple_animations/simple_animations.dart';
 import 'package:slugify/slugify.dart';
@@ -130,15 +131,12 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       }
     });
 
-    EventDispatcher().stream.listen((event) async {
-      if (!event.containsKey("type")) return;
-      if (event["type"] == "keyboard-status") {
-        await Future.delayed(Duration(milliseconds: 500));
-        final textFieldSize = (key.currentContext!.findRenderObject()! as RenderBox).size.height;
-        setState(() {
-          offset = textFieldSize > 300 ? 300 : 0;
-        });
-      }
+    KeyboardVisibilityController().onChange.listen((bool visible) async {
+      await Future.delayed(Duration(milliseconds: 500));
+      final textFieldSize = (key.currentContext?.findRenderObject() as RenderBox?)?.size.height;
+      setState(() {
+        offset = (textFieldSize ?? 0) > 300 ? 300 : 0;
+      });
     });
 
     if (widget.chat != null && messageBloc == null) {
