@@ -4,12 +4,10 @@ import 'dart:math';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/setup_bloc.dart';
-import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_sender.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/crypto.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/attachment_info_bloc.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
@@ -295,7 +293,7 @@ class SocketManager {
         if (!SettingsManager().settings.enablePrivateAPI.value) return;
 
         Map<String, dynamic> data = _data;
-        CurrentChat? currentChat = AttachmentInfoBloc().getCurrentChat(data["guid"]);
+        CurrentChat? currentChat = CurrentChat.forGuid(data["guid"]);
         if (currentChat == null) return;
         if (data["display"]) {
           currentChat.displayTypingIndicator();

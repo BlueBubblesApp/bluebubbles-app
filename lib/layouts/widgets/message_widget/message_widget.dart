@@ -73,7 +73,7 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
   }
 
   void init() {
-    currentChat = CurrentChat.of(context);
+    currentChat = CurrentChat.activeChat;
     if (handledInit) return;
     handledInit = true;
     _message = widget.message;

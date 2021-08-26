@@ -93,8 +93,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     super.initState();
     getPlaceholder();
 
-    if (CurrentChat.of(context)?.chat != null) {
-      textFieldData = TextFieldBloc().getTextField(CurrentChat.of(context)!.chat.guid!);
+    if (CurrentChat.activeChat != null) {
+      textFieldData = TextFieldBloc().getTextField(CurrentChat.activeChat!.chat.guid!);
     }
 
     controller = textFieldData != null ? textFieldData!.controller : new TextEditingController();

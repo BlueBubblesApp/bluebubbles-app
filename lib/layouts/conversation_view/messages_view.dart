@@ -29,6 +29,7 @@ class MessagesView extends StatefulWidget {
   final Chat? chat;
   final Function? initComplete;
   final List<Message> messages;
+  final CurrentChat currentChat;
 
   MessagesView({
     Key? key,
@@ -37,6 +38,7 @@ class MessagesView extends StatefulWidget {
     this.chat,
     this.initComplete,
     this.messages = const [],
+    required this.currentChat,
   }) : super(key: key);
 
   @override
@@ -76,7 +78,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
   void initState() {
     super.initState();
 
-    currentChat = CurrentChat.of(context);
+    currentChat = CurrentChat.forGuid(widget.chat!.guid!);
     if (widget.messageBloc != null) ever<MessageBlocEvent?>(widget.messageBloc!.event, (e) => handleNewMessage(e));
 
     // See if we need to load anything from the message bloc

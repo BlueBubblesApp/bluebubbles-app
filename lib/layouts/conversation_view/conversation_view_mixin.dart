@@ -146,7 +146,6 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
   void initCurrentChat(Chat chat) {
     currentChat = CurrentChat.getCurrentChat(chat);
-    currentChat!.init();
     currentChat!.updateChatAttachments().then((value) {
       if (this.mounted) setState(() {});
     });

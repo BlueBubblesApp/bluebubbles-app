@@ -297,7 +297,7 @@ class Chat {
   Future<Chat> toggleHasUnread(bool hasUnread) async {
     final Database db = await DBProvider.db.database;
     if (hasUnread) {
-      if (CurrentChat.isActive(this.guid!)) {
+      if (CurrentChat.forGuid(this.guid!)?.isAlive ?? false) {
         return this;
       }
     }
@@ -382,7 +382,7 @@ class Chat {
       // If the message is not from the same chat as the current chat, mark unread
       if (message.isFromMe!) {
         await this.toggleHasUnread(false);
-      } else if (!CurrentChat.isActive(this.guid!)) {
+      } else if (!(CurrentChat.forGuid(this.guid!)?.isAlive ?? false)) {
         await this.toggleHasUnread(true);
       }
     }

@@ -1,11 +1,9 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/message_marker.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/message_details_popup.dart';
-import 'package:bluebubbles/managers/attachment_info_bloc.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -21,20 +19,26 @@ import 'package:video_player/video_player.dart';
 
 enum CurrentChatEvent {
   TypingStatus,
-  VideoPlaying,
+}
+
+class CurrentChatInheritedWidget extends InheritedWidget {
+  final CurrentChat currentChat;
+  CurrentChatInheritedWidget({
+    required Widget child,
+    required this.currentChat,
+  }) : super(child: child);
+
+  @override
+  bool updateShouldNotify(covariant InheritedWidget oldWidget) => false;
 }
 
 /// Holds cached metadata for the currently opened chat
 ///
 /// This allows us to get around passing data through the trees and we can just store it here
-class CurrentChat {
+class CurrentChat extends GetxController {
   StreamController<Map<String, dynamic>> _stream = StreamController.broadcast();
 
   Stream get stream => _stream.stream;
-
-  StreamController<Map<String, List<Attachment?>>> _attachmentStream = StreamController.broadcast();
-
-  Stream get attachmentStream => _attachmentStream.stream;
 
   Chat chat;
 
@@ -46,20 +50,16 @@ class CurrentChat {
   List<Attachment> chatAttachments = [];
   List<Message?> sentMessages = [];
   bool showTypingIndicator = false;
-  Timer? indicatorHideTimer;
-  OverlayEntry? entry;
   bool keyboardOpen = false;
-  double keyboardOpenOffset = 0;
-
   bool isAlive = false;
-
-  Map<String, List<Attachment?>> messageAttachments = {};
-
-  double _timeStampOffset = 0.0;
-
   StreamController<double> timeStampOffsetStream = StreamController<double>.broadcast();
-
   late MessageMarkers messageMarkers;
+  ScrollController scrollController = ScrollController();
+  final RxBool showScrollDown = false.obs;
+
+  double _keyboardOpenOffset = 0;
+  Map<String, List<Attachment?>> _messageAttachments = {};
+  double _timeStampOffset = 0.0;
 
   double get timeStampOffset => _timeStampOffset;
 
@@ -69,10 +69,11 @@ class CurrentChat {
     if (!timeStampOffsetStream.isClosed) timeStampOffsetStream.sink.add(_timeStampOffset);
   }
 
-  ScrollController scrollController = ScrollController();
-  final RxBool showScrollDown = false.obs;
+  CurrentChat({required this.chat});
 
-  CurrentChat(this.chat) {
+  @override
+  void onInit() {
+    ChatBloc().currentChatGuids.add(this.chat.guid!);
     messageMarkers = new MessageMarkers(this.chat);
 
     EventDispatcher.instance.stream.listen((Map<String, dynamic> event) {
@@ -82,41 +83,10 @@ class CurrentChat {
       if (event["type"] == "keyboard-status" && scrollController.hasClients) {
         keyboardOpen = event.containsKey("data") ? event["data"] : false;
         if (keyboardOpen) {
-          keyboardOpenOffset = scrollController.offset;
+          _keyboardOpenOffset = scrollController.offset;
         }
       }
     });
-  }
-
-  static CurrentChat? getCurrentChat(Chat? chat) {
-    if (chat?.guid == null) return null;
-
-    CurrentChat? currentChat = AttachmentInfoBloc().getCurrentChat(chat!.guid!);
-    if (currentChat == null) {
-      currentChat = CurrentChat(chat);
-      AttachmentInfoBloc().addCurrentChat(currentChat);
-    }
-
-    return currentChat;
-  }
-
-  static bool isActive(String chatGuid) => AttachmentInfoBloc().getCurrentChat(chatGuid)?.isAlive ?? false;
-
-  static CurrentChat? get activeChat {
-    if (AttachmentInfoBloc().chatData.isNotEmpty) {
-      var res = AttachmentInfoBloc().chatData.values.where((element) => element.isAlive);
-
-      if (res.isNotEmpty) return res.first;
-
-      return null;
-    } else {
-      return null;
-    }
-  }
-
-  void initScrollController() {
-    scrollController = ScrollController();
-
     scrollController.addListener(() async {
       if (!scrollController.hasClients) return;
 
@@ -124,7 +94,7 @@ class CurrentChat {
       // The +100 is relatively arbitrary. It was the threshold I thought was good
       if (keyboardOpen &&
           SettingsManager().settings.hideKeyboardOnScroll.value &&
-          scrollController.offset > keyboardOpenOffset + 100) {
+          scrollController.offset > _keyboardOpenOffset + 100) {
         EventDispatcher.instance.emit("unfocus-keyboard", null);
       }
 
@@ -137,77 +107,90 @@ class CurrentChat {
         showScrollDown.value = false;
       }
     });
+    super.onInit();
   }
 
-  void initControllers() {
-    if (_stream.isClosed) {
-      _stream = StreamController.broadcast();
+  /// Dispose all of the controllers and whatnot
+  @override
+  void dispose() {
+    ChatBloc().currentChatGuids.remove(this.chat.guid!);
+    if (!isNullOrEmpty(currentPlayingVideo)!) {
+      currentPlayingVideo.values.forEach((element) {
+        element.dispose();
+      });
     }
 
-    if (_attachmentStream.isClosed) {
-      _attachmentStream = StreamController.broadcast();
+    if (!isNullOrEmpty(audioPlayers)!) {
+      audioPlayers.values.forEach((element) {
+        element.item1.dispose();
+        element.item2.dispose();
+      });
+      audioPlayers = {};
     }
 
-    if (timeStampOffsetStream.isClosed) {
-      timeStampOffsetStream = StreamController.broadcast();
-    }
+    if (_stream.isClosed) _stream.close();
+    if (!timeStampOffsetStream.isClosed) timeStampOffsetStream.close();
+
+    audioPlayers.forEach((key, value) async {
+      value.item1.dispose();
+      value.item2.dispose();
+      audioPlayers.remove(key);
+    });
+    scrollController.dispose();
+    super.dispose();
   }
 
-  /// Initialize all the values for the currently open chat
-  /// @param [chat] the chat object you are initializing for
-  void init() {
-    dispose();
-
-    imageData = {};
-    currentPlayingVideo = {};
-    audioPlayers = {};
-    urlPreviews = {};
-    videoControllersToDispose = [];
-    chatAttachments = [];
-    sentMessages = [];
-    entry = null;
-    isAlive = true;
-    showTypingIndicator = false;
-    indicatorHideTimer = null;
-    _timeStampOffset = 0;
-    timeStampOffsetStream = StreamController<double>.broadcast();
-    showScrollDown.value = false;
-
-    initScrollController();
-    initControllers();
-    // checkTypingIndicator();
-  }
-
+  /// Find the nearest [CurrentChat] in the widget tree
   static CurrentChat? of(BuildContext context) {
-    return context.findAncestorStateOfType<ConversationViewState>()?.currentChat ??
-        context.findAncestorStateOfType<MessageDetailsPopupState>()?.currentChat ??
-        null;
+    return context.dependOnInheritedWidgetOfExactType<CurrentChatInheritedWidget>()?.currentChat;
+  }
+
+  /// Find the chat with the specified GUID
+  static CurrentChat? forGuid(String guid) {
+    if (Get.isRegistered<CurrentChat>(tag: guid)) {
+      return Get.find<CurrentChat>(tag: guid);
+    }
+    return null;
+  }
+
+  /// Find the currently active chat
+  static CurrentChat? get activeChat {
+    for (String guid in ChatBloc().currentChatGuids) {
+      if (Get.isRegistered<CurrentChat>(tag: guid)) {
+        CurrentChat currentChat = Get.find<CurrentChat>(tag: guid);
+        if (currentChat.isAlive) {
+          return currentChat;
+        }
+      }
+    }
+    return null;
+  }
+
+  static CurrentChat? getCurrentChat(Chat? chat) {
+    if (chat?.guid == null) return null;
+    return Get.put(CurrentChat(chat: chat!), tag: chat.guid);
   }
 
   /// Fetch and store all of the attachments for a [message]
   /// @param [message] the message you want to fetch for
   List<Attachment?>? getAttachmentsForMessage(Message? message) {
     // If we have already disposed, do nothing
-    if (!messageAttachments.containsKey(message!.guid)) {
-      preloadMessageAttachments(specificMessages: [message]).then(
-        (value) => _attachmentStream.sink.add(
-          {message.guid!: messageAttachments[message.guid] ?? []},
-        ),
-      );
+    if (!_messageAttachments.containsKey(message!.guid)) {
+      preloadMessageAttachments(specificMessages: [message]);
       return [];
     }
-    return messageAttachments[message.guid];
+    return _messageAttachments[message.guid];
   }
 
   List<Attachment?>? updateExistingAttachments(NewMessageEvent event) {
     if (event.type != NewMessageType.UPDATE) return null;
     String? oldGuid = event.event["oldGuid"];
-    if (!messageAttachments.containsKey(oldGuid)) return [];
+    if (!_messageAttachments.containsKey(oldGuid)) return [];
     Message message = event.event["message"];
     if (message.attachments!.isEmpty) return [];
 
-    messageAttachments.remove(oldGuid);
-    messageAttachments[message.guid!] = message.attachments ?? [];
+    _messageAttachments.remove(oldGuid);
+    _messageAttachments[message.guid!] = message.attachments ?? [];
 
     String? newAttachmentGuid = message.attachments!.first!.guid;
     if (imageData.containsKey(oldGuid)) {
@@ -246,7 +229,7 @@ class CurrentChat {
     for (Message? message in messages) {
       if (message!.hasAttachments) {
         List<Attachment?>? attachments = await message.fetchAttachments();
-        messageAttachments[message.guid!] = attachments ?? [];
+        _messageAttachments[message.guid!] = attachments ?? [];
       }
     }
   }
@@ -262,8 +245,6 @@ class CurrentChat {
   }
 
   void hideTypingIndicator() {
-    indicatorHideTimer?.cancel();
-    indicatorHideTimer = null;
     showTypingIndicator = false;
     _stream.sink.add(
       {
@@ -285,56 +266,6 @@ class CurrentChat {
       });
     }
     currentPlayingVideo = video;
-    _stream.sink.add(
-      {
-        "type": CurrentChatEvent.VideoPlaying,
-        "data": video,
-      },
-    );
-  }
-
-  /// Dispose all of the controllers and whatnot
-  void dispose() {
-    if (!isNullOrEmpty(currentPlayingVideo)!) {
-      currentPlayingVideo.values.forEach((element) {
-        element.dispose();
-      });
-    }
-
-    if (!isNullOrEmpty(audioPlayers)!) {
-      audioPlayers.values.forEach((element) {
-        element.item1.dispose();
-        element.item2.dispose();
-      });
-      audioPlayers = {};
-    }
-
-    if (_stream.isClosed) _stream.close();
-    if (!_attachmentStream.isClosed) _attachmentStream.close();
-    if (!timeStampOffsetStream.isClosed) timeStampOffsetStream.close();
-
-    _timeStampOffset = 0;
-    showScrollDown.value = false;
-    imageData = {};
-    currentPlayingVideo = {};
-    audioPlayers = {};
-    urlPreviews = {};
-    videoControllersToDispose = [];
-    audioPlayers.forEach((key, value) async {
-      value.item1.dispose();
-      value.item2.dispose();
-      audioPlayers.remove(key);
-    });
-    chatAttachments = [];
-    sentMessages = [];
-    isAlive = false;
-    showTypingIndicator = false;
-    scrollController.dispose();
-
-    initScrollController();
-    initControllers();
-
-    if (entry != null) entry!.remove();
   }
 
   Future<void> scrollToBottom() async {
@@ -346,7 +277,7 @@ class CurrentChat {
 
     if (SettingsManager().settings.openKeyboardOnSTB.value) {
       EventDispatcher.instance.emit("focus-keyboard", null);
-      keyboardOpenOffset = 0;
+      _keyboardOpenOffset = 0;
     }
   }
 

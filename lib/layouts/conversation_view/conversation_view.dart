@@ -199,7 +199,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused && mounted) {
       debugPrint("Removing CurrentChat imageData");
-      CurrentChat.of(context)?.imageData.clear();
+      CurrentChat.activeChat?.imageData.clear();
     }
   }
 
@@ -479,12 +479,22 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                                 ? Stack(
                               alignment: Alignment.bottomCenter,
                               children: [
-                                MessagesView(
-                                  key: new Key(chat?.guid ?? "unknown-chat"),
-                                  messageBloc: messageBloc,
-                                  showHandle: chat!.participants.length > 1,
-                                  chat: chat,
-                                  initComplete: widget.onMessagesViewComplete,
+                                GetBuilder<CurrentChat>(
+                                  init: CurrentChat(
+                                    chat: chat!,
+                                  ),
+                                  tag: chat!.guid,
+                                  builder: (controller) => CurrentChatInheritedWidget(
+                                    currentChat: controller,
+                                    child: MessagesView(
+                                      key: new Key(chat?.guid ?? "unknown-chat"),
+                                      messageBloc: messageBloc,
+                                      currentChat: controller,
+                                      showHandle: chat!.participants.length > 1,
+                                      chat: chat,
+                                      initComplete: widget.onMessagesViewComplete,
+                                    ),
+                                  ),
                                 ),
                                 currentChat != null
                                     ? Obx(() => AnimatedOpacity(

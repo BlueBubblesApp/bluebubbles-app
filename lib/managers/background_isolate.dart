@@ -31,13 +31,13 @@ void callbackHandler() async {
   MethodChannel _backgroundChannel = MethodChannel("com.bluebubbles.messaging");
   WidgetsFlutterBinding.ensureInitialized();
   // don't run this if the app is active to avoid double-initializing our managers
+  Get.put(LifeCycleManager());
   if (!LifeCycleManager.instance.isAlive) {
     await DBProvider.db.initDB();
     await SettingsManager().init();
     await SettingsManager().getSavedSettings();
     Get.put(AttachmentDownloadService());
     Get.put(Logger());
-    Get.put(LifeCycleManager());
     Get.put(EventDispatcher());
     await ContactManager().getContacts(headless: true);
     MethodChannelInterface().init(customChannel: _backgroundChannel);
