@@ -94,7 +94,7 @@ class MethodChannelInterface {
         Map<String, dynamic>? data = jsonDecode(call.arguments);
 
         // Add it to the queue with the data as the item
-        IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_MESSAGE_EVENT, item: {"data": data, "isHeadless": true}));
+        IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_MESSAGE_EVENT, item: {"data": data}));
 
         return new Future.value("");
       case "updated-message":
