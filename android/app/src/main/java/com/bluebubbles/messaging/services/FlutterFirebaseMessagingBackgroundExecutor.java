@@ -242,7 +242,7 @@ public class FlutterFirebaseMessagingBackgroundExecutor {
         RemoteMessage remoteMessage =
                 intent.getParcelableExtra("notification");
         if (remoteMessage != null) {
-            backgroundChannel.invokeMethod(remoteMessage.getData().get("type"), remoteMessage.getData().get("data"));
+            backgroundChannel.invokeMethod(remoteMessage.getData().get("type"), remoteMessage.getData().get("data"), result);
         } else {
             Log.e(TAG, "RemoteMessage instance not found in Intent.");
         }
