@@ -30,15 +30,11 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
   void initState() {
     super.initState();
     _controller = AnimationController(vsync: this, duration: Duration(milliseconds: 700));
-    _controller.addListener(() {});
 
     animation = Tween(
       begin: 0.0,
       end: Math.pi,
-    ).animate(_controller)
-      ..addListener(() {
-        setState(() {});
-      });
+    ).animate(_controller);
 
     _controller.addStatusListener((state) {
       if (state == AnimationStatus.completed && this.mounted) {
