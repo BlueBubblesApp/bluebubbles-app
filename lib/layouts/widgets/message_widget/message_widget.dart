@@ -11,6 +11,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/reactions_widget.dart
 import 'package:bluebubbles/layouts/widgets/message_widget/received_message.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/stickers_widget.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -84,6 +85,20 @@ class MessageWidgetController extends GetxController {
       }
       update();
     });
+
+    ContactManager().colorStream.listen((event) {
+      if (!event.containsKey(message.handle?.address)) return;
+
+      Color? color = event[message.handle?.address];
+      if (color == null) {
+        message.handle!.color = null;
+      } else {
+        message.handle!.color = color.value.toRadixString(16);
+      }
+
+      update();
+    });
+
     super.onInit();
   }
 

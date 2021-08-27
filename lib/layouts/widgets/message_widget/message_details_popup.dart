@@ -3,7 +3,6 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
 import 'package:bluebubbles/helpers/metadata_helper.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachment.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:collection/collection.dart';
@@ -63,7 +62,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   bool showTools = false;
   String? selfReaction;
   String? currentlySelectedReaction;
-  Completer? fetchRequest;
   CurrentChat? currentChat;
   Chat? dmChat;
 
@@ -93,12 +91,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
           showTools = true;
         });
     });
-  }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    fetchReactions();
     SchedulerBinding.instance!.addPostFrameCallback((_) {
       if (this.mounted) {
         setState(() {
@@ -115,18 +108,10 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   }
 
   Future<void> fetchReactions() async {
-    if (fetchRequest != null && !fetchRequest!.isCompleted) {
-      return fetchRequest!.future;
-    }
-
-    // Create a new fetch request
-    fetchRequest = new Completer();
 
     // If there are no associated messages, return now
     List<Message> reactions = widget.message.getReactions();
-    if (reactions.isEmpty) {
-      return fetchRequest!.complete();
-    }
+    if (reactions.isEmpty) return;
 
     // Filter down the messages to the unique ones (one per user, newest)
     List<Message> reactionMessages = Reaction.getUniqueReactionMessages(reactions);
@@ -146,12 +131,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
       );
     }
 
-    // If we aren't mounted, get out
-    if (!this.mounted) return fetchRequest!.complete();
-
-    // Tell the component to re-render
-    this.setState(() {});
-    return fetchRequest!.complete();
+    if (mounted) setState(() {});
   }
 
   void sendReaction(String type) {

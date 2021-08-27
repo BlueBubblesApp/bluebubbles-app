@@ -159,7 +159,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
         if (event.type == MessageBlocEventType.insert && this.mounted && event.outGoing) {
           final constraints = BoxConstraints(
-            maxWidth: context.width * MessageWidgetMixin.MAX_SIZE,
+            maxWidth: context.width * MessageWidgetHelper.MAX_SIZE,
             minHeight: Theme.of(context).textTheme.bodyText2!.fontSize!,
             maxHeight: Theme.of(context).textTheme.bodyText2!.fontSize!,
           );
@@ -173,7 +173,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
           final size = renderParagraph.getDryLayout(constraints);
           if (!(message?.hasAttachments ?? false) && !(message?.text?.isEmpty ?? false))
             setState(() {
-              tween = Tween<double>(begin: context.width - 30, end: min(size.width + 68, context.width * MessageWidgetMixin.MAX_SIZE + 40));
+              tween = Tween<double>(begin: context.width - 30, end: min(size.width + 68, context.width * MessageWidgetHelper.MAX_SIZE + 40));
               controller = CustomAnimationControl.play;
               message = event.message;
             });

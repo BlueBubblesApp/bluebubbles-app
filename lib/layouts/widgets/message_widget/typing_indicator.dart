@@ -93,7 +93,7 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
                         bottom: skin.value == Skins.iOS ? 13 : 5,
                       ),
                       constraints: BoxConstraints(
-                        maxWidth: context.width * MessageWidgetMixin.MAX_SIZE,
+                        maxWidth: context.width * MessageWidgetHelper.MAX_SIZE,
                       ),
                       padding: EdgeInsets.symmetric(
                         vertical: 8,
