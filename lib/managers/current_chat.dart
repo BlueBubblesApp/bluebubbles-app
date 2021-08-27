@@ -17,10 +17,6 @@ import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:tuple/tuple.dart';
 import 'package:video_player/video_player.dart';
 
-enum CurrentChatEvent {
-  TypingStatus,
-}
-
 class CurrentChatInheritedWidget extends InheritedWidget {
   final CurrentChat currentChat;
   CurrentChatInheritedWidget({
@@ -36,38 +32,25 @@ class CurrentChatInheritedWidget extends InheritedWidget {
 ///
 /// This allows us to get around passing data through the trees and we can just store it here
 class CurrentChat extends GetxController {
-  StreamController<Map<String, dynamic>> _stream = StreamController.broadcast();
-
-  Stream get stream => _stream.stream;
-
   Chat chat;
 
   Map<String, Uint8List> imageData = {};
   Map<String, Metadata> urlPreviews = {};
-  Map<String, VideoPlayerController> currentPlayingVideo = {};
+  Tuple2<String, VideoPlayerController>? currentPlayingVideo;
   Map<String, Tuple2<ChewieAudioController, VideoPlayerController>> audioPlayers = {};
   List<VideoPlayerController> videoControllersToDispose = [];
   List<Attachment> chatAttachments = [];
   List<Message?> sentMessages = [];
-  bool showTypingIndicator = false;
   bool keyboardOpen = false;
   bool isAlive = false;
-  StreamController<double> timeStampOffsetStream = StreamController<double>.broadcast();
   late MessageMarkers messageMarkers;
-  ScrollController scrollController = ScrollController();
+  final ScrollController scrollController = ScrollController();
   final RxBool showScrollDown = false.obs;
+  final RxBool showTypingIndicator = false.obs;
+  final RxDouble timeStampOffset = 0.0.obs;
 
   double _keyboardOpenOffset = 0;
   Map<String, List<Attachment?>> _messageAttachments = {};
-  double _timeStampOffset = 0.0;
-
-  double get timeStampOffset => _timeStampOffset;
-
-  set timeStampOffset(double value) {
-    if (_timeStampOffset == value) return;
-    _timeStampOffset = value;
-    if (!timeStampOffsetStream.isClosed) timeStampOffsetStream.sink.add(_timeStampOffset);
-  }
 
   CurrentChat({required this.chat});
 
@@ -97,12 +80,9 @@ class CurrentChat extends GetxController {
         EventDispatcher.instance.emit("unfocus-keyboard", null);
       }
 
-      if (showScrollDown.value && scrollController.offset >= 500) return;
-      if (!showScrollDown.value && scrollController.offset < 500) return;
-
       if (scrollController.offset >= 500 && !showScrollDown.value) {
         showScrollDown.value = true;
-      } else if (showScrollDown.value) {
+      } else if (scrollController.offset < 500 && showScrollDown.value) {
         showScrollDown.value = false;
       }
     });
@@ -112,28 +92,13 @@ class CurrentChat extends GetxController {
   /// Dispose all of the controllers and whatnot
   @override
   void dispose() {
-    if (!isNullOrEmpty(currentPlayingVideo)!) {
-      currentPlayingVideo.values.forEach((element) {
-        element.dispose();
-      });
-    }
-
-    if (!isNullOrEmpty(audioPlayers)!) {
-      audioPlayers.values.forEach((element) {
-        element.item1.dispose();
-        element.item2.dispose();
-      });
-      audioPlayers = {};
-    }
-
-    if (_stream.isClosed) _stream.close();
-    if (!timeStampOffsetStream.isClosed) timeStampOffsetStream.close();
-
-    audioPlayers.forEach((key, value) async {
-      value.item1.dispose();
-      value.item2.dispose();
-      audioPlayers.remove(key);
-    });
+    currentPlayingVideo?.item2.dispose();
+    // just in case the scroll controller was disposed beforehand
+    try{
+      scrollController.dispose();
+    } catch (_) {}
+    disposeVideoControllers();
+    disposeAudioControllers();
     super.dispose();
   }
 
@@ -142,7 +107,7 @@ class CurrentChat extends GetxController {
     return context.dependOnInheritedWidgetOfExactType<CurrentChatInheritedWidget>()?.currentChat;
   }
 
-  /// Find the chat with the specified GUID
+  /// Find the chat with the specified GUID, if any
   static CurrentChat? forGuid(String guid) {
     if (Get.isRegistered<CurrentChat>(tag: guid)) {
       return Get.find<CurrentChat>(tag: guid);
@@ -150,7 +115,7 @@ class CurrentChat extends GetxController {
     return null;
   }
 
-  /// Find the currently active chat
+  /// Find the currently active chat, if any
   static CurrentChat? get activeChat {
     for (String guid in ChatBloc().currentChatGuids) {
       if (Get.isRegistered<CurrentChat>(tag: guid)) {
@@ -163,9 +128,13 @@ class CurrentChat extends GetxController {
     return null;
   }
 
+  /// Get the current chat based on GUID, and if it doesn't exist, create it
   static CurrentChat? getCurrentChat(Chat? chat) {
     if (chat?.guid == null) return null;
-    return Get.put(CurrentChat(chat: chat!), tag: chat.guid);
+    if (Get.isRegistered<CurrentChat>(tag: chat!.guid)) {
+      return Get.find<CurrentChat>(tag: chat.guid);
+    }
+    return Get.put(CurrentChat(chat: chat), tag: chat.guid);
   }
 
   /// Fetch and store all of the attachments for a [message]
@@ -193,9 +162,8 @@ class CurrentChat extends GetxController {
     if (imageData.containsKey(oldGuid)) {
       Uint8List data = imageData.remove(oldGuid)!;
       imageData[newAttachmentGuid!] = data;
-    } else if (currentPlayingVideo.containsKey(oldGuid)) {
-      VideoPlayerController data = currentPlayingVideo.remove(oldGuid)!;
-      currentPlayingVideo[newAttachmentGuid!] = data;
+    } else if (currentPlayingVideo?.item1 == oldGuid) {
+      currentPlayingVideo = Tuple2(newAttachmentGuid!, currentPlayingVideo!.item2);
     } else if (audioPlayers.containsKey(oldGuid)) {
       Tuple2<ChewieAudioController, VideoPlayerController> data = audioPlayers.remove(oldGuid)!;
       audioPlayers[newAttachmentGuid!] = data;
@@ -232,23 +200,11 @@ class CurrentChat extends GetxController {
   }
 
   void displayTypingIndicator() {
-    showTypingIndicator = true;
-    _stream.sink.add(
-      {
-        "type": CurrentChatEvent.TypingStatus,
-        "data": true,
-      },
-    );
+    showTypingIndicator.value = true;
   }
 
   void hideTypingIndicator() {
-    showTypingIndicator = false;
-    _stream.sink.add(
-      {
-        "type": CurrentChatEvent.TypingStatus,
-        "data": false,
-      },
-    );
+    showTypingIndicator.value = false;
   }
 
   /// Retrieve all of the attachments associated with a chat
@@ -256,13 +212,11 @@ class CurrentChat extends GetxController {
     chatAttachments = await Chat.getAttachments(chat);
   }
 
-  void changeCurrentPlayingVideo(Map<String, VideoPlayerController> video) {
-    if (!isNullOrEmpty(currentPlayingVideo)!) {
-      currentPlayingVideo.values.forEach((element) {
-        videoControllersToDispose.add(element);
-      });
+  void changeCurrentPlayingVideo(String guid, VideoPlayerController video) {
+    if (currentPlayingVideo?.item2 != null) {
+      videoControllersToDispose.add(currentPlayingVideo!.item2);
     }
-    currentPlayingVideo = video;
+    currentPlayingVideo = Tuple2(guid, video);
   }
 
   Future<void> scrollToBottom() async {
@@ -280,10 +234,6 @@ class CurrentChat extends GetxController {
 
   /// Dipose of the controllers which we no longer need
   void disposeControllers() {
-    // just in case the scroll controller was disposed beforehand
-    try{
-      scrollController.dispose();
-    } catch (_) {}
     disposeVideoControllers();
     disposeAudioControllers();
   }

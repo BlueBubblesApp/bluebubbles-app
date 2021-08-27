@@ -64,12 +64,6 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
 
   late StreamController<List<String>> smartReplyController;
 
-  ScrollController? get scrollController {
-    if (currentChat == null) return null;
-
-    return currentChat!.scrollController;
-  }
-
   bool get showSmartReplies =>
       SettingsManager().settings.smartReply.value &&
       (!SettingsManager().settings.redactedMode.value || !SettingsManager().settings.hideMessageContent.value);
@@ -367,16 +361,16 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
       onHorizontalDragStart: (details) {},
       onHorizontalDragUpdate: (details) {
         if (SettingsManager().settings.skin.value != Skins.Samsung)
-          CurrentChat.of(context)!.timeStampOffset += details.delta.dx * 0.3;
+          CurrentChat.of(context)!.timeStampOffset.value += details.delta.dx * 0.3;
       },
       onHorizontalDragEnd: (details) {
-        if (SettingsManager().settings.skin.value != Skins.Samsung) CurrentChat.of(context)!.timeStampOffset = 0;
+        if (SettingsManager().settings.skin.value != Skins.Samsung) CurrentChat.of(context)!.timeStampOffset.value = 0;
       },
       onHorizontalDragCancel: () {
-        if (SettingsManager().settings.skin.value != Skins.Samsung) CurrentChat.of(context)!.timeStampOffset = 0;
+        if (SettingsManager().settings.skin.value != Skins.Samsung) CurrentChat.of(context)!.timeStampOffset.value = 0;
       },
       child: CustomScrollView(
-        controller: scrollController ?? ScrollController(),
+        controller: CurrentChat.of(context)!.scrollController,
         reverse: true,
         physics: ThemeSwitcher.getScrollPhysics(),
         slivers: <Widget>[
@@ -404,7 +398,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
               child: Row(
                 children: <Widget>[
                   if (widget.chat?.guid == "theme-selector" ||
-                      (currentChat!.showTypingIndicator && SettingsManager().settings.alwaysShowAvatars.value))
+                      (currentChat!.showTypingIndicator.value && SettingsManager().settings.alwaysShowAvatars.value))
                     Padding(
                       padding: EdgeInsets.only(left: 10.0),
                       child: ContactAvatarWidget(
@@ -418,7 +412,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                   Padding(
                     padding: EdgeInsets.only(top: 5),
                     child: TypingIndicator(
-                      visible: widget.chat?.guid == "theme-selector" ? true : currentChat!.showTypingIndicator,
+                      visible: widget.chat?.guid == "theme-selector" ? true : currentChat!.showTypingIndicator.value,
                     ),
                   ),
                 ],

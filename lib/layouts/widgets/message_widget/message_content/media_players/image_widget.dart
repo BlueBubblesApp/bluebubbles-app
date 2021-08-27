@@ -38,7 +38,7 @@ class ImageWidgetController extends GetxController {
     if (!runForcefully && data.value != null) return;
 
     // Try to get the image data from the "cache"
-    data.value = CurrentChat.activeChat?.getImageData(attachment);
+    data.value = CurrentChat.of(context)?.getImageData(attachment);
     if (data.value == null) {
       // If it's an image, compress the image when loading it
       if (AttachmentHelper.canCompress(attachment) &&

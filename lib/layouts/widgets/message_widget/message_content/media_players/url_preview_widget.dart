@@ -49,8 +49,8 @@ class UrlPreviewController extends GetxController with SingleGetTickerProviderMi
 
   Future<void> fetchPreview() async {
     // Try to get any already loaded attachment data
-    if (CurrentChat.activeChat != null && CurrentChat.activeChat!.urlPreviews.containsKey(message.text)) {
-      data.value = CurrentChat.activeChat!.urlPreviews[message.text];
+    if (CurrentChat.of(context) != null && CurrentChat.of(context)!.urlPreviews.containsKey(message.text)) {
+      data.value = CurrentChat.of(context)!.urlPreviews[message.text];
     }
 
     if (data.value != null || MetadataHelper.isNotEmpty(data.value)) return;
@@ -86,7 +86,7 @@ class UrlPreviewController extends GetxController with SingleGetTickerProviderMi
 
     // Save the metadata
     if (data.value != null) {
-      CurrentChat.activeChat!.urlPreviews[message.text!] = data.value!;
+      CurrentChat.of(context)!.urlPreviews[message.text!] = data.value!;
     }
   }
 }

@@ -149,10 +149,6 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     currentChat!.updateChatAttachments().then((value) {
       if (this.mounted) setState(() {});
     });
-
-    currentChat!.stream.listen((event) {
-      if (this.mounted) setState(() {});
-    });
   }
 
   MessageBloc initMessageBloc() {
