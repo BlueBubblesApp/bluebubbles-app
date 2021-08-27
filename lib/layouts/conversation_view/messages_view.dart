@@ -369,7 +369,6 @@ class MessagesView extends StatelessWidget {
                   itemBuilder: (BuildContext context, int index, Animation<double> animation) {
                     // Load more messages if we are at the top and we aren't alrady loading
                     // and we have more messages to load
-                    print("built message");
                     if (index == controller.messages.length) {
                       if (!controller.noMoreMessages &&
                           (controller.loader == null || !controller.loader!.isCompleted || !controller.loadedPages.contains(controller.messages.length))) {
