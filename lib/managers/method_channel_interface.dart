@@ -59,9 +59,7 @@ class MethodChannelInterface {
     platform.setMethodCallHandler(_callHandler);
     // If we are running in the background, inform Java that the method channel
     // has been initialized and it can start sending messages
-    if (headless) {
-      platform.invokeMethod<void>('MessagingBackground#initialized');
-    }
+    platform.invokeMethod<void>('MessagingBackground#initialized');
   }
 
   /// Helper method to invoke a method in the native code

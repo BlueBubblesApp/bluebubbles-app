@@ -60,7 +60,7 @@ public class MainActivity extends FlutterFragmentActivity {
         engine = flutterEngine;
 
         new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL)
-                .setMethodCallHandler(((call, result) -> MethodCallHandler.methodCallHandler(call, result, MainActivity.this, null)));
+                .setMethodCallHandler(((call, result) -> MethodCallHandler.methodCallHandler(call, result, MainActivity.this, null, null)));
         GeneratedPluginRegistrant.registerWith(flutterEngine);
     }
 
