@@ -84,7 +84,7 @@ public class FlutterFirebaseMessagingBackgroundExecutor {
      * messages.
      */
     public boolean isNotRunning() {
-        return !isCallbackDispatcherReady.get();
+        return !isCallbackDispatcherReady.get() || engine == null;
     }
 
     public void onInitialized() {

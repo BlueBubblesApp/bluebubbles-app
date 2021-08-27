@@ -36,7 +36,8 @@ import com.bluebubbles.messaging.services.FlutterFirebaseMessagingBackgroundExec
 
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
-
+import static com.bluebubbles.messaging.MainActivity.engine;
+import android.util.Log;
 
 public class MethodCallHandler {
     public static boolean isInitialized = false;
@@ -49,6 +50,14 @@ public class MethodCallHandler {
         } else if (call.method.equals("close-background-isolate")) {
             if (worker != null) {
                 worker.destroyHeadlessThread();
+            } else if (engine != null) {
+                try {
+                    Log.d("Destroy", "Destroying FCM Worker isolate...");
+                    engine.destroy();
+                    engine = null;
+                } catch (Exception e) {
+                    Log.d("Destroy", "Failed to destroy FCM Worker isolate!");
+                }
             }
             result.success("");
         } else if(call.method.equals(FetchMessagesHandler.TAG)) {
