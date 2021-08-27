@@ -135,9 +135,13 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       await Future.delayed(Duration(milliseconds: 500));
       final textFieldSize = (key.currentContext?.findRenderObject() as RenderBox?)?.size.height;
       if (mounted) {
-        setState(() {
+        try {
+          setState(() {
+            offset = (textFieldSize ?? 0) > 300 ? 300 : 0;
+          });
+        } catch (_) {
           offset = (textFieldSize ?? 0) > 300 ? 300 : 0;
-        });
+        }
       }
     });
 
@@ -207,7 +211,6 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   void dispose() {
     if (currentChat != null) {
       currentChat!.disposeControllers();
-      currentChat!.dispose();
     }
 
     // Switching chat to null will clear the currently active chat
@@ -483,6 +486,13 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                                   init: CurrentChat(
                                     chat: chat!,
                                   ),
+                                  autoRemove: false,
+                                  initState: (state) {
+                                    ChatBloc().currentChatGuids.add(chat!.guid!);
+                                  },
+                                  dispose: (state) {
+                                    ChatBloc().currentChatGuids.remove(chat!.guid!);
+                                  },
                                   tag: chat!.guid,
                                   builder: (controller) => CurrentChatInheritedWidget(
                                     currentChat: controller,

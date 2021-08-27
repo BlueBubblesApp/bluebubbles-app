@@ -73,7 +73,6 @@ class CurrentChat extends GetxController {
 
   @override
   void onInit() {
-    ChatBloc().currentChatGuids.add(this.chat.guid!);
     messageMarkers = new MessageMarkers(this.chat);
 
     EventDispatcher.instance.stream.listen((Map<String, dynamic> event) {
@@ -113,7 +112,6 @@ class CurrentChat extends GetxController {
   /// Dispose all of the controllers and whatnot
   @override
   void dispose() {
-    ChatBloc().currentChatGuids.remove(this.chat.guid!);
     if (!isNullOrEmpty(currentPlayingVideo)!) {
       currentPlayingVideo.values.forEach((element) {
         element.dispose();
@@ -136,7 +134,6 @@ class CurrentChat extends GetxController {
       value.item2.dispose();
       audioPlayers.remove(key);
     });
-    scrollController.dispose();
     super.dispose();
   }
 
@@ -283,6 +280,10 @@ class CurrentChat extends GetxController {
 
   /// Dipose of the controllers which we no longer need
   void disposeControllers() {
+    // just in case the scroll controller was disposed beforehand
+    try{
+      scrollController.dispose();
+    } catch (_) {}
     disposeVideoControllers();
     disposeAudioControllers();
   }

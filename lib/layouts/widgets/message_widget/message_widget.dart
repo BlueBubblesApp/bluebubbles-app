@@ -61,19 +61,13 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
   Message? _olderMessage;
 
   @override
-  void initState() {
-    super.initState();
-    init();
-  }
-
-  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     init();
   }
 
   void init() {
-    currentChat = CurrentChat.activeChat;
+    currentChat = CurrentChat.of(context);
     if (handledInit) return;
     handledInit = true;
     _message = widget.message;
