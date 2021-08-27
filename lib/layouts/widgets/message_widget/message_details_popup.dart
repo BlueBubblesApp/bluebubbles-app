@@ -178,6 +178,10 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                 child: Container(
                   width: widget.childSize!.width,
                   height: widget.childSize!.height,
+                  constraints: BoxConstraints(
+                    maxWidth: widget.childSize!.width,
+                    maxHeight: widget.childSize!.height,
+                  ),
                   child: widget.child,
                 ),
               ),
