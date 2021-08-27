@@ -273,7 +273,7 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
         stickersWidget: stickersWidget,
         attachmentsWidget: widgetAttachments,
         reactionsWidget: reactionsWidget,
-        shouldFadeIn: currentChat?.sentMessages.contains(_message.guid) ?? false,
+        shouldFadeIn: (_message.dateCreated?.difference(DateTime.now()).inSeconds ?? 0) <= 1,
         showHero: widget.showHero,
         showDeliveredReceipt: widget.isFirstSentMessage,
       );

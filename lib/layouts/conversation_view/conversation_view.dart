@@ -498,10 +498,10 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                                       children: [
                                         MessagesView(
                                           key: new Key(chat?.guid ?? "unknown-chat"),
-                                          messageBloc: messageBloc,
+                                          messageBloc: messageBloc!,
                                           currentChat: controller,
                                           showHandle: chat!.participants.length > 1,
-                                          chat: chat,
+                                          chat: chat!,
                                           initComplete: widget.onMessagesViewComplete,
                                         ),
                                         CurrentChat.forGuid(chat!.guid!) != null

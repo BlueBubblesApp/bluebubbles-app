@@ -40,7 +40,6 @@ class CurrentChat extends GetxController {
   Map<String, Tuple2<ChewieAudioController, VideoPlayerController>> audioPlayers = {};
   List<VideoPlayerController> videoControllersToDispose = [];
   List<Attachment> chatAttachments = [];
-  List<Message?> sentMessages = [];
   bool keyboardOpen = false;
   bool isAlive = false;
   late MessageMarkers messageMarkers;
