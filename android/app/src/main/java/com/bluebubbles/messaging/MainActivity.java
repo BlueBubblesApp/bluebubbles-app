@@ -285,10 +285,6 @@ public class MainActivity extends FlutterFragmentActivity {
 
     @Override
     protected void onStart() {
-        if (engine != null) {
-            engine.destroy();
-            engine = null;
-        }
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("MyData"));
         WorkManager.getInstance(getApplicationContext()).cancelAllWork();
         super.onStart();
