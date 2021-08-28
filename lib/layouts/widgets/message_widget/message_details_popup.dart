@@ -236,16 +236,15 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   }
 
   Widget buildReactionMenu() {
-    Size size = Get.mediaQuery.size;
-
-    double reactionIconSize = ((8.5 / 10 * min(size.width, size.height)) / (ReactionTypes.toList().length).toDouble());
+    double reactionIconSize = ((8.5 / 10 * min(context.width, context.height)) / (ReactionTypes.toList().length).toDouble()).clamp(50, 60);
     double maxMenuWidth = (ReactionTypes.toList().length * reactionIconSize).toDouble();
+    maxMenuWidth = min(context.width - 50, maxMenuWidth + 30);
     double menuHeight = (reactionIconSize).toDouble();
     double topPadding = -20;
-    double topOffset = (messageTopOffset - menuHeight).toDouble().clamp(topMinimum, size.height - 120 - menuHeight);
+    double topOffset = (messageTopOffset - menuHeight).toDouble().clamp(topMinimum, context.height - 120 - menuHeight);
     bool shiftRight = currentChat!.chat.isGroup() || SettingsManager().settings.alwaysShowAvatars.value;
     double leftOffset =
-        (widget.message.isFromMe! ? size.width - maxMenuWidth - 25 : 25 + (shiftRight ? 20 : 0)).toDouble();
+        (widget.message.isFromMe! ? context.width - maxMenuWidth - 25 : 25 + (shiftRight ? 20 : 0)).toDouble();
     Color iconColor = Colors.white;
 
     if (Theme.of(context).accentColor.computeLuminance() >= 0.179) {
@@ -262,13 +261,15 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
           child: Container(
             padding: const EdgeInsets.all(5),
             height: menuHeight,
+            width: maxMenuWidth,
             decoration: BoxDecoration(
               color: Theme.of(context).accentColor.withAlpha(150),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.start,
+            child: ListView(
+              shrinkWrap: true,
+              scrollDirection: Axis.horizontal,
+              physics: ThemeSwitcher.getScrollPhysics(),
               children: ReactionTypes.toList()
                   .map(
                     (e) => Padding(
