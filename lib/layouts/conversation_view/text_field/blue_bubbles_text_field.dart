@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
+import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/list/text_field_attachment_list.dart';
@@ -238,7 +239,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     file.delete();
   }
 
-  void onContentCommit(CommittedContent content) async {
+  /*void onContentCommit(CommittedContent content) async {
     // Add some debugging logs
     debugPrint("[Content Commit] Keyboard received content");
     debugPrint("  -> Content Type: ${content.mimeType}");
@@ -259,7 +260,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     } else {
       showSnackbar('Insertion Failed', 'Attachment has no data!');
     }
-  }
+  }*/
 
   Future<void> reviewAudio(BuildContext originalContext, File file) async {
     showDialog(
@@ -549,7 +550,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     if (!SettingsManager().settings.sendWithReturn.value || isNullOrEmpty(value)!) return;
                     sendMessage();
                   },
-                  onContentCommitted: onContentCommit,
+                  //onContentCommitted: onContentCommit,
                   textCapitalization: TextCapitalization.sentences,
                   focusNode: focusNode,
                   autocorrect: true,
@@ -595,7 +596,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                 : Colors.white,
                         fontSizeDelta: -0.25,
                       ),
-                  onContentCommitted: onContentCommit,
+                  //onContentCommitted: onContentCommit,
                   decoration: InputDecoration(
                     isDense: true,
                     enabledBorder: OutlineInputBorder(
@@ -652,7 +653,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                 : Colors.white,
                         fontSizeDelta: -0.25,
                       ),
-                  onContentCommitted: onContentCommit,
+                  //onContentCommitted: onContentCommit,
                   decoration: InputDecoration(
                     isDense: true,
                     enabledBorder: OutlineInputBorder(
