@@ -275,10 +275,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             children: [
               Text("Review your audio snippet before sending it", style: Theme.of(context).textTheme.subtitle1),
               Container(height: 10.0),
-              AudioPlayerWiget(
+              AudioPlayerWidget(
                 key: new Key("AudioMessage-${file.length().toString()}"),
                 file: file,
-                context: originalContext,
               )
             ],
           ),
