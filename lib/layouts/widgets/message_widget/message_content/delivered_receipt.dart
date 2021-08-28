@@ -6,6 +6,9 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+// Placeholder class so we can get vsync support in the stateless widget
+class DeliveredReceiptController extends GetxController with SingleGetTickerProviderMixin {}
+
 class DeliveredReceipt extends StatelessWidget {
   DeliveredReceipt({
     Key? key,
@@ -16,6 +19,7 @@ class DeliveredReceipt extends StatelessWidget {
   final bool showDeliveredReceipt;
   final bool shouldAnimate;
   final Message message;
+  final DeliveredReceiptController controller = DeliveredReceiptController();
 
   bool shouldShow(BuildContext context, Message? myLastMessage, Message? lastReadMessage, Message? lastDeliveredMessage) {
     // If we have no delivered date, don't show anything
@@ -92,6 +96,7 @@ class DeliveredReceipt extends StatelessWidget {
     Widget item;
     if (shouldAnimate) {
       item = AnimatedSize(
+          vsync: controller,
           curve: Curves.easeInOut,
           alignment: Alignment.bottomLeft,
           duration: Duration(milliseconds: 250),
