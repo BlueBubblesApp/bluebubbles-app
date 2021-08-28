@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
-import 'package:bluebubbles/helpers/socket_singletons.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/pinned_tile_text_bubble.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
@@ -12,10 +11,8 @@ import 'package:bluebubbles/layouts/widgets/message_widget/reactions_widget.dart
 import 'package:bluebubbles/layouts/widgets/message_widget/typing_indicator.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
-import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
@@ -41,23 +38,6 @@ class PinnedConversationTile extends StatefulWidget {
 }
 
 class _PinnedConversationTileState extends State<PinnedConversationTile> with AutomaticKeepAliveClientMixin {
-  bool isFetching = false;
-  Brightness? brightness;
-  Color? previousBackgroundColor;
-  bool gotBrightness = false;
-
-  void loadBrightness() {
-    Color now = context.theme.backgroundColor;
-    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
-    if (!themeChanged && gotBrightness) return;
-
-    previousBackgroundColor = now;
-
-    bool isDark = now.computeLuminance() < 0.179;
-    brightness = isDark ? Brightness.dark : Brightness.light;
-    gotBrightness = true;
-    if (this.mounted) setState(() {});
-  }
 
   @override
   void initState() {
@@ -66,9 +46,6 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
   }
 
   Future<void> fetchParticipants() async {
-    if (isFetching) return;
-    isFetching = true;
-
     // If our chat does not have any participants, get them
     if (isNullOrEmpty(widget.chat.participants)!) {
       await widget.chat.getParticipants();
@@ -76,8 +53,6 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
         setState(() {});
       }
     }
-
-    isFetching = false;
   }
 
   void onTapUp(details) {

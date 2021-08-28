@@ -13,17 +13,8 @@ import 'package:get/get.dart';
 
 class ContactAvatarGroupWidget extends StatelessWidget {
   ContactAvatarGroupWidget({Key? key, this.size = 40, this.editable = true, this.onTap, required this.chat})
-      : super(key: key);
-  final Chat chat;
-  final double size;
-  final bool editable;
-  final Function()? onTap;
-  final RxList<Handle> participants = RxList<Handle>();
-
-  @override
-  Widget build(BuildContext context) {
-    participants.value = chat.participants;
-
+      : super(key: key) {
+    participants = RxList<Handle>(chat.participants);
     participants.sort((a, b) {
       bool avatarA = ContactManager().getCachedContactSync(a.address)?.avatar?.isNotEmpty ?? false;
       bool avatarB = ContactManager().getCachedContactSync(b.address)?.avatar?.isNotEmpty ?? false;
@@ -31,11 +22,15 @@ class ContactAvatarGroupWidget extends StatelessWidget {
       if (avatarA && !avatarB) return -1;
       return 0;
     });
+  }
+  final Chat chat;
+  final double size;
+  final bool editable;
+  final Function()? onTap;
+  late final RxList<Handle> participants;
 
-    for (Handle participant in participants) {
-      if (!(ContactManager().handleToContact[participant]?.avatar?.isNotEmpty ?? false)) {}
-    }
-
+  @override
+  Widget build(BuildContext context) {
     if (participants.length == 0) {
       return Container(
         width: size,
