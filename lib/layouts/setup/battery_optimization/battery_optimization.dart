@@ -4,13 +4,16 @@ import 'package:flutter/services.dart';
 import 'package:battery_optimization/battery_optimization.dart';
 import 'package:get/get.dart';
 
+// Dummy controller so we can use [GetBuilder]
+class BatteryOptimizationController extends GetxController {}
+
 class BatteryOptimizationPage extends StatelessWidget {
   const BatteryOptimizationPage({Key? key, required this.controller}) : super(key: key);
   final PageController controller;
 
   @override
   Widget build(BuildContext context) {
-    return GetBuilder(
+    return GetBuilder<BatteryOptimizationController>(
         initState: (_) {
           // If battery optimizations are already disabled, go to the next page
           BatteryOptimization.isIgnoringBatteryOptimizations().then((isDisabled) {
@@ -22,6 +25,7 @@ class BatteryOptimizationPage extends StatelessWidget {
             }
           });
         },
+        init: BatteryOptimizationController(),
         global: false,
         builder: (_) => AnnotatedRegion<SystemUiOverlayStyle>(
           value: SystemUiOverlayStyle(
