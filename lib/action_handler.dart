@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
@@ -12,7 +13,6 @@ import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/outgoing_queue.dart';
@@ -23,7 +23,6 @@ import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
-import 'package:collection/collection.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
@@ -466,7 +465,7 @@ class ActionHandler {
           chat = await chat.changeName(message.groupTitle);
           ChatBloc().updateChat(chat);
         }
-
+        NewMessageManager().addMessage(chat, message);
         // Replace the chat with the updated chat
         chats[i] = chat;
       }
@@ -479,9 +478,6 @@ class ActionHandler {
         }
       }
 
-      chats.forEach((element) {
-        if (!isHeadless) NewMessageManager().addMessage(element, message);
-      });
     } else if (NotificationManager().hasProcessed(data["guid"])) {
       Message? existing = await Message.findOne({'guid': data['guid']});
       if (existing != null) {

@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
+import 'dart:ui';
 
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -95,16 +97,28 @@ class MethodChannelInterface {
         // Retreive the data for this message as a json
         Map<String, dynamic>? data = jsonDecode(call.arguments);
 
-        // Add it to the queue with the data as the item
-        IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_MESSAGE_EVENT, item: {"data": data}));
+        final SendPort? send = IsolateNameServer.lookupPortByName('bg_isolate');
+        if (send != null) {
+          data!['action'] = 'new-message';
+          send.send(data);
+        } else {
+          // Add it to the queue with the data as the item
+          IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_MESSAGE_EVENT, item: {"data": data}));
+        }
 
         return new Future.value("");
       case "updated-message":
         // Retreive the data for this message as a json
         Map<String, dynamic>? data = jsonDecode(call.arguments);
 
-        // Add it to the queue with the data as the item
-        IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_UPDATE_MESSAGE, item: {"data": data}));
+        final SendPort? send = IsolateNameServer.lookupPortByName('bg_isolate');
+        if (send != null) {
+          data!['action'] = 'new-message';
+          send.send(data);
+        } else {
+          // Add it to the queue with the data as the item
+          IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_UPDATE_MESSAGE, item: {"data": data}));
+        }
 
         return new Future.value("");
       case "ChatOpen":
@@ -270,7 +284,7 @@ class MethodChannelInterface {
     }
   }
 
-  Future<void> openChat(String id, {List<File> existingAttachments = const [], String? existingText}) async {
+  Future<void> openChat(String id, {BuildContext? context, List<File> existingAttachments = const [], String? existingText}) async {
     if (id == "-1") {
       Get.until((route) => route.isFirst);
       return;
@@ -306,7 +320,8 @@ class MethodChannelInterface {
 
       // if (!CurrentChat.isActive(openedChat.guid))
       // Actually navigate to the chat page
-      Get.offUntil(
+      if (context != null) {
+        Navigator.of(context).pushAndRemoveUntil(
           ThemeSwitcher.buildPageRoute(
             builder: (context) => ConversationView(
               chat: openedChat,
@@ -316,6 +331,18 @@ class MethodChannelInterface {
           ),
           (route) => route.isFirst,
         );
+      } else {
+        Get.offUntil(
+          ThemeSwitcher.buildPageRoute(
+            builder: (context) => ConversationView(
+              chat: openedChat,
+              existingAttachments: existingAttachments,
+              existingText: existingText,
+            ),
+          ),
+          (route) => route.isFirst,
+        );
+      }
 
       // We have a delay, because the first [switchChat] does not work.
       // Because we are pushing AND removing until it is the first route,

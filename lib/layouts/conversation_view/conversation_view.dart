@@ -486,9 +486,11 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                                   autoRemove: false,
                                   initState: (state) {
                                     ChatBloc().currentChatGuids.add(chat!.guid!);
+                                    CurrentChat.forGuid(chat!.guid!)?.isAlive = true;
                                   },
                                   dispose: (state) {
                                     ChatBloc().currentChatGuids.remove(chat!.guid!);
+                                    CurrentChat.forGuid(chat!.guid!)?.isAlive = false;
                                   },
                                   tag: chat!.guid,
                                   builder: (controller) => CurrentChatInheritedWidget(

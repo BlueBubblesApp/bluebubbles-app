@@ -378,10 +378,10 @@ class AttachmentHelper {
 
     // Check if the compressed file exists, and return it if it does
     int quality = qualityOverride ?? SettingsManager().compressionQuality;
-    File cachedFile = new File("$filePath.${quality.toString()}.compressed");
+    /*File cachedFile = new File("$filePath.${quality.toString()}.compressed");
     if (cachedFile.existsSync() && cachedFile.statSync().size != 0) {
       return cachedFile.readAsBytes();
-    }
+    }*/
 
     // Get dimensions and preview images
     Uint8List? previewData;
@@ -399,6 +399,7 @@ class AttachmentHelper {
         debugPrint('Failed to get GIF dimensions! Error: ${ex.toString()}');
       }
     } else if (mimeStart == "image") {
+      previewData = originalFile.readAsBytesSync();
       // For images, load properties
       try {
         ImageProperties props = await FlutterNativeImage.getImageProperties(filePath);
@@ -441,7 +442,7 @@ class AttachmentHelper {
       debugPrint('Failed to read EXIF data: ${ex.toString()}');
     }
     bool usedFallback = false;
-    // If the preview data is null, compress the file
+    /*// If the preview data is null, compress the file
     if (previewData == null) {
       // Compress the file
       ReceivePort receivePort = ReceivePort();
@@ -508,7 +509,7 @@ class AttachmentHelper {
     }
     debugPrint("Got previewData: ${previewData.isNotEmpty}");
     // As long as we have preview data now, save it
-    cachedFile.writeAsBytes(previewData);
+    cachedFile.writeAsBytes(previewData);*/
 
     // If we should update the attachment data, do it right before we return, no awaiting
     attachment.update();

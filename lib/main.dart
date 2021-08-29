@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:isolate';
+import 'dart:ui';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
@@ -25,9 +27,11 @@ import 'package:bluebubbles/layouts/testing_mode.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/background_isolate.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
+import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
+import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/theme_object.dart';
@@ -278,6 +282,8 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> with WidgetsBindingObserver {
+  ReceivePort port = ReceivePort();
+
   @override
   void initState() {
     super.initState();
@@ -303,6 +309,18 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       "Socket Connection Error",
       "Notifications that will appear when the connection to the server has failed",
     );
+
+    IsolateNameServer.registerPortWithName(port.sendPort, 'bg_isolate');
+    port.listen((dynamic data) {
+      print('Event: $data');
+      if (data['action'] == 'new-message') {
+        // Add it to the queue with the data as the item
+        IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_MESSAGE_EVENT, item: {"data": data}));
+      } else if (data['action'] == 'update-message') {
+        // Add it to the queue with the data as the item
+        IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_UPDATE_MESSAGE, item: {"data": data}));
+      }
+    });
 
     // Get the saved settings from the settings manager after the first frame
     SchedulerBinding.instance!.addPostFrameCallback((_) async {
@@ -361,7 +379,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         if (!SettingsManager().settings.finishedSetup.value) return;
         if (value != null) {
           // Open that chat
-          MethodChannelInterface().openChat(value.toString());
+          MethodChannelInterface().openChat(value.toString(), context: context);
         }
       });
     });
