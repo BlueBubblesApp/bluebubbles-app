@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
+import 'dart:ui';
 
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -93,16 +95,30 @@ class MethodChannelInterface {
         // Retreive the data for this message as a json
         Map<String, dynamic>? data = jsonDecode(call.arguments);
 
-        // Add it to the queue with the data as the item
-        IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_MESSAGE_EVENT, item: {"data": data}));
+        // send data to the UI thread if it is active, otherwise handle in the isolate
+        final SendPort? send = IsolateNameServer.lookupPortByName('bg_isolate');
+        if (send != null) {
+          data!['action'] = 'new-message';
+          send.send(data);
+        } else {
+          // Add it to the queue with the data as the item
+          IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_MESSAGE_EVENT, item: {"data": data}));
+        }
 
         return new Future.value("");
       case "updated-message":
         // Retreive the data for this message as a json
         Map<String, dynamic>? data = jsonDecode(call.arguments);
 
-        // Add it to the queue with the data as the item
-        IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_UPDATE_MESSAGE, item: {"data": data}));
+        // send data to the UI thread if it is active, otherwise handle in the isolate
+        final SendPort? send = IsolateNameServer.lookupPortByName('bg_isolate');
+        if (send != null) {
+          data!['action'] = 'new-message';
+          send.send(data);
+        } else {
+          // Add it to the queue with the data as the item
+          IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_UPDATE_MESSAGE, item: {"data": data}));
+        }
 
         return new Future.value("");
       case "ChatOpen":
