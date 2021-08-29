@@ -155,7 +155,7 @@ class SentMessageHelper {
     return Container(
       width: customWidth != null ? customWidth - (showTail ? 20 : 0) : null,
       constraints: BoxConstraints(
-        maxWidth: customWidth != null ? customWidth - (showTail ? 20 : 0) : context.width * MessageWidgetMixin.MAX_SIZE + (!padding ? 100 : 0) + 20,
+        maxWidth: customWidth != null ? customWidth - (showTail ? 20 : 0) : context.width,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
