@@ -222,10 +222,14 @@ class _ConversationListState extends State<ConversationList> {
         onPressed: openNewChatCreator);
   }
 
-  List<Widget> getConnectionIndicatorWidgets() {
-    if (!SettingsManager().settings.showConnectionIndicator.value) return [];
-
-    return [Obx(() => getIndicatorIcon(SocketManager().state.value, size: 12)), Container(width: 10.0)];
+  Widget getConnectionIndicatorWidget() {
+    return Obx(() {
+      if (!SettingsManager().settings.showConnectionIndicator.value) return Container();
+      return Padding(
+        padding: const EdgeInsets.only(right: 8.0),
+        child: getIndicatorIcon(SocketManager().state.value, size: 12),
+      );
+    });
   }
 
   @override
@@ -346,7 +350,7 @@ class _Cupertino extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
                                 ...parent.getHeaderTextWidgets(),
-                                ...parent.getConnectionIndicatorWidgets(),
+                                parent.getConnectionIndicatorWidget(),
                                 parent.getSyncIndicatorWidget(),
                               ],
                             ),
@@ -502,7 +506,7 @@ class _Cupertino extends StatelessWidget {
               }),
               Obx(() {
                 ChatBloc().chats.archivedHelper(showArchived).sort(Chat.sort);
-                if (!ChatBloc().hasChats.value) {
+                if (!ChatBloc().loadedChats.value) {
                   return SliverToBoxAdapter(
                     child: Center(
                       child: Container(
@@ -523,7 +527,7 @@ class _Cupertino extends StatelessWidget {
                     ),
                   );
                 }
-                if (!ChatBloc().hasChats.value) {
+                if (ChatBloc().loadedChats.value && ChatBloc().chats.isEmpty) {
                   return SliverToBoxAdapter(
                     child: Center(
                       child: Container(
@@ -746,7 +750,7 @@ class __MaterialState extends State<_Material> {
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             ...widget.parent.getHeaderTextWidgets(size: 20),
-                            ...widget.parent.getConnectionIndicatorWidgets(),
+                            widget.parent.getConnectionIndicatorWidget(),
                             widget.parent.getSyncIndicatorWidget(),
                           ],
                         ),
@@ -1263,7 +1267,7 @@ class _SamsungState extends State<_Samsung> {
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
                             ...widget.parent.getHeaderTextWidgets(size: 20),
-                            ...widget.parent.getConnectionIndicatorWidgets(),
+                            widget.parent.getConnectionIndicatorWidget(),
                             widget.parent.getSyncIndicatorWidget(),
                           ],
                         ),
