@@ -89,6 +89,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   CustomAnimationControl controller = CustomAnimationControl.stop;
   bool wasCreator = false;
   GlobalKey key = GlobalKey();
+  Worker? worker;
 
   @override
   void initState() {
@@ -144,8 +145,22 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     if (widget.chat != null && messageBloc == null) {
       messageBloc = MessageBloc(widget.chat);
     }
+    initListener();
+
+    SchedulerBinding.instance!.addPostFrameCallback((_) {
+      if (widget.showSnackbar) {
+        showSnackbar('Warning',
+            'Support for creating chats is currently limited on MacOS 11 (Big Sur) and up due to limitations imposed by Apple');
+      }
+    });
+
+    // Bind the lifecycle events
+    WidgetsBinding.instance!.addObserver(this);
+  }
+
+  void initListener() {
     if (messageBloc != null) {
-      ever<MessageBlocEvent?>(messageBloc!.event, (event) async {
+      worker = ever<MessageBlocEvent?>(messageBloc!.event, (event) async {
         // Get outta here if we don't have a chat "open"
         if (currentChat == null) return;
         if (event == null) return;
@@ -167,8 +182,9 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
             maxLines: 1,
           ).createRenderObject(context);
           final size = renderParagraph.getDryLayout(constraints);
-          if (!(message?.hasAttachments ?? false) && !(message?.text?.isEmpty ?? false))
+          if (!(event.message?.hasAttachments ?? false) && !(event.message?.text?.isEmpty ?? false))
             setState(() {
+              print(message);
               tween = Tween<double>(begin: context.width - 30, end: min(size.width + 68, context.width * MessageWidgetMixin.MAX_SIZE + 40));
               controller = CustomAnimationControl.play;
               message = event.message;
@@ -176,16 +192,6 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         }
       });
     }
-
-    SchedulerBinding.instance!.addPostFrameCallback((_) {
-      if (widget.showSnackbar) {
-        showSnackbar('Warning',
-            'Support for creating chats is currently limited on MacOS 11 (Big Sur) and up due to limitations imposed by Apple');
-      }
-    });
-
-    // Bind the lifecycle events
-    WidgetsBinding.instance!.addObserver(this);
   }
 
   @override
@@ -244,6 +250,9 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         messageBloc = initMessageBloc();
         messageBloc!.getMessages();
       }
+      if (worker == null) {
+        initListener();
+      }
     } else {
       if (isDifferentChat) {
         initCurrentChat(chat!);
@@ -268,14 +277,6 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     } else if (chat != null) {
       // We include messageBloc here because the bloc listener may not be instantiated yet
       ActionHandler.sendMessage(chat!, text, messageBloc: messageBloc);
-    }
-
-    if (isCreator!) {
-      isCreator = false;
-      wasCreator = true;
-      this.existingText = "";
-      this.existingAttachments = [];
-      setState(() {});
     }
 
     return true;
@@ -533,6 +534,10 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                           tween = Tween<double>(begin: 1, end: 0);
                           controller = CustomAnimationControl.stop;
                           message = null;
+                          isCreator = false;
+                          wasCreator = true;
+                          this.existingText = "";
+                          this.existingAttachments = [];
                         });
                       },
                       child: Visibility(
