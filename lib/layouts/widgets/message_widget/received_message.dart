@@ -258,7 +258,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
       message = Padding(padding: EdgeInsets.only(left: 10.0), child: BalloonBundleWidget(message: widget.message));
     } else if (widget.message.hasText()) {
       message = _buildMessageWithTail(widget.message);
-      if (widget.message.fullText.hasUrl) {
+      if (widget.message.fullText.replaceAll("\n", " ").hasUrl) {
         message = Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
