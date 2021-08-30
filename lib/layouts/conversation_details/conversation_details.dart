@@ -464,7 +464,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                           color: Theme.of(context).primaryColor,
                         )),
                     trailing: Switch(
-                        value: widget.chat.isMuted!,
+                        value: widget.chat.muteType == "mute",
                         activeColor: Theme.of(context).primaryColor,
                         activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
                         inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),

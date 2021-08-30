@@ -15,6 +15,7 @@ import 'package:bluebubbles/layouts/settings/chat_list_panel.dart';
 import 'package:bluebubbles/layouts/settings/conversation_panel.dart';
 import 'package:bluebubbles/layouts/settings/custom_avatar_color_panel.dart';
 import 'package:bluebubbles/layouts/settings/custom_avatar_panel.dart';
+import 'package:bluebubbles/layouts/settings/notification_panel.dart';
 import 'package:bluebubbles/layouts/settings/pinned_order_panel.dart';
 import 'package:bluebubbles/layouts/settings/private_api_panel.dart';
 import 'package:bluebubbles/layouts/settings/redacted_mode_panel.dart';
@@ -42,12 +43,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' hide Priority;
 import 'package:flutter/services.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 import 'package:get/get.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:secure_application/secure_application.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 
 // final SentryClient _sentry = SentryClient(
 //     dsn:
@@ -64,6 +69,8 @@ bool get isInDebugMode {
 
   return inDebugMode;
 }
+
+FlutterLocalNotificationsPlugin? flutterLocalNotificationsPlugin;
 
 Future<Null> _reportError(dynamic error, dynamic stackTrace) async {
   // Print the exception to the console.
@@ -117,6 +124,13 @@ Future<Null> main() async {
     await SettingsManager().init();
     await SettingsManager().getSavedSettings(headless: true);
     Get.put(AttachmentDownloadService());
+    flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+    const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('ic_stat_icon');
+    final InitializationSettings initializationSettings = InitializationSettings(
+        android: initializationSettingsAndroid);
+    await flutterLocalNotificationsPlugin!.initialize(initializationSettings);
+    tz.initializeTimeZones();
+    tz.setLocalLocation(tz.getLocation(await FlutterNativeTimezone.getLocalTimezone()));
   } catch (e) {
     exception = e;
   }
@@ -250,6 +264,7 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
               page: () => CustomAvatarPanel(),
               name: "/settings/custom-avatar-panel",
               binding: CustomAvatarPanelBinding()),
+          GetPage(page: () => NotificationPanel(), name: "/settings/notification-panel"),
           GetPage(page: () => PinnedOrderPanel(), name: "/settings/pinned-order-panel"),
           GetPage(
               page: () => PrivateAPIPanel(), name: "/settings/private-api-panel", binding: PrivateAPIPanelBinding()),

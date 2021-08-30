@@ -52,6 +52,8 @@ class Settings {
   final RxBool use24HrFormat = false.obs;
   final RxBool alwaysShowAvatars = false.obs;
   final RxBool notifyOnChatList = false.obs;
+  final RxBool notifyReactions = true.obs;
+  final RxString notificationSound = "default".obs;
 
   // final RxString emojiFontFamily;
 
@@ -252,6 +254,10 @@ class Settings {
         settings.maxAvatarsInGroupWidget.value = entry.value;
       } else if (entry.name == "notifyOnChatList") {
         settings.notifyOnChatList.value = entry.value;
+      } else if (entry.name == "notifyReactions") {
+        settings.notifyReactions.value = entry.value;
+      } else if (entry.name == "notificationSound") {
+        settings.notificationSound.value = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -651,6 +657,16 @@ class Settings {
           name: "notifyOnChatList",
           value: this.notifyOnChatList.value,
           type: this.notifyOnChatList.runtimeType,
+        ),
+        ConfigEntry(
+          name: "notifyReactions",
+          value: this.notifyReactions.value,
+          type: this.notifyReactions.runtimeType,
+        ),
+        ConfigEntry(
+          name: "notificationSound",
+          value: this.notificationSound.value,
+          type: this.notificationSound.runtimeType,
         )
         // ConfigEntry(
         //     name: "emojiFontFamily",
@@ -698,6 +714,8 @@ class Settings {
       'use24HrFormat': this.use24HrFormat.value,
       'alwaysShowAvatars': this.alwaysShowAvatars.value,
       'notifyOnChatList': this.notifyOnChatList.value,
+      'notifyReactions': this.notifyReactions.value,
+      'notificationSound': this.notificationSound.value,
       'enablePrivateAPI': this.enablePrivateAPI.value,
       'privateSendTypingIndicators': this.privateSendTypingIndicators.value,
       'privateMarkChatAsRead': this.privateMarkChatAsRead.value,
@@ -774,6 +792,8 @@ class Settings {
     SettingsManager().settings.use24HrFormat.value = map['use24HrFormat'];
     SettingsManager().settings.alwaysShowAvatars.value = map['alwaysShowAvatars'];
     SettingsManager().settings.notifyOnChatList.value = map['notifyOnChatList'];
+    SettingsManager().settings.notifyReactions.value = map['notifyReactions'];
+    SettingsManager().settings.notifyReactions.value = map['notificationSound'];
     SettingsManager().settings.enablePrivateAPI.value = map['enablePrivateAPI'];
     SettingsManager().settings.privateSendTypingIndicators.value = map['privateSendTypingIndicators'];
     SettingsManager().settings.privateMarkChatAsRead.value = map['privateMarkChatAsRead'];

@@ -19,6 +19,7 @@ import android.graphics.RectF;
 import android.graphics.drawable.Icon;
 import android.os.Build;
 import android.os.Bundle;
+import android.net.Uri;
 import android.service.notification.StatusBarNotification;
 
 import androidx.annotation.RequiresApi;
@@ -81,6 +82,7 @@ public class NewMessageNotification implements Handler {
         Integer notificationVisibility = (Integer) call.argument("visibility");
         Integer notificationId = (Integer) call.argument("notificationId");
         Integer summaryId = (Integer) call.argument("summaryId");
+        String soundPath = (String) call.argument("sound");
 
         // Find any notifications that already exist for the chat
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
@@ -282,6 +284,12 @@ public class NewMessageNotification implements Handler {
                 .addExtras(extras)
                 // Set the color. This is the blue primary color
                 .setColor(4888294);
+
+        // Set the sound of the notification (Android 7 and below)
+        if (soundPath != "default") {
+            int soundResourceId = context.getResources().getIdentifier(soundPath, "raw", context.getPackageName());
+            notificationBuilder.setSound(Uri.parse("android.resource://" + context.getPackageName() + "/" + soundResourceId));
+        }
 
         // Disable the alert if it's from you
         notificationBuilder.setOnlyAlertOnce(messageIsFromMe);

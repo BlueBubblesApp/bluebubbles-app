@@ -34,6 +34,7 @@ class ConversationTile extends StatefulWidget {
   final Function(bool)? onSelect;
   final bool inSelectMode;
   final List<Chat> selected;
+  final Widget? subtitle;
 
   ConversationTile({
     Key? key,
@@ -43,6 +44,7 @@ class ConversationTile extends StatefulWidget {
     this.onSelect,
     this.inSelectMode = false,
     this.selected = const [],
+    this.subtitle,
   }) : super(key: key);
 
   @override
@@ -174,11 +176,11 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
           secondaryActions: <Widget>[
             if (!widget.chat.isArchived! && SettingsManager().settings.iosShowAlert.value)
               IconSlideAction(
-                caption: widget.chat.isMuted! ? 'Show Alerts' : 'Hide Alerts',
+                caption: widget.chat.muteType == "mute" ? 'Show Alerts' : 'Hide Alerts',
                 color: Colors.purple[700],
-                icon: widget.chat.isMuted! ? Icons.notifications_active : Icons.notifications_off,
+                icon: widget.chat.muteType == "mute" ? Icons.notifications_active : Icons.notifications_off,
                 onTap: () async {
-                  await widget.chat.toggleMute(!widget.chat.isMuted!);
+                  await widget.chat.toggleMute(widget.chat.muteType != "mute");
                   if (this.mounted) setState(() {});
                 },
               ),
@@ -452,7 +454,7 @@ class __CupertinoState extends State<_Cupertino> {
                       contentPadding: EdgeInsets.only(left: 0),
                       minVerticalPadding: 10,
                       title: widget.parent.buildTitle(),
-                      subtitle: widget.parent.buildSubtitle(),
+                      subtitle: widget.parent.widget.subtitle ?? widget.parent.buildSubtitle(),
                       leading: widget.parent.buildLeading(),
                       trailing: Container(
                         padding: EdgeInsets.only(right: 8),
@@ -491,7 +493,7 @@ class __CupertinoState extends State<_Cupertino> {
                       Stack(
                         alignment: AlignmentDirectional.centerStart,
                         children: [
-                          (!widget.parent.widget.chat.isMuted! && widget.parent.widget.chat.hasUnreadMessage!)
+                          (widget.parent.widget.chat.muteType != "mute" && widget.parent.widget.chat.hasUnreadMessage!)
                               ? Container(
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(35),
@@ -511,7 +513,7 @@ class __CupertinoState extends State<_Cupertino> {
                               : Container(),
                         ],
                       ),
-                      widget.parent.widget.chat.isMuted!
+                      widget.parent.widget.chat.muteType == "mute"
                           ? SvgPicture.asset(
                               "assets/icon/moon.svg",
                               color: widget.parentProps.chat.hasUnreadMessage!
@@ -572,13 +574,13 @@ class _Material extends StatelessWidget {
             child: ListTile(
               dense: SettingsManager().settings.denseChatTiles.value,
               title: parent.buildTitle(),
-              subtitle: parent.buildSubtitle(),
+              subtitle: parent.widget.subtitle ?? parent.buildSubtitle(),
               minVerticalPadding: 10,
               leading: Stack(
                 alignment: Alignment.topRight,
                 children: [
                   parent.buildLeading(),
-                  if (!parent.widget.chat.isMuted!)
+                  if (parent.widget.chat.muteType != "mute")
                     Container(
                       width: 10,
                       height: 10,
@@ -599,7 +601,7 @@ class _Material extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: <Widget>[
                       if (parent.widget.chat.isPinned!) Icon(Icons.star, size: 15, color: Colors.yellow),
-                      if (parent.widget.chat.isMuted!)
+                      if (parent.widget.chat.muteType == "mute")
                         Icon(
                           Icons.notifications_off,
                           color: parent.widget.chat.hasUnreadMessage!
@@ -667,12 +669,12 @@ class _Samsung extends StatelessWidget {
               isThreeLine: true,
               dense: SettingsManager().settings.denseChatTiles.value,
               title: parent.buildTitle(),
-              subtitle: parent.buildSubtitle(),
+              subtitle: parent.widget.subtitle ?? parent.buildSubtitle(),
               leading: Stack(
                 alignment: Alignment.topRight,
                 children: [
                   parent.buildLeading(),
-                  if (!parent.widget.chat.isMuted!)
+                  if (parent.widget.chat.muteType != "mute")
                     Container(
                       width: 15,
                       height: 15,
@@ -693,7 +695,7 @@ class _Samsung extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: <Widget>[
                       if (parent.widget.chat.isPinned!) Icon(Icons.star, size: 15, color: Colors.yellow),
-                      if (parent.widget.chat.isMuted!)
+                      if (parent.widget.chat.muteType == "mute")
                         Icon(
                           Icons.notifications_off,
                           color: Theme.of(context).textTheme.subtitle1!.color,
