@@ -283,7 +283,12 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
 
         return widget.chat.latestMessageText != null && !(widget.chat.latestMessageText is String)
             ? widget.chat.latestMessageText as Widget
-            : TextOneLine(message ?? "", style: style, overflow: TextOverflow.ellipsis);
+            : Text(
+                message ?? "",
+                style: style,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 2,
+              );
       },
     );
   }
@@ -430,6 +435,7 @@ class __CupertinoState extends State<_Cupertino> {
                 padding: const EdgeInsets.only(left: 20.0),
                 child: Obx(
                   () => Container(
+                    height: 72.0,
                     decoration: BoxDecoration(
                       border: (!SettingsManager().settings.hideDividers.value)
                           ? Border(
@@ -441,6 +447,7 @@ class __CupertinoState extends State<_Cupertino> {
                           : null,
                     ),
                     child: ListTile(
+                      isThreeLine: true,
                       dense: SettingsManager().settings.denseChatTiles.value,
                       contentPadding: EdgeInsets.only(left: 0),
                       title: widget.parent.buildTitle(),
@@ -551,6 +558,7 @@ class _Material extends StatelessWidget {
         },
         child: Obx(
           () => Container(
+            height: 72.0,
             decoration: BoxDecoration(
               border: (!SettingsManager().settings.hideDividers.value)
                   ? Border(
@@ -562,6 +570,7 @@ class _Material extends StatelessWidget {
                   : null,
             ),
             child: ListTile(
+              isThreeLine: true,
               dense: SettingsManager().settings.denseChatTiles.value,
               title: parent.buildTitle(),
               subtitle: parent.buildSubtitle(),
@@ -641,6 +650,7 @@ class _Samsung extends StatelessWidget {
         },
         child: Obx(
           () => Container(
+            height: 72.0,
             decoration: BoxDecoration(
               color: Theme.of(context).accentColor,
               border: (!SettingsManager().settings.hideDividers.value)
@@ -654,6 +664,7 @@ class _Samsung extends StatelessWidget {
                   : null,
             ),
             child: ListTile(
+              isThreeLine: true,
               dense: SettingsManager().settings.denseChatTiles.value,
               title: parent.buildTitle(),
               subtitle: parent.buildSubtitle(),
