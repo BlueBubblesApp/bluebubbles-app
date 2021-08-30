@@ -196,6 +196,11 @@ class Attachment {
       params.remove("metadata");
     }
 
+    // Don't override the mimetype if it's null
+    if (newAttachment.mimeType == null) {
+      params.remove("mimeType");
+    }
+
     await db.update("attachment", params, where: "ROWID = ?", whereArgs: [existing.id]);
     String appDocPath = SettingsManager().appDocDir.path;
     String pathName = "$appDocPath/attachments/$oldGuid";
