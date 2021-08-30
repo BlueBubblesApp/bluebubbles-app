@@ -125,9 +125,7 @@ class UrlPreviewWidget extends StatelessWidget {
 
           List<Widget> items = [
             Obx(() {
-              if (controller.data.value?.image != null &&
-                  controller.data.value!.image!.isNotEmpty &&
-                  linkPreviews.length <= 1) {
+              if (controller.data.value?.image != null && controller.data.value!.image!.isNotEmpty) {
                 if (controller.data.value!.image!.startsWith("/")) {
                   return Image.file(new File(controller.data.value!.image!),
                       filterQuality: FilterQuality.low, errorBuilder: (context, error, stackTrace) => Container());
@@ -135,7 +133,7 @@ class UrlPreviewWidget extends StatelessWidget {
                   return Image.network(controller.data.value!.image!,
                       filterQuality: FilterQuality.low, errorBuilder: (context, error, stackTrace) => Container());
                 }
-              } else if (linkPreviews.length > 1 && AttachmentHelper.attachmentExists(linkPreviews.last!)) {
+              } else if (linkPreviews.length > 1 && linkPreviews.last!.existsOnDisk) {
                 return Image.file(attachmentFile(linkPreviews.last!),
                     filterQuality: FilterQuality.low, errorBuilder: (context, error, stackTrace) => Container());
               }
