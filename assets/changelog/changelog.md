@@ -2,6 +2,28 @@
 
 Below are the last few BlueBubbles App release changelogs
 
+## v1.4.1
+
+### Bug Fixes
+
+### Enhancements
+
+* Increases message preview to 2 lines (max)
+* Send animation is now smoother & easier to maintain/modify
+
+### Bug Fixes
+
+* Fixes URL preview issues
+  - Issue where the favicon would not show
+  - Issue where the preview image would show briefly, then disappear
+* Fixes notification issues
+  - Issue where notifications would not be received, especially after a long sleep period
+  - (Hopeful) Issue where the notification summary would persist, even when there were no child notifications
+* Fixes Image preview issues
+  - Issue where you'd sometimes see a box behind an image preview
+  - Issue where an image would show as invalid, even if it's valid
+  - Issue where .webp and other unsupported image formats (on the Mac) would disappear after sending
+
 ## v1.4.0
 
 ### New Features
