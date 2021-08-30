@@ -7,6 +7,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
+import 'package:mime_type/mime_type.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../database.dart';
@@ -102,7 +103,7 @@ class Attachment {
       originalROWID: json.containsKey("originalROWID") ? json["originalROWID"] : null,
       guid: json["guid"],
       uti: json["uti"],
-      mimeType: mimeType,
+      mimeType: mimeType ?? mime(json['transferName']),
       transferState: json['transferState'].toString(),
       isOutgoing: (json["isOutgoing"] is bool) ? json['isOutgoing'] : ((json['isOutgoing'] == 1) ? true : false),
       transferName: json['transferName'],
