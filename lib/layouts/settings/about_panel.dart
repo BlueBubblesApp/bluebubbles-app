@@ -385,7 +385,9 @@ class AboutPanel extends StatelessWidget {
                                                       style: context.textTheme.subtitle1!),
                                                   Text(
                                                       "Version Code: " +
-                                                          (snapshot.hasData ? snapshot.data.buildNumber : "N/A"),
+                                                          (snapshot.hasData
+                                                              ? snapshot.data.buildNumber.toString().lastChars(4)
+                                                              : "N/A"),
                                                       style: context.textTheme.subtitle1!),
                                                 ],
                                               ),
