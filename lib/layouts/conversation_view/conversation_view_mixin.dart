@@ -686,11 +686,6 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     }
 
     if (matchingChats.length == 0) {
-      // If we haven't completed the chats request, wait for it to finish
-      if (!ChatBloc().chatRequest!.isCompleted) {
-        await ChatBloc().chatRequest!.future;
-      }
-
       for (var i in ChatBloc().chats) {
         // If the lengths don't match continue
         if (i.participants.length != selected.length) continue;
