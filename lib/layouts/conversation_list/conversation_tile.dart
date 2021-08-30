@@ -323,16 +323,18 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
   Widget _buildDate() => ConstrainedBox(
         constraints: BoxConstraints(maxWidth: 100.0),
         child: FutureBuilder<Message>(
-          future: widget.chat.latestMessage,
-          builder: (context, snapshot) {
-            return Obx(() => Text((snapshot.data?.error.value ?? 0) > 0 ? "Error" : buildDate(widget.chat.latestMessageDate),
-                textAlign: TextAlign.right,
-                style: Theme.of(context).textTheme.subtitle2!.copyWith(
-                      color: (snapshot.data?.error.value ?? 0) > 0 ? Colors.red : Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
-                    ),
-                overflow: TextOverflow.clip));
-          }
-        ),
+            future: widget.chat.latestMessage,
+            builder: (context, snapshot) {
+              return Obx(
+                  () => Text((snapshot.data?.error.value ?? 0) > 0 ? "Error" : buildDate(widget.chat.latestMessageDate),
+                      textAlign: TextAlign.right,
+                      style: Theme.of(context).textTheme.subtitle2!.copyWith(
+                            color: (snapshot.data?.error.value ?? 0) > 0
+                                ? Colors.red
+                                : Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
+                          ),
+                      overflow: TextOverflow.clip));
+            }),
       );
 
   void onTap() {
@@ -435,7 +437,6 @@ class __CupertinoState extends State<_Cupertino> {
                 padding: const EdgeInsets.only(left: 20.0),
                 child: Obx(
                   () => Container(
-                    height: 72.0,
                     decoration: BoxDecoration(
                       border: (!SettingsManager().settings.hideDividers.value)
                           ? Border(
@@ -447,9 +448,9 @@ class __CupertinoState extends State<_Cupertino> {
                           : null,
                     ),
                     child: ListTile(
-                      isThreeLine: true,
                       dense: SettingsManager().settings.denseChatTiles.value,
                       contentPadding: EdgeInsets.only(left: 0),
+                      minVerticalPadding: 10,
                       title: widget.parent.buildTitle(),
                       subtitle: widget.parent.buildSubtitle(),
                       leading: widget.parent.buildLeading(),
@@ -558,7 +559,6 @@ class _Material extends StatelessWidget {
         },
         child: Obx(
           () => Container(
-            height: 72.0,
             decoration: BoxDecoration(
               border: (!SettingsManager().settings.hideDividers.value)
                   ? Border(
@@ -570,10 +570,10 @@ class _Material extends StatelessWidget {
                   : null,
             ),
             child: ListTile(
-              isThreeLine: true,
               dense: SettingsManager().settings.denseChatTiles.value,
               title: parent.buildTitle(),
               subtitle: parent.buildSubtitle(),
+              minVerticalPadding: 10,
               leading: Stack(
                 alignment: Alignment.topRight,
                 children: [
