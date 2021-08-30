@@ -11,6 +11,7 @@ import androidx.core.app.NotificationManagerCompat;
 
 import com.bluebubbles.messaging.MainActivity;
 import com.bluebubbles.messaging.method_call_handler.handlers.NewMessageNotification;
+import com.bluebubbles.messaging.helpers.HelperUtils;
 
 import java.util.Objects;
 
@@ -49,13 +50,6 @@ public class ClearChatNotifs implements Handler {
         }
 
         result.success("");
-
-       // If there are no more notifications (only the group is left). Clear the group
-       StatusBarNotification[] notifications = manager.getActiveNotifications();
-       Log.d(TAG, "Leftover Notifications: " + notifications.length);
-       if (manager.getActiveNotifications().length == 1 && notifications[0].getId() == -1) {
-           Log.d(TAG, "Cancelling the notification group...");
-           notificationManager.cancel(-1);
-       }
+        HelperUtils.tryCancelNotificationSummary(context);
     }
 }
