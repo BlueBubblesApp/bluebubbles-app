@@ -19,7 +19,7 @@ abstract class BackgroundIsolateInterface {
 
 callbackHandler() async {
   debugPrint("(ISOLATE) Starting up...");
-  MethodChannel _backgroundChannel = MethodChannel("background_isolate");
+  MethodChannel _backgroundChannel = MethodChannel("com.bluebubbles.messaging");
   WidgetsFlutterBinding.ensureInitialized();
   await DBProvider.db.initDB();
   await SettingsManager().init();

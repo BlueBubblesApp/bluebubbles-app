@@ -19,6 +19,8 @@ import androidx.work.WorkerParameters;
 import com.baseflow.permissionhandler.PermissionHandlerPlugin;
 import com.bluebubbles.messaging.helpers.NotifyRunnable;
 import com.bluebubbles.messaging.method_call_handler.MethodCallHandler;
+import com.bluebubbles.messaging.services.FirebaseMessagingService;
+import java.util.concurrent.CountDownLatch;
 import com.tekartik.sqflite.SqflitePlugin;
 
 import flutter.plugins.contactsservice.contactsservice.ContactsServicePlugin;
@@ -40,12 +42,14 @@ import io.flutter.embedding.engine.dart.DartExecutor;
 import io.flutter.embedding.engine.dart.DartExecutor.DartCallback;
 
 import static com.bluebubbles.messaging.MainActivity.engine;
+import static com.bluebubbles.messaging.MainActivity.CHANNEL;
 import static com.bluebubbles.messaging.method_call_handler.handlers.InitializeBackgroundHandle.BACKGROUND_HANDLE_SHARED_PREF_KEY;
 import static com.bluebubbles.messaging.method_call_handler.handlers.InitializeBackgroundHandle.BACKGROUND_SERVICE_SHARED_PREF;
 
 public class FCMWorker extends Worker implements DartWorker {
 
-    private MethodChannel backgroundChannel;
+    public static MethodChannel backgroundChannel;
+    public static Handler handler;
     private Context context;
 
     public static final String TAG = "FCMWorker";
@@ -64,7 +68,7 @@ public class FCMWorker extends Worker implements DartWorker {
         if (type.equals("new-message") || type.equals("updated-message")) {
 
             getBackgroundChannel();
-            invokeMethod();
+            // changed FCM messaging structure so currently nothing is sent to Dart here
             // We don't want to finish this worker until we know the backgroundChannel is finished
             // The backgroundChannel is manually closed through dart code
             while (backgroundChannel != null && !isStopped()) {
@@ -122,7 +126,8 @@ public class FCMWorker extends Worker implements DartWorker {
             executor.executeDartCallback(dartCallback);
 
             Log.d("BlueBubblesApp", "Setting MethodCall handler");
-            backgroundChannel = new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), "background_isolate");
+            handler = new Handler(Looper.getMainLooper());
+            backgroundChannel = new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL);
             backgroundChannel.setMethodCallHandler((call, result) -> MethodCallHandler.methodCallHandler(call, result, context, this));
         }
     }
@@ -137,6 +142,7 @@ public class FCMWorker extends Worker implements DartWorker {
                     Log.d("Destroy", "Destroying FCM Worker isolate...");
                     engine.destroy();
                     engine = null;
+                    handler = null;
                     backgroundChannel = null;
                 } catch (Exception e) {
                     Log.d("Destroy", "Failed to destroy FCM Worker isolate!");
@@ -144,23 +150,6 @@ public class FCMWorker extends Worker implements DartWorker {
             }
         });
         return null;
-    }
-
-
-    private void invokeMethod() {
-        Handler handler = new Handler(Looper.getMainLooper());
-        synchronized (handler) {
-            Log.d("BlueBubblesApp", "Invoking backgroundChannel method");
-            NotifyRunnable runnable = new NotifyRunnable(handler, () -> backgroundChannel.invokeMethod(getInputData().getString("type"), getInputData().getString("data")));
-            handler.post(runnable);
-            while (!runnable.isFinished()) {
-                try {
-                    handler.wait();
-                } catch (InterruptedException is) {
-                    // ignore
-                }
-            }
-        }
     }
 
 

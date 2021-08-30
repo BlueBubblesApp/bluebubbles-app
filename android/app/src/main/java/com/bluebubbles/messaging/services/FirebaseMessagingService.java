@@ -9,6 +9,7 @@ import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
+import com.bluebubbles.messaging.helpers.NotifyRunnable;
 import com.bluebubbles.messaging.workers.FCMWorker;
 import com.google.firebase.messaging.RemoteMessage;
 
@@ -16,6 +17,10 @@ import io.flutter.plugin.common.MethodChannel;
 
 import static com.bluebubbles.messaging.MainActivity.CHANNEL;
 import static com.bluebubbles.messaging.MainActivity.engine;
+import static com.bluebubbles.messaging.workers.FCMWorker.backgroundChannel;
+import static com.bluebubbles.messaging.workers.FCMWorker.handler;
+import io.flutter.plugin.common.MethodChannel.Result;
+import java.util.concurrent.CountDownLatch;
 
 public class FirebaseMessagingService extends com.google.firebase.messaging.FirebaseMessagingService {
     private static final String TAG = "MyFirebaseMsgService";
@@ -43,22 +48,15 @@ public class FirebaseMessagingService extends com.google.firebase.messaging.Fire
         if (remoteMessage == null) return;
         Log.d("BlueBubblesApp", "Received new message from FCM");
         Log.d("BlueBubblesApp", "Message type: " + remoteMessage.getData().get("type"));
-        // Check if message contains a data payload.
-        if (remoteMessage.getData().size() > 0 && !remoteMessage.getData().get("type").equals("new-server")) {
-            Intent intent = new Intent("MyData");
-            intent.putExtra("type", remoteMessage.getData().get("type"));
-            intent.putExtra("data", remoteMessage.getData().get("data"));
-            new Handler(Looper.getMainLooper()).post(new Runnable() {
-                @Override
-                public void run() {
-                    if (engine != null) {
-                        Log.d("BlueBubblesApp", "Invoking method of type: " + intent.getExtras().getString("type"));
-                        new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod(intent.getExtras().getString("type"), intent.getExtras().getString("data"));
-                    }
-                }
-            });
-            Log.d("BlueBubblesApp", "Creating FCM worker");
-            FCMWorker.createWorker(getApplicationContext(), remoteMessage.getData().get("type"), remoteMessage.getData().get("data"));
+        if (ContextHolder.getApplicationContext() == null) {
+            ContextHolder.setApplicationContext(getApplicationContext());
         }
+        Intent onBackgroundMessageIntent =
+                new Intent(getApplicationContext(), FlutterFirebaseMessagingBackgroundService.class);
+        onBackgroundMessageIntent.putExtra(
+                "notification", remoteMessage);
+        FlutterFirebaseMessagingBackgroundService.enqueueMessageProcessing(
+                getApplicationContext(), onBackgroundMessageIntent);
     }
+
 }
