@@ -16,17 +16,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class AboutPanel extends StatelessWidget {
-
   @override
   Widget build(BuildContext context) {
-    final iosSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
-    final materialSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
+    final iosSubtitle =
+        Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
+    final materialSubtitle = Theme.of(context)
+        .textTheme
+        .subtitle1
+        ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
     Color headerColor;
     Color tileColor;
-    if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance()
-        || SettingsManager().settings.skin.value != Skins.iOS) {
+    if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+        SettingsManager().settings.skin.value != Skins.iOS) {
       headerColor = Theme.of(context).accentColor;
       tileColor = Theme.of(context).backgroundColor;
     } else {
@@ -40,8 +44,7 @@ class AboutPanel extends StatelessWidget {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: headerColor, // navigation bar color
-        systemNavigationBarIconBrightness:
-        headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarIconBrightness: headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
@@ -74,25 +77,28 @@ class AboutPanel extends StatelessWidget {
                   Container(
                       height: SettingsManager().settings.skin.value == Skins.iOS ? 30 : 40,
                       alignment: Alignment.bottomLeft,
-                      decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
-                        color: headerColor,
-                        border: Border(
-                            bottom: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
-                        ),
-                      ) : BoxDecoration(
-                        color: tileColor,
-                      ),
+                      decoration: SettingsManager().settings.skin.value == Skins.iOS
+                          ? BoxDecoration(
+                              color: headerColor,
+                              border: Border(
+                                  bottom: BorderSide(
+                                      color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
+                            )
+                          : BoxDecoration(
+                              color: tileColor,
+                            ),
                       child: Padding(
                         padding: const EdgeInsets.only(bottom: 8.0, left: 15),
-                        child: Text("Links".psCapitalize, style: SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
-                      )
-                  ),
+                        child: Text("Links".psCapitalize,
+                            style: SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
+                      )),
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
                   SettingsTile(
                     backgroundColor: tileColor,
                     title: "Support Us",
                     onTap: () {
-                      MethodChannelInterface().invokeMethod("open-link", {"link": "https://bluebubbles.app/donate/", "forceBrowser": false});
+                      MethodChannelInterface().invokeMethod(
+                          "open-link", {"link": "https://bluebubbles.app/donate/", "forceBrowser": false});
                     },
                     leading: SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.money_dollar_circle,
@@ -110,7 +116,8 @@ class AboutPanel extends StatelessWidget {
                     backgroundColor: tileColor,
                     title: "Website",
                     onTap: () {
-                      MethodChannelInterface().invokeMethod("open-link", {"link": "https://bluebubbles.app/", "forceBrowser": false});
+                      MethodChannelInterface()
+                          .invokeMethod("open-link", {"link": "https://bluebubbles.app/", "forceBrowser": false});
                     },
                     leading: SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.globe,
@@ -128,7 +135,8 @@ class AboutPanel extends StatelessWidget {
                     backgroundColor: tileColor,
                     title: "Source Code",
                     onTap: () {
-                      MethodChannelInterface().invokeMethod("open-link", {"link": "https://github.com/BlueBubblesApp", "forceBrowser": false});
+                      MethodChannelInterface().invokeMethod(
+                          "open-link", {"link": "https://github.com/BlueBubblesApp", "forceBrowser": false});
                     },
                     leading: SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.chevron_left_slash_chevron_right,
@@ -146,7 +154,8 @@ class AboutPanel extends StatelessWidget {
                     backgroundColor: tileColor,
                     title: "Join Our Discord",
                     onTap: () {
-                      MethodChannelInterface().invokeMethod("open-link", {"link": "https://discord.gg/hbx7EhNFjp", "forceBrowser": false});
+                      MethodChannelInterface()
+                          .invokeMethod("open-link", {"link": "https://discord.gg/hbx7EhNFjp", "forceBrowser": false});
                     },
                     leading: SvgPicture.asset(
                       "assets/icon/discord.svg",
@@ -160,8 +169,7 @@ class AboutPanel extends StatelessWidget {
                       tileColor: tileColor,
                       iosSubtitle: iosSubtitle,
                       materialSubtitle: materialSubtitle,
-                      text: "Info"
-                  ),
+                      text: "Info"),
                   SettingsTile(
                     backgroundColor: tileColor,
                     title: "Changelog",
@@ -192,14 +200,11 @@ class AboutPanel extends StatelessWidget {
                                     .textTheme
                                     .headline2!
                                     .copyWith(fontSize: 18, fontWeight: FontWeight.bold),
-                                h3: Theme.of(context)
-                                    .textTheme
-                                    .headline3!
-                                    .copyWith(
+                                h3: Theme.of(context).textTheme.headline3!.copyWith(
                                       fontSize: 17,
                                       fontWeight: FontWeight.bold,
                                       color: Theme.of(context).textTheme.headline1?.color,
-                                ),
+                                    ),
                               ),
                             ),
                             backgroundColor: Theme.of(context).backgroundColor,
@@ -254,10 +259,11 @@ class AboutPanel extends StatelessWidget {
                                     text: TextSpan(
                                         text: "Zach",
                                         style: TextStyle(decoration: TextDecoration.underline, color: Colors.blue),
-                                        recognizer: TapGestureRecognizer()..onTap = () {
-                                          MethodChannelInterface().invokeMethod("open-link", {"link": "https://github.com/zlshames", "forceBrowser": false});
-                                        }
-                                    ),
+                                        recognizer: TapGestureRecognizer()
+                                          ..onTap = () {
+                                            MethodChannelInterface().invokeMethod("open-link",
+                                                {"link": "https://github.com/zlshames", "forceBrowser": false});
+                                          }),
                                   ),
                                 ),
                                 Container(
@@ -267,10 +273,11 @@ class AboutPanel extends StatelessWidget {
                                     text: TextSpan(
                                         text: "Tanay",
                                         style: TextStyle(decoration: TextDecoration.underline, color: Colors.blue),
-                                        recognizer: TapGestureRecognizer()..onTap = () {
-                                          MethodChannelInterface().invokeMethod("open-link", {"link": "https://github.com/tneotia", "forceBrowser": false});
-                                        }
-                                    ),
+                                        recognizer: TapGestureRecognizer()
+                                          ..onTap = () {
+                                            MethodChannelInterface().invokeMethod("open-link",
+                                                {"link": "https://github.com/tneotia", "forceBrowser": false});
+                                          }),
                                   ),
                                 ),
                                 Container(
@@ -280,10 +287,11 @@ class AboutPanel extends StatelessWidget {
                                     text: TextSpan(
                                         text: "Joel",
                                         style: TextStyle(decoration: TextDecoration.underline, color: Colors.blue),
-                                        recognizer: TapGestureRecognizer()..onTap = () {
-                                          MethodChannelInterface().invokeMethod("open-link", {"link": "https://github.com/jjoelj", "forceBrowser": false});
-                                        }
-                                    ),
+                                        recognizer: TapGestureRecognizer()
+                                          ..onTap = () {
+                                            MethodChannelInterface().invokeMethod("open-link",
+                                                {"link": "https://github.com/jjoelj", "forceBrowser": false});
+                                          }),
                                   ),
                                 ),
                                 Container(
@@ -330,59 +338,92 @@ class AboutPanel extends StatelessWidget {
                       showDialog<void>(
                         context: context,
                         builder: (BuildContext context) {
-                          return AlertDialog(
-                            scrollable: true,
-                            content: ListBody(
-                              children: <Widget>[
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: <Widget>[
-                                    IconTheme(data: Theme.of(context).iconTheme, child: Image.asset(
-                                      "assets/icon/icon.png",
-                                      width: 30,
-                                      height: 30,
-                                    ),),
-                                    Expanded(
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                                        child: ListBody(
-                                          children: <Widget>[
-                                            Text("BlueBubbles", style: Theme.of(context).textTheme.headline5),
-                                          ],
-                                        ),
+                          return FutureBuilder(
+                              future: PackageInfo.fromPlatform(),
+                              builder: (BuildContext context, AsyncSnapshot snapshot) {
+                                return AlertDialog(
+                                  contentPadding: EdgeInsets.only(
+                                    top: 24,
+                                    left: 24,
+                                    right: 24,
+                                  ),
+                                  elevation: 10.0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      10.0,
+                                    ),
+                                  ),
+                                  scrollable: true,
+                                  backgroundColor: context.theme.accentColor,
+                                  content: ListBody(
+                                    children: <Widget>[
+                                      Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: <Widget>[
+                                          IconTheme(
+                                            data: Theme.of(context).iconTheme,
+                                            child: Image.asset(
+                                              "assets/icon/icon.png",
+                                              width: 30,
+                                              height: 30,
+                                            ),
+                                          ),
+                                          Expanded(
+                                            child: Padding(
+                                              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                                              child: ListBody(
+                                                children: <Widget>[
+                                                  Text(
+                                                    "BlueBubbles",
+                                                    style: context.textTheme.headline2!.copyWith(
+                                                      fontSize: 24,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                      "Version Number: " +
+                                                          (snapshot.hasData ? snapshot.data.version : "N/A"),
+                                                      style: context.textTheme.subtitle1!),
+                                                  Text(
+                                                      "Version Code: " +
+                                                          (snapshot.hasData ? snapshot.data.buildNumber : "N/A"),
+                                                      style: context.textTheme.subtitle1!),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
+                                    ],
+                                  ),
+                                  actions: <Widget>[
+                                    TextButton(
+                                      child: Text(MaterialLocalizations.of(context).viewLicensesButtonLabel),
+                                      onPressed: () {
+                                        Navigator.of(context).push(MaterialPageRoute<void>(
+                                          builder: (BuildContext context) => Theme(
+                                            data: context.theme,
+                                            child: LicensePage(
+                                              applicationName: "BlueBubbles",
+                                              applicationVersion: snapshot.hasData ? snapshot.data.version : "",
+                                              applicationIcon: Image.asset(
+                                                "assets/icon/icon.png",
+                                                width: 30,
+                                                height: 30,
+                                              ),
+                                            ),
+                                          ),
+                                        ));
+                                      },
+                                    ),
+                                    TextButton(
+                                      child: Text(MaterialLocalizations.of(context).closeButtonLabel),
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                      },
                                     ),
                                   ],
-                                ),
-                              ],
-                            ),
-                            actions: <Widget>[
-                              TextButton(
-                                child: Text(MaterialLocalizations.of(context).viewLicensesButtonLabel),
-                                onPressed: () {
-                                  Navigator.of(context).push(MaterialPageRoute<void>(
-                                    builder: (BuildContext context) => Theme(
-                                      data: whiteLightTheme,
-                                      child: LicensePage(
-                                        applicationName: "BlueBubbles",
-                                        applicationIcon: Image.asset(
-                                          "assets/icon/icon.png",
-                                          width: 30,
-                                          height: 30,
-                                        ),
-                                      ),
-                                    ),
-                                  ));
-                                },
-                              ),
-                              TextButton(
-                                child: Text(MaterialLocalizations.of(context).closeButtonLabel),
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                              ),
-                            ],
-                          );
+                                );
+                              });
                         },
                       );
                     },
@@ -394,12 +435,13 @@ class AboutPanel extends StatelessWidget {
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
                   Container(
                     height: 30,
-                    decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
-                      color: headerColor,
-                      border: Border(
-                          top: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
-                      ),
-                    ) : null,
+                    decoration: SettingsManager().settings.skin.value == Skins.iOS
+                        ? BoxDecoration(
+                            color: headerColor,
+                            border: Border(
+                                top: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
+                          )
+                        : null,
                   ),
                 ],
               ),
