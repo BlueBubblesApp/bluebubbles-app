@@ -142,6 +142,13 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       }
     });
 
+    // Set the custom message bloc if provided (and there is not already an existing one)
+    if (widget.customMessageBloc != null && messageBloc == null) {
+      messageBloc = widget.customMessageBloc;
+    } else if (widget.chat != null && messageBloc == null) {
+      messageBloc = MessageBloc(widget.chat);
+    }
+
     initListener();
 
     SchedulerBinding.instance!.addPostFrameCallback((_) {
@@ -195,14 +202,6 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   @override
   void didChangeDependencies() async {
     super.didChangeDependencies();
-
-    // Set the custom message bloc if provided (and there is not already an existing one)
-    if (widget.customMessageBloc != null && messageBloc == null) {
-      messageBloc = widget.customMessageBloc;
-    } else if (widget.chat != null && messageBloc == null) {
-      messageBloc = MessageBloc(widget.chat);
-    }
-
     didChangeDependenciesConversationView();
   }
 
