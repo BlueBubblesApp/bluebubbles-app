@@ -127,7 +127,7 @@ class ImageWidget extends StatelessWidget {
                 gaplessPlayback: true,
                 frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
                   return Stack(children: [
-                    buildPlaceHolder(context, controller, isLoaded: frame != null || wasSynchronouslyLoaded),
+                    buildPlaceHolder(context, controller, isLoaded: wasSynchronouslyLoaded),
                     AnimatedOpacity(
                       opacity: (frame == null &&
                               controller.attachment.guid != "redacted-mode-demo-attachment" &&

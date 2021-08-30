@@ -4,7 +4,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
-import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/darty.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -94,7 +94,8 @@ class AttachmentSender {
         debugPrint("failed to send");
         String? tempGuid = sentMessage!.guid;
         sentMessage!.guid = sentMessage!.guid!.replaceAll("temp", "error-${response['error']['message']}");
-        sentMessage!.error.value = response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
+        sentMessage!.error.value =
+            response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
 
         await Message.replaceMessage(tempGuid, sentMessage);
         NewMessageManager().updateMessage(_chat, tempGuid!, sentMessage!);
@@ -129,9 +130,12 @@ class AttachmentSender {
       uti: "public.jpg",
       transferName: _attachmentName,
       mimeType: mime(_attachmentName),
-      width: mime(_attachmentName)!.startsWith("image") ? (await AttachmentHelper.getImageSizing(_attachment.path)).width.toInt() : null,
-      height:
-          mime(_attachmentName)!.startsWith("image") ? (await AttachmentHelper.getImageSizing(_attachment.path)).height.toInt() : null,
+      width: mime(_attachmentName)!.startsWith("image")
+          ? (await AttachmentHelper.getImageSizing(_attachment.path)).width.toInt()
+          : null,
+      height: mime(_attachmentName)!.startsWith("image")
+          ? (await AttachmentHelper.getImageSizing(_attachment.path)).height.toInt()
+          : null,
     );
 
     sentMessage = Message(

@@ -6,12 +6,11 @@ import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/attachment_sender.dart';
-import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/darty.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/outgoing_queue.dart';
@@ -163,7 +162,8 @@ class ActionHandler {
         // If there is an error, replace the temp value with an error
         if (response['status'] != 200) {
           message.guid = message.guid!.replaceAll("temp", "error-${response['error']['message']}");
-          message.error.value = response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
+          message.error.value =
+              response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
 
           await Message.replaceMessage(tempGuid, message);
           NewMessageManager().updateMessage(chat, tempGuid!, message);
@@ -557,7 +557,8 @@ class ActionHandler {
         Attachment file = Attachment.fromMap(attachmentItem);
         await file.save(message);
 
-        if ((await AttachmentHelper.canAutoDownload()) && file.mimeType != null &&
+        if ((await AttachmentHelper.canAutoDownload()) &&
+            file.mimeType != null &&
             !Get.find<AttachmentDownloadService>().downloaders.contains(file.guid)) {
           Get.put(AttachmentDownloadController(attachment: file), tag: file.guid);
         }

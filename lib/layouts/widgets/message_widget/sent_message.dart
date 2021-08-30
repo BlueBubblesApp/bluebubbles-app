@@ -20,6 +20,7 @@ import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/helpers/darty.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -38,7 +39,8 @@ class SentMessageHelper {
         ? Theme.of(context).primaryColor.darkenAmount(0.2)
         : Theme.of(context).primaryColor;
 
-    final bool hideContent = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideEmojis.value;
+    final bool hideContent =
+        SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideEmojis.value;
 
     Widget msg;
     bool hasReactions = (message?.getReactions() ?? []).length > 0;
@@ -46,21 +48,18 @@ class SentMessageHelper {
 
     if (message?.isBigEmoji() ?? false) {
       // this stack is necessary for layouting width properly
-      msg = Stack(
-        alignment: AlignmentDirectional.bottomEnd,
-        children: [
-          LayoutBuilder(
-              builder: (_, constraints) {
-                return Container(
-                  width: customWidth != null ? constraints.maxWidth : null,
-                  child: Padding(
-                    padding: EdgeInsets.only(
-                      left: (hasReactions) ? 15.0 : 0.0,
-                      top: (hasReactions) ? 15.0 : 0.0,
-                      right: 5,
-                    ),
-                    child: hideContent
-                        ? ClipRRect(
+      msg = Stack(alignment: AlignmentDirectional.bottomEnd, children: [
+        LayoutBuilder(builder: (_, constraints) {
+          return Container(
+            width: customWidth != null ? constraints.maxWidth : null,
+            child: Padding(
+              padding: EdgeInsets.only(
+                left: (hasReactions) ? 15.0 : 0.0,
+                top: (hasReactions) ? 15.0 : 0.0,
+                right: 5,
+              ),
+              child: hideContent
+                  ? ClipRRect(
                       borderRadius: BorderRadius.circular(25.0),
                       child: Container(
                           width: 70,
@@ -74,16 +73,14 @@ class SentMessageHelper {
                             ),
                           )),
                     )
-                        : Text(
+                  : Text(
                       message!.text!,
                       style: Theme.of(context).textTheme.bodyText2!.apply(fontSizeFactor: 4),
                     ),
-                  ),
-                );
-              }
-          )
-        ]
-      );
+            ),
+          );
+        })
+      ]);
     } else {
       msg = Stack(
         alignment: AlignmentDirectional.bottomEnd,
@@ -93,88 +90,83 @@ class SentMessageHelper {
               isFromMe: true,
               color: customColor ?? bubbleColor,
             ),
-          LayoutBuilder(
-            builder: (_, constraints) {
-              return Container(
-                width: customWidth != null ? constraints.maxWidth : null,
-                constraints: customWidth == null ? BoxConstraints(
-                  maxWidth: context.width * MessageWidgetMixin.MAX_SIZE + (!padding ? 100 : 0),
-                ) : null,
-                margin: EdgeInsets.only(
-                  top: hasReactions && margin ? 18 : 0,
-                  left: margin ? 10 : 0,
-                  right: margin ? 10 : 0,
-                ),
-                padding: EdgeInsets.symmetric(
-                  vertical: padding ? 8 : 0,
-                  horizontal: padding ? 14 : 0,
-                ),
-                decoration: BoxDecoration(
-                  borderRadius: currentSkin == Skins.iOS
-                      ? BorderRadius.only(
-                    bottomLeft: Radius.circular(20),
-                    bottomRight: Radius.circular(17),
-                    topLeft: Radius.circular(20),
-                    topRight: Radius.circular(20),
-                  )
-                      : (currentSkin == Skins.Material)
-                      ? BorderRadius.only(
-                    topLeft: Radius.circular(20),
-                    topRight: olderMessage == null || MessageHelper.getShowTail(context, olderMessage, message)
-                        ? Radius.circular(20)
-                        : Radius.circular(5),
-                    bottomLeft: Radius.circular(20),
-                    bottomRight: Radius.circular(showTail ? 20 : 5),
-                  )
-                      : (currentSkin == Skins.Samsung)
-                      ? BorderRadius.only(
-                    topLeft: Radius.circular(17.5),
-                    topRight: Radius.circular(17.5),
-                    bottomRight: Radius.circular(17.5),
-                    bottomLeft: Radius.circular(17.5),
-                  )
-                      : null,
-                  color: customColor ?? bubbleColor,
-                ),
-                child: customContent == null
-                    ? RichText(
-                  text: TextSpan(
-                    children: MessageWidgetMixin.buildMessageSpans(context, message),
-                    style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
-                  ),
-                )
-                    : customContent,
-              );
-            }
-          ),
+          LayoutBuilder(builder: (_, constraints) {
+            return Container(
+              width: customWidth != null ? constraints.maxWidth : null,
+              constraints: customWidth == null
+                  ? BoxConstraints(
+                      maxWidth: context.width * MessageWidgetMixin.MAX_SIZE + (!padding ? 100 : 0),
+                    )
+                  : null,
+              margin: EdgeInsets.only(
+                top: hasReactions && margin ? 18 : 0,
+                left: margin ? 10 : 0,
+                right: margin ? 10 : 0,
+              ),
+              padding: EdgeInsets.symmetric(
+                vertical: padding ? 8 : 0,
+                horizontal: padding ? 14 : 0,
+              ),
+              decoration: BoxDecoration(
+                borderRadius: currentSkin == Skins.iOS
+                    ? BorderRadius.only(
+                        bottomLeft: Radius.circular(20),
+                        bottomRight: Radius.circular(17),
+                        topLeft: Radius.circular(20),
+                        topRight: Radius.circular(20),
+                      )
+                    : (currentSkin == Skins.Material)
+                        ? BorderRadius.only(
+                            topLeft: Radius.circular(20),
+                            topRight: olderMessage == null || MessageHelper.getShowTail(context, olderMessage, message)
+                                ? Radius.circular(20)
+                                : Radius.circular(5),
+                            bottomLeft: Radius.circular(20),
+                            bottomRight: Radius.circular(showTail ? 20 : 5),
+                          )
+                        : (currentSkin == Skins.Samsung)
+                            ? BorderRadius.only(
+                                topLeft: Radius.circular(17.5),
+                                topRight: Radius.circular(17.5),
+                                bottomRight: Radius.circular(17.5),
+                                bottomLeft: Radius.circular(17.5),
+                              )
+                            : null,
+                color: customColor ?? bubbleColor,
+              ),
+              child: customContent == null
+                  ? RichText(
+                      text: TextSpan(
+                        children: MessageWidgetMixin.buildMessageSpans(context, message),
+                        style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
+                      ),
+                    )
+                  : customContent,
+            );
+          }),
         ],
       );
     }
 
     if (!padding) return msg;
     return Container(
-      width: customWidth != null ? customWidth - (showTail ? 20 : 0) : null,
-      constraints: BoxConstraints(
-        maxWidth: customWidth != null ? customWidth - (showTail ? 20 : 0) : context.width,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (customWidth != null)
-            Expanded(
-              child: msg
+        width: customWidth != null ? customWidth - (showTail ? 20 : 0) : null,
+        constraints: BoxConstraints(
+          maxWidth: customWidth != null ? customWidth - (showTail ? 20 : 0) : context.width,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (customWidth != null) Expanded(child: msg),
+            if (customWidth == null) msg,
+            getErrorWidget(
+              context,
+              message,
+              currentChat != null ? currentChat.chat : CurrentChat.of(context)?.chat,
             ),
-          if (customWidth == null)
-            msg,
-          getErrorWidget(
-            context,
-            message,
-            currentChat != null ? currentChat.chat : CurrentChat.of(context)?.chat,
-          ),
-        ],
-      )
-    );
+          ],
+        ));
   }
 
   static Widget getErrorWidget(BuildContext context, Message? message, Chat? chat, {double rightPadding = 8.0}) {
@@ -335,18 +327,15 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
           ),
         );
       }
-      if (widget.message.hasUrl()) {
-        message = Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Padding(
-              padding: EdgeInsets.only(right: 5.0),
-              child: widget.urlPreviewWidget,
-            ),
-            message,
-          ]
-        );
+      if (widget.message.fullText.hasUrl) {
+        message =
+            Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [
+          Padding(
+            padding: EdgeInsets.only(right: 5.0),
+            child: widget.urlPreviewWidget,
+          ),
+          message,
+        ]);
       }
     }
 
@@ -384,19 +373,14 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
       Padding(
         // Padding to shift the bubble up a bit, relative to the avatar
         padding: EdgeInsets.only(
-            top: (skin.value != Skins.iOS &&
-                    widget.message.isFromMe == widget.olderMessage?.isFromMe)
+            top: (skin.value != Skins.iOS && widget.message.isFromMe == widget.olderMessage?.isFromMe)
                 ? (skin.value != Skins.iOS)
                     ? 0
                     : 3
                 : (skin.value == Skins.iOS)
                     ? 0.0
                     : 10,
-            bottom: (skin.value == Skins.iOS &&
-                    widget.showTail &&
-                    !isEmptyString(widget.message.fullText))
-                ? 5.0
-                : 0,
+            bottom: (skin.value == Skins.iOS && widget.showTail && !isEmptyString(widget.message.fullText)) ? 5.0 : 0,
             right: isEmptyString(widget.message.fullText) && widget.message.error.value == 0 ? 10.0 : 0.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

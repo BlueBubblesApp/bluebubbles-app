@@ -14,6 +14,7 @@ import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/helpers/darty.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -225,8 +226,12 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
       messageColumn.add(
         Padding(
           padding: EdgeInsets.only(left: 15.0, top: 5.0, bottom: widget.message.getReactions().length > 0 ? 0.0 : 3.0),
-          child: Text(getContactName(context, contactTitle, widget.message.handle!.address),
-              style: Theme.of(context).textTheme.subtitle1, maxLines: 1, overflow: TextOverflow.ellipsis,),
+          child: Text(
+            getContactName(context, contactTitle, widget.message.handle!.address),
+            style: Theme.of(context).textTheme.subtitle1,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       );
       addedSender = true;
@@ -253,18 +258,17 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
       message = Padding(padding: EdgeInsets.only(left: 10.0), child: BalloonBundleWidget(message: widget.message));
     } else if (widget.message.hasText()) {
       message = _buildMessageWithTail(widget.message);
-      if (widget.message.hasUrl()) {
+      if (widget.message.fullText.hasUrl) {
         message = Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: EdgeInsets.only(left: 10.0),
-              child: widget.urlPreviewWidget,
-            ),
-            message,
-          ]
-        );
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: EdgeInsets.only(left: 10.0),
+                child: widget.urlPreviewWidget,
+              ),
+              message,
+            ]);
       }
     }
 
@@ -285,11 +289,18 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
 
     List<Widget> messagePopupColumn = List<Widget>.from(messageColumn);
     if (!addedSender && isGroup) {
-      messagePopupColumn.insert(0, Padding(
-        padding: EdgeInsets.only(left: 15.0, top: 5.0, bottom: widget.message.getReactions().length > 0 ? 0.0 : 3.0),
-        child: Text(getContactName(context, contactTitle, widget.message.handle!.address),
-            style: Theme.of(context).textTheme.subtitle1, maxLines: 1, overflow: TextOverflow.ellipsis,),
-      ));
+      messagePopupColumn.insert(
+          0,
+          Padding(
+            padding:
+                EdgeInsets.only(left: 15.0, top: 5.0, bottom: widget.message.getReactions().length > 0 ? 0.0 : 3.0),
+            child: Text(
+              getContactName(context, contactTitle, widget.message.handle!.address),
+              style: Theme.of(context).textTheme.subtitle1,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ));
     }
 
     // Now, let's create a row that will be the row with the following:
@@ -381,32 +392,32 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           MessagePopupHolder(
-              message: widget.message,
-              olderMessage: widget.olderMessage,
-              newerMessage: widget.newerMessage,
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: msgRow,
-                ),
-                // Add the timestamp for the samsung theme
-                if (skin.value == Skins.Samsung &&
-                    widget.message.dateCreated != null &&
-                    (widget.newerMessage?.dateCreated == null ||
-                        widget.message.isFromMe != widget.newerMessage?.isFromMe ||
-                        widget.message.handleId != widget.newerMessage?.handleId ||
-                        !widget.message.dateCreated!.isWithin(widget.newerMessage!.dateCreated!, minutes: 5)))
-                  Padding(
-                    padding: EdgeInsets.only(top: 5, left: (isGroup) ? 60 : 20),
-                    child: MessageTimeStamp(
-                      message: widget.message,
-                      singleLine: true,
-                      useYesterday: true,
-                    ),
-                  )
-              ]),
+            message: widget.message,
+            olderMessage: widget.olderMessage,
+            newerMessage: widget.newerMessage,
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: msgRow,
+              ),
+              // Add the timestamp for the samsung theme
+              if (skin.value == Skins.Samsung &&
+                  widget.message.dateCreated != null &&
+                  (widget.newerMessage?.dateCreated == null ||
+                      widget.message.isFromMe != widget.newerMessage?.isFromMe ||
+                      widget.message.handleId != widget.newerMessage?.handleId ||
+                      !widget.message.dateCreated!.isWithin(widget.newerMessage!.dateCreated!, minutes: 5)))
+                Padding(
+                  padding: EdgeInsets.only(top: 5, left: (isGroup) ? 60 : 20),
+                  child: MessageTimeStamp(
+                    message: widget.message,
+                    singleLine: true,
+                    useYesterday: true,
+                  ),
+                )
+            ]),
             popupChild: Row(
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.start,

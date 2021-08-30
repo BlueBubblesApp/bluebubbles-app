@@ -12,6 +12,7 @@ import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:bluebubbles/helpers/darty.dart';
 import 'package:get/get.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/widgets.dart';
@@ -395,7 +396,7 @@ class Chat {
     }
 
     // If this is a message preview and we don't already have metadata for this, get it
-    if (message.hasUrl() && !MetadataHelper.mapIsNotEmpty(message.metadata)) {
+    if (message.fullText.hasUrl && !MetadataHelper.mapIsNotEmpty(message.metadata)) {
       MetadataHelper.fetchMetadata(message).then((Metadata? meta) async {
         // If the metadata is empty, don't do anything
         if (!MetadataHelper.isNotEmpty(meta)) return;
@@ -861,8 +862,7 @@ class Chat {
   }
 
   static int sort(Chat? a, Chat? b) {
-    if (a!.pinIndex.value != null && b!.pinIndex.value != null)
-      return a.pinIndex.value!.compareTo(b.pinIndex.value!);
+    if (a!.pinIndex.value != null && b!.pinIndex.value != null) return a.pinIndex.value!.compareTo(b.pinIndex.value!);
     if (b!.pinIndex.value != null) return 1;
     if (a.pinIndex.value != null) return -1;
     if (!a.isPinned! && b.isPinned!) return 1;

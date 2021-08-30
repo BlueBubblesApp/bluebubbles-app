@@ -273,7 +273,7 @@ extension DateHelpers on DateTime {
   }
 }
 
-String? sanitizeString(String? input) {
+String sanitizeString(String? input) {
   if (input == null) return "";
   input = input.replaceAll(String.fromCharCode(65532), '');
   return input;
@@ -283,10 +283,10 @@ bool isEmptyString(String? input, {stripWhitespace = false}) {
   if (input == null) return true;
   input = sanitizeString(input);
   if (stripWhitespace) {
-    input = input!.trim();
+    input = input.trim();
   }
 
-  return input!.isEmpty;
+  return input.isEmpty;
 }
 
 bool isParticipantEvent(Message message) {
@@ -368,9 +368,7 @@ Future<MemoryImage?> loadAvatar(Chat chat, Handle? handle) async {
 }
 
 List<RegExpMatch> parseLinks(String text) {
-  RegExp exp = new RegExp(
-      r"(?:^| )((((H|h)(T|t)|(F|f))(T|t)(P|p)((S|s)?))\://)?(www.|[a-zA-Z0-9].)[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,6}(\:[0-9]{1,5})*(/($|[a-zA-Z0-9\.\,\;\?\'\\\+&amp;%\$#@\=~_\/-]+))*");
-  return exp.allMatches(text).toList();
+  return urlRegex.allMatches(text).toList();
 }
 
 String getSizeString(double size) {
