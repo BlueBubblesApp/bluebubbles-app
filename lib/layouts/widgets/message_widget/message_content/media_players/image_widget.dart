@@ -143,7 +143,7 @@ class ImageWidget extends StatelessWidget {
   ));
 
   Widget buildPlaceHolder(BuildContext context, ImageWidgetController controller, {bool isLoaded = false}) {
-    Widget empty = Container(height: 150, width: 150);
+    Widget empty = Container(height: 0, width: 0);
 
     // Handle the cases when the image is done loading
     if (isLoaded) {
