@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/conversation_details/attachment_details_card.dart';
@@ -80,7 +81,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
     await chat.getParticipants();
     readOnly = !(chat.participants.length > 1);
 
-    debugPrint("updated readonly $readOnly");
+    Logger.instance.log("updated readonly $readOnly");
     if (this.mounted) setState(() {});
   }
 

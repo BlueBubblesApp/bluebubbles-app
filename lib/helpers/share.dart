@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
@@ -33,7 +34,7 @@ class Share {
     final result = await MethodChannelInterface().invokeMethod("get-last-location");
 
     if (result == null) {
-      debugPrint("Failed to load last location!");
+      Logger.instance.log("Failed to load last location!");
       return;
     }
 

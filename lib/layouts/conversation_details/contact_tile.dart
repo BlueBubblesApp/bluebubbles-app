@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:get/get.dart';
@@ -312,13 +313,13 @@ class _ContactTileState extends State<ContactTile> {
                   params["identifier"] = widget.chat.guid;
                   params["address"] = widget.handle.address;
                   SocketManager().sendMessage("remove-participant", params, (response) async {
-                    debugPrint("removed participant participant " + response.toString());
+                    Logger.instance.log("removed participant participant " + response.toString());
                     if (response["status"] == 200) {
                       Chat updatedChat = Chat.fromMap(response["data"]);
                       await updatedChat.save();
                       await ChatBloc().updateChatPosition(updatedChat);
                       Chat chatWithParticipants = await updatedChat.getParticipants();
-                      debugPrint("updating chat with ${chatWithParticipants.participants.length} participants");
+                      Logger.instance.log("updating chat with ${chatWithParticipants.participants.length} participants");
                       widget.updateChat(chatWithParticipants);
                       Navigator.of(context).pop();
                     }

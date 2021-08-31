@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
@@ -65,7 +66,7 @@ class UrlPreviewController extends GetxController with SingleGetTickerProviderMi
       // Fetch the metadata
       meta = await MetadataHelper.fetchMetadata(message);
     } catch (ex) {
-      debugPrint("Failed to fetch metadata! Error: ${ex.toString()}");
+      Logger.instance.log("Failed to fetch metadata! Error: ${ex.toString()}");
       gotError.value = true;
       return;
     }

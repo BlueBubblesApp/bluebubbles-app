@@ -7,6 +7,7 @@ import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_sender.dart';
 import 'package:bluebubbles/helpers/crypto.dart';
 import 'package:bluebubbles/helpers/darty.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/attachment_info_bloc.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
@@ -104,9 +105,9 @@ class SocketManager {
   String? token;
 
   void socketStatusUpdate(String status, dynamic data) {
-    debugPrint("[Socket] -> Socket status update: $status");
+    Logger.instance.log("[Socket] -> Socket status update: $status");
     if (data != null) {
-      debugPrint("[Socket] -> Data: ${data.toString()}");
+      Logger.instance.log("[Socket] -> Data: ${data.toString()}");
     }
 
     switch (status) {
@@ -124,8 +125,8 @@ class SocketManager {
         });
         if (SettingsManager().settings.finishedSetup.value)
           setup.startIncrementalSync(SettingsManager().settings, onConnectionError: (String err) {
-            debugPrint("(SYNC) Error performing incremental sync. Not saving last sync date.");
-            debugPrint(err);
+            Logger.instance.log("(SYNC) Error performing incremental sync. Not saving last sync date.");
+            Logger.instance.log(err);
           });
         return;
       case "connect_error":
@@ -137,7 +138,7 @@ class SocketManager {
           });
           Timer(Duration(seconds: 20), () {
             if (state.value != SocketState.ERROR) return;
-            debugPrint("[Socket] -> Unable to connect");
+            Logger.instance.log("[Socket] -> Unable to connect");
 
             // Only show the notification if setup is finished
             if (SettingsManager().settings.finishedSetup.value) {
@@ -182,7 +183,7 @@ class SocketManager {
         });
         return;
       case "reconnect":
-        debugPrint("RECONNECTED");
+        Logger.instance.log("RECONNECTED");
         state.value = SocketState.CONNECTING;
         _manager.socketProcesses.values.forEach((element) {
           element();
@@ -210,7 +211,7 @@ class SocketManager {
   Future<void> startSocketIO({bool forceNewConnection = false, bool catchException = true}) async {
     //removed check for settings being null here, could be an issue later but I doubt it (tneotia)
     if ((state.value == SocketState.CONNECTING || state.value == SocketState.CONNECTED) && !forceNewConnection) {
-      debugPrint("[Socket] -> Already connected");
+      Logger.instance.log("[Socket] -> Already connected");
       return;
     }
     if (state.value == SocketState.FAILED) {
@@ -224,11 +225,11 @@ class SocketManager {
 
     String? serverAddress = getServerAddress();
     if (serverAddress == null) {
-      debugPrint("[Socket] -> Server Address is not yet configured. Not connecting...");
+      Logger.instance.log("[Socket] -> Server Address is not yet configured. Not connecting...");
       return;
     }
 
-    debugPrint("[Socket] -> Configuring socket.io client...");
+    Logger.instance.log("[Socket] -> Configuring socket.io client...");
 
     try {
       // Create a new socket connection
@@ -247,7 +248,7 @@ class SocketManager {
               .build());
 
       if (_manager.socket == null) {
-        debugPrint("[Socket] -> Socket was never created. Can't connect to server...");
+        Logger.instance.log("[Socket] -> Socket was never created. Can't connect to server...");
         return;
       }
 
@@ -271,14 +272,14 @@ class SocketManager {
         // TODO: Possibly turn this into a notification for the user?
         // This could act as a "pseudo" security measure so they're alerted
         // when a new device is registered
-        debugPrint("[Socket] -> FCM device added: " + data.toString());
+        Logger.instance.log("[Socket] -> FCM device added: " + data.toString());
       });
 
       /**
        * If the server sends us an error it ran into, handle it
        */
       _manager.socket!.on("error", (data) {
-        debugPrint("[Socket] -> An error occurred: " + data.toString());
+        Logger.instance.log("[Socket] -> An error occurred: " + data.toString());
       });
 
       /**
@@ -345,7 +346,7 @@ class SocketManager {
        * something about it (or at least just track it)
        */
       _manager.socket!.on("message-timeout", (_data) async {
-        debugPrint("[Socket] -> Client received message timeout");
+        Logger.instance.log("[Socket] -> Client received message timeout");
         Map<String, dynamic> data = _data;
 
         Message? message = await Message.findOne({"guid": data["tempGuid"]});
@@ -364,21 +365,21 @@ class SocketManager {
         IncomingQueue().add(new QueueItem(event: "handle-updated-message", item: {"data": _data}));
       });
 
-      debugPrint("Connecting to the socket at: $serverAddress");
+      Logger.instance.log("Connecting to the socket at: $serverAddress");
       _manager.socket!.connect();
     } catch (e) {
       if (!catchException) {
         throw ("[Socket] -> Failed to connect: ${e.toString()}");
       } else {
-        debugPrint("[Socket] -> Failed to connect");
-        debugPrint("[Socket] -> ${e.toString()}");
+        Logger.instance.log("[Socket] -> Failed to connect");
+        Logger.instance.log("[Socket] -> ${e.toString()}");
       }
     }
   }
 
   void closeSocket({bool force = false}) {
     if (!force && _manager.socketProcesses.length != 0) {
-      debugPrint("won't close " + socketProcesses.length.toString());
+      Logger.instance.log("won't close " + socketProcesses.length.toString());
       return;
     }
     if (_manager.socket != null) {
@@ -394,21 +395,21 @@ class SocketManager {
     if (!SettingsManager().settings.finishedSetup.value) return;
 
     if (isAuthingFcm && !force) {
-      debugPrint('Currently authenticating with FCM, not doing it again...');
+      Logger.instance.log('Currently authenticating with FCM, not doing it again...');
       return;
     }
 
     isAuthingFcm = true;
 
     if (SettingsManager().fcmData!.isNull) {
-      debugPrint("[FCM Auth] -> No FCM Auth data found. Skipping FCM authentication");
+      Logger.instance.log("[FCM Auth] -> No FCM Auth data found. Skipping FCM authentication");
       isAuthingFcm = false;
       return;
     }
 
     String deviceName = await getDeviceName();
     if (token != null && !force) {
-      debugPrint("[FCM Auth] -> Already authorized FCM device! Token: $token");
+      Logger.instance.log("[FCM Auth] -> Already authorized FCM device! Token: $token");
       await registerDevice(deviceName, token);
       isAuthingFcm = false;
       return;
@@ -418,15 +419,15 @@ class SocketManager {
 
     try {
       // First, try to send what we currently have
-      debugPrint('[FCM Auth] -> Authenticating with FCM');
+      Logger.instance.log('[FCM Auth] -> Authenticating with FCM');
       result = await MethodChannelInterface().invokeMethod('auth', SettingsManager().fcmData!.toMap());
     } on PlatformException catch (ex) {
-      debugPrint('[FCM Auth] -> Failed to perform initial FCM authentication: ${ex.toString()}');
-      debugPrint('[FCM Auth] -> Fetching FCM data from the server...');
+      Logger.instance.log('[FCM Auth] -> Failed to perform initial FCM authentication: ${ex.toString()}');
+      Logger.instance.log('[FCM Auth] -> Fetching FCM data from the server...');
 
       // If the first try fails, let's try again, but first, get the FCM data from the server
       Map<String, dynamic> fcmMeta = await this.getFcmClient();
-      debugPrint('[FCM Auth] -> Received FCM data from the server. Attempting to re-authenticate');
+      Logger.instance.log('[FCM Auth] -> Received FCM data from the server. Attempting to re-authenticate');
 
       try {
         // Parse out the new FCM data
@@ -442,22 +443,22 @@ class SocketManager {
           isAuthingFcm = false;
           throw Exception("[FCM Auth] -> " + e.toString());
         } else {
-          debugPrint("[FCM Auth] -> Failed to register with FCM: " + e.toString());
+          Logger.instance.log("[FCM Auth] -> Failed to register with FCM: " + e.toString());
         }
       }
     }
 
     if (isNullOrEmpty(result)!) {
-      debugPrint("[FCM Auth] -> Empty results, not registering device with the server.");
+      Logger.instance.log("[FCM Auth] -> Empty results, not registering device with the server.");
     }
 
     try {
       token = result;
-      debugPrint('[FCM Auth] -> Registering device with server...');
+      Logger.instance.log('[FCM Auth] -> Registering device with server...');
       await registerDevice(deviceName, token);
     } catch (ex) {
       isAuthingFcm = false;
-      debugPrint('[FCM Auth] -> Failed to register device with server: ${ex.toString()}');
+      Logger.instance.log('[FCM Auth] -> Failed to register device with server: ${ex.toString()}');
       throw Exception("Failed to add FCM device to the server! Token: $token");
     }
 
@@ -496,7 +497,7 @@ class SocketManager {
     Completer<List<dynamic>?> completer = new Completer();
     if (_manager.socket == null) return null;
 
-    debugPrint("[Socket] -> Sending request for '$path'");
+    Logger.instance.log("[Socket] -> Sending request for '$path'");
     _manager.sendMessage(path, params, (Map<String, dynamic> data) async {
       if (data["status"] != 200) return completer.completeError(data);
 
@@ -555,7 +556,7 @@ class SocketManager {
 
   Future<Chat?> fetchChat(String chatGuid, {withParticipants = true}) async {
     Completer<Chat?> completer = new Completer();
-    debugPrint("[Fetch Chat] Fetching full chat metadata from server.");
+    Logger.instance.log("[Fetch Chat] Fetching full chat metadata from server.");
 
     Map<String, dynamic> params = Map();
     params["chatGuid"] = chatGuid;
@@ -567,11 +568,11 @@ class SocketManager {
 
       Map<String, dynamic>? chatData = data["data"];
       if (chatData == null) {
-        debugPrint("[Fetch Chat] Server returned no metadata for chat.");
+        Logger.instance.log("[Fetch Chat] Server returned no metadata for chat.");
         return completer.complete(null);
       }
 
-      debugPrint("[Fetch Chat] Got updated chat metadata from server. Saving.");
+      Logger.instance.log("[Fetch Chat] Got updated chat metadata from server. Saving.");
       Chat newChat = Chat.fromMap(chatData);
 
       // Resave the chat after we've got the participants
@@ -588,7 +589,7 @@ class SocketManager {
       int? after,
       bool onlyAttachments: false,
       List<Map<String, dynamic>> where: const []}) async {
-    debugPrint("(Fetch Messages) Fetching data.");
+    Logger.instance.log("(Fetch Messages) Fetching data.");
 
     Map<String, dynamic> params = Map();
     params["chatGuid"] = chat?.guid;
@@ -668,7 +669,7 @@ class SocketManager {
     } else {
       socketCB();
     }
-    if (reason != null) debugPrint("added process with id " + _processId.toString() + " because $reason");
+    if (reason != null) Logger.instance.log("added process with id " + _processId.toString() + " because $reason");
 
     return completer.future;
   }
@@ -689,7 +690,7 @@ class SocketManager {
     // We copy the settings to a local variable
     Settings settingsCopy = SettingsManager().settings;
     if (settingsCopy.serverAddress.value == serverAddress) {
-      debugPrint("Server address didn't actually change. Ignoring...");
+      Logger.instance.log("Server address didn't actually change. Ignoring...");
       return;
     }
 
@@ -715,14 +716,14 @@ class SocketManager {
   }
 
   Future<void> refreshConnection({bool connectToSocket = true}) async {
-    debugPrint("Fetching new server URL from Firebase");
+    Logger.instance.log("Fetching new server URL from Firebase");
 
     // Get the server URL
     try {
       String? url = await MethodChannelInterface().invokeMethod("get-server-url");
       url = getServerAddress(address: url);
 
-      debugPrint("New server URL: $url");
+      Logger.instance.log("New server URL: $url");
 
       // Set the server URL
       Settings _settingsCopy = SettingsManager().settings;

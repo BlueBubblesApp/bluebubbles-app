@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
@@ -56,7 +57,7 @@ class SetupBloc {
   Future<void> connectToServer(FCMData data, String serverURL, String password) async {
     Settings settingsCopy = SettingsManager().settings;
     if (SocketManager().state.value == SocketState.CONNECTED && settingsCopy.serverAddress.value == serverURL) {
-      debugPrint("Not reconnecting to server we are already connected to!");
+      Logger.instance.log("Not reconnecting to server we are already connected to!");
       return;
     }
 
@@ -226,7 +227,7 @@ class SetupBloc {
   }
 
   void addOutput(String _output, SetupOutputType type) {
-    debugPrint('[Setup] -> $_output');
+    Logger.instance.log('[Setup] -> $_output');
     output.add(SetupOutputData(_output, type));
     data.value = SetupData(_progress, output);
   }

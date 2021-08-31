@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/socket_singletons.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/pinned_tile_text_bubble.dart';
@@ -80,7 +81,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
       try {
         await fetchChatSingleton(widget.chat.guid!);
       } catch (ex) {
-        debugPrint(ex.toString());
+        Logger.instance.log(ex.toString());
       }
 
       this.setNewChatData(forceUpdate: true);

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:collection';
 
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
@@ -227,25 +228,25 @@ class MessageBloc {
       _allMessages.addAll({message.guid!: message});
     }
 
-    // print("ITEMS OG");
+    // Logger.instance.log("ITEMS OG");
     // for (var i in _allMessages.values.toList()) {
-    //   print(i.guid);
+    //   Logger.instance.log(i.guid);
     // }
 
     // for (var i in res ?? []) {
     //   Message tmp = Message.fromMap(i);
-    //   print("ADDING: ${tmp.guid}");
+    //   Logger.instance.log("ADDING: ${tmp.guid}");
     //   if (!_allMessages.containsKey(tmp.guid)) {
     //     _allMessages.addAll({tmp.guid: message});
     //   }
     // }
 
-    // print("ITEMS AFTER");
+    // Logger.instance.log("ITEMS AFTER");
     // for (var i in _allMessages.values.toList()) {
-    //   print("TEXT: ${i.text}");
+    //   Logger.instance.log("TEXT: ${i.text}");
     // }
 
-    // print(_allMessages.length);
+    // Logger.instance.log(_allMessages.length);
 
     this.emitLoaded();
   }
@@ -278,10 +279,10 @@ class MessageBloc {
 
           // Handle the messages
           if (isNullOrEmpty(_messages)!) {
-            debugPrint("(CHUNK) No message chunks left from server");
+            Logger.instance.log("(CHUNK) No message chunks left from server");
             completer.complete(LoadMessageResult.RETREIVED_NO_MESSAGES);
           } else {
-            debugPrint("(CHUNK) Received ${_messages.length} messages from socket");
+            Logger.instance.log("(CHUNK) Received ${_messages.length} messages from socket");
 
             messages = await MessageHelper.bulkAddMessages(_currentChat, _messages,
                 notifyMessageManager: false, notifyForNewMessage: false, checkForLatestMessageText: false);
@@ -293,14 +294,14 @@ class MessageBloc {
             }
           }
         } catch (ex) {
-          debugPrint("(CHUNK) Failed to load message chunk!");
-          debugPrint(ex.toString());
+          Logger.instance.log("(CHUNK) Failed to load message chunk!");
+          Logger.instance.log(ex.toString());
           completer.complete(LoadMessageResult.FAILED_TO_RETREIVE);
         }
       }
 
       // Save the messages to the bloc
-      debugPrint("(CHUNK) Emitting ${messages.length} messages to listeners");
+      Logger.instance.log("(CHUNK) Emitting ${messages.length} messages to listeners");
       for (Message element in messages) {
         if (element.associatedMessageGuid == null && element.guid != null) {
           _allMessages.addAll({element.guid!: element});
@@ -323,7 +324,7 @@ class MessageBloc {
         completer.complete(LoadMessageResult.RETREIVED_MESSAGES);
       }
     } else {
-      debugPrint("(CHUNK) Failed to load message chunk! Unknown chat!");
+      Logger.instance.log("(CHUNK) Failed to load message chunk! Unknown chat!");
       completer.complete(LoadMessageResult.FAILED_TO_RETREIVE);
     }
 

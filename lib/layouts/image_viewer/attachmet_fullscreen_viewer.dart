@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/layouts/image_viewer/image_viewer.dart';
 import 'package:bluebubbles/layouts/image_viewer/video_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/CustomDismissible.dart';
@@ -76,7 +77,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
         await widget.currentChat!.updateChatAttachments();
         List<Attachment> newer = widget.currentChat!.chatAttachments.sublist(0);
         if (newer.length > older.length) {
-          debugPrint("Increasing currentIndex from " +
+          Logger.instance.log("Increasing currentIndex from " +
               currentIndex.toString() +
               " to " +
               (newer.length - older.length + currentIndex).toString());
@@ -142,7 +143,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                     onDismissed: (_) => Navigator.of(context).pop(),
                     child: Builder(
                       builder: (_) {
-                        debugPrint("Showing index: " + index.toString());
+                        Logger.instance.log("Showing index: " + index.toString());
                         Attachment attachment =
                         widget.currentChat != null ? widget.currentChat!.chatAttachments[index] : widget.attachment;
                         String mimeType = attachment.mimeType!;
