@@ -54,6 +54,7 @@ class Settings {
   final RxBool notifyOnChatList = false.obs;
   final RxBool notifyReactions = true.obs;
   final RxString notificationSound = "default".obs;
+  final RxBool colorsFromMedia = false.obs;
 
   // final RxString emojiFontFamily;
 
@@ -258,6 +259,8 @@ class Settings {
         settings.notifyReactions.value = entry.value;
       } else if (entry.name == "notificationSound") {
         settings.notificationSound.value = entry.value;
+      } else if (entry.name == "colorsFromMedia") {
+        settings.colorsFromMedia.value = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -667,6 +670,11 @@ class Settings {
           name: "notificationSound",
           value: this.notificationSound.value,
           type: this.notificationSound.runtimeType,
+        ),
+        ConfigEntry(
+          name: "colorsFromMedia",
+          value: this.colorsFromMedia.value,
+          type: this.colorsFromMedia.runtimeType,
         )
         // ConfigEntry(
         //     name: "emojiFontFamily",

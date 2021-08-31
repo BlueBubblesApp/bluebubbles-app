@@ -20,6 +20,7 @@ import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -268,6 +269,30 @@ class MethodChannelInterface {
       case "alarm-wake":
         AlarmManager().onReceiveAlarm(call.arguments["id"]);
         return new Future.value("");
+      case "album-art":
+        final Color? color;
+        if (call.arguments == null) {
+          color = Colors.blue;
+        } else {
+          color = Color(call.arguments['data']);
+        }
+        if (Get.context != null) {
+          var darkTheme = await ThemeObject.getDarkTheme();
+          var lightTheme = await ThemeObject.getLightTheme();
+          if (!darkTheme.isPreset) {
+            await darkTheme.fetchData();
+            var darkEntry = darkTheme.entries.firstWhere((element) => element.name == "PrimaryColor");
+            darkEntry.color = color;
+            await SettingsManager().saveSelectedTheme(Get.context!, selectedDarkTheme: darkTheme);
+          }
+          if (!lightTheme.isPreset) {
+            await lightTheme.fetchData();
+            var lightEntry = lightTheme.entries.firstWhere((element) => element.name == "PrimaryColor");
+            lightEntry.color = color;
+            await SettingsManager().saveSelectedTheme(Get.context!, selectedLightTheme: lightTheme);
+          }
+        }
+        return Future.value("");
       default:
         return new Future.value("");
     }

@@ -27,6 +27,7 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY"/>
 
     <application
         android:allowBackup="false"
@@ -65,6 +66,14 @@
             android:name=".services.FlutterFirebaseMessagingBackgroundService"
             android:permission="android.permission.BIND_JOB_SERVICE"
             android:exported="false"/>
+
+        <service android:name=".services.CustomNotificationListenerService"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
 
         <provider
             android:name="com.google.firebase.provider.FirebaseInitProvider"

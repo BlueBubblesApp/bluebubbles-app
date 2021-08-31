@@ -342,6 +342,12 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     // Get the saved settings from the settings manager after the first frame
     SchedulerBinding.instance!.addPostFrameCallback((_) async {
       await SettingsManager().getSavedSettings(context: context);
+
+      if (SettingsManager().settings.colorsFromMedia.value) {
+        try {
+          await MethodChannelInterface().invokeMethod("start-notif-listener");
+        } catch (_) {}
+      }
       // Get sharing media from files shared to the app from cold start
       // This one only handles files, not text
       ReceiveSharingIntent.getInitialMedia().then((List<SharedMediaFile> value) async {
