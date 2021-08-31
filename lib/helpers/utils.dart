@@ -650,3 +650,7 @@ extension PlatformSpecificCapitalize on String {
     }
   }
 }
+
+extension LastChars on String {
+  String lastChars(int n) => substring(length - n);
+}
