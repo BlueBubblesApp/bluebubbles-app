@@ -307,6 +307,7 @@ public class MainActivity extends FlutterFragmentActivity {
     @Override
     protected void onDestroy() {
         Log.d("MainActivity", "Removing Activity from memory");
+        new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("remove-sendPort", null);
         engine = null;
         super.onDestroy();
     }

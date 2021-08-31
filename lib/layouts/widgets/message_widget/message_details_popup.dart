@@ -695,7 +695,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
               style: Theme.of(context).textTheme.bodyText1,
             ),
             trailing: Icon(
-              Icons.share,
+              Icons.alarm,
               color: Theme.of(context).textTheme.bodyText1!.color,
             ),
           ),

@@ -248,7 +248,15 @@ class Chat {
   }
 
   Future<bool> shouldMuteNotification(Message? message) async {
-    if (muteType == "mute") {
+    if (SettingsManager().settings.globalTextDetection.value.isNotEmpty) {
+      List<String> text = SettingsManager().settings.globalTextDetection.value.split(",");
+      for (String s in text) {
+        if (message?.text?.toLowerCase().contains(s.toLowerCase()) ?? false) {
+          return false;
+        }
+      }
+      return true;
+    } else if (muteType == "mute") {
       return true;
     } else if (muteType == "mute_individuals") {
       List<String> individuals = muteArgs!.split(",");

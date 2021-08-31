@@ -170,6 +170,52 @@ class NotificationPanel extends StatelessWidget {
                         backgroundColor: tileColor,
                         secondaryColor: headerColor,
                       )),
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 65.0),
+                          child: SettingsDivider(color: headerColor),
+                        ),
+                      ),
+                      SettingsTile(
+                        title: "Text Detection",
+                        onTap: () async {
+                          final TextEditingController controller = TextEditingController();
+                          controller.text = SettingsManager().settings.globalTextDetection.value;
+                          Get.defaultDialog(
+                            title: "Text detection",
+                            backgroundColor: Theme.of(context).backgroundColor,
+                            buttonColor: Theme.of(context).primaryColor,
+                            content: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text("Enter any text separated by commas to whitelist notifications for. These are case insensitive.\n\nE.g. 'John,hey guys,homework'\n"),
+                                  ),
+                                  TextField(
+                                    controller: controller,
+                                    decoration: InputDecoration(
+                                      labelText: "Enter text to whitelist...",
+                                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey,)),
+                                      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).primaryColor,)),
+                                    ),
+                                  ),
+                                ]
+                            ),
+                            onConfirm: () async {
+                              if (controller.text.isEmpty) {
+                                showSnackbar("Error", "Please enter text!");
+                                return;
+                              }
+                              SettingsManager().settings.globalTextDetection.value = controller.text;
+                              Get.back();
+                            },
+                          );
+                        },
+                        backgroundColor: tileColor,
+                        subtitle: "Mute all chats except when your choice of text is found in a message",
+                      ),
                       Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
                       Container(
                         height: 30,

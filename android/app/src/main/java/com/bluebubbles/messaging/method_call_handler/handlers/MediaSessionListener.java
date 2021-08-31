@@ -5,6 +5,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.media.session.MediaController;
 import android.media.MediaMetadata;
 import android.media.session.PlaybackState;
@@ -58,32 +59,39 @@ public class MediaSessionListener implements OnActiveSessionsChangedListener, Ha
         callback = new MediaController.Callback() {
             @Override
             public void onMetadataChanged(MediaMetadata metadata) {
-                String title = metadata.getString(MediaMetadata.METADATA_KEY_ARTIST);
+                String title = metadata.getString(MediaMetadata.METADATA_KEY_TITLE);
+                if (title == null) {
+                    title = "Unknown";
+                }
                 Bitmap icon = metadata.getBitmap(MediaMetadata.METADATA_KEY_ART);
                 Bitmap icon2 = metadata.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART);
-                Log.d("test", title);
+                Log.d("BlueBubblesApp", "Getting media metadata for media " + title);
+                HashMap<String, Object> input = new HashMap<>();
+                Palette p = null;
                 if (icon != null) {
-                    Palette p = Palette.from(icon).generate();
-                    Palette.Swatch vibrant = p.getVibrantSwatch();
-                    if (vibrant != null) {
-                        int color = vibrant.getRgb();
-                        HashMap<String, Object> input = new HashMap<>();
-                        input.put("data", color);
-                        backgroundChannel.invokeMethod("album-art", input);
-                    } else {
-                        backgroundChannel.invokeMethod("album-art", null);
-                    }
+                    p = Palette.from(icon).generate();
                 } else if (icon2 != null) {
-                    Palette p = Palette.from(icon2).generate();
-                    Palette.Swatch vibrant = p.getVibrantSwatch();
-                    if (vibrant != null) {
-                        int color = vibrant.getRgb();
-                        HashMap<String, Object> input = new HashMap<>();
-                        input.put("data", color);
-                        backgroundChannel.invokeMethod("album-art", input);
+                    p = Palette.from(icon2).generate();
+                }
+                if (p != null) {
+                    int lightBg = p.getLightVibrantColor(Color.WHITE);
+                    int darkBg = p.getDarkMutedColor(Color.BLACK);
+                    int primary;
+                    if (p.getVibrantColor(0xFF2196F3) != 0xFF2196F3) {
+                        primary = p.getVibrantColor(0xFF2196F3);
+                    } else if (p.getMutedColor(0xFF2196F3) != 0xFF2196F3) {
+                        primary = p.getMutedColor(0xFF2196F3);
+                    } else if (p.getLightMutedColor(0xFF2196F3) != 0xFF2196F3) {
+                        primary = p.getLightMutedColor(0xFF2196F3);
                     } else {
-                        backgroundChannel.invokeMethod("album-art", null);
+                        primary = 0xFF2196F3;
                     }
+                    Log.d("BlueBubblesApp", "Dominant color found (for debugging only): " + Integer.toString(p.getDominantColor(Color.BLACK)));
+                    input.put("lightBg", lightBg);
+                    input.put("darkBg", darkBg);
+                    input.put("primary", primary);
+                    Log.d("BlueBubblesApp", "Sending media metadata for media " + title);
+                    backgroundChannel.invokeMethod("album-art", input);
                 }
             }
         };

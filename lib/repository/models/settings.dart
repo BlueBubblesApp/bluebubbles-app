@@ -55,6 +55,9 @@ class Settings {
   final RxBool notifyReactions = true.obs;
   final RxString notificationSound = "default".obs;
   final RxBool colorsFromMedia = false.obs;
+  final RxBool adjustPrimary = true.obs;
+  final RxBool adjustBackground = false.obs;
+  final RxString globalTextDetection = "".obs;
 
   // final RxString emojiFontFamily;
 
@@ -261,6 +264,12 @@ class Settings {
         settings.notificationSound.value = entry.value;
       } else if (entry.name == "colorsFromMedia") {
         settings.colorsFromMedia.value = entry.value;
+      } else if (entry.name == "adjustPrimary") {
+        settings.adjustPrimary.value = entry.value;
+      } else if (entry.name == "adjustBackground") {
+        settings.adjustBackground.value = entry.value;
+      } else if (entry.name == "globalTextDetection") {
+        settings.globalTextDetection.value = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -675,6 +684,21 @@ class Settings {
           name: "colorsFromMedia",
           value: this.colorsFromMedia.value,
           type: this.colorsFromMedia.runtimeType,
+        ),
+        ConfigEntry(
+          name: "adjustPrimary",
+          value: this.adjustPrimary.value,
+          type: this.adjustPrimary.runtimeType,
+        ),
+        ConfigEntry(
+          name: "adjustBackground",
+          value: this.adjustBackground.value,
+          type: this.adjustBackground.runtimeType,
+        ),
+        ConfigEntry(
+          name: "globalTextDetection",
+          value: this.globalTextDetection.value,
+          type: this.globalTextDetection.runtimeType,
         )
         // ConfigEntry(
         //     name: "emojiFontFamily",
@@ -724,6 +748,7 @@ class Settings {
       'notifyOnChatList': this.notifyOnChatList.value,
       'notifyReactions': this.notifyReactions.value,
       'notificationSound': this.notificationSound.value,
+      'globalTextDetection': this.globalTextDetection.value,
       'enablePrivateAPI': this.enablePrivateAPI.value,
       'privateSendTypingIndicators': this.privateSendTypingIndicators.value,
       'privateMarkChatAsRead': this.privateMarkChatAsRead.value,
@@ -802,6 +827,7 @@ class Settings {
     SettingsManager().settings.notifyOnChatList.value = map['notifyOnChatList'];
     SettingsManager().settings.notifyReactions.value = map['notifyReactions'];
     SettingsManager().settings.notifyReactions.value = map['notificationSound'];
+    SettingsManager().settings.globalTextDetection.value = map['globalTextDetection'];
     SettingsManager().settings.enablePrivateAPI.value = map['enablePrivateAPI'];
     SettingsManager().settings.privateSendTypingIndicators.value = map['privateSendTypingIndicators'];
     SettingsManager().settings.privateMarkChatAsRead.value = map['privateMarkChatAsRead'];

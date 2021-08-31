@@ -45,6 +45,11 @@ class MethodChannelInterface {
   /// [headless] identifies if this MethodChannelInterface is used when the app is fully closed, in hich case some actions cannot be done
   bool headless = false;
 
+  bool isRunning = false;
+  Color? previousPrimary;
+  Color? previousLightBg;
+  Color? previousDarkBg;
+
   /// Initialize all of the platform channels
   ///
   /// @param [customChannel] an optional custom platform channel to use by the methodchannelinterface
@@ -99,9 +104,11 @@ class MethodChannelInterface {
         // send data to the UI thread if it is active, otherwise handle in the isolate
         final SendPort? send = IsolateNameServer.lookupPortByName('bg_isolate');
         if (send != null) {
+          print("Handling through SendPort");
           data!['action'] = 'new-message';
           send.send(data);
         } else {
+          print("Handling through IncomingQueue");
           // Add it to the queue with the data as the item
           IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_MESSAGE_EVENT, item: {"data": data}));
         }
@@ -270,28 +277,42 @@ class MethodChannelInterface {
         AlarmManager().onReceiveAlarm(call.arguments["id"]);
         return new Future.value("");
       case "album-art":
-        final Color? color;
-        if (call.arguments == null) {
-          color = Colors.blue;
-        } else {
-          color = Color(call.arguments['data']);
-        }
-        if (Get.context != null) {
+        if (!SettingsManager().settings.colorsFromMedia.value) return Future.value("");
+        final Color primary = Color(call.arguments['primary']);
+        final Color lightBg = Color(call.arguments['lightBg']);
+        final Color darkBg = Color(call.arguments['darkBg']);
+        if (Get.context != null && (!isRunning || primary != previousPrimary || lightBg != previousLightBg || darkBg != previousDarkBg)) {
+          previousPrimary = primary;
+          previousLightBg = lightBg;
+          previousDarkBg = darkBg;
+          isRunning = true;
+          print("primary color is $primary");
+          print("light bg color is $lightBg");
+          print("dark bg color is $darkBg");
           var darkTheme = await ThemeObject.getDarkTheme();
           var lightTheme = await ThemeObject.getLightTheme();
           if (!darkTheme.isPreset) {
             await darkTheme.fetchData();
-            var darkEntry = darkTheme.entries.firstWhere((element) => element.name == "PrimaryColor");
-            darkEntry.color = color;
+            var darkPrimaryEntry = darkTheme.entries.firstWhere((element) => element.name == "PrimaryColor");
+            var darkBgEntry = darkTheme.entries.firstWhere((element) => element.name == "BackgroundColor");
+            if (SettingsManager().settings.adjustPrimary.value) darkPrimaryEntry.color = primary;
+            if (SettingsManager().settings.adjustBackground.value) darkBgEntry.color = darkBg;
             await SettingsManager().saveSelectedTheme(Get.context!, selectedDarkTheme: darkTheme);
           }
           if (!lightTheme.isPreset) {
             await lightTheme.fetchData();
-            var lightEntry = lightTheme.entries.firstWhere((element) => element.name == "PrimaryColor");
-            lightEntry.color = color;
+            var lightPrimaryEntry = lightTheme.entries.firstWhere((element) => element.name == "PrimaryColor");
+            var lightBgEntry = lightTheme.entries.firstWhere((element) => element.name == "BackgroundColor");
+            if (SettingsManager().settings.adjustPrimary.value) lightPrimaryEntry.color = primary;
+            if (SettingsManager().settings.adjustBackground.value) lightBgEntry.color = lightBg;
             await SettingsManager().saveSelectedTheme(Get.context!, selectedLightTheme: lightTheme);
           }
+          isRunning = false;
         }
+        return Future.value("");
+      case "remove-sendPort":
+        IsolateNameServer.removePortNameMapping('bg_isolate');
+        print("Removed sendPort because Activity was destroyed");
         return Future.value("");
       default:
         return new Future.value("");
