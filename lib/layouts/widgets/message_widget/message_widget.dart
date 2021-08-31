@@ -18,6 +18,7 @@ import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:bluebubbles/helpers/darty.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -202,7 +203,7 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
 
     // If this is a URL preview and we don't have attachments, we need to get them
     List<Attachment?> nullAttachments = _message.getPreviewAttachments();
-    if (_message.isUrlPreview() && nullAttachments.isEmpty) {
+    if (_message.fullText.replaceAll("\n", " ").hasUrl && nullAttachments.isEmpty) {
       if (lastRequestCount != nullAttachments.length) {
         lastRequestCount = nullAttachments.length;
 

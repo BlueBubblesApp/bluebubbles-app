@@ -283,7 +283,12 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
 
         return widget.chat.latestMessageText != null && !(widget.chat.latestMessageText is String)
             ? widget.chat.latestMessageText as Widget
-            : TextOneLine(message ?? "", style: style, overflow: TextOverflow.ellipsis);
+            : Text(
+                message ?? "",
+                style: style,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 2,
+              );
       },
     );
   }
@@ -318,16 +323,18 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
   Widget _buildDate() => ConstrainedBox(
         constraints: BoxConstraints(maxWidth: 100.0),
         child: FutureBuilder<Message>(
-          future: widget.chat.latestMessage,
-          builder: (context, snapshot) {
-            return Obx(() => Text((snapshot.data?.error.value ?? 0) > 0 ? "Error" : buildDate(widget.chat.latestMessageDate),
-                textAlign: TextAlign.right,
-                style: Theme.of(context).textTheme.subtitle2!.copyWith(
-                      color: (snapshot.data?.error.value ?? 0) > 0 ? Colors.red : Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
-                    ),
-                overflow: TextOverflow.clip));
-          }
-        ),
+            future: widget.chat.latestMessage,
+            builder: (context, snapshot) {
+              return Obx(
+                  () => Text((snapshot.data?.error.value ?? 0) > 0 ? "Error" : buildDate(widget.chat.latestMessageDate),
+                      textAlign: TextAlign.right,
+                      style: Theme.of(context).textTheme.subtitle2!.copyWith(
+                            color: (snapshot.data?.error.value ?? 0) > 0
+                                ? Colors.red
+                                : Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
+                          ),
+                      overflow: TextOverflow.clip));
+            }),
       );
 
   void onTap() {
@@ -443,6 +450,7 @@ class __CupertinoState extends State<_Cupertino> {
                     child: ListTile(
                       dense: SettingsManager().settings.denseChatTiles.value,
                       contentPadding: EdgeInsets.only(left: 0),
+                      minVerticalPadding: 10,
                       title: widget.parent.buildTitle(),
                       subtitle: widget.parent.buildSubtitle(),
                       leading: widget.parent.buildLeading(),
@@ -565,6 +573,7 @@ class _Material extends StatelessWidget {
               dense: SettingsManager().settings.denseChatTiles.value,
               title: parent.buildTitle(),
               subtitle: parent.buildSubtitle(),
+              minVerticalPadding: 10,
               leading: Stack(
                 alignment: Alignment.topRight,
                 children: [
@@ -641,6 +650,7 @@ class _Samsung extends StatelessWidget {
         },
         child: Obx(
           () => Container(
+            height: 72.0,
             decoration: BoxDecoration(
               color: Theme.of(context).accentColor,
               border: (!SettingsManager().settings.hideDividers.value)
@@ -654,6 +664,7 @@ class _Samsung extends StatelessWidget {
                   : null,
             ),
             child: ListTile(
+              isThreeLine: true,
               dense: SettingsManager().settings.denseChatTiles.value,
               title: parent.buildTitle(),
               subtitle: parent.buildSubtitle(),

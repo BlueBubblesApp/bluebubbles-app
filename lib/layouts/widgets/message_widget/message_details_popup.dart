@@ -3,7 +3,6 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
 import 'package:bluebubbles/helpers/metadata_helper.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachment.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:collection/collection.dart';
@@ -29,6 +28,7 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/helpers/darty.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart' as cupertino;
 import 'package:flutter/material.dart';
@@ -385,7 +385,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             ),
           ),
         ),
-      if (widget.message.isUrlPreview())
+      if (widget.message.fullText.replaceAll("\n", " ").hasUrl)
         Material(
           color: Colors.transparent,
           child: InkWell(
@@ -544,7 +544,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                       child: SingleChildScrollView(
                         physics: ThemeSwitcher.getScrollPhysics(),
                         child: SelectableText(
-                          widget.message.fullText!,
+                          widget.message.fullText,
                           style: Theme.of(context).textTheme.bodyText1,
                         ),
                       ),

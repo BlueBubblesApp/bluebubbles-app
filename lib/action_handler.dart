@@ -6,7 +6,7 @@ import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/attachment_sender.dart';
-import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/darty.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
@@ -42,73 +42,102 @@ class ActionHandler {
       {MessageBloc? messageBloc, List<Attachment> attachments = const []}) async {
     if (isNullOrEmpty(text, trimString: true)!) return;
 
-    List<Message> messages = <Message>[];
+    if ((await SettingsManager().getMacOSVersion() ?? 10) < 11) {
+      List<Message> messages = <Message>[];
 
-    // Check for URLs
-    RegExpMatch? linkMatch;
-    String? linkMsg;
-    List<RegExpMatch> matches = parseLinks(text);
+      // Check for URLs
+      RegExpMatch? linkMatch;
+      String? linkMsg;
+      List<RegExpMatch> matches = parseLinks(text);
 
-    // Get the first match (if it exists)
-    if (matches.length > 0) {
-      linkMatch = matches.first;
-      linkMsg = text.substring(linkMatch.start, linkMatch.end).trim();
-    }
+      // Get the first match (if it exists)
+      if (matches.length > 0) {
+        linkMatch = matches.first;
+        linkMsg = text.substring(linkMatch.start, linkMatch.end).trim();
+      }
 
-    // Figure out of the message starts or ends with the link
-    // In either case, we want to split up the messages
-    bool shouldSplitEnd = linkMatch != null && text.endsWith(linkMsg!);
-    bool shouldSplitStart = linkMatch != null && text.startsWith(linkMsg!);
-    bool shouldSplit = shouldSplitEnd || shouldSplitStart;
+      // Figure out of the message starts or ends with the link
+      // In either case, we want to split up the messages
+      bool shouldSplitEnd = linkMatch != null && text.endsWith(linkMsg!);
+      bool shouldSplitStart = linkMatch != null && text.startsWith(linkMsg!);
+      bool shouldSplit = shouldSplitEnd || shouldSplitStart;
 
-    // Split up the messages depending on if the link is at the start or end
-    String mainText = text;
-    String secondaryText = text;
-    if (shouldSplitEnd) {
-      mainText = text.substring(0, linkMatch.start);
-      secondaryText = text.substring(linkMatch.start, linkMatch.end);
-    } else if (shouldSplitStart) {
-      mainText = text.substring(linkMatch.start, linkMatch.end);
-      secondaryText = text.substring(linkMatch.end);
-    }
+      // Split up the messages depending on if the link is at the start or end
+      String mainText = text;
+      String secondaryText = text;
+      if (shouldSplitEnd) {
+        mainText = text.substring(0, linkMatch.start);
+        secondaryText = text.substring(linkMatch.start, linkMatch.end);
+      } else if (shouldSplitStart) {
+        mainText = text.substring(linkMatch.start, linkMatch.end);
+        secondaryText = text.substring(linkMatch.end);
+      }
 
-    // Create the main message
-    Message mainMsg = Message(
-      text: mainText.trim(),
-      dateCreated: DateTime.now(),
-      hasAttachments: attachments.length > 0 ? true : false,
-    );
-
-    // Generate a Temp GUID
-    mainMsg.generateTempGuid();
-
-    if (mainMsg.text!.trim().length > 0) messages.add(mainMsg);
-
-    // If there is a link, build the link message
-    if (shouldSplit) {
-      Message secondaryMessage = Message(
-        text: secondaryText.trim(),
+      Message mainMsg = Message(
+        text: mainText.trim(),
         dateCreated: DateTime.now(),
-        hasAttachments: false,
+        hasAttachments: attachments.length > 0 ? true : false,
       );
 
       // Generate a Temp GUID
-      secondaryMessage.generateTempGuid();
-      messages.add(secondaryMessage);
-    }
+      mainMsg.generateTempGuid();
 
-    // Make sure to save the chat
-    // If we already have the ID, we don't have to wait to resave it
-    if (chat.id == null) {
-      await chat.save();
+      if (mainMsg.text!.trim().length > 0) messages.add(mainMsg);
+
+      // If there is a link, build the link message
+      if (shouldSplit) {
+        Message secondaryMessage = Message(
+          text: secondaryText.trim(),
+          dateCreated: DateTime.now(),
+          hasAttachments: false,
+        );
+
+        // Generate a Temp GUID
+        secondaryMessage.generateTempGuid();
+        messages.add(secondaryMessage);
+      }
+
+      // Make sure to save the chat
+      // If we already have the ID, we don't have to wait to resave it
+      if (chat.id == null) {
+        await chat.save();
+      } else {
+        chat.save();
+      }
+
+      // Send all the messages
+      messages.forEachIndexed((index, message) async {
+        // Add the message to the UI and DB
+        NewMessageManager().addMessage(chat, message, outgoing: true);
+        chat.addMessage(message);
+
+        // Create params for the queue item
+        Map<String, dynamic> params = {"chat": chat, "message": message};
+
+        // Add the message send to the queue
+        await OutgoingQueue().add(new QueueItem(event: "send-message", item: params));
+      });
     } else {
-      chat.save();
-    }
+      // Create the main message
+      Message message = Message(
+        text: text.trim(),
+        dateCreated: DateTime.now(),
+        hasAttachments: attachments.length > 0 ? true : false,
+      );
 
-    // Send all the messages
-    messages.forEachIndexed((index, message) async {
+      // Generate a Temp GUID
+      message.generateTempGuid();
+
+      // Make sure to save the chat
+      // If we already have the ID, we don't have to wait to resave it
+      if (chat.id == null) {
+        await chat.save();
+      } else {
+        chat.save();
+      }
+
       // Add the message to the UI and DB
-      NewMessageManager().addMessage(chat, message, outgoing: true, shouldNotAnimate: index > 0);
+      NewMessageManager().addMessage(chat, message, outgoing: true);
       chat.addMessage(message);
 
       // Create params for the queue item
@@ -116,7 +145,7 @@ class ActionHandler {
 
       // Add the message send to the queue
       await OutgoingQueue().add(new QueueItem(event: "send-message", item: params));
-    });
+    }
   }
 
   static Future<void> sendMessageHelper(Chat chat, Message message) async {
@@ -133,7 +162,8 @@ class ActionHandler {
         // If there is an error, replace the temp value with an error
         if (response['status'] != 200) {
           message.guid = message.guid!.replaceAll("temp", "error-${response['error']['message']}");
-          message.error.value = response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
+          message.error.value =
+              response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
 
           await Message.replaceMessage(tempGuid, message);
           NewMessageManager().updateMessage(chat, tempGuid!, message);
@@ -527,7 +557,8 @@ class ActionHandler {
         Attachment file = Attachment.fromMap(attachmentItem);
         await file.save(message);
 
-        if ((await AttachmentHelper.canAutoDownload()) && file.mimeType != null &&
+        if ((await AttachmentHelper.canAutoDownload()) &&
+            file.mimeType != null &&
             !Get.find<AttachmentDownloadService>().downloaders.contains(file.guid)) {
           Get.put(AttachmentDownloadController(attachment: file), tag: file.guid);
         }

@@ -38,8 +38,8 @@ class ImageWidgetController extends GetxController {
     if (!runForcefully && data.value != null) return;
 
     // Try to get the image data from the "cache"
-    data.value = CurrentChat.of(context)?.getImageData(attachment);
-    if (data.value == null) {
+    Uint8List? tmpData = CurrentChat.of(context)?.getImageData(attachment);
+    if (tmpData == null) {
       // If it's an image, compress the image when loading it
       if (AttachmentHelper.canCompress(attachment) &&
           attachment.guid != "redacted-mode-demo-attachment" &&
@@ -47,8 +47,7 @@ class ImageWidgetController extends GetxController {
         data.value = await AttachmentHelper.compressAttachment(attachment, file.absolute.path);
         // All other attachments can be held in memory as bytes
       } else {
-        if (attachment.guid == "redacted-mode-demo-attachment" ||
-            attachment.guid!.contains("theme-selector")) {
+        if (attachment.guid == "redacted-mode-demo-attachment" || attachment.guid!.contains("theme-selector")) {
           data.value = (await rootBundle.load(file.path)).buffer.asUint8List();
           return;
         }
@@ -57,6 +56,8 @@ class ImageWidgetController extends GetxController {
 
       if (data.value == null || CurrentChat.of(context) == null) return;
       CurrentChat.of(context)?.saveImageData(data.value!, attachment);
+    } else {
+      data.value = tmpData;
     }
   }
 }
@@ -117,30 +118,31 @@ class ImageWidget extends StatelessWidget {
   }
 
   Widget buildSwitcher(BuildContext context, ImageWidgetController controller) => AnimatedSwitcher(
-    duration: Duration(milliseconds: 150),
-    child: Obx(() => controller.data.value != null
-        ? Image.memory(
-            controller.data.value!,
-            // prevents the image widget from "refreshing" when the provider changes
-            gaplessPlayback: true,
-            frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-              return Stack(children: [
-                buildPlaceHolder(context, controller, isLoaded: frame != null || wasSynchronouslyLoaded),
-                AnimatedOpacity(
-                  opacity: (frame == null &&
-                      controller.attachment.guid != "redacted-mode-demo-attachment" &&
-                      controller.attachment.guid!.contains("theme-selector"))
-                      ? 0
-                      : 1,
-                  child: child,
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeInOut,
-                )
-        ]);
-      },
-    )
-        : buildPlaceHolder(context, controller),
-  ));
+      duration: Duration(milliseconds: 150),
+      child: Obx(
+        () => controller.data.value != null
+            ? Image.memory(
+                controller.data.value!,
+                // prevents the image widget from "refreshing" when the provider changes
+                gaplessPlayback: true,
+                frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                  return Stack(children: [
+                    buildPlaceHolder(context, controller, isLoaded: wasSynchronouslyLoaded),
+                    AnimatedOpacity(
+                      opacity: (frame == null &&
+                              controller.attachment.guid != "redacted-mode-demo-attachment" &&
+                              controller.attachment.guid!.contains("theme-selector"))
+                          ? 0
+                          : 1,
+                      child: child,
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeInOut,
+                    )
+                  ]);
+                },
+              )
+            : buildPlaceHolder(context, controller),
+      ));
 
   Widget buildPlaceHolder(BuildContext context, ImageWidgetController controller, {bool isLoaded = false}) {
     Widget empty = Container(height: 0, width: 0);
@@ -148,17 +150,18 @@ class ImageWidget extends StatelessWidget {
     // Handle the cases when the image is done loading
     if (isLoaded) {
       // If we have controller.data.value and the image has a valid size, return an empty container (no placeholder)
-      if (controller.data.value != null && controller.data.value!.length > 0 && controller.attachment.hasValidSize) {
+      if (controller.data.value != null && controller.data.value!.length > 0) {
         return empty;
-      } else if (controller.data.value != null && controller.data.value!.length > 0) {
-        // If we have controller.data.value, but _not_ a valid size, return an empty image placeholder
-        return buildImagePlaceholder(context, controller.attachment, Center(child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Text("Something went wrong, tap here to display in fullscreen"),
-        )));
       } else {
         // If we don't have controller.data.value, show an invalid image placeholder
-        return buildImagePlaceholder(context, controller.attachment, Center(child: Text("Invalid Image")));
+        return buildImagePlaceholder(
+            context,
+            controller.attachment,
+            Center(
+                child: Padding(
+              padding: const EdgeInsets.all(10.0),
+              child: Text("Something went wrong! Tap to display in fullscreen", textAlign: TextAlign.center),
+            )));
       }
     }
 

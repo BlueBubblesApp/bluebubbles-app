@@ -12,6 +12,7 @@ import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:bluebubbles/helpers/darty.dart';
 import 'package:get/get.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/widgets.dart';
@@ -105,6 +106,7 @@ class Chat {
   List<Handle> participants = [];
   List<String?> fakeParticipants = [];
   final RxnString customAvatarPath = RxnString();
+  final RxnInt pinIndex = RxnInt();
 
   Chat({
     this.id,
@@ -119,6 +121,7 @@ class Chat {
     this.hasUnreadMessage,
     this.displayName,
     String? customAvatar,
+    int? pinnedIndex,
     this.participants = const [],
     this.fakeParticipants = const [],
     this.latestMessageDate,
@@ -126,6 +129,7 @@ class Chat {
     this.fakeLatestMessageText,
   }) {
     customAvatarPath.value = customAvatar;
+    pinIndex.value = pinnedIndex;
   }
 
   factory Chat.fromMap(Map<String, dynamic> json) {
@@ -174,6 +178,7 @@ class Chat {
           : null,
       displayName: json.containsKey("displayName") ? json["displayName"] : null,
       customAvatar: json['customAvatarPath'],
+      pinnedIndex: json['pinIndex'],
       participants: participants,
       fakeParticipants: fakeParticipants,
     );
@@ -265,6 +270,7 @@ class Chat {
     }
 
     params["customAvatarPath"] = this.customAvatarPath.value;
+    params["pinIndex"] = this.pinIndex.value;
 
     // If it already exists, update it
     if (this.id != null) {
@@ -390,7 +396,7 @@ class Chat {
     }
 
     // If this is a message preview and we don't already have metadata for this, get it
-    if (message.isUrlPreview() && !MetadataHelper.mapIsNotEmpty(message.metadata)) {
+    if (message.fullText.replaceAll("\n", " ").hasUrl && !MetadataHelper.mapIsNotEmpty(message.metadata)) {
       MetadataHelper.fetchMetadata(message).then((Metadata? meta) async {
         // If the metadata is empty, don't do anything
         if (!MetadataHelper.isNotEmpty(meta)) return;
@@ -730,6 +736,7 @@ class Chat {
     if (this.id == null) return this;
 
     this.isPinned = isPinned;
+    this.pinIndex.value = null;
     await db.update("chat", {"isPinned": isPinned ? 1 : 0}, where: "ROWID = ?", whereArgs: [this.id]);
 
     ChatBloc().updateChat(this);
@@ -808,7 +815,8 @@ class Chat {
       " chat.latestMessageDate as latestMessageDate,"
       " chat.latestMessageText as latestMessageText,"
       " chat.displayName as displayName,"
-      " chat.customAvatarPath as customAvatarPath"
+      " chat.customAvatarPath as customAvatarPath,"
+      " chat.pinIndex as pinIndex"
       " FROM chat"
       " ORDER BY chat.isPinned DESC, chat.latestMessageDate DESC LIMIT $limit OFFSET $offset;",
     );
@@ -854,11 +862,14 @@ class Chat {
   }
 
   static int sort(Chat? a, Chat? b) {
-    if (!a!.isPinned! && b!.isPinned!) return 1;
-    if (a.isPinned! && !b!.isPinned!) return -1;
-    if (a.latestMessageDate == null && b!.latestMessageDate == null) return 0;
+    if (a!.pinIndex.value != null && b!.pinIndex.value != null) return a.pinIndex.value!.compareTo(b.pinIndex.value!);
+    if (b!.pinIndex.value != null) return 1;
+    if (a.pinIndex.value != null) return -1;
+    if (!a.isPinned! && b.isPinned!) return 1;
+    if (a.isPinned! && !b.isPinned!) return -1;
+    if (a.latestMessageDate == null && b.latestMessageDate == null) return 0;
     if (a.latestMessageDate == null) return 1;
-    if (b!.latestMessageDate == null) return -1;
+    if (b.latestMessageDate == null) return -1;
     return -a.latestMessageDate!.compareTo(b.latestMessageDate!);
   }
 
@@ -883,5 +894,6 @@ class Chat {
         "latestMessageDate": latestMessageDate != null ? latestMessageDate!.millisecondsSinceEpoch : 0,
         "latestMessageText": latestMessageText,
         "customAvatarPath": customAvatarPath.value,
+        "pinIndex": pinIndex.value,
       };
 }

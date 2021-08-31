@@ -4,10 +4,9 @@ import 'dart:math';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/setup_bloc.dart';
-import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_sender.dart';
-import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/crypto.dart';
+import 'package:bluebubbles/helpers/darty.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/attachment_info_bloc.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
@@ -104,10 +103,13 @@ class SocketManager {
 
   String? token;
 
-  void socketStatusUpdate(data) {
-    debugPrint("[Socket] -> Socket status update: $data");
+  void socketStatusUpdate(String status, dynamic data) {
+    debugPrint("[Socket] -> Socket status update: $status");
+    if (data != null) {
+      debugPrint("[Socket] -> Data: ${data.toString()}");
+    }
 
-    switch (data) {
+    switch (status) {
       case "connect":
         authFCM();
         NotificationManager().clearSocketWarning();
@@ -226,7 +228,7 @@ class SocketManager {
       return;
     }
 
-    debugPrint("[Socket] -> Starting socket io with the server: $serverAddress");
+    debugPrint("[Socket] -> Configuring socket.io client...");
 
     try {
       // Create a new socket connection
@@ -238,7 +240,8 @@ class SocketManager {
           OptionBuilder()
               .setQuery({"guid": encodeUri(SettingsManager().settings.guidAuthKey.value)})
               .setTransports(['websocket', 'polling'])
-              .enableAutoConnect()
+              // Disable so that we can create the listeners first
+              .disableAutoConnect()
               .disableForceNewConnection()
               .enableReconnection()
               .build());
@@ -250,16 +253,16 @@ class SocketManager {
 
       _manager.socket!.clearListeners();
 
-      _manager.socket!.onConnect((data) => socketStatusUpdate("connect"));
-      _manager.socket!.onReconnect((data) => socketStatusUpdate("reconnect"));
-      _manager.socket!.onDisconnect((data) => socketStatusUpdate("disconnect"));
-      _manager.socket!.onConnectError((data) => socketStatusUpdate("connect_error"));
-      _manager.socket!.onConnectTimeout((data) => socketStatusUpdate("connect_timeout"));
-      _manager.socket!.onReconnectAttempt((data) => socketStatusUpdate("reconnect_attempt"));
-      _manager.socket!.onConnecting((data) => socketStatusUpdate("connecting"));
-      _manager.socket!.onReconnect((data) => socketStatusUpdate("reconnect"));
-      _manager.socket!.onReconnecting((data) => socketStatusUpdate("reconnecting"));
-      _manager.socket!.onError((data) => socketStatusUpdate("error"));
+      _manager.socket!.onConnect((data) => socketStatusUpdate("connect", data));
+      _manager.socket!.onReconnect((data) => socketStatusUpdate("reconnect", data));
+      _manager.socket!.onDisconnect((data) => socketStatusUpdate("disconnect", data));
+      _manager.socket!.onConnectError((data) => socketStatusUpdate("connect_error", data));
+      _manager.socket!.onConnectTimeout((data) => socketStatusUpdate("connect_timeout", data));
+      _manager.socket!.onReconnectAttempt((data) => socketStatusUpdate("reconnect_attempt", data));
+      _manager.socket!.onConnecting((data) => socketStatusUpdate("connecting", data));
+      _manager.socket!.onReconnect((data) => socketStatusUpdate("reconnect", data));
+      _manager.socket!.onReconnecting((data) => socketStatusUpdate("reconnecting", data));
+      _manager.socket!.onError((data) => socketStatusUpdate("error", data));
 
       /**
        * Callback event for when the server successfully added a new FCM device
@@ -361,12 +364,14 @@ class SocketManager {
         IncomingQueue().add(new QueueItem(event: "handle-updated-message", item: {"data": _data}));
       });
 
+      debugPrint("Connecting to the socket at: $serverAddress");
       _manager.socket!.connect();
     } catch (e) {
       if (!catchException) {
-        throw ("[Socket] -> " + e.toString());
+        throw ("[Socket] -> Failed to connect: ${e.toString()}");
       } else {
         debugPrint("[Socket] -> Failed to connect");
+        debugPrint("[Socket] -> ${e.toString()}");
       }
     }
   }

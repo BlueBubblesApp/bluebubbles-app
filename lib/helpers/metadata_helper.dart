@@ -58,7 +58,7 @@ class MetadataHelper {
     _metaCache[message.guid!] = completer;
 
     // Make sure there is a schema with the URL
-    String url = message.text!;
+    String url = message.getUrl()!;
     if (!url.toLowerCase().startsWith("http://") && !url.toLowerCase().startsWith("https://")) {
       url = "https://" + url;
     }
@@ -156,6 +156,8 @@ class MetadataHelper {
     String imageData = data?.image ?? "";
     if (imageData.contains("renderTimingPixel.png") || imageData.contains("fls-na.amazon.com")) {
       data?.image = null;
+    } else if (imageData.startsWith('//')) {
+      data?.image = 'https:$imageData';
     }
 
     // Remove title or description if either are the "null" string
