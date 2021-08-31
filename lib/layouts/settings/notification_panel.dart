@@ -205,6 +205,7 @@ class NotificationPanel extends StatelessWidget {
                             ),
                             onConfirm: () async {
                               SettingsManager().settings.globalTextDetection.value = controller.text;
+                              saveSettings();
                               Get.back();
                             },
                           );
