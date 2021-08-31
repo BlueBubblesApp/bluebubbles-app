@@ -237,7 +237,8 @@ class SocketManager {
           OptionBuilder()
               .setQuery({"guid": encodeUri(SettingsManager().settings.guidAuthKey.value)})
               .setTransports(['websocket', 'polling'])
-              .enableAutoConnect()
+              // Disable so that we can create the listeners first
+              .disableAutoConnect()
               .disableForceNewConnection()
               .enableReconnection()
               .build());
