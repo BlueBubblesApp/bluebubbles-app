@@ -513,12 +513,12 @@ class Message {
     return (this.balloonBundleId != null &&
             this.balloonBundleId == "com.apple.messages.URLBalloonProvider" &&
             this.hasDdResults!) ||
-        (this.hasDdResults! && (this.text ?? "").hasUrl);
+        (this.hasDdResults! && (this.text ?? "").replaceAll("\n", " ").hasUrl);
   }
 
   String? getUrl() {
     if (text == null) return null;
-    List<String> splits = this.text!.split(" ");
+    List<String> splits = this.text!.replaceAll("\n", " ").split(" ");
     return splits.firstWhereOrNull((String element) => element.hasUrl);
   }
 

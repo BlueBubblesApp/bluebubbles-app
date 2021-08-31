@@ -327,7 +327,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
           ),
         );
       }
-      if (widget.message.fullText.hasUrl) {
+      if (widget.message.fullText.replaceAll("\n", " ").hasUrl) {
         message =
             Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [
           Padding(
