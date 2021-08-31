@@ -30,10 +30,7 @@ dependencies:
   connectivity: ^3.0.6
   tuple: ^2.0.0
   encrypt: ^5.0.1
-  assorted_layout_widgets:
-    git:
-      url: https://github.com/josh-burton/assorted_layout_widgets
-      ref: beta-fix
+  assorted_layout_widgets: ^5.0.2
   record: ^3.0.0
   contacts_service: ^0.6.1
   permission_handler: ^8.1.4+2
