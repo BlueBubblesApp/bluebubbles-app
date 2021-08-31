@@ -204,10 +204,6 @@ class NotificationPanel extends StatelessWidget {
                                 ]
                             ),
                             onConfirm: () async {
-                              if (controller.text.isEmpty) {
-                                showSnackbar("Error", "Please enter text!");
-                                return;
-                              }
                               SettingsManager().settings.globalTextDetection.value = controller.text;
                               Get.back();
                             },
