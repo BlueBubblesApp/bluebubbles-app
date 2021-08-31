@@ -19,6 +19,7 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
@@ -533,6 +534,13 @@ class ActionHandler {
         if (chat == null) {
           await ActionHandler.handleChat(chat: chats[i], checkIfExists: true, isHeadless: isHeadless);
           chat = chats[i];
+        }
+
+        Handle? handle = chat.participants.firstWhereOrNull((e) => e.address == message.handle?.address);
+
+        if (handle != null) {
+          message.handle?.color = handle.color;
+          message.handle?.defaultPhone = handle.defaultPhone;
         }
 
         await chat.getParticipants();
