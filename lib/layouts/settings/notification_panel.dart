@@ -184,6 +184,7 @@ class NotificationPanel extends StatelessWidget {
                           controller.text = SettingsManager().settings.globalTextDetection.value;
                           Get.defaultDialog(
                             title: "Text detection",
+                            titleStyle: Theme.of(context).textTheme.headline1,
                             backgroundColor: Theme.of(context).backgroundColor,
                             buttonColor: Theme.of(context).primaryColor,
                             content: Column(
@@ -193,12 +194,19 @@ class NotificationPanel extends StatelessWidget {
                                     padding: const EdgeInsets.all(8.0),
                                     child: Text("Enter any text separated by commas to whitelist notifications for. These are case insensitive.\n\nE.g. 'John,hey guys,homework'\n"),
                                   ),
-                                  TextField(
-                                    controller: controller,
-                                    decoration: InputDecoration(
-                                      labelText: "Enter text to whitelist...",
-                                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey,)),
-                                      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).primaryColor,)),
+                                  Theme(
+                                    data: Theme.of(context).copyWith(
+                                        inputDecorationTheme: const InputDecorationTheme(
+                                          labelStyle: TextStyle(color: Colors.grey),
+                                        )
+                                    ),
+                                    child: TextField(
+                                      controller: controller,
+                                      decoration: InputDecoration(
+                                        labelText: "Enter text to whitelist...",
+                                        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey,)),
+                                        focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).primaryColor,)),
+                                      ),
                                     ),
                                   ),
                                 ]
@@ -394,8 +402,10 @@ class ChatListState extends State<ChatList> {
                                   List<String> existing = chat.muteArgs?.split(",") ?? [];
                                   Get.defaultDialog(
                                       title: "Mute Individuals",
+                                      titleStyle: Theme.of(context).textTheme.headline1,
                                       backgroundColor: Theme.of(context).backgroundColor,
                                       buttonColor: Theme.of(context).primaryColor,
+                                      
                                       content: Container(
                                         constraints: BoxConstraints(
                                           maxHeight: 300,
@@ -409,34 +419,39 @@ class ChatListState extends State<ChatList> {
                                             ),
                                             child: StatefulBuilder(
                                               builder: (context, setState) {
-                                                return Column(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: [
-                                                    Padding(
-                                                      padding: const EdgeInsets.all(8.0),
-                                                      child: Text("Select the individuals you would like to mute"),
-                                                    ),
-                                                    ListView.builder(
-                                                      shrinkWrap: true,
-                                                      itemCount: chat.participants.length,
-                                                      itemBuilder: (context, index) {
-                                                        return CheckboxListTile(
-                                                            value: existing.contains(chat.participants[index].address),
-                                                            onChanged: (val) {
-                                                              setState(() {
-                                                                if (val!) {
-                                                                  existing.add(chat.participants[index].address);
-                                                                } else {
-                                                                  existing.removeWhere((element) => element == chat.participants[index].address);
-                                                                }
-                                                              });
-                                                            },
-                                                            activeColor: Theme.of(context).primaryColor,
-                                                            title: Text(result[index] ?? chat.participants[index].address, style: Theme.of(context).textTheme.headline1),
-                                                        );
-                                                      },
-                                                    ),
-                                                  ],
+                                                return SingleChildScrollView(
+                                                  child: Column(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      Padding(
+                                                        padding: const EdgeInsets.all(8.0),
+                                                        child: Text("Select the individuals you would like to mute"),
+                                                      ),
+                                                      ListView.builder(
+                                                        shrinkWrap: true,
+                                                        itemCount: chat.participants.length,
+                                                        itemBuilder: (context, index) {
+                                                          return Theme(
+                                                            data: Theme.of(context).copyWith(unselectedWidgetColor: Theme.of(context).textTheme.headline1!.color),
+                                                            child: CheckboxListTile(
+                                                                value: existing.contains(chat.participants[index].address),
+                                                                onChanged: (val) {
+                                                                  setState(() {
+                                                                    if (val!) {
+                                                                      existing.add(chat.participants[index].address);
+                                                                    } else {
+                                                                      existing.removeWhere((element) => element == chat.participants[index].address);
+                                                                    }
+                                                                  });
+                                                                },
+                                                                activeColor: Theme.of(context).primaryColor,
+                                                                title: Text(result[index] ?? chat.participants[index].address, style: Theme.of(context).textTheme.headline1),
+                                                            ),
+                                                          );
+                                                        },
+                                                      ),
+                                                    ],
+                                                  ),
                                                 );
                                               }
                                             ),
@@ -499,6 +514,7 @@ class ChatListState extends State<ChatList> {
                                   }
                                   Get.defaultDialog(
                                     title: "Text detection",
+                                    titleStyle: Theme.of(context).textTheme.headline1,
                                     backgroundColor: Theme.of(context).backgroundColor,
                                     buttonColor: Theme.of(context).primaryColor,
                                     content: Column(
@@ -508,12 +524,19 @@ class ChatListState extends State<ChatList> {
                                           padding: const EdgeInsets.all(8.0),
                                           child: Text("Enter any text separated by commas to whitelist notifications for. These are case insensitive.\n\nE.g. 'John,hey guys,homework'\n"),
                                         ),
-                                        TextField(
-                                          controller: controller,
-                                          decoration: InputDecoration(
-                                            labelText: "Enter text to whitelist...",
-                                            enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey,)),
-                                            focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).primaryColor,)),
+                                        Theme(
+                                          data: Theme.of(context).copyWith(
+                                            inputDecorationTheme: const InputDecorationTheme(
+                                                labelStyle: TextStyle(color: Colors.grey),
+                                              )
+                                            ),
+                                          child: TextField(
+                                            controller: controller,
+                                            decoration: InputDecoration(
+                                              labelText: "Enter text to whitelist...",
+                                              enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey,)),
+                                              focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).primaryColor,)),
+                                            ),
                                           ),
                                         ),
                                       ]
@@ -535,7 +558,7 @@ class ChatListState extends State<ChatList> {
                                 },
                             ),
                             ListTile(
-                              title: Text("Remove chat-specific settings", style: Theme.of(context).textTheme.bodyText1),
+                              title: Text("Reset chat-specific settings", style: Theme.of(context).textTheme.bodyText1),
                               subtitle: Text("Delete your custom settings", style: Theme.of(context).textTheme.subtitle1),
                               onTap: () async {
                                 Get.back();
