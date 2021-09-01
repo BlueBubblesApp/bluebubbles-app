@@ -254,7 +254,7 @@ class SetupBloc {
     await Future.delayed(Duration(seconds: 3));
 
     // only get up to 1000 messages (arbitrary limit)
-    int batches = 100;
+    int batches = 10;
     for (int i = 0; i < batches; i++) {
       // Build request params. We want all details on the messages
       Map<String, dynamic> params = Map();
@@ -263,7 +263,7 @@ class SetupBloc {
       }
 
       params["withBlurhash"] = false; // Maybe we want it?
-      params["limit"] = 10;
+      params["limit"] = 100;
       params["offset"] = i * batches;
       params["after"] = settings.lastIncrementalSync.value; // Get everything since the last sync
       params["withChats"] = true; // We want the chats too so we can save them correctly
