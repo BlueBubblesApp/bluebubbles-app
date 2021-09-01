@@ -686,7 +686,13 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
               final messageTime = await showTimePicker(context: context, initialTime: TimeOfDay.now());
               if (messageTime != null) {
                 final finalDate = DateTime(messageDate.year, messageDate.month, messageDate.day, messageTime.hour, messageTime.minute);
+                if (!finalDate.isAfter(DateTime.now().toLocal())) {
+                  showSnackbar("Error", "Select a date in the future");
+                  return;
+                }
                 NotificationManager().scheduleNotification(widget.currentChat!.chat, widget.message, finalDate);
+                Get.back();
+                showSnackbar("Notice", "Scheduled reminder for ${buildDate(finalDate)}");
               }
             }
           },
