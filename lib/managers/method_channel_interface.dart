@@ -325,7 +325,7 @@ class MethodChannelInterface {
   void closeThread() {
     // Only do this if we are indeed running in the background
     if (headless) {
-      Logger.info("(CloseThread) -> Closing the background isolate...");
+      Logger.info("Closing the background isolate...", tag: "MCI-CloseThread");
 
       // Tells the native code to close the isolate
       invokeMethod("close-background-isolate");
@@ -387,7 +387,7 @@ class MethodChannelInterface {
       await Future.delayed(Duration(milliseconds: 500));
       NotificationManager().switchChat(openedChat);
     } else {
-      Logger.warn("(OpenChat) -> Failed to find chat");
+      Logger.warn("Failed to find chat", tag: "MCI-OpenChat");
     }
   }
 }

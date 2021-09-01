@@ -280,10 +280,10 @@ class MessageBloc {
 
           // Handle the messages
           if (isNullOrEmpty(_messages)!) {
-            Logger.info("(CHUNK) No message chunks left from server");
+            Logger.info("No message chunks left from server", tag: "MessageBloc");
             completer.complete(LoadMessageResult.RETREIVED_NO_MESSAGES);
           } else {
-            Logger.info("(CHUNK) Received ${_messages.length} messages from socket");
+            Logger.info("Received ${_messages.length} messages from socket", tag: "MessageBloc");
 
             messages = await MessageHelper.bulkAddMessages(_currentChat, _messages,
                 notifyMessageManager: false, notifyForNewMessage: false, checkForLatestMessageText: false);
@@ -295,14 +295,14 @@ class MessageBloc {
             }
           }
         } catch (ex) {
-          Logger.error("(CHUNK) Failed to load message chunk!");
+          Logger.error("Failed to load message chunk!", tag: "MessageBloc");
           Logger.error(ex.toString());
           completer.complete(LoadMessageResult.FAILED_TO_RETREIVE);
         }
       }
 
       // Save the messages to the bloc
-      Logger.info("(CHUNK) Emitting ${messages.length} messages to listeners");
+      Logger.info("Emitting ${messages.length} messages to listeners", tag: "MessageBloc");
       for (Message element in messages) {
         if (element.associatedMessageGuid == null && element.guid != null) {
           _allMessages.addAll({element.guid!: element});
@@ -325,7 +325,7 @@ class MessageBloc {
         completer.complete(LoadMessageResult.RETREIVED_MESSAGES);
       }
     } else {
-      Logger.error("(CHUNK) Failed to load message chunk! Unknown chat!");
+      Logger.error(" Failed to load message chunk! Unknown chat!", tag: "MessageBloc");
       completer.complete(LoadMessageResult.FAILED_TO_RETREIVE);
     }
 

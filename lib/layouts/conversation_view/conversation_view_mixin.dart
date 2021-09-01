@@ -186,7 +186,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         return;
       }
 
-      Logger.info("(Convo View) No participants found for chat, fetching...");
+      Logger.info("No participants found for chat, fetching...", tag: "ConversationView");
 
       try {
         // If we don't have participants, we should fetch them from the server
@@ -195,14 +195,14 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         if (data != null) {
           await chat!.getParticipants();
           if (chat!.participants.isNotEmpty) {
-            Logger.info("(Convo View) Got new chat participants. Updating state.");
+            Logger.info("Got new chat participants. Updating state.", tag: "ConversationView");
             if (this.mounted) setState(() {});
           } else {
-            Logger.info("(Convo View) Participants list is still empty, please contact support!");
+            Logger.info("Participants list is still empty, please contact support!", tag: "ConversationView");
           }
         }
       } catch (ex) {
-        Logger.info("There was an error fetching the chat");
+        Logger.error("There was an error fetching the chat");
         Logger.error(ex.toString());
       }
     }

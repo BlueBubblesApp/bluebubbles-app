@@ -125,7 +125,7 @@ class SocketManager {
         });
         if (SettingsManager().settings.finishedSetup.value)
           setup.startIncrementalSync(SettingsManager().settings, onConnectionError: (String err) {
-            Logger.error("(SYNC) Error performing incremental sync. Not saving last sync date.");
+            Logger.error("Error performing incremental sync. Not saving last sync date.", tag: "IncrementalSync");
             Logger.error(err);
           });
         return;

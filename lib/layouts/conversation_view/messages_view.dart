@@ -171,7 +171,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
       if (val != LoadMessageResult.FAILED_TO_RETREIVE) {
         if (val == LoadMessageResult.RETREIVED_NO_MESSAGES) {
           noMoreMessages = true;
-          Logger.info("(CHUNK) No more messages to load");
+          Logger.info("No more messages to load", tag: "MessageBloc");
         } else if (val == LoadMessageResult.RETREIVED_LAST_PAGE) {
           // Mark this chat saying we have no more messages to load
           noMoreLocalMessages = true;
@@ -318,15 +318,15 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     bool updatedAMessage = false;
     for (int i = 0; i < _messages.length; i++) {
       if (_messages[i].guid == oldGuid) {
-        Logger.info("(Message status) Update message: [${message!.text}] - [${message.guid}] - [$oldGuid]");
+        Logger.info("Update message: [${message!.text}] - [${message.guid}] - [$oldGuid]", tag: "MessageStatus");
         _messages[i] = message;
         updatedAMessage = true;
         break;
       }
     }
     if (!updatedAMessage) {
-      Logger.warn(
-          "(Message status) Message not updated (not found): [${message!.text}] - [${message.guid}] - [$oldGuid]");
+      Logger.warn("Message not updated (not found): [${message!.text}] - [${message.guid}] - [$oldGuid]",
+          tag: "MessageStatus");
     }
 
     return message;

@@ -66,10 +66,10 @@ class BaseLogger extends GetxService {
     );
   }
 
-  void info(dynamic log) => this._log(LogLevel.INFO, log);
-  void warn(dynamic log) => this._log(LogLevel.WARN, log);
-  void debug(dynamic log) => this._log(LogLevel.DEBUG, log);
-  void error(dynamic log) => this._log(LogLevel.ERROR, log);
+  void info(dynamic log, {String? tag}) => this._log(LogLevel.INFO, log, tag: tag);
+  void warn(dynamic log, {String? tag}) => this._log(LogLevel.WARN, log, tag: tag);
+  void debug(dynamic log, {String? tag}) => this._log(LogLevel.DEBUG, log, tag: tag);
+  void error(dynamic log, {String? tag}) => this._log(LogLevel.ERROR, log, tag: tag);
 
   void _log(LogLevel level, dynamic log, {String name = "BlueBubblesApp", String? tag}) {
     // Example: [BlueBubblesApp][INFO][2021-01-01 01:01:01.000] (Some Tag) -> <Some log here>

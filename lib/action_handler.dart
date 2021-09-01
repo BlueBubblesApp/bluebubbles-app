@@ -411,7 +411,7 @@ class ActionHandler {
 
     if (updatedMessage.isFromMe!) {
       await Future.delayed(Duration(milliseconds: 200));
-      Logger.info("(Message status) -> handleUpdatedMessage: " + updatedMessage.text!);
+      Logger.info("Handling message update: " + updatedMessage.text!, tag: "Actions-UpdatedMessage");
     }
 
     updatedMessage = await Message.replaceMessage(updatedMessage.guid, updatedMessage) ?? updatedMessage;
@@ -465,7 +465,7 @@ class ActionHandler {
 
     // Save the new chat only if current chat isn't found
     if (currentChat == null) {
-      Logger.info("(Handle Chat) Chat did not exist. Saving.");
+      Logger.info("Chat did not exist. Saving.", tag: "Actions-HandleChat");
       await newChat.save();
     }
 
@@ -504,7 +504,8 @@ class ActionHandler {
       // If the GUID exists already, delete the temporary entry
       // Otherwise, replace the temp message
       if (existing != null) {
-        Logger.info("(Message status) -> Deleting message: [${data["text"]}] - ${data["guid"]} - ${data["tempGuid"]}");
+        Logger.info("Deleting message: [${data["text"]}] - ${data["guid"]} - ${data["tempGuid"]}",
+            tag: "MessageStatus");
         await Message.delete({'guid': data['tempGuid']});
         NewMessageManager().removeMessage(chats.first, data['tempGuid']);
       } else {
@@ -521,7 +522,7 @@ class ActionHandler {
           }
           message.attachments!.add(file);
         }
-        Logger.info("(Message status) -> Message match: [${data["text"]}] - ${data["guid"]} - ${data["tempGuid"]}");
+        Logger.info("Message match: [${data["text"]}] - ${data["guid"]} - ${data["tempGuid"]}", tag: "MessageStatus");
 
         if (!isHeadless) NewMessageManager().updateMessage(chats.first, data['tempGuid'], message);
       }
@@ -548,7 +549,7 @@ class ActionHandler {
         // Handle the notification based on the message and chat
         await MessageHelper.handleNotification(message, chat);
 
-        Logger.info("(Message status) New message: [${message.text}] - [${message.guid}]");
+        Logger.info("New message: [${message.text}] - [${message.guid}]", tag: "Actions-HandleMessage");
         await chat.addMessage(message);
 
         if (message.itemType == 2 && message.groupTitle != null) {
