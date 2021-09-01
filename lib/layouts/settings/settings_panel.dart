@@ -7,6 +7,7 @@ import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/layouts/settings/troubleshoot_panel.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/theme_entry.dart';
 import 'package:bluebubbles/repository/models/theme_object.dart';
@@ -686,19 +687,14 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   Obx(() => SettingsTile(
                     backgroundColor: tileColor,
                     onTap: () async {
-                      if (Logger.instance.logToTxt.value) {
-                        await Logger.instance.endTxtLogging();
-                        Logger.instance.logToTxt.value = false;
-                      } else {
-                        Logger.instance.logToTxt.value = true;
-                      }
+                      Get.to(TroubleshootPanel());
                     },
                     leading: SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.pencil_ellipsis_rectangle,
-                      materialIcon: Icons.history_edu,
+                      iosIcon: CupertinoIcons.question_circle,
+                      materialIcon: Icons.help_outline,
                     ),
-                    title: "${Logger.instance.logToTxt.value ? "End" : "Start"} Logging",
-                    subtitle: Logger.instance.logToTxt.value ? "Logging started, tap here to end and save" : "Create a bug report for developers to analyze",
+                    title: "Troubleshooting",
+                    trailing: nextIcon,
                   )),
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
                   Container(
