@@ -41,6 +41,7 @@ class SocketManager {
   }
 
   static final SocketManager _manager = SocketManager._internal();
+  static final String tag = 'Socket';
 
   SocketManager._internal();
 
@@ -105,9 +106,9 @@ class SocketManager {
   String? token;
 
   void socketStatusUpdate(String status, dynamic data) {
-    Logger.info("[Socket] -> Socket status update: $status");
+    Logger.info("Socket status update: $status", tag: tag);
     if (data != null) {
-      Logger.debug("[Socket] -> Data: ${data.toString()}");
+      Logger.debug("Data: ${data.toString()}", tag: tag);
     }
 
     switch (status) {
@@ -138,7 +139,7 @@ class SocketManager {
           });
           Timer(Duration(seconds: 20), () {
             if (state.value != SocketState.ERROR) return;
-            Logger.error("[Socket] -> Unable to connect");
+            Logger.error("Unable to connect", tag: tag);
 
             // Only show the notification if setup is finished
             if (SettingsManager().settings.finishedSetup.value) {
@@ -211,7 +212,7 @@ class SocketManager {
   Future<void> startSocketIO({bool forceNewConnection = false, bool catchException = true}) async {
     //removed check for settings being null here, could be an issue later but I doubt it (tneotia)
     if ((state.value == SocketState.CONNECTING || state.value == SocketState.CONNECTED) && !forceNewConnection) {
-      Logger.debug("[Socket] -> Already connected");
+      Logger.debug("Already connected", tag: tag);
       return;
     }
     if (state.value == SocketState.FAILED) {
@@ -225,11 +226,11 @@ class SocketManager {
 
     String? serverAddress = getServerAddress();
     if (serverAddress == null) {
-      Logger.warn("[Socket] -> Server Address is not yet configured. Not connecting...");
+      Logger.warn("Server Address is not yet configured. Not connecting...", tag: tag);
       return;
     }
 
-    Logger.info("[Socket] -> Configuring socket.io client...");
+    Logger.info("Configuring socket.io client...", tag: tag);
 
     try {
       // Create a new socket connection
@@ -248,7 +249,7 @@ class SocketManager {
               .build());
 
       if (_manager.socket == null) {
-        Logger.error("[Socket] -> Socket was never created. Can't connect to server...");
+        Logger.error("Socket was never created. Can't connect to server...", tag: tag);
         return;
       }
 
@@ -272,14 +273,14 @@ class SocketManager {
         // TODO: Possibly turn this into a notification for the user?
         // This could act as a "pseudo" security measure so they're alerted
         // when a new device is registered
-        Logger.info("[Socket] -> FCM device added: " + data.toString());
+        Logger.info("FCM device added: " + data.toString(), tag: tag);
       });
 
       /**
        * If the server sends us an error it ran into, handle it
        */
       _manager.socket!.on("error", (data) {
-        Logger.info("[Socket] -> An error occurred: " + data.toString());
+        Logger.info("An error occurred: " + data.toString(), tag: tag);
       });
 
       /**
@@ -346,7 +347,7 @@ class SocketManager {
        * something about it (or at least just track it)
        */
       _manager.socket!.on("message-timeout", (_data) async {
-        Logger.info("[Socket] -> Client received message timeout");
+        Logger.info("Client received message timeout", tag: tag);
         Map<String, dynamic> data = _data;
 
         Message? message = await Message.findOne({"guid": data["tempGuid"]});
@@ -369,10 +370,10 @@ class SocketManager {
       _manager.socket!.connect();
     } catch (e) {
       if (!catchException) {
-        throw ("[Socket] -> Failed to connect: ${e.toString()}");
+        throw ("[$tag] -> Failed to connect: ${e.toString()}");
       } else {
-        Logger.error("[Socket] -> Failed to connect");
-        Logger.error("[Socket] -> ${e.toString()}");
+        Logger.error("Failed to connect", tag: tag);
+        Logger.error("${e.toString()}", tag: tag);
       }
     }
   }
@@ -402,14 +403,14 @@ class SocketManager {
     isAuthingFcm = true;
 
     if (SettingsManager().fcmData!.isNull) {
-      Logger.warn("[FCM Auth] -> No FCM Auth data found. Skipping FCM authentication");
+      Logger.warn("No FCM Auth data found. Skipping FCM authentication", tag: 'FCM-Auth');
       isAuthingFcm = false;
       return;
     }
 
     String deviceName = await getDeviceName();
     if (token != null && !force) {
-      Logger.debug("[FCM Auth] -> Already authorized FCM device! Token: $token");
+      Logger.debug("Already authorized FCM device! Token: $token", tag: 'FCM-Auth');
       await registerDevice(deviceName, token);
       isAuthingFcm = false;
       return;
@@ -419,15 +420,15 @@ class SocketManager {
 
     try {
       // First, try to send what we currently have
-      Logger.info('[FCM Auth] -> Authenticating with FCM');
+      Logger.info('Authenticating with FCM', tag: 'FCM-Auth');
       result = await MethodChannelInterface().invokeMethod('auth', SettingsManager().fcmData!.toMap());
     } on PlatformException catch (ex) {
-      Logger.error('[FCM Auth] -> Failed to perform initial FCM authentication: ${ex.toString()}');
-      Logger.info('[FCM Auth] -> Fetching FCM data from the server...');
+      Logger.error('Failed to perform initial FCM authentication: ${ex.toString()}', tag: 'FCM-Auth');
+      Logger.info('Fetching FCM data from the server...', tag: 'FCM-Auth');
 
       // If the first try fails, let's try again, but first, get the FCM data from the server
       Map<String, dynamic> fcmMeta = await this.getFcmClient();
-      Logger.info('[FCM Auth] -> Received FCM data from the server. Attempting to re-authenticate');
+      Logger.info('Received FCM data from the server. Attempting to re-authenticate', tag: 'FCM-Auth');
 
       try {
         // Parse out the new FCM data
@@ -443,18 +444,18 @@ class SocketManager {
           isAuthingFcm = false;
           throw Exception("[FCM Auth] -> " + e.toString());
         } else {
-          Logger.error("[FCM Auth] -> Failed to register with FCM: " + e.toString());
+          Logger.error("Failed to register with FCM: " + e.toString(), tag: 'FCM-Auth');
         }
       }
     }
 
     if (isNullOrEmpty(result)!) {
-      Logger.error("[FCM Auth] -> Empty results, not registering device with the server.");
+      Logger.error("Empty results, not registering device with the server.", tag: 'FCM-Auth');
     }
 
     try {
       token = result;
-      Logger.info('[FCM Auth] -> Registering device with server...');
+      Logger.info('Registering device with server...', tag: 'FCM-Auth');
       await registerDevice(deviceName, token);
     } catch (ex) {
       isAuthingFcm = false;
@@ -497,7 +498,7 @@ class SocketManager {
     Completer<List<dynamic>?> completer = new Completer();
     if (_manager.socket == null) return null;
 
-    Logger.info("[Socket] -> Sending request for '$path'");
+    Logger.info("Sending request for '$path'", tag: "Socket");
     _manager.sendMessage(path, params, (Map<String, dynamic> data) async {
       if (data["status"] != 200) return completer.completeError(data);
 

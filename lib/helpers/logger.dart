@@ -13,7 +13,7 @@ enum LogLevel { INFO, WARN, ERROR, DEBUG }
 extension LogLevelExtension on LogLevel {
   String get value {
     String self = this.toString();
-    return self.substring(self.indexOf('.') + 1).capitalize!;
+    return self.substring(self.indexOf('.') + 1).toUpperCase();
   }
 }
 
@@ -98,8 +98,8 @@ class BaseLogger extends GetxService {
   }
 
   String _buildLog(LogLevel level, String name, String? tag, dynamic log) {
-    final time = this.formatDate(DateTime.now().toLocal());
-    String theLog = "[${level.value}][$time]";
+    final time = DateTime.now().toLocal().toString();
+    String theLog = "[$time][${level.value}]";
 
     // If we have a name, add the name
     if (name.isNotEmpty) {
@@ -112,9 +112,5 @@ class BaseLogger extends GetxService {
     }
 
     return "$theLog ${log.toString()}";
-  }
-
-  String formatDate(DateTime t) {
-    return "${t.year}-${t.month}-${t.day} ${t.hour}:${t.minute}:${t.second}.${t.millisecond}";
   }
 }

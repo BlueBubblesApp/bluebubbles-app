@@ -105,11 +105,11 @@ class MethodChannelInterface {
         // send data to the UI thread if it is active, otherwise handle in the isolate
         final SendPort? send = IsolateNameServer.lookupPortByName('bg_isolate');
         if (send != null) {
-          print("Handling through SendPort");
+          Logger.info("Handling through SendPort");
           data!['action'] = 'new-message';
           send.send(data);
         } else {
-          print("Handling through IncomingQueue");
+          Logger.info("Handling through IncomingQueue");
           // Add it to the queue with the data as the item
           IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_MESSAGE_EVENT, item: {"data": data}));
         }

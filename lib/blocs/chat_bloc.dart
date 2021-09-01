@@ -75,7 +75,7 @@ class ChatBloc {
     }
 
     chatRequest = new Completer<void>();
-    Logger.info("[ChatBloc] -> Fetching chats (${force ? 'forced' : 'normal'})...");
+    Logger.info("Fetching chats (${force ? 'forced' : 'normal'})...", tag: "ChatBloc");
 
     // Get the contacts in case we haven't
     await ContactManager().getContacts();
@@ -279,7 +279,7 @@ class ChatBloc {
       }
     }
 
-    Logger.info("[ChatBloc] -> Finished fetching chats (${_chats.length}).");
+    Logger.info("Finished fetching chats (${_chats.length}).", tag: "ChatBloc");
     await updateAllShareTargets();
 
     if (chatRequest != null && !chatRequest!.isCompleted) {

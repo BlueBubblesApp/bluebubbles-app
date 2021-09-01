@@ -105,9 +105,9 @@ class MessageHelper {
       // Every 50 messages synced, who a message
       index += 1;
       if (index % 50 == 0) {
-        Logger.info('[Bulk Ingest] Saved $index of ${messages.length} messages');
+        Logger.info('Saved $index of ${messages.length} messages', tag: "BulkIngest");
       } else if (index == messages.length) {
-        Logger.info('[Bulk Ingest] Saved ${messages.length} messages');
+        Logger.info('Saved ${messages.length} messages', tag: "BulkIngest");
       }
     }
 

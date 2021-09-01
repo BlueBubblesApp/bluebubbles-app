@@ -227,7 +227,7 @@ class SetupBloc {
   }
 
   void addOutput(String _output, SetupOutputType type) {
-    Logger.info('[Setup] -> $_output');
+    Logger.info(_output, tag: "Setup");
     output.add(SetupOutputData(_output, type));
     data.value = SetupData(_progress, output);
   }
