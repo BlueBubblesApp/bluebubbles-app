@@ -253,39 +253,45 @@ class SetupBloc {
     int syncStart = DateTime.now().millisecondsSinceEpoch;
     await Future.delayed(Duration(seconds: 3));
 
-    // Build request params. We want all details on the messages
-    Map<String, dynamic> params = Map();
-    if (chatGuid != null) {
-      params["chatGuid"] = chatGuid;
-    }
+    // only get up to 1000 messages (arbitrary limit)
+    int batches = 100;
+    for (int i = 0; i < batches; i++) {
+      // Build request params. We want all details on the messages
+      Map<String, dynamic> params = Map();
+      if (chatGuid != null) {
+        params["chatGuid"] = chatGuid;
+      }
 
-    params["withBlurhash"] = false; // Maybe we want it?
-    params["limit"] = 1000; // This is arbitrary, hopefully there aren't more messages
-    params["after"] = settings.lastIncrementalSync.value; // Get everything since the last sync
-    params["withChats"] = true; // We want the chats too so we can save them correctly
-    params["withAttachments"] = true; // We want the attachment data
-    params["withHandle"] = true; // We want to know who sent it
-    params["sort"] = "DESC"; // Sort my DESC so we receive the newest messages first
-    params["where"] = [
-      {"statement": "message.service = 'iMessage'", "args": null}
-    ];
+      params["withBlurhash"] = false; // Maybe we want it?
+      params["limit"] = 10;
+      params["offset"] = i * batches;
+      params["after"] = settings.lastIncrementalSync.value; // Get everything since the last sync
+      params["withChats"] = true; // We want the chats too so we can save them correctly
+      params["withAttachments"] = true; // We want the attachment data
+      params["withHandle"] = true; // We want to know who sent it
+      params["sort"] = "DESC"; // Sort my DESC so we receive the newest messages first
+      params["where"] = [
+        {"statement": "message.service = 'iMessage'", "args": null}
+      ];
 
-    List<dynamic> messages = await SocketManager().getMessages(params)!;
-    if (messages.isEmpty) {
-      addOutput("No new messages found during incremental sync", SetupOutputType.LOG);
-    } else {
-      addOutput("Incremental sync found ${messages.length} messages. Syncing...", SetupOutputType.LOG);
-    }
+      List<dynamic> messages = await SocketManager().getMessages(params)!;
+      if (messages.isEmpty) {
+        addOutput("No more new messages found during incremental sync", SetupOutputType.LOG);
+        break;
+      } else {
+        addOutput("Incremental sync found ${messages.length} messages. Syncing...", SetupOutputType.LOG);
+      }
 
-    if (messages.length > 0) {
-      await MessageHelper.bulkAddMessages(null, messages, onProgress: (progress, total) {
-        _progress = (progress / total) * 100;
-        data.value = SetupData(_progress, output);
-      });
+      if (messages.length > 0) {
+        await MessageHelper.bulkAddMessages(null, messages, onProgress: (progress, total) {
+          _progress = (progress / total) * 100;
+          data.value = SetupData(_progress, output);
+        });
 
-      // If we want to download the attachments, do it, and wait for them to finish before continuing
-      if (downloadAttachments) {
-        await MessageHelper.bulkDownloadAttachments(null, messages.reversed.toList());
+        // If we want to download the attachments, do it, and wait for them to finish before continuing
+        if (downloadAttachments) {
+          await MessageHelper.bulkDownloadAttachments(null, messages.reversed.toList());
+        }
       }
     }
 
