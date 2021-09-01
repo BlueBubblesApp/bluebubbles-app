@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/metadata_helper.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
+import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:collection/collection.dart';
 
@@ -672,6 +673,35 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             ),
           ),
         ),
+      Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () async {
+            final messageDate = await showDatePicker(
+                context: context,
+                initialDate: DateTime.now().toLocal(),
+                firstDate: DateTime.now().toLocal(),
+                lastDate: DateTime.now().toLocal().add(Duration(days: 365)));
+            if (messageDate != null) {
+              final messageTime = await showTimePicker(context: context, initialTime: TimeOfDay.now());
+              if (messageTime != null) {
+                final finalDate = DateTime(messageDate.year, messageDate.month, messageDate.day, messageTime.hour, messageTime.minute);
+                NotificationManager().scheduleNotification(widget.currentChat!.chat, widget.message, finalDate);
+              }
+            }
+          },
+          child: ListTile(
+            title: Text(
+              "Remind Later",
+              style: Theme.of(context).textTheme.bodyText1,
+            ),
+            trailing: Icon(
+              Icons.alarm,
+              color: Theme.of(context).textTheme.bodyText1!.color,
+            ),
+          ),
+        ),
+      ),
     ];
 
     List<Widget> detailsActions = [];

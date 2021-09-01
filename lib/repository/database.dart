@@ -42,7 +42,7 @@ class DBProvider {
 
   static Database? _database;
   static String _path = "";
-  static int currentVersion = 11;
+  static int currentVersion = 12;
 
   /// Contains list of functions to invoke when going from a previous to the current database verison
   /// The previous version is always [key - 1], for example for key 2, it will be the upgrade scheme from version 1 to version 2
@@ -113,6 +113,15 @@ class DBProvider {
         upgrade: (Database db) {
           db.execute(
               "ALTER TABLE chat ADD COLUMN pinIndex INTEGER DEFAULT NULL;");
+        }),
+    new DBUpgradeItem(
+        addedInVersion: 12,
+        upgrade: (Database db) async {
+          db.execute(
+              "ALTER TABLE chat ADD COLUMN muteType TEXT DEFAULT NULL;");
+          db.execute(
+              "ALTER TABLE chat ADD COLUMN muteArgs TEXT DEFAULT NULL;");
+          await db.update("chat", {'muteType': 'mute'}, where: "isMuted = ? OR isMuted = ?", whereArgs: [true, 1]);
         }),
   ];
 
@@ -270,7 +279,8 @@ class DBProvider {
         "isArchived INTEGER DEFAULT 0,"
         "isFiltered INTEGER DEFAULT 0,"
         "isPinned INTEGER DEFAULT 0,"
-        "isMuted INTEGER DEFAULT 0,"
+        "muteType TEXT DEFAULT NULL,"
+        "muteArgs TEXT DEFAULT NULL,"
         "hasUnreadMessage INTEGER DEFAULT 0,"
         "latestMessageDate INTEGER DEFAULT 0,"
         "latestMessageText TEXT,"

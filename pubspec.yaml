@@ -85,6 +85,8 @@ dependencies:
   chewie: ^1.2.2
   simple_animations: ^3.1.1
   flutter_keyboard_visibility: ^5.0.3
+  flutter_local_notifications: ^8.1.1+2
+  flutter_native_timezone: ^2.0.0
   package_info_plus: ^1.0.6
 
 dev_dependencies:

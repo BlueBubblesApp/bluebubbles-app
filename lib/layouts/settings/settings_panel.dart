@@ -239,6 +239,25 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   ),
                   SettingsTile(
                     backgroundColor: tileColor,
+                    title: "Notification Settings",
+                    onTap: () {
+                      Get.toNamed("/settings/notification-panel");
+                    },
+                    leading: SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.bell,
+                      materialIcon: Icons.notifications_on,
+                    ),
+                    trailing: nextIcon,
+                  ),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
+                    ),
+                  ),
+                  SettingsTile(
+                    backgroundColor: tileColor,
                     title: "Chat List Settings",
                     onTap: () {
                       Get.toNamed("/settings/chat-list-panel");

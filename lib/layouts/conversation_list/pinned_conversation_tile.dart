@@ -153,7 +153,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
-        if (!(widget.chat.isMuted ?? false) && (widget.chat.hasUnreadMessage ?? false))
+        if (widget.chat.muteType != "mute" && (widget.chat.hasUnreadMessage ?? false))
           Container(
               width: 8,
               height: 8,
@@ -162,7 +162,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
                 color: context.theme.primaryColor.withOpacity(0.8),
               ),
               margin: EdgeInsets.only(right: 3)),
-        if (widget.chat.isMuted ?? false)
+        if (widget.chat.muteType == "mute")
           Container(
             margin: EdgeInsets.only(right: 3),
             child: SvgPicture.asset(
@@ -259,7 +259,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: () async {
-                  await widget.chat.toggleMute(!widget.chat.isMuted!);
+                  await widget.chat.toggleMute(widget.chat.muteType != "mute");
                   if (this.mounted) setState(() {});
                   Navigator.pop(context);
                 },
@@ -270,11 +270,11 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
                       Padding(
                         padding: EdgeInsets.only(right: 10),
                         child: Icon(
-                          widget.chat.isMuted! ? Icons.notifications_active : Icons.notifications_off,
+                          widget.chat.muteType == "mute" ? Icons.notifications_active : Icons.notifications_off,
                           color: context.textTheme.bodyText1!.color,
                         ),
                       ),
-                      Text(widget.chat.isMuted! ? 'Show Alerts' : 'Hide Alerts', style: context.textTheme.bodyText1!),
+                      Text(widget.chat.muteType == "mute" ? 'Show Alerts' : 'Hide Alerts', style: context.textTheme.bodyText1!),
                     ],
                   ),
                 ),

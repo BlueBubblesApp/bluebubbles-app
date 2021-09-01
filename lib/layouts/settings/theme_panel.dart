@@ -10,6 +10,7 @@ import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/cupertino.dart';
@@ -199,6 +200,63 @@ class ThemePanel extends GetView<ThemePanelController> {
                         text: "Colors"
                     ),
                     Obx(() => SettingsSwitch(
+                      onChanged: (bool val) async {
+                        await MethodChannelInterface().invokeMethod("request-notif-permission");
+                        try {
+                          await MethodChannelInterface().invokeMethod("start-notif-listener");
+                          controller._settingsCopy.colorsFromMedia.value = val;
+                          saveSettings();
+                        } catch (e) {
+                          showSnackbar("Error", "Something went wrong, please ensure you granted the permission correctly!");
+                        }
+                      },
+                      initialVal: controller._settingsCopy.colorsFromMedia.value,
+                      title: "Colors from Media",
+                      backgroundColor: tileColor,
+                      subtitle: "Pull app colors from currently playing media. Note: Requires full notification access & a custom theme to be set",
+                    )),
+                    Obx(() => controller._settingsCopy.colorsFromMedia.value ? Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
+                    ) : Container()),
+                    Obx(() => controller._settingsCopy.colorsFromMedia.value ? SettingsSwitch(
+                      onChanged: (bool val) async {
+                        controller._settingsCopy.adjustPrimary.value = val;
+                        saveSettings();
+                      },
+                      initialVal: controller._settingsCopy.adjustPrimary.value,
+                      title: "Adjust Primary Color from Media",
+                      backgroundColor: tileColor,
+                      subtitle: "Pull primary color from currently playing media",
+                    ) : Container()),
+                    Obx(() => controller._settingsCopy.colorsFromMedia.value ? Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
+                    ) : Container()),
+                    Obx(() => controller._settingsCopy.colorsFromMedia.value ? SettingsSwitch(
+                      onChanged: (bool val) async {
+                        controller._settingsCopy.adjustBackground.value = val;
+                        saveSettings();
+                      },
+                      initialVal: controller._settingsCopy.adjustBackground.value,
+                      title: "Adjust Background Color from Media",
+                      backgroundColor: tileColor,
+                      subtitle: "Pull background color from currently playing media",
+                    ) : Container()),
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
+                    ),
+                    Obx(() => SettingsSwitch(
                       onChanged: (bool val) {
                         controller._settingsCopy.colorfulAvatars.value = val;
                         saveSettings();
@@ -240,6 +298,13 @@ class ThemePanel extends GetView<ThemePanelController> {
                       },
                       backgroundColor: tileColor,
                       subtitle: "Customize the color for different avatars",
+                    ),
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
                     ),
                     SettingsTile(
                       title: "Custom Avatars",

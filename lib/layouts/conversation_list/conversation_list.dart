@@ -618,7 +618,7 @@ class __MaterialState extends State<_Material> {
               SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.pin
                   ? (chat.isPinned! ? Icons.star_outline : Icons.star)
                   : SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.alerts
-                      ? (chat.isMuted! ? Icons.notifications_active : Icons.notifications_off)
+                      ? (chat.muteType == "mute" ? Icons.notifications_active : Icons.notifications_off)
                       : SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.delete
                           ? Icons.delete_forever
                           : SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.mark_read
@@ -630,7 +630,7 @@ class __MaterialState extends State<_Material> {
               SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.pin
                   ? (chat.isPinned! ? " Unpin" : " Pin")
                   : SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.alerts
-                      ? (chat.isMuted! ? ' Show Alerts' : ' Hide Alerts')
+                      ? (chat.muteType == "mute" ? ' Show Alerts' : ' Hide Alerts')
                       : SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.delete
                           ? " Delete"
                           : SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.mark_read
@@ -674,7 +674,7 @@ class __MaterialState extends State<_Material> {
               SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.pin
                   ? (chat.isPinned! ? Icons.star_outline : Icons.star)
                   : SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.alerts
-                      ? (chat.isMuted! ? Icons.notifications_active : Icons.notifications_off)
+                      ? (chat.muteType == "mute" ? Icons.notifications_active : Icons.notifications_off)
                       : SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.delete
                           ? Icons.delete_forever
                           : SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.mark_read
@@ -686,7 +686,7 @@ class __MaterialState extends State<_Material> {
               SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.pin
                   ? (chat.isPinned! ? " Unpin" : " Pin")
                   : SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.alerts
-                      ? (chat.isMuted! ? ' Show Alerts' : ' Hide Alerts')
+                      ? (chat.muteType == "mute" ? ' Show Alerts' : ' Hide Alerts')
                       : SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.delete
                           ? " Delete"
                           : SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.mark_read
@@ -833,11 +833,11 @@ class __MaterialState extends State<_Material> {
                                     ),
                                   ),
                                 if (([0, selected.length])
-                                    .contains(selected.where((element) => element.isMuted!).length))
+                                    .contains(selected.where((element) => element.muteType == "mute").length))
                                   GestureDetector(
                                     onTap: () {
                                       selected.forEach((element) async {
-                                        await element.toggleMute(!element.isMuted!);
+                                        await element.toggleMute(element.muteType != "mute");
                                       });
                                       selected = [];
                                       if (this.mounted) setState(() {});
@@ -845,7 +845,7 @@ class __MaterialState extends State<_Material> {
                                     child: Padding(
                                       padding: const EdgeInsets.all(8.0),
                                       child: Icon(
-                                        selected[0].isMuted! ? Icons.notifications_active : Icons.notifications_off,
+                                        selected[0].muteType == "mute" ? Icons.notifications_active : Icons.notifications_off,
                                         color: context.textTheme.bodyText1!.color,
                                       ),
                                     ),
@@ -975,7 +975,7 @@ class __MaterialState extends State<_Material> {
                                   await ChatBloc()
                                       .chats
                                       .archivedHelper(showArchived)[index]
-                                      .toggleMute(!ChatBloc().chats.archivedHelper(showArchived)[index].isMuted!);
+                                      .toggleMute(ChatBloc().chats.archivedHelper(showArchived)[index].muteType != "mute");
                                   if (this.mounted) setState(() {});
                                 } else if (SettingsManager().settings.materialLeftAction.value ==
                                     MaterialSwipeAction.delete) {
@@ -1005,7 +1005,7 @@ class __MaterialState extends State<_Material> {
                                   await ChatBloc()
                                       .chats
                                       .archivedHelper(showArchived)[index]
-                                      .toggleMute(!ChatBloc().chats.archivedHelper(showArchived)[index].isMuted!);
+                                      .toggleMute(ChatBloc().chats.archivedHelper(showArchived)[index].muteType != "mute");
                                   if (this.mounted) setState(() {});
                                 } else if (SettingsManager().settings.materialRightAction.value ==
                                     MaterialSwipeAction.delete) {
@@ -1134,9 +1134,9 @@ class _SamsungState extends State<_Samsung> {
           children: <Widget>[
             Icon(
               SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.pin
-                  ? (chat.isPinned! ? Icons.star_outline : Icons.star)
+                  ? (chat.muteType == "mute" ? Icons.star_outline : Icons.star)
                   : SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.alerts
-                      ? (chat.isMuted! ? Icons.notifications_active : Icons.notifications_off)
+                      ? (chat.muteType == "mute" ? Icons.notifications_active : Icons.notifications_off)
                       : SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.delete
                           ? Icons.delete_forever
                           : SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.mark_read
@@ -1148,7 +1148,7 @@ class _SamsungState extends State<_Samsung> {
               SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.pin
                   ? (chat.isPinned! ? " Unpin" : " Pin")
                   : SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.alerts
-                      ? (chat.isMuted! ? ' Show Alerts' : ' Hide Alerts')
+                      ? (chat.muteType == "mute" ? ' Show Alerts' : ' Hide Alerts')
                       : SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.delete
                           ? " Delete"
                           : SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.mark_read
@@ -1192,7 +1192,7 @@ class _SamsungState extends State<_Samsung> {
               SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.pin
                   ? (chat.isPinned! ? Icons.star_outline : Icons.star)
                   : SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.alerts
-                      ? (chat.isMuted! ? Icons.notifications_active : Icons.notifications_off)
+                      ? (chat.muteType == "mute" ? Icons.notifications_active : Icons.notifications_off)
                       : SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.delete
                           ? Icons.delete_forever
                           : SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.mark_read
@@ -1204,7 +1204,7 @@ class _SamsungState extends State<_Samsung> {
               SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.pin
                   ? (chat.isPinned! ? " Unpin" : " Pin")
                   : SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.alerts
-                      ? (chat.isMuted! ? ' Show Alerts' : ' Hide Alerts')
+                      ? (chat.muteType == "mute" ? ' Show Alerts' : ' Hide Alerts')
                       : SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.delete
                           ? " Delete"
                           : SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.mark_read
@@ -1335,7 +1335,7 @@ class _SamsungState extends State<_Samsung> {
                                   GestureDetector(
                                     onTap: () {
                                       selected.forEach((element) async {
-                                        await element.toggleMute(!element.isMuted!);
+                                        await element.toggleMute(element.muteType != "mute");
                                       });
 
                                       selected = [];
@@ -1481,7 +1481,7 @@ class _SamsungState extends State<_Samsung> {
                                         await ChatBloc()
                                             .chats
                                             .archivedHelper(showArchived)[index]
-                                            .toggleMute(!ChatBloc().chats.archivedHelper(showArchived)[index].isMuted!);
+                                            .toggleMute(ChatBloc().chats.archivedHelper(showArchived)[index].muteType != "mute");
                                         if (this.mounted) setState(() {});
                                       } else if (SettingsManager().settings.materialLeftAction.value ==
                                           MaterialSwipeAction.delete) {
@@ -1514,7 +1514,7 @@ class _SamsungState extends State<_Samsung> {
                                         await ChatBloc()
                                             .chats
                                             .archivedHelper(showArchived)[index]
-                                            .toggleMute(!ChatBloc().chats.archivedHelper(showArchived)[index].isMuted!);
+                                            .toggleMute(ChatBloc().chats.archivedHelper(showArchived)[index].muteType != "mute");
                                         if (this.mounted) setState(() {});
                                       } else if (SettingsManager().settings.materialRightAction.value ==
                                           MaterialSwipeAction.delete) {
@@ -1644,7 +1644,7 @@ class _SamsungState extends State<_Samsung> {
                                         await ChatBloc()
                                             .chats
                                             .archivedHelper(showArchived)[index]
-                                            .toggleMute(!ChatBloc().chats.archivedHelper(showArchived)[index].isMuted!);
+                                            .toggleMute(ChatBloc().chats.archivedHelper(showArchived)[index].muteType != "mute");
                                         if (this.mounted) setState(() {});
                                       } else if (SettingsManager().settings.materialLeftAction.value ==
                                           MaterialSwipeAction.delete) {
@@ -1677,7 +1677,7 @@ class _SamsungState extends State<_Samsung> {
                                         await ChatBloc()
                                             .chats
                                             .archivedHelper(showArchived)[index]
-                                            .toggleMute(!ChatBloc().chats.archivedHelper(showArchived)[index].isMuted!);
+                                            .toggleMute(ChatBloc().chats.archivedHelper(showArchived)[index].muteType != "mute");
                                         if (this.mounted) setState(() {});
                                       } else if (SettingsManager().settings.materialRightAction.value ==
                                           MaterialSwipeAction.delete) {
