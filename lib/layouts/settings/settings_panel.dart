@@ -684,7 +684,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       child: SettingsDivider(color: headerColor),
                     ),
                   ),
-                  Obx(() => SettingsTile(
+                  SettingsTile(
                     backgroundColor: tileColor,
                     onTap: () async {
                       Get.to(TroubleshootPanel());
@@ -695,7 +695,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     ),
                     title: "Troubleshooting",
                     trailing: nextIcon,
-                  )),
+                  ),
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
                   Container(
                     height: 30,
