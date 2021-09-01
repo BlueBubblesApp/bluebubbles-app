@@ -3,6 +3,7 @@ import 'dart:isolate';
 import 'dart:typed_data';
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/simple_vcard_parser.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:exif/exif.dart';
@@ -82,8 +83,8 @@ class AttachmentHelper {
             latitude: double.tryParse(query.split(",")[1]), longitude: double.tryParse(query.split(",")[0]));
       }
     } catch (ex) {
-      debugPrint("Failed to parse location!");
-      debugPrint(ex.toString());
+      Logger.instance.log("Failed to parse location!");
+      Logger.instance.log(ex.toString());
       return AppleLocation(latitude: null, longitude: null);
     }
   }
@@ -396,7 +397,7 @@ class AttachmentHelper {
           attachment.height = size.height.toInt();
         }
       } catch (ex) {
-        debugPrint('Failed to get GIF dimensions! Error: ${ex.toString()}');
+        Logger.instance.log('Failed to get GIF dimensions! Error: ${ex.toString()}');
       }
     } else if (mimeStart == "image") {
       // For images, load properties
@@ -415,7 +416,7 @@ class AttachmentHelper {
           attachment.metadata!['orientation'] = 'portrait';
         }
       } catch (ex) {
-        debugPrint('Failed to get Image Properties! Error: ${ex.toString()}');
+        Logger.instance.log('Failed to get Image Properties! Error: ${ex.toString()}');
       }
     } else if (mimeStart == "video") {
       // For videos, load the thumbnail
@@ -427,7 +428,7 @@ class AttachmentHelper {
           attachment.height = size.height.toInt();
         }
       } catch (ex) {
-        debugPrint('Failed to get video thumbnail! Error: ${ex.toString()}');
+        Logger.instance.log('Failed to get video thumbnail! Error: ${ex.toString()}');
       }
     }
 
@@ -438,14 +439,14 @@ class AttachmentHelper {
         attachment.metadata![item.key] = item.value.printable;
       }
     } catch (ex) {
-      debugPrint('Failed to read EXIF data: ${ex.toString()}');
+      Logger.instance.log('Failed to read EXIF data: ${ex.toString()}');
     }
     bool usedFallback = false;
     // If the preview data is null, compress the file
     if (previewData == null) {
       // Compress the file
       ReceivePort receivePort = ReceivePort();
-      debugPrint("Spawning isolate...");
+      Logger.instance.log("Spawning isolate...");
       // if we don't have a valid width use the max image width
       // if the image width is less than the max width already don't bother
       // compressing it because it is already low quality
@@ -469,7 +470,7 @@ class AttachmentHelper {
       );
 
       var received = await receivePort.first;
-      debugPrint("Compressing via ${received is String ? "FlutterNativeImage" : "image"} plugin");
+      Logger.instance.log("Compressing via ${received is String ? "FlutterNativeImage" : "image"} plugin");
       if (received is String) {
         File compressedFile = await FlutterNativeImage.compressImage(filePath,
             quality: quality,
@@ -483,7 +484,7 @@ class AttachmentHelper {
         try {
           previewData = Uint8List.fromList(img.encodeNamedImage(received as img.Image, filePath.split("/").last) ?? []);
         } catch (e) {
-          debugPrint("Compression via image plugin failed, using fallback...");
+          Logger.instance.log("Compression via image plugin failed, using fallback...");
           File compressedFile = await FlutterNativeImage.compressImage(filePath,
               quality: quality,
               targetWidth: attachment.width == null ? 0 : attachment.width!,
@@ -496,7 +497,7 @@ class AttachmentHelper {
       }
     }
     if (previewData.isEmpty && !usedFallback) {
-      debugPrint("Compression via image plugin failed, using fallback...");
+      Logger.instance.log("Compression via image plugin failed, using fallback...");
       File compressedFile = await FlutterNativeImage.compressImage(filePath,
           quality: quality,
           targetWidth: attachment.width == null ? 0 : attachment.width!,
@@ -506,7 +507,7 @@ class AttachmentHelper {
       previewData = await compressedFile.readAsBytes();
       usedFallback = true;
     }
-    debugPrint("Got previewData: ${previewData.isNotEmpty}");
+    Logger.instance.log("Got previewData: ${previewData.isNotEmpty}");
     // As long as we have preview data now, save it
     cachedFile.writeAsBytes(previewData);
 
@@ -519,9 +520,9 @@ class AttachmentHelper {
 
   static void resizeIsolate(ResizeArgs args) {
     try {
-      debugPrint("Decoding image...");
+      Logger.instance.log("Decoding image...");
       img.Image image = img.decodeImage(File(args.path).readAsBytesSync())!;
-      debugPrint("Resizing image...");
+      Logger.instance.log("Resizing image...");
       img.Image resized = img.copyResize(image, width: args.width);
       args.sendPort.send(resized);
     } catch (e) {

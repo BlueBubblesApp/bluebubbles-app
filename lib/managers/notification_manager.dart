@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
@@ -203,14 +204,14 @@ class NotificationManager {
         contactIcon = defaultAvatar;
       }
     } catch (ex) {
-      debugPrint("Failed to load contact avatar: ${ex.toString()}");
+      Logger.instance.log("Failed to load contact avatar: ${ex.toString()}");
     }
 
     try {
       // Try to update the share targets
       await ChatBloc().updateShareTarget(chat);
     } catch (ex) {
-      debugPrint("Failed to update share target! Error: ${ex.toString()}");
+      Logger.instance.log("Failed to update share target! Error: ${ex.toString()}");
     }
 
     // Get a title as best as we can

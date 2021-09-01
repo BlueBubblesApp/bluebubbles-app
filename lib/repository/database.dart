@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
@@ -140,12 +141,12 @@ class DBProvider {
     return await openDatabase(_path,
         version: currentVersion,
         onUpgrade: _onUpgrade, onOpen: (Database db) async {
-      debugPrint("Database Opened");
+      Logger.instance.log("Database Opened");
       _database = db;
       await checkTableExistenceAndCreate(db);
       _database = null;
     }, onCreate: (Database db, int version) async {
-      debugPrint("creating database");
+      Logger.instance.log("creating database");
       _database = db;
       await this.buildDatabase(db);
       _database = null;
@@ -159,13 +160,13 @@ class DBProvider {
 
     for (DBUpgradeItem item in upgradeSchemes) {
       if (oldVersion < item.addedInVersion) {
-        debugPrint(
+        Logger.instance.log(
             "Upgrading DB from version $oldVersion to version $newVersion");
 
         try {
           await item.upgrade(db);
         } catch (ex) {
-          debugPrint("Failed to perform DB upgrade: ${ex.toString()}");
+          Logger.instance.log("Failed to perform DB upgrade: ${ex.toString()}");
         }
       }
     }
@@ -233,7 +234,7 @@ class DBProvider {
             await createScheduledTable(db);
             break;
         }
-        debugPrint(
+        Logger.instance.log(
             "creating missing table " + tableName.toString().split(".").last);
       }
     }

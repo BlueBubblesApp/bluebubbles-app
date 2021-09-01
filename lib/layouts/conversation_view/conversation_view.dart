@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/action_handler.dart';
@@ -209,7 +210,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused && mounted) {
-      debugPrint("Removing CurrentChat imageData");
+      Logger.instance.log("Removing CurrentChat imageData");
       CurrentChat.of(context)?.imageData.clear();
     }
   }

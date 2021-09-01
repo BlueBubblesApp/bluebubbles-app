@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_tile.dart';
@@ -50,7 +51,7 @@ class _ConversationListState extends State<ConversationList> {
     }
 
     SystemChannels.textInput.invokeMethod('TextInput.hide').catchError((e) {
-      debugPrint("Error caught while hiding keyboard: ${e.toString()}");
+      Logger.instance.log("Error caught while hiding keyboard: ${e.toString()}");
     });
   }
 

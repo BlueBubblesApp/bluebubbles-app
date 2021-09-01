@@ -7,6 +7,7 @@ import 'dart:ui';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/testing_mode.dart';
@@ -97,7 +98,7 @@ class MethodChannelInterface {
 
         return new Future.value("");
       case "new-message":
-        print("Received new message from FCM");
+        Logger.instance.log("Received new message from FCM");
         // Retreive the data for this message as a json
         Map<String, dynamic>? data = jsonDecode(call.arguments);
 
@@ -130,7 +131,7 @@ class MethodChannelInterface {
 
         return new Future.value("");
       case "ChatOpen":
-        debugPrint("Opening Chat with GUID: ${call.arguments}");
+        Logger.instance.log("Opening Chat with GUID: ${call.arguments}");
         openChat(call.arguments);
 
         return new Future.value("");
@@ -191,7 +192,7 @@ class MethodChannelInterface {
         // Get the path to where the temp files are stored
         String sharedFilesPath = SettingsManager().sharedFilesPath;
 
-        debugPrint("shareAttachments " + sharedFilesPath);
+        Logger.instance.log("shareAttachments " + sharedFilesPath);
 
         // Loop through all of the attachments sent by native code
         call.arguments["attachments"].forEach((element) {
@@ -323,7 +324,7 @@ class MethodChannelInterface {
   void closeThread() {
     // Only do this if we are indeed running in the background
     if (headless) {
-      debugPrint("(CloseThread) -> Closing the background isolate...");
+      Logger.instance.log("(CloseThread) -> Closing the background isolate...");
 
       // Tells the native code to close the isolate
       invokeMethod("close-background-isolate");
@@ -385,7 +386,7 @@ class MethodChannelInterface {
       await Future.delayed(Duration(milliseconds: 500));
       NotificationManager().switchChat(openedChat);
     } else {
-      debugPrint("(OpenChat) -> Failed to find chat");
+      Logger.instance.log("(OpenChat) -> Failed to find chat");
     }
   }
 }

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
@@ -526,7 +527,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                           }
                                         });
                                         Map<String, dynamic> map = e.toMap();
-                                        print(entryJson);
+                                        Logger.instance.log(entryJson);
                                         map['entries'] = jsonDecode(entryJson);
                                         jsonStr = jsonStr + "${jsonEncode(map)}";
                                         if (index != allThemes.length - 1) {
@@ -675,6 +676,30 @@ class _SettingsPanelState extends State<SettingsPanel> {
                     title: "Reset",
                     subtitle: "Resets the app to default settings",
                   ),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
+                    ),
+                  ),
+                  Obx(() => SettingsTile(
+                    backgroundColor: tileColor,
+                    onTap: () async {
+                      if (Logger.instance.logToTxt.value) {
+                        await Logger.instance.endTxtLogging();
+                        Logger.instance.logToTxt.value = false;
+                      } else {
+                        Logger.instance.logToTxt.value = true;
+                      }
+                    },
+                    leading: SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.pencil_ellipsis_rectangle,
+                      materialIcon: Icons.history_edu,
+                    ),
+                    title: "${Logger.instance.logToTxt.value ? "End" : "Start"} Logging",
+                    subtitle: Logger.instance.logToTxt.value ? "Logging started, tap here to end and save" : "Create a bug report for developers to analyze",
+                  )),
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
                   Container(
                     height: 30,

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/attachment_info_bloc.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
@@ -75,7 +76,7 @@ class ChatBloc {
 
     chatRequest = new Completer<void>();
 
-    debugPrint("[ChatBloc] -> Fetching chats (${force ? 'forced' : 'normal'})...");
+    Logger.instance.log("[ChatBloc] -> Fetching chats (${force ? 'forced' : 'normal'})...");
 
     // Get the contacts in case we haven't
     await ContactManager().getContacts();
@@ -204,7 +205,7 @@ class ChatBloc {
         icon = NotificationManager().defaultAvatar;
       }
     } catch (ex) {
-      debugPrint("Failed to load contact avatar: ${ex.toString()}");
+      Logger.instance.log("Failed to load contact avatar: ${ex.toString()}");
     }
 
     // If we don't have a title, try to get it
@@ -279,7 +280,7 @@ class ChatBloc {
       }
     }
 
-    debugPrint("[ChatBloc] -> Finished fetching chats (${_chats.length}).");
+    Logger.instance.log("[ChatBloc] -> Finished fetching chats (${_chats.length}).");
     await updateAllShareTargets();
 
     if (chatRequest != null && !chatRequest!.isCompleted) {

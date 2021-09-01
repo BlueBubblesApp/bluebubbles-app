@@ -6,6 +6,7 @@ import 'dart:ui';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
@@ -74,12 +75,12 @@ FlutterLocalNotificationsPlugin? flutterLocalNotificationsPlugin;
 
 Future<Null> _reportError(dynamic error, dynamic stackTrace) async {
   // Print the exception to the console.
-  debugPrint('Caught error: $error');
+  Logger.instance.log('Caught error: $error');
   if (isInDebugMode) {
     // Print the full stacktrace in debug mode.
-    debugPrint(stackTrace.toString());
+    Logger.instance.log(stackTrace.toString());
   } else {
-    debugPrint(stackTrace.toString());
+    Logger.instance.log(stackTrace.toString());
     // Send the Exception and Stacktrace to Sentry in Production mode.
     // _sentry.captureException(
     //   exception: error,
@@ -106,6 +107,8 @@ Future<Null> main() async {
 
   // This captures errors reported by the Flutter framework.
   FlutterError.onError = (FlutterErrorDetails details) {
+    Logger.instance.log(details.exceptionAsString());
+    Logger.instance.log(details.stack.toString());
     if (isInDebugMode) {
       // In development mode simply print to console.
       FlutterError.dumpErrorToConsole(details);

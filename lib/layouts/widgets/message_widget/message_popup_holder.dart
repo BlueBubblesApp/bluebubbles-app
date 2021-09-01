@@ -1,4 +1,5 @@
 import 'package:bluebubbles/action_handler.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_details_popup.dart';
@@ -44,7 +45,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
         || !(CurrentChat.of(context)?.chat.isGroup() ?? false)
         || !sameSender(widget.message, widget.olderMessage)
         || !widget.message.dateCreated!.isWithin(widget.olderMessage!.dateCreated!, minutes: 30));
-    print(doNotIncreaseHeight);
+    Logger.instance.log(doNotIncreaseHeight);
     this.childOffset = Offset(offset.dx - (increaseWidth ? 35 : 0),
         offset.dy - (doNotIncreaseHeight ? 0 : widget.message.getReactions().length > 0 ? 20.0 : 23.0));
     childSize = Size(size.width + (increaseWidth ? 35 : 0),
@@ -91,7 +92,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
   }
 
   void sendReaction(String type) {
-    debugPrint("Sending reaction type: " + type);
+    Logger.instance.log("Sending reaction type: " + type);
     ActionHandler.sendReaction(CurrentChat.of(context)!.chat, widget.message, type);
   }
 

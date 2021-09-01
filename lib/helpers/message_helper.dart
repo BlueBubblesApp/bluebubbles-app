@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
@@ -104,9 +105,9 @@ class MessageHelper {
       // Every 50 messages synced, who a message
       index += 1;
       if (index % 50 == 0) {
-        debugPrint('[Bulk Ingest] Saved $index of ${messages.length} messages');
+        Logger.instance.log('[Bulk Ingest] Saved $index of ${messages.length} messages');
       } else if (index == messages.length) {
-        debugPrint('[Bulk Ingest] Saved ${messages.length} messages');
+        Logger.instance.log('[Bulk Ingest] Saved ${messages.length} messages');
       }
     }
 

@@ -1,4 +1,5 @@
 import 'package:bluebubbles/action_handler.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:flutter/material.dart';
 
@@ -42,7 +43,7 @@ class IncomingQueue extends QueueManager {
         }
       default:
         {
-          debugPrint("Unhandled queue event: ${item.event}");
+          Logger.instance.log("Unhandled queue event: ${item.event}");
         }
     }
   }
