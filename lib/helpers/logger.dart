@@ -21,12 +21,15 @@ class BaseLogger extends GetxService {
   final RxBool saveLogs = false.obs;
   final int lineLimit = 5000;
   List<String> logs = [];
+  List<LogLevel> enabledLevels = [LogLevel.INFO, LogLevel.WARN, LogLevel.DEBUG, LogLevel.ERROR];
 
   String get logPath {
     String directoryPath = "/storage/emulated/0/Download/BlueBubbles-log-";
     DateTime now = DateTime.now().toLocal();
     return directoryPath + "${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}" + ".txt";
   }
+
+  set setEnabledLevels(List<LogLevel> levels) => this.enabledLevels = levels;
 
   void startSavingLogs() {
     this.saveLogs.value = true;
@@ -72,28 +75,35 @@ class BaseLogger extends GetxService {
   void error(dynamic log, {String? tag}) => this._log(LogLevel.ERROR, log, tag: tag);
 
   void _log(LogLevel level, dynamic log, {String name = "BlueBubblesApp", String? tag}) {
-    // Example: [BlueBubblesApp][INFO][2021-01-01 01:01:01.000] (Some Tag) -> <Some log here>
-    String theLog = this._buildLog(level, name, tag, log);
+    if (!this.enabledLevels.contains(level)) return;
 
-    // Log the data normally
-    debugPrint(theLog);
+    try {
+      // Example: [BlueBubblesApp][INFO][2021-01-01 01:01:01.000] (Some Tag) -> <Some log here>
+      String theLog = this._buildLog(level, name, tag, log);
 
-    // If we aren't saving logs, return here
-    if (!this.saveLogs.value) return;
+      // Log the data normally
+      debugPrint(theLog);
 
-    // Otherwise, add the log to the list
-    logs.add(theLog);
+      // If we aren't saving logs, return here
+      if (!this.saveLogs.value) return;
 
-    // Make sure we concatenate to our limit
-    if (this.logs.length >= this.lineLimit) {
-      // Be safe with it. Make sure we don't go negative or the ranges max < min
-      int min = this.logs.length - this.lineLimit;
-      int max = this.logs.length;
-      if (min < 0) min = 0;
-      if (max < min) max = min;
+      // Otherwise, add the log to the list
+      logs.add(theLog);
 
-      // Take the last x amount of logs (based on the line limit)
-      this.logs = this.logs.sublist(min, max);
+      // Make sure we concatenate to our limit
+      if (this.logs.length >= this.lineLimit) {
+        // Be safe with it. Make sure we don't go negative or the ranges max < min
+        int min = this.logs.length - this.lineLimit;
+        int max = this.logs.length;
+        if (min < 0) min = 0;
+        if (max < min) max = min;
+
+        // Take the last x amount of logs (based on the line limit)
+        this.logs = this.logs.sublist(min, max);
+      }
+    } catch (ex, stacktrace) {
+      debugPrint("Failed to write log! ${ex.toString()}");
+      debugPrint(stacktrace.toString());
     }
   }
 
