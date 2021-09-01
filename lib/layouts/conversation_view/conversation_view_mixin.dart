@@ -5,6 +5,7 @@ import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/socket_singletons.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -117,7 +118,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       try {
         await fetchChatSingleton(widget.chat!.guid!);
       } catch (ex) {
-        debugPrint(ex.toString());
+        Logger.instance.log(ex.toString());
       }
 
       setNewChatData(forceUpdate: true);
@@ -185,7 +186,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         return;
       }
 
-      debugPrint("(Convo View) No participants found for chat, fetching...");
+      Logger.instance.log("(Convo View) No participants found for chat, fetching...");
 
       try {
         // If we don't have participants, we should fetch them from the server
@@ -194,15 +195,15 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         if (data != null) {
           await chat!.getParticipants();
           if (chat!.participants.isNotEmpty) {
-            debugPrint("(Convo View) Got new chat participants. Updating state.");
+            Logger.instance.log("(Convo View) Got new chat participants. Updating state.");
             if (this.mounted) setState(() {});
           } else {
-            debugPrint("(Convo View) Participants list is still empty, please contact support!");
+            Logger.instance.log("(Convo View) Participants list is still empty, please contact support!");
           }
         }
       } catch (ex) {
-        debugPrint("There was an error fetching the chat");
-        debugPrint(ex.toString());
+        Logger.instance.log("There was an error fetching the chat");
+        Logger.instance.log(ex.toString());
       }
     }
 
@@ -913,7 +914,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         });
 
     params["participants"] = participants;
-    debugPrint("Starting chat with participants: ${participants.join(", ")}");
+    Logger.instance.log("Starting chat with participants: ${participants.join(", ")}");
 
     Function returnChat = (Chat newChat) async {
       await newChat.save();

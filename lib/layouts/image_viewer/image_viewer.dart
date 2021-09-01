@@ -259,7 +259,9 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                         if (AttachmentFullscreenViewer.of(context) == null) return;
                         if (this.mounted) {
                           AttachmentFullscreenViewerState? state = AttachmentFullscreenViewer.of(context);
-                          if (scale == PhotoViewScaleState.zoomedIn) {
+                          if (scale == PhotoViewScaleState.zoomedIn
+                              || scale == PhotoViewScaleState.covering
+                              || scale == PhotoViewScaleState.originalSize) {
                             if (state!.physics != NeverScrollableScrollPhysics()) {
                               AttachmentFullscreenViewer.of(context)!.setState(() {
                                 AttachmentFullscreenViewer.of(context)!.physics = NeverScrollableScrollPhysics();

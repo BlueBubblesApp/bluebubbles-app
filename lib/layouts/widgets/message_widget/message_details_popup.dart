@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/metadata_helper.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
@@ -155,7 +156,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   }
 
   void sendReaction(String type) {
-    debugPrint("Sending reaction type: " + type);
+    Logger.instance.log("Sending reaction type: " + type);
     ActionHandler.sendReaction(widget.currentChat!.chat, widget.message, type);
     Navigator.of(context).pop();
   }
@@ -624,7 +625,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                   }
                 }
               } catch (ex, trace) {
-                debugPrint(trace.toString());
+                Logger.instance.log(trace.toString());
                 showSnackbar("Download Error", ex.toString());
               }
             },

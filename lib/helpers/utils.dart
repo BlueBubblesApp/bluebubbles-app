@@ -9,6 +9,7 @@ import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/country_codes.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
@@ -455,8 +456,8 @@ Size getGifDimensions(Uint8List bytes) {
   hexString += hex.encode(bytes.sublist(8, 9));
   int height = int.parse(hexString, radix: 16);
 
-  debugPrint("GIF width: $width");
-  debugPrint("GIF height: $height");
+  Logger.instance.log("GIF width: $width");
+  Logger.instance.log("GIF height: $height");
   Size size = new Size(width.toDouble(), height.toDouble());
   return size;
 }
@@ -509,8 +510,8 @@ Future<String> getDeviceName() async {
       deviceName = items.join("_").toLowerCase();
     }
   } catch (ex) {
-    debugPrint("Failed to get device name! Defaulting to 'android-client'");
-    debugPrint(ex.toString());
+    Logger.instance.log("Failed to get device name! Defaulting to 'android-client'");
+    Logger.instance.log(ex.toString());
   }
 
   // Fallback for if it happens to be empty or null, somehow... idk

@@ -6,6 +6,7 @@ import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/socket_singletons.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
@@ -94,7 +95,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
       try {
         await fetchChatSingleton(widget.chat.guid!);
       } catch (ex) {
-        debugPrint(ex.toString());
+        Logger.instance.log(ex.toString());
       }
 
       this.setNewChatData(forceUpdate: true);

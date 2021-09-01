@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
@@ -130,14 +131,14 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     if (isNullOrEmpty(_messages)!) return resetReplies();
     if (_messages.first.isFromMe!) return resetReplies();
 
-    debugPrint("Getting smart replies...");
+    Logger.instance.log("Getting smart replies...");
     Map<String, dynamic> results = await smartReply.suggestReplies();
 
     if (results.containsKey('suggestions')) {
       List<SmartReplySuggestion> suggestions = results['suggestions'];
-      debugPrint("Smart Replies found: ${suggestions.length}");
+      Logger.instance.log("Smart Replies found: ${suggestions.length}");
       replies = suggestions.map((e) => e.getText()).toList().toSet().toList();
-      debugPrint(replies.toString());
+      Logger.instance.log(replies.toString());
     }
 
     // If there is nothing in the list, get out
@@ -170,7 +171,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
       if (val != LoadMessageResult.FAILED_TO_RETREIVE) {
         if (val == LoadMessageResult.RETREIVED_NO_MESSAGES) {
           noMoreMessages = true;
-          debugPrint("(CHUNK) No more messages to load");
+          Logger.instance.log("(CHUNK) No more messages to load");
         } else if (val == LoadMessageResult.RETREIVED_LAST_PAGE) {
           // Mark this chat saying we have no more messages to load
           noMoreLocalMessages = true;
@@ -295,8 +296,8 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
               _listKey!.currentState!
                   .removeItem(i, (context, animation) => Container(), duration: Duration(milliseconds: 0));
             } catch (ex) {
-              debugPrint("Error removing item animation");
-              debugPrint(ex.toString());
+              Logger.instance.log("Error removing item animation");
+              Logger.instance.log(ex.toString());
             }
           }
         }
@@ -317,14 +318,14 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     bool updatedAMessage = false;
     for (int i = 0; i < _messages.length; i++) {
       if (_messages[i].guid == oldGuid) {
-        debugPrint("(Message status) Update message: [${message!.text}] - [${message.guid}] - [$oldGuid]");
+        Logger.instance.log("(Message status) Update message: [${message!.text}] - [${message.guid}] - [$oldGuid]");
         _messages[i] = message;
         updatedAMessage = true;
         break;
       }
     }
     if (!updatedAMessage) {
-      debugPrint(
+      Logger.instance.log(
           "(Message status) Message not updated (not found): [${message!.text}] - [${message.guid}] - [$oldGuid]");
     }
 

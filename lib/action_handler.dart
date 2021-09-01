@@ -7,6 +7,7 @@ import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/attachment_sender.dart';
 import 'package:bluebubbles/helpers/darty.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
@@ -19,6 +20,7 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
@@ -252,7 +254,7 @@ class ActionHandler {
 
       // If there is an error, replace the temp value with an error
       if (response['status'] != 200) {
-        debugPrint("FAILED TO SEND REACTION " + response['error']['message']);
+        Logger.instance.log("FAILED TO SEND REACTION " + response['error']['message']);
       }
 
       completer.complete();
@@ -361,7 +363,7 @@ class ActionHandler {
         [chat.id]);
 
     // If there are no messages, return
-    debugPrint("Deleting ${items.length} messages");
+    Logger.instance.log("Deleting ${items.length} messages");
     if (isNullOrEmpty(items)!) return;
 
     Batch batch = db.batch();
@@ -409,7 +411,7 @@ class ActionHandler {
 
     if (updatedMessage.isFromMe!) {
       await Future.delayed(Duration(milliseconds: 200));
-      debugPrint("(Message status) -> handleUpdatedMessage: " + updatedMessage.text!);
+      Logger.instance.log("(Message status) -> handleUpdatedMessage: " + updatedMessage.text!);
     }
 
     updatedMessage = await Message.replaceMessage(updatedMessage.guid, updatedMessage) ?? updatedMessage;
@@ -463,7 +465,7 @@ class ActionHandler {
 
     // Save the new chat only if current chat isn't found
     if (currentChat == null) {
-      debugPrint("(Handle Chat) Chat did not exist. Saving.");
+      Logger.instance.log("(Handle Chat) Chat did not exist. Saving.");
       await newChat.save();
     }
 
@@ -476,7 +478,7 @@ class ActionHandler {
       if (newChat == null) return;
       await ChatBloc().updateChatPosition(newChat);
     } catch (ex) {
-      debugPrint(ex.toString());
+      Logger.instance.log(ex.toString());
     }
   }
 
@@ -502,7 +504,7 @@ class ActionHandler {
       // If the GUID exists already, delete the temporary entry
       // Otherwise, replace the temp message
       if (existing != null) {
-        debugPrint("(Message status) -> Deleting message: [${data["text"]}] - ${data["guid"]} - ${data["tempGuid"]}");
+        Logger.instance.log("(Message status) -> Deleting message: [${data["text"]}] - ${data["guid"]} - ${data["tempGuid"]}");
         await Message.delete({'guid': data['tempGuid']});
         NewMessageManager().removeMessage(chats.first, data['tempGuid']);
       } else {
@@ -515,18 +517,18 @@ class ActionHandler {
           try {
             await Attachment.replaceAttachment(data["tempGuid"], file);
           } catch (ex) {
-            debugPrint("Attachment's Old GUID doesn't exist. Skipping");
+            Logger.instance.log("Attachment's Old GUID doesn't exist. Skipping");
           }
           message.attachments!.add(file);
         }
-        debugPrint("(Message status) -> Message match: [${data["text"]}] - ${data["guid"]} - ${data["tempGuid"]}");
+        Logger.instance.log("(Message status) -> Message match: [${data["text"]}] - ${data["guid"]} - ${data["tempGuid"]}");
 
         if (!isHeadless) NewMessageManager().updateMessage(chats.first, data['tempGuid'], message);
       }
     } else if (forceProcess || !NotificationManager().hasProcessed(data["guid"])) {
       // Add the message to the chats
       for (int i = 0; i < chats.length; i++) {
-        debugPrint("Client received new message " + chats[i].guid!);
+        Logger.instance.log("Client received new message " + chats[i].guid!);
 
         // Gets the chat from the chat bloc
         Chat? chat = await ChatBloc().getChat(chats[i].guid);
@@ -535,11 +537,18 @@ class ActionHandler {
           chat = chats[i];
         }
 
+        Handle? handle = chat.participants.firstWhereOrNull((e) => e.address == message.handle?.address);
+
+        if (handle != null) {
+          message.handle?.color = handle.color;
+          message.handle?.defaultPhone = handle.defaultPhone;
+        }
+
         await chat.getParticipants();
         // Handle the notification based on the message and chat
         await MessageHelper.handleNotification(message, chat);
 
-        debugPrint("(Message status) New message: [${message.text}] - [${message.guid}]");
+        Logger.instance.log("(Message status) New message: [${message.text}] - [${message.guid}]");
         await chat.addMessage(message);
 
         if (message.itemType == 2 && message.groupTitle != null) {

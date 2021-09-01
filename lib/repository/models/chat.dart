@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/metadata_helper.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
@@ -334,8 +335,8 @@ class Chat {
     } catch (ex, stacktrace) {
       newMessage = await Message.findOne({"guid": message.guid});
       if (newMessage == null) {
-        debugPrint(ex.toString());
-        debugPrint(stacktrace.toString());
+        Logger.instance.log(ex.toString());
+        Logger.instance.log(stacktrace.toString());
       }
     }
     bool isNewer = false;
@@ -531,7 +532,7 @@ class Chat {
       if (_getMessagesRequests.containsKey(req) && !_getMessagesRequests[req]!.isCompleted)
         _getMessagesRequests[req]!.complete(messages);
     } catch (ex) {
-      debugPrint(ex.toString());
+      Logger.instance.log(ex.toString());
 
       if (_getMessagesRequests.containsKey(req) && !_getMessagesRequests[req]!.isCompleted)
         _getMessagesRequests[req]!.completeError(ex);

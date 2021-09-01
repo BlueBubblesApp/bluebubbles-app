@@ -3,8 +3,8 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
-import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/list/text_field_attachment_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/picker/text_field_attachment_picker.dart';
@@ -139,10 +139,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     EventDispatcher().stream.listen((event) {
       if (!event.containsKey("type")) return;
       if (event["type"] == "unfocus-keyboard" && focusNode!.hasFocus) {
-        print("(EVENT) Unfocus Keyboard");
+        Logger.instance.log("(EVENT) Unfocus Keyboard");
         focusNode!.unfocus();
       } else if (event["type"] == "focus-keyboard" && !focusNode!.hasFocus) {
-        print("(EVENT) Focus Keyboard");
+        Logger.instance.log("(EVENT) Focus Keyboard");
         focusNode!.requestFocus();
       } else if (event["type"] == "text-field-update-attachments") {
         addSharedAttachments();
@@ -241,10 +241,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
   void onContentCommit(CommittedContent content) async {
     // Add some debugging logs
-    debugPrint("[Content Commit] Keyboard received content");
-    debugPrint("  -> Content Type: ${content.mimeType}");
-    debugPrint("  -> URI: ${content.uri}");
-    debugPrint("  -> Content Length: ${content.hasData ? content.data!.length : "null"}");
+    Logger.instance.log("[Content Commit] Keyboard received content");
+    Logger.instance.log("  -> Content Type: ${content.mimeType}");
+    Logger.instance.log("  -> URI: ${content.uri}");
+    Logger.instance.log("  -> Content Length: ${content.hasData ? content.data!.length : "null"}");
 
     // Parse the filename from the URI and read the data as a List<int>
     String filename = uriToFilename(content.uri, content.mimeType);
@@ -322,7 +322,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       await this.disposeCameras();
     }
 
-    debugPrint("[Camera Preview] -> Initializing camera preview");
+    Logger.instance.log("[Camera Preview] -> Initializing camera preview");
 
     // Enumerate the cameras (if we don't have them)
     // We only need to do this once... it's not like it's gonna change very often
@@ -331,7 +331,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     }
 
     if (cameras.length == 0) {
-      debugPrint("[Camera Preview] -> No available cameras!");
+      Logger.instance.log("[Camera Preview] -> No available cameras!");
       return;
     }
 
@@ -349,16 +349,16 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
     cameraState = CameraState.ACTIVE;
     if (this.mounted) setState(() {});
-    debugPrint("[Camera Preview] -> Finished initializing camera preview");
+    Logger.instance.log("[Camera Preview] -> Finished initializing camera preview");
   }
 
   Future<void> disposeCameras() async {
-    debugPrint("[Camera Preview] -> Disposing camera preview");
+    Logger.instance.log("[Camera Preview] -> Disposing camera preview");
     cameraState = CameraState.DISPOSING;
     await cameraController?.dispose();
     cameraController = null;
     cameraState = CameraState.INACTIVE;
-    debugPrint("[Camera Preview] -> Finished disposing camera preview");
+    Logger.instance.log("[Camera Preview] -> Finished disposing camera preview");
   }
 
   Future<void> toggleShareMenu() async {
@@ -510,8 +510,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         }
       }
     } catch (ex) {
-      debugPrint("Error setting Text Field Placeholder!");
-      debugPrint(ex.toString());
+      Logger.instance.log("Error setting Text Field Placeholder!");
+      Logger.instance.log(ex.toString());
     }
 
     if (placeholder != this.placeholder.value) {
