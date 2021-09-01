@@ -234,7 +234,7 @@ class SentMessageHelper {
               },
             );
           },
-          child: Icon(Icons.error_outline, color: Colors.red),
+          child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.exclamationmark_circle : Icons.error_outline, color: Colors.red),
         ),
       );
     }

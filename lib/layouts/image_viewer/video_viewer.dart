@@ -120,7 +120,7 @@ class _VideoViewerState extends State<VideoViewer> {
                   Navigator.pop(context);
                 },
                 child: Icon(
-                  SettingsManager().settings.skin.value == Skins.iOS ? Icons.arrow_back_ios : Icons.arrow_back,
+                  SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.back : Icons.arrow_back,
                   color: Colors.white,
                 ),
               ),
@@ -192,7 +192,7 @@ class _VideoViewerState extends State<VideoViewer> {
                       );
                     },
                     child: Icon(
-                      Icons.info,
+                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.info : Icons.info,
                       color: Colors.white,
                     ),
                   ),
@@ -237,7 +237,7 @@ class _VideoViewerState extends State<VideoViewer> {
                       if (this.mounted) setState(() {});
                     },
                     child: Icon(
-                      Icons.refresh,
+                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.refresh : Icons.refresh,
                       color: Colors.white,
                     ),
                   ),
@@ -250,7 +250,7 @@ class _VideoViewerState extends State<VideoViewer> {
                       await AttachmentHelper.saveToGallery(context, widget.file);
                     },
                     child: Icon(
-                      Icons.file_download,
+                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.cloud_download : Icons.file_download,
                       color: Colors.white,
                     ),
                   ),
@@ -266,7 +266,7 @@ class _VideoViewerState extends State<VideoViewer> {
                       );
                     },
                     child: Icon(
-                      Icons.share,
+                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.share : Icons.share,
                       color: Colors.white,
                     ),
                   ),
@@ -279,7 +279,13 @@ class _VideoViewerState extends State<VideoViewer> {
                       controller.setVolume(controller.value.volume != 0.0 ? 0.0 : 1.0);
                     },
                     child: Icon(
-                      controller.value.volume == 0.0 ? Icons.volume_mute : Icons.volume_up,
+                      controller.value.volume == 0.0
+                          ? SettingsManager().settings.skin.value == Skins.iOS
+                          ? CupertinoIcons.volume_mute
+                          : Icons.volume_mute
+                          : SettingsManager().settings.skin.value == Skins.iOS
+                          ? CupertinoIcons.volume_up
+                          : Icons.volume_up,
                       color: Colors.white,
                     ),
                   ),

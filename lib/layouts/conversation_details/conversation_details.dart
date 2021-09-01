@@ -212,7 +212,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                         );
                                       },
                                       child: Icon(
-                                        Icons.info_outline,
+                                        SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.info : Icons.info_outline,
                                         color: Theme.of(context).primaryColor,
                                       ))),
                             if (chat.displayName!.isEmpty)
@@ -285,7 +285,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     trailing: Padding(
                       padding: EdgeInsets.only(right: 15),
                       child: Icon(
-                        Icons.more_horiz,
+                        SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.ellipsis : Icons.more_horiz,
                         color: Theme.of(context).primaryColor,
                       ),
                     ),
@@ -379,7 +379,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                   trailing: Padding(
                     padding: EdgeInsets.only(right: 15),
                     child: Icon(
-                      Icons.person,
+                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.person : Icons.person,
                       color: Theme.of(context).primaryColor,
                     ),
                   ),
@@ -407,7 +407,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                   trailing: Padding(
                     padding: EdgeInsets.only(right: 15),
                     child: Icon(
-                      Icons.file_download,
+                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.cloud_download : Icons.file_download,
                       color: Theme.of(context).primaryColor,
                     ),
                   ),
@@ -432,7 +432,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                   trailing: Padding(
                     padding: EdgeInsets.only(right: 15),
                     child: Icon(
-                      Icons.replay,
+                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.arrow_counterclockwise : Icons.replay,
                       color: Theme.of(context).primaryColor,
                     ),
                   ),
@@ -535,11 +535,11 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                           )
                         : (isCleared)
                             ? Icon(
-                                Icons.done,
+                                SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.checkmark : Icons.done,
                                 color: Theme.of(context).primaryColor,
                               )
                             : Icon(
-                                Icons.delete_forever,
+                                SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.trash : Icons.delete_forever,
                                 color: Theme.of(context).primaryColor,
                               ),
                   ),

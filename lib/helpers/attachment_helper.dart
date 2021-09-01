@@ -3,10 +3,12 @@ import 'dart:isolate';
 import 'dart:typed_data';
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/simple_vcard_parser.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:exif/exif.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_native_image/flutter_native_image.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
@@ -235,21 +237,21 @@ class AttachmentHelper {
   }
 
   static IconData getIcon(String mimeType) {
-    if (mimeType.isEmpty) return Icons.open_in_new;
+    if (mimeType.isEmpty) return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.arrow_up_right_square : Icons.open_in_new;
     if (mimeType == "application/pdf") {
-      return Icons.picture_as_pdf;
+      return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.doc_on_doc : Icons.picture_as_pdf;
     } else if (mimeType == "application/zip") {
-      return Icons.folder;
+      return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.folder : Icons.folder;
     } else if (mimeType.startsWith("audio")) {
-      return Icons.music_note;
+      return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.music_note : Icons.music_note;
     } else if (mimeType.startsWith("image")) {
-      return Icons.photo;
+      return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.photo : Icons.photo;
     } else if (mimeType.startsWith("video")) {
-      return Icons.videocam;
+      return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.videocam : Icons.videocam;
     } else if (mimeType.startsWith("text")) {
-      return Icons.note;
+      return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.doc_text : Icons.note;
     }
-    return Icons.open_in_new;
+    return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.arrow_up_right_square : Icons.open_in_new;
   }
 
   static Future<bool> canAutoDownload() async {

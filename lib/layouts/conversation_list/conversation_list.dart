@@ -218,7 +218,7 @@ class _ConversationListState extends State<ConversationList> {
   FloatingActionButton buildFloatingActionButton() {
     return FloatingActionButton(
         backgroundColor: context.theme.primaryColor,
-        child: Icon(Icons.message, color: Colors.white, size: 25),
+        child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.pencil : Icons.message, color: Colors.white, size: 25),
         onPressed: openNewChatCreator);
   }
 
@@ -310,16 +310,7 @@ class _Cupertino extends StatelessWidget {
                         (SettingsManager().settings.skin.value == Skins.Material ||
                                 SettingsManager().settings.skin.value == Skins.Samsung) &&
                             !showArchived)
-                    ? IconButton(
-                        icon: Icon(
-                            (SettingsManager().settings.skin.value == Skins.iOS && showArchived)
-                                ? Icons.arrow_back_ios
-                                : Icons.arrow_back,
-                            color: context.theme.primaryColor),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                      )
+                    ? buildBackButton(context)
                     : new Container(),
                 stretch: true,
                 expandedHeight: (!showArchived) ? 80 : 50,
@@ -361,7 +352,7 @@ class _Cupertino extends StatelessWidget {
                                     child: SizedBox(
                                         width: 20,
                                         height: 20,
-                                        child: Icon(Icons.search, color: context.theme.primaryColor, size: 12)),
+                                        child: Icon(CupertinoIcons.search, color: context.theme.primaryColor, size: 12)),
                                     onTap: () async {
                                       Navigator.of(context).push(
                                         CupertinoPageRoute(
@@ -381,7 +372,7 @@ class _Cupertino extends StatelessWidget {
                                     child: SizedBox(
                                       width: 20,
                                       height: 20,
-                                      child: Icon(Icons.create, color: context.theme.primaryColor, size: 12),
+                                      child: Icon(CupertinoIcons.pencil, color: context.theme.primaryColor, size: 12),
                                     ),
                                     onTap: this.parent.openNewChatCreator,
                                   ),

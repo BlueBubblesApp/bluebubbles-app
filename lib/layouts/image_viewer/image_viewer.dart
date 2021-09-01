@@ -86,7 +86,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                   Navigator.pop(context);
                 },
                 child: Icon(
-                  SettingsManager().settings.skin.value == Skins.iOS ? Icons.arrow_back_ios : Icons.arrow_back,
+                  SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.back : Icons.arrow_back,
                   color: Colors.white,
                 ),
               ),
@@ -158,7 +158,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                       );
                     },
                     child: Icon(
-                      Icons.info,
+                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.info : Icons.info,
                       color: Colors.white,
                     ),
                   ),
@@ -181,7 +181,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                       if (this.mounted) setState(() {});
                     },
                     child: Icon(
-                      Icons.refresh,
+                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.refresh : Icons.refresh,
                       color: Colors.white,
                     ),
                   ),
@@ -194,7 +194,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                       await AttachmentHelper.saveToGallery(context, widget.file);
                     },
                     child: Icon(
-                      Icons.file_download,
+                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.cloud_download : Icons.file_download,
                       color: Colors.white,
                     ),
                   ),
@@ -210,7 +210,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                       );
                     },
                     child: Icon(
-                      Icons.share,
+                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.share : Icons.share,
                       color: Colors.white,
                     ),
                   ),

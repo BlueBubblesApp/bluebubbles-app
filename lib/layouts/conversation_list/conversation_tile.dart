@@ -166,7 +166,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
                 caption: widget.chat.isPinned! ? 'Unpin' : 'Pin',
                 color: Colors.yellow[800],
                 foregroundColor: Colors.white,
-                icon: widget.chat.isPinned! ? Icons.star_outline : Icons.star,
+                icon: widget.chat.isPinned! ? CupertinoIcons.pin_slash : CupertinoIcons.pin,
                 onTap: () async {
                   await widget.chat.togglePin(!widget.chat.isPinned!);
                   EventDispatcher().emit("refresh", null);
@@ -179,7 +179,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
               IconSlideAction(
                 caption: widget.chat.muteType == "mute" ? 'Show Alerts' : 'Hide Alerts',
                 color: Colors.purple[700],
-                icon: widget.chat.muteType == "mute" ? Icons.notifications_active : Icons.notifications_off,
+                icon: widget.chat.muteType == "mute" ? CupertinoIcons.bell : CupertinoIcons.bell_slash,
                 onTap: () async {
                   await widget.chat.toggleMute(widget.chat.muteType != "mute");
                   if (this.mounted) setState(() {});
@@ -189,7 +189,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
               IconSlideAction(
                 caption: "Delete",
                 color: Colors.red,
-                icon: Icons.delete_forever,
+                icon: CupertinoIcons.trash,
                 onTap: () async {
                   ChatBloc().deleteChat(widget.chat);
                   Chat.deleteChat(widget.chat);
@@ -199,7 +199,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
               IconSlideAction(
                 caption: widget.chat.hasUnreadMessage! ? 'Mark Read' : 'Mark Unread',
                 color: Colors.blue,
-                icon: widget.chat.hasUnreadMessage! ? Icons.mark_chat_read : Icons.mark_chat_unread,
+                icon: widget.chat.hasUnreadMessage! ? CupertinoIcons.person_crop_circle_badge_checkmark : CupertinoIcons.person_crop_circle_badge_exclam,
                 onTap: () {
                   ChatBloc().toggleChatUnread(widget.chat, !widget.chat.hasUnreadMessage!);
                 },
@@ -208,7 +208,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
               IconSlideAction(
                 caption: widget.chat.isArchived! ? 'UnArchive' : 'Archive',
                 color: widget.chat.isArchived! ? Colors.blue : Colors.red,
-                icon: widget.chat.isArchived! ? Icons.unarchive : Icons.archive,
+                icon: widget.chat.isArchived! ? CupertinoIcons.tray_arrow_up : CupertinoIcons.tray_arrow_down,
                 onTap: () {
                   if (widget.chat.isArchived!) {
                     ChatBloc().unArchiveChat(widget.chat);
@@ -470,7 +470,7 @@ class __CupertinoState extends State<_Cupertino> {
                               ),
                               Icon(
                                 SettingsManager().settings.skin.value == Skins.iOS
-                                    ? Icons.arrow_forward_ios
+                                    ? CupertinoIcons.forward
                                     : Icons.arrow_forward,
                                 color: Theme.of(context).textTheme.subtitle1!.color,
                                 size: 15,
@@ -505,7 +505,7 @@ class __CupertinoState extends State<_Cupertino> {
                               : Container(),
                           widget.parent.widget.chat.isPinned!
                               ? Icon(
-                                  Icons.star,
+                                  CupertinoIcons.pin,
                                   size: 10,
                                   color: Colors
                                       .yellow[AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ? 100 : 700],

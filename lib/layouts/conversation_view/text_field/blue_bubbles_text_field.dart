@@ -458,7 +458,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             child: Padding(
               padding: EdgeInsets.only(right: 1),
               child: Icon(
-                Icons.share,
+                SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.share : Icons.share,
                 color: Colors.white.withAlpha(225),
                 size: 20,
               ),
@@ -655,7 +655,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                 : Colors.white,
                         fontSizeDelta: -0.25,
                       ),
-                  onContentCommitted: onContentCommit,
+                  //onContentCommitted: onContentCommit,
                   decoration: InputDecoration(
                     isDense: true,
                     enabledBorder: OutlineInputBorder(
@@ -805,7 +805,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           if (sendCountdown != null) Text(sendCountdown.toString()),
           (SettingsManager().settings.skin.value == Skins.iOS)
               ? Container(
-                  constraints: BoxConstraints(maxWidth: 38, maxHeight: 37),
+                  constraints: BoxConstraints(maxWidth: 35, maxHeight: 34),
                   padding: EdgeInsets.only(right: 4, top: 2, bottom: 2),
                   child: ButtonTheme(
                     child: ElevatedButton(
@@ -817,6 +817,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(40),
                         ),
+                        elevation: 0
                       ),
                       onPressed: sendAction,
                       child: Stack(
@@ -826,16 +827,16 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                 opacity: sendCountdown == null && canRecord.value ? 1.0 : 0.0,
                                 duration: Duration(milliseconds: 150),
                                 child: Icon(
-                                  Icons.mic,
+                                  CupertinoIcons.waveform,
                                   color: (isRecording.value) ? Colors.red : Colors.white,
-                                  size: 20,
+                                  size: 22,
                                 ),
                               )),
                           Obx(() => AnimatedOpacity(
                                 opacity: (sendCountdown == null && !canRecord.value) && !isRecording.value ? 1.0 : 0.0,
                                 duration: Duration(milliseconds: 150),
                                 child: Icon(
-                                  Icons.arrow_upward,
+                                  CupertinoIcons.arrow_up,
                                   color: Colors.white,
                                   size: 20,
                                 ),
@@ -844,7 +845,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                             opacity: sendCountdown != null ? 1.0 : 0.0,
                             duration: Duration(milliseconds: 50),
                             child: Icon(
-                              Icons.cancel_outlined,
+                              CupertinoIcons.xmark_circle,
                               color: Colors.red,
                               size: 20,
                             ),

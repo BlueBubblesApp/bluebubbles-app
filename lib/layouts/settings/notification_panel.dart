@@ -258,14 +258,14 @@ class NotificationPanel extends StatelessWidget {
             tabs: [
               Tab(
                   icon: Icon(
-                    Icons.public,
+                    SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.globe : Icons.public,
                     color: Theme.of(context).textTheme.bodyText1!.color,
                   ),
                   text: "GLOBAL OPTIONS"
               ),
               Tab(
                 icon: Icon(
-                  Icons.chat_bubble_outline,
+                  SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.conversation_bubble : Icons.chat_bubble_outline,
                   color: Theme.of(context).textTheme.bodyText1!.color,
                 ),
                 text: "CHAT-SPECIFIC OPTIONS"
