@@ -262,16 +262,16 @@ class ChatBloc {
       if (chats.length == 0) break;
 
       for (Chat chat in chats) {
+        newChats.add(chat);
         await initTileValsForChat(chat);
         if (isNullOrEmpty(chat.participants)!) {
           await chat.getParticipants();
         }
-        newChats.add(chat);
       }
 
       if (newChats.length != 0) {
-        newChats.sort(Chat.sort);
         _chats.value = newChats;
+        _chats.sort(Chat.sort);
       }
     }
 
