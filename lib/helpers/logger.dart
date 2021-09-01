@@ -43,11 +43,16 @@ class Logger extends GetxService {
   void log(dynamic log, {String title = "[BlueBubblesApp]"}) {
     debugPrint(title + " " + log.toString());
     if (logToTxt.value) {
-      txtLog = txtLog + title + " " + log.toString() + "\n";
+      final time = DateTime.now().toLocal();
+      txtLog = txtLog + formatDate(time) + title + " " + log.toString() + "\n";
       if ("\n".allMatches(txtLog).length >= 5000) {
         logToTxt.value = false;
         endTxtLogging();
       }
     }
+  }
+
+  String formatDate(DateTime t) {
+    return "${t.year}-${t.month}-${t.day} ${t.hour}:${t.minute}:${t.second}.${t.millisecond} ";
   }
 }
