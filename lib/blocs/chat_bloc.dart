@@ -419,4 +419,18 @@ extension Helpers on RxList<Chat> {
           .toList()
           .obs;
   }
+
+  RxList<Chat> unknownSendersHelper(bool unknown) {
+    if (!SettingsManager().settings.filterUnknownSenders.value) return this;
+    if (unknown)
+      return this
+          .where((e) => e.participants.length == 1
+          && ContactManager().handleToContact[e.participants[0].address] == null)
+          .toList().obs;
+    else
+      return this
+          .where((e) => e.participants.length > 1 || (e.participants.length == 1
+          && ContactManager().handleToContact[e.participants[0].address] != null))
+          .toList().obs;
+  }
 }

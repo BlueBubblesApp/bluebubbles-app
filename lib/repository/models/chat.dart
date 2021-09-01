@@ -249,7 +249,11 @@ class Chat {
   }
 
   Future<bool> shouldMuteNotification(Message? message) async {
-    if (SettingsManager().settings.globalTextDetection.value.isNotEmpty) {
+    if (SettingsManager().settings.filterUnknownSenders.value
+        && this.participants.length == 1
+        && ContactManager().handleToContact[this.participants[0].address] == null) {
+      return true;
+    } else if (SettingsManager().settings.globalTextDetection.value.isNotEmpty) {
       List<String> text = SettingsManager().settings.globalTextDetection.value.split(",");
       for (String s in text) {
         if (message?.text?.toLowerCase().contains(s.toLowerCase()) ?? false) {
