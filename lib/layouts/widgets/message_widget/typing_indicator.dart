@@ -13,9 +13,11 @@ class TypingIndicator extends StatefulWidget {
     Key? key,
     this.visible = false,
     this.bigPin = false,
+    this.chatList = false,
   }) : super(key: key);
   final bool visible;
   final bool bigPin;
+  final bool chatList;
 
   @override
   _TypingIndicatorState createState() => _TypingIndicatorState();
@@ -70,7 +72,7 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
                 Stack(
                   alignment: Alignment.bottomLeft,
                   children: [
-                    if (skin.value == Skins.iOS)
+                    if (!widget.chatList && skin.value == Skins.iOS)
                       Container(
                         margin: EdgeInsets.only(left: widget.bigPin ? 18 : 2),
                         decoration: BoxDecoration(
@@ -80,7 +82,7 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
                         width: 10,
                         height: 10,
                       ),
-                    if (skin.value == Skins.iOS)
+                    if (!widget.chatList && skin.value == Skins.iOS)
                       Container(
                         margin: EdgeInsets.only(left: 9, bottom: 10),
                         decoration: BoxDecoration(
@@ -94,7 +96,7 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
                       margin: EdgeInsets.only(
                         left: 10,
                         right: 10,
-                        bottom: skin.value == Skins.iOS ? 13 : 5,
+                        bottom: !widget.chatList && skin.value == Skins.iOS ? 13 : 5,
                       ),
                       constraints: BoxConstraints(
                         maxWidth: context.width * MessageWidgetMixin.MAX_SIZE,
