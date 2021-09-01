@@ -35,10 +35,10 @@ class VCard {
 
   void printLines() {
     String s;
-    Logger.instance.log('lines #${lines.length}');
+    Logger.debug('lines #${lines.length}');
     for (var i = 0; i < lines.length; i++) {
       s = i.toString().padLeft(2, '0');
-      Logger.instance.log('$s | ${lines[i]}');
+      Logger.debug('$s | ${lines[i]}');
     }
   }
 

@@ -128,18 +128,16 @@ class NotificationManager {
         tz.TZDateTime.from(time, tz.local),
         fln.NotificationDetails(
             android: fln.AndroidNotificationDetails(
-                "com.bluebubbles.reminders",
-                'Reminders',
-                'Message reminder notifications',
-              priority: fln.Priority.max,
-              importance: fln.Importance.max,
-              color: HexColor("4990de"),
-            )
-        ),
+          "com.bluebubbles.reminders",
+          'Reminders',
+          'Message reminder notifications',
+          priority: fln.Priority.max,
+          importance: fln.Importance.max,
+          color: HexColor("4990de"),
+        )),
         payload: await MessageHelper.getNotificationText(message),
         androidAllowWhileIdle: true,
-        uiLocalNotificationDateInterpretation: fln.UILocalNotificationDateInterpretation.absoluteTime
-    );
+        uiLocalNotificationDateInterpretation: fln.UILocalNotificationDateInterpretation.absoluteTime);
   }
 
   /// Creates a notification by sending to native code
@@ -204,14 +202,14 @@ class NotificationManager {
         contactIcon = defaultAvatar;
       }
     } catch (ex) {
-      Logger.instance.log("Failed to load contact avatar: ${ex.toString()}");
+      Logger.error("Failed to load contact avatar: ${ex.toString()}");
     }
 
     try {
       // Try to update the share targets
       await ChatBloc().updateShareTarget(chat);
     } catch (ex) {
-      Logger.instance.log("Failed to update share target! Error: ${ex.toString()}");
+      Logger.error("Failed to update share target! Error: ${ex.toString()}");
     }
 
     // Get a title as best as we can
@@ -223,8 +221,18 @@ class NotificationManager {
       chatTitle = isGroup ? 'Group Chat' : 'iMessage Chat';
     }
 
-    await createNewMessageNotification(chat.guid!, isGroup, chatTitle, contactIcon, contactName, contactIcon, messageText,
-        message.dateCreated ?? DateTime.now(), message.isFromMe ?? false, visibility, chat.id ?? Random().nextInt(9998) + 1);
+    await createNewMessageNotification(
+        chat.guid!,
+        isGroup,
+        chatTitle,
+        contactIcon,
+        contactName,
+        contactIcon,
+        messageText,
+        message.dateCreated ?? DateTime.now(),
+        message.isFromMe ?? false,
+        visibility,
+        chat.id ?? Random().nextInt(9998) + 1);
   }
 
   Future<void> createNewMessageNotification(
@@ -240,7 +248,10 @@ class NotificationManager {
       int visibility,
       int summaryId) async {
     await MethodChannelInterface().platform.invokeMethod("new-message-notification", {
-      "CHANNEL_ID": NEW_MESSAGE_CHANNEL + (SettingsManager().settings.notificationSound.value == "default" ? "" : ("_" + SettingsManager().settings.notificationSound.value)),
+      "CHANNEL_ID": NEW_MESSAGE_CHANNEL +
+          (SettingsManager().settings.notificationSound.value == "default"
+              ? ""
+              : ("_" + SettingsManager().settings.notificationSound.value)),
       "CHANNEL_NAME": "New Messages",
       "notificationId": Random().nextInt(9998) + 1,
       "summaryId": summaryId,

@@ -456,8 +456,8 @@ Size getGifDimensions(Uint8List bytes) {
   hexString += hex.encode(bytes.sublist(8, 9));
   int height = int.parse(hexString, radix: 16);
 
-  Logger.instance.log("GIF width: $width");
-  Logger.instance.log("GIF height: $height");
+  Logger.debug("GIF width: $width");
+  Logger.debug("GIF height: $height");
   Size size = new Size(width.toDouble(), height.toDouble());
   return size;
 }
@@ -510,8 +510,8 @@ Future<String> getDeviceName() async {
       deviceName = items.join("_").toLowerCase();
     }
   } catch (ex) {
-    Logger.instance.log("Failed to get device name! Defaulting to 'android-client'");
-    Logger.instance.log(ex.toString());
+    Logger.error("Failed to get device name! Defaulting to 'android-client'");
+    Logger.error(ex.toString());
   }
 
   // Fallback for if it happens to be empty or null, somehow... idk

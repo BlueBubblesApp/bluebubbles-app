@@ -66,7 +66,7 @@ class UrlPreviewController extends GetxController with SingleGetTickerProviderMi
       // Fetch the metadata
       meta = await MetadataHelper.fetchMetadata(message);
     } catch (ex) {
-      Logger.instance.log("Failed to fetch metadata! Error: ${ex.toString()}");
+      Logger.error("Failed to fetch metadata! Error: ${ex.toString()}");
       gotError.value = true;
       return;
     }

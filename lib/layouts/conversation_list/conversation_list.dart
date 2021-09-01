@@ -51,7 +51,7 @@ class _ConversationListState extends State<ConversationList> {
     }
 
     SystemChannels.textInput.invokeMethod('TextInput.hide').catchError((e) {
-      Logger.instance.log("Error caught while hiding keyboard: ${e.toString()}");
+      Logger.error("Error caught while hiding keyboard: ${e.toString()}");
     });
   }
 
@@ -126,8 +126,7 @@ class _ConversationListState extends State<ConversationList> {
 
   void sortChats() {
     ChatBloc().chats.sort((a, b) {
-      if (a.pinIndex.value != null && b.pinIndex.value != null)
-        return a.pinIndex.value!.compareTo(b.pinIndex.value!);
+      if (a.pinIndex.value != null && b.pinIndex.value != null) return a.pinIndex.value!.compareTo(b.pinIndex.value!);
       if (b.pinIndex.value != null) return 1;
       if (a.pinIndex.value != null) return -1;
       if (!a.isPinned! && b.isPinned!) return 1;
@@ -845,7 +844,9 @@ class __MaterialState extends State<_Material> {
                                     child: Padding(
                                       padding: const EdgeInsets.all(8.0),
                                       child: Icon(
-                                        selected[0].muteType == "mute" ? Icons.notifications_active : Icons.notifications_off,
+                                        selected[0].muteType == "mute"
+                                            ? Icons.notifications_active
+                                            : Icons.notifications_off,
                                         color: context.textTheme.bodyText1!.color,
                                       ),
                                     ),
@@ -972,10 +973,8 @@ class __MaterialState extends State<_Material> {
                                   if (this.mounted) setState(() {});
                                 } else if (SettingsManager().settings.materialLeftAction.value ==
                                     MaterialSwipeAction.alerts) {
-                                  await ChatBloc()
-                                      .chats
-                                      .archivedHelper(showArchived)[index]
-                                      .toggleMute(ChatBloc().chats.archivedHelper(showArchived)[index].muteType != "mute");
+                                  await ChatBloc().chats.archivedHelper(showArchived)[index].toggleMute(
+                                      ChatBloc().chats.archivedHelper(showArchived)[index].muteType != "mute");
                                   if (this.mounted) setState(() {});
                                 } else if (SettingsManager().settings.materialLeftAction.value ==
                                     MaterialSwipeAction.delete) {
@@ -1002,10 +1001,8 @@ class __MaterialState extends State<_Material> {
                                   if (this.mounted) setState(() {});
                                 } else if (SettingsManager().settings.materialRightAction.value ==
                                     MaterialSwipeAction.alerts) {
-                                  await ChatBloc()
-                                      .chats
-                                      .archivedHelper(showArchived)[index]
-                                      .toggleMute(ChatBloc().chats.archivedHelper(showArchived)[index].muteType != "mute");
+                                  await ChatBloc().chats.archivedHelper(showArchived)[index].toggleMute(
+                                      ChatBloc().chats.archivedHelper(showArchived)[index].muteType != "mute");
                                   if (this.mounted) setState(() {});
                                 } else if (SettingsManager().settings.materialRightAction.value ==
                                     MaterialSwipeAction.delete) {
@@ -1478,10 +1475,8 @@ class _SamsungState extends State<_Samsung> {
                                         if (this.mounted) setState(() {});
                                       } else if (SettingsManager().settings.materialLeftAction.value ==
                                           MaterialSwipeAction.alerts) {
-                                        await ChatBloc()
-                                            .chats
-                                            .archivedHelper(showArchived)[index]
-                                            .toggleMute(ChatBloc().chats.archivedHelper(showArchived)[index].muteType != "mute");
+                                        await ChatBloc().chats.archivedHelper(showArchived)[index].toggleMute(
+                                            ChatBloc().chats.archivedHelper(showArchived)[index].muteType != "mute");
                                         if (this.mounted) setState(() {});
                                       } else if (SettingsManager().settings.materialLeftAction.value ==
                                           MaterialSwipeAction.delete) {
@@ -1511,10 +1506,8 @@ class _SamsungState extends State<_Samsung> {
                                         if (this.mounted) setState(() {});
                                       } else if (SettingsManager().settings.materialRightAction.value ==
                                           MaterialSwipeAction.alerts) {
-                                        await ChatBloc()
-                                            .chats
-                                            .archivedHelper(showArchived)[index]
-                                            .toggleMute(ChatBloc().chats.archivedHelper(showArchived)[index].muteType != "mute");
+                                        await ChatBloc().chats.archivedHelper(showArchived)[index].toggleMute(
+                                            ChatBloc().chats.archivedHelper(showArchived)[index].muteType != "mute");
                                         if (this.mounted) setState(() {});
                                       } else if (SettingsManager().settings.materialRightAction.value ==
                                           MaterialSwipeAction.delete) {
@@ -1641,10 +1634,8 @@ class _SamsungState extends State<_Samsung> {
                                         if (this.mounted) setState(() {});
                                       } else if (SettingsManager().settings.materialLeftAction.value ==
                                           MaterialSwipeAction.alerts) {
-                                        await ChatBloc()
-                                            .chats
-                                            .archivedHelper(showArchived)[index]
-                                            .toggleMute(ChatBloc().chats.archivedHelper(showArchived)[index].muteType != "mute");
+                                        await ChatBloc().chats.archivedHelper(showArchived)[index].toggleMute(
+                                            ChatBloc().chats.archivedHelper(showArchived)[index].muteType != "mute");
                                         if (this.mounted) setState(() {});
                                       } else if (SettingsManager().settings.materialLeftAction.value ==
                                           MaterialSwipeAction.delete) {
@@ -1674,10 +1665,8 @@ class _SamsungState extends State<_Samsung> {
                                         if (this.mounted) setState(() {});
                                       } else if (SettingsManager().settings.materialRightAction.value ==
                                           MaterialSwipeAction.alerts) {
-                                        await ChatBloc()
-                                            .chats
-                                            .archivedHelper(showArchived)[index]
-                                            .toggleMute(ChatBloc().chats.archivedHelper(showArchived)[index].muteType != "mute");
+                                        await ChatBloc().chats.archivedHelper(showArchived)[index].toggleMute(
+                                            ChatBloc().chats.archivedHelper(showArchived)[index].muteType != "mute");
                                         if (this.mounted) setState(() {});
                                       } else if (SettingsManager().settings.materialRightAction.value ==
                                           MaterialSwipeAction.delete) {

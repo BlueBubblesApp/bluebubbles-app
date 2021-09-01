@@ -57,7 +57,7 @@ class SetupBloc {
   Future<void> connectToServer(FCMData data, String serverURL, String password) async {
     Settings settingsCopy = SettingsManager().settings;
     if (SocketManager().state.value == SocketState.CONNECTED && settingsCopy.serverAddress.value == serverURL) {
-      Logger.instance.log("Not reconnecting to server we are already connected to!");
+      Logger.warn("Not reconnecting to server we are already connected to!");
       return;
     }
 
@@ -227,7 +227,7 @@ class SetupBloc {
   }
 
   void addOutput(String _output, SetupOutputType type) {
-    Logger.instance.log('[Setup] -> $_output');
+    Logger.info('[Setup] -> $_output');
     output.add(SetupOutputData(_output, type));
     data.value = SetupData(_progress, output);
   }
@@ -236,7 +236,8 @@ class SetupBloc {
       {String? chatGuid, bool saveDate = true, Function? onConnectionError, Function? onComplete}) async {
     // If we are already syncing, don't sync again
     // Or, if we haven't finished setup, or we aren't connected, don't sync
-    if (isSyncing.value || !settings.finishedSetup.value || SocketManager().state.value != SocketState.CONNECTED) return;
+    if (isSyncing.value || !settings.finishedSetup.value || SocketManager().state.value != SocketState.CONNECTED)
+      return;
 
     // Reset the progress
     _progress = 0;

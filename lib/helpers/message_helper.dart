@@ -105,9 +105,9 @@ class MessageHelper {
       // Every 50 messages synced, who a message
       index += 1;
       if (index % 50 == 0) {
-        Logger.instance.log('[Bulk Ingest] Saved $index of ${messages.length} messages');
+        Logger.info('[Bulk Ingest] Saved $index of ${messages.length} messages');
       } else if (index == messages.length) {
-        Logger.instance.log('[Bulk Ingest] Saved ${messages.length} messages');
+        Logger.info('[Bulk Ingest] Saved ${messages.length} messages');
       }
     }
 
@@ -218,7 +218,9 @@ class MessageHelper {
 
     CurrentChat? currChat = CurrentChat.activeChat;
     if (LifeCycleManager().isAlive &&
-        ((!SettingsManager().settings.notifyOnChatList.value && currChat == null && !Get.currentRoute.contains("settings")) ||
+        ((!SettingsManager().settings.notifyOnChatList.value &&
+                currChat == null &&
+                !Get.currentRoute.contains("settings")) ||
             currChat?.chat.guid == chat.guid)) {
       // Don't notify if the the chat is the active chat
       return;

@@ -159,7 +159,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
                                         errors = [];
                                       });
                                     } else {
-                                      Logger.instance.log("ERROR");
+                                      Logger.error("Error");
                                     }
                                   },
                                 ),

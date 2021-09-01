@@ -281,7 +281,8 @@ class Chat {
       }
       return true;
     }
-    return !SettingsManager().settings.notifyReactions.value && ReactionTypes.toList().contains(message?.associatedMessageType ?? "");
+    return !SettingsManager().settings.notifyReactions.value &&
+        ReactionTypes.toList().contains(message?.associatedMessageType ?? "");
   }
 
   Future<Chat> update() async {
@@ -374,8 +375,8 @@ class Chat {
     } catch (ex, stacktrace) {
       newMessage = await Message.findOne({"guid": message.guid});
       if (newMessage == null) {
-        Logger.instance.log(ex.toString());
-        Logger.instance.log(stacktrace.toString());
+        Logger.error(ex.toString());
+        Logger.error(stacktrace.toString());
       }
     }
     bool isNewer = false;
@@ -571,7 +572,7 @@ class Chat {
       if (_getMessagesRequests.containsKey(req) && !_getMessagesRequests[req]!.isCompleted)
         _getMessagesRequests[req]!.complete(messages);
     } catch (ex) {
-      Logger.instance.log(ex.toString());
+      Logger.error(ex.toString());
 
       if (_getMessagesRequests.containsKey(req) && !_getMessagesRequests[req]!.isCompleted)
         _getMessagesRequests[req]!.completeError(ex);

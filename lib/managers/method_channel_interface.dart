@@ -98,7 +98,7 @@ class MethodChannelInterface {
 
         return new Future.value("");
       case "new-message":
-        Logger.instance.log("Received new message from FCM");
+        Logger.info("Received new message from FCM");
         // Retreive the data for this message as a json
         Map<String, dynamic>? data = jsonDecode(call.arguments);
 
@@ -131,7 +131,7 @@ class MethodChannelInterface {
 
         return new Future.value("");
       case "ChatOpen":
-        Logger.instance.log("Opening Chat with GUID: ${call.arguments}");
+        Logger.info("Opening Chat with GUID: ${call.arguments}");
         openChat(call.arguments);
 
         return new Future.value("");
@@ -192,7 +192,7 @@ class MethodChannelInterface {
         // Get the path to where the temp files are stored
         String sharedFilesPath = SettingsManager().sharedFilesPath;
 
-        Logger.instance.log("shareAttachments " + sharedFilesPath);
+        Logger.info("shareAttachments " + sharedFilesPath);
 
         // Loop through all of the attachments sent by native code
         call.arguments["attachments"].forEach((element) {
@@ -282,7 +282,8 @@ class MethodChannelInterface {
         final Color primary = Color(call.arguments['primary']);
         final Color lightBg = Color(call.arguments['lightBg']);
         final Color darkBg = Color(call.arguments['darkBg']);
-        if (Get.context != null && (!isRunning || primary != previousPrimary || lightBg != previousLightBg || darkBg != previousDarkBg)) {
+        if (Get.context != null &&
+            (!isRunning || primary != previousPrimary || lightBg != previousLightBg || darkBg != previousDarkBg)) {
           previousPrimary = primary;
           previousLightBg = lightBg;
           previousDarkBg = darkBg;
@@ -324,7 +325,7 @@ class MethodChannelInterface {
   void closeThread() {
     // Only do this if we are indeed running in the background
     if (headless) {
-      Logger.instance.log("(CloseThread) -> Closing the background isolate...");
+      Logger.info("(CloseThread) -> Closing the background isolate...");
 
       // Tells the native code to close the isolate
       invokeMethod("close-background-isolate");
@@ -386,7 +387,7 @@ class MethodChannelInterface {
       await Future.delayed(Duration(milliseconds: 500));
       NotificationManager().switchChat(openedChat);
     } else {
-      Logger.instance.log("(OpenChat) -> Failed to find chat");
+      Logger.warn("(OpenChat) -> Failed to find chat");
     }
   }
 }

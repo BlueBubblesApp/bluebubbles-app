@@ -48,7 +48,7 @@ class _SetupViewState extends State<SetupView> {
             );
             break;
           default:
-            Logger.instance.log("Default case: " + event.toString());
+            Logger.info("Default case: " + event.toString());
             break;
         }
       }

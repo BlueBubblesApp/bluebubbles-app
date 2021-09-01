@@ -81,7 +81,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
       try {
         await fetchChatSingleton(widget.chat.guid!);
       } catch (ex) {
-        Logger.instance.log(ex.toString());
+        Logger.error(ex.toString());
       }
 
       this.setNewChatData(forceUpdate: true);
@@ -274,7 +274,8 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
                           color: context.textTheme.bodyText1!.color,
                         ),
                       ),
-                      Text(widget.chat.muteType == "mute" ? 'Show Alerts' : 'Hide Alerts', style: context.textTheme.bodyText1!),
+                      Text(widget.chat.muteType == "mute" ? 'Show Alerts' : 'Hide Alerts',
+                          style: context.textTheme.bodyText1!),
                     ],
                   ),
                 ),

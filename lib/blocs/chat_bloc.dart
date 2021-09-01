@@ -75,8 +75,7 @@ class ChatBloc {
     }
 
     chatRequest = new Completer<void>();
-
-    Logger.instance.log("[ChatBloc] -> Fetching chats (${force ? 'forced' : 'normal'})...");
+    Logger.info("[ChatBloc] -> Fetching chats (${force ? 'forced' : 'normal'})...");
 
     // Get the contacts in case we haven't
     await ContactManager().getContacts();
@@ -205,7 +204,7 @@ class ChatBloc {
         icon = NotificationManager().defaultAvatar;
       }
     } catch (ex) {
-      Logger.instance.log("Failed to load contact avatar: ${ex.toString()}");
+      Logger.error("Failed to load contact avatar: ${ex.toString()}");
     }
 
     // If we don't have a title, try to get it
@@ -280,7 +279,7 @@ class ChatBloc {
       }
     }
 
-    Logger.instance.log("[ChatBloc] -> Finished fetching chats (${_chats.length}).");
+    Logger.info("[ChatBloc] -> Finished fetching chats (${_chats.length}).");
     await updateAllShareTargets();
 
     if (chatRequest != null && !chatRequest!.isCompleted) {
@@ -322,12 +321,18 @@ class ChatBloc {
     final item = _chats.bigPinHelper(true)[oldIndex];
     if (newIndex > oldIndex) {
       newIndex = newIndex - 1;
-      _chats.bigPinHelper(true).where((p0) => p0.pinIndex.value != null && p0.pinIndex.value! <= newIndex).forEach((element) {
+      _chats
+          .bigPinHelper(true)
+          .where((p0) => p0.pinIndex.value != null && p0.pinIndex.value! <= newIndex)
+          .forEach((element) {
         element.pinIndex.value = element.pinIndex.value! - 1;
       });
       item.pinIndex.value = newIndex;
     } else {
-      _chats.bigPinHelper(true).where((p0) => p0.pinIndex.value != null && p0.pinIndex.value! >= newIndex).forEach((element) {
+      _chats
+          .bigPinHelper(true)
+          .where((p0) => p0.pinIndex.value != null && p0.pinIndex.value! >= newIndex)
+          .forEach((element) {
         element.pinIndex.value = element.pinIndex.value! + 1;
       });
       item.pinIndex.value = newIndex;

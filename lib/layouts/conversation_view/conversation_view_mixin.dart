@@ -118,7 +118,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       try {
         await fetchChatSingleton(widget.chat!.guid!);
       } catch (ex) {
-        Logger.instance.log(ex.toString());
+        Logger.error(ex.toString());
       }
 
       setNewChatData(forceUpdate: true);
@@ -186,7 +186,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         return;
       }
 
-      Logger.instance.log("(Convo View) No participants found for chat, fetching...");
+      Logger.info("(Convo View) No participants found for chat, fetching...");
 
       try {
         // If we don't have participants, we should fetch them from the server
@@ -195,15 +195,15 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         if (data != null) {
           await chat!.getParticipants();
           if (chat!.participants.isNotEmpty) {
-            Logger.instance.log("(Convo View) Got new chat participants. Updating state.");
+            Logger.info("(Convo View) Got new chat participants. Updating state.");
             if (this.mounted) setState(() {});
           } else {
-            Logger.instance.log("(Convo View) Participants list is still empty, please contact support!");
+            Logger.info("(Convo View) Participants list is still empty, please contact support!");
           }
         }
       } catch (ex) {
-        Logger.instance.log("There was an error fetching the chat");
-        Logger.instance.log(ex.toString());
+        Logger.info("There was an error fetching the chat");
+        Logger.error(ex.toString());
       }
     }
 
@@ -914,7 +914,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         });
 
     params["participants"] = participants;
-    Logger.instance.log("Starting chat with participants: ${participants.join(", ")}");
+    Logger.info("Starting chat with participants: ${participants.join(", ")}");
 
     Function returnChat = (Chat newChat) async {
       await newChat.save();

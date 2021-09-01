@@ -210,7 +210,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused && mounted) {
-      Logger.instance.log("Removing CurrentChat imageData");
+      Logger.info("Removing CurrentChat imageData");
       CurrentChat.of(context)?.imageData.clear();
     }
   }

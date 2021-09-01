@@ -137,7 +137,7 @@ class MetadataHelper {
       try {
         data = await MetadataFetch.extract(url);
       } catch (ex) {
-        Logger.instance.log('An error occurred while fetching URL Preview Metadata: ${ex.toString()}');
+        Logger.error('An error occurred while fetching URL Preview Metadata: ${ex.toString()}');
       }
     }
 
@@ -203,7 +203,7 @@ class MetadataHelper {
       document = parser.parse(response.body.toString());
       document.requestUrl = response.request!.url.toString();
     } catch (err) {
-      Logger.instance.log("Error parsing HTML document: ${err.toString()}");
+      Logger.error("Error parsing HTML document: ${err.toString()}");
       return document;
     }
 
@@ -241,7 +241,7 @@ class MetadataHelper {
       meta.title = 'Invalid SSL Certificate';
       meta.description = ex.message;
     } catch (ex) {
-      Logger.instance.log('Failed to manually get metadata: ${ex.toString()}');
+      Logger.error('Failed to manually get metadata: ${ex.toString()}');
     }
 
     return meta;

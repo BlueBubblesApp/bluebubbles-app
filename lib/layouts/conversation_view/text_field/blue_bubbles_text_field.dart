@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
+import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -139,10 +140,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     EventDispatcher().stream.listen((event) {
       if (!event.containsKey("type")) return;
       if (event["type"] == "unfocus-keyboard" && focusNode!.hasFocus) {
-        Logger.instance.log("(EVENT) Unfocus Keyboard");
+        Logger.info("(EVENT) Unfocus Keyboard");
         focusNode!.unfocus();
       } else if (event["type"] == "focus-keyboard" && !focusNode!.hasFocus) {
-        Logger.instance.log("(EVENT) Focus Keyboard");
+        Logger.info("(EVENT) Focus Keyboard");
         focusNode!.requestFocus();
       } else if (event["type"] == "text-field-update-attachments") {
         addSharedAttachments();
@@ -241,10 +242,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
   void onContentCommit(CommittedContent content) async {
     // Add some debugging logs
-    Logger.instance.log("[Content Commit] Keyboard received content");
-    Logger.instance.log("  -> Content Type: ${content.mimeType}");
-    Logger.instance.log("  -> URI: ${content.uri}");
-    Logger.instance.log("  -> Content Length: ${content.hasData ? content.data!.length : "null"}");
+    Logger.info("[Content Commit] Keyboard received content");
+    Logger.info("  -> Content Type: ${content.mimeType}");
+    Logger.info("  -> URI: ${content.uri}");
+    Logger.info("  -> Content Length: ${content.hasData ? content.data!.length : "null"}");
 
     // Parse the filename from the URI and read the data as a List<int>
     String filename = uriToFilename(content.uri, content.mimeType);
@@ -322,7 +323,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       await this.disposeCameras();
     }
 
-    Logger.instance.log("[Camera Preview] -> Initializing camera preview");
+    Logger.info("[Camera Preview] -> Initializing camera preview");
 
     // Enumerate the cameras (if we don't have them)
     // We only need to do this once... it's not like it's gonna change very often
@@ -331,7 +332,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     }
 
     if (cameras.length == 0) {
-      Logger.instance.log("[Camera Preview] -> No available cameras!");
+      Logger.info("[Camera Preview] -> No available cameras!");
       return;
     }
 
@@ -349,16 +350,16 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
     cameraState = CameraState.ACTIVE;
     if (this.mounted) setState(() {});
-    Logger.instance.log("[Camera Preview] -> Finished initializing camera preview");
+    Logger.info("[Camera Preview] -> Finished initializing camera preview");
   }
 
   Future<void> disposeCameras() async {
-    Logger.instance.log("[Camera Preview] -> Disposing camera preview");
+    Logger.info("[Camera Preview] -> Disposing camera preview");
     cameraState = CameraState.DISPOSING;
     await cameraController?.dispose();
     cameraController = null;
     cameraState = CameraState.INACTIVE;
-    Logger.instance.log("[Camera Preview] -> Finished disposing camera preview");
+    Logger.info("[Camera Preview] -> Finished disposing camera preview");
   }
 
   Future<void> toggleShareMenu() async {
@@ -510,8 +511,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         }
       }
     } catch (ex) {
-      Logger.instance.log("Error setting Text Field Placeholder!");
-      Logger.instance.log(ex.toString());
+      Logger.error("Error setting Text Field Placeholder!");
+      Logger.error(ex.toString());
     }
 
     if (placeholder != this.placeholder.value) {

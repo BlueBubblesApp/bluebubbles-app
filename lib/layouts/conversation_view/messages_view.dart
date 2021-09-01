@@ -131,14 +131,14 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     if (isNullOrEmpty(_messages)!) return resetReplies();
     if (_messages.first.isFromMe!) return resetReplies();
 
-    Logger.instance.log("Getting smart replies...");
+    Logger.info("Getting smart replies...");
     Map<String, dynamic> results = await smartReply.suggestReplies();
 
     if (results.containsKey('suggestions')) {
       List<SmartReplySuggestion> suggestions = results['suggestions'];
-      Logger.instance.log("Smart Replies found: ${suggestions.length}");
+      Logger.info("Smart Replies found: ${suggestions.length}");
       replies = suggestions.map((e) => e.getText()).toList().toSet().toList();
-      Logger.instance.log(replies.toString());
+      Logger.debug(replies.toString());
     }
 
     // If there is nothing in the list, get out
@@ -171,7 +171,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
       if (val != LoadMessageResult.FAILED_TO_RETREIVE) {
         if (val == LoadMessageResult.RETREIVED_NO_MESSAGES) {
           noMoreMessages = true;
-          Logger.instance.log("(CHUNK) No more messages to load");
+          Logger.info("(CHUNK) No more messages to load");
         } else if (val == LoadMessageResult.RETREIVED_LAST_PAGE) {
           // Mark this chat saying we have no more messages to load
           noMoreLocalMessages = true;
@@ -296,8 +296,8 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
               _listKey!.currentState!
                   .removeItem(i, (context, animation) => Container(), duration: Duration(milliseconds: 0));
             } catch (ex) {
-              Logger.instance.log("Error removing item animation");
-              Logger.instance.log(ex.toString());
+              Logger.error("Error removing item animation");
+              Logger.error(ex.toString());
             }
           }
         }
@@ -318,14 +318,14 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     bool updatedAMessage = false;
     for (int i = 0; i < _messages.length; i++) {
       if (_messages[i].guid == oldGuid) {
-        Logger.instance.log("(Message status) Update message: [${message!.text}] - [${message.guid}] - [$oldGuid]");
+        Logger.info("(Message status) Update message: [${message!.text}] - [${message.guid}] - [$oldGuid]");
         _messages[i] = message;
         updatedAMessage = true;
         break;
       }
     }
     if (!updatedAMessage) {
-      Logger.instance.log(
+      Logger.warn(
           "(Message status) Message not updated (not found): [${message!.text}] - [${message.guid}] - [$oldGuid]");
     }
 

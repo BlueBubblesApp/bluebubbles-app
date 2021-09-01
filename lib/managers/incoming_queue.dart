@@ -43,7 +43,7 @@ class IncomingQueue extends QueueManager {
         }
       default:
         {
-          Logger.instance.log("Unhandled queue event: ${item.event}");
+          Logger.info("Unhandled queue event: ${item.event}");
         }
     }
   }

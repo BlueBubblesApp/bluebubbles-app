@@ -97,7 +97,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
       try {
         await fetchChatSingleton(widget.chat.guid!);
       } catch (ex) {
-        Logger.instance.log(ex.toString());
+        Logger.error(ex.toString());
       }
 
       this.setNewChatData(forceUpdate: true);

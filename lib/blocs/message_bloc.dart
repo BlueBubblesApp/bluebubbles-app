@@ -144,9 +144,10 @@ class MessageBloc {
       List<Message?> messages = _allMessages.values.toList();
       for (int i = 0; i < messages.length; i++) {
         //if _allMessages[i] dateCreated is earlier than the new message, insert at that index
-        if (message.guid != null && (messages[i]!.originalROWID != null &&
-                message.originalROWID != null &&
-                message.originalROWID! > messages[i]!.originalROWID!) ||
+        if (message.guid != null &&
+                (messages[i]!.originalROWID != null &&
+                    message.originalROWID != null &&
+                    message.originalROWID! > messages[i]!.originalROWID!) ||
             ((messages[i]!.originalROWID == null || message.originalROWID == null) &&
                 messages[i]!.dateCreated!.compareTo(message.dateCreated!) < 0)) {
           _allMessages = linkedHashMapInsert<String, Message>(_allMessages, i, message.guid!, message);
@@ -279,10 +280,10 @@ class MessageBloc {
 
           // Handle the messages
           if (isNullOrEmpty(_messages)!) {
-            Logger.instance.log("(CHUNK) No message chunks left from server");
+            Logger.info("(CHUNK) No message chunks left from server");
             completer.complete(LoadMessageResult.RETREIVED_NO_MESSAGES);
           } else {
-            Logger.instance.log("(CHUNK) Received ${_messages.length} messages from socket");
+            Logger.info("(CHUNK) Received ${_messages.length} messages from socket");
 
             messages = await MessageHelper.bulkAddMessages(_currentChat, _messages,
                 notifyMessageManager: false, notifyForNewMessage: false, checkForLatestMessageText: false);
@@ -294,14 +295,14 @@ class MessageBloc {
             }
           }
         } catch (ex) {
-          Logger.instance.log("(CHUNK) Failed to load message chunk!");
-          Logger.instance.log(ex.toString());
+          Logger.error("(CHUNK) Failed to load message chunk!");
+          Logger.error(ex.toString());
           completer.complete(LoadMessageResult.FAILED_TO_RETREIVE);
         }
       }
 
       // Save the messages to the bloc
-      Logger.instance.log("(CHUNK) Emitting ${messages.length} messages to listeners");
+      Logger.info("(CHUNK) Emitting ${messages.length} messages to listeners");
       for (Message element in messages) {
         if (element.associatedMessageGuid == null && element.guid != null) {
           _allMessages.addAll({element.guid!: element});
@@ -324,7 +325,7 @@ class MessageBloc {
         completer.complete(LoadMessageResult.RETREIVED_MESSAGES);
       }
     } else {
-      Logger.instance.log("(CHUNK) Failed to load message chunk! Unknown chat!");
+      Logger.error("(CHUNK) Failed to load message chunk! Unknown chat!");
       completer.complete(LoadMessageResult.FAILED_TO_RETREIVE);
     }
 

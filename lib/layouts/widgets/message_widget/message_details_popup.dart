@@ -157,7 +157,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   }
 
   void sendReaction(String type) {
-    Logger.instance.log("Sending reaction type: " + type);
+    Logger.info("Sending reaction type: " + type);
     ActionHandler.sendReaction(widget.currentChat!.chat, widget.message, type);
     Navigator.of(context).pop();
   }
@@ -626,7 +626,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                   }
                 }
               } catch (ex, trace) {
-                Logger.instance.log(trace.toString());
+                Logger.error(trace.toString());
                 showSnackbar("Download Error", ex.toString());
               }
             },
@@ -685,7 +685,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             if (messageDate != null) {
               final messageTime = await showTimePicker(context: context, initialTime: TimeOfDay.now());
               if (messageTime != null) {
-                final finalDate = DateTime(messageDate.year, messageDate.month, messageDate.day, messageTime.hour, messageTime.minute);
+                final finalDate = DateTime(
+                    messageDate.year, messageDate.month, messageDate.day, messageTime.hour, messageTime.minute);
                 if (!finalDate.isAfter(DateTime.now().toLocal())) {
                   showSnackbar("Error", "Select a date in the future");
                   return;

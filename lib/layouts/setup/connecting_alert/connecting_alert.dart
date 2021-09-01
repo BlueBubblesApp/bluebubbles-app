@@ -21,7 +21,7 @@ class _ConnectingAlertState extends State<ConnectingAlert> {
     ever(SocketManager().state, (event) {
       if (!this.mounted) return;
 
-      Logger.instance.log("Connection Status Changed");
+      Logger.info("Connection Status Changed");
       if (event == SocketState.CONNECTED) {
         widget.onConnect(true);
       } else if (event == SocketState.ERROR || event == SocketState.DISCONNECTED) {

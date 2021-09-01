@@ -40,8 +40,8 @@ abstract class QueueManager {
       await handleQueueItem(queued);
       await afterProcessing(queued, {});
     } catch (ex, stacktrace) {
-      Logger.instance.log("Failed to handle queued item! " + ex.toString());
-      Logger.instance.log(stacktrace.toString());
+      Logger.error("Failed to handle queued item! " + ex.toString());
+      Logger.error(stacktrace.toString());
     }
 
     // Process the next item

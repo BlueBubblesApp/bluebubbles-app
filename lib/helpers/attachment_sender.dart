@@ -75,10 +75,7 @@ class AttachmentSender {
     params["hasMore"] = index + _chunkSize < _imageBytes.length;
     params["attachmentName"] = _attachmentName;
     params["attachmentData"] = base64Encode(chunk);
-    Logger.instance.log(chunk.length.toString() + "/" + _imageBytes.length.toString());
-    if (index == 0) {
-      Logger.instance.log("(Sigabrt) Before sending first chunk");
-    }
+    Logger.info(chunk.length.toString() + "/" + _imageBytes.length.toString());
     SocketManager().sendMessage("send-message-chunk", params, (data) async {
       Map<String, dynamic> response = data;
       if (response['status'] == 200) {
@@ -92,7 +89,8 @@ class AttachmentSender {
           SocketManager().finishSender(_attachmentGuid);
         }
       } else {
-        Logger.instance.log("failed to send");
+        Logger.error("Failed to sendattachment");
+
         String? tempGuid = sentMessage!.guid;
         sentMessage!.guid = sentMessage!.guid!.replaceAll("temp", "error-${response['error']['message']}");
         sentMessage!.error.value =
@@ -158,10 +156,8 @@ class AttachmentSender {
     // Save the attachment to device
     String appDocPath = SettingsManager().appDocDir.path;
     String pathName = "$appDocPath/attachments/${messageAttachment!.guid}/$_attachmentName";
-    Logger.instance.log("(Sigabrt) Before saving to device");
     File file = await new File(pathName).create(recursive: true);
     await file.writeAsBytes(Uint8List.fromList(_imageBytes));
-    Logger.instance.log("(Sigabrt) After saving to device");
 
     // Add the message to the chat.
     // This will save the message, attachments, and chat
@@ -176,7 +172,6 @@ class AttachmentSender {
 
     _totalChunks = numOfChunks;
     SocketManager().addAttachmentSender(this);
-    Logger.instance.log("(Sigabrt) Before sending first chunk");
     sendChunkRecursive(0, _totalChunks, messageWithText == null ? "temp-${randomString(8)}" : messageWithText!.guid);
   }
 }

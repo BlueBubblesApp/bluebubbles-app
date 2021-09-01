@@ -75,18 +75,8 @@ FlutterLocalNotificationsPlugin? flutterLocalNotificationsPlugin;
 
 Future<Null> _reportError(dynamic error, dynamic stackTrace) async {
   // Print the exception to the console.
-  Logger.instance.log('Caught error: $error');
-  if (isInDebugMode) {
-    // Print the full stacktrace in debug mode.
-    Logger.instance.log(stackTrace.toString());
-  } else {
-    Logger.instance.log(stackTrace.toString());
-    // Send the Exception and Stacktrace to Sentry in Production mode.
-    // _sentry.captureException(
-    //   exception: error,
-    //   stackTrace: stackTrace,
-    // );
-  }
+  Logger.error('Caught error: $error');
+  Logger.error(stackTrace.toString());
 }
 
 class MyHttpOverrides extends HttpOverrides {
@@ -107,8 +97,8 @@ Future<Null> main() async {
 
   // This captures errors reported by the Flutter framework.
   FlutterError.onError = (FlutterErrorDetails details) {
-    Logger.instance.log(details.exceptionAsString());
-    Logger.instance.log(details.stack.toString());
+    Logger.error(details.exceptionAsString());
+    Logger.error(details.stack.toString());
     if (isInDebugMode) {
       // In development mode simply print to console.
       FlutterError.dumpErrorToConsole(details);
@@ -129,8 +119,8 @@ Future<Null> main() async {
     Get.put(AttachmentDownloadService());
     flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
     const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('ic_stat_icon');
-    final InitializationSettings initializationSettings = InitializationSettings(
-        android: initializationSettingsAndroid);
+    final InitializationSettings initializationSettings =
+        InitializationSettings(android: initializationSettingsAndroid);
     await flutterLocalNotificationsPlugin!.initialize(initializationSettings);
     tz.initializeTimeZones();
     tz.setLocalLocation(tz.getLocation(await FlutterNativeTimezone.getLocalTimezone()));
@@ -276,10 +266,7 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
               page: () => ServerManagementPanel(),
               name: "/settings/server-management-panel",
               binding: ServerManagementPanelBinding()),
-          GetPage(
-              page: () => TestingMode(),
-              name: "/testing-mode",
-              binding: TestingModeBinding()),
+          GetPage(page: () => TestingMode(), name: "/testing-mode", binding: TestingModeBinding()),
           GetPage(page: () => ThemePanel(), name: "/settings/theme-panel", binding: ThemePanelBinding()),
         ],
       ),

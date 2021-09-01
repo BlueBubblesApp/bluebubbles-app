@@ -58,17 +58,17 @@ class ContactManager {
     try {
       PermissionStatus status = await Permission.contacts.status;
       if (status.isGranted) return true;
-      Logger.instance.log("[ContactManager] -> Contacts Permission Status: ${status.toString()}");
+      Logger.info("[ContactManager] -> Contacts Permission Status: ${status.toString()}");
 
       // If it's not permanently denied, request access
       if (!status.isPermanentlyDenied) {
         return (await Permission.contacts.request()).isGranted;
       }
 
-      Logger.instance.log("[ContactManager] -> Contacts permissions are permanently denied...");
+      Logger.info("[ContactManager] -> Contacts permissions are permanently denied...");
     } catch (ex) {
-      Logger.instance.log("[ContactManager] -> Error getting access to contacts!");
-      Logger.instance.log(ex.toString());
+      Logger.error("[ContactManager] -> Error getting access to contacts!");
+      Logger.error(ex.toString());
     }
 
     return false;
@@ -77,7 +77,7 @@ class ContactManager {
   Future getContacts({bool headless = false, bool force = false}) async {
     // If we are fetching the contacts, return the current future so we can await it
     if (getContactsFuture != null && !getContactsFuture!.isCompleted) {
-      Logger.instance.log("[ContactManager] -> Already fetching contacts, returning future...");
+      Logger.info("[ContactManager] -> Already fetching contacts, returning future...");
       return getContactsFuture!.future;
     }
 
@@ -85,7 +85,7 @@ class ContactManager {
     // If we have, exit, we don't need to re-fetch the chats again
     int now = DateTime.now().toUtc().millisecondsSinceEpoch;
     if (!force && lastRefresh != 0 && now < lastRefresh + (60000 * 5)) {
-      Logger.instance.log("[ContactManager] -> Not fetching contacts; Not enough time has elapsed");
+      Logger.info("[ContactManager] -> Not fetching contacts; Not enough time has elapsed");
       return;
     }
 
@@ -99,14 +99,14 @@ class ContactManager {
     getContactsFuture = new Completer<bool>();
 
     // Fetch the current list of contacts
-    Logger.instance.log("[ContactManager] -> Fetching contacts");
+    Logger.info("[ContactManager] -> Fetching contacts");
     contacts = (await ContactsService.getContacts(withThumbnails: false)).toList();
     hasFetchedContacts = true;
 
     // Match handles in the database with contacts
     await this.matchHandles();
 
-    Logger.instance.log("[ContactManager] -> Finished fetching contacts (${handleToContact.length})");
+    Logger.info("[ContactManager] -> Finished fetching contacts (${handleToContact.length})");
     if (getContactsFuture != null && !getContactsFuture!.isCompleted) {
       getContactsFuture!.complete(true);
     }
@@ -132,7 +132,7 @@ class ContactManager {
         contactMatch = await getContact(handle);
         handleToContact[handle.address] = contactMatch;
       } catch (ex) {
-        Logger.instance.log('Failed to match handle for address, "${handle.address}": ${ex.toString()}');
+        Logger.error('Failed to match handle for address, "${handle.address}": ${ex.toString()}');
       }
 
       // If we have a match, add it to the mapping, then break out
@@ -156,7 +156,7 @@ class ContactManager {
     // Create a new completer for this
     getAvatarsFuture = new Completer();
 
-    Logger.instance.log("[ContactManager] -> Fetching Avatars");
+    Logger.info("[ContactManager] -> Fetching Avatars");
     for (String address in handleToContact.keys) {
       Contact? contact = handleToContact[address];
       if (handleToContact[address] == null) continue;
@@ -172,7 +172,7 @@ class ContactManager {
       });
     }
 
-    Logger.instance.log("[ContactManager] -> Finished fetching avatars");
+    Logger.info("[ContactManager] -> Finished fetching avatars");
     getAvatarsFuture!.complete();
   }
 
@@ -245,7 +245,7 @@ class ContactManager {
       Contact? contact = await getContact(handle);
       if (contact != null && contact.displayName != null) return contact.displayName;
     } catch (ex) {
-      Logger.instance.log('Failed to getContact() in getContactTitle(), for address, "$address": ${ex.toString()}');
+      Logger.error('Failed to getContact() in getContactTitle(), for address, "$address": ${ex.toString()}');
     }
 
     try {
@@ -262,7 +262,7 @@ class ContactManager {
 
       return contactTitle;
     } catch (ex) {
-      Logger.instance.log('Failed to formatPhoneNumber() in getContactTitle(), for address, "$address": ${ex.toString()}');
+      Logger.error('Failed to formatPhoneNumber() in getContactTitle(), for address, "$address": ${ex.toString()}');
     }
 
     return address;

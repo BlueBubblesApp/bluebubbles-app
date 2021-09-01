@@ -18,7 +18,7 @@ class TroubleshootPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iosSubtitle =
-    Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
+        Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
     final materialSubtitle = Theme.of(context)
         .textTheme
         .subtitle1
@@ -75,14 +75,14 @@ class TroubleshootPanel extends StatelessWidget {
                       alignment: Alignment.bottomLeft,
                       decoration: SettingsManager().settings.skin.value == Skins.iOS
                           ? BoxDecoration(
-                        color: headerColor,
-                        border: Border(
-                            bottom: BorderSide(
-                                color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
-                      )
+                              color: headerColor,
+                              border: Border(
+                                  bottom: BorderSide(
+                                      color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
+                            )
                           : BoxDecoration(
-                        color: tileColor,
-                      ),
+                              color: tileColor,
+                            ),
                       child: Padding(
                         padding: const EdgeInsets.only(bottom: 8.0, left: 15),
                         child: Text("Logging".psCapitalize,
@@ -90,31 +90,33 @@ class TroubleshootPanel extends StatelessWidget {
                       )),
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
                   Obx(() => SettingsTile(
-                    backgroundColor: tileColor,
-                    onTap: () async {
-                      if (Logger.instance.logToTxt.value) {
-                        await Logger.instance.endTxtLogging();
-                        Logger.instance.logToTxt.value = false;
-                      } else {
-                        Logger.instance.logToTxt.value = true;
-                      }
-                    },
-                    leading: SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.pencil_ellipsis_rectangle,
-                      materialIcon: Icons.history_edu,
-                    ),
-                    title: "${Logger.instance.logToTxt.value ? "End" : "Start"} Logging",
-                    subtitle: Logger.instance.logToTxt.value ? "Logging started, tap here to end and save" : "Create a bug report for developers to analyze",
-                  )),
+                        backgroundColor: tileColor,
+                        onTap: () async {
+                          if (Logger.saveLogs.value) {
+                            await Logger.stopSavingLogs();
+                            Logger.saveLogs.value = false;
+                          } else {
+                            Logger.startSavingLogs();
+                          }
+                        },
+                        leading: SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.pencil_ellipsis_rectangle,
+                          materialIcon: Icons.history_edu,
+                        ),
+                        title: "${Logger.saveLogs.value ? "End" : "Start"} Logging",
+                        subtitle: Logger.saveLogs.value
+                            ? "Logging started, tap here to end and save"
+                            : "Create a bug report for developers to analyze",
+                      )),
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
                   Container(
                     height: 30,
                     decoration: SettingsManager().settings.skin.value == Skins.iOS
                         ? BoxDecoration(
-                      color: headerColor,
-                      border: Border(
-                          top: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
-                    )
+                            color: headerColor,
+                            border: Border(
+                                top: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
+                          )
                         : null,
                   ),
                 ],

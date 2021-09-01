@@ -34,7 +34,7 @@ class Share {
     final result = await MethodChannelInterface().invokeMethod("get-last-location");
 
     if (result == null) {
-      Logger.instance.log("Failed to load last location!");
+      Logger.error("Failed to load last location!");
       return;
     }
 

@@ -81,7 +81,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
     await chat.getParticipants();
     readOnly = !(chat.participants.length > 1);
 
-    Logger.instance.log("updated readonly $readOnly");
+    Logger.info("Updated readonly $readOnly");
     if (this.mounted) setState(() {});
   }
 
@@ -319,15 +319,13 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                         return AlertDialog(
                             backgroundColor: Theme.of(context).accentColor,
                             title: new Text("Custom Avatar",
-                                style:
-                                TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
+                                style: TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
                             content: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               mainAxisSize: MainAxisSize.min,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                    "You have already set a custom avatar for this chat. What would you like to do?",
+                                Text("You have already set a custom avatar for this chat. What would you like to do?",
                                     style: Theme.of(context).textTheme.bodyText1),
                               ],
                             ),

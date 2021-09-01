@@ -83,8 +83,8 @@ class AttachmentHelper {
             latitude: double.tryParse(query.split(",")[1]), longitude: double.tryParse(query.split(",")[0]));
       }
     } catch (ex) {
-      Logger.instance.log("Failed to parse location!");
-      Logger.instance.log(ex.toString());
+      Logger.error("Failed to parse location!");
+      Logger.error(ex.toString());
       return AppleLocation(latitude: null, longitude: null);
     }
   }
@@ -277,7 +277,8 @@ class AttachmentHelper {
     if (cExists) compressedFile.deleteSync();
 
     // Redownload the attachment
-    Get.put(AttachmentDownloadController(attachment: attachment, onComplete: onComplete, onError: onError), tag: attachment.guid);
+    Get.put(AttachmentDownloadController(attachment: attachment, onComplete: onComplete, onError: onError),
+        tag: attachment.guid);
   }
 
   static Future<Uint8List?> getVideoThumbnail(String filePath) async {
@@ -397,7 +398,7 @@ class AttachmentHelper {
           attachment.height = size.height.toInt();
         }
       } catch (ex) {
-        Logger.instance.log('Failed to get GIF dimensions! Error: ${ex.toString()}');
+        Logger.error('Failed to get GIF dimensions! Error: ${ex.toString()}');
       }
     } else if (mimeStart == "image") {
       // For images, load properties
@@ -416,7 +417,7 @@ class AttachmentHelper {
           attachment.metadata!['orientation'] = 'portrait';
         }
       } catch (ex) {
-        Logger.instance.log('Failed to get Image Properties! Error: ${ex.toString()}');
+        Logger.error('Failed to get Image Properties! Error: ${ex.toString()}');
       }
     } else if (mimeStart == "video") {
       // For videos, load the thumbnail
@@ -428,7 +429,7 @@ class AttachmentHelper {
           attachment.height = size.height.toInt();
         }
       } catch (ex) {
-        Logger.instance.log('Failed to get video thumbnail! Error: ${ex.toString()}');
+        Logger.error('Failed to get video thumbnail! Error: ${ex.toString()}');
       }
     }
 
@@ -439,14 +440,14 @@ class AttachmentHelper {
         attachment.metadata![item.key] = item.value.printable;
       }
     } catch (ex) {
-      Logger.instance.log('Failed to read EXIF data: ${ex.toString()}');
+      Logger.error('Failed to read EXIF data: ${ex.toString()}');
     }
     bool usedFallback = false;
     // If the preview data is null, compress the file
     if (previewData == null) {
       // Compress the file
       ReceivePort receivePort = ReceivePort();
-      Logger.instance.log("Spawning isolate...");
+      Logger.info("Spawning isolate...");
       // if we don't have a valid width use the max image width
       // if the image width is less than the max width already don't bother
       // compressing it because it is already low quality
@@ -464,13 +465,13 @@ class AttachmentHelper {
         }
       }
       await Isolate.spawn(
-          resizeIsolate,
-          ResizeArgs(filePath, receivePort.sendPort, compressWidth),
-          errorsAreFatal: false,
+        resizeIsolate,
+        ResizeArgs(filePath, receivePort.sendPort, compressWidth),
+        errorsAreFatal: false,
       );
 
       var received = await receivePort.first;
-      Logger.instance.log("Compressing via ${received is String ? "FlutterNativeImage" : "image"} plugin");
+      Logger.info("Compressing via ${received is String ? "FlutterNativeImage" : "image"} plugin");
       if (received is String) {
         File compressedFile = await FlutterNativeImage.compressImage(filePath,
             quality: quality,
@@ -484,7 +485,7 @@ class AttachmentHelper {
         try {
           previewData = Uint8List.fromList(img.encodeNamedImage(received as img.Image, filePath.split("/").last) ?? []);
         } catch (e) {
-          Logger.instance.log("Compression via image plugin failed, using fallback...");
+          Logger.info("Compression via image plugin failed, using fallback...");
           File compressedFile = await FlutterNativeImage.compressImage(filePath,
               quality: quality,
               targetWidth: attachment.width == null ? 0 : attachment.width!,
@@ -497,7 +498,7 @@ class AttachmentHelper {
       }
     }
     if (previewData.isEmpty && !usedFallback) {
-      Logger.instance.log("Compression via image plugin failed, using fallback...");
+      Logger.info("Compression via image plugin failed, using fallback...");
       File compressedFile = await FlutterNativeImage.compressImage(filePath,
           quality: quality,
           targetWidth: attachment.width == null ? 0 : attachment.width!,
@@ -507,7 +508,7 @@ class AttachmentHelper {
       previewData = await compressedFile.readAsBytes();
       usedFallback = true;
     }
-    Logger.instance.log("Got previewData: ${previewData.isNotEmpty}");
+    Logger.info("Got previewData: ${previewData.isNotEmpty}");
     // As long as we have preview data now, save it
     cachedFile.writeAsBytes(previewData);
 
@@ -520,9 +521,9 @@ class AttachmentHelper {
 
   static void resizeIsolate(ResizeArgs args) {
     try {
-      Logger.instance.log("Decoding image...");
+      Logger.info("Decoding image...");
       img.Image image = img.decodeImage(File(args.path).readAsBytesSync())!;
-      Logger.instance.log("Resizing image...");
+      Logger.info("Resizing image...");
       img.Image resized = img.copyResize(image, width: args.width);
       args.sendPort.send(resized);
     } catch (e) {
