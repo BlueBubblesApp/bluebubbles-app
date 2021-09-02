@@ -2,14 +2,17 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
+import 'dart:math';
 import 'dart:ui';
 
+import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
+import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/testing_mode.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/alarm_manager.dart';
@@ -27,6 +30,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:simple_animations/simple_animations.dart';
 
 /// [MethodChannelInterface] is a manager used to talk to native code via a flutter MethodChannel
 ///
@@ -277,37 +281,74 @@ class MethodChannelInterface {
       case "alarm-wake":
         AlarmManager().onReceiveAlarm(call.arguments["id"]);
         return new Future.value("");
-      case "album-art":
+      case "media-colors":
         if (!SettingsManager().settings.colorsFromMedia.value) return Future.value("");
         final Color primary = Color(call.arguments['primary']);
         final Color lightBg = Color(call.arguments['lightBg']);
         final Color darkBg = Color(call.arguments['darkBg']);
+        final double primaryPercent = call.arguments['primaryPercent'];
+        final double lightBgPercent = call.arguments['lightBgPercent'];
+        final double darkBgPercent = call.arguments['darkBgPercent'];
         if (Get.context != null &&
             (!isRunning || primary != previousPrimary || lightBg != previousLightBg || darkBg != previousDarkBg)) {
           previousPrimary = primary;
           previousLightBg = lightBg;
           previousDarkBg = darkBg;
           isRunning = true;
-          print("primary color is $primary");
-          print("light bg color is $lightBg");
-          print("dark bg color is $darkBg");
-          var darkTheme = await ThemeObject.getDarkTheme();
-          var lightTheme = await ThemeObject.getLightTheme();
-          if (!darkTheme.isPreset) {
-            await darkTheme.fetchData();
-            var darkPrimaryEntry = darkTheme.entries.firstWhere((element) => element.name == "PrimaryColor");
-            var darkBgEntry = darkTheme.entries.firstWhere((element) => element.name == "BackgroundColor");
-            if (SettingsManager().settings.adjustPrimary.value) darkPrimaryEntry.color = primary;
-            if (SettingsManager().settings.adjustBackground.value) darkBgEntry.color = darkBg;
-            await SettingsManager().saveSelectedTheme(Get.context!, selectedDarkTheme: darkTheme);
+          if (SettingsManager().settings.adjustPrimary.value) {
+            print("primary color is $primary");
+            print("light bg color is $lightBg");
+            print("dark bg color is $darkBg");
+            var darkTheme = await ThemeObject.getDarkTheme();
+            var lightTheme = await ThemeObject.getLightTheme();
+            if (!darkTheme.isPreset) {
+              await darkTheme.fetchData();
+              var darkPrimaryEntry = darkTheme.entries.firstWhere((element) => element.name == "PrimaryColor");
+              var darkBgEntry = darkTheme.entries.firstWhere((element) => element.name == "BackgroundColor");
+              if (SettingsManager().settings.adjustPrimary.value) darkPrimaryEntry.color = primary;
+              if (SettingsManager().settings.adjustBackground.value) darkBgEntry.color = darkBg;
+              await SettingsManager().saveSelectedTheme(Get.context!, selectedDarkTheme: darkTheme);
+            }
+            if (!lightTheme.isPreset) {
+              await lightTheme.fetchData();
+              var lightPrimaryEntry = lightTheme.entries.firstWhere((element) => element.name == "PrimaryColor");
+              var lightBgEntry = lightTheme.entries.firstWhere((element) => element.name == "BackgroundColor");
+              if (SettingsManager().settings.adjustPrimary.value) lightPrimaryEntry.color = primary;
+              if (SettingsManager().settings.adjustBackground.value) lightBgEntry.color = lightBg;
+              await SettingsManager().saveSelectedTheme(Get.context!, selectedLightTheme: lightTheme);
+            }
           }
-          if (!lightTheme.isPreset) {
-            await lightTheme.fetchData();
-            var lightPrimaryEntry = lightTheme.entries.firstWhere((element) => element.name == "PrimaryColor");
-            var lightBgEntry = lightTheme.entries.firstWhere((element) => element.name == "BackgroundColor");
-            if (SettingsManager().settings.adjustPrimary.value) lightPrimaryEntry.color = primary;
-            if (SettingsManager().settings.adjustBackground.value) lightBgEntry.color = lightBg;
-            await SettingsManager().saveSelectedTheme(Get.context!, selectedLightTheme: lightTheme);
+          if (SettingsManager().settings.adjustBackground.value) {
+            ConversationViewMixin.color1.value = primary;
+            if (AdaptiveTheme.of(Get.context!).mode == AdaptiveThemeMode.dark) {
+              ConversationViewMixin.color2.value = darkBg;
+              if (primaryPercent != 0.5 && darkBgPercent != 0.5) {
+                double difference = min((primaryPercent / (primaryPercent + darkBgPercent)), 1 - (primaryPercent / (primaryPercent + darkBgPercent)));
+                Tween color1 = Tween<double>(begin: 0, end: difference);
+                Tween color2 = Tween<double>(begin: 1 - difference, end: 1);
+                ConversationViewMixin.gradientTween.value = MultiTween<String>()
+                  ..add("color1", color1)
+                  ..add("color2", color2);
+              } else {
+                ConversationViewMixin.gradientTween.value = MultiTween<String>()
+                  ..add("color1", Tween<double>(begin: 0.0, end: 0.2))
+                  ..add("color2", Tween<double>(begin: 0.8, end: 1.0));
+              }
+            } else {
+              ConversationViewMixin.color2.value = lightBg;
+              if (primaryPercent != 0.5 && lightBgPercent != 0.5) {
+                double difference = min((primaryPercent / (primaryPercent + lightBgPercent)), 1 - (primaryPercent / (primaryPercent + lightBgPercent)));
+                Tween color1 = Tween<double>(begin: 0.0, end: difference);
+                Tween color2 = Tween<double>(begin: 1.0 - difference, end: 1.0);
+                ConversationViewMixin.gradientTween.value = MultiTween<String>()
+                  ..add("color1", color1)
+                  ..add("color2", color2);
+              } else {
+                ConversationViewMixin.gradientTween.value = MultiTween<String>()
+                  ..add("color1", Tween<double>(begin: 0.0, end: 0.2))
+                  ..add("color2", Tween<double>(begin: 0.8, end: 1.0));
+              }
+            }
           }
           isRunning = false;
         }

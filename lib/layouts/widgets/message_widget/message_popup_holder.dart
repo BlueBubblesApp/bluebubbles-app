@@ -4,6 +4,7 @@ import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_details_popup.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
@@ -65,6 +66,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
   }
 
   void openMessageDetails() async {
+    EventDispatcher().emit("unfocus-keyboard", null);
     HapticFeedback.lightImpact();
     getOffset();
 
