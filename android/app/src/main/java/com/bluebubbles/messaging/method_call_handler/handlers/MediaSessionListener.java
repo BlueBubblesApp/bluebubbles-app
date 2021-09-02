@@ -77,21 +77,45 @@ public class MediaSessionListener implements OnActiveSessionsChangedListener, Ha
                     int lightBg = p.getLightVibrantColor(Color.WHITE);
                     int darkBg = p.getDarkMutedColor(Color.BLACK);
                     int primary;
+                    double lightBgPercent = 0.5;
+                    double darkBgPercent = 0.5;
+                    double primaryPercent = 0.5;
+                    String primaryFrom = "none";
                     if (p.getVibrantColor(0xFF2196F3) != 0xFF2196F3) {
                         primary = p.getVibrantColor(0xFF2196F3);
+                        primaryFrom = "vibrant";
                     } else if (p.getMutedColor(0xFF2196F3) != 0xFF2196F3) {
                         primary = p.getMutedColor(0xFF2196F3);
+                        primaryFrom = "muted";
                     } else if (p.getLightMutedColor(0xFF2196F3) != 0xFF2196F3) {
                         primary = p.getLightMutedColor(0xFF2196F3);
+                        primaryFrom = "lightMuted";
                     } else {
                         primary = 0xFF2196F3;
+                        primaryFrom = "none";
+                    }
+                    if (p.getLightVibrantSwatch() != null) {
+                        lightBgPercent = p.getLightVibrantSwatch().getPopulation();
+                    }
+                    if (p.getDarkMutedSwatch() != null) {
+                        darkBgPercent = p.getDarkMutedSwatch().getPopulation();
+                    }
+                    if (primaryFrom == "vibrant" && p.getVibrantSwatch() != null) {
+                        primaryPercent = p.getVibrantSwatch().getPopulation();
+                    } else if (primaryFrom == "muted" && p.getMutedSwatch() != null) {
+                        primaryPercent = p.getMutedSwatch().getPopulation();
+                    } else if (primaryFrom == "lightMuted" && p.getLightMutedSwatch() != null) {
+                        primaryPercent = p.getLightMutedSwatch().getPopulation();
                     }
                     Log.d("BlueBubblesApp", "Dominant color found (for debugging only): " + Integer.toString(p.getDominantColor(Color.BLACK)));
                     input.put("lightBg", lightBg);
                     input.put("darkBg", darkBg);
                     input.put("primary", primary);
+                    input.put("lightBgPercent", lightBgPercent);
+                    input.put("darkBgPercent", darkBgPercent);
+                    input.put("primaryPercent", primaryPercent);
                     Log.d("BlueBubblesApp", "Sending media metadata for media " + title);
-                    backgroundChannel.invokeMethod("album-art", input);
+                    backgroundChannel.invokeMethod("media-colors", input);
                 }
             }
         };
