@@ -653,6 +653,23 @@ class ChatListPanel extends StatelessWidget {
                     ),
                   ),
                   Obx(() => SettingsSwitch(
+                    onChanged: (bool val) {
+                      SettingsManager().settings.cameraFAB.value = val;
+                      saveSettings();
+                    },
+                    initialVal: SettingsManager().settings.cameraFAB.value,
+                    title: "Add Camera Button",
+                    subtitle: "Adds a dedicated camera button near the new chat creator button to easily send pictures",
+                    backgroundColor: tileColor,
+                  )),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
+                    ),
+                  ),
+                  Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
                           SettingsManager().settings.notifyOnChatList.value = val;
                           saveSettings();

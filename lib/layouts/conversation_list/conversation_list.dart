@@ -243,40 +243,42 @@ class _ConversationListState extends State<ConversationList> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: 45,
-            maxHeight: 45,
-          ),
-          child: FloatingActionButton(
-            child: Icon(
-                SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.camera : Icons.photo_camera,
-              size: 20,
+        if (SettingsManager().settings.cameraFAB.value)
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 45,
+              maxHeight: 45,
             ),
-            onPressed: () async {
-              String appDocPath = SettingsManager().appDocDir.path;
-              String ext = ".png";
-              File file = new File("$appDocPath/attachments/" + randomString(16) + ext);
-              await file.create(recursive: true);
+            child: FloatingActionButton(
+              child: Icon(
+                  SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.camera : Icons.photo_camera,
+                size: 20,
+              ),
+              onPressed: () async {
+                String appDocPath = SettingsManager().appDocDir.path;
+                String ext = ".png";
+                File file = new File("$appDocPath/attachments/" + randomString(16) + ext);
+                await file.create(recursive: true);
 
-              // Take the picture after opening the camera
-              await MethodChannelInterface().invokeMethod("open-camera", {"path": file.path, "type": "camera"});
+                // Take the picture after opening the camera
+                await MethodChannelInterface().invokeMethod("open-camera", {"path": file.path, "type": "camera"});
 
-              // If we don't get data back, return outta here
-              if (!file.existsSync()) return;
-              if (file.statSync().size == 0) {
-                file.deleteSync();
-                return;
-              }
+                // If we don't get data back, return outta here
+                if (!file.existsSync()) return;
+                if (file.statSync().size == 0) {
+                  file.deleteSync();
+                  return;
+                }
 
-              openNewChatCreator(existing: [file]);
-            },
-            heroTag: null,
+                openNewChatCreator(existing: [file]);
+              },
+              heroTag: null,
+            ),
           ),
-        ),
-        SizedBox(
-          height: 10,
-        ),
+        if (SettingsManager().settings.cameraFAB.value)
+          SizedBox(
+            height: 10,
+          ),
         FloatingActionButton(
             backgroundColor: context.theme.primaryColor,
             child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.pencil : Icons.message, color: Colors.white, size: 25),
@@ -442,8 +444,11 @@ class _Cupertino extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                            if (SettingsManager().settings.moveChatCreatorToHeader.value) Container(width: 10.0),
-                            if (SettingsManager().settings.moveChatCreatorToHeader.value && !showArchived && !showUnknown)
+                            if (SettingsManager().settings.moveChatCreatorToHeader.value
+                                && SettingsManager().settings.cameraFAB.value) Container(width: 10.0),
+                            if (SettingsManager().settings.moveChatCreatorToHeader.value
+                                && SettingsManager().settings.cameraFAB.value
+                                && !showArchived && !showUnknown)
                               ClipOval(
                                 child: Material(
                                   color: context.theme.accentColor, // button color
@@ -879,7 +884,9 @@ class __MaterialState extends State<_Material> {
                                   ),
                                 )
                               : Container(),
-                          (SettingsManager().settings.moveChatCreatorToHeader.value && !showArchived && !showUnknown)
+                          (SettingsManager().settings.moveChatCreatorToHeader.value
+                              && SettingsManager().settings.cameraFAB.value
+                              && !showArchived && !showUnknown)
                               ? GestureDetector(
                                 onTap: () async {
                                   String appDocPath = SettingsManager().appDocDir.path;
@@ -1424,7 +1431,9 @@ class _SamsungState extends State<_Samsung> {
                                   ),
                                 )
                               : Container()),
-                          (SettingsManager().settings.moveChatCreatorToHeader.value && !showArchived && !showUnknown
+                          (SettingsManager().settings.moveChatCreatorToHeader.value
+                              && SettingsManager().settings.cameraFAB.value
+                              && !showArchived && !showUnknown
                               ? GestureDetector(
                                   onTap: () async {
                                     String appDocPath = SettingsManager().appDocDir.path;

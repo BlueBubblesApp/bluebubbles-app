@@ -39,6 +39,7 @@ class Settings {
   final RxBool recipientAsPlaceholder = false.obs;
   final RxBool hideKeyboardOnScroll = false.obs;
   final RxBool moveChatCreatorToHeader = false.obs;
+  final RxBool cameraFAB = false.obs;
   final RxBool swipeToCloseKeyboard = false.obs;
   final RxBool swipeToOpenKeyboard = false.obs;
   final RxBool openKeyboardOnSTB = false.obs;
@@ -182,6 +183,8 @@ class Settings {
         settings.swipeToCloseKeyboard.value = entry.value;
       } else if (entry.name == "moveChatCreatorToHeader") {
         settings.moveChatCreatorToHeader.value = entry.value;
+      } else if (entry.name == "cameraFAB") {
+        settings.cameraFAB.value = entry.value;
       } else if (entry.name == "openKeyboardOnSTB") {
         settings.openKeyboardOnSTB.value = entry.value;
       } else if (entry.name == "swipableConversationTiles") {
@@ -471,6 +474,11 @@ class Settings {
           type: this.moveChatCreatorToHeader.runtimeType,
         ),
         ConfigEntry(
+          name: "cameraFAB",
+          value: this.cameraFAB.value,
+          type: this.cameraFAB.runtimeType,
+        ),
+        ConfigEntry(
           name: "swipeToCloseKeyboard",
           value: this.swipeToCloseKeyboard.value,
           type: this.swipeToCloseKeyboard.runtimeType,
@@ -749,6 +757,7 @@ class Settings {
       'recipientAsPlaceholder': this.recipientAsPlaceholder.value,
       'hideKeyboardOnScroll': this.hideKeyboardOnScroll.value,
       'moveChatCreatorToHeader': this.moveChatCreatorToHeader.value,
+      'cameraFAB': this.cameraFAB.value,
       'swipeToCloseKeyboard': this.swipeToCloseKeyboard.value,
       'swipeToOpenKeyboard': this.swipeToOpenKeyboard.value,
       'openKeyboardOnSTB': this.openKeyboardOnSTB.value,
@@ -830,6 +839,7 @@ class Settings {
     SettingsManager().settings.recipientAsPlaceholder.value = map['recipientAsPlaceholder'];
     SettingsManager().settings.hideKeyboardOnScroll.value = map['hideKeyboardOnScroll'];
     SettingsManager().settings.moveChatCreatorToHeader.value = map['moveChatCreatorToHeader'];
+    SettingsManager().settings.cameraFAB.value = map['cameraFAB'];
     SettingsManager().settings.swipeToCloseKeyboard.value = map['swipeToCloseKeyboard'];
     SettingsManager().settings.swipeToOpenKeyboard.value = map['swipeToOpenKeyboard'];
     SettingsManager().settings.openKeyboardOnSTB.value = map['openKeyboardOnSTB'];
