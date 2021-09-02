@@ -55,8 +55,6 @@ class Settings {
   final RxBool notifyReactions = true.obs;
   final RxString notificationSound = "default".obs;
   final RxBool colorsFromMedia = false.obs;
-  final RxBool adjustPrimary = true.obs;
-  final RxBool adjustBackground = false.obs;
   final RxString globalTextDetection = "".obs;
   final RxBool filterUnknownSenders = false.obs;
 
@@ -265,10 +263,6 @@ class Settings {
         settings.notificationSound.value = entry.value;
       } else if (entry.name == "colorsFromMedia") {
         settings.colorsFromMedia.value = entry.value;
-      } else if (entry.name == "adjustPrimary") {
-        settings.adjustPrimary.value = entry.value;
-      } else if (entry.name == "adjustBackground") {
-        settings.adjustBackground.value = entry.value;
       } else if (entry.name == "globalTextDetection") {
         settings.globalTextDetection.value = entry.value;
       } else if (entry.name == "filterUnknownSenders") {
@@ -687,16 +681,6 @@ class Settings {
           name: "colorsFromMedia",
           value: this.colorsFromMedia.value,
           type: this.colorsFromMedia.runtimeType,
-        ),
-        ConfigEntry(
-          name: "adjustPrimary",
-          value: this.adjustPrimary.value,
-          type: this.adjustPrimary.runtimeType,
-        ),
-        ConfigEntry(
-          name: "adjustBackground",
-          value: this.adjustBackground.value,
-          type: this.adjustBackground.runtimeType,
         ),
         ConfigEntry(
           name: "globalTextDetection",
