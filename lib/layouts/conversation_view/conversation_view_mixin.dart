@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -31,6 +32,7 @@ import 'package:flutter/cupertino.dart' as Cupertino;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:simple_animations/simple_animations.dart';
 import 'package:slugify/slugify.dart';
 
 mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on State<ConversationView> {
@@ -65,6 +67,14 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   Stream<List<UniqueContact>> get contactStream => _contactStreamController.stream;
 
   TextEditingController chatSelectorController = new TextEditingController(text: " ");
+
+  static Rxn<Color> color1 = Rxn<Color>();
+  static Rxn<Color> color2 = Rxn<Color>();
+  static Rx<MultiTween<String>> gradientTween = Rx<MultiTween<String>>(
+      MultiTween<String>()
+        ..add("color1", Tween<double>(begin: 0, end: 0.2))
+        ..add("color2", Tween<double>(begin: 0.8, end: 1))
+  );
 
   /// Conversation view methods
   ///

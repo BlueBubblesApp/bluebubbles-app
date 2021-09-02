@@ -150,6 +150,24 @@ class ChatListPanel extends StatelessWidget {
                             "Filters the chat list based on parameters set in iMessage (usually this removes old, inactive chats)",
                         backgroundColor: tileColor,
                       )),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
+                    ),
+                  ),
+                  Obx(() => SettingsSwitch(
+                    onChanged: (bool val) {
+                      SettingsManager().settings.filterUnknownSenders.value = val;
+                      saveSettings();
+                    },
+                    initialVal: SettingsManager().settings.filterUnknownSenders.value,
+                    title: "Filter Unknown Senders",
+                    subtitle:
+                    "Turn off notifications for senders who aren't in your contacts and sort them into a separate chat list",
+                    backgroundColor: tileColor,
+                  )),
                   SettingsHeader(
                       headerColor: headerColor,
                       tileColor: tileColor,
