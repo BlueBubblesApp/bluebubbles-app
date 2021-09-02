@@ -349,7 +349,7 @@ class ChatListPanel extends StatelessWidget {
                                     width: context.width / 5 - 8,
                                     color: Colors.yellow[800],
                                     child: IconButton(
-                                      icon: Icon(Icons.star, color: Colors.white),
+                                      icon: Icon(CupertinoIcons.pin, color: Colors.white),
                                       onPressed: () async {
                                         SettingsManager().settings.iosShowPin.value =
                                             !SettingsManager().settings.iosShowPin.value;
@@ -402,7 +402,7 @@ class ChatListPanel extends StatelessWidget {
                                           color: Colors.purple[700],
                                           width: context.width / 5 - 8,
                                           child: IconButton(
-                                            icon: Icon(Icons.notifications_off, color: Colors.white),
+                                            icon: Icon(CupertinoIcons.bell_slash, color: Colors.white),
                                             onPressed: () async {
                                               SettingsManager().settings.iosShowAlert.value =
                                                   !SettingsManager().settings.iosShowAlert.value;
@@ -449,7 +449,7 @@ class ChatListPanel extends StatelessWidget {
                                           color: Colors.red,
                                           width: context.width / 5 - 8,
                                           child: IconButton(
-                                            icon: Icon(Icons.delete_forever, color: Colors.white),
+                                            icon: Icon(CupertinoIcons.trash, color: Colors.white),
                                             onPressed: () async {
                                               SettingsManager().settings.iosShowDelete.value =
                                                   !SettingsManager().settings.iosShowDelete.value;
@@ -496,7 +496,7 @@ class ChatListPanel extends StatelessWidget {
                                           color: Colors.blue,
                                           width: context.width / 5 - 8,
                                           child: IconButton(
-                                            icon: Icon(Icons.mark_chat_read, color: Colors.white),
+                                            icon: Icon(CupertinoIcons.person_crop_circle_badge_exclam, color: Colors.white),
                                             onPressed: () {
                                               SettingsManager().settings.iosShowMarkRead.value =
                                                   !SettingsManager().settings.iosShowMarkRead.value;
@@ -544,7 +544,7 @@ class ChatListPanel extends StatelessWidget {
                                           color: Colors.red,
                                           width: context.width / 5 - 8,
                                           child: IconButton(
-                                            icon: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.tray_arrow_down : Icons.archive, color: Colors.white),
+                                            icon: Icon(CupertinoIcons.tray_arrow_down, color: Colors.white),
                                             onPressed: () {
                                               SettingsManager().settings.iosShowArchive.value =
                                                   !SettingsManager().settings.iosShowArchive.value;
