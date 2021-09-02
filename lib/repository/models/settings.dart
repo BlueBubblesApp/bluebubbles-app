@@ -58,6 +58,7 @@ class Settings {
   final RxBool adjustPrimary = true.obs;
   final RxBool adjustBackground = false.obs;
   final RxString globalTextDetection = "".obs;
+  final RxBool filterUnknownSenders = false.obs;
 
   // final RxString emojiFontFamily;
 
@@ -270,6 +271,8 @@ class Settings {
         settings.adjustBackground.value = entry.value;
       } else if (entry.name == "globalTextDetection") {
         settings.globalTextDetection.value = entry.value;
+      } else if (entry.name == "filterUnknownSenders") {
+        settings.filterUnknownSenders.value = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -699,6 +702,11 @@ class Settings {
           name: "globalTextDetection",
           value: this.globalTextDetection.value,
           type: this.globalTextDetection.runtimeType,
+        ),
+        ConfigEntry(
+          name: "filterUnknownSenders",
+          value: this.filterUnknownSenders.value,
+          type: this.filterUnknownSenders.runtimeType,
         )
         // ConfigEntry(
         //     name: "emojiFontFamily",
@@ -749,6 +757,7 @@ class Settings {
       'notifyReactions': this.notifyReactions.value,
       'notificationSound': this.notificationSound.value,
       'globalTextDetection': this.globalTextDetection.value,
+      'filterUnknownSenders': this.filterUnknownSenders.value,
       'enablePrivateAPI': this.enablePrivateAPI.value,
       'privateSendTypingIndicators': this.privateSendTypingIndicators.value,
       'privateMarkChatAsRead': this.privateMarkChatAsRead.value,
@@ -828,6 +837,7 @@ class Settings {
     SettingsManager().settings.notifyReactions.value = map['notifyReactions'];
     SettingsManager().settings.notifyReactions.value = map['notificationSound'];
     SettingsManager().settings.globalTextDetection.value = map['globalTextDetection'];
+    SettingsManager().settings.filterUnknownSenders.value = map['filterUnknownSenders'];
     SettingsManager().settings.enablePrivateAPI.value = map['enablePrivateAPI'];
     SettingsManager().settings.privateSendTypingIndicators.value = map['privateSendTypingIndicators'];
     SettingsManager().settings.privateMarkChatAsRead.value = map['privateMarkChatAsRead'];

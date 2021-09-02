@@ -463,6 +463,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                 ]);
                 return ConversationList(
                   showArchivedChats: false,
+                  showUnknownSenders: false,
                 );
               } else {
                 SystemChrome.setPreferredOrientations([
