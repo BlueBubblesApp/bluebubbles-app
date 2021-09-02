@@ -534,6 +534,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               curve: Curves.easeInOut,
               child: ThemeSwitcher(
                 iOSSkin: CustomCupertinoTextField(
+                  enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
                   enabled: sendCountdown == null,
                   textInputAction:
                       SettingsManager().settings.sendWithReturn.value ? TextInputAction.send : TextInputAction.newline,
@@ -584,6 +585,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   ),
                 ),
                 materialSkin: TextField(
+                  enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
                   controller: controller,
                   focusNode: focusNode,
                   textCapitalization: TextCapitalization.sentences,
@@ -641,6 +643,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   minLines: 1,
                 ),
                 samsungSkin: TextField(
+                  enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
                   controller: controller,
                   focusNode: focusNode,
                   textCapitalization: TextCapitalization.sentences,

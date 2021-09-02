@@ -97,6 +97,7 @@ class Settings {
   // Security settings
   final RxBool shouldSecure = RxBool(false);
   final Rx<SecurityLevel> securityLevel = Rx<SecurityLevel>(SecurityLevel.locked);
+  final RxBool incognitoKeyboard = RxBool(false);
 
   final Rx<Skins> skin = Skins.iOS.obs;
   final Rx<ThemeMode> theme = ThemeMode.system.obs;
@@ -253,6 +254,8 @@ class Settings {
         settings.shouldSecure.value = entry.value;
       } else if (entry.name == "securityLevel") {
         settings.securityLevel.value = SecurityLevel.values[entry.value];
+      } else if (entry.name == "incognitoKeyboard") {
+        settings.incognitoKeyboard.value = entry.value;
       } else if (entry.name == "pinRowsPortrait") {
         settings.pinRowsPortrait.value = entry.value;
       } else if (entry.name == "maxAvatarsInGroupWidget") {
@@ -659,6 +662,11 @@ class Settings {
           type: this.securityLevel.value.index.runtimeType,
         ),
         ConfigEntry(
+          name: "incognitoKeyboard",
+          value: this.incognitoKeyboard.value,
+          type: this.incognitoKeyboard.runtimeType,
+        ),
+        ConfigEntry(
           name: "pinRowsPortrait",
           value: this.pinRowsPortrait.value,
           type: this.pinRowsPortrait.value.runtimeType,
@@ -784,6 +792,7 @@ class Settings {
       'materialLeftAction': this.materialLeftAction.value.index,
       'shouldSecure': this.shouldSecure.value,
       'securityLevel': this.securityLevel.value.index,
+      'incognitoKeyboard': this.incognitoKeyboard.value,
       'skin': this.skin.value.index,
       'theme': this.theme.value.index,
       'fullscreenViewerSwipeDir': this.fullscreenViewerSwipeDir.value.index,
@@ -864,6 +873,7 @@ class Settings {
     SettingsManager().settings.materialLeftAction.value = MaterialSwipeAction.values[map['materialLeftAction']];
     SettingsManager().settings.shouldSecure.value = map['shouldSecure'];
     SettingsManager().settings.securityLevel.value = SecurityLevel.values[map['securityLevel']];
+    SettingsManager().settings.incognitoKeyboard.value = map['incognitoKeyboard'];
     SettingsManager().settings.skin.value = Skins.values[map['skin']];
     SettingsManager().settings.theme.value = ThemeMode.values[map['theme']];
     SettingsManager().settings.fullscreenViewerSwipeDir.value = SwipeDirection.values[map['fullscreenViewerSwipeDir']];

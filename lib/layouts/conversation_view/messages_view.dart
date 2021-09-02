@@ -384,18 +384,21 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                 stream: smartReplyController.stream,
                 builder: (context, snapshot) {
                   return SliverToBoxAdapter(
-                    child: AnimatedSize(
-                      duration: Duration(milliseconds: 400),
-                      vsync: this,
-                      child: replies.isEmpty
-                          ? Container()
-                          : Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: replies
-                                  .map(
-                                    (e) => _buildReply(e),
-                                  )
-                                  .toList()),
+                    child: Padding(
+                      padding: EdgeInsets.only(top: SettingsManager().settings.skin.value != Skins.iOS ? 8.0 : 0.0),
+                      child: AnimatedSize(
+                        duration: Duration(milliseconds: 400),
+                        vsync: this,
+                        child: replies.isEmpty
+                            ? Container()
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: replies
+                                    .map(
+                                      (e) => _buildReply(e),
+                                    )
+                                    .toList()),
+                      ),
                     ),
                   );
                 },

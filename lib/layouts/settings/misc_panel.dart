@@ -147,13 +147,12 @@ class MiscPanel extends StatelessWidget {
                         subtitle: "Show a snackbar whenever a message sync is completed",
                         backgroundColor: tileColor,
                       )),
-                  if (SettingsManager().canAuthenticate)
-                    SettingsHeader(
-                        headerColor: headerColor,
-                        tileColor: tileColor,
-                        iosSubtitle: iosSubtitle,
-                        materialSubtitle: materialSubtitle,
-                        text: "Security"),
+                  SettingsHeader(
+                      headerColor: headerColor,
+                      tileColor: tileColor,
+                      iosSubtitle: iosSubtitle,
+                      materialSubtitle: materialSubtitle,
+                      text: "Security"),
                   if (SettingsManager().canAuthenticate)
                     Obx(() =>
                         SettingsSwitch(
@@ -253,6 +252,24 @@ class MiscPanel extends StatelessWidget {
                       else
                         return SizedBox.shrink();
                     }),
+                  if (SettingsManager().canAuthenticate)
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
+                    ),
+                  Obx(() => SettingsSwitch(
+                    onChanged: (bool val) async {
+                      SettingsManager().settings.incognitoKeyboard.value = val;
+                      saveSettings();
+                    },
+                    initialVal: SettingsManager().settings.incognitoKeyboard.value,
+                    title: "Incognito Keyboard",
+                    subtitle: "Disables keyboard suggestions and prevents the keyboard from learning or storing any words you type in the message text field",
+                    backgroundColor: tileColor,
+                  )),
                   SettingsHeader(
                       headerColor: headerColor,
                       tileColor: tileColor,

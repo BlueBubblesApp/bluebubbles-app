@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
 
@@ -15,6 +16,7 @@ import 'package:bluebubbles/layouts/search/search_view.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
+import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
@@ -113,7 +115,7 @@ class _ConversationListState extends State<ConversationList> {
     });
   }
 
-  void openNewChatCreator() async {
+  void openNewChatCreator({List<File>? existing}) async {
     bool shouldShowSnackbar = (await SettingsManager().getMacOSVersion())! >= 11;
     Navigator.of(context).push(
       CupertinoPageRoute(
@@ -121,6 +123,7 @@ class _ConversationListState extends State<ConversationList> {
           return ConversationView(
             isCreator: true,
             showSnackbar: shouldShowSnackbar,
+            existingAttachments: existing ?? [],
           );
         },
       ),
@@ -236,11 +239,50 @@ class _ConversationListState extends State<ConversationList> {
         )
       : Container();
 
-  FloatingActionButton buildFloatingActionButton() {
-    return FloatingActionButton(
-        backgroundColor: context.theme.primaryColor,
-        child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.pencil : Icons.message, color: Colors.white, size: 25),
-        onPressed: openNewChatCreator);
+  Column buildFloatingActionButton() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 45,
+            maxHeight: 45,
+          ),
+          child: FloatingActionButton(
+            child: Icon(
+                SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.camera : Icons.photo_camera,
+              size: 20,
+            ),
+            onPressed: () async {
+              String appDocPath = SettingsManager().appDocDir.path;
+              String ext = ".png";
+              File file = new File("$appDocPath/attachments/" + randomString(16) + ext);
+              await file.create(recursive: true);
+
+              // Take the picture after opening the camera
+              await MethodChannelInterface().invokeMethod("open-camera", {"path": file.path, "type": "camera"});
+
+              // If we don't get data back, return outta here
+              if (!file.existsSync()) return;
+              if (file.statSync().size == 0) {
+                file.deleteSync();
+                return;
+              }
+
+              openNewChatCreator(existing: [file]);
+            },
+            heroTag: null,
+          ),
+        ),
+        SizedBox(
+          height: 10,
+        ),
+        FloatingActionButton(
+            backgroundColor: context.theme.primaryColor,
+            child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.pencil : Icons.message, color: Colors.white, size: 25),
+            onPressed: openNewChatCreator),
+      ],
+    );
   }
 
   List<Widget> getConnectionIndicatorWidgets() {
@@ -397,6 +439,38 @@ class _Cupertino extends StatelessWidget {
                                       child: Icon(CupertinoIcons.pencil, color: context.theme.primaryColor, size: 12),
                                     ),
                                     onTap: this.parent.openNewChatCreator,
+                                  ),
+                                ),
+                              ),
+                            if (SettingsManager().settings.moveChatCreatorToHeader.value) Container(width: 10.0),
+                            if (SettingsManager().settings.moveChatCreatorToHeader.value && !showArchived && !showUnknown)
+                              ClipOval(
+                                child: Material(
+                                  color: context.theme.accentColor, // button color
+                                  child: InkWell(
+                                    child: SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: Icon(CupertinoIcons.camera, color: context.theme.primaryColor, size: 12),
+                                    ),
+                                    onTap: () async {
+                                      String appDocPath = SettingsManager().appDocDir.path;
+                                      String ext = ".png";
+                                      File file = new File("$appDocPath/attachments/" + randomString(16) + ext);
+                                      await file.create(recursive: true);
+
+                                      // Take the picture after opening the camera
+                                      await MethodChannelInterface().invokeMethod("open-camera", {"path": file.path, "type": "camera"});
+
+                                      // If we don't get data back, return outta here
+                                      if (!file.existsSync()) return;
+                                      if (file.statSync().size == 0) {
+                                        file.deleteSync();
+                                        return;
+                                      }
+
+                                      parent.openNewChatCreator(existing: [file]);
+                                    },
                                   ),
                                 ),
                               ),
@@ -804,6 +878,35 @@ class __MaterialState extends State<_Material> {
                                     ),
                                   ),
                                 )
+                              : Container(),
+                          (SettingsManager().settings.moveChatCreatorToHeader.value && !showArchived && !showUnknown)
+                              ? GestureDetector(
+                                onTap: () async {
+                                  String appDocPath = SettingsManager().appDocDir.path;
+                                  String ext = ".png";
+                                  File file = new File("$appDocPath/attachments/" + randomString(16) + ext);
+                                  await file.create(recursive: true);
+
+                                  // Take the picture after opening the camera
+                                  await MethodChannelInterface().invokeMethod("open-camera", {"path": file.path, "type": "camera"});
+
+                                  // If we don't get data back, return outta here
+                                  if (!file.existsSync()) return;
+                                  if (file.statSync().size == 0) {
+                                    file.deleteSync();
+                                    return;
+                                  }
+
+                                  widget.parent.openNewChatCreator(existing: [file]);
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Icon(
+                                    Icons.photo_camera,
+                                    color: context.textTheme.bodyText1!.color,
+                                  ),
+                                ),
+                              )
                               : Container(),
                           Padding(
                             padding: EdgeInsets.only(right: 20),
@@ -1316,6 +1419,35 @@ class _SamsungState extends State<_Samsung> {
                                     padding: const EdgeInsets.all(8.0),
                                     child: Icon(
                                       Icons.create,
+                                      color: context.textTheme.bodyText1!.color,
+                                    ),
+                                  ),
+                                )
+                              : Container()),
+                          (SettingsManager().settings.moveChatCreatorToHeader.value && !showArchived && !showUnknown
+                              ? GestureDetector(
+                                  onTap: () async {
+                                    String appDocPath = SettingsManager().appDocDir.path;
+                                    String ext = ".png";
+                                    File file = new File("$appDocPath/attachments/" + randomString(16) + ext);
+                                    await file.create(recursive: true);
+
+                                    // Take the picture after opening the camera
+                                    await MethodChannelInterface().invokeMethod("open-camera", {"path": file.path, "type": "camera"});
+
+                                    // If we don't get data back, return outta here
+                                    if (!file.existsSync()) return;
+                                    if (file.statSync().size == 0) {
+                                      file.deleteSync();
+                                      return;
+                                    }
+
+                                    widget.parent.openNewChatCreator(existing: [file]);
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Icon(
+                                      Icons.photo_camera,
                                       color: context.textTheme.bodyText1!.color,
                                     ),
                                   ),
