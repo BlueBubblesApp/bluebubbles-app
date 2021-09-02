@@ -7,6 +7,7 @@ import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -138,7 +139,7 @@ class ContactSelectorOption extends StatelessWidget {
             ),
       trailing: item.isChat
           ? Icon(
-              SettingsManager().settings.skin.value == Skins.iOS ? Icons.arrow_forward_ios : Icons.arrow_forward,
+              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.forward : Icons.arrow_forward,
               color: Theme.of(context).primaryColor,
             )
           : null,

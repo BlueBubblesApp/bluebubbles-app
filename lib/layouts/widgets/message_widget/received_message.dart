@@ -259,16 +259,16 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     } else if (widget.message.hasText()) {
       message = _buildMessageWithTail(widget.message);
       if (widget.message.fullText.replaceAll("\n", " ").hasUrl) {
-        message = Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: EdgeInsets.only(left: 10.0),
-                child: widget.urlPreviewWidget,
-              ),
-              message,
-            ]);
+        message = widget.message.fullText.isURL ? Padding(
+          padding: EdgeInsets.only(left: 10.0),
+          child: widget.urlPreviewWidget,
+        ) : Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Padding(
+            padding: EdgeInsets.only(left: 10.0),
+            child: widget.urlPreviewWidget,
+          ),
+          message,
+        ]);
       }
     }
 

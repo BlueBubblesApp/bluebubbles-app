@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/socket_singletons.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -241,7 +242,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
                       Padding(
                         padding: EdgeInsets.only(right: 10),
                         child: Icon(
-                          widget.chat.isPinned! ? Icons.star_outline : Icons.star,
+                          widget.chat.isPinned! ? CupertinoIcons.pin_slash : CupertinoIcons.pin,
                           color: context.textTheme.bodyText1!.color,
                         ),
                       ),
@@ -328,7 +329,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
                       Padding(
                         padding: EdgeInsets.only(right: 10),
                         child: Icon(
-                          widget.chat.isArchived! ? Icons.unarchive : Icons.archive,
+                          widget.chat.isArchived! ? CupertinoIcons.tray_arrow_up : CupertinoIcons.tray_arrow_down,
                           color: context.textTheme.bodyText1!.color,
                         ),
                       ),

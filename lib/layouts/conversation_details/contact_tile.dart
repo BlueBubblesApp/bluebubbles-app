@@ -1,8 +1,10 @@
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:contacts_service/contacts_service.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/redacted_helper.dart';
@@ -185,7 +187,7 @@ class _ContactTileState extends State<ContactTile> {
                     onPressed: () {
                       startEmail(widget.handle.address);
                     },
-                    child: Icon(Icons.email, color: Theme.of(context).primaryColor, size: 20),
+                    child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.mail : Icons.email, color: Theme.of(context).primaryColor, size: 20),
                   ),
                 ),
               ((contact == null && !isEmail) || (contact?.phones?.length ?? 0) > 0)
@@ -198,7 +200,7 @@ class _ContactTileState extends State<ContactTile> {
                         ),
                         onLongPress: () => onPressContactTrailing(longPressed: true),
                         onPressed: () => onPressContactTrailing(),
-                        child: Icon(Icons.call, color: Theme.of(context).primaryColor, size: 20),
+                        child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.phone : Icons.call, color: Theme.of(context).primaryColor, size: 20),
                       ),
                     )
                   : Container()
@@ -294,7 +296,7 @@ class _ContactTileState extends State<ContactTile> {
               IconSlideAction(
                 caption: 'Remove',
                 color: Colors.red,
-                icon: Icons.delete,
+                icon: SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.trash : Icons.delete,
                 onTap: () async {
                   showDialog(
                       context: context,

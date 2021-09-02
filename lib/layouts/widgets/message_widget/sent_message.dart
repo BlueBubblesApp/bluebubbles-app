@@ -234,7 +234,7 @@ class SentMessageHelper {
               },
             );
           },
-          child: Icon(Icons.error_outline, color: Colors.red),
+          child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.exclamationmark_circle : Icons.error_outline, color: Colors.red),
         ),
       );
     }
@@ -328,13 +328,15 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
         );
       }
       if (widget.message.fullText.replaceAll("\n", " ").hasUrl) {
-        message =
-            Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [
-          Padding(
-            padding: EdgeInsets.only(right: 5.0),
-            child: widget.urlPreviewWidget,
-          ),
-          message,
+        message = widget.message.fullText.isURL ? Padding(
+          padding: EdgeInsets.only(right: 5.0),
+          child: widget.urlPreviewWidget,
+        ) : Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [
+              Padding(
+                padding: EdgeInsets.only(right: 5.0),
+                child: widget.urlPreviewWidget,
+              ),
+              message,
         ]);
       }
     }

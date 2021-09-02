@@ -78,7 +78,7 @@ class ChatBloc {
     Logger.info("Fetching chats (${force ? 'forced' : 'normal'})...", tag: "ChatBloc");
 
     // Get the contacts in case we haven't
-    await ContactManager().getContacts();
+    if (ContactManager().contacts.isEmpty) await ContactManager().getContacts();
 
     if (_messageSubscription == null) {
       _messageSubscription = setupMessageListener();
@@ -263,13 +263,9 @@ class ChatBloc {
 
       for (Chat chat in chats) {
         newChats.add(chat);
-
         await initTileValsForChat(chat);
-      }
-
-      for (int i = 0; i < newChats.length; i++) {
-        if (isNullOrEmpty(newChats[i].participants)!) {
-          await newChats[i].getParticipants();
+        if (isNullOrEmpty(chat.participants)!) {
+          await chat.getParticipants();
         }
       }
 

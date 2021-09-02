@@ -189,7 +189,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
             maxLines: 1,
           ).createRenderObject(context);
           final size = renderParagraph.getDryLayout(constraints);
-          if (!(event.message?.hasAttachments ?? false) && !(event.message?.text?.isEmpty ?? false))
+          if (!(event.message?.hasAttachments ?? false) && !(event.message?.text?.isEmpty ?? false)) {
             setState(() {
               tween = Tween<double>(
                   begin: context.width - 30,
@@ -197,6 +197,14 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
               controller = CustomAnimationControl.play;
               message = event.message;
             });
+          } else {
+            setState(() {
+              isCreator = false;
+              wasCreator = true;
+              this.existingText = "";
+              this.existingAttachments = [];
+            });
+          }
         }
       });
     }

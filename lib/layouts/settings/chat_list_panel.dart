@@ -544,7 +544,7 @@ class ChatListPanel extends StatelessWidget {
                                           color: Colors.red,
                                           width: context.width / 5 - 8,
                                           child: IconButton(
-                                            icon: Icon(Icons.archive, color: Colors.white),
+                                            icon: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.tray_arrow_down : Icons.archive, color: Colors.white),
                                             onPressed: () {
                                               SettingsManager().settings.iosShowArchive.value =
                                                   !SettingsManager().settings.iosShowArchive.value;

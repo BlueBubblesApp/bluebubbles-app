@@ -1,7 +1,10 @@
 import 'dart:io';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -88,7 +91,7 @@ class _LocationWidgetState extends State<LocationWidget> with AutomaticKeepAlive
                                   height: 40.0,
                                   point: new LatLng(location!.longitude!, location!.latitude!),
                                   builder: (ctx) => new Container(
-                                    child: Icon(Icons.pin_drop, color: Colors.red, size: 45),
+                                    child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.location : Icons.pin_drop, color: Colors.red, size: 45),
                                   ),
                                 ),
                               ],

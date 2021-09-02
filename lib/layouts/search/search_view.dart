@@ -174,7 +174,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Icon(Icons.search, color: Theme.of(context).textTheme.bodyText1!.color),
+                      Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.search : Icons.search, color: Theme.of(context).textTheme.bodyText1!.color),
                       Container(padding: EdgeInsets.only(right: 5.0)),
                       Flexible(
                           fit: FlexFit.loose,
@@ -312,7 +312,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                                     ),
                                   ),
                                   trailing: Icon(
-                                    Icons.arrow_forward_ios,
+                                    SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.forward : Icons.arrow_forward_ios,
                                     color: Theme.of(context).textTheme.bodyText1!.color,
                                   ),
                                 ),

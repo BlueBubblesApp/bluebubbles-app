@@ -381,7 +381,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               trailing: Icon(
-                Icons.open_in_new,
+                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.arrow_up_right_square : Icons.open_in_new,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
@@ -404,7 +404,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               trailing: Icon(
-                Icons.open_in_browser,
+                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.macwindow : Icons.open_in_browser,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
@@ -446,7 +446,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               trailing: Icon(
-                Icons.message,
+                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.chat_bubble : Icons.message,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
@@ -482,7 +482,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
               style: Theme.of(context).textTheme.bodyText1,
             ),
             trailing: Icon(
-              Icons.forward,
+              SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.arrow_right : Icons.forward,
               color: Theme.of(context).textTheme.bodyText1!.color,
             ),
           ),
@@ -502,7 +502,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
               style: Theme.of(context).textTheme.bodyText1,
             ),
             trailing: Icon(
-              Icons.delete,
+              SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.trash : Icons.delete,
               color: Theme.of(context).textTheme.bodyText1!.color,
             ),
           ),
@@ -520,7 +520,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             child: ListTile(
               title: Text("Copy", style: Theme.of(context).textTheme.bodyText1),
               trailing: Icon(
-                Icons.content_copy,
+                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.doc_on_clipboard : Icons.content_copy,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
@@ -583,7 +583,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               trailing: Icon(
-                Icons.content_copy,
+                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.doc_on_clipboard : Icons.content_copy,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
@@ -607,7 +607,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               trailing: Icon(
-                Icons.refresh,
+                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.refresh : Icons.refresh,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
@@ -636,7 +636,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               trailing: Icon(
-                Icons.file_download,
+                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.cloud_download : Icons.file_download,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
@@ -667,7 +667,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               trailing: Icon(
-                Icons.share,
+                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.share : Icons.share,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
@@ -703,7 +703,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
               style: Theme.of(context).textTheme.bodyText1,
             ),
             trailing: Icon(
-              Icons.alarm,
+              SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.alarm : Icons.alarm,
               color: Theme.of(context).textTheme.bodyText1!.color,
             ),
           ),
@@ -769,7 +769,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                     child: ListTile(
                       title: Text("More...", style: Theme.of(context).textTheme.bodyText1),
                       trailing: Icon(
-                        Icons.more_vert,
+                        SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.ellipsis : Icons.more_vert,
                         color: Theme.of(context).textTheme.bodyText1!.color,
                       ),
                     ),

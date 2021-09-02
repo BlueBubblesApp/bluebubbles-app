@@ -296,7 +296,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           padding: EdgeInsets.only(right: SettingsManager().settings.colorblindMode.value ? 10.0 : 5.0),
           child: GestureDetector(
             child: Icon(
-              (markedAsRead) ? Icons.check_circle : Icons.check_circle_outline,
+              (markedAsRead) ? Cupertino.CupertinoIcons.check_mark_circled : Cupertino.CupertinoIcons.check_mark_circled_solid,
               color: (markedAsRead) ? HexColor('32CD32').withAlpha(200) : fontColor,
             ),
             onTap: markChatAsRead,
@@ -380,7 +380,13 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                 padding: const EdgeInsets.only(right: 8.0),
                 child: GestureDetector(
                   child: Icon(
-                    (markedAsRead) ? Icons.check_circle : Icons.check_circle_outline,
+                    (markedAsRead)
+                        ? SettingsManager().settings.skin.value == Skins.iOS
+                        ? Cupertino.CupertinoIcons.check_mark_circled_solid
+                        : Icons.check_circle
+                        : SettingsManager().settings.skin.value == Skins.iOS
+                        ? Cupertino.CupertinoIcons.check_mark_circled
+                        : Icons.check_circle_outline,
                     color: (markedAsRead) ? HexColor('32CD32').withAlpha(200) : fontColor,
                   ),
                   onTap: markChatAsRead,
@@ -393,7 +399,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             padding: const EdgeInsets.only(right: 8.0),
             child: GestureDetector(
               child: Icon(
-                Icons.more_vert,
+                SettingsManager().settings.skin.value == Skins.iOS ? Cupertino.CupertinoIcons.ellipsis : Icons.more_vert,
                 color: fontColor,
               ),
               onTap: openDetails,
@@ -518,7 +524,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     return CupertinoNavigationBar(
         backgroundColor: Theme.of(context).accentColor.withAlpha(125),
         border: Border(
-          bottom: BorderSide(color: Colors.white.withOpacity(0.2), width: 0.2),
+          bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1.5),
         ),
         leading: GestureDetector(
           onTap: () {
