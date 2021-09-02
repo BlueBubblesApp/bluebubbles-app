@@ -373,7 +373,7 @@ class Chat {
     // Save the message
     Message? existing = await Message.findOne({"guid": message.guid});
     Message? newMessage;
-    Logger.instance.log("Saving message with guid ${message.guid}");
+    Logger.info("Saving message with guid ${message.guid}");
     try {
       newMessage = await message.save();
     } catch (ex, stacktrace) {
@@ -403,19 +403,19 @@ class Chat {
 
     // Save any attachments
     for (Attachment? attachment in message.attachments ?? []) {
-      Logger.instance.log("Saving message attachments");
+      Logger.info("Saving message attachments");
       await attachment!.save(newMessage);
     }
 
     // Save the chat.
     // This will update the latestMessage info as well as update some
     // other fields that we want to "mimic" from the server
-    Logger.instance.log("Saving chat");
+    Logger.info("Saving chat");
     await this.save();
 
     try {
       // Add the relationship
-      Logger.instance.log("Saving message in chat_message_join DB");
+      Logger.info("Saving message in chat_message_join DB");
       await db.insert("chat_message_join", {"chatId": this.id, "messageId": message.id});
     } catch (ex) {
       // Don't do anything if it already exists

@@ -38,6 +38,7 @@ class MessageWidgetController extends GetxController {
 
   final BuildContext context;
   final Function? onUpdate;
+
   MessageWidgetController({
     required this.context,
     this.onUpdate,
@@ -117,7 +118,8 @@ class MessageWidgetController extends GetxController {
 
   Future<void> fetchAssociatedMessages() async {
     // If there is already a request being made, return that request
-    if (associatedMessageRequest != null) return associatedMessageRequest!.future;
+    if (associatedMessageRequest != null)
+      return associatedMessageRequest!.future;
 
     // Create a new request and get the messages
     associatedMessageRequest = new Completer();
@@ -130,7 +132,9 @@ class MessageWidgetController extends GetxController {
 
     // If we don't think there are reactions, and we found reactions,
     // Update the DB so it saves that we have reactions
-    if (!message.hasReactions && message.getReactions().length > 0) {
+    if (!message.hasReactions && message
+        .getReactions()
+        .length > 0) {
       message.hasReactions = true;
       message.update();
     }
@@ -157,19 +161,24 @@ class MessageWidgetController extends GetxController {
 
     // If this is a URL preview and we don't have attachments, we need to get them
     List<Attachment?> nullAttachments = message.getPreviewAttachments();
-    if (message.fullText.replaceAll("\n", " ").hasUrl && nullAttachments.isEmpty) {
+    if (message.fullText
+        .replaceAll("\n", " ")
+        .hasUrl && nullAttachments.isEmpty) {
       if (lastRequestCount != nullAttachments.length) {
         lastRequestCount = nullAttachments.length;
 
-      List<dynamic> msgs = (await SocketManager().getAttachments(currentChat!.chat.guid!, message.guid!)) ?? [];
-      for (var msg in msgs) await ActionHandler.handleMessage(msg, forceProcess: true);
-    }
+        List<dynamic> msgs = (await SocketManager().getAttachments(
+            currentChat!.chat.guid!, message.guid!)) ?? [];
+        for (var msg in msgs)
+          await ActionHandler.handleMessage(msg, forceProcess: true);
+      }
 
-    if (message.attachments!.length != this.attachmentCount) {
-      this.attachmentCount = message.attachments!.length;
-    }
+      if (message.attachments!.length != this.attachmentCount) {
+        this.attachmentCount = message.attachments!.length;
+      }
 
-    if (!attachmentsRequest!.isCompleted) attachmentsRequest!.complete();
+      if (!attachmentsRequest!.isCompleted) attachmentsRequest!.complete();
+    }
   }
 }
 

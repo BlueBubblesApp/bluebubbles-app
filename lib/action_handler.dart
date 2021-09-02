@@ -24,6 +24,7 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
@@ -480,7 +481,6 @@ class ActionHandler {
   static Future<void> handleMessage(Map<String, dynamic> data,
       {bool createAttachmentNotification = false, bool isHeadless = false, bool forceProcess = false}) async {
     Message message = Message.fromMap(data);
-    Logger.instance.log("${data['chats']}");
     List<Chat> chats = MessageHelper.parseChats(data);
 
     // Handle message differently depending on if there is a temp GUID match

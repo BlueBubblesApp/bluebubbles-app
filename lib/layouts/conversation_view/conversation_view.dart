@@ -197,7 +197,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
             setState(() {
               tween = Tween<double>(
                   begin: context.width - 30,
-                  end: min(size.width + 68, context.width * MessageWidgetMixin.MAX_SIZE + 40));
+                  end: min(size.width + 68, context.width * MessageWidgetHelper.MAX_SIZE + 40));
               controller = CustomAnimationControl.play;
               message = event.message;
             });

@@ -115,7 +115,6 @@ main() async {
     await SettingsManager().init();
     await SettingsManager().getSavedSettings();
     Get.put(AttachmentDownloadService());
-    Get.put(Logger());
     Get.put(LifeCycleManager());
     Get.put(EventDispatcher());
     flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();

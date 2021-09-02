@@ -31,7 +31,7 @@ callbackHandler() async {
   WidgetsFlutterBinding.ensureInitialized();
   await DBProvider.db.initDB();
   await SettingsManager().init();
-  await SettingsManager().getSavedSettings(headless: true);
+  await SettingsManager().getSavedSettings();
   await ContactManager().getContacts(headless: true);
   MethodChannelInterface().init(customChannel: _backgroundChannel);
   await SocketManager().refreshConnection(connectToSocket: false);

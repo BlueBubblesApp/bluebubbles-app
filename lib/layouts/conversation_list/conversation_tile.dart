@@ -230,59 +230,53 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
   }
 
   Widget buildLeading() {
-    return StreamBuilder<Map<String, dynamic>>(
-        stream: CurrentChat.getCurrentChat(widget.chat)?.stream as Stream<Map<String, dynamic>>?,
-        builder: (BuildContext context, AsyncSnapshot snapshot) {
-          if (snapshot.connectionState == ConnectionState.active &&
-              snapshot.hasData &&
-              snapshot.data["type"] == CurrentChatEvent.TypingStatus) {
-            showTypingIndicator = snapshot.data["data"];
-          }
-          double height = Theme.of(context).textTheme.subtitle1!.fontSize! * 1.25;
-          return Stack(
-            clipBehavior: Clip.none,
-            children: <Widget>[
-              Padding(
-                padding: EdgeInsets.only(top: 2, right: 2),
-                child: !selected
-                    ? ContactAvatarGroupWidget(
-                        chat: widget.chat,
-                        size: 40,
-                        editable: false,
-                        onTap: this.onTapUpBypass,
-                      )
-                    : Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(30),
-                          color: Theme.of(context).primaryColor,
-                        ),
-                        width: 40,
-                        height: 40,
-                        child: Center(
-                          child: Icon(
-                            Icons.check,
-                            color: Theme.of(context).textTheme.bodyText1!.color,
-                            size: 20,
-                          ),
-                        ),
-                      ),
+    return Obx(() {
+      double height = Theme.of(context).textTheme.subtitle1!.fontSize! * 1.25;
+      bool showTypingIndicator = CurrentChat.getCurrentChat(widget.chat)?.showTypingIndicator.value ?? false;
+      return Stack(
+        clipBehavior: Clip.none,
+        children: <Widget>[
+          Padding(
+            padding: EdgeInsets.only(top: 2, right: 2),
+            child: !selected
+                ? ContactAvatarGroupWidget(
+              chat: widget.chat,
+              size: 40,
+              editable: false,
+              onTap: this.onTapUpBypass,
+            )
+                : Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(30),
+                color: Theme.of(context).primaryColor,
               ),
-              if (showTypingIndicator)
-                Positioned(
-                  top: 30,
-                  left: 20,
-                  height: height,
-                  child: FittedBox(
-                    alignment: Alignment.centerLeft,
-                    child: TypingIndicator(
-                      chatList: true,
-                      visible: true,
-                    ),
-                  ),
+              width: 40,
+              height: 40,
+              child: Center(
+                child: Icon(
+                  Icons.check,
+                  color: Theme.of(context).textTheme.bodyText1!.color,
+                  size: 20,
                 ),
-            ],
-          );
-        });
+              ),
+            ),
+          ),
+          if (showTypingIndicator)
+            Positioned(
+              top: 30,
+              left: 20,
+              height: height,
+              child: FittedBox(
+                alignment: Alignment.centerLeft,
+                child: TypingIndicator(
+                  chatList: true,
+                  visible: true,
+                ),
+              ),
+            ),
+        ],
+      );
+    });
   }
 
   Widget _buildDate() => ConstrainedBox(
