@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/conversation_details/attachment_details_card.dart';
@@ -80,7 +81,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
     await chat.getParticipants();
     readOnly = !(chat.participants.length > 1);
 
-    debugPrint("updated readonly $readOnly");
+    Logger.info("Updated readonly $readOnly");
     if (this.mounted) setState(() {});
   }
 
@@ -211,7 +212,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                         );
                                       },
                                       child: Icon(
-                                        Icons.info_outline,
+                                        SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.info : Icons.info_outline,
                                         color: Theme.of(context).primaryColor,
                                       ))),
                             if (chat.displayName!.isEmpty)
@@ -284,7 +285,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     trailing: Padding(
                       padding: EdgeInsets.only(right: 15),
                       child: Icon(
-                        Icons.more_horiz,
+                        SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.ellipsis : Icons.more_horiz,
                         color: Theme.of(context).primaryColor,
                       ),
                     ),
@@ -318,15 +319,13 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                         return AlertDialog(
                             backgroundColor: Theme.of(context).accentColor,
                             title: new Text("Custom Avatar",
-                                style:
-                                TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
+                                style: TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
                             content: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               mainAxisSize: MainAxisSize.min,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                    "You have already set a custom avatar for this chat. What would you like to do?",
+                                Text("You have already set a custom avatar for this chat. What would you like to do?",
                                     style: Theme.of(context).textTheme.bodyText1),
                               ],
                             ),
@@ -380,7 +379,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                   trailing: Padding(
                     padding: EdgeInsets.only(right: 15),
                     child: Icon(
-                      Icons.person,
+                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.person : Icons.person,
                       color: Theme.of(context).primaryColor,
                     ),
                   ),
@@ -408,7 +407,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                   trailing: Padding(
                     padding: EdgeInsets.only(right: 15),
                     child: Icon(
-                      Icons.file_download,
+                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.cloud_download : Icons.file_download,
                       color: Theme.of(context).primaryColor,
                     ),
                   ),
@@ -433,7 +432,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                   trailing: Padding(
                     padding: EdgeInsets.only(right: 15),
                     child: Icon(
-                      Icons.replay,
+                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.arrow_counterclockwise : Icons.replay,
                       color: Theme.of(context).primaryColor,
                     ),
                   ),
@@ -464,7 +463,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                           color: Theme.of(context).primaryColor,
                         )),
                     trailing: Switch(
-                        value: widget.chat.isMuted!,
+                        value: widget.chat.muteType == "mute",
                         activeColor: Theme.of(context).primaryColor,
                         activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
                         inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
@@ -536,11 +535,11 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                           )
                         : (isCleared)
                             ? Icon(
-                                Icons.done,
+                                SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.checkmark : Icons.done,
                                 color: Theme.of(context).primaryColor,
                               )
                             : Icon(
-                                Icons.delete_forever,
+                                SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.trash : Icons.delete_forever,
                                 color: Theme.of(context).primaryColor,
                               ),
                   ),

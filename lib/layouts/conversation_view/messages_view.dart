@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
@@ -116,8 +117,8 @@ class MessagesViewController extends GetxController with SingleGetTickerProvider
           event.index != null ? event.index! : 0,
           duration: isNewMessage
               ? event.outGoing
-              ? Duration(milliseconds: 300)
-              : animationDuration
+                  ? Duration(milliseconds: 300)
+                  : animationDuration
               : Duration(milliseconds: 0),
         );
       }
@@ -155,9 +156,9 @@ class MessagesViewController extends GetxController with SingleGetTickerProvider
       reversed.sublist(reversed.length - sampleSize).forEach((message) {
         if (!isEmptyString(message.fullText, stripWhitespace: true)) {
           if (message.isFromMe ?? false) {
-            smartReply.addConversationForLocalUser(message.fullText!);
+            smartReply.addConversationForLocalUser(message.fullText);
           } else {
-            smartReply.addConversationForRemoteUser(message.fullText!, message.handle?.address ?? "participant");
+            smartReply.addConversationForRemoteUser(message.fullText, message.handle?.address ?? "participant");
           }
         }
       });
@@ -257,15 +258,18 @@ class MessagesView extends StatelessWidget {
     String? oldGuid = event.event["oldGuid"];
     Message? message = event.event["message"];
 
+    bool updatedAMessage = false;
     for (int i = 0; i < controller.messages.length; i++) {
       if (controller.messages[i].guid == oldGuid) {
-        debugPrint("(Message status) Update message: [${message!.text}] - [${message.guid}] - [$oldGuid]");
+        Logger.info("(Message status) Update message: [${message!.text}] - [${message.guid}] - [$oldGuid]");
         controller.messages[i] = message;
+        updatedAMessage = true;
         break;
-      } else {
-        debugPrint(
-            "(Message status) Message not updated (not found): [${message!.text}] - [${message.guid}] - [$oldGuid]");
       }
+    }
+    if (!updatedAMessage) {
+      Logger.warn("Message not updated (not found): [${message!.text}] - [${message.guid}] - [$oldGuid]",
+          tag: "MessageStatus");
     }
 
     return message;

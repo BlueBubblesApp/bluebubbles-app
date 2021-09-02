@@ -1,7 +1,9 @@
 import 'dart:typed_data';
 
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/blue_bubbles_text_field.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:photo_manager/photo_manager.dart';
@@ -88,7 +90,7 @@ class _GalleryAttachmentState extends State<GalleryAttachment> with AutomaticKee
                     child: Container(
                       child: Center(
                         child: Icon(
-                          Icons.check_circle,
+                          SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.check_mark_circled_solid : Icons.check_circle,
                           color: Colors.white,
                         ),
                       ),
@@ -101,7 +103,7 @@ class _GalleryAttachmentState extends State<GalleryAttachment> with AutomaticKee
                     child: InkWell(
                       child: widget.data.type == AssetType.video
                           ? Icon(
-                              Icons.play_circle_filled,
+                              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.play_circle_fill : Icons.play_circle_filled,
                               color: Colors.white.withOpacity(0.5),
                               size: 50,
                             )

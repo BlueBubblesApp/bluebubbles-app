@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
@@ -104,9 +105,9 @@ class MessageHelper {
       // Every 50 messages synced, who a message
       index += 1;
       if (index % 50 == 0) {
-        debugPrint('[Bulk Ingest] Saved $index of ${messages.length} messages');
+        Logger.info('Saved $index of ${messages.length} messages', tag: "BulkIngest");
       } else if (index == messages.length) {
-        debugPrint('[Bulk Ingest] Saved ${messages.length} messages');
+        Logger.info('Saved ${messages.length} messages', tag: "BulkIngest");
       }
     }
 
@@ -212,12 +213,14 @@ class MessageHelper {
     // Handle all the cases that would mean we don't show the notification
     if (!SettingsManager().settings.finishedSetup.value) return; // Don't notify if not fully setup
     if (existingMessage != null) return;
-    if (chat.isMuted!) return; // Don''t notify if the chat is muted
+    if (await chat.shouldMuteNotification(message)) return; // Don''t notify if the chat is muted
     if (message.isFromMe! || message.handle == null) return; // Don't notify if the text is from me
 
     CurrentChat? currChat = CurrentChat.activeChat;
     if (LifeCycleManager.instance.isAlive &&
-        ((!SettingsManager().settings.notifyOnChatList.value && currChat == null) ||
+        ((!SettingsManager().settings.notifyOnChatList.value &&
+                currChat == null &&
+                !Get.currentRoute.contains("settings")) ||
             currChat?.chat.guid == chat.guid)) {
       // Don't notify if the the chat is the active chat
       return;

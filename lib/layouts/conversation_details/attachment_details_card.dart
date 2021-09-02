@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
@@ -79,7 +80,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
             widget.attachment.getFriendlySize(),
             style: Theme.of(context).textTheme.bodyText1,
           ),
-          Icon(Icons.cloud_download, size: 28.0),
+          Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.cloud_download : Icons.cloud_download, size: 28.0),
           (widget.attachment.mimeType != null)
               ? Text(
                   basename(this.attachmentFile.path),
@@ -253,7 +254,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
           Align(
             alignment: Alignment.bottomRight,
             child: Icon(
-              Icons.play_arrow,
+              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.play : Icons.play_arrow,
               color: Colors.white,
             ),
           ),

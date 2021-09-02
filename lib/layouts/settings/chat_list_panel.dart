@@ -150,6 +150,24 @@ class ChatListPanel extends StatelessWidget {
                             "Filters the chat list based on parameters set in iMessage (usually this removes old, inactive chats)",
                         backgroundColor: tileColor,
                       )),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
+                    ),
+                  ),
+                  Obx(() => SettingsSwitch(
+                    onChanged: (bool val) {
+                      SettingsManager().settings.filterUnknownSenders.value = val;
+                      saveSettings();
+                    },
+                    initialVal: SettingsManager().settings.filterUnknownSenders.value,
+                    title: "Filter Unknown Senders",
+                    subtitle:
+                    "Turn off notifications for senders who aren't in your contacts and sort them into a separate chat list",
+                    backgroundColor: tileColor,
+                  )),
                   SettingsHeader(
                       headerColor: headerColor,
                       tileColor: tileColor,
@@ -264,24 +282,24 @@ class ChatListPanel extends StatelessWidget {
                     else
                       return SizedBox.shrink();
                   }),
-                  Obx(() {
-                    if (SettingsManager().settings.skin.value == Skins.iOS)
-                      return SettingsTile(
-                        title: "Pinned Order",
-                        subtitle:
-                        "Set the order for your pinned chats",
-                        backgroundColor: tileColor,
-                        onTap: () {
-                          Get.toNamed("/settings/pinned-order-panel");
-                        },
-                        trailing: Icon(
-                          SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.chevron_right : Icons.arrow_forward,
-                          color: Colors.grey,
-                        ),
-                      );
-                    else
-                      return SizedBox.shrink();
-                  }),
+                  // Obx(() {
+                  //   if (SettingsManager().settings.skin.value == Skins.iOS)
+                  //     return SettingsTile(
+                  //       title: "Pinned Order",
+                  //       subtitle:
+                  //       "Set the order for your pinned chats",
+                  //       backgroundColor: tileColor,
+                  //       onTap: () {
+                  //         Get.toNamed("/settings/pinned-order-panel");
+                  //       },
+                  //       trailing: Icon(
+                  //         SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.chevron_right : Icons.arrow_forward,
+                  //         color: Colors.grey,
+                  //       ),
+                  //     );
+                  //   else
+                  //     return SizedBox.shrink();
+                  // }),
                   SettingsHeader(
                       headerColor: headerColor,
                       tileColor: tileColor,
@@ -348,10 +366,10 @@ class ChatListPanel extends StatelessWidget {
                                               : tileColor,
                                           border: Border.all(
                                               color: SettingsManager().settings.iosShowPin.value
-                                              ? Theme.of(context).primaryColor
-                                              : CupertinoColors.systemGrey,
-                                          style: BorderStyle.solid,
-                                          width: 1),
+                                                  ? Theme.of(context).primaryColor
+                                                  : CupertinoColors.systemGrey,
+                                              style: BorderStyle.solid,
+                                              width: 1),
                                           borderRadius: BorderRadius.all(Radius.circular(25))),
                                       child: Padding(
                                         padding: const EdgeInsets.all(3.0),
@@ -526,7 +544,7 @@ class ChatListPanel extends StatelessWidget {
                                           color: Colors.red,
                                           width: context.width / 5 - 8,
                                           child: IconButton(
-                                            icon: Icon(Icons.archive, color: Colors.white),
+                                            icon: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.tray_arrow_down : Icons.archive, color: Colors.white),
                                             onPressed: () {
                                               SettingsManager().settings.iosShowArchive.value =
                                                   !SettingsManager().settings.iosShowArchive.value;
@@ -635,15 +653,15 @@ class ChatListPanel extends StatelessWidget {
                     ),
                   ),
                   Obx(() => SettingsSwitch(
-                    onChanged: (bool val) {
-                      SettingsManager().settings.notifyOnChatList.value = val;
-                      saveSettings();
-                    },
-                    initialVal: SettingsManager().settings.notifyOnChatList.value,
-                    title: "Send Notifications on Chat List",
-                    subtitle: "Sends notifications for new messages while in the chat list or chat creator",
-                    backgroundColor: tileColor,
-                  )),
+                        onChanged: (bool val) {
+                          SettingsManager().settings.notifyOnChatList.value = val;
+                          saveSettings();
+                        },
+                        initialVal: SettingsManager().settings.notifyOnChatList.value,
+                        title: "Send Notifications on Chat List",
+                        subtitle: "Sends notifications for new messages while in the chat list or chat creator",
+                        backgroundColor: tileColor,
+                      )),
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
                   Container(
                     height: 30,

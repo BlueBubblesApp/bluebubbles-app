@@ -1,11 +1,14 @@
+import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 
 Map<String, IconData> iconMap = {
-  'com.apple.Handwriting.HandwritingProvider': Icons.brush,
-  'com.apple.DigitalTouchBalloonProvider': Icons.touch_app
+  'com.apple.Handwriting.HandwritingProvider': SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.square_pencil : Icons.brush,
+  'com.apple.DigitalTouchBalloonProvider': SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.app_badge : Icons.touch_app
 };
 
 class BalloonBundleWidget extends StatelessWidget {
@@ -23,16 +26,16 @@ class BalloonBundleWidget extends StatelessWidget {
 
     String val = message!.balloonBundleId!.toLowerCase();
     if (val.contains("gamepigeon")) {
-      return Icons.games;
+      return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.gamecontroller : Icons.games;
     } else if (val.contains("contextoptional")) {
-      return Icons.phone_android;
+      return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.device_phone_portrait : Icons.phone_android;
     } else if (val.contains("mobileslideshow")) {
-      return Icons.slideshow;
+      return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.play_rectangle : Icons.slideshow;
     } else if (val.contains("PeerPayment")) {
-      return Icons.monetization_on;
+      return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.money_dollar_circle : Icons.monetization_on;
     }
 
-    return Icons.apps;
+    return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.square_grid_3x2 : Icons.apps;
   }
 
   @override

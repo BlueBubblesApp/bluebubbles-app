@@ -1,8 +1,10 @@
 import 'package:bluebubbles/action_handler.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_details_popup.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
@@ -30,19 +32,21 @@ class MessagePopupHolder extends StatelessWidget {
     RenderBox renderBox = containerKey.currentContext!.findRenderObject() as RenderBox;
     Size size = renderBox.size;
     Offset offset = renderBox.localToGlobal(Offset.zero);
-    bool increaseWidth = !MessageHelper.getShowTail(context, message, newerMessage)
-        && (SettingsManager().settings.alwaysShowAvatars.value || (CurrentChat.of(context)?.chat.isGroup() ?? false));
-    bool doNotIncreaseHeight = ((message.isFromMe ?? false)
-        || !(CurrentChat.of(context)?.chat.isGroup() ?? false)
-        || !sameSender(message, olderMessage)
-        || !message.dateCreated!.isWithin(olderMessage!.dateCreated!, minutes: 30));
+    bool increaseWidth = !MessageHelper.getShowTail(context, message, newerMessage) &&
+        (SettingsManager().settings.alwaysShowAvatars.value || (CurrentChat.of(context)?.chat.isGroup() ?? false));
+    bool doNotIncreaseHeight = ((message.isFromMe ?? false) ||
+        !(CurrentChat.of(context)?.chat.isGroup() ?? false) ||
+        !sameSender(message, olderMessage) ||
+        !message.dateCreated!.isWithin(olderMessage!.dateCreated!, minutes: 30));
+
     return Tuple2(Offset(offset.dx - (increaseWidth ? 35 : 0),
         offset.dy - (doNotIncreaseHeight ? 0 : message.getReactions().length > 0 ? 20.0 : 23.0)),
         Size(size.width + (increaseWidth ? 35 : 0),
-        size.height + (doNotIncreaseHeight ? 0 : message.getReactions().length > 0 ? 20.0 : 23.0)));
+            size.height + (doNotIncreaseHeight ? 0 : message.getReactions().length > 0 ? 20.0 : 23.0)));
   }
 
   void openMessageDetails(BuildContext context) async {
+    EventDispatcher().emit("unfocus-keyboard", null);
     HapticFeedback.lightImpact();
     Tuple2<Offset, Size> data = getOffset(context);
 
@@ -71,7 +75,7 @@ class MessagePopupHolder extends StatelessWidget {
   }
 
   void sendReaction(String type, BuildContext context) {
-    debugPrint("Sending reaction type: " + type);
+    Logger.info("Sending reaction type: " + type);
     ActionHandler.sendReaction(CurrentChat.of(context)!.chat, message, type);
   }
 

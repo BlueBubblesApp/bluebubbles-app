@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_tile.dart';
@@ -25,9 +26,10 @@ import 'package:get/get.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 class ConversationList extends StatefulWidget {
-  ConversationList({Key? key, required this.showArchivedChats}) : super(key: key);
+  ConversationList({Key? key, required this.showArchivedChats, required this.showUnknownSenders}) : super(key: key);
 
   final bool showArchivedChats;
+  final bool showUnknownSenders;
 
   @override
   _ConversationListState createState() => _ConversationListState();
@@ -50,7 +52,7 @@ class _ConversationListState extends State<ConversationList> {
     }
 
     SystemChannels.textInput.invokeMethod('TextInput.hide').catchError((e) {
-      debugPrint("Error caught while hiding keyboard: ${e.toString()}");
+      Logger.error("Error caught while hiding keyboard: ${e.toString()}");
     });
   }
 
@@ -65,7 +67,9 @@ class _ConversationListState extends State<ConversationList> {
   @override
   void initState() {
     super.initState();
-    ChatBloc().refreshChats();
+    if (!widget.showUnknownSenders) {
+      ChatBloc().refreshChats();
+    }
     scrollController = ScrollController()..addListener(scrollListener);
 
     // Listen for any incoming events
@@ -98,7 +102,7 @@ class _ConversationListState extends State<ConversationList> {
     TextStyle? style = context.textTheme.headline1;
     if (size != null) style = style!.copyWith(fontSize: size);
 
-    return [Text(widget.showArchivedChats ? "Archive" : "Messages", style: style), Container(width: 10)];
+    return [Text(widget.showArchivedChats ? "Archive" : widget.showUnknownSenders ? "Unknown Senders" : "Messages", style: style), Container(width: 10)];
   }
 
   Widget getSyncIndicatorWidget() {
@@ -125,8 +129,7 @@ class _ConversationListState extends State<ConversationList> {
 
   void sortChats() {
     ChatBloc().chats.sort((a, b) {
-      if (a.pinIndex.value != null && b.pinIndex.value != null)
-        return a.pinIndex.value!.compareTo(b.pinIndex.value!);
+      if (a.pinIndex.value != null && b.pinIndex.value != null) return a.pinIndex.value!.compareTo(b.pinIndex.value!);
       if (b.pinIndex.value != null) return 1;
       if (a.pinIndex.value != null) return -1;
       if (!a.isPinned! && b.isPinned!) return 1;
@@ -138,7 +141,7 @@ class _ConversationListState extends State<ConversationList> {
     });
   }
 
-  Widget buildSettingsButton() => !widget.showArchivedChats
+  Widget buildSettingsButton() => !widget.showArchivedChats && !widget.showUnknownSenders
       ? PopupMenuButton(
           color: context.theme.accentColor,
           onSelected: (dynamic value) {
@@ -149,6 +152,7 @@ class _ConversationListState extends State<ConversationList> {
                 ThemeSwitcher.buildPageRoute(
                   builder: (context) => ConversationList(
                     showArchivedChats: true,
+                    showUnknownSenders: false,
                   ),
                 ),
               );
@@ -158,6 +162,15 @@ class _ConversationListState extends State<ConversationList> {
                   builder: (BuildContext context) {
                     return SettingsPanel();
                   },
+                ),
+              );
+            } else if (value == 3) {
+              Navigator.of(context).push(
+                ThemeSwitcher.buildPageRoute(
+                  builder: (context) => ConversationList(
+                    showArchivedChats: false,
+                    showUnknownSenders: true,
+                  ),
                 ),
               );
             }
@@ -178,6 +191,14 @@ class _ConversationListState extends State<ConversationList> {
                   style: context.textTheme.bodyText1,
                 ),
               ),
+              if (SettingsManager().settings.filterUnknownSenders.value)
+                PopupMenuItem(
+                  value: 3,
+                  child: Text(
+                    'Unknown Senders',
+                    style: context.textTheme.bodyText1,
+                  ),
+                ),
               PopupMenuItem(
                 value: 2,
                 child: Text(
@@ -218,7 +239,7 @@ class _ConversationListState extends State<ConversationList> {
   FloatingActionButton buildFloatingActionButton() {
     return FloatingActionButton(
         backgroundColor: context.theme.primaryColor,
-        child: Icon(Icons.message, color: Colors.white, size: 25),
+        child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.pencil : Icons.message, color: Colors.white, size: 25),
         onPressed: openNewChatCreator);
   }
 
@@ -250,6 +271,7 @@ class _Cupertino extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     bool showArchived = parent.widget.showArchivedChats;
+    bool showUnknown = parent.widget.showUnknownSenders;
     Brightness brightness = ThemeData.estimateBrightnessForColor(context.theme.backgroundColor);
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
@@ -285,7 +307,7 @@ class _Cupertino extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: <Widget>[
                             Text(
-                              showArchived ? "Archive" : "Messages",
+                              showArchived ? "Archive" : showUnknown ? "Unknown Senders" : "Messages",
                               style: context.textTheme.bodyText1,
                             ),
                           ],
@@ -310,23 +332,14 @@ class _Cupertino extends StatelessWidget {
             physics: ThemeManager().scrollPhysics,
             slivers: <Widget>[
               SliverAppBar(
-                leading: ((SettingsManager().settings.skin.value == Skins.iOS && showArchived) ||
+                leading: ((SettingsManager().settings.skin.value == Skins.iOS && (showArchived || showUnknown)) ||
                         (SettingsManager().settings.skin.value == Skins.Material ||
                                 SettingsManager().settings.skin.value == Skins.Samsung) &&
-                            !showArchived)
-                    ? IconButton(
-                        icon: Icon(
-                            (SettingsManager().settings.skin.value == Skins.iOS && showArchived)
-                                ? Icons.arrow_back_ios
-                                : Icons.arrow_back,
-                            color: context.theme.primaryColor),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                      )
+                            !showArchived && !showUnknown)
+                    ? buildBackButton(context)
                     : new Container(),
                 stretch: true,
-                expandedHeight: (!showArchived) ? 80 : 50,
+                expandedHeight: (!showArchived && !showUnknown) ? 80 : 50,
                 backgroundColor: Colors.transparent,
                 pinned: false,
                 flexibleSpace: FlexibleSpaceBar(
@@ -343,7 +356,7 @@ class _Cupertino extends StatelessWidget {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: <Widget>[
-                            Container(width: (!showArchived) ? 20 : 50),
+                            Container(width: (!showArchived && !showUnknown) ? 20 : 50),
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -357,7 +370,7 @@ class _Cupertino extends StatelessWidget {
                             Spacer(
                               flex: 25,
                             ),
-                            if (!showArchived)
+                            if (!showArchived && !showUnknown)
                               ClipOval(
                                 child: Material(
                                   color: context.theme.accentColor, // button color
@@ -365,7 +378,7 @@ class _Cupertino extends StatelessWidget {
                                     child: SizedBox(
                                         width: 20,
                                         height: 20,
-                                        child: Icon(Icons.search, color: context.theme.primaryColor, size: 12)),
+                                        child: Icon(CupertinoIcons.search, color: context.theme.primaryColor, size: 12)),
                                     onTap: () async {
                                       Navigator.of(context).push(
                                         CupertinoPageRoute(
@@ -376,8 +389,8 @@ class _Cupertino extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                            if (!showArchived) Container(width: 10.0),
-                            if (SettingsManager().settings.moveChatCreatorToHeader.value && !showArchived)
+                            if (!showArchived && !showUnknown) Container(width: 10.0),
+                            if (SettingsManager().settings.moveChatCreatorToHeader.value && !showArchived && !showUnknown)
                               ClipOval(
                                 child: Material(
                                   color: context.theme.accentColor, // button color
@@ -385,7 +398,7 @@ class _Cupertino extends StatelessWidget {
                                     child: SizedBox(
                                       width: 20,
                                       height: 20,
-                                      child: Icon(Icons.create, color: context.theme.primaryColor, size: 12),
+                                      child: Icon(CupertinoIcons.pencil, color: context.theme.primaryColor, size: 12),
                                     ),
                                     onTap: this.parent.openNewChatCreator,
                                   ),
@@ -421,10 +434,10 @@ class _Cupertino extends StatelessWidget {
               //   ),
               // ),
               Obx(() {
-                if (ChatBloc().chats.archivedHelper(showArchived).bigPinHelper(true).isEmpty) {
+                if (ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).bigPinHelper(true).isEmpty) {
                   return SliverToBoxAdapter(child: Container());
                 }
-                ChatBloc().chats.archivedHelper(showArchived).sort(Chat.sort);
+                ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).sort(Chat.sort);
 
                 int rowCount = context.mediaQuery.orientation == Orientation.portrait
                     ? SettingsManager().settings.pinRowsPortrait.value
@@ -433,7 +446,7 @@ class _Cupertino extends StatelessWidget {
                 if (context.mediaQuery.orientation != Orientation.portrait) {
                   colCount = (colCount / context.mediaQuerySize.height * context.mediaQuerySize.width).floor();
                 }
-                int pinCount = ChatBloc().chats.archivedHelper(showArchived).bigPinHelper(true).length;
+                int pinCount = ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).bigPinHelper(true).length;
                 int usedRowCount = min((pinCount / colCount).ceil(), rowCount);
                 int maxOnPage = rowCount * colCount;
                 PageController _controller = PageController();
@@ -464,19 +477,19 @@ class _Cupertino extends StatelessWidget {
                                 children: List.generate(
                                   index < _filledPageCount
                                       ? maxOnPage
-                                      : ChatBloc().chats.archivedHelper(showArchived).bigPinHelper(true).length %
+                                      : ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).bigPinHelper(true).length %
                                           maxOnPage,
                                   (_index) {
                                     return PinnedConversationTile(
                                       key: Key(ChatBloc()
                                           .chats
-                                          .archivedHelper(showArchived)
+                                          .archivedHelper(showArchived).unknownSendersHelper(showUnknown)
                                           .bigPinHelper(true)[index * maxOnPage + _index]
                                           .guid
                                           .toString()),
                                       chat: ChatBloc()
                                           .chats
-                                          .archivedHelper(showArchived)
+                                          .archivedHelper(showArchived).unknownSendersHelper(showUnknown)
                                           .bigPinHelper(true)[index * maxOnPage + _index],
                                     );
                                   },
@@ -505,7 +518,7 @@ class _Cupertino extends StatelessWidget {
                 );
               }),
               Obx(() {
-                ChatBloc().chats.archivedHelper(showArchived).sort(Chat.sort);
+                ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).sort(Chat.sort);
                 if (!ChatBloc().loadedChats.value) {
                   return SliverToBoxAdapter(
                     child: Center(
@@ -533,7 +546,7 @@ class _Cupertino extends StatelessWidget {
                       child: Container(
                         padding: EdgeInsets.only(top: 50.0),
                         child: Text(
-                          showArchived ? "You have no archived chats :(" : "You have no chats :(",
+                          showArchived ? "You have no archived chats :(" : showUnknown ? "You have no messages from unknown senders :)" : "You have no chats :(",
                           style: Theme.of(context).textTheme.subtitle1,
                         ),
                       ),
@@ -546,11 +559,11 @@ class _Cupertino extends StatelessWidget {
                     (context, index) {
                       return ConversationTile(
                         key: Key(
-                            ChatBloc().chats.archivedHelper(showArchived).bigPinHelper(false)[index].guid.toString()),
-                        chat: ChatBloc().chats.archivedHelper(showArchived).bigPinHelper(false)[index],
+                            ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).bigPinHelper(false)[index].guid.toString()),
+                        chat: ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).bigPinHelper(false)[index],
                       );
                     },
-                    childCount: ChatBloc().chats.archivedHelper(showArchived).bigPinHelper(false).length,
+                    childCount: ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).bigPinHelper(false).length,
                   ),
                 );
               }),
@@ -577,8 +590,8 @@ class __MaterialState extends State<_Material> {
   List<Chat> selected = [];
 
   bool hasPinnedChat() {
-    for (var i = 0; i < ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).length; i++) {
-      if (ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats)[i].isPinned!) {
+    for (var i = 0; i < ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).unknownSendersHelper(widget.parent.widget.showUnknownSenders).length; i++) {
+      if (ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).unknownSendersHelper(widget.parent.widget.showUnknownSenders)[i].isPinned!) {
         widget.parent.hasPinnedChats = true;
         return true;
       } else {
@@ -590,12 +603,12 @@ class __MaterialState extends State<_Material> {
 
   bool hasNormalChats() {
     int counter = 0;
-    for (var i = 0; i < ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).length; i++) {
-      if (ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats)[i].isPinned!) {
+    for (var i = 0; i < ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).unknownSendersHelper(widget.parent.widget.showUnknownSenders).length; i++) {
+      if (ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).unknownSendersHelper(widget.parent.widget.showUnknownSenders)[i].isPinned!) {
         counter++;
       } else {}
     }
-    if (counter == ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).length) {
+    if (counter == ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).unknownSendersHelper(widget.parent.widget.showUnknownSenders).length) {
       return false;
     } else {
       return true;
@@ -621,7 +634,7 @@ class __MaterialState extends State<_Material> {
               SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.pin
                   ? (chat.isPinned! ? Icons.star_outline : Icons.star)
                   : SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.alerts
-                      ? (chat.isMuted! ? Icons.notifications_active : Icons.notifications_off)
+                      ? (chat.muteType == "mute" ? Icons.notifications_active : Icons.notifications_off)
                       : SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.delete
                           ? Icons.delete_forever
                           : SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.mark_read
@@ -633,7 +646,7 @@ class __MaterialState extends State<_Material> {
               SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.pin
                   ? (chat.isPinned! ? " Unpin" : " Pin")
                   : SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.alerts
-                      ? (chat.isMuted! ? ' Show Alerts' : ' Hide Alerts')
+                      ? (chat.muteType == "mute" ? ' Show Alerts' : ' Hide Alerts')
                       : SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.delete
                           ? " Delete"
                           : SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.mark_read
@@ -677,7 +690,7 @@ class __MaterialState extends State<_Material> {
               SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.pin
                   ? (chat.isPinned! ? Icons.star_outline : Icons.star)
                   : SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.alerts
-                      ? (chat.isMuted! ? Icons.notifications_active : Icons.notifications_off)
+                      ? (chat.muteType == "mute" ? Icons.notifications_active : Icons.notifications_off)
                       : SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.delete
                           ? Icons.delete_forever
                           : SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.mark_read
@@ -689,7 +702,7 @@ class __MaterialState extends State<_Material> {
               SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.pin
                   ? (chat.isPinned! ? " Unpin" : " Pin")
                   : SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.alerts
-                      ? (chat.isMuted! ? ' Show Alerts' : ' Hide Alerts')
+                      ? (chat.muteType == "mute" ? ' Show Alerts' : ' Hide Alerts')
                       : SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.delete
                           ? " Delete"
                           : SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.mark_read
@@ -712,6 +725,7 @@ class __MaterialState extends State<_Material> {
   Widget build(BuildContext context) {
     hasPinnedChat();
     bool showArchived = widget.parent.widget.showArchivedChats;
+    bool showUnknown = widget.parent.widget.showUnknownSenders;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: context.theme.backgroundColor, // navigation bar color
@@ -755,7 +769,7 @@ class __MaterialState extends State<_Material> {
                           ],
                         ),
                         actions: [
-                          (!showArchived)
+                          (!showArchived && !showUnknown)
                               ? GestureDetector(
                                   onTap: () async {
                                     Navigator.of(context).push(
@@ -773,7 +787,7 @@ class __MaterialState extends State<_Material> {
                                   ),
                                 )
                               : Container(),
-                          (SettingsManager().settings.moveChatCreatorToHeader.value && !showArchived)
+                          (SettingsManager().settings.moveChatCreatorToHeader.value && !showArchived && !showUnknown)
                               ? GestureDetector(
                                   onTap: () {
                                     Navigator.of(context).push(
@@ -836,11 +850,11 @@ class __MaterialState extends State<_Material> {
                                     ),
                                   ),
                                 if (([0, selected.length])
-                                    .contains(selected.where((element) => element.isMuted!).length))
+                                    .contains(selected.where((element) => element.muteType == "mute").length))
                                   GestureDetector(
                                     onTap: () {
                                       selected.forEach((element) async {
-                                        await element.toggleMute(!element.isMuted!);
+                                        await element.toggleMute(element.muteType != "mute");
                                       });
                                       selected = [];
                                       if (this.mounted) setState(() {});
@@ -848,7 +862,9 @@ class __MaterialState extends State<_Material> {
                                     child: Padding(
                                       padding: const EdgeInsets.all(8.0),
                                       child: Icon(
-                                        selected[0].isMuted! ? Icons.notifications_active : Icons.notifications_off,
+                                        selected[0].muteType == "mute"
+                                            ? Icons.notifications_active
+                                            : Icons.notifications_off,
                                         color: context.textTheme.bodyText1!.color,
                                       ),
                                     ),
@@ -938,7 +954,7 @@ class __MaterialState extends State<_Material> {
                     ),
                   );
                 }
-                if (ChatBloc().chats.archivedHelper(showArchived).isEmpty) {
+                if (ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).isEmpty) {
                   return Center(
                     child: Container(
                       padding: EdgeInsets.only(top: 50.0),
@@ -956,9 +972,9 @@ class __MaterialState extends State<_Material> {
                       if (SettingsManager().settings.swipableConversationTiles.value) {
                         return Dismissible(
                             background:
-                                Obx(() => slideRightBackground(ChatBloc().chats.archivedHelper(showArchived)[index])),
+                                Obx(() => slideRightBackground(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index])),
                             secondaryBackground:
-                                Obx(() => slideLeftBackground(ChatBloc().chats.archivedHelper(showArchived)[index])),
+                                Obx(() => slideLeftBackground(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index])),
                             // Each Dismissible must contain a Key. Keys allow Flutter to
                             // uniquely identify widgets.
                             key: UniqueKey(),
@@ -969,81 +985,77 @@ class __MaterialState extends State<_Material> {
                                 if (SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.pin) {
                                   await ChatBloc()
                                       .chats
-                                      .archivedHelper(showArchived)[index]
-                                      .togglePin(!ChatBloc().chats.archivedHelper(showArchived)[index].isPinned!);
+                                      .archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]
+                                      .togglePin(!ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isPinned!);
                                   EventDispatcher.instance.emit("refresh", null);
                                   if (this.mounted) setState(() {});
                                 } else if (SettingsManager().settings.materialLeftAction.value ==
                                     MaterialSwipeAction.alerts) {
-                                  await ChatBloc()
-                                      .chats
-                                      .archivedHelper(showArchived)[index]
-                                      .toggleMute(!ChatBloc().chats.archivedHelper(showArchived)[index].isMuted!);
+                                  await ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].toggleMute(
+                                      ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].muteType != "mute");
                                   if (this.mounted) setState(() {});
                                 } else if (SettingsManager().settings.materialLeftAction.value ==
                                     MaterialSwipeAction.delete) {
-                                  ChatBloc().deleteChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
-                                  Chat.deleteChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                  ChatBloc().deleteChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
+                                  Chat.deleteChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
                                 } else if (SettingsManager().settings.materialLeftAction.value ==
                                     MaterialSwipeAction.mark_read) {
-                                  ChatBloc().toggleChatUnread(ChatBloc().chats.archivedHelper(showArchived)[index],
-                                      !ChatBloc().chats.archivedHelper(showArchived)[index].hasUnreadMessage!);
+                                  ChatBloc().toggleChatUnread(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index],
+                                      !ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].hasUnreadMessage!);
                                 } else {
-                                  if (ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!) {
-                                    ChatBloc().unArchiveChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                  if (ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isArchived!) {
+                                    ChatBloc().unArchiveChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
                                   } else {
-                                    ChatBloc().archiveChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                    ChatBloc().archiveChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
                                   }
                                 }
                               } else {
                                 if (SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.pin) {
                                   await ChatBloc()
                                       .chats
-                                      .archivedHelper(showArchived)[index]
-                                      .togglePin(!ChatBloc().chats.archivedHelper(showArchived)[index].isPinned!);
+                                      .archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]
+                                      .togglePin(!ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isPinned!);
                                   EventDispatcher.instance.emit("refresh", null);
                                   if (this.mounted) setState(() {});
                                 } else if (SettingsManager().settings.materialRightAction.value ==
                                     MaterialSwipeAction.alerts) {
-                                  await ChatBloc()
-                                      .chats
-                                      .archivedHelper(showArchived)[index]
-                                      .toggleMute(!ChatBloc().chats.archivedHelper(showArchived)[index].isMuted!);
+                                  await ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].toggleMute(
+                                      ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].muteType != "mute");
                                   if (this.mounted) setState(() {});
                                 } else if (SettingsManager().settings.materialRightAction.value ==
                                     MaterialSwipeAction.delete) {
-                                  ChatBloc().deleteChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
-                                  Chat.deleteChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                  ChatBloc().deleteChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
+                                  Chat.deleteChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
                                 } else if (SettingsManager().settings.materialRightAction.value ==
                                     MaterialSwipeAction.mark_read) {
-                                  ChatBloc().toggleChatUnread(ChatBloc().chats.archivedHelper(showArchived)[index],
-                                      !ChatBloc().chats.archivedHelper(showArchived)[index].hasUnreadMessage!);
+                                  ChatBloc().toggleChatUnread(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index],
+                                      !ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].hasUnreadMessage!);
                                 } else {
-                                  if (ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!) {
-                                    ChatBloc().unArchiveChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                  if (ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isArchived!) {
+                                    ChatBloc().unArchiveChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
                                   } else {
-                                    ChatBloc().archiveChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                    ChatBloc().archiveChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
                                   }
                                 }
                               }
                             },
-                            child: (!showArchived && ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!)
+                            child: (!showArchived && ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isArchived!)
                                 ? Container()
-                                : (showArchived && !ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!)
+                                : (showArchived && !ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isArchived!)
                                     ? Container()
                                     : ConversationTile(
                                         key: UniqueKey(),
-                                        chat: ChatBloc().chats.archivedHelper(showArchived)[index],
+                                        chat: ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index],
                                         inSelectMode: selected.isNotEmpty,
                                         selected: selected,
                                         onSelect: (bool selected) {
                                           if (selected) {
-                                            this.selected.add(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                            this.selected.add(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
                                             setState(() {});
                                           } else {
                                             this.selected.removeWhere((element) =>
                                                 element.guid ==
-                                                ChatBloc().chats.archivedHelper(showArchived)[index].guid);
+                                                ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].guid);
                                             setState(() {});
                                           }
                                         },
@@ -1051,16 +1063,16 @@ class __MaterialState extends State<_Material> {
                       } else {
                         return ConversationTile(
                           key: UniqueKey(),
-                          chat: ChatBloc().chats.archivedHelper(showArchived)[index],
+                          chat: ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index],
                           inSelectMode: selected.isNotEmpty,
                           selected: selected,
                           onSelect: (bool selected) {
                             if (selected) {
-                              this.selected.add(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                              this.selected.add(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
                               setState(() {});
                             } else {
                               this.selected.removeWhere((element) =>
-                                  element.guid == ChatBloc().chats.archivedHelper(showArchived)[index].guid);
+                                  element.guid == ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].guid);
                               setState(() {});
                             }
                           },
@@ -1068,7 +1080,7 @@ class __MaterialState extends State<_Material> {
                       }
                     });
                   },
-                  itemCount: ChatBloc().chats.archivedHelper(showArchived).length,
+                  itemCount: ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).length,
                 );
               },
             ),
@@ -1095,8 +1107,8 @@ class _SamsungState extends State<_Samsung> {
   List<Chat> selected = [];
 
   bool hasPinnedChat() {
-    for (var i = 0; i < ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).length; i++) {
-      if (ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats)[i].isPinned!) {
+    for (var i = 0; i < ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).unknownSendersHelper(widget.parent.widget.showUnknownSenders).length; i++) {
+      if (ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).unknownSendersHelper(widget.parent.widget.showUnknownSenders)[i].isPinned!) {
         widget.parent.hasPinnedChats = true;
         return true;
       } else {
@@ -1108,12 +1120,12 @@ class _SamsungState extends State<_Samsung> {
 
   bool hasNormalChats() {
     int counter = 0;
-    for (var i = 0; i < ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).length; i++) {
-      if (ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats)[i].isPinned!) {
+    for (var i = 0; i < ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).unknownSendersHelper(widget.parent.widget.showUnknownSenders).length; i++) {
+      if (ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).unknownSendersHelper(widget.parent.widget.showUnknownSenders)[i].isPinned!) {
         counter++;
       } else {}
     }
-    if (counter == ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).length) {
+    if (counter == ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).unknownSendersHelper(widget.parent.widget.showUnknownSenders).length) {
       return false;
     } else {
       return true;
@@ -1137,9 +1149,9 @@ class _SamsungState extends State<_Samsung> {
           children: <Widget>[
             Icon(
               SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.pin
-                  ? (chat.isPinned! ? Icons.star_outline : Icons.star)
+                  ? (chat.muteType == "mute" ? Icons.star_outline : Icons.star)
                   : SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.alerts
-                      ? (chat.isMuted! ? Icons.notifications_active : Icons.notifications_off)
+                      ? (chat.muteType == "mute" ? Icons.notifications_active : Icons.notifications_off)
                       : SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.delete
                           ? Icons.delete_forever
                           : SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.mark_read
@@ -1151,7 +1163,7 @@ class _SamsungState extends State<_Samsung> {
               SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.pin
                   ? (chat.isPinned! ? " Unpin" : " Pin")
                   : SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.alerts
-                      ? (chat.isMuted! ? ' Show Alerts' : ' Hide Alerts')
+                      ? (chat.muteType == "mute" ? ' Show Alerts' : ' Hide Alerts')
                       : SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.delete
                           ? " Delete"
                           : SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.mark_read
@@ -1195,7 +1207,7 @@ class _SamsungState extends State<_Samsung> {
               SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.pin
                   ? (chat.isPinned! ? Icons.star_outline : Icons.star)
                   : SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.alerts
-                      ? (chat.isMuted! ? Icons.notifications_active : Icons.notifications_off)
+                      ? (chat.muteType == "mute" ? Icons.notifications_active : Icons.notifications_off)
                       : SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.delete
                           ? Icons.delete_forever
                           : SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.mark_read
@@ -1207,7 +1219,7 @@ class _SamsungState extends State<_Samsung> {
               SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.pin
                   ? (chat.isPinned! ? " Unpin" : " Pin")
                   : SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.alerts
-                      ? (chat.isMuted! ? ' Show Alerts' : ' Hide Alerts')
+                      ? (chat.muteType == "mute" ? ' Show Alerts' : ' Hide Alerts')
                       : SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.delete
                           ? " Delete"
                           : SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.mark_read
@@ -1229,6 +1241,7 @@ class _SamsungState extends State<_Samsung> {
   @override
   Widget build(BuildContext context) {
     bool showArchived = widget.parent.widget.showArchivedChats;
+    bool showUnknown = widget.parent.widget.showUnknownSenders;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: context.theme.backgroundColor, // navigation bar color
@@ -1272,7 +1285,7 @@ class _SamsungState extends State<_Samsung> {
                           ],
                         ),
                         actions: [
-                          (!showArchived)
+                          (!showArchived && !showUnknown)
                               ? GestureDetector(
                                   onTap: () async {
                                     Navigator.of(context).push(
@@ -1290,7 +1303,7 @@ class _SamsungState extends State<_Samsung> {
                                   ),
                                 )
                               : Container(),
-                          (SettingsManager().settings.moveChatCreatorToHeader.value && !showArchived
+                          (SettingsManager().settings.moveChatCreatorToHeader.value && !showArchived && !showUnknown
                               ? GestureDetector(
                                   onTap: () {
                                     Navigator.of(context).push(
@@ -1338,7 +1351,7 @@ class _SamsungState extends State<_Samsung> {
                                   GestureDetector(
                                     onTap: () {
                                       selected.forEach((element) async {
-                                        await element.toggleMute(!element.isMuted!);
+                                        await element.toggleMute(element.muteType != "mute");
                                       });
 
                                       selected = [];
@@ -1417,7 +1430,7 @@ class _SamsungState extends State<_Samsung> {
                   ),
                 );
               }
-              if (ChatBloc().chats.archivedHelper(showArchived).isEmpty) {
+              if (ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).isEmpty) {
                 return Center(
                   child: Container(
                     padding: EdgeInsets.only(top: 50.0),
@@ -1461,9 +1474,9 @@ class _SamsungState extends State<_Samsung> {
                               if (SettingsManager().settings.swipableConversationTiles.value) {
                                 return Dismissible(
                                   background: Obx(
-                                      () => slideRightBackground(ChatBloc().chats.archivedHelper(showArchived)[index])),
+                                      () => slideRightBackground(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index])),
                                   secondaryBackground: Obx(
-                                      () => slideLeftBackground(ChatBloc().chats.archivedHelper(showArchived)[index])),
+                                      () => slideLeftBackground(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index])),
                                   // Each Dismissible must contain a Key. Keys allow Flutter to
                                   // uniquely identify widgets.
                                   key: UniqueKey(),
@@ -1475,32 +1488,30 @@ class _SamsungState extends State<_Samsung> {
                                           MaterialSwipeAction.pin) {
                                         await ChatBloc()
                                             .chats
-                                            .archivedHelper(showArchived)[index]
-                                            .togglePin(!ChatBloc().chats.archivedHelper(showArchived)[index].isPinned!);
+                                            .archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]
+                                            .togglePin(!ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isPinned!);
                                         EventDispatcher.instance.emit("refresh", null);
                                         if (this.mounted) setState(() {});
                                       } else if (SettingsManager().settings.materialLeftAction.value ==
                                           MaterialSwipeAction.alerts) {
-                                        await ChatBloc()
-                                            .chats
-                                            .archivedHelper(showArchived)[index]
-                                            .toggleMute(!ChatBloc().chats.archivedHelper(showArchived)[index].isMuted!);
+                                        await ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].toggleMute(
+                                            ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].muteType != "mute");
                                         if (this.mounted) setState(() {});
                                       } else if (SettingsManager().settings.materialLeftAction.value ==
                                           MaterialSwipeAction.delete) {
-                                        ChatBloc().deleteChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
-                                        Chat.deleteChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                        ChatBloc().deleteChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
+                                        Chat.deleteChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
                                       } else if (SettingsManager().settings.materialLeftAction.value ==
                                           MaterialSwipeAction.mark_read) {
                                         ChatBloc().toggleChatUnread(
-                                            ChatBloc().chats.archivedHelper(showArchived)[index],
-                                            !ChatBloc().chats.archivedHelper(showArchived)[index].hasUnreadMessage!);
+                                            ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index],
+                                            !ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].hasUnreadMessage!);
                                       } else {
-                                        if (ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!) {
+                                        if (ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isArchived!) {
                                           ChatBloc()
-                                              .unArchiveChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                              .unArchiveChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
                                         } else {
-                                          ChatBloc().archiveChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                          ChatBloc().archiveChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
                                         }
                                       }
                                     } else {
@@ -1508,57 +1519,55 @@ class _SamsungState extends State<_Samsung> {
                                           MaterialSwipeAction.pin) {
                                         await ChatBloc()
                                             .chats
-                                            .archivedHelper(showArchived)[index]
-                                            .togglePin(!ChatBloc().chats.archivedHelper(showArchived)[index].isPinned!);
+                                            .archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]
+                                            .togglePin(!ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isPinned!);
                                         EventDispatcher.instance.emit("refresh", null);
                                         if (this.mounted) setState(() {});
                                       } else if (SettingsManager().settings.materialRightAction.value ==
                                           MaterialSwipeAction.alerts) {
-                                        await ChatBloc()
-                                            .chats
-                                            .archivedHelper(showArchived)[index]
-                                            .toggleMute(!ChatBloc().chats.archivedHelper(showArchived)[index].isMuted!);
+                                        await ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].toggleMute(
+                                            ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].muteType != "mute");
                                         if (this.mounted) setState(() {});
                                       } else if (SettingsManager().settings.materialRightAction.value ==
                                           MaterialSwipeAction.delete) {
-                                        ChatBloc().deleteChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
-                                        Chat.deleteChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                        ChatBloc().deleteChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
+                                        Chat.deleteChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
                                       } else if (SettingsManager().settings.materialRightAction.value ==
                                           MaterialSwipeAction.mark_read) {
                                         ChatBloc().toggleChatUnread(
-                                            ChatBloc().chats.archivedHelper(showArchived)[index],
-                                            !ChatBloc().chats.archivedHelper(showArchived)[index].hasUnreadMessage!);
+                                            ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index],
+                                            !ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].hasUnreadMessage!);
                                       } else {
-                                        if (ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!) {
+                                        if (ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isArchived!) {
                                           ChatBloc()
-                                              .unArchiveChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                              .unArchiveChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
                                         } else {
-                                          ChatBloc().archiveChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                          ChatBloc().archiveChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
                                         }
                                       }
                                     }
                                   },
                                   child: (!showArchived &&
-                                          ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!)
+                                          ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isArchived!)
                                       ? Container()
                                       : (showArchived &&
-                                              !ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!)
+                                              !ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isArchived!)
                                           ? Container()
-                                          : ChatBloc().chats.archivedHelper(showArchived)[index].isPinned!
+                                          : ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isPinned!
                                               ? ConversationTile(
                                                   key: UniqueKey(),
-                                                  chat: ChatBloc().chats.archivedHelper(showArchived)[index],
+                                                  chat: ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index],
                                                   inSelectMode: selected.isNotEmpty,
                                                   selected: selected,
                                                   onSelect: (bool selected) {
                                                     if (selected) {
                                                       this
                                                           .selected
-                                                          .add(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                                          .add(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
                                                     } else {
                                                       this.selected.removeWhere((element) =>
                                                           element.guid ==
-                                                          ChatBloc().chats.archivedHelper(showArchived)[index].guid);
+                                                          ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].guid);
                                                     }
 
                                                     if (this.mounted) setState(() {});
@@ -1567,23 +1576,23 @@ class _SamsungState extends State<_Samsung> {
                                               : Container(),
                                 );
                               } else {
-                                if (!showArchived && ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!)
+                                if (!showArchived && ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isArchived!)
                                   return Container();
-                                if (showArchived && !ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!)
+                                if (showArchived && !ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isArchived!)
                                   return Container();
-                                if (ChatBloc().chats.archivedHelper(showArchived)[index].isPinned!) {
+                                if (ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isPinned!) {
                                   return ConversationTile(
                                     key: UniqueKey(),
-                                    chat: ChatBloc().chats.archivedHelper(showArchived)[index],
+                                    chat: ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index],
                                     inSelectMode: selected.isNotEmpty,
                                     selected: selected,
                                     onSelect: (bool selected) {
                                       if (selected) {
-                                        this.selected.add(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                        this.selected.add(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
                                         if (this.mounted) setState(() {});
                                       } else {
                                         this.selected.removeWhere((element) =>
-                                            element.guid == ChatBloc().chats.archivedHelper(showArchived)[index].guid);
+                                            element.guid == ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].guid);
                                         if (this.mounted) setState(() {});
                                       }
                                     },
@@ -1593,7 +1602,7 @@ class _SamsungState extends State<_Samsung> {
                               }
                             });
                           },
-                          itemCount: ChatBloc().chats.archivedHelper(showArchived).length,
+                          itemCount: ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).length,
                         ),
                       ),
                     if (hasNormalChats())
@@ -1624,9 +1633,9 @@ class _SamsungState extends State<_Samsung> {
                               if (SettingsManager().settings.swipableConversationTiles.value) {
                                 return Dismissible(
                                   background: Obx(
-                                      () => slideRightBackground(ChatBloc().chats.archivedHelper(showArchived)[index])),
+                                      () => slideRightBackground(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index])),
                                   secondaryBackground: Obx(
-                                      () => slideLeftBackground(ChatBloc().chats.archivedHelper(showArchived)[index])),
+                                      () => slideLeftBackground(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index])),
                                   // Each Dismissible must contain a Key. Keys allow Flutter to
                                   // uniquely identify widgets.
                                   key: UniqueKey(),
@@ -1638,32 +1647,30 @@ class _SamsungState extends State<_Samsung> {
                                           MaterialSwipeAction.pin) {
                                         await ChatBloc()
                                             .chats
-                                            .archivedHelper(showArchived)[index]
-                                            .togglePin(!ChatBloc().chats.archivedHelper(showArchived)[index].isPinned!);
+                                            .archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]
+                                            .togglePin(!ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isPinned!);
                                         EventDispatcher.instance.emit("refresh", null);
                                         if (this.mounted) setState(() {});
                                       } else if (SettingsManager().settings.materialLeftAction.value ==
                                           MaterialSwipeAction.alerts) {
-                                        await ChatBloc()
-                                            .chats
-                                            .archivedHelper(showArchived)[index]
-                                            .toggleMute(!ChatBloc().chats.archivedHelper(showArchived)[index].isMuted!);
+                                        await ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].toggleMute(
+                                            ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].muteType != "mute");
                                         if (this.mounted) setState(() {});
                                       } else if (SettingsManager().settings.materialLeftAction.value ==
                                           MaterialSwipeAction.delete) {
-                                        ChatBloc().deleteChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
-                                        Chat.deleteChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                        ChatBloc().deleteChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
+                                        Chat.deleteChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
                                       } else if (SettingsManager().settings.materialLeftAction.value ==
                                           MaterialSwipeAction.mark_read) {
                                         ChatBloc().toggleChatUnread(
-                                            ChatBloc().chats.archivedHelper(showArchived)[index],
-                                            !ChatBloc().chats.archivedHelper(showArchived)[index].hasUnreadMessage!);
+                                            ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index],
+                                            !ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].hasUnreadMessage!);
                                       } else {
-                                        if (ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!) {
+                                        if (ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isArchived!) {
                                           ChatBloc()
-                                              .unArchiveChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                              .unArchiveChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
                                         } else {
-                                          ChatBloc().archiveChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                          ChatBloc().archiveChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
                                         }
                                       }
                                     } else {
@@ -1671,57 +1678,55 @@ class _SamsungState extends State<_Samsung> {
                                           MaterialSwipeAction.pin) {
                                         await ChatBloc()
                                             .chats
-                                            .archivedHelper(showArchived)[index]
-                                            .togglePin(!ChatBloc().chats.archivedHelper(showArchived)[index].isPinned!);
+                                            .archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]
+                                            .togglePin(!ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isPinned!);
                                         EventDispatcher.instance.emit("refresh", null);
                                         if (this.mounted) setState(() {});
                                       } else if (SettingsManager().settings.materialRightAction.value ==
                                           MaterialSwipeAction.alerts) {
-                                        await ChatBloc()
-                                            .chats
-                                            .archivedHelper(showArchived)[index]
-                                            .toggleMute(!ChatBloc().chats.archivedHelper(showArchived)[index].isMuted!);
+                                        await ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].toggleMute(
+                                            ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].muteType != "mute");
                                         if (this.mounted) setState(() {});
                                       } else if (SettingsManager().settings.materialRightAction.value ==
                                           MaterialSwipeAction.delete) {
-                                        ChatBloc().deleteChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
-                                        Chat.deleteChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                        ChatBloc().deleteChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
+                                        Chat.deleteChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
                                       } else if (SettingsManager().settings.materialRightAction.value ==
                                           MaterialSwipeAction.mark_read) {
                                         ChatBloc().toggleChatUnread(
-                                            ChatBloc().chats.archivedHelper(showArchived)[index],
-                                            !ChatBloc().chats.archivedHelper(showArchived)[index].hasUnreadMessage!);
+                                            ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index],
+                                            !ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].hasUnreadMessage!);
                                       } else {
-                                        if (ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!) {
+                                        if (ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isArchived!) {
                                           ChatBloc()
-                                              .unArchiveChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                              .unArchiveChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
                                         } else {
-                                          ChatBloc().archiveChat(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                          ChatBloc().archiveChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
                                         }
                                       }
                                     }
                                   },
                                   child: (!showArchived &&
-                                          ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!)
+                                          ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isArchived!)
                                       ? Container()
                                       : (showArchived &&
-                                              !ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!)
+                                              !ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isArchived!)
                                           ? Container()
-                                          : (!ChatBloc().chats.archivedHelper(showArchived)[index].isPinned!)
+                                          : (!ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isPinned!)
                                               ? ConversationTile(
                                                   key: UniqueKey(),
-                                                  chat: ChatBloc().chats.archivedHelper(showArchived)[index],
+                                                  chat: ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index],
                                                   inSelectMode: selected.isNotEmpty,
                                                   selected: selected,
                                                   onSelect: (bool selected) {
                                                     if (selected) {
                                                       this
                                                           .selected
-                                                          .add(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                                          .add(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
                                                     } else {
                                                       this.selected.removeWhere((element) =>
                                                           element.guid ==
-                                                          ChatBloc().chats.archivedHelper(showArchived)[index].guid);
+                                                          ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].guid);
                                                     }
 
                                                     if (this.mounted) setState(() {});
@@ -1730,22 +1735,22 @@ class _SamsungState extends State<_Samsung> {
                                               : Container(),
                                 );
                               } else {
-                                if (!showArchived && ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!)
+                                if (!showArchived && ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isArchived!)
                                   return Container();
-                                if (showArchived && !ChatBloc().chats.archivedHelper(showArchived)[index].isArchived!)
+                                if (showArchived && !ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isArchived!)
                                   return Container();
-                                if (!ChatBloc().chats.archivedHelper(showArchived)[index].isPinned!) {
+                                if (!ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isPinned!) {
                                   return ConversationTile(
                                     key: UniqueKey(),
-                                    chat: ChatBloc().chats.archivedHelper(showArchived)[index],
+                                    chat: ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index],
                                     inSelectMode: selected.isNotEmpty,
                                     selected: selected,
                                     onSelect: (bool selected) {
                                       if (selected) {
-                                        this.selected.add(ChatBloc().chats.archivedHelper(showArchived)[index]);
+                                        this.selected.add(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
                                       } else {
                                         this.selected.removeWhere((element) =>
-                                            element.guid == ChatBloc().chats.archivedHelper(showArchived)[index].guid);
+                                            element.guid == ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].guid);
                                       }
 
                                       if (this.mounted) setState(() {});
@@ -1756,7 +1761,7 @@ class _SamsungState extends State<_Samsung> {
                               }
                             });
                           },
-                          itemCount: ChatBloc().chats.archivedHelper(showArchived).length,
+                          itemCount: ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).length,
                         ),
                       )
                   ],

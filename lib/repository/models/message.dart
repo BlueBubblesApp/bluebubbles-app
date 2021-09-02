@@ -4,6 +4,7 @@ import 'package:collection/collection.dart';
 import 'package:crypto/crypto.dart' as crypto;
 
 import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/helpers/darty.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
@@ -11,8 +12,8 @@ import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:get/get.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:sqflite/sqflite.dart';
-
 import '../../helpers/utils.dart';
+
 import '../database.dart';
 import 'chat.dart';
 import 'handle.dart';
@@ -113,7 +114,7 @@ class Message {
     if (error2 != null) error.value = error2;
   }
 
-  String? get fullText {
+  String get fullText {
     String fullText = this.subject ?? "";
     if (fullText.isNotEmpty) {
       fullText += "\n";
@@ -507,22 +508,18 @@ class Message {
     await db.delete("message");
   }
 
-  bool hasUrl() {
-    if (text == null) return false;
-    List<String> splits = this.text!.split(" ");
-    return splits.firstWhereOrNull((element) => element.isURL) != null;
-  }
-
   bool isUrlPreview() {
     // first condition is for macOS < 11 and second condition is for macOS >= 11
-    return (this.balloonBundleId != null && this.balloonBundleId == "com.apple.messages.URLBalloonProvider" &&
-        this.hasDdResults!) || (this.hasDdResults! && (this.text ?? "").isURL);
+    return (this.balloonBundleId != null &&
+            this.balloonBundleId == "com.apple.messages.URLBalloonProvider" &&
+            this.hasDdResults!) ||
+        (this.hasDdResults! && (this.text ?? "").replaceAll("\n", " ").hasUrl);
   }
 
   String? getUrl() {
     if (text == null) return null;
-    List<String> splits = this.text!.split(" ");
-    return splits.firstWhereOrNull((element) => element.isURL);
+    List<String> splits = this.text!.replaceAll("\n", " ").split(" ");
+    return splits.firstWhereOrNull((String element) => element.hasUrl);
   }
 
   bool isInteractive() {
@@ -541,7 +538,7 @@ class Message {
     // We are checking the variable first because we want to
     // avoid processing twice for this as it won't change
     if (this.bigEmoji == null) {
-      this.bigEmoji = MessageHelper.shouldShowBigEmoji(this.fullText ?? "");
+      this.bigEmoji = MessageHelper.shouldShowBigEmoji(this.fullText);
     }
 
     return this.bigEmoji!;

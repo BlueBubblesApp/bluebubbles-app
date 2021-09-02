@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/socket_manager.dart';
@@ -59,7 +60,7 @@ class AttachmentDownloadController extends GetxController {
     if (attachment.guid == null) return;
     isFetching = true;
     int numOfChunks = (attachment.totalBytes! / chunkSize).ceil();
-    debugPrint("Fetching $numOfChunks attachment chunks");
+    Logger.info("Fetching $numOfChunks attachment chunks");
     stopwatch.start();
     getChunkRecursive(attachment.guid!, 0, numOfChunks, []);
   }
@@ -91,7 +92,7 @@ class AttachmentDownloadController extends GetxController {
       if (numBytes == chunkSize) {
         // Calculate some stats
         double progress = ((index + 1) / total).clamp(0, 1).toDouble();
-        debugPrint("Progress: ${(progress * 100).round()}% of the attachment");
+        Logger.info("Progress: ${(progress * 100).round()}% of the attachment");
 
         // Update the progress in stream
         setProgress(progress);
@@ -99,9 +100,9 @@ class AttachmentDownloadController extends GetxController {
         // Get the next chunk
         getChunkRecursive(guid, index + 1, total, currentBytes);
       } else {
-        debugPrint("Finished fetching attachment");
+        Logger.info("Finished fetching attachment");
         stopwatch.stop();
-        debugPrint("Attachment downloaded in ${stopwatch.elapsedMilliseconds} ms");
+        Logger.info("Attachment downloaded in ${stopwatch.elapsedMilliseconds} ms");
 
         try {
           // Compress the attachment

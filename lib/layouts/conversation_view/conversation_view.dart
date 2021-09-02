@@ -3,6 +3,9 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/action_handler.dart';
@@ -89,6 +92,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   CustomAnimationControl controller = CustomAnimationControl.stop;
   bool wasCreator = false;
   GlobalKey key = GlobalKey();
+  Worker? worker;
 
   @override
   void initState() {
@@ -145,11 +149,29 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       }
     });
 
-    if (widget.chat != null && messageBloc == null) {
+    // Set the custom message bloc if provided (and there is not already an existing one)
+    if (widget.customMessageBloc != null && messageBloc == null) {
+      messageBloc = widget.customMessageBloc;
+    } else if (widget.chat != null && messageBloc == null) {
       messageBloc = MessageBloc(widget.chat);
     }
+
+    initListener();
+
+    SchedulerBinding.instance!.addPostFrameCallback((_) {
+      if (widget.showSnackbar) {
+        showSnackbar('Warning',
+            'Support for creating chats is currently limited on MacOS 11 (Big Sur) and up due to limitations imposed by Apple');
+      }
+    });
+
+    // Bind the lifecycle events
+    WidgetsBinding.instance!.addObserver(this);
+  }
+
+  void initListener() {
     if (messageBloc != null) {
-      ever<MessageBlocEvent?>(messageBloc!.event, (event) async {
+      worker = ever<MessageBlocEvent?>(messageBloc!.event, (event) async {
         // Get outta here if we don't have a chat "open"
         if (CurrentChat.activeChat == null) return;
         if (event == null) return;
@@ -171,25 +193,25 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
             maxLines: 1,
           ).createRenderObject(context);
           final size = renderParagraph.getDryLayout(constraints);
-          if (!(message?.hasAttachments ?? false) && !(message?.text?.isEmpty ?? false))
+          if (!(event.message?.hasAttachments ?? false) && !(event.message?.text?.isEmpty ?? false)) {
             setState(() {
-              tween = Tween<double>(begin: context.width - 30, end: min(size.width + 68, context.width * MessageWidgetHelper.MAX_SIZE + 40));
+              tween = Tween<double>(
+                  begin: context.width - 30,
+                  end: min(size.width + 68, context.width * MessageWidgetMixin.MAX_SIZE + 40));
               controller = CustomAnimationControl.play;
               message = event.message;
             });
+          } else {
+            setState(() {
+              isCreator = false;
+              wasCreator = true;
+              this.existingText = "";
+              this.existingAttachments = [];
+            });
+          }
         }
       });
     }
-
-    SchedulerBinding.instance!.addPostFrameCallback((_) {
-      if (widget.showSnackbar) {
-        showSnackbar('Warning',
-            'Support for creating chats is currently limited on MacOS 11 (Big Sur) and up due to limitations imposed by Apple');
-      }
-    });
-
-    // Bind the lifecycle events
-    WidgetsBinding.instance!.addObserver(this);
   }
 
   @override
@@ -202,7 +224,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused && mounted) {
-      debugPrint("Removing CurrentChat imageData");
+      Logger.info("Removing CurrentChat imageData");
       CurrentChat.activeChat?.imageData.clear();
     }
   }
@@ -247,6 +269,9 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         messageBloc = initMessageBloc();
         messageBloc!.getMessages();
       }
+      if (worker == null) {
+        initListener();
+      }
     } else {
       if (isDifferentChat) {
         initCurrentChat(chat!);
@@ -271,14 +296,6 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     } else if (chat != null) {
       // We include messageBloc here because the bloc listener may not be instantiated yet
       ActionHandler.sendMessage(chat!, text, messageBloc: messageBloc);
-    }
-
-    if (isCreator!) {
-      isCreator = false;
-      wasCreator = true;
-      this.existingText = "";
-      this.existingAttachments = [];
-      setState(() {});
     }
 
     return true;
@@ -376,10 +393,6 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     loadBrightness();
     currentChat?.isAlive = true;
 
-    if (widget.customMessageBloc != null && messageBloc == null) {
-      messageBloc = widget.customMessageBloc;
-    }
-
     if (messageBloc == null) {
       messageBloc = initMessageBloc();
       messageBloc!.getMessages();
@@ -407,187 +420,205 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         appBar: !isCreator!
             ? buildConversationViewHeader() as PreferredSizeWidget?
             : buildChatSelectorHeader() as PreferredSizeWidget?,
-        body: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: <Widget>[
-            if (isCreator!)
-              ChatSelectorTextField(
-                controller: chatSelectorController,
-                onRemove: (UniqueContact item) {
-                  if (item.isChat) {
-                    selected.removeWhere((e) => (e.chat?.guid ?? null) == item.chat!.guid);
-                  } else {
-                    selected.removeWhere((e) => e.address == item.address);
-                  }
-                  fetchCurrentChat();
-                  filterContacts();
-                  resetCursor();
-                  if (this.mounted) setState(() {});
-                },
-                onSelected: onSelected,
-                isCreator: widget.isCreator,
-                allContacts: contacts,
-                selectedContacts: selected,
-              ),
-            Obx(() {
-              if (!ChatBloc().hasChats.value) {
-                return Center(
-                  child: Container(
-                    padding: EdgeInsets.symmetric(vertical: 20.0),
-                    child: Column(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Text(
-                            "Loading existing chats...",
-                            style: Theme.of(context).textTheme.subtitle1,
+        body: Obx(() => MirrorAnimation<MultiTweenValues<String>>(
+          tween: ConversationViewMixin.gradientTween.value,
+          duration: Duration(seconds: 3),
+          builder: (context, child, anim) {
+            return Container(
+              decoration: ConversationViewMixin.color1.value != null
+                  && (searchQuery.length == 0 || !isCreator!)
+                  && chat != null
+                  && SettingsManager().settings.adjustBackground.value ? BoxDecoration(
+                  gradient: LinearGradient(
+                      begin: Alignment.topRight,
+                      end: Alignment.bottomLeft,
+                      stops: [anim.get("color1"), anim.get("color2")],
+                      colors: [AdaptiveTheme.of(context).mode == AdaptiveThemeMode.light ?
+                        ConversationViewMixin.color1.value!.lightenPercent(20) : ConversationViewMixin.color1.value!.darkenPercent(20), ConversationViewMixin.color2.value!]
+                  )
+              ) : null,
+              child: child,
+            );
+          },
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: <Widget>[
+              if (isCreator!)
+                ChatSelectorTextField(
+                  controller: chatSelectorController,
+                  onRemove: (UniqueContact item) {
+                    if (item.isChat) {
+                      selected.removeWhere((e) => (e.chat?.guid ?? null) == item.chat!.guid);
+                    } else {
+                      selected.removeWhere((e) => e.address == item.address);
+                    }
+                    fetchCurrentChat();
+                    filterContacts();
+                    resetCursor();
+                    if (this.mounted) setState(() {});
+                  },
+                  onSelected: onSelected,
+                  isCreator: widget.isCreator,
+                  allContacts: contacts,
+                  selectedContacts: selected,
+                ),
+              Obx(() {
+                if (!ChatBloc().hasChats.value) {
+                  return Center(
+                    child: Container(
+                      padding: EdgeInsets.symmetric(vertical: 20.0),
+                      child: Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text(
+                              "Loading existing chats...",
+                              style: Theme.of(context).textTheme.subtitle1,
+                            ),
                           ),
-                        ),
-                        buildProgressIndicator(context, size: 15),
-                      ],
-                    ),
-                  ),
-                );
-              } else
-                return SizedBox.shrink();
-            }),
-            Expanded(
-                child: Stack(
-                  children: [
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Expanded(
-                          child: Obx(
-                                () => fetchingCurrentChat.value
-                                ? Center(
-                              child: Container(
-                                padding: EdgeInsets.symmetric(vertical: 20.0),
-                                child: Column(
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Text(
-                                        "Loading chat...",
-                                        style: Theme.of(context).textTheme.subtitle1,
-                                      ),
-                                    ),
-                                    buildProgressIndicator(context, size: 15),
-                                  ],
-                                ),
-                              ),
-                            )
-                                : (searchQuery.length == 0 || !isCreator!) && chat != null
-                                ? GetBuilder<CurrentChat>(
-                                  init: CurrentChat(
-                                    chat: chat!,
-                                  ),
-                                  autoRemove: false,
-                                  initState: (state) {
-                                    ChatBloc().currentChatGuids.add(chat!.guid!);
-                                    CurrentChat.forGuid(chat!.guid!)?.isAlive = true;
-                                  },
-                                  dispose: (state) {
-                                    ChatBloc().currentChatGuids.remove(chat!.guid!);
-                                    CurrentChat.forGuid(chat!.guid!)?.isAlive = false;
-                                  },
-                                  tag: chat!.guid,
-                                  builder: (controller) => CurrentChatInheritedWidget(
-                                    currentChat: controller,
-                                    child: Stack(
-                                      alignment: Alignment.bottomCenter,
-                                      children: [
-                                        MessagesView(
-                                          key: new Key(chat?.guid ?? "unknown-chat"),
-                                          messageBloc: messageBloc!,
-                                          currentChat: controller,
-                                          showHandle: chat!.participants.length > 1,
-                                          chat: chat!,
-                                          initComplete: widget.onMessagesViewComplete,
-                                        ),
-                                        CurrentChat.forGuid(chat!.guid!) != null
-                                            ? Obx(() => AnimatedOpacity(
-                                          duration: Duration(milliseconds: 250),
-                                          opacity: CurrentChat.forGuid(chat!.guid!)!.showScrollDown.value ? 1 : 0,
-                                          curve: Curves.easeInOut,
-                                          child: buildScrollToBottomFAB(context),
-                                        ))
-                                            : Container(),
-                                      ],
-                                    ),
-                                  )
-                                )
-                                : buildChatSelectorBody(),
-                          ),
-                        ),
-                        widget.onSelect == null
-                            ? SettingsManager().settings.swipeToCloseKeyboard.value ||
-                            SettingsManager().settings.swipeToOpenKeyboard.value
-                            ? GestureDetector(
-                            onPanUpdate: (details) {
-                              if (SettingsManager().settings.swipeToCloseKeyboard.value &&
-                                  details.delta.dy > 0 &&
-                                  (currentChat?.keyboardOpen ?? false)) {
-                                EventDispatcher.instance.emit("unfocus-keyboard", null);
-                              } else if (SettingsManager().settings.swipeToOpenKeyboard.value &&
-                                  details.delta.dy < 0 &&
-                                  !(currentChat?.keyboardOpen ?? false)) {
-                                EventDispatcher.instance.emit("focus-keyboard", null);
-                              }
-                            },
-                            child: textField) : textField : Container(),
-                      ]
-                    ),
-                    AnimatedPositioned(
-                      duration: Duration(milliseconds: 300),
-                      bottom: message != null ? 62 + offset : 10 + offset,
-                      right: 5,
-                      curve: Curves.easeIn,
-                      onEnd: () {
-                        setState(() {
-                          tween = Tween<double>(begin: 1, end: 0);
-                          controller = CustomAnimationControl.stop;
-                          message = null;
-                        });
-                      },
-                      child: Visibility(
-                        visible: message != null,
-                        child: CustomAnimation<double>(
-                            control: controller,
-                            tween: tween,
-                            duration: Duration(milliseconds: 200),
-                            builder: (context, child, value) {
-                              return SentMessageHelper.buildMessageWithTail(
-                                context,
-                                message,
-                                true,
-                                false,
-                                message?.isBigEmoji() ?? false,
-                                currentChat: currentChat,
-                                customWidth: (message?.hasAttachments ?? false)
-                                    && (message?.text?.isEmpty ?? true) ? null : value,
-                                customColor: (message?.hasAttachments ?? false)
-                                    && (message?.text?.isEmpty ?? true) ?
-                                Colors.transparent : null,
-                                customContent: child,
-                              );
-                            },
-                            child: (message?.hasAttachments ?? false)
-                                && (message?.text?.isEmpty ?? true) ?
-                            MessageAttachments(
-                              message: message,
-                              showTail: true,
-                              showHandle: false,
-                            ) : null
-                        ),
+                          buildProgressIndicator(context, size: 15),
+                        ],
                       ),
                     ),
-                  ]
-                ),
-            ),
-          ],
-        ),
+                  );
+                } else
+                  return SizedBox.shrink();
+              }),
+              Expanded(
+                child: Stack(children: [
+                  Column(mainAxisAlignment: MainAxisAlignment.end, mainAxisSize: MainAxisSize.min, children: [
+                    Expanded(
+                      child: Obx(
+                            () => fetchingCurrentChat.value
+                            ? Center(
+                          child: Container(
+                            padding: EdgeInsets.symmetric(vertical: 20.0),
+                            child: Column(
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    "Loading chat...",
+                                    style: Theme.of(context).textTheme.subtitle1,
+                                  ),
+                                ),
+                                buildProgressIndicator(context, size: 15),
+                              ],
+                            ),
+                          ),
+                        )
+                            : (searchQuery.length == 0 || !isCreator!) && chat != null
+                            ? GetBuilder<CurrentChat>(
+                                init: CurrentChat(
+                                  chat: chat!,
+                                ),
+                                autoRemove: false,
+                                initState: (state) {
+                                  ChatBloc().currentChatGuids.add(chat!.guid!);
+                                  CurrentChat.forGuid(chat!.guid!)?.isAlive = true;
+                                },
+                                dispose: (state) {
+                                  ChatBloc().currentChatGuids.remove(chat!.guid!);
+                                  CurrentChat.forGuid(chat!.guid!)?.isAlive = false;
+                                },
+                                tag: chat!.guid,
+                                builder: (controller) => CurrentChatInheritedWidget(
+                                  currentChat: controller,
+                                  child: Stack(
+                                    alignment: Alignment.bottomCenter,
+                                    children: [
+                                      MessagesView(
+                                        key: new Key(chat?.guid ?? "unknown-chat"),
+                                        messageBloc: messageBloc!,
+                                        currentChat: controller,
+                                        showHandle: chat!.participants.length > 1,
+                                        chat: chat!,
+                                        initComplete: widget.onMessagesViewComplete,
+                                      ),
+                                      CurrentChat.forGuid(chat!.guid!) != null
+                                          ? Obx(() => AnimatedOpacity(
+                                        duration: Duration(milliseconds: 250),
+                                        opacity: CurrentChat.forGuid(chat!.guid!)!.showScrollDown.value ? 1 : 0,
+                                        curve: Curves.easeInOut,
+                                        child: buildScrollToBottomFAB(context),
+                                      ))
+                                          : Container(),
+                                    ],
+                                  ),
+                                )
+                            )
+                                : buildChatSelectorBody(),
+                      ),
+                    ),
+                    widget.onSelect == null
+                        ? SettingsManager().settings.swipeToCloseKeyboard.value ||
+                        SettingsManager().settings.swipeToOpenKeyboard.value
+                        ? GestureDetector(
+                        onPanUpdate: (details) {
+                          if (SettingsManager().settings.swipeToCloseKeyboard.value &&
+                              details.delta.dy > 0 &&
+                              (currentChat?.keyboardOpen ?? false)) {
+                            EventDispatcher.instance.emit("unfocus-keyboard", null);
+                          } else if (SettingsManager().settings.swipeToOpenKeyboard.value &&
+                              details.delta.dy < 0 &&
+                              !(currentChat?.keyboardOpen ?? false)) {
+                            EventDispatcher.instance.emit("focus-keyboard", null);
+                          }
+                        },
+                        child: textField) : textField : Container(),
+                  ]),
+                  AnimatedPositioned(
+                    duration: Duration(milliseconds: 300),
+                    bottom: message != null ? 62 + offset : 10 + offset,
+                    right: 5,
+                    curve: Curves.easeIn,
+                    onEnd: () {
+                      setState(() {
+                        tween = Tween<double>(begin: 1, end: 0);
+                        controller = CustomAnimationControl.stop;
+                        message = null;
+                        isCreator = false;
+                        wasCreator = true;
+                        this.existingText = "";
+                        this.existingAttachments = [];
+                      });
+                    },
+                    child: Visibility(
+                      visible: message != null,
+                      child: CustomAnimation<double>(
+                          control: controller,
+                          tween: tween,
+                          duration: Duration(milliseconds: 200),
+                          builder: (context, child, value) {
+                            return SentMessageHelper.buildMessageWithTail(
+                              context,
+                              message,
+                              true,
+                              false,
+                              message?.isBigEmoji() ?? false,
+                              currentChat: currentChat,
+                              customWidth:
+                              (message?.hasAttachments ?? false) && (message?.text?.isEmpty ?? true) ? null : value,
+                              customColor: (message?.hasAttachments ?? false) && (message?.text?.isEmpty ?? true)
+                                  ? Colors.transparent
+                                  : null,
+                              customContent: child,
+                            );
+                          },
+                          child: (message?.hasAttachments ?? false) && (message?.text?.isEmpty ?? true)
+                              ? MessageAttachments(
+                            message: message,
+                            showTail: true,
+                            showHandle: false,
+                          )
+                              : null),
+                    ),
+                  ),
+                ]),
+              ),
+            ],
+          ),
+        )),
         floatingActionButton: currentChat != null
             ? AnimatedOpacity(
                 duration: Duration(milliseconds: 250), opacity: 1, curve: Curves.easeInOut, child: buildFAB())

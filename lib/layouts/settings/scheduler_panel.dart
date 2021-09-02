@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
@@ -158,7 +159,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
                                         errors = [];
                                       });
                                     } else {
-                                      debugPrint("ERROR");
+                                      Logger.error("Error");
                                     }
                                   },
                                 ),

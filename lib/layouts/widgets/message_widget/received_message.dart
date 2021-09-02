@@ -15,6 +15,7 @@ import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/helpers/darty.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -226,8 +227,12 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
       messageColumn.add(
         Padding(
           padding: EdgeInsets.only(left: 15.0, top: 5.0, bottom: widget.message.getReactions().length > 0 ? 0.0 : 3.0),
-          child: Text(getContactName(context, contactTitle, widget.message.handle!.address),
-            style: Theme.of(context).textTheme.subtitle1, maxLines: 1, overflow: TextOverflow.ellipsis,),
+          child: Text(
+            getContactName(context, contactTitle, widget.message.handle!.address),
+            style: Theme.of(context).textTheme.subtitle1,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       );
       addedSender = true;
@@ -254,18 +259,17 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
       message = Padding(padding: EdgeInsets.only(left: 10.0), child: BalloonBundleWidget(message: widget.message));
     } else if (widget.message.hasText()) {
       message = _buildMessageWithTail(widget.message);
-      if (widget.message.hasUrl()) {
-        message = Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: EdgeInsets.only(left: 10.0),
-                child: widget.urlPreviewWidget,
-              ),
-              message,
-            ]
-        );
+      if (widget.message.fullText.replaceAll("\n", " ").hasUrl) {
+        message = widget.message.fullText.isURL ? Padding(
+          padding: EdgeInsets.only(left: 10.0),
+          child: widget.urlPreviewWidget,
+        ) : Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Padding(
+            padding: EdgeInsets.only(left: 10.0),
+            child: widget.urlPreviewWidget,
+          ),
+          message,
+        ]);
       }
     }
 
@@ -286,11 +290,18 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
 
     List<Widget> messagePopupColumn = List<Widget>.from(messageColumn);
     if (!addedSender && isGroup) {
-      messagePopupColumn.insert(0, Padding(
-        padding: EdgeInsets.only(left: 15.0, top: 5.0, bottom: widget.message.getReactions().length > 0 ? 0.0 : 3.0),
-        child: Text(getContactName(context, contactTitle, widget.message.handle!.address),
-          style: Theme.of(context).textTheme.subtitle1, maxLines: 1, overflow: TextOverflow.ellipsis,),
-      ));
+      messagePopupColumn.insert(
+          0,
+          Padding(
+            padding:
+                EdgeInsets.only(left: 15.0, top: 5.0, bottom: widget.message.getReactions().length > 0 ? 0.0 : 3.0),
+            child: Text(
+              getContactName(context, contactTitle, widget.message.handle!.address),
+              style: Theme.of(context).textTheme.subtitle1,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ));
     }
 
     // Now, let's create a row that will be the row with the following:

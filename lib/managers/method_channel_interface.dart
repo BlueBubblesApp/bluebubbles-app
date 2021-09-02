@@ -2,14 +2,17 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
+import 'dart:math';
 import 'dart:ui';
 
+import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
+import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/testing_mode.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/alarm_manager.dart';
@@ -20,11 +23,13 @@ import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:simple_animations/simple_animations.dart';
 
 /// [MethodChannelInterface] is a manager used to talk to native code via a flutter MethodChannel
 ///
@@ -43,6 +48,11 @@ class MethodChannelInterface {
 
   /// [headless] identifies if this MethodChannelInterface is used when the app is fully closed, in hich case some actions cannot be done
   bool headless = false;
+
+  bool isRunning = false;
+  Color? previousPrimary;
+  Color? previousLightBg;
+  Color? previousDarkBg;
 
   /// Initialize all of the platform channels
   ///
@@ -93,15 +103,18 @@ class MethodChannelInterface {
 
         return new Future.value("");
       case "new-message":
-        Logger.instance.log("Received new message from FCM");
+        Logger.info("Received new message from FCM");
         // Retreive the data for this message as a json
         Map<String, dynamic>? data = jsonDecode(call.arguments);
 
+        // send data to the UI thread if it is active, otherwise handle in the isolate
         final SendPort? send = IsolateNameServer.lookupPortByName('bg_isolate');
         if (send != null) {
+          Logger.info("Handling through SendPort");
           data!['action'] = 'new-message';
           send.send(data);
         } else {
+          Logger.info("Handling through IncomingQueue");
           // Add it to the queue with the data as the item
           IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_MESSAGE_EVENT, item: {"data": data}));
         }
@@ -111,6 +124,7 @@ class MethodChannelInterface {
         // Retreive the data for this message as a json
         Map<String, dynamic>? data = jsonDecode(call.arguments);
 
+        // send data to the UI thread if it is active, otherwise handle in the isolate
         final SendPort? send = IsolateNameServer.lookupPortByName('bg_isolate');
         if (send != null) {
           data!['action'] = 'new-message';
@@ -122,7 +136,7 @@ class MethodChannelInterface {
 
         return new Future.value("");
       case "ChatOpen":
-        debugPrint("Opening Chat with GUID: ${call.arguments}");
+        Logger.info("Opening Chat with GUID: ${call.arguments}");
         openChat(call.arguments);
 
         return new Future.value("");
@@ -183,7 +197,7 @@ class MethodChannelInterface {
         // Get the path to where the temp files are stored
         String sharedFilesPath = SettingsManager().sharedFilesPath;
 
-        debugPrint("shareAttachments " + sharedFilesPath);
+        Logger.info("shareAttachments " + sharedFilesPath);
 
         // Loop through all of the attachments sent by native code
         call.arguments["attachments"].forEach((element) {
@@ -268,6 +282,82 @@ class MethodChannelInterface {
       case "alarm-wake":
         AlarmManager().onReceiveAlarm(call.arguments["id"]);
         return new Future.value("");
+      case "media-colors":
+        if (!SettingsManager().settings.colorsFromMedia.value) return Future.value("");
+        final Color primary = Color(call.arguments['primary']);
+        final Color lightBg = Color(call.arguments['lightBg']);
+        final Color darkBg = Color(call.arguments['darkBg']);
+        final double primaryPercent = call.arguments['primaryPercent'];
+        final double lightBgPercent = call.arguments['lightBgPercent'];
+        final double darkBgPercent = call.arguments['darkBgPercent'];
+        if (Get.context != null &&
+            (!isRunning || primary != previousPrimary || lightBg != previousLightBg || darkBg != previousDarkBg)) {
+          previousPrimary = primary;
+          previousLightBg = lightBg;
+          previousDarkBg = darkBg;
+          isRunning = true;
+          if (SettingsManager().settings.adjustPrimary.value) {
+            print("primary color is $primary");
+            print("light bg color is $lightBg");
+            print("dark bg color is $darkBg");
+            var darkTheme = await ThemeObject.getDarkTheme();
+            var lightTheme = await ThemeObject.getLightTheme();
+            if (!darkTheme.isPreset) {
+              await darkTheme.fetchData();
+              var darkPrimaryEntry = darkTheme.entries.firstWhere((element) => element.name == "PrimaryColor");
+              var darkBgEntry = darkTheme.entries.firstWhere((element) => element.name == "BackgroundColor");
+              if (SettingsManager().settings.adjustPrimary.value) darkPrimaryEntry.color = primary;
+              if (SettingsManager().settings.adjustBackground.value) darkBgEntry.color = darkBg;
+              await SettingsManager().saveSelectedTheme(Get.context!, selectedDarkTheme: darkTheme);
+            }
+            if (!lightTheme.isPreset) {
+              await lightTheme.fetchData();
+              var lightPrimaryEntry = lightTheme.entries.firstWhere((element) => element.name == "PrimaryColor");
+              var lightBgEntry = lightTheme.entries.firstWhere((element) => element.name == "BackgroundColor");
+              if (SettingsManager().settings.adjustPrimary.value) lightPrimaryEntry.color = primary;
+              if (SettingsManager().settings.adjustBackground.value) lightBgEntry.color = lightBg;
+              await SettingsManager().saveSelectedTheme(Get.context!, selectedLightTheme: lightTheme);
+            }
+          }
+          if (SettingsManager().settings.adjustBackground.value) {
+            ConversationViewMixin.color1.value = primary;
+            if (AdaptiveTheme.of(Get.context!).mode == AdaptiveThemeMode.dark) {
+              ConversationViewMixin.color2.value = darkBg;
+              if (primaryPercent != 0.5 && darkBgPercent != 0.5) {
+                double difference = min((primaryPercent / (primaryPercent + darkBgPercent)), 1 - (primaryPercent / (primaryPercent + darkBgPercent)));
+                Tween color1 = Tween<double>(begin: 0, end: difference);
+                Tween color2 = Tween<double>(begin: 1 - difference, end: 1);
+                ConversationViewMixin.gradientTween.value = MultiTween<String>()
+                  ..add("color1", color1)
+                  ..add("color2", color2);
+              } else {
+                ConversationViewMixin.gradientTween.value = MultiTween<String>()
+                  ..add("color1", Tween<double>(begin: 0.0, end: 0.2))
+                  ..add("color2", Tween<double>(begin: 0.8, end: 1.0));
+              }
+            } else {
+              ConversationViewMixin.color2.value = lightBg;
+              if (primaryPercent != 0.5 && lightBgPercent != 0.5) {
+                double difference = min((primaryPercent / (primaryPercent + lightBgPercent)), 1 - (primaryPercent / (primaryPercent + lightBgPercent)));
+                Tween color1 = Tween<double>(begin: 0.0, end: difference);
+                Tween color2 = Tween<double>(begin: 1.0 - difference, end: 1.0);
+                ConversationViewMixin.gradientTween.value = MultiTween<String>()
+                  ..add("color1", color1)
+                  ..add("color2", color2);
+              } else {
+                ConversationViewMixin.gradientTween.value = MultiTween<String>()
+                  ..add("color1", Tween<double>(begin: 0.0, end: 0.2))
+                  ..add("color2", Tween<double>(begin: 0.8, end: 1.0));
+              }
+            }
+          }
+          isRunning = false;
+        }
+        return Future.value("");
+      case "remove-sendPort":
+        IsolateNameServer.removePortNameMapping('bg_isolate');
+        print("Removed sendPort because Activity was destroyed");
+        return Future.value("");
       default:
         return new Future.value("");
     }
@@ -277,7 +367,7 @@ class MethodChannelInterface {
   void closeThread() {
     // Only do this if we are indeed running in the background
     if (headless) {
-      debugPrint("(CloseThread) -> Closing the background isolate...");
+      Logger.info("Closing the background isolate...", tag: "MCI-CloseThread");
 
       // Tells the native code to close the isolate
       invokeMethod("close-background-isolate");
@@ -351,7 +441,7 @@ class MethodChannelInterface {
       await Future.delayed(Duration(milliseconds: 500));
       NotificationManager().switchChat(openedChat);
     } else {
-      debugPrint("(OpenChat) -> Failed to find chat");
+      Logger.warn("Failed to find chat", tag: "MCI-OpenChat");
     }
   }
 }

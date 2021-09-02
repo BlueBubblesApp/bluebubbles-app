@@ -21,10 +21,12 @@ import java.util.Map;
 
 import io.flutter.plugin.common.MethodChannel;
 
+import com.bluebubbles.messaging.helpers.HelperUtils;
+import com.bluebubbles.messaging.method_call_handler.handlers.NewMessageNotification;
+
 import static android.content.Context.NOTIFICATION_SERVICE;
 import static com.bluebubbles.messaging.MainActivity.CHANNEL;
 import static com.bluebubbles.messaging.MainActivity.engine;
-import com.bluebubbles.messaging.method_call_handler.handlers.NewMessageNotification;
 
 public class ReplyReceiver extends BroadcastReceiver {
 
@@ -85,13 +87,7 @@ public class ReplyReceiver extends BroadcastReceiver {
                 }
             }
 
-            // If there are no more notifications (only the group is left). Clear the group
-            StatusBarNotification[] notifications = manager.getActiveNotifications();
-            Log.d(TAG, "Leftover Notifications: " + notifications.length);
-            if (manager.getActiveNotifications().length == 1 && notifications[0].getId() == -1) {
-                Log.d(TAG, "Cancelling the notification group...");
-                notificationManager.cancel(-1);
-            }
+            HelperUtils.tryCancelNotificationSummary(context);
 
             // Build params to send to Dart for it to handle whatever it needs
             Map<String, Object> params = new HashMap<>();
@@ -115,6 +111,7 @@ public class ReplyReceiver extends BroadcastReceiver {
             }
         } else if (intent.getType().equals("swipeAway")) {
             existingId = intent.getExtras().getInt("id");
+
             // Clear the chat notification by finding the notification by Tag/ID and cancelling it
             NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
             NotificationManager manager = (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
@@ -124,13 +121,7 @@ public class ReplyReceiver extends BroadcastReceiver {
                 }
             }
 
-            // If there are no more notifications (only the group is left). Clear the group
-            StatusBarNotification[] notifications = manager.getActiveNotifications();
-            Log.d(TAG, "Leftover Notifications: " + notifications.length);
-            if (manager.getActiveNotifications().length == 1 && notifications[0].getId() == -1) {
-                Log.d(TAG, "Cancelling the notification group...");
-                notificationManager.cancel(-1);
-            }
+            HelperUtils.tryCancelNotificationSummary(context);
         }
     }
 }

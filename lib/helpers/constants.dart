@@ -1,17 +1,3 @@
-enum MessageError { NO_ERROR, TIMEOUT, NO_CONNECTION, BAD_REQUEST, SERVER_ERROR }
-
-extension MessageErrorExtension on MessageError {
-  static const codes = {
-    MessageError.NO_ERROR: 0,
-    MessageError.TIMEOUT: 4,
-    MessageError.NO_CONNECTION: 1000,
-    MessageError.BAD_REQUEST: 1001,
-    MessageError.SERVER_ERROR: 1002,
-  };
-
-  int get code => codes[this]!;
-}
-
 abstract class ThemeColors {
   static const String Headline1 = "Headline1";
   static const String Headline2 = "Headline2";
@@ -61,3 +47,6 @@ enum SecurityLevel {
   locked,
   locked_and_secured,
 }
+
+final urlRegex = new RegExp(
+    r"(?:^| )(((((H|h)(T|t)|(F|f))(T|t)(P|p)((S|s)?))\://)|www.)[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,6}(\:[0-9]{1,5})*(/($|[a-zA-Z0-9\.\,\;\?\'\\\+&amp;%\$#@!^*()\=~_\/-]+))*");

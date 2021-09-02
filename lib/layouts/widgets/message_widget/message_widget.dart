@@ -19,6 +19,7 @@ import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:bluebubbles/helpers/darty.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -156,8 +157,9 @@ class MessageWidgetController extends GetxController {
 
     // If this is a URL preview and we don't have attachments, we need to get them
     List<Attachment?> nullAttachments = message.getPreviewAttachments();
-    if (message.hasUrl() && nullAttachments.isEmpty && lastRequestCount != nullAttachments.length) {
-      lastRequestCount = nullAttachments.length;
+    if (message.fullText.replaceAll("\n", " ").hasUrl && nullAttachments.isEmpty) {
+      if (lastRequestCount != nullAttachments.length) {
+        lastRequestCount = nullAttachments.length;
 
       List<dynamic> msgs = (await SocketManager().getAttachments(currentChat!.chat.guid!, message.guid!)) ?? [];
       for (var msg in msgs) await ActionHandler.handleMessage(msg, forceProcess: true);

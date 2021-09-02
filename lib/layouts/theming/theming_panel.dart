@@ -8,6 +8,7 @@ import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/theming/theming_color_options_list.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -105,7 +106,7 @@ class _ThemingPanelState extends State<ThemingPanel> with TickerProviderStateMix
               streamController.sink.add(null);
             },
             child: Icon(
-              Icons.edit,
+              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.pencil : Icons.edit,
               color: Colors.white,
             ),
           ),
@@ -126,14 +127,14 @@ class _ThemingPanelState extends State<ThemingPanel> with TickerProviderStateMix
               Container(
                 child: Tab(
                   icon: Icon(
-                    Icons.brightness_high,
+                    SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.sun_max : Icons.brightness_high,
                     color: Theme.of(context).textTheme.bodyText1!.color,
                   ),
                 ),
               ),
               Tab(
                 icon: Icon(
-                  Icons.brightness_3,
+                  SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.moon : Icons.brightness_3,
                   color: Theme.of(context).textTheme.bodyText1!.color,
                 ),
               ),

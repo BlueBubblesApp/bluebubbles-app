@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
@@ -75,11 +76,10 @@ class ChatBloc {
     }
 
     chatRequest = new Completer<void>();
-
-    debugPrint("[ChatBloc] -> Fetching chats (${force ? 'forced' : 'normal'})...");
+    Logger.info("Fetching chats (${force ? 'forced' : 'normal'})...", tag: "ChatBloc");
 
     // Get the contacts in case we haven't
-    await ContactManager().getContacts();
+    if (ContactManager().contacts.isEmpty) await ContactManager().getContacts();
 
     if (_messageSubscription == null) {
       _messageSubscription = setupMessageListener();
@@ -205,7 +205,7 @@ class ChatBloc {
         icon = NotificationManager().defaultAvatar;
       }
     } catch (ex) {
-      debugPrint("Failed to load contact avatar: ${ex.toString()}");
+      Logger.error("Failed to load contact avatar: ${ex.toString()}");
     }
 
     // If we don't have a title, try to get it
@@ -264,13 +264,9 @@ class ChatBloc {
 
       for (Chat chat in chats) {
         newChats.add(chat);
-
         await initTileValsForChat(chat);
-      }
-
-      for (int i = 0; i < newChats.length; i++) {
-        if (isNullOrEmpty(newChats[i].participants)!) {
-          await newChats[i].getParticipants();
+        if (isNullOrEmpty(chat.participants)!) {
+          await chat.getParticipants();
         }
       }
 
@@ -280,7 +276,7 @@ class ChatBloc {
       }
     }
 
-    debugPrint("[ChatBloc] -> Finished fetching chats (${_chats.length}).");
+    Logger.info("Finished fetching chats (${_chats.length}).", tag: "ChatBloc");
     await updateAllShareTargets();
 
     if (chatRequest != null && !chatRequest!.isCompleted) {
@@ -322,12 +318,18 @@ class ChatBloc {
     final item = _chats.bigPinHelper(true)[oldIndex];
     if (newIndex > oldIndex) {
       newIndex = newIndex - 1;
-      _chats.bigPinHelper(true).where((p0) => p0.pinIndex.value != null && p0.pinIndex.value! <= newIndex).forEach((element) {
+      _chats
+          .bigPinHelper(true)
+          .where((p0) => p0.pinIndex.value != null && p0.pinIndex.value! <= newIndex)
+          .forEach((element) {
         element.pinIndex.value = element.pinIndex.value! - 1;
       });
       item.pinIndex.value = newIndex;
     } else {
-      _chats.bigPinHelper(true).where((p0) => p0.pinIndex.value != null && p0.pinIndex.value! >= newIndex).forEach((element) {
+      _chats
+          .bigPinHelper(true)
+          .where((p0) => p0.pinIndex.value != null && p0.pinIndex.value! >= newIndex)
+          .forEach((element) {
         element.pinIndex.value = element.pinIndex.value! + 1;
       });
       item.pinIndex.value = newIndex;
@@ -413,5 +415,19 @@ extension Helpers on RxList<Chat> {
           .where((e) => SettingsManager().settings.skin.value == Skins.iOS ? !(e.isPinned ?? false) : true)
           .toList()
           .obs;
+  }
+
+  RxList<Chat> unknownSendersHelper(bool unknown) {
+    if (!SettingsManager().settings.filterUnknownSenders.value) return this;
+    if (unknown)
+      return this
+          .where((e) => e.participants.length == 1
+          && ContactManager().handleToContact[e.participants[0].address] == null)
+          .toList().obs;
+    else
+      return this
+          .where((e) => e.participants.length > 1 || (e.participants.length == 1
+          && ContactManager().handleToContact[e.participants[0].address] != null))
+          .toList().obs;
   }
 }

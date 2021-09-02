@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/list/text_field_attachment_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/picker/text_field_attachment_picker.dart';
@@ -139,10 +140,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     EventDispatcher.instance.stream.listen((event) {
       if (!event.containsKey("type")) return;
       if (event["type"] == "unfocus-keyboard" && focusNode!.hasFocus) {
-        print("(EVENT) Unfocus Keyboard");
+        Logger.info("(EVENT) Unfocus Keyboard");
         focusNode!.unfocus();
       } else if (event["type"] == "focus-keyboard" && !focusNode!.hasFocus) {
-        print("(EVENT) Focus Keyboard");
+        Logger.info("(EVENT) Focus Keyboard");
         focusNode!.requestFocus();
       } else if (event["type"] == "text-field-update-attachments") {
         addSharedAttachments();
@@ -241,10 +242,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
   void onContentCommit(CommittedContent content) async {
     // Add some debugging logs
-    debugPrint("[Content Commit] Keyboard received content");
-    debugPrint("  -> Content Type: ${content.mimeType}");
-    debugPrint("  -> URI: ${content.uri}");
-    debugPrint("  -> Content Length: ${content.hasData ? content.data!.length : "null"}");
+    Logger.info("[Content Commit] Keyboard received content");
+    Logger.info("  -> Content Type: ${content.mimeType}");
+    Logger.info("  -> URI: ${content.uri}");
+    Logger.info("  -> Content Length: ${content.hasData ? content.data!.length : "null"}");
 
     // Parse the filename from the URI and read the data as a List<int>
     String filename = uriToFilename(content.uri, content.mimeType);
@@ -321,7 +322,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       await this.disposeCameras();
     }
 
-    debugPrint("[Camera Preview] -> Initializing camera preview");
+    Logger.info("[Camera Preview] -> Initializing camera preview");
 
     // Enumerate the cameras (if we don't have them)
     // We only need to do this once... it's not like it's gonna change very often
@@ -330,7 +331,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     }
 
     if (cameras.length == 0) {
-      debugPrint("[Camera Preview] -> No available cameras!");
+      Logger.info("[Camera Preview] -> No available cameras!");
       return;
     }
 
@@ -348,16 +349,16 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
     cameraState = CameraState.ACTIVE;
     if (this.mounted) setState(() {});
-    debugPrint("[Camera Preview] -> Finished initializing camera preview");
+    Logger.info("[Camera Preview] -> Finished initializing camera preview");
   }
 
   Future<void> disposeCameras() async {
-    debugPrint("[Camera Preview] -> Disposing camera preview");
+    Logger.info("[Camera Preview] -> Disposing camera preview");
     cameraState = CameraState.DISPOSING;
     await cameraController?.dispose();
     cameraController = null;
     cameraState = CameraState.INACTIVE;
-    debugPrint("[Camera Preview] -> Finished disposing camera preview");
+    Logger.info("[Camera Preview] -> Finished disposing camera preview");
   }
 
   Future<void> toggleShareMenu() async {
@@ -456,7 +457,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             child: Padding(
               padding: EdgeInsets.only(right: 1),
               child: Icon(
-                Icons.share,
+                SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.share : Icons.share,
                 color: Colors.white.withAlpha(225),
                 size: 20,
               ),
@@ -509,8 +510,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         }
       }
     } catch (ex) {
-      debugPrint("Error setting Text Field Placeholder!");
-      debugPrint(ex.toString());
+      Logger.error("Error setting Text Field Placeholder!");
+      Logger.error(ex.toString());
     }
 
     if (placeholder != this.placeholder.value) {
@@ -653,7 +654,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                 : Colors.white,
                         fontSizeDelta: -0.25,
                       ),
-                  onContentCommitted: onContentCommit,
+                  //onContentCommitted: onContentCommit,
                   decoration: InputDecoration(
                     isDense: true,
                     enabledBorder: OutlineInputBorder(
@@ -803,7 +804,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           if (sendCountdown != null) Text(sendCountdown.toString()),
           (SettingsManager().settings.skin.value == Skins.iOS)
               ? Container(
-                  constraints: BoxConstraints(maxWidth: 38, maxHeight: 37),
+                  constraints: BoxConstraints(maxWidth: 35, maxHeight: 34),
                   padding: EdgeInsets.only(right: 4, top: 2, bottom: 2),
                   child: ButtonTheme(
                     child: ElevatedButton(
@@ -815,6 +816,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(40),
                         ),
+                        elevation: 0
                       ),
                       onPressed: sendAction,
                       child: Stack(
@@ -824,16 +826,16 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                 opacity: sendCountdown == null && canRecord.value ? 1.0 : 0.0,
                                 duration: Duration(milliseconds: 150),
                                 child: Icon(
-                                  Icons.mic,
+                                  CupertinoIcons.waveform,
                                   color: (isRecording.value) ? Colors.red : Colors.white,
-                                  size: 20,
+                                  size: 22,
                                 ),
                               )),
                           Obx(() => AnimatedOpacity(
                                 opacity: (sendCountdown == null && !canRecord.value) && !isRecording.value ? 1.0 : 0.0,
                                 duration: Duration(milliseconds: 150),
                                 child: Icon(
-                                  Icons.arrow_upward,
+                                  CupertinoIcons.arrow_up,
                                   color: Colors.white,
                                   size: 20,
                                 ),
@@ -842,7 +844,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                             opacity: sendCountdown != null ? 1.0 : 0.0,
                             duration: Duration(milliseconds: 50),
                             child: Icon(
-                              Icons.cancel_outlined,
+                              CupertinoIcons.xmark_circle,
                               color: Colors.red,
                               size: 20,
                             ),

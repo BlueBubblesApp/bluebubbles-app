@@ -7,12 +7,14 @@ import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/metadata_helper.dart';
+import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:bluebubbles/helpers/darty.dart';
 import 'package:get/get.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/widgets.dart';
@@ -95,7 +97,8 @@ class Chat {
   String? chatIdentifier;
   bool? isArchived;
   bool? isFiltered;
-  bool? isMuted;
+  String? muteType;
+  String? muteArgs;
   bool? isPinned;
   bool? hasUnreadMessage;
   DateTime? latestMessageDate;
@@ -117,7 +120,8 @@ class Chat {
     this.isArchived,
     this.isFiltered,
     this.isPinned,
-    this.isMuted,
+    this.muteType,
+    this.muteArgs,
     this.hasUnreadMessage,
     this.displayName,
     String? customAvatar,
@@ -154,11 +158,8 @@ class Chat {
               ? json['isFiltered']
               : ((json['isFiltered'] == 1) ? true : false)
           : false,
-      isMuted: json.containsKey("isMuted")
-          ? (json["isMuted"] is bool)
-              ? json['isMuted']
-              : ((json['isMuted'] == 1) ? true : false)
-          : false,
+      muteType: json["muteType"],
+      muteArgs: json["muteArgs"],
       isPinned: json.containsKey("isPinned")
           ? (json["isPinned"] is bool)
               ? json['isPinned']
@@ -199,7 +200,8 @@ class Chat {
     if (existing != null) {
       this.id = existing.id;
       if (!updateLocalVals) {
-        this.isMuted = existing.isMuted;
+        this.muteType = existing.muteType;
+        this.muteArgs = existing.muteArgs;
         this.isPinned = existing.isPinned;
         this.isArchived = existing.isArchived;
         this.hasUnreadMessage = existing.hasUnreadMessage;
@@ -246,6 +248,47 @@ class Chat {
     return buildDate(this.latestMessageDate);
   }
 
+  Future<bool> shouldMuteNotification(Message? message) async {
+    if (SettingsManager().settings.filterUnknownSenders.value
+        && this.participants.length == 1
+        && ContactManager().handleToContact[this.participants[0].address] == null) {
+      return true;
+    } else if (SettingsManager().settings.globalTextDetection.value.isNotEmpty) {
+      List<String> text = SettingsManager().settings.globalTextDetection.value.split(",");
+      for (String s in text) {
+        if (message?.text?.toLowerCase().contains(s.toLowerCase()) ?? false) {
+          return false;
+        }
+      }
+      return true;
+    } else if (muteType == "mute") {
+      return true;
+    } else if (muteType == "mute_individuals") {
+      List<String> individuals = muteArgs!.split(",");
+      return individuals.contains(message?.handle?.address ?? "");
+    } else if (muteType == "temporary_mute") {
+      DateTime time = DateTime.parse(muteArgs!);
+      bool shouldMute = DateTime.now().toLocal().difference(time).inSeconds.isNegative;
+      if (!shouldMute) {
+        await this.toggleMute(false);
+        this.muteType = null;
+        this.muteArgs = null;
+        await this.update();
+      }
+      return shouldMute;
+    } else if (muteType == "text_detection") {
+      List<String> text = muteArgs!.split(",");
+      for (String s in text) {
+        if (message?.text?.toLowerCase().contains(s.toLowerCase()) ?? false) {
+          return false;
+        }
+      }
+      return true;
+    }
+    return !SettingsManager().settings.notifyReactions.value &&
+        ReactionTypes.toList().contains(message?.associatedMessageType ?? "");
+  }
+
   Future<Chat> update() async {
     final Database db = await DBProvider.db.database;
 
@@ -271,6 +314,8 @@ class Chat {
 
     params["customAvatarPath"] = this.customAvatarPath.value;
     params["pinIndex"] = this.pinIndex.value;
+    params["muteType"] = this.muteType;
+    params["muteArgs"] = this.muteArgs;
 
     // If it already exists, update it
     if (this.id != null) {
@@ -334,8 +379,8 @@ class Chat {
     } catch (ex, stacktrace) {
       newMessage = await Message.findOne({"guid": message.guid});
       if (newMessage == null) {
-        debugPrint(ex.toString());
-        debugPrint(stacktrace.toString());
+        Logger.error(ex.toString());
+        Logger.error(stacktrace.toString());
       }
     }
     bool isNewer = false;
@@ -399,7 +444,7 @@ class Chat {
     }
 
     // If this is a message preview and we don't already have metadata for this, get it
-    if (message.hasUrl() && !MetadataHelper.mapIsNotEmpty(message.metadata)) {
+    if (message.fullText.replaceAll("\n", " ").hasUrl && !MetadataHelper.mapIsNotEmpty(message.metadata)) {
       MetadataHelper.fetchMetadata(message).then((Metadata? meta) async {
         // If the metadata is empty, don't do anything
         if (!MetadataHelper.isNotEmpty(meta)) return;
@@ -534,7 +579,7 @@ class Chat {
       if (_getMessagesRequests.containsKey(req) && !_getMessagesRequests[req]!.isCompleted)
         _getMessagesRequests[req]!.complete(messages);
     } catch (ex) {
-      debugPrint(ex.toString());
+      Logger.error(ex.toString());
 
       if (_getMessagesRequests.containsKey(req) && !_getMessagesRequests[req]!.isCompleted)
         _getMessagesRequests[req]!.completeError(ex);
@@ -750,8 +795,9 @@ class Chat {
     final Database db = await DBProvider.db.database;
     if (this.id == null) return this;
 
-    this.isMuted = isMuted;
-    await db.update("chat", {"isMuted": isMuted ? 1 : 0}, where: "ROWID = ?", whereArgs: [this.id]);
+    this.muteType = isMuted ? "mute" : null;
+    this.muteArgs = null;
+    await db.update("chat", {"muteType": muteType, "muteArgs": muteArgs}, where: "ROWID = ?", whereArgs: [this.id]);
 
     ChatBloc().updateChat(this);
     return this;
@@ -813,7 +859,8 @@ class Chat {
       " chat.isFiltered as isFiltered,"
       " chat.isPinned as isPinned,"
       " chat.isArchived as isArchived,"
-      " chat.isMuted as isMuted,"
+      " chat.muteType as muteType,"
+      " chat.muteArgs as muteArgs,"
       " chat.hasUnreadMessage as hasUnreadMessage,"
       " chat.latestMessageDate as latestMessageDate,"
       " chat.latestMessageText as latestMessageText,"
@@ -865,8 +912,7 @@ class Chat {
   }
 
   static int sort(Chat? a, Chat? b) {
-    if (a!.pinIndex.value != null && b!.pinIndex.value != null)
-      return a.pinIndex.value!.compareTo(b.pinIndex.value!);
+    if (a!.pinIndex.value != null && b!.pinIndex.value != null) return a.pinIndex.value!.compareTo(b.pinIndex.value!);
     if (b!.pinIndex.value != null) return 1;
     if (a.pinIndex.value != null) return -1;
     if (!a.isPinned! && b.isPinned!) return 1;
@@ -890,7 +936,8 @@ class Chat {
         "chatIdentifier": chatIdentifier,
         "isArchived": isArchived! ? 1 : 0,
         "isFiltered": isFiltered! ? 1 : 0,
-        "isMuted": isMuted! ? 1 : 0,
+        "muteType": muteType,
+        "muteArgs": muteArgs,
         "isPinned": isPinned! ? 1 : 0,
         "displayName": displayName,
         "participants": participants.map((item) => item.toMap()),

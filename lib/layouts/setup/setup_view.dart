@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/layouts/setup/battery_optimization/battery_optimization.dart';
 import 'package:bluebubbles/layouts/setup/connecting_alert/failed_to_connect_dialog.dart';
 import 'package:bluebubbles/layouts/setup/prepare_to_download/prepare_to_download.dart';
@@ -47,7 +48,7 @@ class _SetupViewState extends State<SetupView> {
             );
             break;
           default:
-            debugPrint("Default case: " + event.toString());
+            Logger.info("Default case: " + event.toString());
             break;
         }
       }

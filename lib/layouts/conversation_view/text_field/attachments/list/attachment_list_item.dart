@@ -2,10 +2,12 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:path/path.dart' as path;
@@ -154,7 +156,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
             Align(
               alignment: Alignment.bottomRight,
               child: Icon(
-                Icons.play_arrow,
+                SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.play : Icons.play_arrow,
                 color: Colors.white,
               ),
             ),
@@ -170,7 +172,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
                 width: 25,
                 height: 25,
                 child: Icon(
-                  Icons.close,
+                  SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.xmark : Icons.close,
                   color: Colors.white,
                   size: 15,
                 ),

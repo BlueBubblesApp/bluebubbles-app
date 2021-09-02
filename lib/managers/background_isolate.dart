@@ -24,23 +24,15 @@ abstract class BackgroundIsolateInterface {
   }
 }
 
-/// This function is called from Java when the [FlutterEngine] is null
-void callbackHandler() async {
+callbackHandler() async {
+  // can't use logger here
   debugPrint("(ISOLATE) Starting up...");
-  // we initialize the [MethodChannel] to receive new messages from Java
   MethodChannel _backgroundChannel = MethodChannel("com.bluebubbles.messaging");
   WidgetsFlutterBinding.ensureInitialized();
-  // don't run this if the app is active to avoid double-initializing our managers
-  if (!Get.isRegistered<LifeCycleManager>() || !LifeCycleManager.instance.isAlive) {
-    await DBProvider.db.initDB();
-    await SettingsManager().init();
-    await SettingsManager().getSavedSettings();
-    Get.put(AttachmentDownloadService());
-    Get.put(Logger());
-    Get.put(EventDispatcher());
-    Get.put(LifeCycleManager());
-    await ContactManager().getContacts(headless: true);
-    MethodChannelInterface().init(customChannel: _backgroundChannel);
-    await SocketManager().refreshConnection(connectToSocket: false);
-  }
+  await DBProvider.db.initDB();
+  await SettingsManager().init();
+  await SettingsManager().getSavedSettings(headless: true);
+  await ContactManager().getContacts(headless: true);
+  MethodChannelInterface().init(customChannel: _backgroundChannel);
+  await SocketManager().refreshConnection(connectToSocket: false);
 }

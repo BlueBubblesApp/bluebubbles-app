@@ -3,8 +3,11 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
@@ -14,6 +17,8 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart' as fln;
+import 'package:timezone/timezone.dart' as tz;
 
 class NotificationVisibility {
   // ignore: non_constant_identifier_names
@@ -89,11 +94,50 @@ class NotificationManager {
   /// Creates notification channel for android
   /// This is done through native code and all of this data is hard coded for now
   Future<void> createNotificationChannel(String channelID, String channelName, String channelDescription) async {
+    List<String> sounds = ["twig.wav", "walrus.wav", "sugarfree.wav", "raspberry.wav"];
     await MethodChannelInterface().invokeMethod("create-notif-channel", {
       "channel_name": channelName,
       "channel_description": channelDescription,
       "CHANNEL_ID": channelID,
     });
+    if (channelID.contains("new_messages")) {
+      sounds.forEach((s) async {
+        await MethodChannelInterface().invokeMethod("create-notif-channel", {
+          "channel_name": channelName,
+          "channel_description": channelDescription,
+          "CHANNEL_ID": channelID + "_$s",
+          "sound": s,
+        });
+      });
+    }
+  }
+
+  Future<void> scheduleNotification(Chat chat, Message message, DateTime time) async {
+    // Get a title as best as we can
+    String? chatTitle = await chat.getTitle();
+    bool isGroup = chat.isGroup();
+
+    // If we couldn't get a chat title, generate placeholder names
+    if (chatTitle == null) {
+      chatTitle = isGroup ? 'Group Chat' : 'iMessage Chat';
+    }
+    await flutterLocalNotificationsPlugin!.zonedSchedule(
+        Random().nextInt(9998) + 1,
+        'Reminder: $chatTitle',
+        await MessageHelper.getNotificationText(message),
+        tz.TZDateTime.from(time, tz.local),
+        fln.NotificationDetails(
+            android: fln.AndroidNotificationDetails(
+          "com.bluebubbles.reminders",
+          'Reminders',
+          'Message reminder notifications',
+          priority: fln.Priority.max,
+          importance: fln.Importance.max,
+          color: HexColor("4990de"),
+        )),
+        payload: await MessageHelper.getNotificationText(message),
+        androidAllowWhileIdle: true,
+        uiLocalNotificationDateInterpretation: fln.UILocalNotificationDateInterpretation.absoluteTime);
   }
 
   /// Creates a notification by sending to native code
@@ -121,7 +165,7 @@ class NotificationManager {
   /// @param [contact] optional parameter of the contact of the message
   Future<void> createNotificationFromMessage(Chat chat, Message message, int visibility) async {
     // sanity check to make sure we don't notify if the chat is muted
-    if (chat.isMuted ?? false) return;
+    if (await chat.shouldMuteNotification(message)) return;
     Uint8List? contactIcon;
 
     // Get the contact name if the message is not from you
@@ -158,14 +202,14 @@ class NotificationManager {
         contactIcon = defaultAvatar;
       }
     } catch (ex) {
-      debugPrint("Failed to load contact avatar: ${ex.toString()}");
+      Logger.error("Failed to load contact avatar: ${ex.toString()}");
     }
 
     try {
       // Try to update the share targets
       await ChatBloc().updateShareTarget(chat);
     } catch (ex) {
-      debugPrint("Failed to update share target! Error: ${ex.toString()}");
+      Logger.error("Failed to update share target! Error: ${ex.toString()}");
     }
 
     // Get a title as best as we can
@@ -177,8 +221,18 @@ class NotificationManager {
       chatTitle = isGroup ? 'Group Chat' : 'iMessage Chat';
     }
 
-    await createNewMessageNotification(chat.guid!, isGroup, chatTitle, contactIcon, contactName, contactIcon, messageText,
-        message.dateCreated ?? DateTime.now(), message.isFromMe ?? false, visibility, chat.id ?? Random().nextInt(9998) + 1);
+    await createNewMessageNotification(
+        chat.guid!,
+        isGroup,
+        chatTitle,
+        contactIcon,
+        contactName,
+        contactIcon,
+        messageText,
+        message.dateCreated ?? DateTime.now(),
+        message.isFromMe ?? false,
+        visibility,
+        chat.id ?? Random().nextInt(9998) + 1);
   }
 
   Future<void> createNewMessageNotification(
@@ -194,7 +248,10 @@ class NotificationManager {
       int visibility,
       int summaryId) async {
     await MethodChannelInterface().platform.invokeMethod("new-message-notification", {
-      "CHANNEL_ID": NEW_MESSAGE_CHANNEL,
+      "CHANNEL_ID": NEW_MESSAGE_CHANNEL +
+          (SettingsManager().settings.notificationSound.value == "default"
+              ? ""
+              : ("_" + SettingsManager().settings.notificationSound.value)),
       "CHANNEL_NAME": "New Messages",
       "notificationId": Random().nextInt(9998) + 1,
       "summaryId": summaryId,
@@ -207,7 +264,8 @@ class NotificationManager {
       "messageText": messageText,
       "messageDate": messageDate.millisecondsSinceEpoch,
       "messageIsFromMe": messageIsFromMe,
-      "visibility": visibility
+      "visibility": visibility,
+      "sound": SettingsManager().settings.notificationSound.value,
     });
   }
 

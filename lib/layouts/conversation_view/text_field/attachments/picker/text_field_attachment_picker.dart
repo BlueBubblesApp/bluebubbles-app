@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/picker/attachment_picked.dart';
@@ -9,6 +10,7 @@ import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
 
@@ -122,7 +124,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
                                           Padding(
                                             padding: const EdgeInsets.all(8.0),
                                             child: Icon(
-                                              Icons.video_library,
+                                              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.folder_open : Icons.folder_open,
                                               color: Theme.of(context).textTheme.bodyText1!.color,
                                             ),
                                           ),
@@ -197,7 +199,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
                                           Padding(
                                             padding: const EdgeInsets.all(8.0),
                                             child: Icon(
-                                              Icons.location_on,
+                                              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.location : Icons.location_on,
                                               color: Theme.of(context).textTheme.bodyText1!.color,
                                             ),
                                           ),
@@ -245,7 +247,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
                                           Padding(
                                             padding: const EdgeInsets.all(8.0),
                                             child: Icon(
-                                              Icons.photo_camera,
+                                              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.camera : Icons.photo_camera,
                                               color: Theme.of(context).textTheme.bodyText1!.color,
                                             ),
                                           ),
@@ -284,7 +286,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
                                           Padding(
                                             padding: const EdgeInsets.all(8.0),
                                             child: Icon(
-                                              Icons.videocam,
+                                              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.videocam : Icons.videocam,
                                               color: Theme.of(context).textTheme.bodyText1!.color,
                                             ),
                                           ),

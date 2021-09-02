@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
@@ -136,7 +137,7 @@ class MetadataHelper {
       try {
         data = await MetadataFetch.extract(url);
       } catch (ex) {
-        debugPrint('An error occurred while fetching URL Preview Metadata: ${ex.toString()}');
+        Logger.error('An error occurred while fetching URL Preview Metadata: ${ex.toString()}');
       }
     }
 
@@ -156,6 +157,8 @@ class MetadataHelper {
     String imageData = data?.image ?? "";
     if (imageData.contains("renderTimingPixel.png") || imageData.contains("fls-na.amazon.com")) {
       data?.image = null;
+    } else if (imageData.startsWith('//')) {
+      data?.image = 'https:$imageData';
     }
 
     // Remove title or description if either are the "null" string
@@ -200,7 +203,7 @@ class MetadataHelper {
       document = parser.parse(response.body.toString());
       document.requestUrl = response.request!.url.toString();
     } catch (err) {
-      debugPrint("Error parsing HTML document: ${err.toString()}");
+      Logger.error("Error parsing HTML document: ${err.toString()}");
       return document;
     }
 
@@ -238,7 +241,7 @@ class MetadataHelper {
       meta.title = 'Invalid SSL Certificate';
       meta.description = ex.message;
     } catch (ex) {
-      debugPrint('Failed to manually get metadata: ${ex.toString()}');
+      Logger.error('Failed to manually get metadata: ${ex.toString()}');
     }
 
     return meta;

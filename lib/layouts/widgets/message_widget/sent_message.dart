@@ -21,6 +21,7 @@ import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/helpers/darty.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -39,7 +40,8 @@ class SentMessageHelper {
         ? Theme.of(context).primaryColor.darkenAmount(0.2)
         : Theme.of(context).primaryColor;
 
-    final bool hideContent = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideEmojis.value;
+    final bool hideContent =
+        SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideEmojis.value;
 
     Widget msg;
     bool hasReactions = (message?.getReactions() ?? []).length > 0;
@@ -47,21 +49,18 @@ class SentMessageHelper {
 
     if (message?.isBigEmoji() ?? false) {
       // this stack is necessary for layouting width properly
-      msg = Stack(
-        alignment: AlignmentDirectional.bottomEnd,
-        children: [
-          LayoutBuilder(
-              builder: (_, constraints) {
-                return Container(
-                  width: customWidth != null ? constraints.maxWidth : null,
-                  child: Padding(
-                    padding: EdgeInsets.only(
-                      left: (hasReactions) ? 15.0 : 0.0,
-                      top: (hasReactions) ? 15.0 : 0.0,
-                      right: 5,
-                    ),
-                    child: hideContent
-                        ? ClipRRect(
+      msg = Stack(alignment: AlignmentDirectional.bottomEnd, children: [
+        LayoutBuilder(builder: (_, constraints) {
+          return Container(
+            width: customWidth != null ? constraints.maxWidth : null,
+            child: Padding(
+              padding: EdgeInsets.only(
+                left: (hasReactions) ? 15.0 : 0.0,
+                top: (hasReactions) ? 15.0 : 0.0,
+                right: 5,
+              ),
+              child: hideContent
+                  ? ClipRRect(
                       borderRadius: BorderRadius.circular(25.0),
                       child: Container(
                           width: 70,
@@ -75,16 +74,14 @@ class SentMessageHelper {
                             ),
                           )),
                     )
-                        : Text(
+                  : Text(
                       message!.text!,
                       style: Theme.of(context).textTheme.bodyText2!.apply(fontSizeFactor: 4),
                     ),
-                  ),
-                );
-              }
-          )
-        ]
-      );
+            ),
+          );
+        })
+      ]);
     } else {
       msg = Stack(
         alignment: AlignmentDirectional.bottomEnd,
@@ -243,7 +240,7 @@ class SentMessageHelper {
               },
             );
           },
-          child: Icon(Icons.error_outline, color: Colors.red),
+          child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.exclamationmark_circle : Icons.error_outline, color: Colors.red),
         ),
       );
     }
@@ -324,18 +321,17 @@ class SentMessage extends StatelessWidget {
           ),
         );
       }
-      if (message.hasUrl()) {
-        messageWidget = Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Padding(
-              padding: EdgeInsets.only(right: 5.0),
-              child: urlPreviewWidget,
-            ),
-            messageWidget,
-          ]
-        );
+      if (message.fullText.replaceAll("\n", " ").hasUrl) {
+        messageWidget = message.fullText.isURL ? Padding(
+          padding: EdgeInsets.only(right: 5.0),
+          child: urlPreviewWidget,
+        ) : Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [
+              Padding(
+                padding: EdgeInsets.only(right: 5.0),
+                child: urlPreviewWidget,
+              ),
+              messageWidget,
+        ]);
       }
     }
 

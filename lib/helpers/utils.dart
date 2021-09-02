@@ -9,6 +9,7 @@ import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/country_codes.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
@@ -22,6 +23,7 @@ import 'package:collection/collection.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:convert/convert.dart';
 import 'package:device_info/device_info.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -273,7 +275,7 @@ extension DateHelpers on DateTime {
   }
 }
 
-String? sanitizeString(String? input) {
+String sanitizeString(String? input) {
   if (input == null) return "";
   input = input.replaceAll(String.fromCharCode(65532), '');
   return input;
@@ -283,10 +285,10 @@ bool isEmptyString(String? input, {stripWhitespace = false}) {
   if (input == null) return true;
   input = sanitizeString(input);
   if (stripWhitespace) {
-    input = input!.trim();
+    input = input.trim();
   }
 
-  return input!.isEmpty;
+  return input.isEmpty;
 }
 
 bool isParticipantEvent(Message message) {
@@ -368,9 +370,7 @@ Future<MemoryImage?> loadAvatar(Chat chat, Handle? handle) async {
 }
 
 List<RegExpMatch> parseLinks(String text) {
-  RegExp exp = new RegExp(
-      r"(?:^| )((((H|h)(T|t)|(F|f))(T|t)(P|p)((S|s)?))\://)?(www.|[a-zA-Z0-9].)[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,6}(\:[0-9]{1,5})*(/($|[a-zA-Z0-9\.\,\;\?\'\\\+&amp;%\$#\=~_\/-]+))*");
-  return exp.allMatches(text).toList();
+  return urlRegex.allMatches(text).toList();
 }
 
 String getSizeString(double size) {
@@ -457,8 +457,8 @@ Size getGifDimensions(Uint8List bytes) {
   hexString += hex.encode(bytes.sublist(8, 9));
   int height = int.parse(hexString, radix: 16);
 
-  debugPrint("GIF width: $width");
-  debugPrint("GIF height: $height");
+  Logger.debug("GIF width: $width");
+  Logger.debug("GIF height: $height");
   Size size = new Size(width.toDouble(), height.toDouble());
   return size;
 }
@@ -511,8 +511,8 @@ Future<String> getDeviceName() async {
       deviceName = items.join("_").toLowerCase();
     }
   } catch (ex) {
-    debugPrint("Failed to get device name! Defaulting to 'android-client'");
-    debugPrint(ex.toString());
+    Logger.error("Failed to get device name! Defaulting to 'android-client'");
+    Logger.error(ex.toString());
   }
 
   // Fallback for if it happens to be empty or null, somehow... idk
@@ -651,4 +651,8 @@ extension PlatformSpecificCapitalize on String {
       return this;
     }
   }
+}
+
+extension LastChars on String {
+  String lastChars(int n) => substring(length - n);
 }

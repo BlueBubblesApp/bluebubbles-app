@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:collection/collection.dart';
 import 'package:contacts_service/contacts_service.dart';
@@ -62,7 +63,7 @@ class ChatSelectorTextField extends StatelessWidget {
                     ),
                     InkWell(
                         child: Icon(
-                      Icons.close,
+                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.xmark : Icons.close,
                       size: 15.0,
                     ))
                   ],
