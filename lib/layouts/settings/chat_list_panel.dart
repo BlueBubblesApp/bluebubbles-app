@@ -290,7 +290,10 @@ class ChatListPanel extends StatelessWidget {
                   //       "Set the order for your pinned chats",
                   //       backgroundColor: tileColor,
                   //       onTap: () {
-                  //         Get.toNamed("/settings/pinned-order-panel");
+                  //         CustomNavigator.pushSettings(
+                  //           context,
+                  //           PinnedOrderPanel(),
+                  //         );
                   //       },
                   //       trailing: Icon(
                   //         SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.chevron_right : Icons.arrow_forward,

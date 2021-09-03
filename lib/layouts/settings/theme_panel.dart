@@ -4,9 +4,12 @@ import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/layouts/settings/custom_avatar_color_panel.dart';
+import 'package:bluebubbles/layouts/settings/custom_avatar_panel.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
@@ -261,7 +264,11 @@ class ThemePanel extends GetView<ThemePanelController> {
                       title: "Custom Avatar Colors",
                       trailing: nextIcon,
                       onTap: () async {
-                        Get.toNamed("/settings/custom-avatar-color-panel");
+                        CustomNavigator.pushSettings(
+                          context,
+                          CustomAvatarColorPanel(),
+                          binding: CustomAvatarColorPanelBinding(),
+                        );
                       },
                       backgroundColor: tileColor,
                       subtitle: "Customize the color for different avatars",
@@ -277,7 +284,11 @@ class ThemePanel extends GetView<ThemePanelController> {
                       title: "Custom Avatars",
                       trailing: nextIcon,
                       onTap: () async {
-                        Get.toNamed("/settings/custom-avatar-panel");
+                        CustomNavigator.pushSettings(
+                          context,
+                          CustomAvatarPanel(),
+                          binding: CustomAvatarPanelBinding(),
+                        );
                       },
                       backgroundColor: tileColor,
                       subtitle: "Customize the avatar for different chats",

@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:get/get.dart';
@@ -275,21 +276,17 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                               children: [
                                 ListTile(
                                   onTap: () {
-                                    Navigator.of(context).push(
-                                      CupertinoPageRoute(
-                                        builder: (BuildContext context) {
-                                          MessageBloc customBloc = new MessageBloc(chat, canLoadMore: false);
-
-                                          return ConversationView(
-                                            chat: chat,
-                                            existingAttachments: [],
-                                            existingText: null,
-                                            isCreator: false,
-                                            customMessageBloc: customBloc,
-                                            onMessagesViewComplete: () {
-                                              customBloc.loadSearchChunk(message);
-                                            },
-                                          );
+                                    MessageBloc customBloc = new MessageBloc(chat, canLoadMore: false);
+                                    CustomNavigator.push(
+                                      context,
+                                      ConversationView(
+                                        chat: chat,
+                                        existingAttachments: [],
+                                        existingText: null,
+                                        isCreator: false,
+                                        customMessageBloc: customBloc,
+                                        onMessagesViewComplete: () {
+                                          customBloc.loadSearchChunk(message);
                                         },
                                       ),
                                     );
