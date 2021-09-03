@@ -39,6 +39,7 @@ class Settings {
   final RxBool recipientAsPlaceholder = false.obs;
   final RxBool hideKeyboardOnScroll = false.obs;
   final RxBool moveChatCreatorToHeader = false.obs;
+  final RxBool cameraFAB = false.obs;
   final RxBool swipeToCloseKeyboard = false.obs;
   final RxBool swipeToOpenKeyboard = false.obs;
   final RxBool openKeyboardOnSTB = false.obs;
@@ -95,6 +96,7 @@ class Settings {
   // Security settings
   final RxBool shouldSecure = RxBool(false);
   final Rx<SecurityLevel> securityLevel = Rx<SecurityLevel>(SecurityLevel.locked);
+  final RxBool incognitoKeyboard = RxBool(false);
 
   final Rx<Skins> skin = Skins.iOS.obs;
   final Rx<ThemeMode> theme = ThemeMode.system.obs;
@@ -179,6 +181,8 @@ class Settings {
         settings.swipeToCloseKeyboard.value = entry.value;
       } else if (entry.name == "moveChatCreatorToHeader") {
         settings.moveChatCreatorToHeader.value = entry.value;
+      } else if (entry.name == "cameraFAB") {
+        settings.cameraFAB.value = entry.value;
       } else if (entry.name == "openKeyboardOnSTB") {
         settings.openKeyboardOnSTB.value = entry.value;
       } else if (entry.name == "swipableConversationTiles") {
@@ -251,6 +255,8 @@ class Settings {
         settings.shouldSecure.value = entry.value;
       } else if (entry.name == "securityLevel") {
         settings.securityLevel.value = SecurityLevel.values[entry.value];
+      } else if (entry.name == "incognitoKeyboard") {
+        settings.incognitoKeyboard.value = entry.value;
       } else if (entry.name == "pinRowsPortrait") {
         settings.pinRowsPortrait.value = entry.value;
       } else if (entry.name == "maxAvatarsInGroupWidget") {
@@ -462,6 +468,11 @@ class Settings {
           type: this.moveChatCreatorToHeader.runtimeType,
         ),
         ConfigEntry(
+          name: "cameraFAB",
+          value: this.cameraFAB.value,
+          type: this.cameraFAB.runtimeType,
+        ),
+        ConfigEntry(
           name: "swipeToCloseKeyboard",
           value: this.swipeToCloseKeyboard.value,
           type: this.swipeToCloseKeyboard.runtimeType,
@@ -653,6 +664,11 @@ class Settings {
           type: this.securityLevel.value.index.runtimeType,
         ),
         ConfigEntry(
+          name: "incognitoKeyboard",
+          value: this.incognitoKeyboard.value,
+          type: this.incognitoKeyboard.runtimeType,
+        ),
+        ConfigEntry(
           name: "pinRowsPortrait",
           value: this.pinRowsPortrait.value,
           type: this.pinRowsPortrait.value.runtimeType,
@@ -725,6 +741,7 @@ class Settings {
       'recipientAsPlaceholder': this.recipientAsPlaceholder.value,
       'hideKeyboardOnScroll': this.hideKeyboardOnScroll.value,
       'moveChatCreatorToHeader': this.moveChatCreatorToHeader.value,
+      'cameraFAB': this.cameraFAB.value,
       'swipeToCloseKeyboard': this.swipeToCloseKeyboard.value,
       'swipeToOpenKeyboard': this.swipeToOpenKeyboard.value,
       'openKeyboardOnSTB': this.openKeyboardOnSTB.value,
@@ -768,6 +785,7 @@ class Settings {
       'materialLeftAction': this.materialLeftAction.value.index,
       'shouldSecure': this.shouldSecure.value,
       'securityLevel': this.securityLevel.value.index,
+      'incognitoKeyboard': this.incognitoKeyboard.value,
       'skin': this.skin.value.index,
       'theme': this.theme.value.index,
       'fullscreenViewerSwipeDir': this.fullscreenViewerSwipeDir.value.index,
@@ -805,6 +823,7 @@ class Settings {
     SettingsManager().settings.recipientAsPlaceholder.value = map['recipientAsPlaceholder'];
     SettingsManager().settings.hideKeyboardOnScroll.value = map['hideKeyboardOnScroll'];
     SettingsManager().settings.moveChatCreatorToHeader.value = map['moveChatCreatorToHeader'];
+    SettingsManager().settings.cameraFAB.value = map['cameraFAB'];
     SettingsManager().settings.swipeToCloseKeyboard.value = map['swipeToCloseKeyboard'];
     SettingsManager().settings.swipeToOpenKeyboard.value = map['swipeToOpenKeyboard'];
     SettingsManager().settings.openKeyboardOnSTB.value = map['openKeyboardOnSTB'];
@@ -848,6 +867,7 @@ class Settings {
     SettingsManager().settings.materialLeftAction.value = MaterialSwipeAction.values[map['materialLeftAction']];
     SettingsManager().settings.shouldSecure.value = map['shouldSecure'];
     SettingsManager().settings.securityLevel.value = SecurityLevel.values[map['securityLevel']];
+    SettingsManager().settings.incognitoKeyboard.value = map['incognitoKeyboard'];
     SettingsManager().settings.skin.value = Skins.values[map['skin']];
     SettingsManager().settings.theme.value = ThemeMode.values[map['theme']];
     SettingsManager().settings.fullscreenViewerSwipeDir.value = SwipeDirection.values[map['fullscreenViewerSwipeDir']];

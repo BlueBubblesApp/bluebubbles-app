@@ -232,6 +232,7 @@ class CustomCupertinoTextField extends StatefulWidget {
   ///    characters" and how it may differ from the intuitive meaning.
   const CustomCupertinoTextField({
     Key? key,
+    this.enableIMEPersonalizedLearning = true,
     this.controller,
     this.focusNode,
     this.decoration = _kDefaultRoundedBorderDecoration,
@@ -376,6 +377,7 @@ class CustomCupertinoTextField extends StatefulWidget {
   ///    characters" and how it may differ from the intuitive meaning.
   const CustomCupertinoTextField.borderless({
     Key? key,
+    this.enableIMEPersonalizedLearning = true,
     this.controller,
     this.focusNode,
     this.decoration,
@@ -759,6 +761,8 @@ class CustomCupertinoTextField extends StatefulWidget {
   /// {@macro flutter.material.textfield.restorationId}
   final String? restorationId;
 
+  final bool enableIMEPersonalizedLearning;
+
   @override
   _CustomCupertinoTextFieldState createState() => _CustomCupertinoTextFieldState();
 
@@ -805,6 +809,7 @@ class CustomCupertinoTextField extends StatefulWidget {
     properties.add(DiagnosticsProperty<ScrollPhysics>('scrollPhysics', scrollPhysics, defaultValue: null));
     properties.add(EnumProperty<TextAlign>('textAlign', textAlign, defaultValue: TextAlign.start));
     properties.add(DiagnosticsProperty<TextAlignVertical>('textAlignVertical', textAlignVertical, defaultValue: null));
+    properties.add(DiagnosticsProperty<bool>('enableIMEPersonalizedLearning', enableIMEPersonalizedLearning, defaultValue: true));
   }
 }
 
@@ -1147,6 +1152,7 @@ class _CustomCupertinoTextFieldState extends State<CustomCupertinoTextField>
         child: UnmanagedRestorationScope(
           bucket: bucket,
           child: EditableText(
+            enableIMEPersonalizedLearning: widget.enableIMEPersonalizedLearning,
             key: editableTextKey,
             controller: controller,
             readOnly: widget.readOnly,
