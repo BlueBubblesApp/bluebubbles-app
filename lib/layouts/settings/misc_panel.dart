@@ -260,16 +260,16 @@ class MiscPanel extends StatelessWidget {
                         child: SettingsDivider(color: headerColor),
                       ),
                     ),
-                  Obx(() => SettingsSwitch(
-                    onChanged: (bool val) async {
-                      SettingsManager().settings.incognitoKeyboard.value = val;
-                      saveSettings();
-                    },
-                    initialVal: SettingsManager().settings.incognitoKeyboard.value,
-                    title: "Incognito Keyboard",
-                    subtitle: "Disables keyboard suggestions and prevents the keyboard from learning or storing any words you type in the message text field",
-                    backgroundColor: tileColor,
-                  )),
+                  // Obx(() => SettingsSwitch(
+                  //   onChanged: (bool val) async {
+                  //     SettingsManager().settings.incognitoKeyboard.value = val;
+                  //     saveSettings();
+                  //   },
+                  //   initialVal: SettingsManager().settings.incognitoKeyboard.value,
+                  //   title: "Incognito Keyboard",
+                  //   subtitle: "Disables keyboard suggestions and prevents the keyboard from learning or storing any words you type in the message text field",
+                  //   backgroundColor: tileColor,
+                  // )),
                   SettingsHeader(
                       headerColor: headerColor,
                       tileColor: tileColor,
