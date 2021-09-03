@@ -135,6 +135,7 @@ class ThemePanel extends GetView<ThemePanelController> {
                       onChanged: (val) {
                         if (val == null) return;
                         AdaptiveTheme.of(context).setThemeMode(val);
+                        controller.update();
                       },
                       options: AdaptiveThemeMode.values,
                       textProcessing: (val) => val.toString().split(".").last,
@@ -215,40 +216,6 @@ class ThemePanel extends GetView<ThemePanelController> {
                       backgroundColor: tileColor,
                       subtitle: "Pull app colors from currently playing media. Note: Requires full notification access & a custom theme to be set",
                     )),
-                    Obx(() => controller._settingsCopy.colorsFromMedia.value ? Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
-                      ),
-                    ) : Container()),
-                    Obx(() => controller._settingsCopy.colorsFromMedia.value ? SettingsSwitch(
-                      onChanged: (bool val) async {
-                        controller._settingsCopy.adjustPrimary.value = val;
-                        saveSettings();
-                      },
-                      initialVal: controller._settingsCopy.adjustPrimary.value,
-                      title: "Adjust Primary Color from Media",
-                      backgroundColor: tileColor,
-                      subtitle: "Pull primary color from currently playing media",
-                    ) : Container()),
-                    Obx(() => controller._settingsCopy.colorsFromMedia.value ? Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
-                      ),
-                    ) : Container()),
-                    Obx(() => controller._settingsCopy.colorsFromMedia.value ? SettingsSwitch(
-                      onChanged: (bool val) async {
-                        controller._settingsCopy.adjustBackground.value = val;
-                        saveSettings();
-                      },
-                      initialVal: controller._settingsCopy.adjustBackground.value,
-                      title: "Adjust Background Color from Media",
-                      backgroundColor: tileColor,
-                      subtitle: "Pull background color from currently playing media",
-                    ) : Container()),
                     Container(
                       color: tileColor,
                       child: Padding(

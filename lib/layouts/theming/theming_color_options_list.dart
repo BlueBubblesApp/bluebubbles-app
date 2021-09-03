@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/theming/theming_color_selector.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
@@ -163,6 +164,24 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                   ],
                 ),
               ),
+              if (!currentTheme!.isPreset)
+                SliverToBoxAdapter(
+                    child: SettingsSwitch(
+                      onChanged: (bool val) async {
+                        currentTheme!.gradientBg = val;
+                        await currentTheme!.save();
+                        if (widget.isDarkMode) {
+                          SettingsManager().saveSelectedTheme(context, selectedDarkTheme: currentTheme);
+                        } else {
+                          SettingsManager().saveSelectedTheme(context, selectedLightTheme: currentTheme);
+                        }
+                      },
+                      initialVal: currentTheme!.gradientBg,
+                      title: "Gradient Message View Background",
+                      backgroundColor: tileColor,
+                      subtitle: "Make the background of the messages view an animated gradient based on the background color and the primary color",
+                    )
+                ),
               SliverGrid(
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {

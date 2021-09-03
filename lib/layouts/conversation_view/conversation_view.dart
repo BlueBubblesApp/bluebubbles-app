@@ -29,6 +29,7 @@ import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -93,10 +94,13 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   bool wasCreator = false;
   GlobalKey key = GlobalKey();
   Worker? worker;
+  final RxBool adjustBackground = RxBool(false);
 
   @override
   void initState() {
     super.initState();
+
+    getAdjustBackground();
 
     this.selected = widget.selected.isEmpty ? [] : widget.selected;
     this.existingAttachments = widget.existingAttachments.isEmpty ? [] : widget.existingAttachments;
@@ -165,6 +169,17 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     WidgetsBinding.instance!.addObserver(this);
   }
 
+  void getAdjustBackground() async {
+    var lightTheme = await ThemeObject.getLightTheme();
+    var darkTheme = await ThemeObject.getDarkTheme();
+    if ((lightTheme.gradientBg && !ThemeObject.inDarkMode(Get.context!))
+        || (darkTheme.gradientBg && ThemeObject.inDarkMode(Get.context!))) {
+      adjustBackground.value = true;
+    } else {
+      adjustBackground.value = false;
+    }
+  }
+
   void initListener() {
     if (messageBloc != null) {
       worker = ever<MessageBlocEvent?>(messageBloc!.event, (event) async {
@@ -214,6 +229,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   void didChangeDependencies() async {
     super.didChangeDependencies();
     didChangeDependenciesConversationView();
+    getAdjustBackground();
   }
 
   /// Called when the app is either closed or opened or paused
@@ -419,19 +435,19 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
             : buildChatSelectorHeader() as PreferredSizeWidget?,
         body: Obx(() => MirrorAnimation<MultiTweenValues<String>>(
           tween: ConversationViewMixin.gradientTween.value,
+          curve: Curves.fastOutSlowIn,
           duration: Duration(seconds: 3),
           builder: (context, child, anim) {
             return Container(
-              decoration: ConversationViewMixin.color1.value != null
-                  && (searchQuery.length == 0 || !isCreator!)
+              decoration: (searchQuery.length == 0 || !isCreator!)
                   && chat != null
-                  && SettingsManager().settings.adjustBackground.value ? BoxDecoration(
+                  && adjustBackground.value ? BoxDecoration(
                   gradient: LinearGradient(
                       begin: Alignment.topRight,
                       end: Alignment.bottomLeft,
                       stops: [anim.get("color1"), anim.get("color2")],
                       colors: [AdaptiveTheme.of(context).mode == AdaptiveThemeMode.light ?
-                        ConversationViewMixin.color1.value!.lightenPercent(20) : ConversationViewMixin.color1.value!.darkenPercent(20), ConversationViewMixin.color2.value!]
+                        Theme.of(context).primaryColor.lightenPercent(20) : Theme.of(context).primaryColor.darkenPercent(20), Theme.of(context).backgroundColor]
                   )
               ) : null,
               child: child,

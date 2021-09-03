@@ -14,9 +14,11 @@ enum LightThemes {
 
 class Themes {
   static List<ThemeObject> get themes => [
-        ThemeObject.fromData(oledDarkTheme, "OLED Dark", isPreset: true),
-        ThemeObject.fromData(whiteLightTheme, "Bright White", isPreset: true),
-        ThemeObject.fromData(nordDarkTheme, "Nord Theme", isPreset: true),
+        ThemeObject.fromData(oledDarkTheme, "OLED Dark"),
+        ThemeObject.fromData(whiteLightTheme, "Bright White"),
+        ThemeObject.fromData(nordDarkTheme, "Nord Theme"),
+        ThemeObject.fromData(whiteLightTheme, "Music Theme (Light)", gradientBg: true),
+        ThemeObject.fromData(oledDarkTheme, "Music Theme (Dark)", gradientBg: true),
       ];
 }
 

@@ -68,8 +68,6 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
   TextEditingController chatSelectorController = new TextEditingController(text: " ");
 
-  static Rxn<Color> color1 = Rxn<Color>();
-  static Rxn<Color> color2 = Rxn<Color>();
   static Rx<MultiTween<String>> gradientTween = Rx<MultiTween<String>>(
       MultiTween<String>()
         ..add("color1", Tween<double>(begin: 0, end: 0.2))
