@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
-import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/socket_singletons.dart';
@@ -13,7 +12,6 @@ import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reactions_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/typing_indicator.dart';
-import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -371,97 +369,98 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
           right: 10,
           bottom: 10,
         ),
-        child: Obx(
-          () {
-            int colCount = SettingsManager().settings.pinColumnsPortrait.value;
-            if (context.mediaQuery.orientation != Orientation.portrait) {
-              colCount = (colCount / context.mediaQuerySize.height * context.mediaQuerySize.width).floor();
-            }
-            int spaceBetween = (colCount - 1) * 20;
-            int spaceAround = 20;
-
-            // Great math right here
-            double maxWidth = ((context.mediaQuerySize.width - spaceBetween - spaceAround) / colCount).floorToDouble();
-            return ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: maxWidth,
-              ),
-              child: Stack(
-                clipBehavior: Clip.none,
-                alignment: Alignment.center,
-                children: <Widget>[
-                  Column(
-                    children: [
-                      ContactAvatarGroupWidget(
-                        chat: widget.chat,
-                        size: (context.mediaQueryShortestSide - 150) / 3,
-                        editable: false,
-                        onTap: this.onTapUpBypass,
+        child: LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints constraints) {
+            return Obx(
+              () {
+                // Great math right here
+                double availableWidth = constraints.maxWidth;
+                int colCount = SettingsManager().settings.pinColumnsPortrait.value;
+                double spaceBetween = (colCount - 1) * 10;
+                double spaceAround = 20;
+                double maxWidth = ((availableWidth - spaceBetween - spaceAround) / colCount).floorToDouble();
+                return ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: maxWidth,
+                  ),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    alignment: Alignment.center,
+                    children: <Widget>[
+                      Column(
+                        children: [
+                          ContactAvatarGroupWidget(
+                            chat: widget.chat,
+                            size: (availableWidth - 150) / 3,
+                            editable: false,
+                            onTap: this.onTapUpBypass,
+                          ),
+                          Container(
+                            padding: EdgeInsets.only(
+                              top: 10,
+                              left: 10,
+                              right: 10,
+                            ),
+                            child: buildSubtitle(),
+                          ),
+                        ],
                       ),
-                      Container(
-                        padding: EdgeInsets.only(
-                          top: 10,
-                          left: 10,
-                          right: 10,
+                      StreamBuilder<Map<String, dynamic>>(
+                        stream: CurrentChat.getCurrentChat(widget.chat)?.stream as Stream<Map<String, dynamic>>?,
+                        builder: (BuildContext context, AsyncSnapshot snapshot) {
+                          if (snapshot.connectionState == ConnectionState.active &&
+                              snapshot.hasData &&
+                              snapshot.data["type"] == CurrentChatEvent.TypingStatus) {
+                            showTypingIndicator.value = snapshot.data["data"];
+                          }
+                          if (showTypingIndicator.value) {
+                            return Positioned(
+                              top: -11,
+                              right: -13,
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(maxHeight: 32),
+                                child: FittedBox(
+                                  child: TypingIndicator(
+                                    visible: true,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+                          return Container();
+                        },
+                      ),
+                      FutureBuilder<Message>(
+                        future: widget.chat.latestMessage,
+                        builder: (BuildContext context, AsyncSnapshot snapshot) {
+                          if (!(widget.chat.hasUnreadMessage ?? false)) return Container();
+                          if (showTypingIndicator.value) return Container();
+                          if (!snapshot.hasData) return Container();
+                          Message message = snapshot.data;
+                          if ([null, ""].contains(message.associatedMessageGuid) || (message.isFromMe ?? false)) {
+                            return Container();
+                          }
+                          return Positioned(
+                            top: -12,
+                            right: -8,
+                            child: ReactionsWidget(
+                              associatedMessages: [message],
+                              bigPin: true,
+                            ),
+                          );
+                        },
+                      ),
+                      Positioned(
+                        bottom: 20,
+                        width: maxWidth,
+                        child: PinnedTileTextBubble(
+                          chat: widget.chat,
                         ),
-                        child: buildSubtitle(),
                       ),
                     ],
                   ),
-                  StreamBuilder<Map<String, dynamic>>(
-                    stream: CurrentChat.getCurrentChat(widget.chat)?.stream as Stream<Map<String, dynamic>>?,
-                    builder: (BuildContext context, AsyncSnapshot snapshot) {
-                      if (snapshot.connectionState == ConnectionState.active &&
-                          snapshot.hasData &&
-                          snapshot.data["type"] == CurrentChatEvent.TypingStatus) {
-                        showTypingIndicator.value = snapshot.data["data"];
-                      }
-                      if (showTypingIndicator.value) {
-                        return Positioned(
-                          top: -11,
-                          right: -13,
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(maxHeight: 32),
-                            child: FittedBox(
-                              child: TypingIndicator(
-                                visible: true,
-                              ),
-                            ),
-                          ),
-                        );
-                      }
-                      return Container();
-                    },
-                  ),
-                  FutureBuilder<Message>(
-                    future: widget.chat.latestMessage,
-                    builder: (BuildContext context, AsyncSnapshot snapshot) {
-                      if (!(widget.chat.hasUnreadMessage ?? false)) return Container();
-                      if (showTypingIndicator.value) return Container();
-                      if (!snapshot.hasData) return Container();
-                      Message message = snapshot.data;
-                      if ([null, ""].contains(message.associatedMessageGuid) || (message.isFromMe ?? false)) {
-                        return Container();
-                      }
-                      return Positioned(
-                        top: -12,
-                        right: -8,
-                        child: ReactionsWidget(
-                          associatedMessages: [message],
-                          bigPin: true,
-                        ),
-                      );
-                    },
-                  ),
-                  Positioned(
-                    bottom: 20,
-                    width: maxWidth,
-                    child: PinnedTileTextBubble(
-                      chat: widget.chat,
-                    ),
-                  ),
-                ],
-              ),
+                );
+              },
             );
           },
         ),

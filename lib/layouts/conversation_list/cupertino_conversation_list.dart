@@ -29,19 +29,18 @@ class CupertinoConversationList extends StatefulWidget {
 
   @override
   State<StatefulWidget> createState() => CupertinoConversationListState();
-
 }
 
 class CupertinoConversationListState extends State<CupertinoConversationList> {
   final key = new GlobalKey<NavigatorState>();
-  
+
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: context.theme.backgroundColor, // navigation bar color
         systemNavigationBarIconBrightness:
-        context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+            context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: buildForDevice(context),
@@ -66,8 +65,9 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                 stream: widget.parent.headerColorStream.stream,
                 builder: (context, snapshot) {
                   return AnimatedCrossFade(
-                    crossFadeState:
-                    widget.parent.theme == Colors.transparent ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+                    crossFadeState: widget.parent.theme == Colors.transparent
+                        ? CrossFadeState.showFirst
+                        : CrossFadeState.showSecond,
                     duration: Duration(milliseconds: 250),
                     secondChild: AppBar(
                       iconTheme: IconThemeData(color: context.theme.primaryColor),
@@ -79,7 +79,11 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: <Widget>[
                           Text(
-                            showArchived ? "Archive" : showUnknown ? "Unknown Senders" : "Messages",
+                            showArchived
+                                ? "Archive"
+                                : showUnknown
+                                    ? "Unknown Senders"
+                                    : "Messages",
                             style: context.textTheme.bodyText1,
                           ),
                         ],
@@ -105,9 +109,10 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
           slivers: <Widget>[
             SliverAppBar(
               leading: ((SettingsManager().settings.skin.value == Skins.iOS && (showArchived || showUnknown)) ||
-                  (SettingsManager().settings.skin.value == Skins.Material ||
-                      SettingsManager().settings.skin.value == Skins.Samsung) &&
-                      !showArchived && !showUnknown)
+                      (SettingsManager().settings.skin.value == Skins.Material ||
+                              SettingsManager().settings.skin.value == Skins.Samsung) &&
+                          !showArchived &&
+                          !showUnknown)
                   ? buildBackButton(context)
                   : new Container(),
               stretch: true,
@@ -152,10 +157,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                                       height: 20,
                                       child: Icon(CupertinoIcons.search, color: context.theme.primaryColor, size: 12)),
                                   onTap: () async {
-                                    CustomNavigator.pushLeft(
-                                      context,
-                                      SearchView()
-                                    );
+                                    CustomNavigator.pushLeft(context, SearchView());
                                   },
                                 ),
                               ),
@@ -175,11 +177,13 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                                 ),
                               ),
                             ),
-                          if (SettingsManager().settings.moveChatCreatorToHeader.value
-                              && SettingsManager().settings.cameraFAB.value) Container(width: 10.0),
-                          if (SettingsManager().settings.moveChatCreatorToHeader.value
-                              && SettingsManager().settings.cameraFAB.value
-                              && !showArchived && !showUnknown)
+                          if (SettingsManager().settings.moveChatCreatorToHeader.value &&
+                              SettingsManager().settings.cameraFAB.value)
+                            Container(width: 10.0),
+                          if (SettingsManager().settings.moveChatCreatorToHeader.value &&
+                              SettingsManager().settings.cameraFAB.value &&
+                              !showArchived &&
+                              !showUnknown)
                             ClipOval(
                               child: Material(
                                 color: context.theme.accentColor, // button color
@@ -196,7 +200,8 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                                     await file.create(recursive: true);
 
                                     // Take the picture after opening the camera
-                                    await MethodChannelInterface().invokeMethod("open-camera", {"path": file.path, "type": "camera"});
+                                    await MethodChannelInterface()
+                                        .invokeMethod("open-camera", {"path": file.path, "type": "camera"});
 
                                     // If we don't get data back, return outta here
                                     if (!file.existsSync()) return;
@@ -240,7 +245,12 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
             //   ),
             // ),
             Obx(() {
-              if (ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).bigPinHelper(true).isEmpty) {
+              if (ChatBloc()
+                  .chats
+                  .archivedHelper(showArchived)
+                  .unknownSendersHelper(showUnknown)
+                  .bigPinHelper(true)
+                  .isEmpty) {
                 return SliverToBoxAdapter(child: Container());
               }
               ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).sort(Chat.sort);
@@ -249,10 +259,12 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                   ? SettingsManager().settings.pinRowsPortrait.value
                   : SettingsManager().settings.pinRowsLandscape.value;
               int colCount = SettingsManager().settings.pinColumnsPortrait.value;
-              if (context.mediaQuery.orientation != Orientation.portrait) {
-                colCount = (colCount / context.mediaQuerySize.height * context.mediaQuerySize.width).floor();
-              }
-              int pinCount = ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).bigPinHelper(true).length;
+              int pinCount = ChatBloc()
+                  .chats
+                  .archivedHelper(showArchived)
+                  .unknownSendersHelper(showUnknown)
+                  .bigPinHelper(true)
+                  .length;
               int usedRowCount = min((pinCount / colCount).ceil(), rowCount);
               int maxOnPage = rowCount * colCount;
               PageController _controller = PageController();
@@ -265,59 +277,71 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                   bottom: 10,
                 ),
                 sliver: SliverToBoxAdapter(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxHeight: (context.mediaQuerySize.width + 30) / colCount * usedRowCount,
-                    ),
-                    child: Stack(
-                      alignment: Alignment.bottomCenter,
-                      children: <Widget>[
-                        PageView.builder(
-                          physics: BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                          scrollDirection: Axis.horizontal,
-                          controller: _controller,
-                          itemBuilder: (context, index) {
-                            return Wrap(
-                              crossAxisAlignment: WrapCrossAlignment.center,
-                              alignment: _pageCount > 1 ? WrapAlignment.start : WrapAlignment.center,
-                              children: List.generate(
-                                index < _filledPageCount
-                                    ? maxOnPage
-                                    : ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).bigPinHelper(true).length %
-                                    maxOnPage,
-                                    (_index) {
-                                  return PinnedConversationTile(
-                                    key: Key(ChatBloc()
-                                        .chats
-                                        .archivedHelper(showArchived).unknownSendersHelper(showUnknown)
-                                        .bigPinHelper(true)[index * maxOnPage + _index]
-                                        .guid
-                                        .toString()),
-                                    chat: ChatBloc()
-                                        .chats
-                                        .archivedHelper(showArchived).unknownSendersHelper(showUnknown)
-                                        .bigPinHelper(true)[index * maxOnPage + _index],
-                                  );
-                                },
-                              ),
-                            );
-                          },
-                          itemCount: _pageCount,
-                        ),
-                        if (_pageCount > 1)
-                          SmoothPageIndicator(
+                  child: LayoutBuilder(
+                    builder: (BuildContext context, BoxConstraints constraints) => ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: (constraints.maxWidth) / colCount * usedRowCount,
+                      ),
+                      child: Stack(
+                        alignment: Alignment.bottomCenter,
+                        children: <Widget>[
+                          PageView.builder(
+                            physics: BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                            scrollDirection: Axis.horizontal,
                             controller: _controller,
-                            count: _pageCount,
-                            effect: ScaleEffect(
-                              dotHeight: 5.0,
-                              dotWidth: 5.0,
-                              spacing: 5.0,
-                              radius: 5.0,
-                              scale: 1.5,
-                              activeDotColor: context.theme.primaryColor,
-                            ),
+                            itemBuilder: (context, index) {
+                              return Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 10),
+                                child: Wrap(
+                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                  alignment: _pageCount > 1 ? WrapAlignment.start : WrapAlignment.center,
+                                  children: List.generate(
+                                    index < _filledPageCount
+                                        ? maxOnPage
+                                        : ChatBloc()
+                                                .chats
+                                                .archivedHelper(showArchived)
+                                                .unknownSendersHelper(showUnknown)
+                                                .bigPinHelper(true)
+                                                .length %
+                                            maxOnPage,
+                                    (_index) {
+                                      return PinnedConversationTile(
+                                        key: Key(ChatBloc()
+                                            .chats
+                                            .archivedHelper(showArchived)
+                                            .unknownSendersHelper(showUnknown)
+                                            .bigPinHelper(true)[index * maxOnPage + _index]
+                                            .guid
+                                            .toString()),
+                                        chat: ChatBloc()
+                                            .chats
+                                            .archivedHelper(showArchived)
+                                            .unknownSendersHelper(showUnknown)
+                                            .bigPinHelper(true)[index * maxOnPage + _index],
+                                      );
+                                    },
+                                  ),
+                                ),
+                              );
+                            },
+                            itemCount: _pageCount,
                           ),
-                      ],
+                          if (_pageCount > 1)
+                            SmoothPageIndicator(
+                              controller: _controller,
+                              count: _pageCount,
+                              effect: ScaleEffect(
+                                dotHeight: 5.0,
+                                dotWidth: 5.0,
+                                spacing: 5.0,
+                                radius: 5.0,
+                                scale: 1.5,
+                                activeDotColor: context.theme.primaryColor,
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -352,7 +376,11 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                     child: Container(
                       padding: EdgeInsets.only(top: 50.0),
                       child: Text(
-                        showArchived ? "You have no archived chats :(" : showUnknown ? "You have no messages from unknown senders :)" : "You have no chats :(",
+                        showArchived
+                            ? "You have no archived chats :("
+                            : showUnknown
+                                ? "You have no messages from unknown senders :)"
+                                : "You have no chats :(",
                         style: Theme.of(context).textTheme.subtitle1,
                       ),
                     ),
@@ -362,72 +390,87 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
 
               return SliverList(
                 delegate: SliverChildBuilderDelegate(
-                      (context, index) {
+                  (context, index) {
                     return ConversationTile(
-                      key: Key(
-                          ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).bigPinHelper(false)[index].guid.toString()),
-                      chat: ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).bigPinHelper(false)[index],
+                      key: Key(ChatBloc()
+                          .chats
+                          .archivedHelper(showArchived)
+                          .unknownSendersHelper(showUnknown)
+                          .bigPinHelper(false)[index]
+                          .guid
+                          .toString()),
+                      chat: ChatBloc()
+                          .chats
+                          .archivedHelper(showArchived)
+                          .unknownSendersHelper(showUnknown)
+                          .bigPinHelper(false)[index],
                     );
                   },
-                  childCount: ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).bigPinHelper(false).length,
+                  childCount: ChatBloc()
+                      .chats
+                      .archivedHelper(showArchived)
+                      .unknownSendersHelper(showUnknown)
+                      .bigPinHelper(false)
+                      .length,
                 ),
               );
             }),
           ],
         ),
-        floatingActionButton:
-        !SettingsManager().settings.moveChatCreatorToHeader.value ? widget.parent.buildFloatingActionButton() : null,
+        floatingActionButton: !SettingsManager().settings.moveChatCreatorToHeader.value
+            ? widget.parent.buildFloatingActionButton()
+            : null,
       ),
     );
   }
 
   Widget buildForLandscape(BuildContext context, Widget chatList) {
     return VerticalSplitView(
-        dividerWidth: 10.0,
-        initialRatio: 0.4,
-        minRatio: 0.33,
-        maxRatio: 0.5,
-        allowResize: true,
-        left: LayoutBuilder(
-          builder: (context, constraints) {
-            CustomNavigator.maxWidthLeft = constraints.maxWidth;
-            return WillPopScope(
-              onWillPop: () async {
-                Get.back(id: 1);
-                return false;
-              },
-              child: Navigator(
-                key: Get.nestedKey(1),
-                onPopPage: (route, _) {
-                  return false;
-                },
-                pages: [CupertinoPage(name: "initial", child: chatList)],
-              ),
-            );
-          }
-        ),
-        right: LayoutBuilder(
-          builder: (context, constraints) {
-            CustomNavigator.maxWidthRight = constraints.maxWidth;
-            return WillPopScope(
-              onWillPop: () async {
-                Get.back(id: 2);
-                return false;
-              },
-              child: Navigator(
-                key: Get.nestedKey(2),
-                onPopPage: (route, _) {
-                  return false;
-                },
-                pages: [CupertinoPage(name: "initial", child: Center(
-                  child: Container(
-                      child: Text("Select a chat from the list", style: Theme.of(Get.context!).textTheme.subtitle1!.copyWith(fontSize: 18))
-                  ),
-                ))],
-              ),
-            );
-          }
-        ),
+      dividerWidth: 10.0,
+      initialRatio: 0.4,
+      minRatio: 0.33,
+      maxRatio: 0.5,
+      allowResize: true,
+      left: LayoutBuilder(builder: (context, constraints) {
+        CustomNavigator.maxWidthLeft = constraints.maxWidth;
+        return WillPopScope(
+          onWillPop: () async {
+            Get.back(id: 1);
+            return false;
+          },
+          child: Navigator(
+            key: Get.nestedKey(1),
+            onPopPage: (route, _) {
+              return false;
+            },
+            pages: [CupertinoPage(name: "initial", child: chatList)],
+          ),
+        );
+      }),
+      right: LayoutBuilder(builder: (context, constraints) {
+        CustomNavigator.maxWidthRight = constraints.maxWidth;
+        return WillPopScope(
+          onWillPop: () async {
+            Get.back(id: 2);
+            return false;
+          },
+          child: Navigator(
+            key: Get.nestedKey(2),
+            onPopPage: (route, _) {
+              return false;
+            },
+            pages: [
+              CupertinoPage(
+                  name: "initial",
+                  child: Center(
+                    child: Container(
+                        child: Text("Select a chat from the list",
+                            style: Theme.of(Get.context!).textTheme.subtitle1!.copyWith(fontSize: 18))),
+                  ))
+            ],
+          ),
+        );
+      }),
     );
   }
 
