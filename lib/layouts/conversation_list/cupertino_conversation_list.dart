@@ -56,7 +56,11 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
         appBar: PreferredSize(
           preferredSize: Size(
             (showAltLayout) ? CustomNavigator.width(context) * 0.33 : CustomNavigator.width(context),
-            SettingsManager().settings.reducedForehead.value ? 10 : 40,
+            context.orientation == Orientation.landscape
+                ? 0
+                : SettingsManager().settings.reducedForehead.value
+                    ? 10
+                    : 40,
           ),
           child: ClipRRect(
             child: BackdropFilter(
@@ -130,6 +134,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                   children: <Widget>[
                     Container(height: 20),
                     Container(
+                      margin: EdgeInsets.only(right: 10),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: <Widget>[
@@ -273,19 +278,21 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
 
               return SliverPadding(
                 padding: EdgeInsets.only(
-                  top: 10,
+                  top: 0,
                   bottom: 10,
                 ),
                 sliver: SliverToBoxAdapter(
                   child: LayoutBuilder(
                     builder: (BuildContext context, BoxConstraints constraints) => ConstrainedBox(
                       constraints: BoxConstraints(
-                        maxHeight: (constraints.maxWidth) / colCount * usedRowCount,
+                        maxHeight: (constraints.maxWidth) / colCount * usedRowCount * (showAltLayout ? 1.175 : 1.125),
                       ),
                       child: Stack(
+                        clipBehavior: Clip.none,
                         alignment: Alignment.bottomCenter,
                         children: <Widget>[
                           PageView.builder(
+                            clipBehavior: Clip.none,
                             physics: BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                             scrollDirection: Axis.horizontal,
                             controller: _controller,

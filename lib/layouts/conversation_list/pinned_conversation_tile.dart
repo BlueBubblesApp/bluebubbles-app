@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 
-import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
@@ -21,8 +21,8 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 
 class PinnedConversationTile extends StatefulWidget {
@@ -146,39 +146,12 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
       title = widget.chat.fakeParticipants.length == 1 ? widget.chat.fakeParticipants[0] : "Group Chat";
     else if (hideInfo) style = style.copyWith(color: Colors.transparent);
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: <Widget>[
-        if (widget.chat.muteType != "mute" && (widget.chat.hasUnreadMessage ?? false))
-          Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                color: context.theme.primaryColor.withOpacity(0.8),
-              ),
-              margin: EdgeInsets.only(right: 3)),
-        if (widget.chat.muteType == "mute")
-          Container(
-            margin: EdgeInsets.only(right: 3),
-            child: SvgPicture.asset(
-              "assets/icon/moon.svg",
-              color: widget.chat.hasUnreadMessage!
-                  ? context.theme.primaryColor.withOpacity(0.8)
-                  : context.textTheme.subtitle1!.color,
-              width: 8,
-              height: 8,
-            ),
-          ),
-        Flexible(
-          child: TextOneLine(
-            title!,
-            style: style,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
+    return Text(
+      title!,
+      style: style,
+      overflow: TextOverflow.ellipsis,
+      textAlign: TextAlign.center,
+      maxLines: 2,
     );
   }
 
@@ -264,7 +237,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
                       Padding(
                         padding: EdgeInsets.only(right: 10),
                         child: Icon(
-                          widget.chat.muteType == "mute" ? Icons.notifications_active : Icons.notifications_off,
+                          widget.chat.muteType == "mute" ? CupertinoIcons.bell : CupertinoIcons.bell_slash,
                           color: context.textTheme.bodyText1!.color,
                         ),
                       ),
@@ -291,7 +264,9 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
                       Padding(
                         padding: EdgeInsets.only(right: 10),
                         child: Icon(
-                          widget.chat.hasUnreadMessage! ? Icons.mark_chat_read : Icons.mark_chat_unread,
+                          widget.chat.hasUnreadMessage!
+                              ? CupertinoIcons.person_crop_circle_badge_xmark
+                              : CupertinoIcons.person_crop_circle_badge_checkmark,
                           color: context.textTheme.bodyText1!.color,
                         ),
                       ),
@@ -364,10 +339,10 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
       },
       child: Padding(
         padding: EdgeInsets.only(
-          top: 20,
-          left: 10,
-          right: 10,
-          bottom: 10,
+          top: 5,
+          left: 15,
+          right: 15,
+          bottom: 5,
         ),
         child: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints constraints) {
@@ -376,9 +351,16 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
                 // Great math right here
                 double availableWidth = constraints.maxWidth;
                 int colCount = SettingsManager().settings.pinColumnsPortrait.value;
-                double spaceBetween = (colCount - 1) * 10;
-                double spaceAround = 20;
-                double maxWidth = ((availableWidth - spaceBetween - spaceAround) / colCount).floorToDouble();
+                double spaceBetween = (colCount - 1) * 30;
+                double maxWidth = ((availableWidth - spaceBetween) / colCount).floorToDouble();
+
+                Color alphaWithoutAlpha = Color.fromARGB(
+                  255,
+                  (context.theme.primaryColor.red * 0.8).toInt() + (context.theme.backgroundColor.red * 0.2).toInt(),
+                  (context.theme.primaryColor.green * 0.8).toInt() +
+                      (context.theme.backgroundColor.green * 0.2).toInt(),
+                  (context.theme.primaryColor.blue * 0.8).toInt() + (context.theme.backgroundColor.blue * 0.2).toInt(),
+                );
                 return ConstrainedBox(
                   constraints: BoxConstraints(
                     maxWidth: maxWidth,
@@ -389,19 +371,63 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
                     children: <Widget>[
                       Column(
                         children: [
-                          ContactAvatarGroupWidget(
-                            chat: widget.chat,
-                            size: (availableWidth - 150) / 3,
-                            editable: false,
-                            onTap: this.onTapUpBypass,
+                          Stack(
+                            children: <Widget>[
+                              ContactAvatarGroupWidget(
+                                chat: widget.chat,
+                                size: maxWidth,
+                                editable: false,
+                                onTap: this.onTapUpBypass,
+                              ),
+                              if (widget.chat.muteType != "mute" && (widget.chat.hasUnreadMessage ?? false))
+                                Positioned(
+                                  left: sqrt(maxWidth) - maxWidth * 0.05 * sqrt(2),
+                                  top: sqrt(maxWidth) - maxWidth * 0.05 * sqrt(2),
+                                  child: Container(
+                                    width: maxWidth * 0.2,
+                                    height: maxWidth * 0.2,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(maxWidth * 0.1),
+                                      color: alphaWithoutAlpha,
+                                    ),
+                                    margin: EdgeInsets.only(right: 3),
+                                  ),
+                                ),
+                              if (widget.chat.muteType == "mute")
+                                Positioned(
+                                  left: sqrt(maxWidth) - maxWidth * 0.05 * sqrt(2),
+                                  top: sqrt(maxWidth) - maxWidth * 0.05 * sqrt(2),
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    children: <Widget>[
+                                      Container(
+                                        width: maxWidth * 0.2,
+                                        height: maxWidth * 0.2,
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(maxWidth * 0.1),
+                                          color: (widget.chat.hasUnreadMessage ?? false)
+                                              ? alphaWithoutAlpha
+                                              : context.textTheme.subtitle1!.color,
+                                        ),
+                                      ),
+                                      Icon(
+                                        CupertinoIcons.bell_slash_fill,
+                                        size: maxWidth * 0.14,
+                                        color: Colors.white,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                            ],
                           ),
                           Container(
                             padding: EdgeInsets.only(
-                              top: 10,
-                              left: 10,
-                              right: 10,
+                              top: maxWidth * 0.075,
                             ),
-                            child: buildSubtitle(),
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(minHeight: context.textTheme.subtitle1!.fontSize! * 2),
+                              child: buildSubtitle(),
+                            ),
                           ),
                         ],
                       ),
@@ -415,8 +441,8 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
                           }
                           if (showTypingIndicator.value) {
                             return Positioned(
-                              top: -11,
-                              right: -13,
+                              top: -sqrt(maxWidth / 2),
+                              right: -sqrt(maxWidth / 2) - maxWidth * 0.25,
                               child: ConstrainedBox(
                                 constraints: BoxConstraints(maxHeight: 32),
                                 child: FittedBox(
@@ -441,8 +467,8 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
                             return Container();
                           }
                           return Positioned(
-                            top: -12,
-                            right: -8,
+                            top: -sqrt(maxWidth / 2),
+                            right: -sqrt(maxWidth / 2) - maxWidth * 0.15,
                             child: ReactionsWidget(
                               associatedMessages: [message],
                               bigPin: true,
@@ -451,10 +477,11 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
                         },
                       ),
                       Positioned(
-                        bottom: 20,
+                        bottom: context.textTheme.subtitle1!.fontSize! * 2 + maxWidth * 0.05,
                         width: maxWidth,
                         child: PinnedTileTextBubble(
                           chat: widget.chat,
+                          size: maxWidth,
                         ),
                       ),
                     ],

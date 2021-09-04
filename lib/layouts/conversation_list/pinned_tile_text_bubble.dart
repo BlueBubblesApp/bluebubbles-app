@@ -15,9 +15,11 @@ class PinnedTileTextBubble extends StatefulWidget {
   PinnedTileTextBubble({
     Key? key,
     required this.chat,
+    required this.size,
   }) : super(key: key);
 
   final Chat chat;
+  final double size;
 
   @override
   _PinnedTileTextBubbleState createState() => _PinnedTileTextBubbleState();
@@ -81,14 +83,14 @@ class _PinnedTileTextBubbleState extends State<PinnedTileTextBubble> with Automa
             padding: EdgeInsets.only(
               left: showTail
                   ? leftSide
-                      ? 15
-                      : 5
-                  : 10,
+                      ? widget.size * 0.06
+                      : widget.size * 0.02
+                  : widget.size * 0.04,
               right: showTail
                   ? leftSide
-                      ? 5
-                      : 15
-                  : 10,
+                      ? widget.size * 0.02
+                      : widget.size * 0.06
+                  : widget.size * 0.04,
             ),
             child: Stack(
               clipBehavior: Clip.none,
