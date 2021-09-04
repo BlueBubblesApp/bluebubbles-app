@@ -52,7 +52,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
   late Settings _settingsCopy;
   bool needToReconnect = false;
   int? lastRestart;
-  bool pushedServerPanel = false;
 
   @override
   void initState() {
@@ -62,17 +61,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
 
   @override
   Widget build(BuildContext context) {
-    Future.delayed(Duration.zero, () {
-      if (!pushedServerPanel) {
-        CustomNavigator.pushAndRemoveSettingsUntil(
-          context,
-          ServerManagementPanel(),
-              (route) => route.isFirst,
-          binding: ServerManagementPanelBinding(),
-        );
-        pushedServerPanel = true;
-      }
-    });
     Color headerColor;
     if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
         SettingsManager().settings.skin.value != Skins.iOS) {
