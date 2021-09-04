@@ -1,6 +1,7 @@
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/redacted_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/setup/theme_selector/theme_selector.dart';
@@ -153,7 +154,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
             right: 10,
           ),
           constraints: BoxConstraints(
-            maxWidth: context.width * MessageWidgetMixin.MAX_SIZE,
+            maxWidth: CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE,
           ),
           padding: EdgeInsets.symmetric(
             vertical: 8,

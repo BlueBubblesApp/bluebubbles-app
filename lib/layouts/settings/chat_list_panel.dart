@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -46,7 +47,7 @@ class ChatListPanel extends StatelessWidget {
       child: Scaffold(
         backgroundColor: SettingsManager().settings.skin.value != Skins.iOS ? tileColor : headerColor,
         appBar: PreferredSize(
-          preferredSize: Size(context.width, 80),
+          preferredSize: Size(CustomNavigator.width(context), 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
@@ -335,7 +336,7 @@ class ChatListPanel extends StatelessWidget {
                     if (SettingsManager().settings.skin.value == Skins.iOS)
                       return Container(
                         color: tileColor,
-                        constraints: BoxConstraints(maxWidth: context.width),
+                        constraints: BoxConstraints(maxWidth: CustomNavigator.width(context)),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 15.0),
                           child: Row(
@@ -349,7 +350,7 @@ class ChatListPanel extends StatelessWidget {
                                   opacity: SettingsManager().settings.iosShowPin.value ? 1 : 0.7,
                                   child: Container(
                                     height: 60,
-                                    width: context.width / 5 - 8,
+                                    width: CustomNavigator.width(context) / 5 - 8,
                                     color: Colors.yellow[800],
                                     child: IconButton(
                                       icon: Icon(CupertinoIcons.pin, color: Colors.white),
@@ -403,7 +404,7 @@ class ChatListPanel extends StatelessWidget {
                                         child: Container(
                                           height: 60,
                                           color: Colors.purple[700],
-                                          width: context.width / 5 - 8,
+                                          width: CustomNavigator.width(context) / 5 - 8,
                                           child: IconButton(
                                             icon: Icon(CupertinoIcons.bell_slash, color: Colors.white),
                                             onPressed: () async {
@@ -450,7 +451,7 @@ class ChatListPanel extends StatelessWidget {
                                         child: Container(
                                           height: 60,
                                           color: Colors.red,
-                                          width: context.width / 5 - 8,
+                                          width: CustomNavigator.width(context) / 5 - 8,
                                           child: IconButton(
                                             icon: Icon(CupertinoIcons.trash, color: Colors.white),
                                             onPressed: () async {
@@ -497,7 +498,7 @@ class ChatListPanel extends StatelessWidget {
                                         child: Container(
                                           height: 60,
                                           color: Colors.blue,
-                                          width: context.width / 5 - 8,
+                                          width: CustomNavigator.width(context) / 5 - 8,
                                           child: IconButton(
                                             icon: Icon(CupertinoIcons.person_crop_circle_badge_exclam, color: Colors.white),
                                             onPressed: () {
@@ -545,7 +546,7 @@ class ChatListPanel extends StatelessWidget {
                                         child: Container(
                                           height: 60,
                                           color: Colors.red,
-                                          width: context.width / 5 - 8,
+                                          width: CustomNavigator.width(context) / 5 - 8,
                                           child: IconButton(
                                             icon: Icon(CupertinoIcons.tray_arrow_down, color: Colors.white),
                                             onPressed: () {

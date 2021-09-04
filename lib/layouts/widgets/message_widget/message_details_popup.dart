@@ -4,6 +4,7 @@ import 'dart:math';
 import 'dart:ui';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/metadata_helper.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
@@ -219,7 +220,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                             child: Container(
                               alignment: Alignment.center,
                               height: 120,
-                              width: context.width - 20,
+                              width: CustomNavigator.width(context) - 20,
                               color: Theme.of(context).accentColor,
                               child: Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 0),
@@ -254,16 +255,14 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   }
 
   Widget buildReactionMenu() {
-    Size size = Get.mediaQuery.size;
-
-    double reactionIconSize = ((8.5 / 10 * min(size.width, size.height)) / (ReactionTypes.toList().length).toDouble());
+    double reactionIconSize = ((8.5 / 10 * min(CustomNavigator.width(context), context.height)) / (ReactionTypes.toList().length).toDouble());
     double maxMenuWidth = (ReactionTypes.toList().length * reactionIconSize).toDouble();
     double menuHeight = (reactionIconSize).toDouble();
     double topPadding = -20;
-    double topOffset = (messageTopOffset - menuHeight).toDouble().clamp(topMinimum, size.height - 120 - menuHeight);
+    double topOffset = (messageTopOffset - menuHeight).toDouble().clamp(topMinimum, context.height - 120 - menuHeight);
     bool shiftRight = currentChat!.chat.isGroup() || SettingsManager().settings.alwaysShowAvatars.value;
     double leftOffset =
-        (widget.message.isFromMe! ? size.width - maxMenuWidth - 25 : 25 + (shiftRight ? 20 : 0)).toDouble();
+        (widget.message.isFromMe! ? CustomNavigator.width(context) - maxMenuWidth - 25 : 25 + (shiftRight ? 20 : 0)).toDouble();
     Color iconColor = Colors.white;
 
     if (Theme.of(context).accentColor.computeLuminance() >= 0.179) {
@@ -352,11 +351,9 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   }
 
   Widget buildCopyPasteMenu() {
-    Size size = Get.mediaQuery.size;
+    double maxMenuWidth = CustomNavigator.width(context) * 2 / 3;
 
-    double maxMenuWidth = size.width * 2 / 3;
-
-    double maxHeight = size.height - topMinimum - widget.childSize!.height;
+    double maxHeight = context.height - topMinimum - widget.childSize!.height;
 
     List<Widget> allActions = [
       if (widget.currentChat!.chat.isGroup() && !widget.message.isFromMe! && dmChat != null)
@@ -781,7 +778,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
       ),
     );
 
-    double upperLimit = size.height - detailsMenuHeight!;
+    double upperLimit = context.height - detailsMenuHeight!;
     if (topMinimum > upperLimit) {
       topMinimum = upperLimit;
     }
@@ -789,7 +786,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
     double topOffset = (messageTopOffset + widget.childSize!.height).toDouble().clamp(topMinimum, upperLimit);
     bool shiftRight = currentChat!.chat.isGroup() || SettingsManager().settings.alwaysShowAvatars.value;
     double leftOffset =
-        (widget.message.isFromMe! ? size.width - maxMenuWidth - 15 : 15 + (shiftRight ? 35 : 0)).toDouble();
+        (widget.message.isFromMe! ? CustomNavigator.width(context) - maxMenuWidth - 15 : 15 + (shiftRight ? 35 : 0)).toDouble();
     return Positioned(
       top: topOffset + 5,
       left: leftOffset,

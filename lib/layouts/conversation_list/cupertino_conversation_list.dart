@@ -10,7 +10,6 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_tile.dart';
 import 'package:bluebubbles/layouts/conversation_list/pinned_conversation_tile.dart';
-import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/search/search_view.dart';
 import 'package:bluebubbles/layouts/widgets/vertical_split_view.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
@@ -57,7 +56,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
       () => Scaffold(
         appBar: PreferredSize(
           preferredSize: Size(
-            (showAltLayout) ? context.width * 0.33 : context.width,
+            (showAltLayout) ? CustomNavigator.width(context) * 0.33 : CustomNavigator.width(context),
             SettingsManager().settings.reducedForehead.value ? 10 : 40,
           ),
           child: ClipRRect(
@@ -389,35 +388,45 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
         minRatio: 0.33,
         maxRatio: 0.5,
         allowResize: true,
-        left: WillPopScope(
-          onWillPop: () async {
-            Get.back(id: 1);
-            return false;
-          },
-          child: Navigator(
-            key: Get.nestedKey(1),
-            onPopPage: (route, _) {
-              return false;
-            },
-            pages: [CupertinoPage(name: "initial", child: chatList)],
-          ),
-        ),
-        right: WillPopScope(
-          onWillPop: () async {
-            Get.back(id: 2);
-            return false;
-          },
-          child: Navigator(
-            key: Get.nestedKey(2),
-            onPopPage: (route, _) {
-              return false;
-            },
-            pages: [CupertinoPage(name: "initial", child: Center(
-              child: Container(
-                  child: Text("Select a chat from the list", style: Theme.of(Get.context!).textTheme.subtitle1!.copyWith(fontSize: 18))
+        left: LayoutBuilder(
+          builder: (context, constraints) {
+            CustomNavigator.maxWidthLeft = constraints.maxWidth;
+            return WillPopScope(
+              onWillPop: () async {
+                Get.back(id: 1);
+                return false;
+              },
+              child: Navigator(
+                key: Get.nestedKey(1),
+                onPopPage: (route, _) {
+                  return false;
+                },
+                pages: [CupertinoPage(name: "initial", child: chatList)],
               ),
-            ))],
-          ),
+            );
+          }
+        ),
+        right: LayoutBuilder(
+          builder: (context, constraints) {
+            CustomNavigator.maxWidthRight = constraints.maxWidth;
+            return WillPopScope(
+              onWillPop: () async {
+                Get.back(id: 2);
+                return false;
+              },
+              child: Navigator(
+                key: Get.nestedKey(2),
+                onPopPage: (route, _) {
+                  return false;
+                },
+                pages: [CupertinoPage(name: "initial", child: Center(
+                  child: Container(
+                      child: Text("Select a chat from the list", style: Theme.of(Get.context!).textTheme.subtitle1!.copyWith(fontSize: 18))
+                  ),
+                ))],
+              ),
+            );
+          }
         ),
     );
   }

@@ -106,7 +106,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
     return Obx(() => Scaffold(
       backgroundColor: SettingsManager().settings.skin.value != Skins.iOS ? tileColor : headerColor,
       appBar: PreferredSize(
-        preferredSize: Size(context.width, 80),
+        preferredSize: Size(CustomNavigator.width(context), 80),
         child: ClipRRect(
           child: BackdropFilter(
             child: AppBar(
@@ -1098,7 +1098,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
                   ),
                   (subtitle != null)
                       ? Container(
-                          constraints: BoxConstraints(maxWidth: context.width * 2 / 3),
+                          constraints: BoxConstraints(maxWidth: CustomNavigator.width(context) * 2 / 3),
                           child: Padding(
                             padding: EdgeInsets.only(top: 3.0),
                             child: Text(

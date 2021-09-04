@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -69,7 +70,7 @@ class MiscPanel extends StatelessWidget {
       child: Scaffold(
         backgroundColor: SettingsManager().settings.skin.value != Skins.iOS ? tileColor : headerColor,
         appBar: PreferredSize(
-          preferredSize: Size(context.width, 80),
+          preferredSize: Size(CustomNavigator.width(context), 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(

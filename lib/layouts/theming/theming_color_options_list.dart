@@ -118,7 +118,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Container(
-                        width: context.width - 16,
+                        width: CustomNavigator.width(context) - 16,
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
                         decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(5.0),

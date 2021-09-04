@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:chewie/chewie.dart';
@@ -109,7 +110,7 @@ class _VideoViewerState extends State<VideoViewer> {
       duration: Duration(milliseconds: 125),
       child: Container(
           height: 150.0,
-          width: context.width,
+          width: CustomNavigator.width(context),
           color: Colors.black.withOpacity(0.65),
           child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Padding(
@@ -162,7 +163,7 @@ class _VideoViewerState extends State<VideoViewer> {
                           ),
                           backgroundColor: Theme.of(context).accentColor,
                           content: SizedBox(
-                            width: context.width * 3 / 5,
+                            width: CustomNavigator.width(context) * 3 / 5,
                             height: context.height * 1 / 4,
                             child: Container(
                               padding: EdgeInsets.all(10.0),

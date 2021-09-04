@@ -6,6 +6,7 @@ import 'dart:ui';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/action_handler.dart';
@@ -192,7 +193,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
         if (event.type == MessageBlocEventType.insert && this.mounted && event.outGoing) {
           final constraints = BoxConstraints(
-            maxWidth: context.width * MessageWidgetMixin.MAX_SIZE,
+            maxWidth: CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE,
             minHeight: Theme.of(context).textTheme.bodyText2!.fontSize!,
             maxHeight: Theme.of(context).textTheme.bodyText2!.fontSize!,
           );
@@ -207,8 +208,8 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
           if (!(event.message?.hasAttachments ?? false) && !(event.message?.text?.isEmpty ?? false)) {
             setState(() {
               tween = Tween<double>(
-                  begin: context.width - 30,
-                  end: min(size.width + 68, context.width * MessageWidgetMixin.MAX_SIZE + 40));
+                  begin: CustomNavigator.width(context) - 30,
+                  end: min(size.width + 68, CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE + 40));
               controller = CustomAnimationControl.play;
               message = event.message;
             });

@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/theming/theming_color_options_list.dart';
@@ -66,7 +67,7 @@ class _ThemingPanelState extends State<ThemingPanel> with TickerProviderStateMix
       child: Scaffold(
         backgroundColor: tileColor,
         appBar: PreferredSize(
-          preferredSize: Size(context.width, 80),
+          preferredSize: Size(CustomNavigator.width(context), 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(

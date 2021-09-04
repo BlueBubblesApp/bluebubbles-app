@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
@@ -152,7 +153,7 @@ class VideoWidget extends StatelessWidget {
         },
         child: Container(
           constraints: BoxConstraints(
-            maxWidth: context.width / 2,
+            maxWidth: CustomNavigator.width(context) / 2,
             maxHeight: context.height / 2,
           ),
           child: Hero(
