@@ -433,51 +433,55 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
 
   Widget buildForLandscape(BuildContext context, Widget chatList) {
     return VerticalSplitView(
-      dividerWidth: 10.0,
-      initialRatio: 0.4,
-      minRatio: 0.33,
-      maxRatio: 0.5,
-      allowResize: true,
-      left: LayoutBuilder(builder: (context, constraints) {
-        CustomNavigator.maxWidthLeft = constraints.maxWidth;
-        return WillPopScope(
-          onWillPop: () async {
-            Get.back(id: 1);
-            return false;
-          },
-          child: Navigator(
-            key: Get.nestedKey(1),
-            onPopPage: (route, _) {
-              return false;
-            },
-            pages: [CupertinoPage(name: "initial", child: chatList)],
-          ),
-        );
-      }),
-      right: LayoutBuilder(builder: (context, constraints) {
-        CustomNavigator.maxWidthRight = constraints.maxWidth;
-        return WillPopScope(
-          onWillPop: () async {
-            Get.back(id: 2);
-            return false;
-          },
-          child: Navigator(
-            key: Get.nestedKey(2),
-            onPopPage: (route, _) {
-              return false;
-            },
-            pages: [
-              CupertinoPage(
-                  name: "initial",
-                  child: Center(
+        dividerWidth: 10.0,
+        initialRatio: 0.4,
+        minRatio: 0.33,
+        maxRatio: 0.5,
+        allowResize: true,
+        left: LayoutBuilder(
+          builder: (context, constraints) {
+            CustomNavigator.maxWidthLeft = constraints.maxWidth;
+            return WillPopScope(
+              onWillPop: () async {
+                Get.back(id: 1);
+                return false;
+              },
+              child: Navigator(
+                key: Get.nestedKey(1),
+                onPopPage: (route, _) {
+                  return false;
+                },
+                pages: [CupertinoPage(name: "initial", child: chatList)],
+              ),
+            );
+          }
+        ),
+        right: LayoutBuilder(
+          builder: (context, constraints) {
+            CustomNavigator.maxWidthRight = constraints.maxWidth;
+            return WillPopScope(
+              onWillPop: () async {
+                Get.back(id: 2);
+                return false;
+              },
+              child: Navigator(
+                key: Get.nestedKey(2),
+                onPopPage: (route, _) {
+                  return false;
+                },
+                pages: [CupertinoPage(name: "initial", child: Scaffold(
+                  backgroundColor: context.theme.backgroundColor,
+                  extendBodyBehindAppBar: true,
+                  body: Center(
                     child: Container(
-                        child: Text("Select a chat from the list",
-                            style: Theme.of(Get.context!).textTheme.subtitle1!.copyWith(fontSize: 18))),
-                  ))
-            ],
-          ),
-        );
-      }),
+                        child: Text("Select a chat from the list", style: Theme.of(Get.context!).textTheme.subtitle1!.copyWith(fontSize: 18))
+                    ),
+                  ),
+                ))],
+              ),
+            );
+          }
+        ),
     );
   }
 

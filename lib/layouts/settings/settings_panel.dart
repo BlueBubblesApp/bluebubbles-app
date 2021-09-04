@@ -52,6 +52,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
   late Settings _settingsCopy;
   bool needToReconnect = false;
   int? lastRestart;
+  bool pushedServerPanel = false;
 
   @override
   void initState() {
@@ -61,6 +62,17 @@ class _SettingsPanelState extends State<SettingsPanel> {
 
   @override
   Widget build(BuildContext context) {
+    Future.delayed(Duration.zero, () {
+      if (!pushedServerPanel) {
+        CustomNavigator.pushAndRemoveSettingsUntil(
+          context,
+          ServerManagementPanel(),
+              (route) => route.isFirst,
+          binding: ServerManagementPanelBinding(),
+        );
+        pushedServerPanel = true;
+      }
+    });
     Color headerColor;
     if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
         SettingsManager().settings.skin.value != Skins.iOS) {
@@ -799,6 +811,19 @@ class _SettingsPanelState extends State<SettingsPanel> {
   }
 
   Widget buildForLandscape(BuildContext context, Widget settingsList) {
+    Color headerColor;
+    Color tileColor;
+    if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+        SettingsManager().settings.skin.value != Skins.iOS) {
+      headerColor = Theme.of(context).accentColor;
+      tileColor = Theme.of(context).backgroundColor;
+    } else {
+      headerColor = Theme.of(context).backgroundColor;
+      tileColor = Theme.of(context).accentColor;
+    }
+    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
+      tileColor = headerColor;
+    }
     return VerticalSplitView(
       dividerWidth: 10.0,
       initialRatio: 0.4,
@@ -817,13 +842,19 @@ class _SettingsPanelState extends State<SettingsPanel> {
             child: Navigator(
               key: Get.nestedKey(3),
               onPopPage: (route, _) {
+                route.didPop(false);
                 return false;
               },
-              pages: [CupertinoPage(name: "initial", child: Center(
-                child: Container(
-                    child: Text("Select a settings page from the list", style: Theme.of(Get.context!).textTheme.subtitle1!.copyWith(fontSize: 18))
-                ),
-              ))],
+              pages: [
+                CupertinoPage(name: "initial", child: Scaffold(
+                  backgroundColor: SettingsManager().settings.skin.value != Skins.iOS ? tileColor : headerColor,
+                  body: Center(
+                    child: Container(
+                        child: Text("Select a settings page from the list", style: Theme.of(Get.context!).textTheme.subtitle1!.copyWith(fontSize: 18))
+                    ),
+                  )
+                )),
+              ],
             ),
           );
         }

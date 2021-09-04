@@ -80,8 +80,6 @@ class BaseNavigator extends GetxService {
 
   /// Push a new route, popping all previous routes, on the settings navigator
   void pushAndRemoveSettingsUntil(BuildContext context, Widget widget, bool Function(Route) predicate, {Bindings? binding}) {
-    print(Get.keys[3]?.currentContext?.size?.width);
-    print((Navigator.of(context).widget.key as GlobalKey?)?.currentContext?.size?.width);
     if (Get.keys.containsKey(3) && (!context.isPhone || context.isLandscape)) {
       // we only want to offUntil when in landscape, otherwise when the user presses back, the previous page will be the chat list
       Get.offUntil(GetPageRoute(

@@ -607,9 +607,13 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                 onPopPage: (route, _) {
                   return false;
                 },
-                pages: [CupertinoPage(name: "initial", child: Center(
-                  child: Container(
-                      child: Text("Select a chat from the list", style: Theme.of(Get.context!).textTheme.subtitle1!.copyWith(fontSize: 18))
+                pages: [CupertinoPage(name: "initial", child: Scaffold(
+                  backgroundColor: context.theme.backgroundColor,
+                  extendBodyBehindAppBar: true,
+                  body: Center(
+                    child: Container(
+                        child: Text("Select a chat from the list", style: Theme.of(Get.context!).textTheme.subtitle1!.copyWith(fontSize: 18))
+                    ),
                   ),
                 ))],
               ),
