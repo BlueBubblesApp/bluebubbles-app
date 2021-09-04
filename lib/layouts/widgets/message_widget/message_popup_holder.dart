@@ -9,6 +9,7 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 
 class MessagePopupHolder extends StatefulWidget {
   final Widget child;
@@ -84,14 +85,21 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
         transitionDuration: Duration(milliseconds: 150),
         pageBuilder: (context, animation, secondaryAnimation) {
           return FadeTransition(
-              opacity: animation,
-              child: MessageDetailsPopup(
-                currentChat: currentChat,
-                child: widget.popupChild,
-                childOffset: childOffset,
-                childSize: childSize,
-                message: widget.message,
-              ));
+            opacity: animation,
+            child: LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints constraints) {
+                childOffset =
+                    Offset(childOffset.dx - context.mediaQuerySize.width + constraints.maxWidth, childOffset.dy);
+                return MessageDetailsPopup(
+                  currentChat: currentChat,
+                  child: widget.popupChild,
+                  childOffset: childOffset,
+                  childSize: childSize,
+                  message: widget.message,
+                );
+              },
+            ),
+          );
         },
         fullscreenDialog: true,
         opaque: false,
