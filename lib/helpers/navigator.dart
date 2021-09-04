@@ -6,15 +6,21 @@ import 'package:get/get.dart';
 // ignore: non_constant_identifier_names
 BaseNavigator CustomNavigator = Get.isRegistered<BaseNavigator>() ? Get.find<BaseNavigator>() : Get.put(BaseNavigator());
 
+/// Handles navigation for the app
 class BaseNavigator extends GetxService {
+  /// width of left side of split screen view
   double? _widthChatListLeft;
+  /// width of right side of split screen view
   double? _widthChatListRight;
+  /// width of settings right side split screen
   double? _widthSettings;
 
   set maxWidthLeft(double w) => _widthChatListLeft = w;
   set maxWidthRight(double w) => _widthChatListRight = w;
   set maxWidthSettings(double w) => _widthSettings = w;
 
+  /// grab the available screen width, returning the split screen width if applicable
+  /// this should *always* be used in place of context.width or similar
   double width(BuildContext context) {
     if (Navigator.of(context).widget.key?.toString().contains("Getx nested key: 1") ?? false) {
       return _widthChatListLeft ?? context.width;
@@ -26,6 +32,7 @@ class BaseNavigator extends GetxService {
     return context.width;
   }
 
+  /// Push a new route onto the chat list right side navigator
   void push(BuildContext context, Widget widget) {
     if (Get.keys.containsKey(2) && (!context.isPhone || context.isLandscape)) {
       Get.to(() => widget, transition: Transition.rightToLeft, id: 2);
@@ -36,6 +43,7 @@ class BaseNavigator extends GetxService {
     }
   }
 
+  /// Push a new route onto the chat list left side navigator
   void pushLeft(BuildContext context, Widget widget) {
     if (Get.keys.containsKey(1) && (!context.isPhone || context.isLandscape)) {
       Get.to(() => widget, transition: Transition.leftToRight, id: 1);
@@ -46,14 +54,17 @@ class BaseNavigator extends GetxService {
     }
   }
 
+  /// Push a new route onto the settings navigator
   void pushSettings(BuildContext context, Widget widget, {Bindings? binding}) {
     if (Get.keys.containsKey(3) && (!context.isPhone || context.isLandscape)) {
       Get.to(() => widget, transition: Transition.rightToLeft, id: 3, binding: binding);
     } else {
+      // Use Get.to to be able to init bindings
       Get.to(() => widget, binding: binding);
     }
   }
 
+  /// Push a new route, popping all previous routes, on the chat list right side navigator
   void pushAndRemoveUntil(BuildContext context, Widget widget, bool Function(Route) predicate) {
     if (Get.keys.containsKey(2) && (!context.isPhone || context.isLandscape)) {
       Get.offUntil(GetPageRoute(
@@ -67,6 +78,7 @@ class BaseNavigator extends GetxService {
     }
   }
 
+  /// Push a new route, popping all previous routes, on the settings navigator
   void pushAndRemoveSettingsUntil(BuildContext context, Widget widget, bool Function(Route) predicate, {Bindings? binding}) {
     print(Get.keys[3]?.currentContext?.size?.width);
     print((Navigator.of(context).widget.key as GlobalKey?)?.currentContext?.size?.width);
@@ -78,6 +90,7 @@ class BaseNavigator extends GetxService {
           transition: Transition.rightToLeft
       ), predicate, id: 3);
     } else {
+      // use Get.to to be able to init bindings
       Get.to(() => widget, binding: binding);
     }
   }
