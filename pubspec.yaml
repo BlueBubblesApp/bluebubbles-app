@@ -23,33 +23,33 @@ dependencies:
   get: ^4.3.8
   cupertino_icons: ^1.0.3
   exif: ^3.0.0
-  flutter_native_image: ^0.0.6+1
+  flutter_native_image: ^0.0.6+1 # mobile only, todo use image size getter on web and desktop
   socket_io_client: ^2.0.0-beta.4-nullsafety.0
   url_launcher: ^6.0.9
-  qr_code_scanner: ^0.5.2
-  connectivity: ^3.0.6
+  qr_code_scanner: ^0.5.2 # mobile only, todo disable on web and desktop
+  connectivity: ^3.0.6 # no linux or windows support (switch to connectivity_plus), todo desktop
   tuple: ^2.0.0
   encrypt: ^5.0.1
   assorted_layout_widgets: ^5.0.2
-  record: ^3.0.0
-  contacts_service: ^0.6.1
-  permission_handler: ^8.1.4+2
-  path_provider: ^2.0.2
-  sqflite: ^2.0.0+3
+  record: ^3.0.0 # mobile and web, todo desktop
+  contacts_service: ^0.6.1 # mobile only, todo disable on web and desktop
+  permission_handler: ^8.1.4+2 # mobile only, todo disable on web and desktop
+  path_provider: ^2.0.2 # no web support, todo disable on web (no concept of storage on web)
+  sqflite: ^2.0.0+3 # mobile only, we can potentially use sqflite_common_ffi for desktop and sembast_sqflite for web, todo web todo desktop
   path: ^1.8.0
   intl: ^0.17.0
-  flutter_svg: ^0.22.0
-  photo_manager: ^1.3.1
-  video_player: ^2.1.13
-  chewie_audio:
+  flutter_svg: ^0.22.0 # partial web support
+  photo_manager: ^1.3.1 # only mobile, todo disable on web and desktop
+  video_player: ^2.1.13 # no desktop support, todo desktop
+  chewie_audio: # no desktop support, todo desktop
     git:
       url: https://github.com/tneotia/chewie_audio-1.git
       ref: BlueBubbles
   mime_type: ^1.0.0
-  receive_sharing_intent: ^1.4.5
+  receive_sharing_intent: ^1.4.5 # mobile only, todo disable on web and desktop
   flutter_map: ^0.13.1
-  video_thumbnail: ^0.4.3
-  camera: ^0.8.1+7
+  video_thumbnail: ^0.4.3 # mobile only (we don't need this package anymore)
+  camera: ^0.8.1+7 # mobile only, todo disable on web and desktop
   flutter_slidable: ^0.6.0
   image_size_getter: ^1.0.0
   photo_view: ^0.12.0
@@ -57,36 +57,36 @@ dependencies:
   sprung: ^3.0.0
   slugify: ^2.0.0
   metadata_fetch: ^0.4.1
-  map_launcher: ^2.1.1
+  map_launcher: ^2.1.1 # mobile only (switch to maps_launcher), todo web todo desktop
   latlong2: ^0.8.0
   smooth_page_indicator: ^0.3.0-nullsafety.0
   flex_color_picker: ^2.1.2
-  image_gallery_saver: ^1.6.9
+  image_gallery_saver: ^1.6.9 # mobile only, todo download differently on web and desktop
   visibility_detector: ^0.2.0
-  flutter_displaymode: ^0.3.2
-  flutter_libphonenumber: ^1.1.0
+  flutter_displaymode: ^0.3.2 # android only, todo disable on web and desktop
+  flutter_libphonenumber: ^1.1.0 # mobile only (switch to intl_phone_number_input or libphonenumber_plugin to add web support), todo web todo desktop
   flutter_markdown: ^0.6.4
-  device_info: ^2.0.2
-  google_ml_kit: ^0.7.0
+  device_info: ^2.0.2 # mobile only, todo switch to device_info_plus
+  google_ml_kit: ^0.7.0 # mobile only, todo disable on web and desktop
   faker: ^2.0.0
-  share_plus: ^2.1.4
+  share_plus: ^2.1.4 # sharing files not supported on Windows & Linux
   # for nullsafety
-  battery_optimization:
+  battery_optimization: # android only, disable for other platforms
     git:
       url: https://github.com/ChangJoo-Park/battery_optimization
       ref: master
   collection: ^1.15.0
-  internet_connection_checker: ^0.0.1+2
-  secure_application: ^3.7.3
-  local_auth: ^1.1.6
+  internet_connection_checker: ^0.0.1+2 # no web support, but we don't need it obviously
+  secure_application: ^3.7.3 # no linux support, todo linux
+  local_auth: ^1.1.6 # mobile only, todo disable on web and desktop
   flutter_screen_lock: ^4.0.4+1
   image: ^3.0.2
   crop_your_image: ^0.6.0+1
-  chewie: ^1.2.2
+  chewie: ^1.2.2 # no desktop support, todo desktop
   simple_animations: ^3.1.1
-  flutter_keyboard_visibility: ^5.0.3
-  flutter_local_notifications: ^8.1.1+2
-  flutter_native_timezone: ^2.0.0
+  flutter_keyboard_visibility: ^5.0.3 # no desktop support, todo desktop
+  flutter_local_notifications: ^8.1.1+2 # mobile only, todo disable on web and desktop
+  flutter_native_timezone: ^2.0.0 # no desktop support, todo desktop
   package_info_plus: ^1.0.6
   shared_preferences: ^2.0.7
 
