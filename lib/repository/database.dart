@@ -119,7 +119,7 @@ class DBProvider {
         upgrade: (Database db) async {
           db.execute("ALTER TABLE themes ADD COLUMN previousLightTheme INTEGER DEFAULT 0;");
           db.execute("ALTER TABLE themes ADD COLUMN previousDarkTheme INTEGER DEFAULT 0;");
-          Settings s = await Settings.getSettingsOld();
+          Settings s = await Settings.getSettingsOld(db);
           s.save();
           db.execute("DELETE FROM config");
         }),
@@ -151,7 +151,7 @@ class DBProvider {
     });
   }
 
-  void _onUpgrade(Database db, int oldVersion, int newVersion) async {
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     // Run each upgrade scheme for every difference in version.
     // If the user is on version 1 and they need to upgrade to version 3,
     // then we will run every single scheme from 1 -> 2 and 2 -> 3
