@@ -69,14 +69,14 @@ dependencies:
   device_info: ^2.0.2 # mobile only, todo switch to device_info_plus
   google_ml_kit: ^0.7.0 # mobile only, todo disable on web and desktop
   faker: ^2.0.0
-  share_plus: ^2.1.4 # sharing files not supported on Windows & Linux
+  share_plus: ^2.1.4 # sharing files not supported on Windows & Linux, todo desktop
   # for nullsafety
-  battery_optimization: # android only, disable for other platforms
+  battery_optimization: # android only, todo disable for other platforms
     git:
       url: https://github.com/ChangJoo-Park/battery_optimization
       ref: master
   collection: ^1.15.0
-  internet_connection_checker: ^0.0.1+2 # no web support, but we don't need it obviously
+  internet_connection_checker: ^0.0.1+2 # no web support, but we don't need it obviously, todo disable on web
   secure_application: ^3.7.3 # no linux support, todo linux
   local_auth: ^1.1.6 # mobile only, todo disable on web and desktop
   flutter_screen_lock: ^4.0.4+1
