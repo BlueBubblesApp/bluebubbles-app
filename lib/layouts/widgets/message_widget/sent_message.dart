@@ -148,7 +148,6 @@ class SentMessageHelper {
         ],
       );
     }
-    print(CustomNavigator.width(context));
     if (!padding) return msg;
     return Container(
         width: customWidth != null ? customWidth - (showTail ? 20 : 0) : null,
