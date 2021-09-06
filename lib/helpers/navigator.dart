@@ -59,8 +59,10 @@ class BaseNavigator extends GetxService {
     if (Get.keys.containsKey(3) && (!context.isPhone || context.isLandscape)) {
       Get.to(() => widget, transition: Transition.rightToLeft, id: 3, binding: binding);
     } else {
-      // Use Get.to to be able to init bindings
-      Get.to(() => widget, binding: binding);
+      binding?.dependencies();
+      Navigator.of(context).push(ThemeSwitcher.buildPageRoute(
+        builder: (BuildContext context) => widget,
+      ));
     }
   }
 
@@ -88,8 +90,11 @@ class BaseNavigator extends GetxService {
           transition: Transition.rightToLeft
       ), predicate, id: 3);
     } else {
-      // use Get.to to be able to init bindings
-      Get.to(() => widget, binding: binding);
+      binding?.dependencies();
+      // only push here because we don't want to remove underlying routes when in portrait
+      Navigator.of(context).push(ThemeSwitcher.buildPageRoute(
+        builder: (BuildContext context) => widget,
+      ));
     }
   }
 }

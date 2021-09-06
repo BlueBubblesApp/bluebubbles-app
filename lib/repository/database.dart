@@ -7,8 +7,8 @@ import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/repository/models/theme_object.dart';
-import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
@@ -42,7 +42,7 @@ class DBProvider {
 
   static Database? _database;
   static String _path = "";
-  static int currentVersion = 13;
+  static int currentVersion = 14;
 
   /// Contains list of functions to invoke when going from a previous to the current database verison
   /// The previous version is always [key - 1], for example for key 2, it will be the upgrade scheme from version 1 to version 2
@@ -113,6 +113,15 @@ class DBProvider {
         addedInVersion: 13,
         upgrade: (Database db) {
           db.execute("ALTER TABLE themes ADD COLUMN gradientBg INTEGER DEFAULT 0;");
+        }),
+    new DBUpgradeItem(
+        addedInVersion: 14,
+        upgrade: (Database db) async {
+          db.execute("ALTER TABLE themes ADD COLUMN previousLightTheme INTEGER DEFAULT 0;");
+          db.execute("ALTER TABLE themes ADD COLUMN previousDarkTheme INTEGER DEFAULT 0;");
+          Settings s = await Settings.getSettingsOld();
+          s.save();
+          db.execute("DELETE FROM config");
         }),
   ];
 
@@ -415,7 +424,9 @@ class DBProvider {
         "name TEXT UNIQUE,"
         "selectedLightTheme INTEGER DEFAULT 0,"
         "selectedDarkTheme INTEGER DEFAULT 0,"
-        "gradientBg INTEGER DEFAULT 0"
+        "gradientBg INTEGER DEFAULT 0,"
+        "previousLightTheme INTEGER DEFAULT 0,"
+        "previousDarkTheme INTEGER DEFAULT 0"
         ");");
   }
 

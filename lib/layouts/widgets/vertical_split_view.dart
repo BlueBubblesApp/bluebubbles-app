@@ -1,5 +1,8 @@
+import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:get/get.dart';
 
 class VerticalSplitView extends StatefulWidget {
   final Widget left;
@@ -29,17 +32,29 @@ class VerticalSplitView extends StatefulWidget {
 
 class _VerticalSplitViewState extends State<VerticalSplitView> {
   //from 0-1
-  late double _ratio;
+  late final RxDouble _ratio;
   double? _maxWidth;
 
   get _width1 => _ratio * _maxWidth!;
 
-  get _width2 => (1 - _ratio) * _maxWidth!;
+  get _width2 => (1 - _ratio.value) * _maxWidth!;
 
   @override
   void initState() {
     super.initState();
-    _ratio = widget.initialRatio;
+    _ratio = RxDouble(prefs.getDouble('splitRatio') ?? widget.initialRatio);
+    EventDispatcher().stream.listen((Map<String, dynamic> event) {
+      if (!event.containsKey("type")) return;
+
+      if (event["type"] == 'split-refresh' && this.mounted) {
+        _ratio.value = prefs.getDouble('splitRatio') ?? _ratio.value;
+        setState(() {});
+      }
+    });
+    debounce<double>(_ratio, (val) {
+      prefs.setDouble('splitRatio', val);
+      EventDispatcher().emit('split-refresh', null);
+    });
   }
 
   @override
@@ -54,42 +69,36 @@ class _VerticalSplitViewState extends State<VerticalSplitView> {
 
       return SizedBox(
         width: constraints.maxWidth,
-        child: Row(
+        child: Obx(() => Row(
           children: <Widget>[
             SizedBox(
               width: _width1,
               child: widget.left,
             ),
-            (widget.allowResize)
-                ? GestureDetector(
+            (widget.allowResize) ? GestureDetector(
               behavior: HitTestBehavior.translucent,
               child: Container(
                   color: Theme.of(context).accentColor,
                   child: SizedBox(
                     width: widget.dividerWidth,
                     height: constraints.maxHeight,
-                    child: RotationTransition(
-                      child: Icon(Icons.drag_handle, color: Theme.of(context).textTheme.subtitle1?.color),
-                      turns: AlwaysStoppedAnimation(0.25),
-                    ),
+                    child: Icon(Icons.drag_indicator, color: Theme.of(context).textTheme.subtitle1?.color, size: 10),
                   )),
               onPanUpdate: (DragUpdateDetails details) {
-                setState(() {
-                  _ratio = (_ratio + (details.delta.dx / _maxWidth!)).clamp(widget.minRatio, widget.maxRatio);
-                });
+                _ratio.value = (_ratio.value + (details.delta.dx / _maxWidth!)).clamp(widget.minRatio, widget.maxRatio);
               },
-            )
-                : SizedBox(
-                width: widget.dividerWidth,
-                height: constraints.maxHeight,
-                child: Container(color: Theme.of(context).accentColor)),
+            ) : SizedBox(
+              width: widget.dividerWidth,
+              height: constraints.maxHeight,
+              child: Container(color: Theme.of(context).accentColor)
+            ),
             SizedBox(
               width: _width2,
               child: widget.right,
             ),
           ],
         ),
-      );
+      ));
     });
   }
 }

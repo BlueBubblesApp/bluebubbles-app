@@ -106,10 +106,24 @@ class _ThemingPanelState extends State<ThemingPanel> with TickerProviderStateMix
             onPressed: () {
               streamController.sink.add(null);
             },
-            child: Icon(
-              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.pencil : Icons.edit,
-              color: Colors.white,
-            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Icon(
+                  Icons.copy,
+                  color: Colors.white,
+                ),
+                PositionedDirectional(
+                  start: 7.5,
+                  top: 8,
+                  child: Icon(
+                    SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.pencil : Icons.edit,
+                    color: Colors.white,
+                    size: 12,
+                  ),
+                ),
+              ]
+            )
           ),
         ),
         bottomSheet: Container(

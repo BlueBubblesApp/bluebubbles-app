@@ -431,6 +431,7 @@ class ChatListState extends State<ChatList> {
                                                       ListView.builder(
                                                         shrinkWrap: true,
                                                         itemCount: chat.participants.length,
+                                                        physics: NeverScrollableScrollPhysics(),
                                                         itemBuilder: (context, index) {
                                                           return Theme(
                                                             data: Theme.of(context).copyWith(unselectedWidgetColor: Theme.of(context).textTheme.headline1!.color),

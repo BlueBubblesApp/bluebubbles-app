@@ -11,22 +11,9 @@ import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
-import 'package:bluebubbles/layouts/settings/about_panel.dart';
-import 'package:bluebubbles/layouts/settings/attachment_panel.dart';
-import 'package:bluebubbles/layouts/settings/chat_list_panel.dart';
-import 'package:bluebubbles/layouts/settings/conversation_panel.dart';
-import 'package:bluebubbles/layouts/settings/custom_avatar_color_panel.dart';
-import 'package:bluebubbles/layouts/settings/custom_avatar_panel.dart';
-import 'package:bluebubbles/layouts/settings/notification_panel.dart';
-import 'package:bluebubbles/layouts/settings/pinned_order_panel.dart';
-import 'package:bluebubbles/layouts/settings/private_api_panel.dart';
-import 'package:bluebubbles/layouts/settings/redacted_mode_panel.dart';
-import 'package:bluebubbles/layouts/settings/server_management_panel.dart';
-import 'package:bluebubbles/layouts/settings/theme_panel.dart';
 import 'package:bluebubbles/layouts/setup/failure_to_start.dart';
 import 'package:bluebubbles/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/layouts/testing_mode.dart';
-import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/background_isolate.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
@@ -53,6 +40,7 @@ import 'package:local_auth/local_auth.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:secure_application/secure_application.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -73,6 +61,7 @@ bool get isInDebugMode {
 }
 
 FlutterLocalNotificationsPlugin? flutterLocalNotificationsPlugin;
+late SharedPreferences prefs;
 
 Future<Null> _reportError(dynamic error, dynamic stackTrace) async {
   // Print the exception to the console.
@@ -113,6 +102,7 @@ Future<Null> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   dynamic exception;
   try {
+    prefs = await SharedPreferences.getInstance();
     await DBProvider.db.initDB();
     await initializeDateFormatting('fr_FR', null);
     await SettingsManager().init();

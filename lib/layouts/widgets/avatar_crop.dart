@@ -186,11 +186,10 @@ class _AvatarCropState extends State<AvatarCrop> {
                         barrierDismissible: false,
                         backgroundColor: Theme.of(context).backgroundColor,
                       );
-                      onCropped(file.readAsBytesSync());
+                      onCropped(await file.readAsBytes());
                     } else {
-                      setState(() {
-                        _imageData = file.readAsBytesSync();
-                      });
+                      _imageData = await file.readAsBytes();
+                      setState(() {});
                     }
                   },
                   child: Text(

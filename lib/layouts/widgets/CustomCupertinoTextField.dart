@@ -1141,7 +1141,7 @@ class _CustomCupertinoTextFieldState extends State<CustomCupertinoTextField>
 
     final BoxDecoration? effectiveDecoration = widget.decoration?.copyWith(
       border: resolvedBorder,
-      color: enabled ? decorationColor : disabledColor,
+      color: decorationColor,
     );
 
     final Color selectionColor = CupertinoTheme.of(context).primaryColor.withOpacity(0.2);
@@ -1224,7 +1224,7 @@ class _CustomCupertinoTextFieldState extends State<CustomCupertinoTextField>
         ignoring: !enabled,
         child: Container(
           decoration: effectiveDecoration,
-          color: !enabled && effectiveDecoration == null ? disabledColor : null,
+          color: null,
           child: _selectionGestureDetectorBuilder.buildGestureDetector(
             behavior: HitTestBehavior.translucent,
             child: Align(

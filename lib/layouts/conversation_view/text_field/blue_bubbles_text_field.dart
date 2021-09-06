@@ -456,7 +456,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           child: InkWell(
             onTap: toggleShareMenu,
             child: Padding(
-              padding: EdgeInsets.only(right: 1),
+              padding: EdgeInsets.only(right: SettingsManager().settings.skin.value == Skins.iOS ? 0 : 1),
               child: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.share : Icons.share,
                 color: Colors.white.withAlpha(225),
