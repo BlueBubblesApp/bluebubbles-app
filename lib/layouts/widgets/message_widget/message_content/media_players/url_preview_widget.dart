@@ -104,7 +104,7 @@ class UrlPreviewWidget extends StatelessWidget {
   final PageController pageController = PageController();
 
   /// Returns a File object representing the [attachment]
-  File attachmentFile(Attachment attachment) {
+  dynamic attachmentFile(Attachment attachment) {
     String appDocPath = SettingsManager().appDocDir.path;
     String pathName = "$appDocPath/attachments/${attachment.guid}/${attachment.transferName}";
     return new File(pathName);
@@ -129,7 +129,8 @@ class UrlPreviewWidget extends StatelessWidget {
             Obx(() {
               if (controller.data.value?.image != null && controller.data.value!.image!.isNotEmpty) {
                 if (controller.data.value!.image!.startsWith("/")) {
-                  return Image.file(new File(controller.data.value!.image!),
+                  dynamic file = File(controller.data.value!.image!);
+                  return Image.file(file,
                       filterQuality: FilterQuality.low, errorBuilder: (context, error, stackTrace) => Container());
                 } else {
                   return Image.network(controller.data.value!.image!,

@@ -301,7 +301,8 @@ class AttachmentHelper {
 
   static Future<Size> getImageSizingFallback(String filePath) async {
     try {
-      isg.Size size = isg.ImageSizeGetter.getSize(FileInput(File(filePath)));
+      dynamic file = File(filePath);
+      isg.Size size = isg.ImageSizeGetter.getSize(FileInput(file));
       return Size(size.width.toDouble(), size.height.toDouble());
     } catch (ex) {
       return Size(0, 0);

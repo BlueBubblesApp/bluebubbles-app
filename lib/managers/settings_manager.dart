@@ -56,7 +56,8 @@ class SettingsManager {
   /// [init] is run at start and fetches both the [appDocDir] and sets the [settings] to a default value
   Future<void> init() async {
     settings = new Settings();
-    appDocDir = await getApplicationSupportDirectory();
+    //ignore: unnecessary_cast, we need this as a workaround
+    appDocDir = (await getApplicationSupportDirectory()) as Directory;
     canAuthenticate = !kIsWeb && !kIsDesktop && await LocalAuthentication().isDeviceSupported();
   }
 

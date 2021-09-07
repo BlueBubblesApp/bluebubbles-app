@@ -136,7 +136,8 @@ class DBProvider {
   String get path => _path;
 
   Future<Database> initDB() async {
-    Directory documentsDirectory = await getApplicationDocumentsDirectory();
+    //ignore: unnecessary_cast, we need this as a workaround
+    Directory documentsDirectory = (await getApplicationDocumentsDirectory() as Directory);
     _path = join(documentsDirectory.path, "chat.db");
     return await openDatabase(_path, version: currentVersion, onUpgrade: _onUpgrade, onOpen: (Database db) async {
       Logger.info("Database Opened");

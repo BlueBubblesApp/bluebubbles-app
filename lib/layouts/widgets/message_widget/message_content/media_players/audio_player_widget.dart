@@ -44,8 +44,9 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> with AutomaticKeepA
       audioController = thisChat.audioPlayers[widget.file.path]!.item2;
       controller = thisChat.audioPlayers[widget.file.path]!.item1;
     } else {
+      dynamic file = widget.file;
       audioController = VideoPlayerController.file(
-        widget.file,
+        file,
       );
       controller = ChewieAudioController(
         videoPlayerController: audioController,

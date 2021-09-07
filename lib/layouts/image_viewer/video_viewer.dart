@@ -47,7 +47,8 @@ class _VideoViewerState extends State<VideoViewer> {
   }
 
   void initControllers() async {
-    controller = new VideoPlayerController.file(widget.file);
+    dynamic file = widget.file;
+    controller = new VideoPlayerController.file(file);
     controller.setVolume(SettingsManager().settings.startVideosMutedFullscreen.value ? 0 : 1);
     await controller.initialize();
     chewieController = ChewieController(
@@ -210,7 +211,8 @@ class _VideoViewerState extends State<VideoViewer> {
                       AttachmentHelper.redownloadAttachment(widget.attachment, onComplete: () async {
                         controller.dispose();
                         chewieController?.dispose();
-                        controller = new VideoPlayerController.file(widget.file);
+                        dynamic file = widget.file;
+                        controller = new VideoPlayerController.file(file);
                         await controller.initialize();
                         isReloading.value = false;
                         controller.setVolume(SettingsManager().settings.startVideosMutedFullscreen.value ? 0 : 1);

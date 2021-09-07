@@ -317,7 +317,8 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
                                 key: Key("attachmentPicked" + _images[index].id),
                                 data: element,
                                 onTap: () async {
-                                  widget.onAddAttachment(await element.file);
+                                  dynamic file = await element.file;
+                                  widget.onAddAttachment(file);
                                 },
                               );
                             },

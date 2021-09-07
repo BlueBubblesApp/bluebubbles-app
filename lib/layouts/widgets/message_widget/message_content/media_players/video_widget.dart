@@ -51,7 +51,8 @@ class VideoWidgetController extends GetxController with SingleGetTickerProviderM
   }
 
   void initializeController() async {
-    VideoPlayerController vpc = VideoPlayerController.file(file);
+    dynamic file2 = file;
+    VideoPlayerController vpc = VideoPlayerController.file(file2);
     controller = vpc;
     await vpc.initialize();
     CurrentChat.of(context)!.changeCurrentPlayingVideo({attachment.guid!: vpc});
