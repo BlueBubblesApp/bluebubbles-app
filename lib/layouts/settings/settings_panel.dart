@@ -355,10 +355,10 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   backgroundColor: tileColor,
                   title: "Misc and Advanced Settings",
                   onTap: () {
-                    Navigator.of(context).push(
-                      CupertinoPageRoute(
-                        builder: (context) => MiscPanel(),
-                      ),
+                    CustomNavigator.pushAndRemoveSettingsUntil(
+                      context,
+                      MiscPanel(),
+                      (route) => route.isFirst,
                     );
                   },
                   leading: SettingsLeadingIcon(

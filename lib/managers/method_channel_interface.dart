@@ -5,10 +5,10 @@ import 'dart:isolate';
 import 'dart:math';
 import 'dart:ui';
 
-import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
@@ -229,13 +229,12 @@ class MethodChannelInterface {
         }
 
         // Go to the new chat creator with all of these attachments to select a chat in case it wasn't a direct share
-        NavigatorManager().navigatorKey.currentState!.pushAndRemoveUntil(
-              ThemeSwitcher.buildPageRoute(
-                builder: (context) => ConversationView(
-                  existingAttachments: attachments,
-                  isCreator: true,
-                  // onTapGoToChat: true,
-                ),
+        CustomNavigator.pushAndRemoveUntil(
+              Get.context!,
+              ConversationView(
+                existingAttachments: attachments,
+                isCreator: true,
+                // onTapGoToChat: true,
               ),
               (route) => route.isFirst,
             );
@@ -267,12 +266,11 @@ class MethodChannelInterface {
           }
         }
         // Navigate to the new chat creator with the specified text
-        NavigatorManager().navigatorKey.currentState!.pushAndRemoveUntil(
-              ThemeSwitcher.buildPageRoute(
-                builder: (context) => ConversationView(
-                  existingText: text,
-                  isCreator: true,
-                ),
+        CustomNavigator.pushAndRemoveUntil(
+              Get.context!,
+              ConversationView(
+                existingText: text,
+                isCreator: true,
               ),
               (route) => route.isFirst,
             );
@@ -397,14 +395,12 @@ class MethodChannelInterface {
 
       // if (!CurrentChat.isActive(openedChat.guid))
       // Actually navigate to the chat page
-      NavigatorManager().navigatorKey.currentState!
-        ..pushAndRemoveUntil(
-          ThemeSwitcher.buildPageRoute(
-            builder: (context) => ConversationView(
-              chat: openedChat,
-              existingAttachments: existingAttachments,
-              existingText: existingText,
-            ),
+      CustomNavigator.pushAndRemoveUntil(
+          Get.context!,
+          ConversationView(
+            chat: openedChat,
+            existingAttachments: existingAttachments,
+            existingText: existingText,
           ),
           (route) => route.isFirst,
         );

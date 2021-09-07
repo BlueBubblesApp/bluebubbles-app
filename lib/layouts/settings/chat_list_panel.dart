@@ -666,23 +666,6 @@ class ChatListPanel extends StatelessWidget {
                     subtitle: "Adds a dedicated camera button near the new chat creator button to easily send pictures",
                     backgroundColor: tileColor,
                   )),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
-                    ),
-                  ),
-                  Obx(() => SettingsSwitch(
-                        onChanged: (bool val) {
-                          SettingsManager().settings.notifyOnChatList.value = val;
-                          saveSettings();
-                        },
-                        initialVal: SettingsManager().settings.notifyOnChatList.value,
-                        title: "Send Notifications on Chat List",
-                        subtitle: "Sends notifications for new messages while in the chat list or chat creator",
-                        backgroundColor: tileColor,
-                      )),
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
                   Container(
                     height: 30,
