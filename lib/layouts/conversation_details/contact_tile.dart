@@ -5,6 +5,7 @@ import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/redacted_helper.dart';
@@ -190,7 +191,7 @@ class _ContactTileState extends State<ContactTile> {
                     child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.mail : Icons.email, color: Theme.of(context).primaryColor, size: 20),
                   ),
                 ),
-              ((contact == null && !isEmail) || (contact?.phones?.length ?? 0) > 0)
+              (((contact == null && !isEmail) || (contact?.phones?.length ?? 0) > 0) && !kIsWeb && !kIsDesktop)
                   ? ButtonTheme(
                       minWidth: 1,
                       child: TextButton(
