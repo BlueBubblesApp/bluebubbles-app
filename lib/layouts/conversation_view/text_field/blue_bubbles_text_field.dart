@@ -181,7 +181,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
   void addAttachments(List<PlatformFile> attachments) {
     pickedImages.addAll(attachments);
-    pickedImages = pickedImages.toSet().toList();
+    if (!kIsWeb) pickedImages = pickedImages.toSet().toList();
     setCanRecord();
   }
 
@@ -924,8 +924,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     if (file == null) return;
 
     for (PlatformFile image in pickedImages) {
-      if (image.path == file.path) {
-        pickedImages.removeWhere((element) => element.path == file.path);
+      if (image.bytes == file.bytes) {
+        pickedImages.removeWhere((element) => element.bytes == file.bytes);
         updateTextFieldAttachments();
         if (this.mounted) setState(() {});
         return;

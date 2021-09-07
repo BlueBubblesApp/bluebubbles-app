@@ -327,14 +327,17 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
             future: widget.chat.latestMessage,
             builder: (context, snapshot) {
               return Obx(
-                  () => Text((snapshot.data?.error.value ?? 0) > 0 ? "Error" : buildDate(widget.chat.latestMessageDate),
-                      textAlign: TextAlign.right,
-                      style: Theme.of(context).textTheme.subtitle2!.copyWith(
-                            color: (snapshot.data?.error.value ?? 0) > 0
-                                ? Colors.red
-                                : Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
-                          ),
-                      overflow: TextOverflow.clip));
+                  () {
+                    var test = null.obs.value;
+                    return Text((snapshot.data?.error.value ?? 0) > 0 ? "Error" : buildDate(widget.chat.latestMessageDate),
+                        textAlign: TextAlign.right,
+                        style: Theme.of(context).textTheme.subtitle2!.copyWith(
+                          color: (snapshot.data?.error.value ?? 0) > 0
+                              ? Colors.red
+                              : Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
+                        ),
+                        overflow: TextOverflow.clip);
+                  });
             }),
       );
 

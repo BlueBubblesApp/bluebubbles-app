@@ -21,6 +21,7 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -417,6 +418,8 @@ class SocketManager {
     }
 
     String? result;
+
+    if (kIsWeb) return;
 
     try {
       // First, try to send what we currently have

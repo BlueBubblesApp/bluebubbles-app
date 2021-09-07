@@ -299,17 +299,22 @@ class AttachmentHelper {
     return thumbnail;
   }
 
-  static Future<Size> getImageSizingFallback(String filePath) async {
+  static Future<Size> getImageSizingFallback(String filePath, {Uint8List? bytes}) async {
     try {
-      dynamic file = File(filePath);
-      isg.Size size = isg.ImageSizeGetter.getSize(FileInput(file));
-      return Size(size.width.toDouble(), size.height.toDouble());
+      if (!kIsWeb) {
+        dynamic file = File(filePath);
+        isg.Size size = isg.ImageSizeGetter.getSize(FileInput(file));
+        return Size(size.width.toDouble(), size.height.toDouble());
+      } else {
+        isg.Size size = isg.ImageSizeGetter.getSize(isg.MemoryInput(bytes!));
+        return Size(size.width.toDouble(), size.height.toDouble());
+      }
     } catch (ex) {
       return Size(0, 0);
     }
   }
 
-  static Future<Size> getImageSizing(String filePath, {ImageProperties? properties}) async {
+  static Future<Size> getImageSizing(String filePath, {ImageProperties? properties, Uint8List? bytes}) async {
     try {
       double width = 0;
       double height = 0;
@@ -320,12 +325,12 @@ class AttachmentHelper {
       }
 
       if (width == 0 || height == 0) {
-        return AttachmentHelper.getImageSizingFallback(filePath);
+        return AttachmentHelper.getImageSizingFallback(filePath, bytes: bytes);
       }
 
       return Size(width, height);
     } catch (_) {
-      return AttachmentHelper.getImageSizingFallback(filePath);
+      return AttachmentHelper.getImageSizingFallback(filePath, bytes: bytes);
     }
   }
 

@@ -33,7 +33,7 @@ class _TextFieldAttachmentListState extends State<TextFieldAttachmentList> with 
           ),
           itemBuilder: (context, int index) {
             return AttachmentListItem(
-              key: Key("attachmentList" + widget.attachments[index].path),
+              key: Key("attachmentList" + widget.attachments[index].name),
               file: widget.attachments[index],
               onRemove: () {
                 widget.onRemove(widget.attachments[index]);
