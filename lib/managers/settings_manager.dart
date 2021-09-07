@@ -3,12 +3,14 @@ import 'dart:io';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/themes.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:local_auth/local_auth.dart';
@@ -55,7 +57,7 @@ class SettingsManager {
   Future<void> init() async {
     settings = new Settings();
     appDocDir = await getApplicationSupportDirectory();
-    canAuthenticate = await LocalAuthentication().isDeviceSupported();
+    canAuthenticate = !kIsWeb && !kIsDesktop && await LocalAuthentication().isDeviceSupported();
   }
 
   /// Retreives files from disk and stores them in [settings]
@@ -81,7 +83,9 @@ class SettingsManager {
 
     try {
       // Set the [displayMode] to that saved in settings
-      await FlutterDisplayMode.setPreferredMode(await settings.getDisplayMode());
+      if (!kIsWeb && !kIsDesktop) {
+        await FlutterDisplayMode.setPreferredMode(await settings.getDisplayMode());
+      }
     } catch (e) {}
 
     // Change the [finishedSetup] status to that of the settings
@@ -108,7 +112,9 @@ class SettingsManager {
     settings.save();
     try {
       // Set the [displayMode] to that saved in settings
-      await FlutterDisplayMode.setPreferredMode(await settings.getDisplayMode());
+      if (!kIsWeb && !kIsDesktop) {
+        await FlutterDisplayMode.setPreferredMode(await settings.getDisplayMode());
+      }
     } catch (e) {}
   }
 

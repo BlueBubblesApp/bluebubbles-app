@@ -7,19 +7,18 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/simple_vcard_parser.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:exif/exif.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_native_image/flutter_native_image.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:bluebubbles/socket_manager.dart';
-import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';
-import 'package:image/image.dart' as img;
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:image_size_getter/file_input.dart';
 import 'package:image_size_getter/image_size_getter.dart' as isg;
@@ -311,9 +310,13 @@ class AttachmentHelper {
 
   static Future<Size> getImageSizing(String filePath, {ImageProperties? properties}) async {
     try {
-      ImageProperties size = properties ?? await FlutterNativeImage.getImageProperties(filePath);
-      double width = (size.width ?? 0).toDouble();
-      double height = (size.height ?? 0).toDouble();
+      double width = 0;
+      double height = 0;
+      if (!kIsWeb && !kIsDesktop) {
+        ImageProperties size = properties ?? await FlutterNativeImage.getImageProperties(filePath);
+        width = (size.width ?? 0).toDouble();
+        height = (size.height ?? 0).toDouble();
+      }
 
       if (width == 0 || height == 0) {
         return AttachmentHelper.getImageSizingFallback(filePath);
@@ -389,11 +392,8 @@ class AttachmentHelper {
     }
 
     // Get dimensions and preview images
-    Uint8List? previewData;
+    Uint8List previewData = originalFile.readAsBytesSync();
     if (attachment.mimeType == "image/gif") {
-      // For GIFs, just load the entire thing
-      previewData = originalFile.readAsBytesSync();
-
       try {
         Size size = getGifDimensions(previewData);
         if (size.width != 0 && size.height != 0) {
@@ -406,33 +406,23 @@ class AttachmentHelper {
     } else if (mimeStart == "image") {
       // For images, load properties
       try {
-        ImageProperties props = await FlutterNativeImage.getImageProperties(filePath);
+        ImageProperties? props;
+        if (!kIsWeb && !kIsDesktop) {
+          props = await FlutterNativeImage.getImageProperties(filePath);
+          String orientation = props.orientation.toString();
+          if (orientation == '0') {
+            attachment.metadata!['orientation'] = 'landscape';
+          } else if (orientation == '1') {
+            attachment.metadata!['orientation'] = 'portrait';
+          }
+        }
         Size size = await getImageSizing(filePath, properties: props);
         if (size.width != 0 && size.height != 0) {
           attachment.width = size.width.toInt();
           attachment.height = size.height.toInt();
         }
-
-        String orientation = props.orientation.toString();
-        if (orientation == '0') {
-          attachment.metadata!['orientation'] = 'landscape';
-        } else if (orientation == '1') {
-          attachment.metadata!['orientation'] = 'portrait';
-        }
       } catch (ex) {
         Logger.error('Failed to get Image Properties! Error: ${ex.toString()}');
-      }
-    } else if (mimeStart == "video") {
-      // For videos, load the thumbnail
-      try {
-        previewData = await getVideoThumbnail(filePath);
-        Size size = await getVideoDimensions(filePath);
-        if (size.width != 0 && size.height != 0) {
-          attachment.width = size.width.toInt();
-          attachment.height = size.height.toInt();
-        }
-      } catch (ex) {
-        Logger.error('Failed to get video thumbnail! Error: ${ex.toString()}');
       }
     }
 
@@ -445,94 +435,12 @@ class AttachmentHelper {
     } catch (ex) {
       Logger.error('Failed to read EXIF data: ${ex.toString()}');
     }
-    bool usedFallback = false;
-    // If the preview data is null, compress the file
-    if (previewData == null) {
-      // Compress the file
-      ReceivePort receivePort = ReceivePort();
-      Logger.info("Spawning isolate...");
-      // if we don't have a valid width use the max image width
-      // if the image width is less than the max width already don't bother
-      // compressing it because it is already low quality
-      // otherwise use the current width multiplied by preview quality
-      late int compressWidth;
-      if (attachment.width == null) {
-        compressWidth = getDeviceWidth() ~/ 2;
-      } else if (attachment.width! < getDeviceWidth() ~/ 2) {
-        compressWidth = attachment.width!;
-      } else {
-        compressWidth = (attachment.width! * quality * 0.01).toInt();
-        // make sure the compressed image will not be unnecessarily shrunken
-        if (compressWidth < getDeviceWidth() ~/ 2) {
-          compressWidth = getDeviceWidth() ~/ 2;
-        }
-      }
-      await Isolate.spawn(
-        resizeIsolate,
-        ResizeArgs(filePath, receivePort.sendPort, compressWidth),
-        errorsAreFatal: false,
-      );
-
-      var received = await receivePort.first;
-      Logger.info("Compressing via ${received is String ? "FlutterNativeImage" : "image"} plugin");
-      if (received is String) {
-        File compressedFile = await FlutterNativeImage.compressImage(filePath,
-            quality: quality,
-            targetWidth: attachment.width == null ? 0 : attachment.width!,
-            targetHeight: attachment.height == null ? 0 : attachment.height!);
-
-        // Read the compressed data, then cache it
-        previewData = await compressedFile.readAsBytes();
-        usedFallback = true;
-      } else {
-        try {
-          previewData = Uint8List.fromList(img.encodeNamedImage(received as img.Image, filePath.split("/").last) ?? []);
-        } catch (e) {
-          Logger.info("Compression via image plugin failed, using fallback...");
-          File compressedFile = await FlutterNativeImage.compressImage(filePath,
-              quality: quality,
-              targetWidth: attachment.width == null ? 0 : attachment.width!,
-              targetHeight: attachment.height == null ? 0 : attachment.height!);
-
-          // Read the compressed data, then cache it
-          previewData = await compressedFile.readAsBytes();
-          usedFallback = true;
-        }
-      }
-    }
-    if (previewData.isEmpty && !usedFallback) {
-      Logger.info("Compression via image plugin failed, using fallback...");
-      File compressedFile = await FlutterNativeImage.compressImage(filePath,
-          quality: quality,
-          targetWidth: attachment.width == null ? 0 : attachment.width!,
-          targetHeight: attachment.height == null ? 0 : attachment.height!);
-
-      // Read the compressed data, then cache it
-      previewData = await compressedFile.readAsBytes();
-      usedFallback = true;
-    }
-    Logger.info("Got previewData: ${previewData.isNotEmpty}");
-    // As long as we have preview data now, save it
-    cachedFile.writeAsBytes(previewData);
 
     // If we should update the attachment data, do it right before we return, no awaiting
     attachment.update();
 
     // Return the bytes
     return previewData;
-  }
-
-  static void resizeIsolate(ResizeArgs args) {
-    try {
-      Logger.info("Decoding image...");
-      img.Image image = img.decodeImage(File(args.path).readAsBytesSync())!;
-      Logger.info("Resizing image...");
-      img.Image resized = img.copyResize(image, width: args.width);
-      args.sendPort.send(resized);
-    } catch (e) {
-      e.printError();
-      args.sendPort.send("failed");
-    }
   }
 
   static double getAspectRatio(int? height, int? width, {BuildContext? context}) {

@@ -34,6 +34,7 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/helpers/darty.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart' as cupertino;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
@@ -670,42 +671,43 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             ),
           ),
         ),
-      Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () async {
-            final messageDate = await showDatePicker(
-                context: context,
-                initialDate: DateTime.now().toLocal(),
-                firstDate: DateTime.now().toLocal(),
-                lastDate: DateTime.now().toLocal().add(Duration(days: 365)));
-            if (messageDate != null) {
-              final messageTime = await showTimePicker(context: context, initialTime: TimeOfDay.now());
-              if (messageTime != null) {
-                final finalDate = DateTime(
-                    messageDate.year, messageDate.month, messageDate.day, messageTime.hour, messageTime.minute);
-                if (!finalDate.isAfter(DateTime.now().toLocal())) {
-                  showSnackbar("Error", "Select a date in the future");
-                  return;
+      if (!kIsWeb && !kIsDesktop)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () async {
+              final messageDate = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime.now().toLocal(),
+                  firstDate: DateTime.now().toLocal(),
+                  lastDate: DateTime.now().toLocal().add(Duration(days: 365)));
+              if (messageDate != null) {
+                final messageTime = await showTimePicker(context: context, initialTime: TimeOfDay.now());
+                if (messageTime != null) {
+                  final finalDate = DateTime(
+                      messageDate.year, messageDate.month, messageDate.day, messageTime.hour, messageTime.minute);
+                  if (!finalDate.isAfter(DateTime.now().toLocal())) {
+                    showSnackbar("Error", "Select a date in the future");
+                    return;
+                  }
+                  NotificationManager().scheduleNotification(widget.currentChat!.chat, widget.message, finalDate);
+                  Get.back();
+                  showSnackbar("Notice", "Scheduled reminder for ${buildDate(finalDate)}");
                 }
-                NotificationManager().scheduleNotification(widget.currentChat!.chat, widget.message, finalDate);
-                Get.back();
-                showSnackbar("Notice", "Scheduled reminder for ${buildDate(finalDate)}");
               }
-            }
-          },
-          child: ListTile(
-            title: Text(
-              "Remind Later",
-              style: Theme.of(context).textTheme.bodyText1,
-            ),
-            trailing: Icon(
-              SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.alarm : Icons.alarm,
-              color: Theme.of(context).textTheme.bodyText1!.color,
+            },
+            child: ListTile(
+              title: Text(
+                "Remind Later",
+                style: Theme.of(context).textTheme.bodyText1,
+              ),
+              trailing: Icon(
+                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.alarm : Icons.alarm,
+                color: Theme.of(context).textTheme.bodyText1!.color,
+              ),
             ),
           ),
         ),
-      ),
     ];
 
     List<Widget> detailsActions = [];

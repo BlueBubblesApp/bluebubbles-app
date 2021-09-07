@@ -7,6 +7,7 @@ import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:contacts_service/contacts_service.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/cupertino.dart';
@@ -56,6 +57,7 @@ class ContactManager {
   }
 
   Future<bool> canAccessContacts() async {
+    if (kIsWeb || kIsDesktop) return false;
     try {
       PermissionStatus status = await Permission.contacts.status;
       if (status.isGranted) return true;
@@ -101,7 +103,9 @@ class ContactManager {
 
     // Fetch the current list of contacts
     Logger.info("Fetching contacts", tag: tag);
-    contacts = (await ContactsService.getContacts(withThumbnails: false)).toList();
+    if (!kIsWeb && !kIsDesktop) {
+      contacts = (await ContactsService.getContacts(withThumbnails: false)).toList();
+    }
     hasFetchedContacts = true;
 
     // Match handles in the database with contacts
@@ -160,7 +164,7 @@ class ContactManager {
     Logger.info("Fetching Avatars", tag: tag);
     for (String address in handleToContact.keys) {
       Contact? contact = handleToContact[address];
-      if (handleToContact[address] == null) continue;
+      if (handleToContact[address] == null || kIsWeb || kIsDesktop) continue;
 
       ContactsService.getAvatar(contact!, photoHighRes: !SettingsManager().settings.lowMemoryMode.value).then((avatar) {
         if (avatar == null) return;
@@ -225,7 +229,7 @@ class ContactManager {
       if (contact != null) break;
     }
 
-    if (fetchAvatar) {
+    if (fetchAvatar && !kIsDesktop && !kIsWeb) {
       Uint8List? avatar =
           await ContactsService.getAvatar(contact!, photoHighRes: !SettingsManager().settings.lowMemoryMode.value);
       contact.avatar = avatar;
