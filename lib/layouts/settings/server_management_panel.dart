@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
+import 'package:universal_io/io.dart';
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';

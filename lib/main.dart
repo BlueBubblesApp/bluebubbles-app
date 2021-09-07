@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:io';
+import 'package:universal_io/io.dart';
 import 'dart:isolate';
 import 'dart:ui';
 

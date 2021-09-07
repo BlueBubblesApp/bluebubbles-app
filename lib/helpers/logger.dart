@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/utils.dart';

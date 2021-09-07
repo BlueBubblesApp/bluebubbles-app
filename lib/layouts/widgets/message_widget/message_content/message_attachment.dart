@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';

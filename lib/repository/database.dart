@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:io';
+import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/themes.dart';

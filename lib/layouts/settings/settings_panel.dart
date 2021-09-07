@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:io';
+import 'package:universal_io/io.dart';
 import 'dart:ui';
 
 import 'package:adaptive_theme/adaptive_theme.dart';

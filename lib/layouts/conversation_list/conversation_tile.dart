@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:io';
+import 'package:universal_io/io.dart';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';

@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/list/attachment_list_item.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';

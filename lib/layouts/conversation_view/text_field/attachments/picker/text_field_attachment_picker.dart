@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:io';
+import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/share.dart';
