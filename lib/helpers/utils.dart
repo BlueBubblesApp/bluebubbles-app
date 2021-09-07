@@ -87,12 +87,12 @@ Future<String> formatPhoneNumber(dynamic item) async {
   String? meta;
 
   try {
-    meta = await PhoneNumberUtil.normalizePhoneNumber(address, countryCode);
+    meta = await PhoneNumberUtil.formatAsYouType(address, countryCode);
   } catch (ex) {
     CountryCode? cc = getCountryCodes().firstWhereOrNull((e) => e.code == countryCode);
     if (!address.startsWith("+") && cc != null) {
       try {
-        meta = await PhoneNumberUtil.normalizePhoneNumber("${cc.dialCode}$address", countryCode);
+        meta = await PhoneNumberUtil.formatAsYouType("${cc.dialCode}$address", countryCode);
       } catch (x) {}
     }
   }
