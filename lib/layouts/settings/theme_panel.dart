@@ -18,7 +18,6 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
@@ -45,11 +44,9 @@ class ThemePanelController extends GetxController {
 
   @override
   void onReady() async {
-    if (!kIsWeb && kIsDesktop) {
-      modes.value = await FlutterDisplayMode.supported;
-      refreshRates.value = modes.map((e) => e.refreshRate.round()).toSet().toList();
-      currentMode.value = (await _settingsCopy.getDisplayMode()).refreshRate.round();
-    }
+    modes.value = await FlutterDisplayMode.supported;
+    refreshRates.value = modes.map((e) => e.refreshRate.round()).toSet().toList();
+    currentMode.value = (await _settingsCopy.getDisplayMode()).refreshRate.round();
     super.onReady();
   }
 
@@ -320,37 +317,35 @@ class ThemePanel extends GetView<ThemePanelController> {
                       backgroundColor: tileColor,
                       subtitle: "Customize the avatar for different chats",
                     ),
-                    if (!kIsWeb && !kIsDesktop)
-                      Obx(() {
-                        if (controller.refreshRates.length > 2)
-                          return SettingsHeader(
-                              headerColor: headerColor,
-                              tileColor: tileColor,
-                              iosSubtitle: iosSubtitle,
-                              materialSubtitle: materialSubtitle,
-                              text: "Refresh Rate"
-                          );
-                        else return SizedBox.shrink();
-                      }),
-                    if (!kIsWeb && !kIsDesktop)
-                      Obx(() {
-                        if (controller.refreshRates.length > 2)
-                          return SettingsOptions<int>(
-                            initial: controller.currentMode.value,
-                            onChanged: (val) async {
-                              if (val == null) return;
-                              controller.currentMode.value = val;
-                              controller._settingsCopy.refreshRate.value = controller.currentMode.value;
-                              saveSettings();
-                            },
-                            options: controller.refreshRates,
-                            textProcessing: (val) => val == 0 ? "Auto" : val.toString() + " Hz",
-                            title: "Display",
-                            backgroundColor: tileColor,
-                            secondaryColor: headerColor,
-                          );
-                        else return SizedBox.shrink();
-                      }),
+                    Obx(() {
+                      if (controller.refreshRates.length > 2)
+                        return SettingsHeader(
+                            headerColor: headerColor,
+                            tileColor: tileColor,
+                            iosSubtitle: iosSubtitle,
+                            materialSubtitle: materialSubtitle,
+                            text: "Refresh Rate"
+                        );
+                      else return SizedBox.shrink();
+                    }),
+                    Obx(() {
+                      if (controller.refreshRates.length > 2)
+                        return SettingsOptions<int>(
+                          initial: controller.currentMode.value,
+                          onChanged: (val) async {
+                            if (val == null) return;
+                            controller.currentMode.value = val;
+                            controller._settingsCopy.refreshRate.value = controller.currentMode.value;
+                            saveSettings();
+                          },
+                          options: controller.refreshRates,
+                          textProcessing: (val) => val == 0 ? "Auto" : val.toString() + " Hz",
+                          title: "Display",
+                          backgroundColor: tileColor,
+                          secondaryColor: headerColor,
+                        );
+                      else return SizedBox.shrink();
+                    }),
                     // SettingsOptions<String>(
                     //   initial: controller._settingsCopy.emojiFontFamily == null
                     //       ? "System"

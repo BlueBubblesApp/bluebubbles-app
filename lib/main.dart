@@ -28,10 +28,10 @@ import 'package:bluebubbles/repository/models/theme_object.dart';
 
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' hide Priority;
 import 'package:flutter/services.dart';
+import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 import 'package:get/get.dart';
@@ -108,15 +108,13 @@ Future<Null> main() async {
     await SettingsManager().init();
     await SettingsManager().getSavedSettings(headless: true);
     Get.put(AttachmentDownloadService());
-    if (!kIsWeb && !kIsDesktop) {
-      flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-      const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('ic_stat_icon');
-      final InitializationSettings initializationSettings =
-      InitializationSettings(android: initializationSettingsAndroid);
-      await flutterLocalNotificationsPlugin!.initialize(initializationSettings);
-      tz.initializeTimeZones();
-      tz.setLocalLocation(tz.getLocation(await FlutterNativeTimezone.getLocalTimezone()));
-    }
+    flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+    const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('ic_stat_icon');
+    final InitializationSettings initializationSettings =
+        InitializationSettings(android: initializationSettingsAndroid);
+    await flutterLocalNotificationsPlugin!.initialize(initializationSettings);
+    tz.initializeTimeZones();
+    tz.setLocalLocation(tz.getLocation(await FlutterNativeTimezone.getLocalTimezone()));
   } catch (e) {
     exception = e;
   }
@@ -309,52 +307,49 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           await MethodChannelInterface().invokeMethod("start-notif-listener");
         } catch (_) {}
       }
+      // Get sharing media from files shared to the app from cold start
+      // This one only handles files, not text
+      ReceiveSharingIntent.getInitialMedia().then((List<SharedMediaFile> value) async {
+        if (!SettingsManager().settings.finishedSetup.value) return;
+        if (value.isEmpty) return;
 
-      if (!kIsWeb && !kIsDesktop) {
-        // Get sharing media from files shared to the app from cold start
-        // This one only handles files, not text
-        ReceiveSharingIntent.getInitialMedia().then((List<SharedMediaFile> value) async {
-          if (!SettingsManager().settings.finishedSetup.value) return;
-          if (value.isEmpty) return;
+        // If we don't have storage permission, we can't do anything
+        if (!await Permission.storage.request().isGranted) return;
 
-          // If we don't have storage permission, we can't do anything
-          if (!await Permission.storage.request().isGranted) return;
-
-          // Add the attached files to a list
-          List<File> attachments = <File>[];
-          value.forEach((element) {
-            attachments.add(File(element.path));
-          });
-
-          if (attachments.length == 0) return;
-
-          // Go to the new chat creator, with all of our attachments
-          CustomNavigator.pushAndRemoveUntil(
-            context,
-            ConversationView(
-              existingAttachments: attachments,
-              isCreator: true,
-            ),
-                (route) => route.isFirst,
-          );
+        // Add the attached files to a list
+        List<File> attachments = <File>[];
+        value.forEach((element) {
+          attachments.add(File(element.path));
         });
 
-        // Same thing as [getInitialMedia] except for text
-        ReceiveSharingIntent.getInitialText().then((String? text) {
-          if (!SettingsManager().settings.finishedSetup.value) return;
-          if (text == null) return;
+        if (attachments.length == 0) return;
 
-          // Go to the new chat creator, with all of our text
-          CustomNavigator.pushAndRemoveUntil(
-            context,
-            ConversationView(
-              existingText: text,
-              isCreator: true,
-            ),
-                (route) => route.isFirst,
-          );
-        });
-      }
+        // Go to the new chat creator, with all of our attachments
+        CustomNavigator.pushAndRemoveUntil(
+          context,
+          ConversationView(
+            existingAttachments: attachments,
+            isCreator: true,
+          ),
+          (route) => route.isFirst,
+        );
+      });
+
+      // Same thing as [getInitialMedia] except for text
+      ReceiveSharingIntent.getInitialText().then((String? text) {
+        if (!SettingsManager().settings.finishedSetup.value) return;
+        if (text == null) return;
+
+        // Go to the new chat creator, with all of our text
+        CustomNavigator.pushAndRemoveUntil(
+          context,
+          ConversationView(
+            existingText: text,
+            isCreator: true,
+          ),
+          (route) => route.isFirst,
+        );
+      });
 
       // Request native code to retreive what the starting intent was
       //
@@ -377,6 +372,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   void didChangeDependencies() async {
     Locale myLocale = Localizations.localeOf(context);
     SettingsManager().countryCode = myLocale.countryCode;
+    await FlutterLibphonenumber().init();
     super.didChangeDependencies();
   }
 

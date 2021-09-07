@@ -1,5 +1,4 @@
 import 'package:bluebubbles/helpers/logger.dart';
-import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/setup/battery_optimization/battery_optimization.dart';
 import 'package:bluebubbles/layouts/setup/connecting_alert/failed_to_connect_dialog.dart';
 import 'package:bluebubbles/layouts/setup/prepare_to_download/prepare_to_download.dart';
@@ -12,7 +11,6 @@ import 'package:bluebubbles/layouts/setup/welcome_page/welcome_page.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -73,10 +71,8 @@ class _SetupViewState extends State<SetupView> {
             WelcomePage(
               controller: controller,
             ),
-            if (!kIsWeb && !kIsDesktop)
-              RequestContacts(controller: controller),
-            if (!kIsWeb && !kIsDesktop)
-              BatteryOptimizationPage(controller: controller),
+            RequestContacts(controller: controller),
+            BatteryOptimizationPage(controller: controller),
             SetupMacApp(controller: controller),
             QRScan(
               controller: controller,
@@ -97,7 +93,7 @@ class _SetupViewState extends State<SetupView> {
               Padding(
                 padding: EdgeInsets.only(bottom: 20),
                 child: Text(
-                  "$currentPage/${kIsWeb || kIsDesktop ? "5" : "7"}",
+                  "$currentPage/7",
                   style: Theme.of(context).textTheme.bodyText1,
                 ),
               ),

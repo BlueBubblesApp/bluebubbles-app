@@ -22,12 +22,12 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:convert/convert.dart';
-import 'package:device_info_plus/device_info_plus.dart';
+import 'package:device_info/device_info.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:libphonenumber_plugin/libphonenumber_plugin.dart';
+import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:get/get.dart';
 import 'package:html/parser.dart';
 import 'package:http/http.dart' show get;
@@ -84,20 +84,28 @@ Future<String> formatPhoneNumber(dynamic item) async {
   if (address == null || address.isEmail) return address!;
   address = address.trim(); // Trim it just in case
 
-  String? meta;
+  Map<String, dynamic> meta = {};
 
   try {
-    meta = await PhoneNumberUtil.normalizePhoneNumber(address, countryCode);
+    meta = await FlutterLibphonenumber().parse(address, region: countryCode);
   } catch (ex) {
     CountryCode? cc = getCountryCodes().firstWhereOrNull((e) => e.code == countryCode);
     if (!address.startsWith("+") && cc != null) {
       try {
-        meta = await PhoneNumberUtil.normalizePhoneNumber("${cc.dialCode}$address", countryCode);
+        meta = await FlutterLibphonenumber().parse("${cc.dialCode}$address", region: countryCode);
       } catch (x) {}
     }
   }
 
-  return meta ?? address;
+  if (!meta.containsKey("national")) {
+    if (meta.containsKey("international")) {
+      return meta['international'];
+    } else {
+      return address;
+    }
+  }
+
+  return meta['national'];
 }
 
 Future<List<String>> getCompareOpts(Handle handle) async {
@@ -115,8 +123,8 @@ Future<List<String>> getCompareOpts(Handle handle) async {
     if (i + 1 >= maxOpts) break;
   }
 
-  String? parsed = await parsePhoneNumber(handle.address, handle.country ?? "US");
-  if (parsed != null) opts.add(parsed);
+  Map<String, dynamic> parsed = await parsePhoneNumber(handle.address, handle.country ?? "US");
+  opts.addAll(parsed.values.map((item) => item.toString()).where((item) => item != 'fixedOrMobile'));
   return opts;
 }
 
@@ -168,11 +176,12 @@ String getInitials(Contact contact) {
 //   return imageDataBytes.toList();
 // }
 
-Future<String?> parsePhoneNumber(String number, String region) async {
+Future<Map<String, dynamic>> parsePhoneNumber(String number, String region) async {
+  Map<String, dynamic> meta = {};
   try {
-    return await PhoneNumberUtil.normalizePhoneNumber(number, region);
+    return await FlutterLibphonenumber().parse(number, region: region);
   } catch (ex) {
-    return null;
+    return meta;
   }
 }
 
@@ -455,6 +464,14 @@ Size getGifDimensions(Uint8List bytes) {
   return size;
 }
 
+Future<Size> getVideoDimensions(String filePath) async {
+  File cachedFile = new File("$filePath.thumbnail");
+  if (!cachedFile.existsSync()) {
+    await AttachmentHelper.getVideoThumbnail(filePath);
+  }
+  return await AttachmentHelper.getImageSizing("$filePath.thumbnail");
+}
+
 Brightness getBrightness(BuildContext context) {
   return AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ? Brightness.dark : Brightness.light;
 }
@@ -480,41 +497,28 @@ String? getServerAddress({String? address}) {
 }
 
 Future<String> getDeviceName() async {
-  String deviceName = "bluebubbles-client";
+  String deviceName = "android-client";
 
   try {
     // Load device info
     DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+    AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
 
     // Gather device info
-    List<String> items = [];
-
-    if (Platform.isAndroid) {
-      AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
-      items.addAll([androidInfo.brand!, androidInfo.model!, androidInfo.androidId!]);
-    } else if (kIsWeb) {
-      WebBrowserInfo webInfo = await deviceInfo.webBrowserInfo;
-      items.addAll([describeEnum(webInfo.browserName), webInfo.platform!]);
-    } else if (Platform.isWindows) {
-      WindowsDeviceInfo windowsInfo = await deviceInfo.windowsInfo;
-      items.addAll([windowsInfo.computerName]);
-    } else if (Platform.isLinux) {
-      LinuxDeviceInfo windowsInfo = await deviceInfo.linuxInfo;
-      items.addAll([windowsInfo.prettyName]);
-    }
+    List<String> items = [androidInfo.brand, androidInfo.model, androidInfo.androidId].toList();
 
     // Set device name
     if (items.length > 0) {
       deviceName = items.join("_").toLowerCase();
     }
   } catch (ex) {
-    Logger.error("Failed to get device name! Defaulting to 'bluebubbles-client'");
+    Logger.error("Failed to get device name! Defaulting to 'android-client'");
     Logger.error(ex.toString());
   }
 
   // Fallback for if it happens to be empty or null, somehow... idk
   if (isNullOrEmpty(deviceName.trim())!) {
-    deviceName = "bluebubbles-client";
+    deviceName = "android-client";
   }
 
   return deviceName;
@@ -653,5 +657,3 @@ extension PlatformSpecificCapitalize on String {
 extension LastChars on String {
   String lastChars(int n) => substring(length - n);
 }
-
-bool get kIsDesktop => Platform.isWindows || Platform.isLinux || Platform.isMacOS;

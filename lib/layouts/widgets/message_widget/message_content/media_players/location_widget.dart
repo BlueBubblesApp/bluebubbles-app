@@ -8,7 +8,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:maps_launcher/maps_launcher.dart';
+import 'package:map_launcher/map_launcher.dart' as ML;
 
 class LocationWidget extends StatefulWidget {
   LocationWidget({
@@ -45,8 +45,12 @@ class _LocationWidgetState extends State<LocationWidget> with AutomaticKeepAlive
 
   void openMaps() async {
     if (location == null) return;
+    final availableMaps = await ML.MapLauncher.installedMaps;
 
-    await MapsLauncher.launchCoordinates(location!.longitude!, location!.latitude!);
+    await availableMaps.first.showMarker(
+      coords: ML.Coords(location!.longitude!, location!.latitude!),
+      title: "Shared Location",
+    );
   }
 
   @override

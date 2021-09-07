@@ -148,13 +148,12 @@ class MiscPanel extends StatelessWidget {
                         subtitle: "Show a snackbar whenever a message sync is completed",
                         backgroundColor: tileColor,
                       )),
-                  if (SettingsManager().canAuthenticate)
-                    SettingsHeader(
-                        headerColor: headerColor,
-                        tileColor: tileColor,
-                        iosSubtitle: iosSubtitle,
-                        materialSubtitle: materialSubtitle,
-                        text: "Security"),
+                  SettingsHeader(
+                      headerColor: headerColor,
+                      tileColor: tileColor,
+                      iosSubtitle: iosSubtitle,
+                      materialSubtitle: materialSubtitle,
+                      text: "Security"),
                   if (SettingsManager().canAuthenticate)
                     Obx(() =>
                         SettingsSwitch(

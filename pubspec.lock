@@ -138,6 +138,20 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "8.1.0"
+  camera:
+    dependency: "direct main"
+    description:
+      name: camera
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.8.1+7"
+  camera_platform_interface:
+    dependency: transitive
+    description:
+      name: camera_platform_interface
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.0.1"
   characters:
     dependency: transitive
     description:
@@ -203,48 +217,34 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.15.0"
-  connectivity_plus:
+  connectivity:
     dependency: "direct main"
     description:
-      name: connectivity_plus
+      name: connectivity
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.1.0"
-  connectivity_plus_linux:
+    version: "3.0.6"
+  connectivity_for_web:
     dependency: transitive
     description:
-      name: connectivity_plus_linux
+      name: connectivity_for_web
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.1.0"
-  connectivity_plus_macos:
+    version: "0.4.0"
+  connectivity_macos:
     dependency: transitive
     description:
-      name: connectivity_plus_macos
+      name: connectivity_macos
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.1.0"
-  connectivity_plus_platform_interface:
+    version: "0.2.0"
+  connectivity_platform_interface:
     dependency: transitive
     description:
-      name: connectivity_plus_platform_interface
+      name: connectivity_platform_interface
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.1.0"
-  connectivity_plus_web:
-    dependency: transitive
-    description:
-      name: connectivity_plus_web
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "1.1.0+1"
-  connectivity_plus_windows:
-    dependency: transitive
-    description:
-      name: connectivity_plus_windows
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "1.1.0"
+    version: "2.0.1"
   contacts_service:
     dependency: "direct main"
     description:
@@ -273,6 +273,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.6.0+1"
+  cross_file:
+    dependency: transitive
+    description:
+      name: cross_file
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.3.1+1"
   crypto:
     dependency: transitive
     description:
@@ -301,55 +308,20 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.0.1"
-  dbus:
-    dependency: transitive
-    description:
-      name: dbus
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.5.6"
-  device_info_plus:
+  device_info:
     dependency: "direct main"
     description:
-      name: device_info_plus
+      name: device_info
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.1.0"
-  device_info_plus_linux:
+    version: "2.0.2"
+  device_info_platform_interface:
     dependency: transitive
     description:
-      name: device_info_plus_linux
+      name: device_info_platform_interface
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.1.0"
-  device_info_plus_macos:
-    dependency: transitive
-    description:
-      name: device_info_plus_macos
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "2.1.0"
-  device_info_plus_platform_interface:
-    dependency: transitive
-    description:
-      name: device_info_plus_platform_interface
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "2.1.0"
-  device_info_plus_web:
-    dependency: transitive
-    description:
-      name: device_info_plus_web
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "2.1.0"
-  device_info_plus_windows:
-    dependency: transitive
-    description:
-      name: device_info_plus_windows
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "2.1.0"
+    version: "2.0.1"
   encrypt:
     dependency: "direct main"
     description:
@@ -446,6 +418,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.9.1"
+  flutter_libphonenumber:
+    dependency: "direct main"
+    description:
+      name: flutter_libphonenumber
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.1.0"
   flutter_local_notifications:
     dependency: "direct main"
     description:
@@ -604,7 +583,7 @@ packages:
     source: hosted
     version: "4.0.0"
   image:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: image
       url: "https://pub.dartlang.org"
@@ -666,34 +645,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.8.0"
-  libphonenumber:
-    dependency: transitive
-    description:
-      name: libphonenumber
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "2.0.1"
-  libphonenumber_platform_interface:
-    dependency: transitive
-    description:
-      name: libphonenumber_platform_interface
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.3.1"
-  libphonenumber_plugin:
-    dependency: "direct main"
-    description:
-      name: libphonenumber_plugin
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.2.3"
-  libphonenumber_web:
-    dependency: transitive
-    description:
-      name: libphonenumber_web
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.2.0+1"
   lists:
     dependency: transitive
     description:
@@ -708,27 +659,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.1.6"
-  location:
-    dependency: "direct main"
-    description:
-      name: location
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "4.3.0"
-  location_platform_interface:
-    dependency: transitive
-    description:
-      name: location_platform_interface
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "2.3.0"
-  location_web:
-    dependency: transitive
-    description:
-      name: location_web
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "3.1.1"
   logging:
     dependency: transitive
     description:
@@ -736,13 +666,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.1"
-  maps_launcher:
+  map_launcher:
     dependency: "direct main"
     description:
-      name: maps_launcher
+      name: map_launcher
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.0.1"
+    version: "2.1.1"
   markdown:
     dependency: transitive
     description:
@@ -806,13 +736,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.0"
-  nm:
-    dependency: transitive
-    description:
-      name: nm
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.3.0"
   node_preamble:
     dependency: transitive
     description:
@@ -1421,7 +1344,7 @@ packages:
     source: hosted
     version: "0.3.1"
   universal_io:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: universal_io
       url: "https://pub.dartlang.org"

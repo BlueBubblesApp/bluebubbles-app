@@ -4,7 +4,6 @@ import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/repository/models/message.dart';
-import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
@@ -130,25 +129,23 @@ class ConversationPanel extends StatelessWidget {
                     subtitle: "Shows contact avatars in direct messages rather than just in group messages",
                     backgroundColor: tileColor,
                   )),
-                  if (!kIsWeb && !kIsDesktop)
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
-                      ),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
                     ),
-                  if (!kIsWeb && !kIsDesktop)
-                    Obx(() => SettingsSwitch(
-                      onChanged: (bool val) {
-                        SettingsManager().settings.smartReply.value = val;
-                        saveSettings();
-                      },
-                      initialVal: SettingsManager().settings.smartReply.value,
-                      title: "Show Smart Replies",
-                      subtitle: "Shows smart reply suggestions above the message box",
-                      backgroundColor: tileColor,
-                    )),
+                  ),
+                  Obx(() => SettingsSwitch(
+                    onChanged: (bool val) {
+                      SettingsManager().settings.smartReply.value = val;
+                      saveSettings();
+                    },
+                    initialVal: SettingsManager().settings.smartReply.value,
+                    title: "Show Smart Replies",
+                    subtitle: "Shows smart reply suggestions above the message box",
+                    backgroundColor: tileColor,
+                  )),
                   SettingsHeader(
                       headerColor: headerColor,
                       tileColor: tileColor,
