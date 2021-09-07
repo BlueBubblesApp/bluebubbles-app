@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:typed_data';
+import 'package:file_picker/file_picker.dart';
 import 'package:universal_io/io.dart';
 import 'dart:math';
 import 'dart:ui';
@@ -254,7 +256,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     super.dispose();
   }
 
-  Future<bool> send(List<File> attachments, String text) async {
+  Future<bool> send(List<PlatformFile> attachments, String text) async {
     bool isDifferentChat = currentChat == null || currentChat?.chat.guid != chat?.guid;
 
     if (isCreator!) {

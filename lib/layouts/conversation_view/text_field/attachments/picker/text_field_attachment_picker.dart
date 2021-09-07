@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:file_picker/file_picker.dart';
 import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/helpers/constants.dart';
@@ -21,7 +22,7 @@ class TextFieldAttachmentPicker extends StatefulWidget {
     required this.onAddAttachment,
   }) : super(key: key);
   final bool visible;
-  final Function(File?) onAddAttachment;
+  final Function(PlatformFile?) onAddAttachment;
 
   @override
   _TextFieldAttachmentPickerState createState() => _TextFieldAttachmentPickerState();
@@ -68,7 +69,12 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
       return;
     }
 
-    widget.onAddAttachment(file);
+    widget.onAddAttachment(PlatformFile(
+      path: file.path,
+      name: file.path.split('/').last,
+      size: file.lengthSync(),
+      bytes: file.readAsBytesSync(),
+    ));
   }
 
   @override
@@ -111,11 +117,11 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
                                         primary: Theme.of(context).accentColor,
                                       ),
                                       onPressed: () async {
-                                        List<dynamic>? res = await MethodChannelInterface().invokeMethod("pick-file");
-                                        if (res == null || res.isEmpty) return;
+                                        final res = await FilePicker.platform.pickFiles(withData: true, allowMultiple: true);
+                                        if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
 
-                                        for (dynamic path in res) {
-                                          widget.onAddAttachment(File(path.toString()));
+                                        for (dynamic file in res.files) {
+                                          widget.onAddAttachment(file);
                                         }
                                       },
                                       child: Column(
@@ -318,7 +324,12 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
                                 data: element,
                                 onTap: () async {
                                   dynamic file = await element.file;
-                                  widget.onAddAttachment(file);
+                                  widget.onAddAttachment(PlatformFile(
+                                    path: file.path,
+                                    name: file.path.split('/').last,
+                                    size: file.lengthSync(),
+                                    bytes: file.readAsBytesSync(),
+                                  ));
                                 },
                               );
                             },

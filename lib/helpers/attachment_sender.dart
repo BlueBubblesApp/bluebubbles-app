@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:file_picker/file_picker.dart';
 import 'package:universal_io/io.dart';
 import 'dart:typed_data';
 
@@ -28,9 +29,9 @@ class AttachmentSender {
 
   // String _tempGuid;
 
-  late File _attachment;
+  late PlatformFile _attachment;
   late String _attachmentGuid;
-  late List<int> _imageBytes;
+  late Uint8List _imageBytes;
   late String _text;
   String? _attachmentName;
   Attachment? messageAttachment;
@@ -41,7 +42,7 @@ class AttachmentSender {
   String? get guid => _attachmentGuid;
 
   AttachmentSender(
-    File attachment,
+    PlatformFile attachment,
     Chat chat,
     String text,
   ) {
@@ -116,7 +117,7 @@ class AttachmentSender {
 
   Future<void> send() async {
     _attachmentName = basename(_attachment.path);
-    _imageBytes = await _attachment.readAsBytes();
+    _imageBytes = _attachment.bytes!;
 
     int numOfChunks = (_imageBytes.length / _chunkSize).ceil();
 
@@ -157,7 +158,7 @@ class AttachmentSender {
     String appDocPath = SettingsManager().appDocDir.path;
     String pathName = "$appDocPath/attachments/${messageAttachment!.guid}/$_attachmentName";
     File file = await new File(pathName).create(recursive: true);
-    await file.writeAsBytes(Uint8List.fromList(_imageBytes));
+    await file.writeAsBytes(_imageBytes);
 
     // Add the message to the chat.
     // This will save the message, attachments, and chat

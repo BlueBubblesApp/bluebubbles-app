@@ -1,4 +1,4 @@
-import 'package:universal_io/io.dart';
+import 'package:file_picker/file_picker.dart';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
@@ -18,7 +18,7 @@ class AttachmentListItem extends StatefulWidget {
     required this.file,
     required this.onRemove,
   }) : super(key: key);
-  final File file;
+  final PlatformFile file;
   final Function() onRemove;
 
   @override
@@ -43,7 +43,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
       if (this.mounted) setState(() {});
     } else if (mimeType == null || mimeType.startsWith("image/")) {
       // Compress the file, using a dummy attachment object
-      preview = await File(widget.file.absolute.path).readAsBytes();
+      preview = widget.file.bytes;
       if (this.mounted) setState(() {});
     }
   }

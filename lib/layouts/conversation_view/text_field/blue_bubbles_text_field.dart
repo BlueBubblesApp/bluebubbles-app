@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:file_picker/file_picker.dart';
 import 'package:universal_io/io.dart';
 import 'dart:ui';
 
@@ -37,7 +38,7 @@ class BlueBubblesTextField extends StatefulWidget {
   final String? existingText;
   final bool? isCreator;
   final bool wasCreator;
-  final Future<bool> Function(List<File> attachments, String text) onSend;
+  final Future<bool> Function(List<PlatformFile> attachments, String text) onSend;
 
   BlueBubblesTextField({
     Key? key,
@@ -59,7 +60,7 @@ class BlueBubblesTextField extends StatefulWidget {
 class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerProviderStateMixin {
   TextEditingController? controller;
   FocusNode? focusNode;
-  List<File> pickedImages = <File>[];
+  List<PlatformFile> pickedImages = [];
   TextFieldData? textFieldData;
   StreamController _streamController = new StreamController.broadcast();
   CurrentChat? safeChat;
@@ -155,7 +156,12 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     }
 
     if (widget.existingAttachments != null) {
-      this.addAttachments(widget.existingAttachments!);
+      this.addAttachments(widget.existingAttachments!.map((e) => PlatformFile(
+        path: e.path,
+        name: e.path.split("/").last,
+        size: e.lengthSync(),
+        bytes: e.readAsBytesSync(),
+      )).toList());
       updateTextFieldAttachments();
     }
 
@@ -173,16 +179,15 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     }
   }
 
-  void addAttachments(List<File> attachments) {
+  void addAttachments(List<PlatformFile> attachments) {
     pickedImages.addAll(attachments);
-    final ids = pickedImages.map((e) => e.path).toSet();
-    pickedImages.retainWhere((element) => ids.remove(element.path));
+    pickedImages = pickedImages.toSet().toList();
     setCanRecord();
   }
 
   void updateTextFieldAttachments() {
     if (textFieldData != null) {
-      textFieldData!.attachments = pickedImages.where((element) => mime(element.path) != null).toList();
+      textFieldData!.attachments = List<PlatformFile>.from(pickedImages);
       _streamController.sink.add(null);
     }
 
@@ -293,9 +298,19 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               onPressed: () async {
                 CurrentChat? thisChat = CurrentChat.of(originalContext);
                 if (thisChat == null) {
-                  this.addAttachments([file]);
+                  this.addAttachments([PlatformFile(
+                    path: file.path,
+                    name: file.path.split("/").last,
+                    size: file.lengthSync(),
+                    bytes: file.readAsBytesSync(),
+                  )]);
                 } else {
-                  await widget.onSend([file], "");
+                  await widget.onSend([PlatformFile(
+                    path: file.path,
+                    name: file.path.split("/").last,
+                    size: file.lengthSync(),
+                    bytes: file.readAsBytesSync(),
+                  )], "");
                   this.disposeAudioFile(originalContext, file);
                 }
 
@@ -322,12 +337,11 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               ListTile(
                 title: Text("Upload file", style: Theme.of(context).textTheme.bodyText1),
                 onTap: () async {
-                  //todo change to file picker
-                  List<dynamic>? res = await MethodChannelInterface().invokeMethod("pick-file");
-                  if (res == null || res.isEmpty) return;
+                  final res = await FilePicker.platform.pickFiles(withData: true, allowMultiple: true);
+                  if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
 
-                  for (dynamic path in res) {
-                    addAttachment(File(path.toString()));
+                  for (var e in res.files) {
+                    addAttachment(e);
                   }
                 },
               ),
@@ -398,7 +412,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         padding: const EdgeInsets.only(left: 50.0),
         child: TextFieldAttachmentList(
           attachments: pickedImages,
-          onRemove: (File attachment) {
+          onRemove: (PlatformFile attachment) {
             pickedImages.removeWhere((element) => element.path == attachment.path);
             updateTextFieldAttachments();
             if (this.mounted) setState(() {});
@@ -762,7 +776,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
     if (await widget.onSend(pickedImages, controller!.text)) {
       controller!.text = "";
-      pickedImages = <File>[];
+      pickedImages.clear();
       updateTextFieldAttachments();
     }
   }
@@ -906,12 +920,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         onAddAttachment: addAttachment,
       ));
 
-  void addAttachment(File? file) {
+  void addAttachment(PlatformFile? file) {
     if (file == null) return;
-    bool exists = file.existsSync();
-    if (!exists) return;
 
-    for (File image in pickedImages) {
+    for (PlatformFile image in pickedImages) {
       if (image.path == file.path) {
         pickedImages.removeWhere((element) => element.path == file.path);
         updateTextFieldAttachments();

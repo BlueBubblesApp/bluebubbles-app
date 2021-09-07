@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:universal_io/io.dart';
 
 import 'package:flutter/cupertino.dart';
@@ -33,5 +36,5 @@ class TextFieldBloc {
 /// [TextFieldData] holds a TextEditingController and a list of strings that link to attachments
 class TextFieldData {
   late TextEditingController controller;
-  List<File> attachments = [];
+  List<PlatformFile> attachments = [];
 }

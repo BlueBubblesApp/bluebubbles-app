@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:file_picker/file_picker.dart';
 import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -290,7 +291,12 @@ class ActionHandler {
         new QueueItem(
           event: "send-attachment",
           item: new AttachmentSender(
-            file,
+            PlatformFile(
+              path: file.path,
+              name: file.path.split("/").last,
+              size: file.lengthSync(),
+              bytes: file.readAsBytesSync(),
+            ),
             chat,
             i == message.attachments!.length - 1 ? message.text ?? "" : "",
           ),

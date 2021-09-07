@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:file_picker/file_picker.dart';
 import 'package:universal_io/io.dart';
 import 'dart:ui';
 
@@ -547,14 +548,11 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                 primary: Theme.of(context).backgroundColor,
                               ),
                               onPressed: () async {
-                                List<dynamic>? res = await MethodChannelInterface().invokeMethod("pick-file", {
-                                  "mimeTypes": ["application/json"],
-                                  "allowMultiple": false,
-                                });
-                                if (res == null || res.isEmpty) return;
+                                final res = await FilePicker.platform.pickFiles(withData: true, type: FileType.custom, allowedExtensions: ["json"]);
+                                if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
 
                                 try {
-                                  String jsonString = await File(res.first.toString()).readAsString();
+                                  String jsonString = Utf8Decoder().convert(res.files.first.bytes!);
                                   Map<String, dynamic> json = jsonDecode(jsonString);
                                   Settings.updateFromMap(json);
                                   Get.back();
@@ -651,14 +649,11 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                 primary: Theme.of(context).backgroundColor,
                               ),
                               onPressed: () async {
-                                List<dynamic>? res = await MethodChannelInterface().invokeMethod("pick-file", {
-                                  "mimeTypes": ["application/json"],
-                                  "allowMultiple": false,
-                                });
-                                if (res == null || res.isEmpty) return;
+                                final res = await FilePicker.platform.pickFiles(withData: true, type: FileType.custom, allowedExtensions: ["json"]);
+                                if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
 
                                 try {
-                                  String jsonString = await File(res.first.toString()).readAsString();
+                                  String jsonString = Utf8Decoder().convert(res.files.first.bytes!);
                                   List<dynamic> json = jsonDecode(jsonString);
                                   for (var e in json) {
                                     ThemeObject object = ThemeObject.fromMap(e);

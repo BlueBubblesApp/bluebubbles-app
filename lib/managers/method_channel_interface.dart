@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:file_picker/file_picker.dart';
 import 'package:universal_io/io.dart';
 import 'dart:isolate';
 import 'dart:math';
@@ -370,7 +371,12 @@ class MethodChannelInterface {
       NotificationManager().switchChat(CurrentChat.activeChat!.chat);
       TextFieldData? data = TextFieldBloc().getTextField(id);
       if (existingAttachments.isNotEmpty && data != null) {
-        data.attachments.addAll(existingAttachments);
+        data.attachments.addAll(existingAttachments.map((e) => PlatformFile(
+          path: e.path,
+          name: e.path.split("/").last,
+          size: e.lengthSync(),
+          bytes: e.readAsBytesSync(),
+        )).toList());
         final ids = data.attachments.map((e) => e.path).toSet();
         data.attachments.retainWhere((element) => ids.remove(element.path));
         EventDispatcher().emit("text-field-update-attachments", null);

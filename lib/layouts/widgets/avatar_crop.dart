@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:universal_io/io.dart';
 import 'dart:typed_data';
 import 'dart:ui';
@@ -6,14 +7,12 @@ import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:crop_your_image/crop_your_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:mime/mime.dart';
 
 class AvatarCrop extends StatefulWidget {
   final int? index;
@@ -161,14 +160,10 @@ class _AvatarCropState extends State<AvatarCrop> {
                     primary: Theme.of(context).backgroundColor,
                   ),
                   onPressed: () async {
-                    List<dynamic>? res = await MethodChannelInterface().invokeMethod("pick-file", {
-                      "mimeTypes": ["image/*"],
-                      "allowMultiple": false,
-                    });
-                    if (res == null || res.isEmpty) return;
+                    final res = await FilePicker.platform.pickFiles(withData: true, type: FileType.image);
+                    if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
 
-                    File file = File(res.first.toString());
-                    if (lookupMimeType(file.path)?.endsWith("gif") ?? false) {
+                    if (res.files.first.name.endsWith("gif")) {
                       Get.defaultDialog(
                         title: "Saving avatar...",
                         titleStyle: Theme.of(context).textTheme.headline1,
@@ -186,9 +181,9 @@ class _AvatarCropState extends State<AvatarCrop> {
                         barrierDismissible: false,
                         backgroundColor: Theme.of(context).backgroundColor,
                       );
-                      onCropped(await file.readAsBytes());
+                      onCropped(res.files.first.bytes!);
                     } else {
-                      _imageData = await file.readAsBytes();
+                      _imageData = res.files.first.bytes!;
                       setState(() {});
                     }
                   },
