@@ -33,10 +33,6 @@ class SettingsManager {
   /// It cannot be accessed by the user, and is private to the app
   late Directory appDocDir;
 
-  /// [sharedFilesPath] is the path where most temporary files like those inserted from the keyboard or shared to the app are stored
-  /// The getter simply is a helper to that path
-  String get sharedFilesPath => "${appDocDir.path}/sharedFiles";
-
   /// [settings] is just an instance of the current settings that are saved
   late Settings settings;
   FCMData? fcmData;
@@ -56,8 +52,10 @@ class SettingsManager {
   /// [init] is run at start and fetches both the [appDocDir] and sets the [settings] to a default value
   Future<void> init() async {
     settings = new Settings();
-    //ignore: unnecessary_cast, we need this as a workaround
-    appDocDir = (await getApplicationSupportDirectory()) as Directory;
+    if (!kIsWeb) {
+      //ignore: unnecessary_cast, we need this as a workaround
+      appDocDir = (await getApplicationSupportDirectory()) as Directory;
+    }
     canAuthenticate = !kIsWeb && !kIsDesktop && await LocalAuthentication().isDeviceSupported();
   }
 

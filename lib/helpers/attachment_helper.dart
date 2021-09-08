@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:universal_io/io.dart';
 import 'dart:isolate';
 import 'dart:typed_data';
@@ -144,21 +145,6 @@ class AttachmentHelper {
     return contact;
   }
 
-  static String getPreviewPath(Attachment attachment) {
-    String fileName = attachment.transferName ?? randomString(8);
-    String appDocPath = SettingsManager().appDocDir.path;
-    String pathName = AttachmentHelper.getAttachmentPath(attachment);
-
-    // If the file is an image, compress it for the preview
-    if ((attachment.mimeType ?? "").startsWith("image/")) {
-      String fn = fileName.split(".").sublist(0, fileName.length - 1).join("") + "prev";
-      String ext = fileName.split(".").last;
-      pathName = "$appDocPath/attachments/${attachment.guid}/$fn.$ext";
-    }
-
-    return pathName;
-  }
-
   static bool canCompress(Attachment attachment) {
     String mime = attachment.mimeType ?? "";
     List<String> blacklist = ["image/gif"];
@@ -177,6 +163,7 @@ class AttachmentHelper {
   }
 
   static Future<void> saveToGallery(BuildContext context, File? file) async {
+    //todo web support
     Function showDeniedSnackbar = (String? err) {
       showSnackbar("Save Failed", err ?? "Failed to save attachment!");
     };
@@ -216,19 +203,34 @@ class AttachmentHelper {
 
   /// Checks to see if an [attachment] exists in our attachment filesystem
   static bool attachmentExists(Attachment attachment) {
+    if (kIsWeb) return false;
     String pathName = AttachmentHelper.getAttachmentPath(attachment);
     return !(FileSystemEntity.typeSync(pathName) == FileSystemEntityType.notFound);
   }
 
   static dynamic getContent(Attachment attachment, {String? path}) {
+    if (kIsWeb && attachment.bytes == null) {
+      return Get.put(AttachmentDownloadController(attachment: attachment), tag: attachment.guid);
+    } else if (kIsWeb) {
+      return PlatformFile(
+        name: attachment.transferName!,
+        path: null,
+        size: attachment.totalBytes ?? 0,
+        bytes: attachment.bytes,
+      );
+    }
     String appDocPath = SettingsManager().appDocDir.path;
     String pathName = path ?? "$appDocPath/attachments/${attachment.guid}/${attachment.transferName}";
     if (Get.find<AttachmentDownloadService>().downloaders.contains(attachment.guid)) {
       return Get.find<AttachmentDownloadController>(tag: attachment.guid);
-    } else if (FileSystemEntity.typeSync(pathName) != FileSystemEntityType.notFound ||
+    } else if (!kIsWeb && (FileSystemEntity.typeSync(pathName) != FileSystemEntityType.notFound ||
         attachment.guid == "redacted-mode-demo-attachment" ||
-        attachment.guid!.contains("theme-selector")) {
-      return File(pathName);
+        attachment.guid!.contains("theme-selector"))) {
+      return PlatformFile(
+        name: attachment.transferName!,
+        path: pathName,
+        size: attachment.totalBytes ?? 0,
+      );
     } else if (attachment.mimeType == null || attachment.mimeType!.startsWith("text/")) {
       return Get.put(AttachmentDownloadController(attachment: attachment), tag: attachment.guid);
     } else {
@@ -344,13 +346,6 @@ class AttachmentHelper {
     return tempAssets.absolute.path;
   }
 
-  static File saveTempFile(String filename, Uint8List bytes) {
-    String tempPath = AttachmentHelper.getTempPath();
-    File newFile = new File("$tempPath/$filename");
-    newFile.writeAsBytesSync(bytes, mode: FileMode.write);
-    return newFile;
-  }
-
   static File tryCopyTempFile(File oldFile) {
     // Pull the filename from the Uri. If we can't, just return the original file
     String? ogFilename = getFilenameFromUri(oldFile.absolute.path);
@@ -368,7 +363,7 @@ class AttachmentHelper {
 
   static Future<Uint8List?> compressAttachment(Attachment attachment, String filePath,
       {int? qualityOverride, bool getActualPath = true}) async {
-    if (attachment.mimeType == null) return null;
+    if (kIsWeb || attachment.mimeType == null) return null;
     if (attachment.metadata == null) {
       attachment.metadata = {};
     }
@@ -388,13 +383,6 @@ class AttachmentHelper {
     if (!getActualPath) {
       originalFile = tryCopyTempFile(originalFile);
       filePath = originalFile.absolute.path;
-    }
-
-    // Check if the compressed file exists, and return it if it does
-    int quality = qualityOverride ?? SettingsManager().compressionQuality;
-    File cachedFile = new File("$filePath.${quality.toString()}.compressed");
-    if (cachedFile.existsSync() && cachedFile.statSync().size != 0) {
-      return cachedFile.readAsBytes();
     }
 
     // Get dimensions and preview images

@@ -216,13 +216,15 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
     if (safeChat?.chat == null) controller!.dispose();
 
-    String dir = SettingsManager().appDocDir.path;
-    Directory tempAssets = Directory("$dir/tempAssets");
-    tempAssets.exists().then((value) {
-      if (value) {
-        tempAssets.delete(recursive: true);
-      }
-    });
+    if (!kIsWeb) {
+      String dir = SettingsManager().appDocDir.path;
+      Directory tempAssets = Directory("$dir/tempAssets");
+      tempAssets.exists().then((value) {
+        if (value) {
+          tempAssets.delete(recursive: true);
+        }
+      });
+    }
     pickedImages = [];
     super.dispose();
   }
@@ -275,7 +277,12 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               Container(height: 10.0),
               AudioPlayerWiget(
                 key: new Key("AudioMessage-${file.length().toString()}"),
-                file: file,
+                file: PlatformFile(
+                  name: file.path.split("/").last,
+                  path: file.absolute.path,
+                  bytes: file.readAsBytesSync(),
+                  size: file.lengthSync(),
+                ),
                 context: originalContext,
               )
             ],
@@ -597,7 +604,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                   : Colors.white,
                           fontSizeDelta: -0.25,
                         ),
-                    onContentCommitted: onContentCommit,
+                    //onContentCommitted: onContentCommit,
                     decoration: InputDecoration(
                       isDense: true,
                       enabledBorder: OutlineInputBorder(

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 import 'dart:isolate';
 import 'dart:math';
@@ -71,7 +72,7 @@ class MethodChannelInterface {
 
     // We set the handler for all of the method calls from the platform to be the [callHandler]
     platform.setMethodCallHandler(_callHandler);
-    platform.invokeMethod<void>('MessagingBackground#initialized');
+    if (!kIsWeb && !kIsDesktop) platform.invokeMethod<void>('MessagingBackground#initialized');
   }
 
   /// Helper method to invoke a method in the native code
@@ -193,11 +194,6 @@ class MethodChannelInterface {
       case "shareAttachments":
         if (!SettingsManager().settings.finishedSetup.value) return Future.value("");
         List<File> attachments = <File>[];
-
-        // Get the path to where the temp files are stored
-        String sharedFilesPath = SettingsManager().sharedFilesPath;
-
-        Logger.info("shareAttachments " + sharedFilesPath);
 
         // Loop through all of the attachments sent by native code
         call.arguments["attachments"].forEach((element) {

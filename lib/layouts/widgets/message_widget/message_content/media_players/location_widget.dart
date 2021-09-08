@@ -1,3 +1,7 @@
+import 'dart:convert';
+
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
@@ -16,7 +20,7 @@ class LocationWidget extends StatefulWidget {
     required this.file,
     required this.attachment,
   }) : super(key: key);
-  final File file;
+  final PlatformFile file;
   final Attachment attachment;
 
   @override
@@ -35,7 +39,13 @@ class _LocationWidgetState extends State<LocationWidget> with AutomaticKeepAlive
   void loadLocation() {
     // If we already have location data, don't load it again
     if (location != null) return;
-    String _location = widget.file.readAsStringSync();
+    String _location;
+
+    if (kIsWeb) {
+      _location = utf8.decode(widget.file.bytes!);
+    } else {
+      _location = File(widget.file.path).readAsStringSync();
+    }
     location = AttachmentHelper.parseAppleLocation(_location);
 
     if (location != null && this.mounted) {

@@ -544,7 +544,7 @@ String? getFilenameFromUri(String url) {
 
 Future<File?> saveImageFromUrl(String guid, String url) async {
   // Make sure the URL is "formed"
-  if (!url.contains("/")) return null;
+  if (kIsWeb || !url.contains("/")) return null;
 
   // Get the filename from the URL
   String? filename = getFilenameFromUri(url);

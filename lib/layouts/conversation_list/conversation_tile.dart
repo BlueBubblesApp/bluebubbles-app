@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
@@ -231,9 +232,9 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
 
     if (generateNames)
       title = widget.chat.fakeParticipants.length == 1 ? widget.chat.fakeParticipants[0] : "Group Chat";
-    else if (hideInfo) style = style!.copyWith(color: Colors.transparent);
+    else if (hideInfo) style = style?.copyWith(color: Colors.transparent);
 
-    return TextOneLine(title!, style: style, overflow: TextOverflow.ellipsis);
+    return TextOneLine(title ?? 'Fake Person', style: style, overflow: TextOverflow.ellipsis);
   }
 
   Widget buildSubtitle() {
@@ -321,14 +322,17 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
         });
   }
 
-  Widget _buildDate() => ConstrainedBox(
+  Widget _buildDate() => kIsWeb ? Text(buildDate(widget.chat.latestMessageDate),
+    textAlign: TextAlign.right,
+    style: Theme.of(context).textTheme.subtitle2!.copyWith(
+    color: Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
+    overflow: TextOverflow.clip)) : ConstrainedBox(
         constraints: BoxConstraints(maxWidth: 100.0),
         child: FutureBuilder<Message>(
             future: widget.chat.latestMessage,
             builder: (context, snapshot) {
               return Obx(
                   () {
-                    var test = null.obs.value;
                     return Text((snapshot.data?.error.value ?? 0) > 0 ? "Error" : buildDate(widget.chat.latestMessageDate),
                         textAlign: TextAlign.right,
                         style: Theme.of(context).textTheme.subtitle2!.copyWith(

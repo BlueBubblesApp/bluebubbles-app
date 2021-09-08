@@ -1,3 +1,5 @@
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 import 'dart:typed_data';
 
@@ -24,7 +26,7 @@ class ImageViewer extends StatefulWidget {
     required this.attachment,
     required this.showInteractions,
   }) : super(key: key);
-  final File file;
+  final PlatformFile file;
   final Attachment attachment;
   final bool showInteractions;
 
@@ -52,11 +54,13 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
   }
 
   Future<void> initBytes() async {
-    if (widget.attachment.mimeType == "image/heic") {
+    if (kIsWeb) {
+      bytes = widget.file.bytes;
+    } if (widget.attachment.mimeType == "image/heic") {
       bytes =
-          await AttachmentHelper.compressAttachment(widget.attachment, widget.file.absolute.path, qualityOverride: 100);
+          await AttachmentHelper.compressAttachment(widget.attachment, widget.file.path, qualityOverride: 100);
     } else {
-      bytes = await widget.file.readAsBytes();
+      bytes = await File(widget.file.path).readAsBytes();
     }
     if (this.mounted) setState(() {});
   }
@@ -192,7 +196,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                   child: CupertinoButton(
                     padding: EdgeInsets.symmetric(horizontal: 5),
                     onPressed: () async {
-                      await AttachmentHelper.saveToGallery(context, widget.file);
+                      await AttachmentHelper.saveToGallery(context, File(widget.file.path));
                     },
                     child: Icon(
                       SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.cloud_download : Icons.file_download,

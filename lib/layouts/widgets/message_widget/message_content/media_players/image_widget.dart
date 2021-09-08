@@ -1,3 +1,5 @@
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 import 'dart:typed_data';
 
@@ -17,7 +19,7 @@ class ImageWidgetController extends GetxController {
   bool navigated = false;
   bool visible = true;
   final Rxn<Uint8List> data = Rxn<Uint8List>();
-  final File file;
+  final PlatformFile file;
   final Attachment attachment;
   final BuildContext context;
   ImageWidgetController({
@@ -41,17 +43,19 @@ class ImageWidgetController extends GetxController {
     Uint8List? tmpData = CurrentChat.of(context)?.getImageData(attachment);
     if (tmpData == null) {
       // If it's an image, compress the image when loading it
-      if (AttachmentHelper.canCompress(attachment) &&
+      if (kIsWeb) {
+        data.value = file.bytes;
+      } else if (AttachmentHelper.canCompress(attachment) &&
           attachment.guid != "redacted-mode-demo-attachment" &&
           !attachment.guid!.contains("theme-selector")) {
-        data.value = await AttachmentHelper.compressAttachment(attachment, file.absolute.path);
+        data.value = await AttachmentHelper.compressAttachment(attachment, file.path);
         // All other attachments can be held in memory as bytes
       } else {
         if (attachment.guid == "redacted-mode-demo-attachment" || attachment.guid!.contains("theme-selector")) {
           data.value = (await rootBundle.load(file.path)).buffer.asUint8List();
           return;
         }
-        data.value = await file.readAsBytes();
+        data.value = await File(file.path).readAsBytes();
       }
 
       if (data.value == null || CurrentChat.of(context) == null) return;
@@ -63,7 +67,7 @@ class ImageWidgetController extends GetxController {
 }
 
 class ImageWidget extends StatelessWidget {
-  final File file;
+  final PlatformFile file;
   final Attachment attachment;
   ImageWidget({
     Key? key,

@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/helpers/utils.dart';
@@ -15,7 +16,7 @@ class RegularFileOpener extends StatefulWidget {
     required this.file,
   }) : super(key: key);
   final Attachment attachment;
-  final File file;
+  final PlatformFile file;
 
   @override
   _RegularFileOpenerState createState() => _RegularFileOpenerState();
@@ -53,7 +54,7 @@ class _RegularFileOpenerState extends State<RegularFileOpener> {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               Text(
-                basename(widget.file.path),
+                widget.file.name,
                 textAlign: TextAlign.center,
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,

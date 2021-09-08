@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
+import 'dart:html' as html;
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';
@@ -22,7 +25,7 @@ import 'package:video_player/video_player.dart';
 class VideoViewer extends StatefulWidget {
   VideoViewer({Key? key, required this.file, required this.attachment, required this.showInteractions})
       : super(key: key);
-  final File file;
+  final PlatformFile file;
   final Attachment attachment;
   final bool showInteractions;
 
@@ -47,8 +50,14 @@ class _VideoViewerState extends State<VideoViewer> {
   }
 
   void initControllers() async {
-    dynamic file = widget.file;
-    controller = new VideoPlayerController.file(file);
+    if (kIsWeb) {
+      final blob = html.Blob([widget.file.bytes]);
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      controller = VideoPlayerController.network(url);
+    } else {
+      dynamic file = File(widget.file.path);
+      controller = new VideoPlayerController.file(file);
+    }
     controller.setVolume(SettingsManager().settings.startVideosMutedFullscreen.value ? 0 : 1);
     await controller.initialize();
     chewieController = ChewieController(
@@ -211,8 +220,14 @@ class _VideoViewerState extends State<VideoViewer> {
                       AttachmentHelper.redownloadAttachment(widget.attachment, onComplete: () async {
                         controller.dispose();
                         chewieController?.dispose();
-                        dynamic file = widget.file;
-                        controller = new VideoPlayerController.file(file);
+                        if (kIsWeb) {
+                          final blob = html.Blob([widget.file.bytes]);
+                          final url = html.Url.createObjectUrlFromBlob(blob);
+                          controller = VideoPlayerController.network(url);
+                        } else {
+                          dynamic file = File(widget.file.path);
+                          controller = new VideoPlayerController.file(file);
+                        }
                         await controller.initialize();
                         isReloading.value = false;
                         controller.setVolume(SettingsManager().settings.startVideosMutedFullscreen.value ? 0 : 1);
@@ -250,7 +265,7 @@ class _VideoViewerState extends State<VideoViewer> {
                   child: CupertinoButton(
                     padding: EdgeInsets.symmetric(horizontal: 5),
                     onPressed: () async {
-                      await AttachmentHelper.saveToGallery(context, widget.file);
+                      await AttachmentHelper.saveToGallery(context, File(widget.file.path));
                     },
                     child: Icon(
                       SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.cloud_download : Icons.file_download,

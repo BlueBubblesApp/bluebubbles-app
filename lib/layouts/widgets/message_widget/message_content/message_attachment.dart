@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/helpers/navigator.dart';
@@ -80,7 +81,7 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
 
   Widget _buildAttachmentWidget() {
     // If it's a file, it's already been downlaoded, so just display it
-    if (content is File) {
+    if (content is PlatformFile) {
       String? mimeType = widget.attachment.mimeType;
       if (mimeType != null) mimeType = mimeType.substring(0, mimeType.indexOf("/"));
       if (mimeType == "image" && !widget.attachment.mimeType!.endsWith("tiff")) {

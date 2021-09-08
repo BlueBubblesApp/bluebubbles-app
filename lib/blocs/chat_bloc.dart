@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/attachment_info_bloc.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
@@ -10,7 +11,11 @@ import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
+import 'package:faker/faker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -247,7 +252,7 @@ class ChatBloc {
 
   Future<void> getChatBatches({int batchSize = 10}) async {
     int count = (await Chat.count()) ?? 0;
-    if (count == 0) {
+    if (count == 0 && !kIsWeb) {
       hasChats.value = false;
     } else {
       hasChats.value = true;
@@ -256,9 +261,14 @@ class ChatBloc {
     // Reset chat lists
     List<Chat> newChats = [];
 
-    int batches = (count < batchSize) ? batchSize : (count / batchSize).ceil();
+    int batches = count == 0 ? 1 : (count < batchSize) ? batchSize : (count / batchSize).ceil();
     for (int i = 0; i < batches; i++) {
-      List<Chat> chats = await Chat.getChats(limit: batchSize, offset: i * batchSize);
+      List<Chat> chats = [];
+      if (kIsWeb) {
+        chats = await SocketManager().getChats({});
+      } else {
+        chats = await Chat.getChats(limit: batchSize, offset: i * batchSize);
+      }
       if (chats.length == 0) break;
 
       for (Chat chat in chats) {
@@ -266,6 +276,9 @@ class ChatBloc {
         await initTileValsForChat(chat);
         if (isNullOrEmpty(chat.participants)!) {
           await chat.getParticipants();
+        }
+        if (kIsWeb) {
+          getMessageStuffWeb(chat, chat.guid == chats.last.guid);
         }
       }
 
@@ -281,6 +294,29 @@ class ChatBloc {
     if (chatRequest != null && !chatRequest!.isCompleted) {
       chatRequest!.complete();
       loadedChats.value = true;
+    }
+  }
+
+  void getMessageStuffWeb(Chat chat, bool last) async {
+    Map<String, dynamic> params = Map();
+    params["identifier"] = chat.guid;
+    params["withBlurhash"] = false;
+    params["limit"] = 1;
+    params["where"] = [
+      {"statement": "message.service = 'iMessage'", "args": null}
+    ];
+    List<dynamic> messages = await SocketManager().getChatMessages(params)!;
+    if (messages.isNotEmpty) {
+      Message message = Message.fromMap(messages.first);
+      if (message.hasAttachments) {
+        await message.fetchAttachments();
+      }
+      chat.latestMessageText = await MessageHelper.getNotificationText(message);
+      chat.fakeLatestMessageText = faker.lorem.words((chat.latestMessageText ?? "").split(" ").length).join(" ");
+      chat.latestMessageDate = message.dateCreated;
+    }
+    if (last) {
+      _chats.sort(Chat.sort);
     }
   }
 

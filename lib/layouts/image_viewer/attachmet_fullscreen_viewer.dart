@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:file_picker/file_picker.dart';
 import 'package:universal_io/io.dart';
 import 'dart:math';
 
@@ -155,7 +156,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
 
                       String viewerKey = attachment.guid ?? attachment.transferName ?? Random().nextInt(100).toString();
 
-                      if (content is File) {
+                      if (content is PlatformFile) {
                         content = content;
                         if (mimeType == "image") {
                           return ImageViewer(
@@ -194,7 +195,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                         );
                       } else if (content is AttachmentDownloadController) {
                         if (widget.attachment.mimeType == null) return Container();
-                        ever<File?>(content.file, (file) {
+                        ever<PlatformFile?>(content.file, (file) {
                           if (file != null) {
                             content = file;
                             if (this.mounted) setState(() {});

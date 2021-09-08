@@ -1,3 +1,7 @@
+import 'dart:html' as html;
+
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/helpers/constants.dart';
@@ -19,7 +23,7 @@ class AudioPlayerWiget extends StatefulWidget {
     this.width,
   }) : super(key: key);
 
-  final File file;
+  final PlatformFile file;
   final BuildContext context;
   final double? width;
   final bool isFromMe;
@@ -44,10 +48,14 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> with AutomaticKeepA
       audioController = thisChat.audioPlayers[widget.file.path]!.item2;
       controller = thisChat.audioPlayers[widget.file.path]!.item1;
     } else {
-      dynamic file = widget.file;
-      audioController = VideoPlayerController.file(
-        file,
-      );
+      if (kIsWeb) {
+        final blob = html.Blob([widget.file.bytes]);
+        final url = html.Url.createObjectUrlFromBlob(blob);
+        audioController = VideoPlayerController.network(url);
+      } else {
+        dynamic file = File(widget.file.path);
+        audioController = new VideoPlayerController.file(file);
+      }
       controller = ChewieAudioController(
         videoPlayerController: audioController,
         autoPlay: false,

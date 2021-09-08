@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
@@ -38,6 +40,7 @@ class Attachment {
   int? height;
   int? width;
   Map<String, dynamic>? metadata;
+  Uint8List? bytes;
 
   Attachment({
     this.id,
@@ -55,9 +58,11 @@ class Attachment {
     this.height,
     this.width,
     this.metadata,
+    this.bytes,
   });
 
   bool get existsOnDisk {
+    if (kIsWeb) return false;
     File attachment = new File(AttachmentHelper.getAttachmentPath(this));
     return attachment.existsSync();
   }

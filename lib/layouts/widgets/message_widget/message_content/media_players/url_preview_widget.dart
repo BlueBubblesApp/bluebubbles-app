@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/helpers/logger.dart';
@@ -42,10 +43,10 @@ class UrlPreviewController extends GetxController with SingleGetTickerProviderMi
 
   void fetchMissingAttachments() {
     for (Attachment? attachment in linkPreviews) {
-      if (AttachmentHelper.attachmentExists(attachment!)) continue;
+      if (!kIsWeb && AttachmentHelper.attachmentExists(attachment!)) continue;
       Get.put(
           AttachmentDownloadController(
-              attachment: attachment,
+              attachment: attachment!,
               onComplete: () {
                 update();
               }),
@@ -126,23 +127,24 @@ class UrlPreviewWidget extends StatelessWidget {
               SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachmentTypes.value;
 
           List<Widget> items = [
-            Obx(() {
-              if (controller.data.value?.image != null && controller.data.value!.image!.isNotEmpty) {
-                if (controller.data.value!.image!.startsWith("/")) {
-                  dynamic file = File(controller.data.value!.image!);
-                  return Image.file(file,
-                      filterQuality: FilterQuality.low, errorBuilder: (context, error, stackTrace) => Container());
-                } else {
-                  return Image.network(controller.data.value!.image!,
+            if (!kIsWeb)
+              Obx(() {
+                if (controller.data.value?.image != null && controller.data.value!.image!.isNotEmpty) {
+                  if (controller.data.value!.image!.startsWith("/")) {
+                    dynamic file = File(controller.data.value!.image!);
+                    return Image.file(file,
+                        filterQuality: FilterQuality.low, errorBuilder: (context, error, stackTrace) => Container());
+                  } else {
+                    return Image.network(controller.data.value!.image!,
+                        filterQuality: FilterQuality.low, errorBuilder: (context, error, stackTrace) => Container());
+                  }
+                } else if (linkPreviews.length > 1 && linkPreviews.last!.existsOnDisk) {
+                  return Image.file(attachmentFile(linkPreviews.last!),
                       filterQuality: FilterQuality.low, errorBuilder: (context, error, stackTrace) => Container());
                 }
-              } else if (linkPreviews.length > 1 && linkPreviews.last!.existsOnDisk) {
-                return Image.file(attachmentFile(linkPreviews.last!),
-                    filterQuality: FilterQuality.low, errorBuilder: (context, error, stackTrace) => Container());
-              }
 
-              return Container();
-            }),
+                return Container();
+              }),
             Padding(
               padding: EdgeInsets.only(left: 14.0, right: 14.0, top: 14.0),
               child: Row(
@@ -197,7 +199,7 @@ class UrlPreviewWidget extends StatelessWidget {
                       ],
                     ),
                   ),
-                  (linkPreviews.length > 0 && linkPreviews.first!.existsOnDisk)
+                  (!kIsWeb && linkPreviews.length > 0 && linkPreviews.first!.existsOnDisk)
                       ? Padding(
                           padding: EdgeInsets.only(left: 10.0, bottom: 10.0),
                           child: ClipRRect(

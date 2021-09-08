@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:file_picker/file_picker.dart';
 import 'package:universal_io/io.dart';
 import 'dart:math';
 import 'dart:ui';
@@ -619,8 +620,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
               try {
                 for (Attachment? element in widget.message.attachments!) {
                   dynamic content = AttachmentHelper.getContent(element!);
-                  if (content is File) {
-                    await AttachmentHelper.saveToGallery(context, content);
+                  if (content is PlatformFile && !kIsWeb) {
+                    await AttachmentHelper.saveToGallery(context, File(content.path));
                   }
                 }
               } catch (ex, trace) {

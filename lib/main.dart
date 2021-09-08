@@ -34,6 +34,8 @@ import 'package:flutter/scheduler.dart' hide Priority;
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_native_timezone/flutter_native_timezone.dart';
+import 'package:firebase_dart/firebase_dart.dart';
+import 'package:firebase_dart/src/auth/utils.dart' as fdu;
 import 'package:get/get.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:local_auth/local_auth.dart';
@@ -62,6 +64,7 @@ bool get isInDebugMode {
 
 FlutterLocalNotificationsPlugin? flutterLocalNotificationsPlugin;
 late SharedPreferences prefs;
+late FirebaseApp app;
 
 Future<Null> _reportError(dynamic error, dynamic stackTrace) async {
   // Print the exception to the console.
@@ -103,7 +106,21 @@ Future<Null> main() async {
   dynamic exception;
   try {
     prefs = await SharedPreferences.getInstance();
-    await DBProvider.db.initDB();
+    if (!kIsWeb) await DBProvider.db.initDB();
+    FirebaseDart.setup(
+      platform: fdu.Platform.web(
+        currentUrl: Uri.base.toString(),
+        isMobile: false,
+        isOnline: true,
+      ),
+    );
+    var options = FirebaseOptions(
+        appId: 'my_app_id',
+        apiKey: 'apiKey',
+        projectId: 'my_project',
+        messagingSenderId: 'ignore',
+        authDomain: 'my_project.firebaseapp.com');
+    app = await Firebase.initializeApp(options: options);
     await initializeDateFormatting('fr_FR', null);
     await SettingsManager().init();
     await SettingsManager().getSavedSettings(headless: true);
@@ -272,33 +289,35 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     // We initialize the [LifeCycleManager] so that it is open, because [initState] occurs when the app is opened
     LifeCycleManager().opened();
 
-    // This initialization sets the function address in the native code to be used later
-    BackgroundIsolateInterface.initialize();
+    if (!kIsWeb && !kIsDesktop) {
+      // This initialization sets the function address in the native code to be used later
+      BackgroundIsolateInterface.initialize();
 
-    // Create the notification in case it hasn't been already. Doing this multiple times won't do anything, so we just do it on every app start
-    NotificationManager().createNotificationChannel(
-      NotificationManager.NEW_MESSAGE_CHANNEL,
-      "New Messages",
-      "For new messages retreived",
-    );
-    NotificationManager().createNotificationChannel(
-      NotificationManager.SOCKET_ERROR_CHANNEL,
-      "Socket Connection Error",
-      "Notifications that will appear when the connection to the server has failed",
-    );
+      // Create the notification in case it hasn't been already. Doing this multiple times won't do anything, so we just do it on every app start
+      NotificationManager().createNotificationChannel(
+        NotificationManager.NEW_MESSAGE_CHANNEL,
+        "New Messages",
+        "For new messages retreived",
+      );
+      NotificationManager().createNotificationChannel(
+        NotificationManager.SOCKET_ERROR_CHANNEL,
+        "Socket Connection Error",
+        "Notifications that will appear when the connection to the server has failed",
+      );
 
-    // create a send port to receive messages from the background isolate when
-    // the UI thread is active
-    IsolateNameServer.registerPortWithName(port.sendPort, 'bg_isolate');
-    port.listen((dynamic data) {
-      if (data['action'] == 'new-message') {
-        // Add it to the queue with the data as the item
-        IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_MESSAGE_EVENT, item: {"data": data}));
-      } else if (data['action'] == 'update-message') {
-        // Add it to the queue with the data as the item
-        IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_UPDATE_MESSAGE, item: {"data": data}));
-      }
-    });
+      // create a send port to receive messages from the background isolate when
+      // the UI thread is active
+      IsolateNameServer.registerPortWithName(port.sendPort, 'bg_isolate');
+      port.listen((dynamic data) {
+        if (data['action'] == 'new-message') {
+          // Add it to the queue with the data as the item
+          IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_MESSAGE_EVENT, item: {"data": data}));
+        } else if (data['action'] == 'update-message') {
+          // Add it to the queue with the data as the item
+          IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_UPDATE_MESSAGE, item: {"data": data}));
+        }
+      });
+    }
 
     // Get the saved settings from the settings manager after the first frame
     SchedulerBinding.instance!.addPostFrameCallback((_) async {
@@ -354,19 +373,19 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                 (route) => route.isFirst,
           );
         });
-      }
 
-      // Request native code to retreive what the starting intent was
-      //
-      // The starting intent will be set when you click on a notification
-      // This is only really necessary when opening a notification and the app is fully closed
-      MethodChannelInterface().invokeMethod("get-starting-intent").then((value) {
-        if (!SettingsManager().settings.finishedSetup.value) return;
-        if (value != null) {
-          // Open that chat
-          MethodChannelInterface().openChat(value.toString());
-        }
-      });
+        // Request native code to retreive what the starting intent was
+        //
+        // The starting intent will be set when you click on a notification
+        // This is only really necessary when opening a notification and the app is fully closed
+        MethodChannelInterface().invokeMethod("get-starting-intent").then((value) {
+          if (!SettingsManager().settings.finishedSetup.value) return;
+          if (value != null) {
+            // Open that chat
+            MethodChannelInterface().openChat(value.toString());
+          }
+        });
+      }
     });
 
     // Bind the lifecycle events

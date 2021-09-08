@@ -1,3 +1,7 @@
+import 'dart:convert';
+
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
@@ -18,7 +22,7 @@ class ContactWidget extends StatefulWidget {
     required this.file,
     required this.attachment,
   }) : super(key: key);
-  final File file;
+  final PlatformFile file;
   final Attachment attachment;
 
   @override
@@ -32,7 +36,13 @@ class _ContactWidgetState extends State<ContactWidget> {
   void initState() {
     super.initState();
 
-    String appleContact = widget.file.readAsStringSync();
+    String appleContact;
+
+    if (kIsWeb) {
+      appleContact = utf8.decode(widget.file.bytes!);
+    } else {
+      appleContact = File(widget.file.path).readAsStringSync();
+    }
 
     try {
       contact = AttachmentHelper.parseAppleContact(appleContact);

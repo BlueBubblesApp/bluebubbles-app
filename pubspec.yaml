@@ -90,6 +90,10 @@ dependencies:
   location: ^4.3.0 # no desktop support, todo desktop
   universal_io: ^2.0.4 # cross-platform dart:io implementation
   file_picker: ^4.0.2
+  firebase_dart: ^1.0.0-dev.45
+
+dependency_overrides:
+  rxdart: ^0.27.2
 
 dev_dependencies:
   build_runner: ^2.1.1

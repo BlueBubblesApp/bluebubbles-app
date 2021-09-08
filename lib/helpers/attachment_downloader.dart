@@ -1,3 +1,7 @@
+import 'dart:convert';
+
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
@@ -6,7 +10,6 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class AttachmentDownloadService extends GetxService {
@@ -37,7 +40,7 @@ class AttachmentDownloadController extends GetxController {
   final Function? onComplete;
   final Function? onError;
   final RxnNum progress = RxnNum();
-  final Rxn<File> file = Rxn<File>();
+  final Rxn<PlatformFile> file = Rxn<PlatformFile>();
   final RxBool error = RxBool(false);
   int chunkSize = 500;
   Stopwatch stopwatch = Stopwatch();
@@ -75,9 +78,11 @@ class AttachmentDownloadController extends GetxController {
     SocketManager().sendMessage("get-attachment-chunk", params, (attachmentResponse) async {
       if (attachmentResponse['status'] != 200 ||
           (attachmentResponse.containsKey("error") && attachmentResponse["error"] != null)) {
-        File file = new File(attachment.getPath());
-        if (await file.exists()) {
-          await file.delete();
+        if (!kIsWeb) {
+          File file = new File(attachment.getPath());
+          if (await file.exists()) {
+            await file.delete();
+          }
         }
 
         if (onError != null) onError!.call();
@@ -106,22 +111,27 @@ class AttachmentDownloadController extends GetxController {
 
         try {
           // Compress the attachment
-          await AttachmentHelper.compressAttachment(attachment, attachment.getPath());
-          await attachment.update();
+          if (!kIsWeb) {
+            await AttachmentHelper.compressAttachment(attachment, attachment.getPath());
+            await attachment.update();
+          }
         } catch (ex) {
           // So what if it crashes here.... I don't care...
         }
 
-        File downloadedFile = new File(attachment.getPath());
-
         // Finish the downloader
         Get.find<AttachmentDownloadService>().removeFromQueue(this);
         if (onComplete != null) onComplete!();
-
+        attachment.bytes = base64.decode(attachmentResponse['data']);
         // Add attachment to sink based on if we got data
-        file.value = downloadedFile;
+        file.value = PlatformFile(
+          name: attachment.transferName!,
+          path: kIsWeb ? null : attachment.getPath(),
+          size: total,
+          bytes: base64.decode(attachmentResponse['data']),
+        );
       }
-    }, reason: "Attachment downloader " + attachment.guid!, path: attachment.getPath());
+    }, reason: "Attachment downloader " + attachment.guid!, path: kIsWeb ? "" : attachment.getPath());
   }
 
   void setProgress(double value) {

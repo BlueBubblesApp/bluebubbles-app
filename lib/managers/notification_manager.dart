@@ -16,6 +16,7 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart' as fln;
 import 'package:timezone/timezone.dart' as tz;
@@ -269,25 +270,35 @@ class NotificationManager {
     });
   }
 
+  //todo implement these notifications on web
+
   /// Creates a notification for when the socket is disconnected
   void createSocketWarningNotification() {
-    MethodChannelInterface().platform.invokeMethod("create-socket-issue-warning", {
-      "CHANNEL_ID": SOCKET_ERROR_CHANNEL,
-    });
+    if (!kIsWeb && !kIsDesktop) {
+      MethodChannelInterface().platform.invokeMethod("create-socket-issue-warning", {
+        "CHANNEL_ID": SOCKET_ERROR_CHANNEL,
+      });
+    }
   }
 
   void createFailedToSendMessage() {
-    MethodChannelInterface().platform.invokeMethod("message-failed-to-send", {
-      "CHANNEL_ID": SOCKET_ERROR_CHANNEL,
-    });
+    if (!kIsWeb && !kIsDesktop) {
+      MethodChannelInterface().platform.invokeMethod("message-failed-to-send", {
+        "CHANNEL_ID": SOCKET_ERROR_CHANNEL,
+      });
+    }
   }
 
   /// Clears the socket warning notification
   void clearSocketWarning() {
-    MethodChannelInterface().platform.invokeMethod("clear-socket-issue");
+    if (!kIsWeb && !kIsDesktop) {
+      MethodChannelInterface().platform.invokeMethod("clear-socket-issue");
+    }
   }
 
   void clearFailedToSend() {
-    MethodChannelInterface().platform.invokeMethod("clear-failed-to-send");
+    if (!kIsWeb && !kIsDesktop) {
+      MethodChannelInterface().platform.invokeMethod("clear-failed-to-send");
+    }
   }
 }
