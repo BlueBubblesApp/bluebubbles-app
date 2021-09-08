@@ -21,7 +21,7 @@ packages:
       name: analyzer
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.7.2"
+    version: "1.7.1"
   archive:
     dependency: transitive
     description:
@@ -46,19 +46,17 @@ packages:
   assorted_layout_widgets:
     dependency: "direct main"
     description:
-      path: "."
-      ref: beta-fix
-      resolved-ref: "26f3ecb4dba38cdb3bf579b1d4972612d03fbe86"
-      url: "https://github.com/josh-burton/assorted_layout_widgets"
-    source: git
-    version: "5.0.3"
+      name: assorted_layout_widgets
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "5.1.1"
   async:
     dependency: transitive
     description:
       name: async
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.8.1"
+    version: "2.6.1"
   battery_optimization:
     dependency: "direct main"
     description:
@@ -165,7 +163,7 @@ packages:
       name: charcode
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.3.1"
+    version: "1.2.0"
   checked_yaml:
     dependency: transitive
     description:
@@ -700,7 +698,7 @@ packages:
       name: meta
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.7.0"
+    version: "1.3.0"
   metadata_fetch:
     dependency: "direct main"
     description:
@@ -1286,21 +1284,21 @@ packages:
       name: test
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.17.10"
+    version: "1.16.8"
   test_api:
     dependency: transitive
     description:
       name: test_api
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.4.2"
+    version: "0.3.0"
   test_core:
     dependency: transitive
     description:
       name: test_core
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.4.0"
+    version: "0.3.19"
   timezone:
     dependency: transitive
     description:

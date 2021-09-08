@@ -99,7 +99,10 @@ class ChatBloc {
     DateTime? lastMsgDate = await Message.lastMessageDate();
 
     // If there is no last message, don't do anything
-    if (lastMsgDate == null) return;
+    if (lastMsgDate == null) {
+      Logger.debug("No last message date found! Not doing anything...", tag: 'ChatBloc-Resume');
+      return;
+    }
 
     // If the last message date is >= the last fetch, let's refetch
     int lastMs = lastMsgDate.millisecondsSinceEpoch;
