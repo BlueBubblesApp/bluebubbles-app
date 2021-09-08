@@ -89,6 +89,7 @@ dependencies:
   shared_preferences: ^2.0.7
   location: ^4.3.0 # no desktop support, todo desktop
   universal_io: ^2.0.4 # cross-platform dart:io implementation
+  universal_html: ^2.0.8 # cross-platform dart:html implementation
   file_picker: ^4.0.2
   firebase_dart: ^1.0.0-dev.45
 
