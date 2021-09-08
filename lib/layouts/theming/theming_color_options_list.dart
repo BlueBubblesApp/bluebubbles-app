@@ -77,7 +77,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
       await theme.fetchData();
     }
 
-    setState(() {});
+    if (this.mounted) setState(() {});
   }
 
   @override
@@ -85,8 +85,8 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
     editable = currentTheme != null && !currentTheme!.isPreset;
     Color headerColor;
     Color tileColor;
-    if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance()
-        || SettingsManager().settings.skin.value != Skins.iOS) {
+    if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+        SettingsManager().settings.skin.value != Skins.iOS) {
       headerColor = Theme.of(context).accentColor;
       tileColor = Theme.of(context).backgroundColor;
     } else {
@@ -121,8 +121,8 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                         width: CustomNavigator.width(context) - 16,
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
                         decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(5.0),
-                            color: headerColor,
+                          borderRadius: BorderRadius.circular(5.0),
+                          color: headerColor,
                         ),
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<ThemeObject>(
@@ -149,7 +149,8 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                                   SettingsManager().settings.colorsFromMedia.value = true;
                                   SettingsManager().saveSettings(SettingsManager().settings);
                                 } catch (e) {
-                                  showSnackbar("Error", "Something went wrong, please ensure you granted the permission correctly!");
+                                  showSnackbar("Error",
+                                      "Something went wrong, please ensure you granted the permission correctly!");
                                   return;
                                 }
                               } else {
@@ -166,24 +167,20 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                                 await currentLight.save();
                                 await currentDark.save();
                                 SettingsManager().saveSelectedTheme(context,
-                                    selectedLightTheme: allThemes.firstWhere((element) => element.name == "Music Theme (Light)"),
-                                    selectedDarkTheme: allThemes.firstWhere((element) => element.name == "Music Theme (Dark)"));
-                              } else if (currentTheme!.name == "Music Theme (Light)" || currentTheme!.name == "Music Theme (Dark)") {
-                                var allThemes = await ThemeObject.getThemes();
+                                    selectedLightTheme:
+                                        allThemes.firstWhere((element) => element.name == "Music Theme (Light)"),
+                                    selectedDarkTheme:
+                                        allThemes.firstWhere((element) => element.name == "Music Theme (Dark)"));
+                              } else if (currentTheme!.name == "Music Theme (Light)" ||
+                                  currentTheme!.name == "Music Theme (Dark)") {
                                 if (!widget.isDarkMode) {
-                                  var previousDark = allThemes.firstWhere((e) => e.previousDarkTheme);
-                                  previousDark.previousDarkTheme = false;
-                                  await previousDark.save();
+                                  ThemeObject previousDark = await revertToPreviousDarkTheme();
                                   SettingsManager().saveSelectedTheme(context,
-                                      selectedLightTheme: value,
-                                      selectedDarkTheme: previousDark);
+                                      selectedLightTheme: value, selectedDarkTheme: previousDark);
                                 } else {
-                                  var previousLight = allThemes.firstWhere((e) => e.previousLightTheme);
-                                  previousLight.previousLightTheme = false;
-                                  await previousLight.save();
+                                  ThemeObject previousLight = await revertToPreviousLightTheme();
                                   SettingsManager().saveSelectedTheme(context,
-                                      selectedLightTheme: previousLight,
-                                      selectedDarkTheme: value);
+                                      selectedLightTheme: previousLight, selectedDarkTheme: value);
                                 }
                               } else if (widget.isDarkMode) {
                                 SettingsManager().saveSelectedTheme(context, selectedDarkTheme: value);
@@ -211,21 +208,21 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
               if (!currentTheme!.isPreset)
                 SliverToBoxAdapter(
                     child: SettingsSwitch(
-                      onChanged: (bool val) async {
-                        currentTheme!.gradientBg = val;
-                        await currentTheme!.save();
-                        if (widget.isDarkMode) {
-                          SettingsManager().saveSelectedTheme(context, selectedDarkTheme: currentTheme);
-                        } else {
-                          SettingsManager().saveSelectedTheme(context, selectedLightTheme: currentTheme);
-                        }
-                      },
-                      initialVal: currentTheme!.gradientBg,
-                      title: "Gradient Message View Background",
-                      backgroundColor: tileColor,
-                      subtitle: "Make the background of the messages view an animated gradient based on the background color and the primary color",
-                    )
-                ),
+                  onChanged: (bool val) async {
+                    currentTheme!.gradientBg = val;
+                    await currentTheme!.save();
+                    if (widget.isDarkMode) {
+                      SettingsManager().saveSelectedTheme(context, selectedDarkTheme: currentTheme);
+                    } else {
+                      SettingsManager().saveSelectedTheme(context, selectedLightTheme: currentTheme);
+                    }
+                  },
+                  initialVal: currentTheme!.gradientBg,
+                  title: "Gradient Message View Background",
+                  backgroundColor: tileColor,
+                  subtitle:
+                      "Make the background of the messages view an animated gradient based on the background color and the primary color",
+                )),
               SliverGrid(
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {

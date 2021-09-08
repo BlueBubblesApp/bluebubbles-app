@@ -2,6 +2,7 @@ import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:flutter/material.dart';
+import 'package:collection/src/iterable_extensions.dart';
 
 enum DarkThemes {
   OLED,
@@ -23,8 +24,7 @@ class Themes {
 }
 
 bool isEqual(ThemeData one, ThemeData two) {
-  return one.accentColor == two.accentColor
-      && one.backgroundColor == two.backgroundColor;
+  return one.accentColor == two.accentColor && one.backgroundColor == two.backgroundColor;
 }
 
 ThemeData oledDarkTheme = ThemeData(
@@ -161,4 +161,34 @@ Future<void> loadTheme(BuildContext? context, {ThemeObject? lightOverride, Theme
     light: light.themeData,
     dark: dark.themeData,
   );
+}
+
+Future<ThemeObject> revertToPreviousDarkTheme() async {
+  List<ThemeObject> allThemes = await ThemeObject.getThemes();
+  ThemeObject? previous = allThemes.firstWhereOrNull((e) => e.previousDarkTheme);
+
+  if (previous == null) {
+    previous = Themes.themes.firstWhereOrNull((element) => element.name == "OLED Dark");
+  }
+
+  // Remove the previous flags
+  previous!.previousDarkTheme = false;
+
+  // Save the theme and set it accordingly
+  return await previous.save();
+}
+
+Future<ThemeObject> revertToPreviousLightTheme() async {
+  List<ThemeObject> allThemes = await ThemeObject.getThemes();
+  ThemeObject? previous = allThemes.firstWhereOrNull((e) => e.previousDarkTheme);
+
+  if (previous == null) {
+    previous = Themes.themes.firstWhereOrNull((element) => element.name == "Bright White");
+  }
+
+  // Remove the previous flags
+  previous!.previousDarkTheme = false;
+
+  // Save the theme and set it accordingly
+  return await previous.save();
 }
