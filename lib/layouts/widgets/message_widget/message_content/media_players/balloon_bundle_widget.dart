@@ -1,4 +1,5 @@
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
@@ -69,7 +70,7 @@ class _BalloonBubbleState extends State<BalloonBundleWidget> {
       borderRadius: BorderRadius.circular(20),
       child: Container(
           constraints: BoxConstraints(
-            maxWidth: context.width * 3 / 4,
+            maxWidth: CustomNavigator.width(context) * 3 / 4,
           ),
           child: Container(
             width: 200,

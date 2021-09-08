@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/layouts/setup/theme_selector/theme_selector.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:get/get.dart';
@@ -95,7 +96,7 @@ class SentMessageHelper {
               width: customWidth != null ? constraints.maxWidth : null,
               constraints: customWidth == null
                   ? BoxConstraints(
-                      maxWidth: context.width * MessageWidgetMixin.MAX_SIZE + (!padding ? 100 : 0),
+                      maxWidth: CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE + (!padding ? 100 : 0),
                     )
                   : null,
               margin: EdgeInsets.only(
@@ -147,12 +148,11 @@ class SentMessageHelper {
         ],
       );
     }
-
     if (!padding) return msg;
     return Container(
         width: customWidth != null ? customWidth - (showTail ? 20 : 0) : null,
         constraints: BoxConstraints(
-          maxWidth: customWidth != null ? customWidth - (showTail ? 20 : 0) : context.width,
+          maxWidth: customWidth != null ? customWidth - (showTail ? 20 : 0) : CustomNavigator.width(context),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,

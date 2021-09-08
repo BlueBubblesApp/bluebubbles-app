@@ -351,6 +351,8 @@ Future<String> getGroupEventText(Message message) async {
     text = "$handle left the conversation";
   } else if (message.itemType == 2 && message.groupTitle != null) {
     text = "$handle named the conversation \"${message.groupTitle}\"";
+  } else if (message.itemType == 6) {
+    text = "$handle started a FaceTime call";
   }
 
   return text;

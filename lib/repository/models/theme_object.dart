@@ -17,6 +17,8 @@ class ThemeObject {
   bool selectedLightTheme = false;
   bool selectedDarkTheme = false;
   bool gradientBg = false;
+  bool previousLightTheme = false;
+  bool previousDarkTheme = false;
   ThemeData? data;
   List<ThemeEntry> entries = [];
 
@@ -26,6 +28,8 @@ class ThemeObject {
     this.selectedLightTheme = false,
     this.selectedDarkTheme = false,
     this.gradientBg = false,
+    this.previousLightTheme = false,
+    this.previousDarkTheme = false,
     this.data,
   });
   factory ThemeObject.fromData(ThemeData data, String name, {bool gradientBg = false}) {
@@ -46,6 +50,8 @@ class ThemeObject {
       selectedLightTheme: json["selectedLightTheme"] == 1,
       selectedDarkTheme: json["selectedDarkTheme"] == 1,
       gradientBg: json["gradientBg"] == 1,
+      previousLightTheme: json["previousLightTheme"] == 1,
+      previousDarkTheme: json["previousDarkTheme"] == 1,
     );
   }
 
@@ -123,6 +129,8 @@ class ThemeObject {
             "selectedLightTheme": this.selectedLightTheme ? 1 : 0,
             "selectedDarkTheme": this.selectedDarkTheme ? 1 : 0,
             "gradientBg": this.gradientBg ? 1 : 0,
+            "previousLightTheme": this.previousLightTheme ? 1 : 0,
+            "previousDarkTheme": this.previousDarkTheme ? 1 : 0,
           },
           where: "ROWID = ?",
           whereArgs: [this.id]);
@@ -242,6 +250,8 @@ class ThemeObject {
         "selectedLightTheme": this.selectedLightTheme ? 1 : 0,
         "selectedDarkTheme": this.selectedDarkTheme ? 1 : 0,
         "gradientBg": this.gradientBg ? 1 : 0,
+        "previousLightTheme": this.previousLightTheme ? 1 : 0,
+        "previousDarkTheme": this.previousDarkTheme ? 1 : 0,
       };
 
   ThemeData get themeData {

@@ -4,15 +4,19 @@ import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/layouts/settings/custom_avatar_color_panel.dart';
+import 'package:bluebubbles/layouts/settings/custom_avatar_panel.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
+import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -90,7 +94,7 @@ class ThemePanel extends GetView<ThemePanelController> {
         child: Scaffold(
           backgroundColor: SettingsManager().settings.skin.value != Skins.iOS ? tileColor : headerColor,
           appBar: PreferredSize(
-            preferredSize: Size(context.width, 80),
+            preferredSize: Size(CustomNavigator.width(context), 80),
             child: ClipRRect(
               child: BackdropFilter(
                 child: AppBar(
@@ -205,6 +209,29 @@ class ThemePanel extends GetView<ThemePanelController> {
                         await MethodChannelInterface().invokeMethod("request-notif-permission");
                         try {
                           await MethodChannelInterface().invokeMethod("start-notif-listener");
+                          if (val) {
+                            var allThemes = await ThemeObject.getThemes();
+                            var currentLight = await ThemeObject.getLightTheme();
+                            var currentDark = await ThemeObject.getDarkTheme();
+                            currentLight.previousLightTheme = true;
+                            currentDark.previousDarkTheme = true;
+                            await currentLight.save();
+                            await currentDark.save();
+                            SettingsManager().saveSelectedTheme(context,
+                                selectedLightTheme: allThemes.firstWhere((element) => element.name == "Music Theme (Light)"),
+                                selectedDarkTheme: allThemes.firstWhere((element) => element.name == "Music Theme (Dark)"));
+                          } else {
+                            var allThemes = await ThemeObject.getThemes();
+                            var previousLight = allThemes.firstWhere((e) => e.previousLightTheme);
+                            var previousDark = allThemes.firstWhere((e) => e.previousDarkTheme);
+                            previousLight.previousLightTheme = false;
+                            previousDark.previousDarkTheme = false;
+                            await previousLight.save();
+                            await previousDark.save();
+                            SettingsManager().saveSelectedTheme(context,
+                                selectedLightTheme: previousLight,
+                                selectedDarkTheme: previousDark);
+                          }
                           controller._settingsCopy.colorsFromMedia.value = val;
                           saveSettings();
                         } catch (e) {
@@ -261,7 +288,11 @@ class ThemePanel extends GetView<ThemePanelController> {
                       title: "Custom Avatar Colors",
                       trailing: nextIcon,
                       onTap: () async {
-                        Get.toNamed("/settings/custom-avatar-color-panel");
+                        CustomNavigator.pushSettings(
+                          context,
+                          CustomAvatarColorPanel(),
+                          binding: CustomAvatarColorPanelBinding(),
+                        );
                       },
                       backgroundColor: tileColor,
                       subtitle: "Customize the color for different avatars",
@@ -277,7 +308,11 @@ class ThemePanel extends GetView<ThemePanelController> {
                       title: "Custom Avatars",
                       trailing: nextIcon,
                       onTap: () async {
-                        Get.toNamed("/settings/custom-avatar-panel");
+                        CustomNavigator.pushSettings(
+                          context,
+                          CustomAvatarPanel(),
+                          binding: CustomAvatarPanelBinding(),
+                        );
                       },
                       backgroundColor: tileColor,
                       subtitle: "Customize the avatar for different chats",

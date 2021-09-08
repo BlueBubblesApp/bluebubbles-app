@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -46,7 +47,7 @@ class ChatListPanel extends StatelessWidget {
       child: Scaffold(
         backgroundColor: SettingsManager().settings.skin.value != Skins.iOS ? tileColor : headerColor,
         appBar: PreferredSize(
-          preferredSize: Size(context.width, 80),
+          preferredSize: Size(CustomNavigator.width(context), 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
@@ -290,7 +291,10 @@ class ChatListPanel extends StatelessWidget {
                   //       "Set the order for your pinned chats",
                   //       backgroundColor: tileColor,
                   //       onTap: () {
-                  //         Get.toNamed("/settings/pinned-order-panel");
+                  //         CustomNavigator.pushSettings(
+                  //           context,
+                  //           PinnedOrderPanel(),
+                  //         );
                   //       },
                   //       trailing: Icon(
                   //         SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.chevron_right : Icons.arrow_forward,
@@ -332,7 +336,7 @@ class ChatListPanel extends StatelessWidget {
                     if (SettingsManager().settings.skin.value == Skins.iOS)
                       return Container(
                         color: tileColor,
-                        constraints: BoxConstraints(maxWidth: context.width),
+                        constraints: BoxConstraints(maxWidth: CustomNavigator.width(context)),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 15.0),
                           child: Row(
@@ -346,7 +350,7 @@ class ChatListPanel extends StatelessWidget {
                                   opacity: SettingsManager().settings.iosShowPin.value ? 1 : 0.7,
                                   child: Container(
                                     height: 60,
-                                    width: context.width / 5 - 8,
+                                    width: CustomNavigator.width(context) / 5 - 8,
                                     color: Colors.yellow[800],
                                     child: IconButton(
                                       icon: Icon(CupertinoIcons.pin, color: Colors.white),
@@ -400,7 +404,7 @@ class ChatListPanel extends StatelessWidget {
                                         child: Container(
                                           height: 60,
                                           color: Colors.purple[700],
-                                          width: context.width / 5 - 8,
+                                          width: CustomNavigator.width(context) / 5 - 8,
                                           child: IconButton(
                                             icon: Icon(CupertinoIcons.bell_slash, color: Colors.white),
                                             onPressed: () async {
@@ -447,7 +451,7 @@ class ChatListPanel extends StatelessWidget {
                                         child: Container(
                                           height: 60,
                                           color: Colors.red,
-                                          width: context.width / 5 - 8,
+                                          width: CustomNavigator.width(context) / 5 - 8,
                                           child: IconButton(
                                             icon: Icon(CupertinoIcons.trash, color: Colors.white),
                                             onPressed: () async {
@@ -494,7 +498,7 @@ class ChatListPanel extends StatelessWidget {
                                         child: Container(
                                           height: 60,
                                           color: Colors.blue,
-                                          width: context.width / 5 - 8,
+                                          width: CustomNavigator.width(context) / 5 - 8,
                                           child: IconButton(
                                             icon: Icon(CupertinoIcons.person_crop_circle_badge_exclam, color: Colors.white),
                                             onPressed: () {
@@ -542,7 +546,7 @@ class ChatListPanel extends StatelessWidget {
                                         child: Container(
                                           height: 60,
                                           color: Colors.red,
-                                          width: context.width / 5 - 8,
+                                          width: CustomNavigator.width(context) / 5 - 8,
                                           child: IconButton(
                                             icon: Icon(CupertinoIcons.tray_arrow_down, color: Colors.white),
                                             onPressed: () {
@@ -662,23 +666,6 @@ class ChatListPanel extends StatelessWidget {
                     subtitle: "Adds a dedicated camera button near the new chat creator button to easily send pictures",
                     backgroundColor: tileColor,
                   )),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
-                    ),
-                  ),
-                  Obx(() => SettingsSwitch(
-                        onChanged: (bool val) {
-                          SettingsManager().settings.notifyOnChatList.value = val;
-                          saveSettings();
-                        },
-                        initialVal: SettingsManager().settings.notifyOnChatList.value,
-                        title: "Send Notifications on Chat List",
-                        subtitle: "Sends notifications for new messages while in the chat list or chat creator",
-                        backgroundColor: tileColor,
-                      )),
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
                   Container(
                     height: 30,

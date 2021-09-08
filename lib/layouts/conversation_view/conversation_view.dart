@@ -6,6 +6,7 @@ import 'dart:ui';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/action_handler.dart';
@@ -30,6 +31,7 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/theme_object.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -114,6 +116,10 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     isCreator = widget.isCreator;
     chat = widget.chat;
 
+    if (chat != null) {
+      prefs.setString('lastOpenedChat', chat!.guid!);
+    }
+
     if (widget.selected.isEmpty) {
       initChatSelector();
     }
@@ -192,7 +198,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
         if (event.type == MessageBlocEventType.insert && this.mounted && event.outGoing) {
           final constraints = BoxConstraints(
-            maxWidth: context.width * MessageWidgetMixin.MAX_SIZE,
+            maxWidth: CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE,
             minHeight: Theme.of(context).textTheme.bodyText2!.fontSize!,
             maxHeight: Theme.of(context).textTheme.bodyText2!.fontSize!,
           );
@@ -207,8 +213,8 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
           if (!(event.message?.hasAttachments ?? false) && !(event.message?.text?.isEmpty ?? false)) {
             setState(() {
               tween = Tween<double>(
-                  begin: context.width - 30,
-                  end: min(size.width + 68, context.width * MessageWidgetMixin.MAX_SIZE + 40));
+                  begin: CustomNavigator.width(context) - 30,
+                  end: min(size.width + 68, CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE + 40));
               controller = CustomAnimationControl.play;
               message = event.message;
             });
@@ -268,6 +274,8 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
       // If the chat is still null, return false
       if (chat == null) return false;
+
+      prefs.setString('lastOpenedChat', chat!.guid!);
 
       // If the current chat is null, set it
       if (isDifferentChat) {

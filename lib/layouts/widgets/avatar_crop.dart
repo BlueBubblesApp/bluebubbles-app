@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
@@ -39,7 +40,7 @@ class _AvatarCropState extends State<AvatarCrop> {
       await file.writeAsBytes(croppedData);
       ChatBloc().chats[widget.index!].customAvatarPath.value = file.path;
       ChatBloc().chats[widget.index!].save();
-      Get.back(closeOverlays: true);
+      CustomNavigator.backSettingsCloseOverlays(context);
       showSnackbar("Notice", "Custom chat avatar saved successfully");
     } else {
       File file = new File(widget.chat!.customAvatarPath.value ?? "$appDocPath/avatars/${widget.chat!.guid!.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar.jpg");
@@ -66,7 +67,7 @@ class _AvatarCropState extends State<AvatarCrop> {
       child: Scaffold(
           backgroundColor: Theme.of(context).backgroundColor,
           appBar: PreferredSize(
-            preferredSize: Size(context.width, 80),
+            preferredSize: Size(CustomNavigator.width(context), 80),
             child: ClipRRect(
               child: BackdropFilter(
                 child: AppBar(
@@ -185,11 +186,10 @@ class _AvatarCropState extends State<AvatarCrop> {
                         barrierDismissible: false,
                         backgroundColor: Theme.of(context).backgroundColor,
                       );
-                      onCropped(file.readAsBytesSync());
+                      onCropped(await file.readAsBytes());
                     } else {
-                      setState(() {
-                        _imageData = file.readAsBytesSync();
-                      });
+                      _imageData = await file.readAsBytes();
+                      setState(() {});
                     }
                   },
                   child: Text(

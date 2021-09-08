@@ -456,7 +456,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           child: InkWell(
             onTap: toggleShareMenu,
             child: Padding(
-              padding: EdgeInsets.only(right: 1),
+              padding: EdgeInsets.only(right: SettingsManager().settings.skin.value == Skins.iOS ? 0 : 1),
               child: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.share : Icons.share,
                 color: Colors.white.withAlpha(225),
@@ -532,168 +532,179 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               duration: Duration(milliseconds: 100),
               vsync: this,
               curve: Curves.easeInOut,
-              child: ThemeSwitcher(
-                iOSSkin: CustomCupertinoTextField(
-                  enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
-                  enabled: sendCountdown == null,
-                  textInputAction:
-                      SettingsManager().settings.sendWithReturn.value ? TextInputAction.send : TextInputAction.newline,
-                  cursorColor: Theme.of(context).primaryColor,
-                  onLongPressStart: () {
-                    Feedback.forLongPress(context);
-                  },
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    if (cameraState == CameraState.ACTIVE) {
-                      disposeCameras();
-                    }
-                  },
-                  key: _searchFormKey,
-                  onSubmitted: (String value) {
-                    if (!SettingsManager().settings.sendWithReturn.value || isNullOrEmpty(value)!) return;
-                    sendMessage();
-                  },
-                  onContentCommitted: onContentCommit,
-                  textCapitalization: TextCapitalization.sentences,
-                  focusNode: focusNode,
-                  autocorrect: true,
-                  controller: controller,
-                  scrollPhysics: CustomBouncingScrollPhysics(),
-                  style: Theme.of(context).textTheme.bodyText1!.apply(
-                        color:
-                            ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.light
-                                ? Colors.black
-                                : Colors.white,
-                        fontSizeDelta: -0.25,
-                      ),
-                  keyboardType: TextInputType.multiline,
-                  maxLines: 14,
-                  minLines: 1,
-                  placeholder: SettingsManager().settings.recipientAsPlaceholder.value == true
-                      ? placeholder.value
-                      : "BlueBubbles",
-                  padding: EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
-                  placeholderStyle: Theme.of(context).textTheme.subtitle1,
-                  autofocus: SettingsManager().settings.autoOpenKeyboard.value,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).backgroundColor,
-                    border: Border.all(
-                      color: Theme.of(context).dividerColor,
-                      width: 1.5,
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-                materialSkin: TextField(
-                  // enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
-                  controller: controller,
-                  focusNode: focusNode,
-                  textCapitalization: TextCapitalization.sentences,
-                  autocorrect: true,
-                  autofocus: SettingsManager().settings.autoOpenKeyboard.value,
-                  cursorColor: Theme.of(context).primaryColor,
-                  key: _searchFormKey,
-                  style: Theme.of(context).textTheme.bodyText1!.apply(
-                        color:
-                            ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.light
-                                ? Colors.black
-                                : Colors.white,
-                        fontSizeDelta: -0.25,
-                      ),
-                  onContentCommitted: onContentCommit,
-                  decoration: InputDecoration(
-                    isDense: true,
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        color: Theme.of(context).dividerColor,
-                        width: 1.5,
-                        style: BorderStyle.solid,
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    disabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        color: Theme.of(context).dividerColor,
-                        width: 1.5,
-                        style: BorderStyle.solid,
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        color: Theme.of(context).dividerColor,
-                        width: 1.5,
-                        style: BorderStyle.solid,
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    hintText: SettingsManager().settings.recipientAsPlaceholder.value == true
+              child: RawKeyboardListener(
+                focusNode: FocusNode(),
+                onKey: (RawKeyEvent event) async {
+                  if (event.isKeyPressed(LogicalKeyboardKey.enter)
+                      && SettingsManager().settings.sendWithReturn.value
+                      && !isNullOrEmpty(controller!.text)!) {
+                    await sendMessage();
+                    focusNode!.requestFocus();
+                  }
+                },
+                child: ThemeSwitcher(
+                  iOSSkin: CustomCupertinoTextField(
+                    enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
+                    enabled: sendCountdown == null,
+                    textInputAction:
+                        SettingsManager().settings.sendWithReturn.value ? TextInputAction.send : TextInputAction.newline,
+                    cursorColor: Theme.of(context).primaryColor,
+                    onLongPressStart: () {
+                      Feedback.forLongPress(context);
+                    },
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      if (cameraState == CameraState.ACTIVE) {
+                        disposeCameras();
+                      }
+                    },
+                    key: _searchFormKey,
+                    onSubmitted: (String value) {
+                      if (!SettingsManager().settings.sendWithReturn.value || isNullOrEmpty(value)!) return;
+                      sendMessage();
+                    },
+                    onContentCommitted: onContentCommit,
+                    textCapitalization: TextCapitalization.sentences,
+                    focusNode: focusNode,
+                    autocorrect: true,
+                    controller: controller,
+                    scrollPhysics: CustomBouncingScrollPhysics(),
+                    style: Theme.of(context).textTheme.bodyText1!.apply(
+                          color:
+                              ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.light
+                                  ? Colors.black
+                                  : Colors.white,
+                          fontSizeDelta: -0.25,
+                        ),
+                    keyboardType: TextInputType.multiline,
+                    maxLines: 14,
+                    minLines: 1,
+                    placeholder: SettingsManager().settings.recipientAsPlaceholder.value == true
                         ? placeholder.value
                         : "BlueBubbles",
-                    hintStyle: Theme.of(context).textTheme.subtitle1,
-                    contentPadding: EdgeInsets.only(
-                      left: 10,
-                      top: 15,
-                      right: 10,
-                      bottom: 10,
+                    padding: EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
+                    placeholderStyle: Theme.of(context).textTheme.subtitle1,
+                    autofocus: SettingsManager().settings.autoOpenKeyboard.value,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).backgroundColor,
+                      border: Border.all(
+                        color: Theme.of(context).dividerColor,
+                        width: 1.5,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
                     ),
                   ),
-                  keyboardType: TextInputType.multiline,
-                  maxLines: 14,
-                  minLines: 1,
-                ),
-                samsungSkin: TextField(
-                  // enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
-                  controller: controller,
-                  focusNode: focusNode,
-                  textCapitalization: TextCapitalization.sentences,
-                  autocorrect: true,
-                  autofocus: SettingsManager().settings.autoOpenKeyboard.value,
-                  cursorColor: Theme.of(context).primaryColor,
-                  key: _searchFormKey,
-                  style: Theme.of(context).textTheme.bodyText1!.apply(
-                        color:
-                            ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.light
-                                ? Colors.black
-                                : Colors.white,
-                        fontSizeDelta: -0.25,
+                  materialSkin: TextField(
+                    // enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
+                    controller: controller,
+                    focusNode: focusNode,
+                    textCapitalization: TextCapitalization.sentences,
+                    autocorrect: true,
+                    autofocus: SettingsManager().settings.autoOpenKeyboard.value,
+                    cursorColor: Theme.of(context).primaryColor,
+                    key: _searchFormKey,
+                    style: Theme.of(context).textTheme.bodyText1!.apply(
+                          color:
+                              ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.light
+                                  ? Colors.black
+                                  : Colors.white,
+                          fontSizeDelta: -0.25,
+                        ),
+                    onContentCommitted: onContentCommit,
+                    decoration: InputDecoration(
+                      isDense: true,
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Theme.of(context).dividerColor,
+                          width: 1.5,
+                          style: BorderStyle.solid,
+                        ),
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                  //onContentCommitted: onContentCommit,
-                  decoration: InputDecoration(
-                    isDense: true,
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        color: Theme.of(context).dividerColor,
-                        width: 1.5,
-                        style: BorderStyle.solid,
+                      disabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Theme.of(context).dividerColor,
+                          width: 1.5,
+                          style: BorderStyle.solid,
+                        ),
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                      borderRadius: BorderRadius.circular(20),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Theme.of(context).dividerColor,
+                          width: 1.5,
+                          style: BorderStyle.solid,
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      hintText: SettingsManager().settings.recipientAsPlaceholder.value == true
+                          ? placeholder.value
+                          : "BlueBubbles",
+                      hintStyle: Theme.of(context).textTheme.subtitle1,
+                      contentPadding: EdgeInsets.only(
+                        left: 10,
+                        top: 15,
+                        right: 10,
+                        bottom: 10,
+                      ),
                     ),
-                    disabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        color: Theme.of(context).dividerColor,
-                        width: 1.5,
-                        style: BorderStyle.solid,
+                    keyboardType: TextInputType.multiline,
+                    maxLines: 14,
+                    minLines: 1,
+                  ),
+                  samsungSkin: TextField(
+                    // enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
+                    controller: controller,
+                    focusNode: focusNode,
+                    textCapitalization: TextCapitalization.sentences,
+                    autocorrect: true,
+                    autofocus: SettingsManager().settings.autoOpenKeyboard.value,
+                    cursorColor: Theme.of(context).primaryColor,
+                    key: _searchFormKey,
+                    style: Theme.of(context).textTheme.bodyText1!.apply(
+                          color:
+                              ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.light
+                                  ? Colors.black
+                                  : Colors.white,
+                          fontSizeDelta: -0.25,
+                        ),
+                    onContentCommitted: onContentCommit,
+                    decoration: InputDecoration(
+                      isDense: true,
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Theme.of(context).dividerColor,
+                          width: 1.5,
+                          style: BorderStyle.solid,
+                        ),
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        color: Theme.of(context).dividerColor,
-                        width: 1.5,
-                        style: BorderStyle.solid,
+                      disabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Theme.of(context).dividerColor,
+                          width: 1.5,
+                          style: BorderStyle.solid,
+                        ),
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    hintText: SettingsManager().settings.recipientAsPlaceholder.value == true
-                        ? placeholder.value
-                        : "BlueBubbles",
-                    hintStyle: Theme.of(context).textTheme.subtitle1,
-                    contentPadding: EdgeInsets.only(
-                      left: 10,
-                      top: 15,
-                      right: 10,
-                      bottom: 10,
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Theme.of(context).dividerColor,
+                          width: 1.5,
+                          style: BorderStyle.solid,
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      hintText: SettingsManager().settings.recipientAsPlaceholder.value == true
+                          ? placeholder.value
+                          : "BlueBubbles",
+                      hintStyle: Theme.of(context).textTheme.subtitle1,
+                      contentPadding: EdgeInsets.only(
+                        left: 10,
+                        top: 15,
+                        right: 10,
+                        bottom: 10,
+                      ),
                     ),
                   ),
                 ),
