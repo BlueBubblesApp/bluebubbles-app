@@ -269,7 +269,7 @@ class ChatBloc {
     return NewMessageManager().stream.listen(handleMessageAction);
   }
 
-  Future<void> getChatBatches({int batchSize = 10}) async {
+  Future<void> getChatBatches({int batchSize = 15}) async {
     int count = (await Chat.count()) ?? 0;
     if (count == 0) {
       hasChats.value = false;
