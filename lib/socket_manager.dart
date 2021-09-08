@@ -421,7 +421,7 @@ class SocketManager {
 
     String? result;
 
-    if (kIsWeb) {
+    if (kIsWeb || kIsDesktop) {
       Logger.debug("Platform Web detected, not authing with FCM!", tag: 'FCM-Auth');
       isAuthingFcm = false;
       return;

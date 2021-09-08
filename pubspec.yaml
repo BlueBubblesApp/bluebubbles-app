@@ -36,6 +36,7 @@ dependencies:
   permission_handler: ^8.1.4+2 # mobile only, todo disable on web and desktop
   path_provider: ^2.0.2 # no web support, todo disable on web (no concept of storage on web) (must *completely* remove all references to dart:io and file.writeAsBytes, etc)
   sqflite: ^2.0.0+3 # mobile only, we can potentially use sqflite_common_ffi for desktop and sembast_sqflite for web, todo web todo desktop
+  sqflite_common_ffi: ^2.0.0+3 # desktop
   path: ^1.8.0
   intl: ^0.17.0
   flutter_svg: ^0.22.0 # partial web support

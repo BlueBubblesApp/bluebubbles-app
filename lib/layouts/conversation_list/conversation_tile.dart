@@ -325,8 +325,8 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
   Widget _buildDate() => kIsWeb ? Text(buildDate(widget.chat.latestMessageDate),
     textAlign: TextAlign.right,
     style: Theme.of(context).textTheme.subtitle2!.copyWith(
-    color: Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
-    overflow: TextOverflow.clip)) : ConstrainedBox(
+    color: Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),),
+    overflow: TextOverflow.clip) : ConstrainedBox(
         constraints: BoxConstraints(maxWidth: 100.0),
         child: FutureBuilder<Message>(
             future: widget.chat.latestMessage,

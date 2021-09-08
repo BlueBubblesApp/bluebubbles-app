@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -113,7 +114,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                       child: InkWell(
                           child: SizedBox(width: 60, height: 60, child: Icon(Icons.arrow_forward, color: Colors.white)),
                           onTap: () async {
-                            if (!kIsWeb && await Permission.contacts.isGranted) {
+                            if (!kIsWeb && !kIsDesktop && await Permission.contacts.isGranted) {
                               widget.controller!.animateToPage(
                                 2,
                                 duration: Duration(milliseconds: 300),

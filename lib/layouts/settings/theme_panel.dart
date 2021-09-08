@@ -45,7 +45,7 @@ class ThemePanelController extends GetxController {
 
   @override
   void onReady() async {
-    if (!kIsWeb && kIsDesktop) {
+    if (!kIsWeb && !kIsDesktop) {
       modes.value = await FlutterDisplayMode.supported;
       refreshRates.value = modes.map((e) => e.refreshRate.round()).toSet().toList();
       currentMode.value = (await _settingsCopy.getDisplayMode()).refreshRate.round();
@@ -61,22 +61,25 @@ class ThemePanelController extends GetxController {
 }
 
 class ThemePanel extends GetView<ThemePanelController> {
-
   @override
   Widget build(BuildContext context) {
     Widget nextIcon = Obx(() => Icon(
-      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.chevron_right : Icons.arrow_forward,
-      color: Colors.grey,
-    ));
+          SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.chevron_right : Icons.arrow_forward,
+          color: Colors.grey,
+        ));
 
     /// for some reason we need a [GetBuilder] here otherwise the theme switching refuses to work right
     return GetBuilder<ThemePanelController>(builder: (_) {
-      final iosSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
-      final materialSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
+      final iosSubtitle =
+          Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
+      final materialSubtitle = Theme.of(context)
+          .textTheme
+          .subtitle1
+          ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
       Color headerColor;
       Color tileColor;
-      if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance()
-          || SettingsManager().settings.skin.value != Skins.iOS) {
+      if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+          SettingsManager().settings.skin.value != Skins.iOS) {
         headerColor = Theme.of(context).accentColor;
         tileColor = Theme.of(context).backgroundColor;
       } else {
@@ -90,8 +93,7 @@ class ThemePanel extends GetView<ThemePanelController> {
       return AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle(
           systemNavigationBarColor: headerColor, // navigation bar color
-          systemNavigationBarIconBrightness:
-          headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+          systemNavigationBarIconBrightness: headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
           statusBarColor: Colors.transparent, // status bar color
         ),
         child: Scaffold(
@@ -124,19 +126,22 @@ class ThemePanel extends GetView<ThemePanelController> {
                     Container(
                         height: SettingsManager().settings.skin.value == Skins.iOS ? 30 : 40,
                         alignment: Alignment.bottomLeft,
-                        decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
-                          color: headerColor,
-                          border: Border(
-                              bottom: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
-                          ),
-                        ) : BoxDecoration(
-                          color: tileColor,
-                        ),
+                        decoration: SettingsManager().settings.skin.value == Skins.iOS
+                            ? BoxDecoration(
+                                color: headerColor,
+                                border: Border(
+                                    bottom: BorderSide(
+                                        color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
+                              )
+                            : BoxDecoration(
+                                color: tileColor,
+                              ),
                         child: Padding(
                           padding: const EdgeInsets.only(bottom: 8.0, left: 15),
-                          child: Text("Theme".psCapitalize, style: SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
-                        )
-                    ),
+                          child: Text("Theme".psCapitalize,
+                              style:
+                                  SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
+                        )),
                     SettingsOptions<AdaptiveThemeMode>(
                       initial: AdaptiveTheme.of(context).mode,
                       onChanged: (val) {
@@ -175,77 +180,99 @@ class ThemePanel extends GetView<ThemePanelController> {
                         tileColor: tileColor,
                         iosSubtitle: iosSubtitle,
                         materialSubtitle: materialSubtitle,
-                        text: "Skin"
-                    ),
+                        text: "Skin"),
                     Obx(() => SettingsOptions<Skins>(
-                      initial: controller._settingsCopy.skin.value,
-                      onChanged: (val) {
-                        if (val == null) return;
-                        controller._settingsCopy.skin.value = val;
-                        if (val == Skins.Material) {
-                          controller._settingsCopy.hideDividers.value = true;
-                        } else if (val == Skins.Samsung) {
-                          controller._settingsCopy.hideDividers.value = true;
-                        } else {
-                          controller._settingsCopy.hideDividers.value = false;
-                        }
-                        ChatBloc().refreshChats();
-                        saveSettings();
-                        controller.update();
-                      },
-                      options: Skins.values.where((item) => item != Skins.Samsung).toList(),
-                      textProcessing: (val) => val.toString().split(".").last,
-                      capitalize: false,
-                      title: "App Skin",
-                      backgroundColor: tileColor,
-                      secondaryColor: headerColor,
-                    )),
+                          initial: controller._settingsCopy.skin.value,
+                          onChanged: (val) {
+                            if (val == null) return;
+                            controller._settingsCopy.skin.value = val;
+                            if (val == Skins.Material) {
+                              controller._settingsCopy.hideDividers.value = true;
+                            } else if (val == Skins.Samsung) {
+                              controller._settingsCopy.hideDividers.value = true;
+                            } else {
+                              controller._settingsCopy.hideDividers.value = false;
+                            }
+                            ChatBloc().refreshChats();
+                            saveSettings();
+                            controller.update();
+                          },
+                          options: Skins.values.where((item) => item != Skins.Samsung).toList(),
+                          textProcessing: (val) => val.toString().split(".").last,
+                          capitalize: false,
+                          title: "App Skin",
+                          backgroundColor: tileColor,
+                          secondaryColor: headerColor,
+                        )),
                     SettingsHeader(
                         headerColor: headerColor,
                         tileColor: tileColor,
                         iosSubtitle: iosSubtitle,
                         materialSubtitle: materialSubtitle,
-                        text: "Colors"
-                    ),
+                        text: "Colors"),
+                    if (!kIsWeb && !kIsDesktop)
+                      Obx(
+                        () => SettingsSwitch(
+                          onChanged: (bool val) async {
+                            await MethodChannelInterface().invokeMethod("request-notif-permission");
+                            try {
+                              await MethodChannelInterface().invokeMethod("start-notif-listener");
+                              if (val) {
+                                var allThemes = await ThemeObject.getThemes();
+                                var currentLight = await ThemeObject.getLightTheme();
+                                var currentDark = await ThemeObject.getDarkTheme();
+                                currentLight.previousLightTheme = true;
+                                currentDark.previousDarkTheme = true;
+                                await currentLight.save();
+                                await currentDark.save();
+                                SettingsManager().saveSelectedTheme(context,
+                                    selectedLightTheme:
+                                        allThemes.firstWhere((element) => element.name == "Music Theme (Light)"),
+                                    selectedDarkTheme:
+                                        allThemes.firstWhere((element) => element.name == "Music Theme (Dark)"));
+                              } else {
+                                var allThemes = await ThemeObject.getThemes();
+                                var previousLight = allThemes.firstWhere((e) => e.previousLightTheme);
+                                var previousDark = allThemes.firstWhere((e) => e.previousDarkTheme);
+                                previousLight.previousLightTheme = false;
+                                previousDark.previousDarkTheme = false;
+                                await previousLight.save();
+                                await previousDark.save();
+                                SettingsManager().saveSelectedTheme(context,
+                                    selectedLightTheme: previousLight, selectedDarkTheme: previousDark);
+                              }
+                              controller._settingsCopy.colorsFromMedia.value = val;
+                              saveSettings();
+                            } catch (e) {
+                              showSnackbar(
+                                  "Error", "Something went wrong, please ensure you granted the permission correctly!");
+                            }
+                          },
+                          initialVal: controller._settingsCopy.colorsFromMedia.value,
+                          title: "Colors from Media",
+                          backgroundColor: tileColor,
+                          subtitle:
+                              "Pull app colors from currently playing media. Note: Requires full notification access & a custom theme to be set",
+                        ),
+                      ),
+                    if (!kIsWeb && !kIsDesktop)
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 65.0),
+                          child: SettingsDivider(color: headerColor),
+                        ),
+                      ),
                     Obx(() => SettingsSwitch(
-                      onChanged: (bool val) async {
-                        await MethodChannelInterface().invokeMethod("request-notif-permission");
-                        try {
-                          await MethodChannelInterface().invokeMethod("start-notif-listener");
-                          if (val) {
-                            var allThemes = await ThemeObject.getThemes();
-                            var currentLight = await ThemeObject.getLightTheme();
-                            var currentDark = await ThemeObject.getDarkTheme();
-                            currentLight.previousLightTheme = true;
-                            currentDark.previousDarkTheme = true;
-                            await currentLight.save();
-                            await currentDark.save();
-                            SettingsManager().saveSelectedTheme(context,
-                                selectedLightTheme: allThemes.firstWhere((element) => element.name == "Music Theme (Light)"),
-                                selectedDarkTheme: allThemes.firstWhere((element) => element.name == "Music Theme (Dark)"));
-                          } else {
-                            var allThemes = await ThemeObject.getThemes();
-                            var previousLight = allThemes.firstWhere((e) => e.previousLightTheme);
-                            var previousDark = allThemes.firstWhere((e) => e.previousDarkTheme);
-                            previousLight.previousLightTheme = false;
-                            previousDark.previousDarkTheme = false;
-                            await previousLight.save();
-                            await previousDark.save();
-                            SettingsManager().saveSelectedTheme(context,
-                                selectedLightTheme: previousLight,
-                                selectedDarkTheme: previousDark);
-                          }
-                          controller._settingsCopy.colorsFromMedia.value = val;
-                          saveSettings();
-                        } catch (e) {
-                          showSnackbar("Error", "Something went wrong, please ensure you granted the permission correctly!");
-                        }
-                      },
-                      initialVal: controller._settingsCopy.colorsFromMedia.value,
-                      title: "Colors from Media",
-                      backgroundColor: tileColor,
-                      subtitle: "Pull app colors from currently playing media. Note: Requires full notification access & a custom theme to be set",
-                    )),
+                          onChanged: (bool val) {
+                            controller._settingsCopy.colorfulAvatars.value = val;
+                            saveSettings();
+                          },
+                          initialVal: controller._settingsCopy.colorfulAvatars.value,
+                          title: "Colorful Avatars",
+                          backgroundColor: tileColor,
+                          subtitle: "Gives letter avatars a splash of color",
+                        )),
                     Container(
                       color: tileColor,
                       child: Padding(
@@ -254,32 +281,15 @@ class ThemePanel extends GetView<ThemePanelController> {
                       ),
                     ),
                     Obx(() => SettingsSwitch(
-                      onChanged: (bool val) {
-                        controller._settingsCopy.colorfulAvatars.value = val;
-                        saveSettings();
-                      },
-                      initialVal: controller._settingsCopy.colorfulAvatars.value,
-                      title: "Colorful Avatars",
-                      backgroundColor: tileColor,
-                      subtitle: "Gives letter avatars a splash of color",
-                    )),
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
-                      ),
-                    ),
-                    Obx(() => SettingsSwitch(
-                      onChanged: (bool val) {
-                        controller._settingsCopy.colorfulBubbles.value = val;
-                        saveSettings();
-                      },
-                      initialVal: controller._settingsCopy.colorfulBubbles.value,
-                      title: "Colorful Bubbles",
-                      backgroundColor: tileColor,
-                      subtitle: "Gives received message bubbles a splash of color",
-                    )),
+                          onChanged: (bool val) {
+                            controller._settingsCopy.colorfulBubbles.value = val;
+                            saveSettings();
+                          },
+                          initialVal: controller._settingsCopy.colorfulBubbles.value,
+                          title: "Colorful Bubbles",
+                          backgroundColor: tileColor,
+                          subtitle: "Gives received message bubbles a splash of color",
+                        )),
                     Container(
                       color: tileColor,
                       child: Padding(
@@ -328,9 +338,9 @@ class ThemePanel extends GetView<ThemePanelController> {
                               tileColor: tileColor,
                               iosSubtitle: iosSubtitle,
                               materialSubtitle: materialSubtitle,
-                              text: "Refresh Rate"
-                          );
-                        else return SizedBox.shrink();
+                              text: "Refresh Rate");
+                        else
+                          return SizedBox.shrink();
                       }),
                     if (!kIsWeb && !kIsDesktop)
                       Obx(() {
@@ -349,7 +359,8 @@ class ThemePanel extends GetView<ThemePanelController> {
                             backgroundColor: tileColor,
                             secondaryColor: headerColor,
                           );
-                        else return SizedBox.shrink();
+                        else
+                          return SizedBox.shrink();
                       }),
                     // SettingsOptions<String>(
                     //   initial: controller._settingsCopy.emojiFontFamily == null
@@ -366,12 +377,14 @@ class ThemePanel extends GetView<ThemePanelController> {
                     Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
                     Container(
                       height: 30,
-                      decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
-                        color: headerColor,
-                        border: Border(
-                            top: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
-                        ),
-                      ) : null,
+                      decoration: SettingsManager().settings.skin.value == Skins.iOS
+                          ? BoxDecoration(
+                              color: headerColor,
+                              border: Border(
+                                  top: BorderSide(
+                                      color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
+                            )
+                          : null,
                     ),
                   ],
                 ),
