@@ -6,6 +6,7 @@ import 'dart:ui';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/action_handler.dart';
@@ -29,6 +30,8 @@ import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/theme_object.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -93,10 +96,13 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   bool wasCreator = false;
   GlobalKey key = GlobalKey();
   Worker? worker;
+  final RxBool adjustBackground = RxBool(false);
 
   @override
   void initState() {
     super.initState();
+
+    getAdjustBackground();
 
     this.selected = widget.selected.isEmpty ? [] : widget.selected;
     this.existingAttachments = widget.existingAttachments.isEmpty ? [] : widget.existingAttachments;
@@ -109,6 +115,10 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
     isCreator = widget.isCreator;
     chat = widget.chat;
+
+    if (chat != null) {
+      prefs.setString('lastOpenedChat', chat!.guid!);
+    }
 
     if (widget.selected.isEmpty) {
       initChatSelector();
@@ -169,6 +179,17 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     WidgetsBinding.instance!.addObserver(this);
   }
 
+  void getAdjustBackground() async {
+    var lightTheme = await ThemeObject.getLightTheme();
+    var darkTheme = await ThemeObject.getDarkTheme();
+    if ((lightTheme.gradientBg && !ThemeObject.inDarkMode(Get.context!))
+        || (darkTheme.gradientBg && ThemeObject.inDarkMode(Get.context!))) {
+      adjustBackground.value = true;
+    } else {
+      adjustBackground.value = false;
+    }
+  }
+
   void initListener() {
     if (messageBloc != null) {
       worker = ever<MessageBlocEvent?>(messageBloc!.event, (event) async {
@@ -181,7 +202,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
         if (event.type == MessageBlocEventType.insert && this.mounted && event.outGoing) {
           final constraints = BoxConstraints(
-            maxWidth: context.width * MessageWidgetHelper.MAX_SIZE,
+            maxWidth: CustomNavigator.width(context) * MessageWidgetHelper.MAX_SIZE,
             minHeight: Theme.of(context).textTheme.bodyText2!.fontSize!,
             maxHeight: Theme.of(context).textTheme.bodyText2!.fontSize!,
           );
@@ -196,8 +217,8 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
           if (!(event.message?.hasAttachments ?? false) && !(event.message?.text?.isEmpty ?? false)) {
             setState(() {
               tween = Tween<double>(
-                  begin: context.width - 30,
-                  end: min(size.width + 68, context.width * MessageWidgetHelper.MAX_SIZE + 40));
+                  begin: CustomNavigator.width(context) - 30,
+                  end: min(size.width + 68, CustomNavigator.width(context) * MessageWidgetHelper.MAX_SIZE + 40));
               controller = CustomAnimationControl.play;
               message = event.message;
             });
@@ -218,6 +239,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   void didChangeDependencies() async {
     super.didChangeDependencies();
     didChangeDependenciesConversationView();
+    getAdjustBackground();
   }
 
   /// Called when the app is either closed or opened or paused
@@ -255,6 +277,8 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
       // If the chat is still null, return false
       if (chat == null) return false;
+
+      prefs.setString('lastOpenedChat', chat!.guid!);
 
       // If the current chat is null, set it
       if (isDifferentChat) {
@@ -422,19 +446,19 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
             : buildChatSelectorHeader() as PreferredSizeWidget?,
         body: Obx(() => MirrorAnimation<MultiTweenValues<String>>(
           tween: ConversationViewMixin.gradientTween.value,
+          curve: Curves.fastOutSlowIn,
           duration: Duration(seconds: 3),
           builder: (context, child, anim) {
             return Container(
-              decoration: ConversationViewMixin.color1.value != null
-                  && (searchQuery.length == 0 || !isCreator!)
+              decoration: (searchQuery.length == 0 || !isCreator!)
                   && chat != null
-                  && SettingsManager().settings.adjustBackground.value ? BoxDecoration(
+                  && adjustBackground.value ? BoxDecoration(
                   gradient: LinearGradient(
                       begin: Alignment.topRight,
                       end: Alignment.bottomLeft,
                       stops: [anim.get("color1"), anim.get("color2")],
                       colors: [AdaptiveTheme.of(context).mode == AdaptiveThemeMode.light ?
-                        ConversationViewMixin.color1.value!.lightenPercent(20) : ConversationViewMixin.color1.value!.darkenPercent(20), ConversationViewMixin.color2.value!]
+                        Theme.of(context).primaryColor.lightenPercent(20) : Theme.of(context).primaryColor.darkenPercent(20), Theme.of(context).backgroundColor]
                   )
               ) : null,
               child: child,

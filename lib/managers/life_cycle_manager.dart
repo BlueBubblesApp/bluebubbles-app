@@ -55,7 +55,7 @@ class LifeCycleManager extends GetxService {
 
     // Refresh all the chats assuming that the app has already finished setup
     if (SettingsManager().settings.finishedSetup.value) {
-      ChatBloc().refreshChats();
+      ChatBloc().resumeRefresh();
     }
   }
 

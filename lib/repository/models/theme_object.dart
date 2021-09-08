@@ -1,12 +1,15 @@
 import 'dart:async';
 import 'dart:core';
+import 'dart:developer';
 
+import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/theme_entry.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:sqflite/sqflite.dart';
 
 class ThemeObject {
@@ -14,6 +17,9 @@ class ThemeObject {
   String? name;
   bool selectedLightTheme = false;
   bool selectedDarkTheme = false;
+  bool gradientBg = false;
+  bool previousLightTheme = false;
+  bool previousDarkTheme = false;
   ThemeData? data;
   List<ThemeEntry> entries = [];
 
@@ -22,13 +28,16 @@ class ThemeObject {
     this.name,
     this.selectedLightTheme = false,
     this.selectedDarkTheme = false,
+    this.gradientBg = false,
+    this.previousLightTheme = false,
+    this.previousDarkTheme = false,
     this.data,
   });
-
-  factory ThemeObject.fromData(ThemeData data, String name) {
+  factory ThemeObject.fromData(ThemeData data, String name, {bool gradientBg = false}) {
     ThemeObject object = new ThemeObject(
       data: data,
       name: name,
+      gradientBg: gradientBg,
     );
     object.entries = object.toEntries();
 
@@ -41,10 +50,13 @@ class ThemeObject {
       name: json["name"],
       selectedLightTheme: json["selectedLightTheme"] == 1,
       selectedDarkTheme: json["selectedDarkTheme"] == 1,
+      gradientBg: json["gradientBg"] == 1,
+      previousLightTheme: json["previousLightTheme"] == 1,
+      previousDarkTheme: json["previousDarkTheme"] == 1,
     );
   }
 
-  bool get isPreset => this.name == "OLED Dark" || this.name == "Bright White" || this.name == "Nord Theme";
+  bool get isPreset => this.name == "OLED Dark" || this.name == "Bright White" || this.name == "Nord Theme" || this.name == "Music Theme (Light)" || this.name == "Music Theme (Dark)";
 
   List<ThemeEntry> toEntries() => [
         ThemeEntry.fromStyle(ThemeColors.Headline1, data!.textTheme.headline1!),
@@ -85,7 +97,7 @@ class ThemeObject {
       await this.update();
     }
 
-    if (this.isPreset) return this;
+    if (this.isPreset && !this.name!.contains("Music")) return this;
     for (ThemeEntry entry in this.entries) {
       await entry.save(this);
     }
@@ -117,6 +129,9 @@ class ThemeObject {
             "name": this.name,
             "selectedLightTheme": this.selectedLightTheme ? 1 : 0,
             "selectedDarkTheme": this.selectedDarkTheme ? 1 : 0,
+            "gradientBg": this.gradientBg ? 1 : 0,
+            "previousLightTheme": this.previousLightTheme ? 1 : 0,
+            "previousDarkTheme": this.previousDarkTheme ? 1 : 0,
           },
           where: "ROWID = ?",
           whereArgs: [this.id]);
@@ -187,7 +202,7 @@ class ThemeObject {
   }
 
   Future<List<ThemeEntry>> fetchData() async {
-    if (isPreset) {
+    if (isPreset && !name!.contains("Music")) {
       if (name == "OLED Dark") {
         this.data = oledDarkTheme;
       } else if (name == "Bright White") {
@@ -213,8 +228,19 @@ class ThemeObject {
         " JOIN theme_values ON theme_values.ROWID = tvj.themeValueId"
         " WHERE themes.ROWID = ?;",
         [this.id]);
-    this.entries = (res.isNotEmpty) ? res.map((t) => ThemeEntry.fromMap(t)).toList() : [];
-    this.data = themeData;
+    if (name == "Music Theme (Light)" && res.isEmpty) {
+      data = whiteLightTheme;
+      entries = this.toEntries();
+    } else if (name == "Music Theme (Dark)" && res.isEmpty) {
+      data = oledDarkTheme;
+      entries = this.toEntries();
+    } else if (res.isNotEmpty) {
+      this.entries = res.map((t) => ThemeEntry.fromMap(t)).toList();
+      this.data = themeData;
+    } else {
+      this.entries = [];
+      this.data = themeData;
+    }
     return this.entries;
   }
 
@@ -223,6 +249,9 @@ class ThemeObject {
         "name": this.name,
         "selectedLightTheme": this.selectedLightTheme ? 1 : 0,
         "selectedDarkTheme": this.selectedDarkTheme ? 1 : 0,
+        "gradientBg": this.gradientBg ? 1 : 0,
+        "previousLightTheme": this.previousLightTheme ? 1 : 0,
+        "previousDarkTheme": this.previousDarkTheme ? 1 : 0,
       };
 
   ThemeData get themeData {
@@ -265,6 +294,11 @@ class ThemeObject {
         dividerColor: data[ThemeColors.DividerColor]!.style,
         backgroundColor: data[ThemeColors.BackgroundColor]!.style,
         primaryColor: data[ThemeColors.PrimaryColor]!.style);
+  }
+
+  static bool inDarkMode(BuildContext context) {
+    return (AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark
+        || (AdaptiveTheme.of(context).mode == AdaptiveThemeMode.system && SchedulerBinding.instance!.window.platformBrightness == Brightness.dark));
   }
 
   @override

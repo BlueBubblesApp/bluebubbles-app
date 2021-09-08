@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/material.dart';
@@ -77,7 +78,7 @@ class _StickersWidgetState extends State<StickersWidget> {
     // Turn the attachments into Image Widgets
     final List<Widget> stickers = this.stickers.map((item) {
       String pathName = AttachmentHelper.getAttachmentPath(item);
-      return Image.file(new File(pathName), width: context.width * 2 / 3, height: context.width * 2 / 4);
+      return Image.file(new File(pathName), width: CustomNavigator.width(context) * 2 / 3, height: CustomNavigator.width(context) * 2 / 4);
     }).toList();
 
     return GestureDetector(

@@ -2,6 +2,7 @@ import 'dart:math' as Math;
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/layouts/setup/theme_selector/theme_selector.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -95,7 +96,7 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
                         bottom: !widget.chatList && skin.value == Skins.iOS ? 13 : 5,
                       ),
                       constraints: BoxConstraints(
-                        maxWidth: context.width * MessageWidgetHelper.MAX_SIZE,
+                        maxWidth: CustomNavigator.width(context) * MessageWidgetHelper.MAX_SIZE,
                       ),
                       padding: EdgeInsets.symmetric(
                         vertical: 8,

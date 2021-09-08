@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/setup/theme_selector/theme_selector.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
@@ -96,7 +97,7 @@ class SentMessageHelper {
               return Container(
                 width: customWidth != null ? constraints.maxWidth : null,
                 constraints: customWidth == null ? BoxConstraints(
-                  maxWidth: context.width * MessageWidgetHelper.MAX_SIZE + (!padding ? 100 : 0),
+                  maxWidth: CustomNavigator.width(context) * MessageWidgetHelper.MAX_SIZE + (!padding ? 100 : 0),
                 ) : null,
                 margin: EdgeInsets.only(
                   top: hasReactions && margin ? 18 : 0,
@@ -148,31 +149,25 @@ class SentMessageHelper {
         ],
       );
     }
-
     if (!padding) return msg;
     return Container(
-      width: customWidth != null ? customWidth - (showTail ? 20 : 0) : null,
-      constraints: BoxConstraints(
-        maxWidth: customWidth != null ? customWidth - (showTail ? 20 : 0) : context.width,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (customWidth != null)
-            Expanded(
-              child: msg
+        width: customWidth != null ? customWidth - (showTail ? 20 : 0) : null,
+        constraints: BoxConstraints(
+          maxWidth: customWidth != null ? customWidth - (showTail ? 20 : 0) : CustomNavigator.width(context),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (customWidth != null) Expanded(child: msg),
+            if (customWidth == null) msg,
+            getErrorWidget(
+              context,
+              message,
+              currentChat != null ? currentChat.chat : CurrentChat.of(context)?.chat,
             ),
-          if (customWidth == null)
-            msg,
-          getErrorWidget(
-            context,
-            message,
-            currentChat != null ? currentChat.chat : CurrentChat.of(context)?.chat,
-          ),
-        ],
-      )
-    );
+          ],
+        ));
   }
 
   static Widget getErrorWidget(BuildContext context, Message? message, Chat? chat, {double rightPadding = 8.0}) {

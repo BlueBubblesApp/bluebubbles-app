@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -77,7 +78,7 @@ class CustomAvatarColorPanel extends GetView<CustomAvatarColorPanelController> {
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
         appBar: PreferredSize(
-          preferredSize: Size(context.width, 80),
+          preferredSize: Size(CustomNavigator.width(context), 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(

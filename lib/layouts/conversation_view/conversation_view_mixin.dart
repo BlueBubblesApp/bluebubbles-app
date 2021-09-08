@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -7,6 +6,7 @@ import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/socket_singletons.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -68,8 +68,6 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
   TextEditingController chatSelectorController = new TextEditingController(text: " ");
 
-  static Rxn<Color> color1 = Rxn<Color>();
-  static Rxn<Color> color2 = Rxn<Color>();
   static Rx<MultiTween<String>> gradientTween = Rx<MultiTween<String>>(
       MultiTween<String>()
         ..add("color1", Tween<double>(begin: 0, end: 0.2))
@@ -438,7 +436,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     // IT KINDA WORKED BUT ULTIMATELY FAILED
 
     // return PreferredSize(
-    //     preferredSize: Size(context.width, 80),
+    //     preferredSize: Size(CustomNavigator.width(context), 80),
     //     child: ClipRect(
     //         child: BackdropFilter(
     //             filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
@@ -576,12 +574,12 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                     Center(
                         child: Container(
                       constraints: BoxConstraints(
-                        maxWidth: context.width / 2,
+                        maxWidth: CustomNavigator.width(context) / 2,
                       ),
                       child: Row(mainAxisSize: MainAxisSize.min, children: [
                         Container(
                           constraints: BoxConstraints(
-                            maxWidth: context.width / 2 - 55,
+                            maxWidth: CustomNavigator.width(context) / 2 - 55,
                           ),
                           child: RichText(
                             maxLines: 1,

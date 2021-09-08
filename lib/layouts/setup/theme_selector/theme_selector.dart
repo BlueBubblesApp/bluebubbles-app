@@ -6,6 +6,7 @@ import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/conversation_view/messages_view.dart';
@@ -877,12 +878,12 @@ Widget buildConversationViewHeader(BuildContext context, Chat chat, ThemeData th
                   Center(
                       child: Container(
                         constraints: BoxConstraints(
-                          maxWidth: context.width / 2,
+                          maxWidth: CustomNavigator.width(context) / 2,
                         ),
                         child: Row(mainAxisSize: MainAxisSize.min, children: [
                           Container(
                             constraints: BoxConstraints(
-                              maxWidth: context.width / 2 - 55,
+                              maxWidth: CustomNavigator.width(context) / 2 - 55,
                             ),
                             child: RichText(
                               maxLines: 1,

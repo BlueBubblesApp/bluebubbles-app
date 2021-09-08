@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/layouts/setup/qr_scan/failed_to_scan_dialog.dart';
@@ -84,7 +85,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                     flex: 5,
                   ),
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: context.width / 4),
+                    padding: EdgeInsets.symmetric(horizontal: CustomNavigator.width(context) / 4),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(20),
                       child: LinearProgressIndicator(
@@ -98,7 +99,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                     flex: 20,
                   ),
                   SizedBox(
-                    width: context.width * 4 / 5,
+                    width: CustomNavigator.width(context) * 4 / 5,
                     height: context.height * 1 / 3,
                     child: Container(
                       decoration: BoxDecoration(
@@ -132,7 +133,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
           } else {
             return Center(
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: context.width / 4),
+                padding: EdgeInsets.symmetric(horizontal: CustomNavigator.width(context) / 4),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[

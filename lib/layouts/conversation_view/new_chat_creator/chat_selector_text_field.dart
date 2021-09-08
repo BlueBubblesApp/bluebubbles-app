@@ -89,7 +89,7 @@ class ChatSelectorTextField extends StatelessWidget {
             if (done.isEmail || done.isPhoneNumber) {
               Contact? contact = ContactManager().getCachedContactSync(done);
               if (contact == null) {
-                onSelected(new UniqueContact(address: done, displayName: await formatPhoneNumber(done)));
+                onSelected(new UniqueContact(address: done, displayName: done.isEmail ? done : await formatPhoneNumber(done)));
               } else {
                 onSelected(new UniqueContact(address: done, displayName: contact.displayName ?? done));
               }

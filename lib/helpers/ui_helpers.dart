@@ -20,7 +20,10 @@ Widget buildBackButton(BuildContext context,
               color: Theme.of(context).primaryColor)),
       onPressed: () {
         callback?.call();
-        Get.back(closeOverlays: true);
+        while (Get.isOverlaysOpen) {
+          Get.back();
+        }
+        Navigator.of(context).pop();
       },
     ),
   );

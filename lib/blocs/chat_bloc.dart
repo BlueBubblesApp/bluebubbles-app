@@ -9,8 +9,8 @@ import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/message.dart';
 import 'package:contacts_service/contacts_service.dart';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../repository/models/chat.dart';
@@ -36,6 +36,7 @@ class ChatBloc {
   }
 
   Completer<void>? chatRequest;
+  int lastFetch = 0;
 
   static final ChatBloc _chatBloc = ChatBloc._internal();
 
@@ -85,8 +86,34 @@ class ChatBloc {
       _messageSubscription = setupMessageListener();
     }
 
+    // Store the last time we fetched
+    lastFetch = DateTime.now().toUtc().millisecondsSinceEpoch;
+
     // Fetch the first x chats
     getChatBatches();
+  }
+
+  Future<void> resumeRefresh() async {
+    Logger.info('Performing ChatBloc resume request...', tag: 'ChatBloc-Resume');
+
+    // Get the last message date
+    DateTime? lastMsgDate = await Message.lastMessageDate();
+
+    // If there is no last message, don't do anything
+    if (lastMsgDate == null) {
+      Logger.debug("No last message date found! Not doing anything...", tag: 'ChatBloc-Resume');
+      return;
+    }
+
+    // If the last message date is >= the last fetch, let's refetch
+    int lastMs = lastMsgDate.millisecondsSinceEpoch;
+    if (lastMs >= lastFetch) {
+      Logger.info('New messages detected! Refreshing the ChatBloc', tag: 'ChatBloc-Resume');
+      Logger.debug("$lastMs >= $lastFetch", tag: 'ChatBloc-Resume');
+      await this.refreshChats();
+    } else {
+      Logger.info('No new messages detected. Not refreshing the ChatBloc', tag: 'ChatBloc-Resume');
+    }
   }
 
   /// Inserts a [chat] into the chat bloc based on the lastMessage data
@@ -246,7 +273,7 @@ class ChatBloc {
     return NewMessageManager().stream.listen(handleMessageAction);
   }
 
-  Future<void> getChatBatches({int batchSize = 10}) async {
+  Future<void> getChatBatches({int batchSize = 15}) async {
     int count = (await Chat.count()) ?? 0;
     if (count == 0) {
       hasChats.value = false;
@@ -421,13 +448,16 @@ extension Helpers on RxList<Chat> {
     if (!SettingsManager().settings.filterUnknownSenders.value) return this;
     if (unknown)
       return this
-          .where((e) => e.participants.length == 1
-          && ContactManager().handleToContact[e.participants[0].address] == null)
-          .toList().obs;
+          .where(
+              (e) => e.participants.length == 1 && ContactManager().handleToContact[e.participants[0].address] == null)
+          .toList()
+          .obs;
     else
       return this
-          .where((e) => e.participants.length > 1 || (e.participants.length == 1
-          && ContactManager().handleToContact[e.participants[0].address] != null))
-          .toList().obs;
+          .where((e) =>
+              e.participants.length > 1 ||
+              (e.participants.length == 1 && ContactManager().handleToContact[e.participants[0].address] != null))
+          .toList()
+          .obs;
   }
 }

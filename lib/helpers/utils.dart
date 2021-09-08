@@ -240,7 +240,6 @@ String buildDate(DateTime? dateTime) {
 }
 
 String buildTime(DateTime? dateTime) {
-  SettingsManager().settings.use24HrFormat.value = MediaQuery.of(Get.context!).alwaysUse24HourFormat;
   if (dateTime == null || dateTime.millisecondsSinceEpoch == 0) return "";
   String time = SettingsManager().settings.use24HrFormat.value
       ? intl.DateFormat.Hm().format(dateTime)
@@ -352,6 +351,8 @@ Future<String> getGroupEventText(Message message) async {
     text = "$handle left the conversation";
   } else if (message.itemType == 2 && message.groupTitle != null) {
     text = "$handle named the conversation \"${message.groupTitle}\"";
+  } else if (message.itemType == 6) {
+    text = "$handle started a FaceTime call";
   }
 
   return text;

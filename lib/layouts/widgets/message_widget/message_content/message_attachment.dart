@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
@@ -65,7 +66,7 @@ class MessageAttachment extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         child: Container(
           constraints: BoxConstraints(
-            maxWidth: context.width * 0.5,
+            maxWidth: CustomNavigator.width(context) * 0.5,
             maxHeight: context.height * 0.6,
           ),
           child: Obx(() => _buildAttachmentWidget(controller, context)),

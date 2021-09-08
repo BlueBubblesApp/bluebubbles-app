@@ -67,7 +67,7 @@ class SettingsManager {
   /// Setting to null will prevent the theme from being set and will be set to null in the background isolate
   Future<void> getSavedSettings({BuildContext? context}) async {
     await DBProvider.setupConfigRows();
-    settings = await Settings.getSettings();
+    settings = Settings.getSettings();
 
     fcmData = await FCMData.getFCM();
     // await DBProvider.setupDefaultPresetThemes(await DBProvider.db.database);
@@ -99,7 +99,7 @@ class SettingsManager {
   Future<void> saveSettings(Settings newSettings) async {
     // Set the new settings as the current settings in the manager
     settings = newSettings;
-    await settings.save();
+    settings.save();
   }
 
   /// Updates the selected theme for the app

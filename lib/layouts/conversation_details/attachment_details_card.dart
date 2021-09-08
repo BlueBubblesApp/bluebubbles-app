@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
@@ -93,7 +94,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
   }
 
   Widget buildPreview(BuildContext context) => SizedBox(
-        width: context.width / 2,
+        width: CustomNavigator.width(context) / 2,
         child: _buildPreview(this.attachmentFile, context),
       );
 
@@ -194,8 +195,8 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
                         alignment: Alignment.center,
                       )
                     : Container()),
-            width: context.width / 2,
-            height: context.width / 2,
+            width: CustomNavigator.width(context) / 2,
+            height: CustomNavigator.width(context) / 2,
           ),
           Material(
             color: Colors.transparent,
@@ -233,8 +234,8 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
                     )
                   : Container(),
             ),
-            width: context.width / 2,
-            height: context.width / 2,
+            width: CustomNavigator.width(context) / 2,
+            height: CustomNavigator.width(context) / 2,
           ),
           Material(
             color: Colors.transparent,

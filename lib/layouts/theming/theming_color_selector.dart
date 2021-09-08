@@ -1,4 +1,5 @@
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -91,7 +92,7 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
                     dialogActionButtons: true,
                   ),
                   constraints: BoxConstraints(
-                      minHeight: 480, minWidth: context.width - 70, maxWidth: context.width - 70),
+                      minHeight: 480, minWidth: CustomNavigator.width(context) - 70, maxWidth: CustomNavigator.width(context) - 70),
                 );
                 widget.entry.color = color;
                 await widget.entry.save(widget.currentTheme);

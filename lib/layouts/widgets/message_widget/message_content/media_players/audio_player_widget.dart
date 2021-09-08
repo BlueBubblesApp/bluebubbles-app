@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:chewie_audio/chewie_audio.dart';
 import 'package:get/get.dart';
@@ -93,7 +94,7 @@ class AudioPlayerWidget extends StatelessWidget {
       ),
       global: false,
       builder: (controller) {
-        double maxWidth = width ?? context.width - 20;
+        double maxWidth = width ?? CustomNavigator.width(context) - 20;
         if (!(ModalRoute.of(context)?.isCurrent ?? false)) {
           controller.controller.pause();
         }

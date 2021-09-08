@@ -5,6 +5,7 @@ import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/simple_vcard_parser.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:exif/exif.dart';
@@ -169,7 +170,7 @@ class AttachmentHelper {
     double width = attachment.width?.toDouble() ?? 0.0;
     double factor = attachment.height?.toDouble() ?? 0.0;
     if (attachment.width == null || attachment.width == 0 || attachment.height == null || attachment.height == 0) {
-      width = context.width;
+      width = CustomNavigator.width(context);
       factor = 2;
     }
 
