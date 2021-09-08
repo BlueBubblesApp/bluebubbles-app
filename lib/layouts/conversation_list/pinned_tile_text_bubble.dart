@@ -57,14 +57,14 @@ class PinnedTileTextBubble extends StatelessWidget {
             padding: EdgeInsets.only(
               left: showTail
                   ? leftSide
-                      ? widget.size * 0.06
-                      : widget.size * 0.02
-                  : widget.size * 0.04,
+                      ? size * 0.06
+                      : size * 0.02
+                  : size * 0.04,
               right: showTail
                   ? leftSide
-                      ? widget.size * 0.02
-                      : widget.size * 0.06
-                  : widget.size * 0.04,
+                      ? size * 0.02
+                      : size * 0.06
+                  : size * 0.04,
             ),
             child: Stack(
               clipBehavior: Clip.none,

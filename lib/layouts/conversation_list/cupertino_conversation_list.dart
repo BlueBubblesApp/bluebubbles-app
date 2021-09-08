@@ -169,7 +169,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               ...widget.parent.getHeaderTextWidgets(),
-                              ...widget.parent.getConnectionIndicatorWidgets(),
+                              widget.parent.getConnectionIndicatorWidget(),
                               widget.parent.getSyncIndicatorWidget(),
                             ],
                           ),

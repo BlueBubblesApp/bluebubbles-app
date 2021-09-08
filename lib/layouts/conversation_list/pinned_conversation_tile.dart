@@ -370,15 +370,14 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
                           ),
                         ],
                       ),
-                      StreamBuilder<Map<String, dynamic>>(
-                        stream: CurrentChat.getCurrentChat(widget.chat)?.stream as Stream<Map<String, dynamic>>?,
-                        builder: (BuildContext context, AsyncSnapshot snapshot) {
-                          if (snapshot.connectionState == ConnectionState.active &&
-                              snapshot.hasData &&
-                              snapshot.data["type"] == CurrentChatEvent.TypingStatus) {
-                            showTypingIndicator.value = snapshot.data["data"];
-                          }
-                          if (showTypingIndicator.value) {
+                      GetBuilder<CurrentChat>(
+                        init: CurrentChat(
+                          chat: widget.chat,
+                        ),
+                        autoRemove: false,
+                        tag: widget.chat.guid,
+                        builder: (controller) {
+                          if (controller.showTypingIndicator.value) {
                             return Positioned(
                               top: -sqrt(maxWidth / 2),
                               right: -sqrt(maxWidth / 2) - maxWidth * 0.25,
@@ -399,7 +398,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
                         future: widget.chat.latestMessage,
                         builder: (BuildContext context, AsyncSnapshot snapshot) {
                           if (!(widget.chat.hasUnreadMessage ?? false)) return Container();
-                          if (showTypingIndicator.value) return Container();
+                          if (CurrentChat.forGuid(widget.chat.guid!)?.showTypingIndicator.value ?? false) return Container();
                           if (!snapshot.hasData) return Container();
                           Message message = snapshot.data;
                           if ([null, ""].contains(message.associatedMessageGuid) || (message.isFromMe ?? false)) {

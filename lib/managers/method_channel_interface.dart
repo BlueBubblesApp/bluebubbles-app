@@ -405,16 +405,15 @@ class MethodChannelInterface {
           ),
           (route) => route.isFirst,
         );
-      }
 
-      // We have a delay, because the first [switchChat] does not work.
-      // Because we are pushing AND removing until it is the first route,
-      // the [dispose] methods of the previous conversation views will be called and thus will override the switch chat we just called
-      // Thus we need to add a delay here to wait for the animation to finish
-      await Future.delayed(Duration(milliseconds: 500));
-      NotificationManager().switchChat(openedChat);
-    } else {
-      Logger.warn("Failed to find chat", tag: "MCI-OpenChat");
-    }
+        // We have a delay, because the first [switchChat] does not work.
+        // Because we are pushing AND removing until it is the first route,
+        // the [dispose] methods of the previous conversation views will be called and thus will override the switch chat we just called
+        // Thus we need to add a delay here to wait for the animation to finish
+        await Future.delayed(Duration(milliseconds: 500));
+        NotificationManager().switchChat(openedChat);
+      } else {
+        Logger.warn("Failed to find chat", tag: "MCI-OpenChat");
+      }
   }
 }

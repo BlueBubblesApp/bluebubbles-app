@@ -236,7 +236,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     ...widget.parent.getHeaderTextWidgets(size: 20),
-                    ...widget.parent.getConnectionIndicatorWidgets(),
+                    widget.parent.getConnectionIndicatorWidget(),
                     widget.parent.getSyncIndicatorWidget(),
                   ],
                 ),
