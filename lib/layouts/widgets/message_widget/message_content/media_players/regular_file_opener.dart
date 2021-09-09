@@ -55,7 +55,7 @@ class _RegularFileOpenerState extends State<RegularFileOpener> {
               Text(
                 basename(widget.file.path),
                 textAlign: TextAlign.center,
-                maxLines: 3,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodyText2,
               ),

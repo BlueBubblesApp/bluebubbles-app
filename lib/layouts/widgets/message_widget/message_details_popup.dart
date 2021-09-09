@@ -259,6 +259,9 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
     double maxMenuWidth = (ReactionTypes.toList().length * reactionIconSize).toDouble();
     double menuHeight = (reactionIconSize).toDouble();
     double topPadding = -20;
+    if (topMinimum > context.height - 120 - menuHeight) {
+      topMinimum = context.height - 120 - menuHeight;
+    }
     double topOffset = (messageTopOffset - menuHeight).toDouble().clamp(topMinimum, context.height - 120 - menuHeight);
     bool shiftRight = currentChat!.chat.isGroup() || SettingsManager().settings.alwaysShowAvatars.value;
     double leftOffset =
@@ -783,6 +786,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
       topMinimum = upperLimit;
     }
 
+    print(topMinimum.toString() + ' | ' + upperLimit.toString());
     double topOffset = (messageTopOffset + widget.childSize!.height).toDouble().clamp(topMinimum, upperLimit);
     bool shiftRight = currentChat!.chat.isGroup() || SettingsManager().settings.alwaysShowAvatars.value;
     double leftOffset =
