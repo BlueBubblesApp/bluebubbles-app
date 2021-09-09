@@ -661,7 +661,7 @@ class SocketManager {
           });
         } else {
           _manager.socket!.emitWithAck(event, message, ack: (response) async {
-            if (!kIsWeb) {
+            if (!kIsWeb && !kIsDesktop) {
               await MethodChannelInterface().invokeMethod("download-file", {
                 "data": response['data'],
                 "path": path,
@@ -733,7 +733,7 @@ class SocketManager {
     // Get the server URL
     try {
       String? url;
-      if (kIsWeb) {
+      if (kIsWeb || kIsDesktop) {
         print(SettingsManager().fcmData?.firebaseURL);
         var db = FirebaseDatabase(databaseURL: SettingsManager().fcmData?.firebaseURL);
         print(db);
