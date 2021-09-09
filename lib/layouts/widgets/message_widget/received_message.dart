@@ -104,23 +104,23 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
         ),
         child: hideContent
             ? ClipRRect(
-          borderRadius: BorderRadius.circular(25.0),
-          child: Container(
-              width: 70,
-              height: 70,
-              color: Theme.of(context).accentColor,
-              child: Center(
-                child: Text(
-                  "emoji",
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyText1,
-                ),
-              )),
-        )
+                borderRadius: BorderRadius.circular(25.0),
+                child: Container(
+                    width: 70,
+                    height: 70,
+                    color: Theme.of(context).accentColor,
+                    child: Center(
+                      child: Text(
+                        "emoji",
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyText1,
+                      ),
+                    )),
+              )
             : Text(
-          message.text!,
-          style: Theme.of(context).textTheme.bodyText2!.apply(fontSizeFactor: 4),
-        ),
+                message.text!,
+                style: Theme.of(context).textTheme.bodyText2!.apply(fontSizeFactor: 4),
+              ),
       );
     }
 
@@ -149,8 +149,8 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
             top: widget.message.getReactions().length > 0 && !widget.message.hasAttachments
                 ? 18
                 : (widget.message.isFromMe != widget.olderMessage?.isFromMe)
-                ? 5.0
-                : 0,
+                    ? 5.0
+                    : 0,
             left: 10,
             right: 10,
           ),
@@ -164,29 +164,29 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
           decoration: BoxDecoration(
             borderRadius: skin.value == Skins.iOS
                 ? BorderRadius.only(
-              bottomLeft: Radius.circular(17),
-              bottomRight: Radius.circular(20),
-              topLeft: Radius.circular(20),
-              topRight: Radius.circular(20),
-            )
+                    bottomLeft: Radius.circular(17),
+                    bottomRight: Radius.circular(20),
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  )
                 : (skin.value == Skins.Material)
-                ? BorderRadius.only(
-              topLeft: widget.olderMessage == null ||
-                  MessageHelper.getShowTail(context, widget.olderMessage, widget.message)
-                  ? Radius.circular(20)
-                  : Radius.circular(5),
-              topRight: Radius.circular(20),
-              bottomRight: Radius.circular(20),
-              bottomLeft: Radius.circular(widget.showTail ? 20 : 5),
-            )
-                : (skin.value == Skins.Samsung)
-                ? BorderRadius.only(
-              topLeft: Radius.circular(17.5),
-              topRight: Radius.circular(17.5),
-              bottomRight: Radius.circular(17.5),
-              bottomLeft: Radius.circular(17.5),
-            )
-                : null,
+                    ? BorderRadius.only(
+                        topLeft: widget.olderMessage == null ||
+                                MessageHelper.getShowTail(context, widget.olderMessage, widget.message)
+                            ? Radius.circular(20)
+                            : Radius.circular(5),
+                        topRight: Radius.circular(20),
+                        bottomRight: Radius.circular(20),
+                        bottomLeft: Radius.circular(widget.showTail ? 20 : 5),
+                      )
+                    : (skin.value == Skins.Samsung)
+                        ? BorderRadius.only(
+                            topLeft: Radius.circular(17.5),
+                            topRight: Radius.circular(17.5),
+                            bottomRight: Radius.circular(17.5),
+                            bottomLeft: Radius.circular(17.5),
+                          )
+                        : null,
             gradient: LinearGradient(
               begin: AlignmentDirectional.bottomCenter,
               end: AlignmentDirectional.topCenter,
@@ -261,16 +261,21 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
     } else if (widget.message.hasText()) {
       message = _buildMessageWithTail(widget.message);
       if (widget.message.fullText.replaceAll("\n", " ").hasUrl) {
-        message = widget.message.fullText.isURL ? Padding(
-          padding: EdgeInsets.only(left: 10.0),
-          child: widget.urlPreviewWidget,
-        ) : Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Padding(
-            padding: EdgeInsets.only(left: 10.0),
-            child: widget.urlPreviewWidget,
-          ),
-          message,
-        ]);
+        message = widget.message.fullText.isURL
+            ? Padding(
+                padding: EdgeInsets.only(left: 10.0),
+                child: widget.urlPreviewWidget,
+              )
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                    Padding(
+                      padding: EdgeInsets.only(left: 10.0),
+                      child: widget.urlPreviewWidget,
+                    ),
+                    message,
+                  ]);
       }
     }
 
@@ -292,17 +297,17 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
     List<Widget> messagePopupColumn = List<Widget>.from(messageColumn);
     if (!addedSender && isGroup) {
       messagePopupColumn.insert(
-          0,
-          Padding(
-            padding:
-                EdgeInsets.only(left: 15.0, top: 5.0, bottom: widget.message.getReactions().length > 0 ? 0.0 : 3.0),
-            child: Text(
-              getContactName(context, contactTitle, widget.message.handle!.address),
-              style: Theme.of(context).textTheme.subtitle1,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ));
+        0,
+        Padding(
+          padding: EdgeInsets.only(left: 15.0, top: 5.0, bottom: widget.message.getReactions().length > 0 ? 0.0 : 3.0),
+          child: Text(
+            getContactName(context, contactTitle, widget.message.handle!.address),
+            style: Theme.of(context).textTheme.subtitle1,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      );
     }
 
     // Now, let's create a row that will be the row with the following:
@@ -371,10 +376,13 @@ class _ReceivedMessageState extends State<ReceivedMessage> {
       Padding(
         // Padding to shift the bubble up a bit, relative to the avatar
         padding: EdgeInsets.only(bottom: 0.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: messagePopupColumn,
+        child: SingleChildScrollView(
+          physics: BouncingScrollPhysics(),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: messagePopupColumn,
+          ),
         ),
       ),
     );
