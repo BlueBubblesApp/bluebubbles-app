@@ -696,7 +696,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                               : Colors.white,
                           fontSizeDelta: -0.25,
                         ),
-                    // onContentCommitted: onContentCommit,
+                    onContentCommitted: onContentCommit,
                     decoration: InputDecoration(
                       isDense: true,
                       enabledBorder: OutlineInputBorder(
