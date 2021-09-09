@@ -6,7 +6,6 @@ import 'package:bluebubbles/layouts/setup/qr_scan/qr_scan.dart';
 import 'package:bluebubbles/layouts/setup/request_contact/request_contacts.dart';
 import 'package:bluebubbles/layouts/setup/setup_mac_app/setup_mac_app.dart';
 import 'package:bluebubbles/layouts/setup/syncing_messages/syncing_messages.dart';
-import 'package:bluebubbles/layouts/setup/theme_selector/theme_selector.dart';
 import 'package:bluebubbles/layouts/setup/welcome_page/welcome_page.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/socket_manager.dart';

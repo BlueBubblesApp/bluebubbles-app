@@ -3,7 +3,6 @@ import 'package:bluebubbles/helpers/attachment_sender.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/socket_manager.dart';
-import 'package:flutter/material.dart';
 
 class OutgoingQueue extends QueueManager {
   factory OutgoingQueue() {

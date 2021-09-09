@@ -1116,7 +1116,7 @@ class _CustomCupertinoTextFieldState extends State<CustomCupertinoTextField>
 
     final Brightness keyboardAppearance = widget.keyboardAppearance ?? CupertinoTheme.brightnessOf(context);
     final Color cursorColor = CupertinoDynamicColor.maybeResolve(widget.cursorColor, context) ?? themeData.primaryColor;
-    final Color disabledColor = CupertinoDynamicColor.resolve(_kDisabledBackground, context);
+    // final Color disabledColor = CupertinoDynamicColor.resolve(_kDisabledBackground, context);
 
     final Color? decorationColor = CupertinoDynamicColor.maybeResolve(widget.decoration?.color, context);
 

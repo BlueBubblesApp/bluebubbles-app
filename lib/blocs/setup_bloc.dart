@@ -10,7 +10,6 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 enum SetupOutputType { ERROR, LOG }

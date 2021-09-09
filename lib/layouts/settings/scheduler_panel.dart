@@ -13,7 +13,6 @@ import 'package:bluebubbles/repository/models/scheduled.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
 
 List<List<dynamic>> timeOptions = [
   [300, "5 Minutes"],

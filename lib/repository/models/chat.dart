@@ -17,7 +17,6 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:bluebubbles/helpers/darty.dart';
 import 'package:get/get.dart';
 import 'package:faker/faker.dart';
-import 'package:flutter/widgets.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:sqflite/sqflite.dart';
 
