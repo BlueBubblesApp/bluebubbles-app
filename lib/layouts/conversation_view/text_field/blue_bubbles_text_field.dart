@@ -547,6 +547,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       return;
                     }
                   }
+                  // 99% sure this isn't necessary but keeping it for now
                   if (event.isKeyPressed(LogicalKeyboardKey.enter) &&
                       SettingsManager().settings.sendWithReturn.value &&
                       !isNullOrEmpty(controller!.text)!) {
