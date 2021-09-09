@@ -191,4 +191,4 @@ msix_config:
   # todo icons_background_color
   languages: en-us # todo
   architecture: x64 # todo
-  abilities: internetClient, location, microphone, webcam # todo
+  capabilities: internetClient, location, microphone, webcam # todo
