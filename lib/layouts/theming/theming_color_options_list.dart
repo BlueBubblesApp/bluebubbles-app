@@ -1,14 +1,16 @@
 import 'dart:async';
 
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/theming/theming_color_selector.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
+import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/theme_object.dart';
-import 'package:get/get.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -75,7 +77,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
       await theme.fetchData();
     }
 
-    setState(() {});
+    if (this.mounted) setState(() {});
   }
 
   @override
@@ -83,8 +85,8 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
     editable = currentTheme != null && !currentTheme!.isPreset;
     Color headerColor;
     Color tileColor;
-    if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance()
-        || SettingsManager().settings.skin.value != Skins.iOS) {
+    if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+        SettingsManager().settings.skin.value != Skins.iOS) {
       headerColor = Theme.of(context).accentColor;
       tileColor = Theme.of(context).backgroundColor;
     } else {
@@ -116,11 +118,11 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Container(
-                        width: context.width - 16,
+                        width: CustomNavigator.width(context) - 16,
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
                         decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(5.0),
-                            color: headerColor,
+                          borderRadius: BorderRadius.circular(5.0),
+                          color: headerColor,
                         ),
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<ThemeObject>(
@@ -140,7 +142,47 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                               value!.data = value.themeData;
                               await value.save();
 
-                              if (widget.isDarkMode) {
+                              if (value.name == "Music Theme (Light)" || value.name == "Music Theme (Dark)") {
+                                await MethodChannelInterface().invokeMethod("request-notif-permission");
+                                try {
+                                  await MethodChannelInterface().invokeMethod("start-notif-listener");
+                                  SettingsManager().settings.colorsFromMedia.value = true;
+                                  SettingsManager().saveSettings(SettingsManager().settings);
+                                } catch (e) {
+                                  showSnackbar("Error",
+                                      "Something went wrong, please ensure you granted the permission correctly!");
+                                  return;
+                                }
+                              } else {
+                                SettingsManager().settings.colorsFromMedia.value = false;
+                                SettingsManager().saveSettings(SettingsManager().settings);
+                              }
+
+                              if (value.name == "Music Theme (Light)" || value.name == "Music Theme (Dark)") {
+                                var allThemes = await ThemeObject.getThemes();
+                                var currentLight = await ThemeObject.getLightTheme();
+                                var currentDark = await ThemeObject.getDarkTheme();
+                                currentLight.previousLightTheme = true;
+                                currentDark.previousDarkTheme = true;
+                                await currentLight.save();
+                                await currentDark.save();
+                                SettingsManager().saveSelectedTheme(context,
+                                    selectedLightTheme:
+                                        allThemes.firstWhere((element) => element.name == "Music Theme (Light)"),
+                                    selectedDarkTheme:
+                                        allThemes.firstWhere((element) => element.name == "Music Theme (Dark)"));
+                              } else if (currentTheme!.name == "Music Theme (Light)" ||
+                                  currentTheme!.name == "Music Theme (Dark)") {
+                                if (!widget.isDarkMode) {
+                                  ThemeObject previousDark = await revertToPreviousDarkTheme();
+                                  SettingsManager().saveSelectedTheme(context,
+                                      selectedLightTheme: value, selectedDarkTheme: previousDark);
+                                } else {
+                                  ThemeObject previousLight = await revertToPreviousLightTheme();
+                                  SettingsManager().saveSelectedTheme(context,
+                                      selectedLightTheme: previousLight, selectedDarkTheme: value);
+                                }
+                              } else if (widget.isDarkMode) {
                                 SettingsManager().saveSelectedTheme(context, selectedDarkTheme: value);
                               } else {
                                 SettingsManager().saveSelectedTheme(context, selectedLightTheme: value);
@@ -163,6 +205,24 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                   ],
                 ),
               ),
+              if (!currentTheme!.isPreset)
+                SliverToBoxAdapter(
+                    child: SettingsSwitch(
+                  onChanged: (bool val) async {
+                    currentTheme!.gradientBg = val;
+                    await currentTheme!.save();
+                    if (widget.isDarkMode) {
+                      SettingsManager().saveSelectedTheme(context, selectedDarkTheme: currentTheme);
+                    } else {
+                      SettingsManager().saveSelectedTheme(context, selectedLightTheme: currentTheme);
+                    }
+                  },
+                  initialVal: currentTheme!.gradientBg,
+                  title: "Gradient Message View Background",
+                  backgroundColor: tileColor,
+                  subtitle:
+                      "Make the background of the messages view an animated gradient based on the background color and the primary color",
+                )),
               SliverGrid(
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {

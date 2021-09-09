@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
@@ -65,7 +67,7 @@ class UrlPreviewController extends GetxController with SingleGetTickerProviderMi
       // Fetch the metadata
       meta = await MetadataHelper.fetchMetadata(message);
     } catch (ex) {
-      debugPrint("Failed to fetch metadata! Error: ${ex.toString()}");
+      Logger.error("Failed to fetch metadata! Error: ${ex.toString()}");
       gotError.value = true;
       return;
     }
@@ -185,7 +187,7 @@ class UrlPreviewWidget extends StatelessWidget {
                               padding: EdgeInsets.only(
                                   top: (controller.data.value?.title == "Image Preview" ? 0 : 5.0), bottom: 10.0),
                               child: Text(
-                                Uri.tryParse(message.getUrl()!)?.host ?? "",
+                                message.fullText.isURL ? message.fullText : (Uri.tryParse(message.getUrl()!)?.host ?? ""),
                                 style: Theme.of(context).textTheme.subtitle2,
                                 overflow: TextOverflow.ellipsis,
                                 maxLines: 1,
@@ -255,7 +257,7 @@ class UrlPreviewWidget extends StatelessWidget {
                     },
                     child: Container(
                       // The minus 5 here is so the timestamps show OK during swipe
-                      width: (context.width * 2 / 3) - 5,
+                      width: (CustomNavigator.width(context) * 2 / 3) - 5,
                       child: (hideContent || hideType) ? Stack(children: items) : Column(children: items),
                     ),
                   ),

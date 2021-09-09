@@ -4,6 +4,8 @@ import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.content.Context;
 import android.os.Build;
+import android.content.Intent;
+import android.provider.Settings;
 
 import androidx.annotation.RequiresApi;
 
@@ -20,6 +22,7 @@ import com.bluebubbles.messaging.method_call_handler.handlers.FirebaseAuth;
 import com.bluebubbles.messaging.method_call_handler.handlers.GetLastLocation;
 import com.bluebubbles.messaging.method_call_handler.handlers.GetServerUrl;
 import com.bluebubbles.messaging.method_call_handler.handlers.InitializeBackgroundHandle;
+import com.bluebubbles.messaging.method_call_handler.handlers.MediaSessionListener;
 import com.bluebubbles.messaging.method_call_handler.handlers.NewMessageNotification;
 import com.bluebubbles.messaging.method_call_handler.handlers.OpenCamera;
 import com.bluebubbles.messaging.method_call_handler.handlers.OpenFile;
@@ -32,6 +35,7 @@ import com.bluebubbles.messaging.method_call_handler.handlers.SetNextRestart;
 import com.bluebubbles.messaging.method_call_handler.handlers.OpenContactForm;
 import com.bluebubbles.messaging.method_call_handler.handlers.ViewContactForm;
 import com.bluebubbles.messaging.workers.DartWorker;
+import static com.bluebubbles.messaging.MainActivity.engine;
 
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
@@ -96,6 +100,21 @@ public class MethodCallHandler {
             new FailedToSend(context, call, result).Handle();
         } else if (call.method.equals(ClearFailedToSend.TAG)) {
             new ClearFailedToSend(context, call, result).Handle();
+        } else if (call.method.equals("start-notif-listener")) {
+            if (Settings.Secure.getString(context.getContentResolver(),"enabled_notification_listeners").contains(context.getPackageName()) && engine != null) {
+                new MediaSessionListener(context, call, result).Handle();
+            } else {
+                result.error("could_not_initialize", "Failed to initialize, permission not granted", "");
+            }
+        } else if (call.method.equals("request-notif-permission")) {
+            if (Settings.Secure.getString(context.getContentResolver(),"enabled_notification_listeners").contains(context.getPackageName())) {
+                result.success("");
+            } else {
+                MainActivity activity = (MainActivity) context;
+                activity.result = result;
+                Intent intent = new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
+                activity.startActivityForResult(intent, 3000);
+            }
         } else {
             result.notImplemented();
         }

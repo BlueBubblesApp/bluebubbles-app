@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:bluebubbles/helpers/logger.dart';
+
 class VCard {
   String? _vCardString;
   late List<String> lines;
@@ -33,10 +35,10 @@ class VCard {
 
   void printLines() {
     String s;
-    print('lines #${lines.length}');
+    Logger.debug('lines #${lines.length}');
     for (var i = 0; i < lines.length; i++) {
       s = i.toString().padLeft(2, '0');
-      print('$s | ${lines[i]}');
+      Logger.debug('$s | ${lines[i]}');
     }
   }
 

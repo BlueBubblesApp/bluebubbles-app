@@ -104,8 +104,8 @@ class Reaction {
       reactionList.add(
         Padding(
           padding: EdgeInsets.fromLTRB(
-            (this.messages[i].isFromMe! && isReactionPicker ? 5.0 : 0.0) + i.toDouble() * 10.0,
-            bigPin ? 0 : 1.0,
+            (this.messages[i].isFromMe! && !isReactionPicker ? 5.0 : 0.0) + i.toDouble() * 10.0,
+            bigPin || isReactionPicker ? 0 : 1.0,
             0,
             0,
           ),

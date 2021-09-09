@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
@@ -12,11 +14,9 @@ import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
-import 'package:tuple/tuple.dart';
 
 class AttachmentDetailsCard extends StatefulWidget {
   AttachmentDetailsCard({Key? key, required this.attachment, required this.allAttachments}) : super(key: key);
@@ -81,7 +81,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
             widget.attachment.getFriendlySize(),
             style: Theme.of(context).textTheme.bodyText1,
           ),
-          Icon(Icons.cloud_download, size: 28.0),
+          Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.cloud_download : Icons.cloud_download, size: 28.0),
           (widget.attachment.mimeType != null)
               ? Text(
                   basename(this.attachmentFile.path),
@@ -94,7 +94,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
   }
 
   Widget buildPreview(BuildContext context) => SizedBox(
-        width: context.width / 2,
+        width: CustomNavigator.width(context) / 2,
         child: _buildPreview(this.attachmentFile, context),
       );
 
@@ -195,8 +195,8 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
                         alignment: Alignment.center,
                       )
                     : Container()),
-            width: context.width / 2,
-            height: context.width / 2,
+            width: CustomNavigator.width(context) / 2,
+            height: CustomNavigator.width(context) / 2,
           ),
           Material(
             color: Colors.transparent,
@@ -234,8 +234,8 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
                     )
                   : Container(),
             ),
-            width: context.width / 2,
-            height: context.width / 2,
+            width: CustomNavigator.width(context) / 2,
+            height: CustomNavigator.width(context) / 2,
           ),
           Material(
             color: Colors.transparent,
@@ -255,7 +255,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
           Align(
             alignment: Alignment.bottomRight,
             child: Icon(
-              Icons.play_arrow,
+              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.play : Icons.play_arrow,
               color: Colors.white,
             ),
           ),

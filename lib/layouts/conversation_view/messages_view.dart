@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
@@ -130,14 +131,14 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     if (isNullOrEmpty(_messages)!) return resetReplies();
     if (_messages.first.isFromMe!) return resetReplies();
 
-    debugPrint("Getting smart replies...");
+    Logger.info("Getting smart replies...");
     Map<String, dynamic> results = await smartReply.suggestReplies();
 
     if (results.containsKey('suggestions')) {
       List<SmartReplySuggestion> suggestions = results['suggestions'];
-      debugPrint("Smart Replies found: ${suggestions.length}");
+      Logger.info("Smart Replies found: ${suggestions.length}");
       replies = suggestions.map((e) => e.getText()).toList().toSet().toList();
-      debugPrint(replies.toString());
+      Logger.debug(replies.toString());
     }
 
     // If there is nothing in the list, get out
@@ -170,7 +171,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
       if (val != LoadMessageResult.FAILED_TO_RETREIVE) {
         if (val == LoadMessageResult.RETREIVED_NO_MESSAGES) {
           noMoreMessages = true;
-          debugPrint("(CHUNK) No more messages to load");
+          Logger.info("No more messages to load", tag: "MessageBloc");
         } else if (val == LoadMessageResult.RETREIVED_LAST_PAGE) {
           // Mark this chat saying we have no more messages to load
           noMoreLocalMessages = true;
@@ -295,8 +296,8 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
               _listKey!.currentState!
                   .removeItem(i, (context, animation) => Container(), duration: Duration(milliseconds: 0));
             } catch (ex) {
-              debugPrint("Error removing item animation");
-              debugPrint(ex.toString());
+              Logger.error("Error removing item animation");
+              Logger.error(ex.toString());
             }
           }
         }
@@ -317,15 +318,15 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     bool updatedAMessage = false;
     for (int i = 0; i < _messages.length; i++) {
       if (_messages[i].guid == oldGuid) {
-        debugPrint("(Message status) Update message: [${message!.text}] - [${message.guid}] - [$oldGuid]");
+        Logger.info("Update message: [${message!.text}] - [${message.guid}] - [$oldGuid]", tag: "MessageStatus");
         _messages[i] = message;
         updatedAMessage = true;
         break;
       }
     }
     if (!updatedAMessage) {
-      debugPrint(
-          "(Message status) Message not updated (not found): [${message!.text}] - [${message.guid}] - [$oldGuid]");
+      Logger.warn("Message not updated (not found): [${message!.text}] - [${message.guid}] - [$oldGuid]",
+          tag: "MessageStatus");
     }
 
     return message;
@@ -383,18 +384,21 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                 stream: smartReplyController.stream,
                 builder: (context, snapshot) {
                   return SliverToBoxAdapter(
-                    child: AnimatedSize(
-                      duration: Duration(milliseconds: 400),
-                      vsync: this,
-                      child: replies.isEmpty
-                          ? Container()
-                          : Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: replies
-                                  .map(
-                                    (e) => _buildReply(e),
-                                  )
-                                  .toList()),
+                    child: Padding(
+                      padding: EdgeInsets.only(top: SettingsManager().settings.skin.value != Skins.iOS ? 8.0 : 0.0),
+                      child: AnimatedSize(
+                        duration: Duration(milliseconds: 400),
+                        vsync: this,
+                        child: replies.isEmpty
+                            ? Container()
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: replies
+                                    .map(
+                                      (e) => _buildReply(e),
+                                    )
+                                    .toList()),
+                      ),
                     ),
                   );
                 },

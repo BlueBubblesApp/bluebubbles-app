@@ -1,5 +1,4 @@
-import 'package:bluebubbles/managers/method_channel_interface.dart';
-import 'package:flutter/material.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 
 class QueueItem {
   String event;
@@ -39,8 +38,8 @@ abstract class QueueManager {
       await handleQueueItem(queued);
       await afterProcessing(queued, {});
     } catch (ex, stacktrace) {
-      debugPrint("Failed to handle queued item! " + ex.toString());
-      debugPrint(stacktrace.toString());
+      Logger.error("Failed to handle queued item! " + ex.toString());
+      Logger.error(stacktrace.toString());
     }
 
     // Process the next item

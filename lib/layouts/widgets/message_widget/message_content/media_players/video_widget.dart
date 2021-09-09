@@ -1,6 +1,8 @@
 import 'dart:io';
 
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
@@ -151,7 +153,7 @@ class VideoWidget extends StatelessWidget {
         },
         child: Container(
           constraints: BoxConstraints(
-            maxWidth: context.width / 2,
+            maxWidth: CustomNavigator.width(context) / 2,
             maxHeight: context.height / 2,
           ),
           child: Hero(
@@ -179,7 +181,7 @@ class VideoWidget extends StatelessWidget {
                     child: controller.controller.value.isPlaying
                         ? GestureDetector(
                             child: Icon(
-                              Icons.pause,
+                              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.pause : Icons.pause,
                               color: Colors.white,
                               size: 45,
                             ),
@@ -190,7 +192,7 @@ class VideoWidget extends StatelessWidget {
                           )
                         : GestureDetector(
                             child: Icon(
-                              Icons.play_arrow,
+                              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.play : Icons.play_arrow,
                               color: Colors.white,
                               size: 45,
                             ),
@@ -223,7 +225,13 @@ class VideoWidget extends StatelessWidget {
                               ),
                               padding: EdgeInsets.all(5),
                               child: Obx(() => Icon(
-                                controller.muted.value ? Icons.volume_mute : Icons.volume_up,
+                                controller.muted.value
+                                    ? SettingsManager().settings.skin.value == Skins.iOS
+                                    ? CupertinoIcons.volume_mute
+                                    : Icons.volume_mute
+                                    : SettingsManager().settings.skin.value == Skins.iOS
+                                    ? CupertinoIcons.volume_up
+                                    : Icons.volume_up,
                                 color: Colors.white,
                                 size: 15,
                               )),

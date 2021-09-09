@@ -2,8 +2,11 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/metadata_helper.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
+import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:collection/collection.dart';
 
@@ -155,7 +158,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   }
 
   void sendReaction(String type) {
-    debugPrint("Sending reaction type: " + type);
+    Logger.info("Sending reaction type: " + type);
     ActionHandler.sendReaction(widget.currentChat!.chat, widget.message, type);
     Navigator.of(context).pop();
   }
@@ -217,7 +220,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                             child: Container(
                               alignment: Alignment.center,
                               height: 120,
-                              width: context.width - 20,
+                              width: CustomNavigator.width(context) - 20,
                               color: Theme.of(context).accentColor,
                               child: Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 0),
@@ -252,16 +255,17 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   }
 
   Widget buildReactionMenu() {
-    Size size = Get.mediaQuery.size;
-
-    double reactionIconSize = ((8.5 / 10 * min(size.width, size.height)) / (ReactionTypes.toList().length).toDouble());
+    double reactionIconSize = ((8.5 / 10 * min(CustomNavigator.width(context), context.height)) / (ReactionTypes.toList().length).toDouble());
     double maxMenuWidth = (ReactionTypes.toList().length * reactionIconSize).toDouble();
     double menuHeight = (reactionIconSize).toDouble();
     double topPadding = -20;
-    double topOffset = (messageTopOffset - menuHeight).toDouble().clamp(topMinimum, size.height - 120 - menuHeight);
+    if (topMinimum > context.height - 120 - menuHeight) {
+      topMinimum = context.height - 120 - menuHeight;
+    }
+    double topOffset = (messageTopOffset - menuHeight).toDouble().clamp(topMinimum, context.height - 120 - menuHeight);
     bool shiftRight = currentChat!.chat.isGroup() || SettingsManager().settings.alwaysShowAvatars.value;
     double leftOffset =
-        (widget.message.isFromMe! ? size.width - maxMenuWidth - 25 : 25 + (shiftRight ? 20 : 0)).toDouble();
+        (widget.message.isFromMe! ? CustomNavigator.width(context) - maxMenuWidth - 25 : 25 + (shiftRight ? 20 : 0)).toDouble();
     Color iconColor = Colors.white;
 
     if (Theme.of(context).accentColor.computeLuminance() >= 0.179) {
@@ -350,11 +354,9 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   }
 
   Widget buildCopyPasteMenu() {
-    Size size = Get.mediaQuery.size;
+    double maxMenuWidth = CustomNavigator.width(context) * 2 / 3;
 
-    double maxMenuWidth = size.width * 2 / 3;
-
-    double maxHeight = size.height - topMinimum - widget.childSize!.height;
+    double maxHeight = context.height - topMinimum - widget.childSize!.height;
 
     List<Widget> allActions = [
       if (widget.currentChat!.chat.isGroup() && !widget.message.isFromMe! && dmChat != null)
@@ -379,7 +381,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               trailing: Icon(
-                Icons.open_in_new,
+                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.arrow_up_right_square : Icons.open_in_new,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
@@ -402,7 +404,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               trailing: Icon(
-                Icons.open_in_browser,
+                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.macwindow : Icons.open_in_browser,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
@@ -444,7 +446,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               trailing: Icon(
-                Icons.message,
+                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.chat_bubble : Icons.message,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
@@ -480,7 +482,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
               style: Theme.of(context).textTheme.bodyText1,
             ),
             trailing: Icon(
-              Icons.forward,
+              SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.arrow_right : Icons.forward,
               color: Theme.of(context).textTheme.bodyText1!.color,
             ),
           ),
@@ -500,7 +502,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
               style: Theme.of(context).textTheme.bodyText1,
             ),
             trailing: Icon(
-              Icons.delete,
+              SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.trash : Icons.delete,
               color: Theme.of(context).textTheme.bodyText1!.color,
             ),
           ),
@@ -518,7 +520,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             child: ListTile(
               title: Text("Copy", style: Theme.of(context).textTheme.bodyText1),
               trailing: Icon(
-                Icons.content_copy,
+                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.doc_on_clipboard : Icons.content_copy,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
@@ -581,7 +583,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               trailing: Icon(
-                Icons.content_copy,
+                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.doc_on_clipboard : Icons.content_copy,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
@@ -605,7 +607,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               trailing: Icon(
-                Icons.refresh,
+                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.refresh : Icons.refresh,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
@@ -624,7 +626,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                   }
                 }
               } catch (ex, trace) {
-                debugPrint(trace.toString());
+                Logger.error(trace.toString());
                 showSnackbar("Download Error", ex.toString());
               }
             },
@@ -634,7 +636,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               trailing: Icon(
-                Icons.file_download,
+                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.cloud_download : Icons.file_download,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
@@ -665,12 +667,48 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               trailing: Icon(
-                Icons.share,
+                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.share : Icons.share,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
           ),
         ),
+      Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () async {
+            final messageDate = await showDatePicker(
+                context: context,
+                initialDate: DateTime.now().toLocal(),
+                firstDate: DateTime.now().toLocal(),
+                lastDate: DateTime.now().toLocal().add(Duration(days: 365)));
+            if (messageDate != null) {
+              final messageTime = await showTimePicker(context: context, initialTime: TimeOfDay.now());
+              if (messageTime != null) {
+                final finalDate = DateTime(
+                    messageDate.year, messageDate.month, messageDate.day, messageTime.hour, messageTime.minute);
+                if (!finalDate.isAfter(DateTime.now().toLocal())) {
+                  showSnackbar("Error", "Select a date in the future");
+                  return;
+                }
+                NotificationManager().scheduleNotification(widget.currentChat!.chat, widget.message, finalDate);
+                Get.back();
+                showSnackbar("Notice", "Scheduled reminder for ${buildDate(finalDate)}");
+              }
+            }
+          },
+          child: ListTile(
+            title: Text(
+              "Remind Later",
+              style: Theme.of(context).textTheme.bodyText1,
+            ),
+            trailing: Icon(
+              SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.alarm : Icons.alarm,
+              color: Theme.of(context).textTheme.bodyText1!.color,
+            ),
+          ),
+        ),
+      ),
     ];
 
     List<Widget> detailsActions = [];
@@ -731,7 +769,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                     child: ListTile(
                       title: Text("More...", style: Theme.of(context).textTheme.bodyText1),
                       trailing: Icon(
-                        Icons.more_vert,
+                        SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.ellipsis : Icons.more_vert,
                         color: Theme.of(context).textTheme.bodyText1!.color,
                       ),
                     ),
@@ -743,15 +781,16 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
       ),
     );
 
-    double upperLimit = size.height - detailsMenuHeight!;
+    double upperLimit = context.height - detailsMenuHeight!;
     if (topMinimum > upperLimit) {
       topMinimum = upperLimit;
     }
 
+    print(topMinimum.toString() + ' | ' + upperLimit.toString());
     double topOffset = (messageTopOffset + widget.childSize!.height).toDouble().clamp(topMinimum, upperLimit);
     bool shiftRight = currentChat!.chat.isGroup() || SettingsManager().settings.alwaysShowAvatars.value;
     double leftOffset =
-        (widget.message.isFromMe! ? size.width - maxMenuWidth - 15 : 15 + (shiftRight ? 35 : 0)).toDouble();
+        (widget.message.isFromMe! ? CustomNavigator.width(context) - maxMenuWidth - 15 : 15 + (shiftRight ? 35 : 0)).toDouble();
     return Positioned(
       top: topOffset + 5,
       left: leftOffset,

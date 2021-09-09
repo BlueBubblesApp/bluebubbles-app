@@ -2,11 +2,11 @@ import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
-import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
@@ -69,7 +69,7 @@ class MiscPanel extends StatelessWidget {
       child: Scaffold(
         backgroundColor: SettingsManager().settings.skin.value != Skins.iOS ? tileColor : headerColor,
         appBar: PreferredSize(
-          preferredSize: Size(context.width, 80),
+          preferredSize: Size(CustomNavigator.width(context), 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
@@ -147,13 +147,12 @@ class MiscPanel extends StatelessWidget {
                         subtitle: "Show a snackbar whenever a message sync is completed",
                         backgroundColor: tileColor,
                       )),
-                  if (SettingsManager().canAuthenticate)
-                    SettingsHeader(
-                        headerColor: headerColor,
-                        tileColor: tileColor,
-                        iosSubtitle: iosSubtitle,
-                        materialSubtitle: materialSubtitle,
-                        text: "Security"),
+                  SettingsHeader(
+                      headerColor: headerColor,
+                      tileColor: tileColor,
+                      iosSubtitle: iosSubtitle,
+                      materialSubtitle: materialSubtitle,
+                      text: "Security"),
                   if (SettingsManager().canAuthenticate)
                     Obx(() =>
                         SettingsSwitch(
@@ -253,6 +252,24 @@ class MiscPanel extends StatelessWidget {
                       else
                         return SizedBox.shrink();
                     }),
+                  if (SettingsManager().canAuthenticate)
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
+                    ),
+                  // Obx(() => SettingsSwitch(
+                  //   onChanged: (bool val) async {
+                  //     SettingsManager().settings.incognitoKeyboard.value = val;
+                  //     saveSettings();
+                  //   },
+                  //   initialVal: SettingsManager().settings.incognitoKeyboard.value,
+                  //   title: "Incognito Keyboard",
+                  //   subtitle: "Disables keyboard suggestions and prevents the keyboard from learning or storing any words you type in the message text field",
+                  //   backgroundColor: tileColor,
+                  // )),
                   SettingsHeader(
                       headerColor: headerColor,
                       tileColor: tileColor,

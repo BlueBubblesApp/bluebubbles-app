@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/attachment_info_bloc.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
@@ -9,8 +10,8 @@ import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/message.dart';
 import 'package:contacts_service/contacts_service.dart';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../repository/models/chat.dart';
@@ -34,6 +35,7 @@ class ChatBloc {
   }
 
   Completer<void>? chatRequest;
+  int lastFetch = 0;
 
   static final ChatBloc _chatBloc = ChatBloc._internal();
 
@@ -74,18 +76,43 @@ class ChatBloc {
     }
 
     chatRequest = new Completer<void>();
-
-    debugPrint("[ChatBloc] -> Fetching chats (${force ? 'forced' : 'normal'})...");
+    Logger.info("Fetching chats (${force ? 'forced' : 'normal'})...", tag: "ChatBloc");
 
     // Get the contacts in case we haven't
-    await ContactManager().getContacts();
+    if (ContactManager().contacts.isEmpty) await ContactManager().getContacts();
 
     if (_messageSubscription == null) {
       _messageSubscription = setupMessageListener();
     }
 
+    // Store the last time we fetched
+    lastFetch = DateTime.now().toUtc().millisecondsSinceEpoch;
+
     // Fetch the first x chats
     getChatBatches();
+  }
+
+  Future<void> resumeRefresh() async {
+    Logger.info('Performing ChatBloc resume request...', tag: 'ChatBloc-Resume');
+
+    // Get the last message date
+    DateTime? lastMsgDate = await Message.lastMessageDate();
+
+    // If there is no last message, don't do anything
+    if (lastMsgDate == null) {
+      Logger.debug("No last message date found! Not doing anything...", tag: 'ChatBloc-Resume');
+      return;
+    }
+
+    // If the last message date is >= the last fetch, let's refetch
+    int lastMs = lastMsgDate.millisecondsSinceEpoch;
+    if (lastMs >= lastFetch) {
+      Logger.info('New messages detected! Refreshing the ChatBloc', tag: 'ChatBloc-Resume');
+      Logger.debug("$lastMs >= $lastFetch", tag: 'ChatBloc-Resume');
+      await this.refreshChats();
+    } else {
+      Logger.info('No new messages detected. Not refreshing the ChatBloc', tag: 'ChatBloc-Resume');
+    }
   }
 
   /// Inserts a [chat] into the chat bloc based on the lastMessage data
@@ -204,7 +231,7 @@ class ChatBloc {
         icon = NotificationManager().defaultAvatar;
       }
     } catch (ex) {
-      debugPrint("Failed to load contact avatar: ${ex.toString()}");
+      Logger.error("Failed to load contact avatar: ${ex.toString()}");
     }
 
     // If we don't have a title, try to get it
@@ -245,7 +272,7 @@ class ChatBloc {
     return NewMessageManager().stream.listen(handleMessageAction);
   }
 
-  Future<void> getChatBatches({int batchSize = 10}) async {
+  Future<void> getChatBatches({int batchSize = 15}) async {
     int count = (await Chat.count()) ?? 0;
     if (count == 0) {
       hasChats.value = false;
@@ -263,13 +290,9 @@ class ChatBloc {
 
       for (Chat chat in chats) {
         newChats.add(chat);
-
         await initTileValsForChat(chat);
-      }
-
-      for (int i = 0; i < newChats.length; i++) {
-        if (isNullOrEmpty(newChats[i].participants)!) {
-          await newChats[i].getParticipants();
+        if (isNullOrEmpty(chat.participants)!) {
+          await chat.getParticipants();
         }
       }
 
@@ -279,7 +302,7 @@ class ChatBloc {
       }
     }
 
-    debugPrint("[ChatBloc] -> Finished fetching chats (${_chats.length}).");
+    Logger.info("Finished fetching chats (${_chats.length}).", tag: "ChatBloc");
     await updateAllShareTargets();
 
     if (chatRequest != null && !chatRequest!.isCompleted) {
@@ -321,12 +344,18 @@ class ChatBloc {
     final item = _chats.bigPinHelper(true)[oldIndex];
     if (newIndex > oldIndex) {
       newIndex = newIndex - 1;
-      _chats.bigPinHelper(true).where((p0) => p0.pinIndex.value != null && p0.pinIndex.value! <= newIndex).forEach((element) {
+      _chats
+          .bigPinHelper(true)
+          .where((p0) => p0.pinIndex.value != null && p0.pinIndex.value! <= newIndex)
+          .forEach((element) {
         element.pinIndex.value = element.pinIndex.value! - 1;
       });
       item.pinIndex.value = newIndex;
     } else {
-      _chats.bigPinHelper(true).where((p0) => p0.pinIndex.value != null && p0.pinIndex.value! >= newIndex).forEach((element) {
+      _chats
+          .bigPinHelper(true)
+          .where((p0) => p0.pinIndex.value != null && p0.pinIndex.value! >= newIndex)
+          .forEach((element) {
         element.pinIndex.value = element.pinIndex.value! + 1;
       });
       item.pinIndex.value = newIndex;
@@ -410,6 +439,23 @@ extension Helpers on RxList<Chat> {
     else
       return this
           .where((e) => SettingsManager().settings.skin.value == Skins.iOS ? !(e.isPinned ?? false) : true)
+          .toList()
+          .obs;
+  }
+
+  RxList<Chat> unknownSendersHelper(bool unknown) {
+    if (!SettingsManager().settings.filterUnknownSenders.value) return this;
+    if (unknown)
+      return this
+          .where(
+              (e) => e.participants.length == 1 && ContactManager().handleToContact[e.participants[0].address] == null)
+          .toList()
+          .obs;
+    else
+      return this
+          .where((e) =>
+              e.participants.length > 1 ||
+              (e.participants.length == 1 && ContactManager().handleToContact[e.participants[0].address] != null))
           .toList()
           .obs;
   }

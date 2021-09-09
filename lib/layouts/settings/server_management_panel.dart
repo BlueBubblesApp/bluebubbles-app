@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
@@ -47,6 +48,7 @@ class ServerManagementPanelController extends GetxController {
   final RxBool isRestarting = false.obs;
   final RxBool isRestartingMessages = false.obs;
   final RxBool isRestartingPrivateAPI = false.obs;
+  final RxDouble opacity = 1.0.obs;
 
   late Settings _settingsCopy;
   FCMData? _fcmDataCopy;
@@ -113,7 +115,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
       child: Scaffold(
         backgroundColor: SettingsManager().settings.skin.value != Skins.iOS ? tileColor : headerColor,
         appBar: PreferredSize(
-          preferredSize: Size(context.width, 80),
+          preferredSize: Size(CustomNavigator.width(context), 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
@@ -159,36 +161,39 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                         color: tileColor,
                         child: Padding(
                           padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
-                          child: SelectableText.rich(
-                            TextSpan(
-                                children: [
-                                  TextSpan(text: "Connection Status: "),
-                                  TextSpan(text: describeEnum(SocketManager().state.value), style: TextStyle(color: getIndicatorColor(SocketManager().state.value))),
-                                  TextSpan(text: "\n\n"),
-                                  TextSpan(text: "Server URL: ${redact ? "Redacted" : controller._settingsCopy.serverAddress}"),
-                                  TextSpan(text: "\n\n"),
-                                  TextSpan(text: "Latency: ${redact ? "Redacted" : ((controller.latency.value ?? "N/A").toString() + " ms")}"),
-                                  TextSpan(text: "\n\n"),
-                                  TextSpan(text: "Server Version: ${redact ? "Redacted" : (controller.serverVersion.value ?? "N/A")}"),
-                                  TextSpan(text: "\n\n"),
-                                  TextSpan(text: "macOS Version: ${redact ? "Redacted" : (controller.macOSVersion.value ?? "N/A")}"),
-                                  TextSpan(text: "\n\n"),
-                                  TextSpan(text: "Tap to update values...", style: TextStyle(fontStyle: FontStyle.italic)),
-                                ]
+                          child: AnimatedOpacity(
+                            duration: Duration(milliseconds: 300),
+                            opacity: controller.opacity.value,
+                            child: SelectableText.rich(
+                              TextSpan(
+                                  children: [
+                                    TextSpan(text: "Connection Status: "),
+                                    TextSpan(text: describeEnum(SocketManager().state.value), style: TextStyle(color: getIndicatorColor(SocketManager().state.value))),
+                                    TextSpan(text: "\n\n"),
+                                    TextSpan(text: "Server URL: ${redact ? "Redacted" : controller._settingsCopy.serverAddress}"),
+                                    TextSpan(text: "\n\n"),
+                                    TextSpan(text: "Latency: ${redact ? "Redacted" : ((controller.latency.value ?? "N/A").toString() + " ms")}"),
+                                    TextSpan(text: "\n\n"),
+                                    TextSpan(text: "Server Version: ${redact ? "Redacted" : (controller.serverVersion.value ?? "N/A")}"),
+                                    TextSpan(text: "\n\n"),
+                                    TextSpan(text: "macOS Version: ${redact ? "Redacted" : (controller.macOSVersion.value ?? "N/A")}"),
+                                    TextSpan(text: "\n\n"),
+                                    TextSpan(text: "Tap to update values...", style: TextStyle(fontStyle: FontStyle.italic)),
+                                  ]
+                              ),
+                              onTap: () {
+                                if (SocketManager().state.value != SocketState.CONNECTED) return;
+                                controller.opacity.value = 0.0;
+                                int now = DateTime.now().toUtc().millisecondsSinceEpoch;
+                                SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
+                                  int later = DateTime.now().toUtc().millisecondsSinceEpoch;
+                                  controller.latency.value = later - now;
+                                  controller.macOSVersion.value = res['data']['os_version'];
+                                  controller.serverVersion.value = res['data']['server_version'];
+                                  controller.opacity.value = 1.0;
+                                });
+                              },
                             ),
-                            onTap: () {
-                              if (SocketManager().state.value != SocketState.CONNECTED) return;
-
-                              int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-                              SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
-                                int later = DateTime.now().toUtc().millisecondsSinceEpoch;
-                                controller.latency.value = later - now;
-                              });
-                              SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
-                                controller.macOSVersion.value = res['data']['os_version'];
-                                controller.serverVersion.value = res['data']['server_version'];
-                              });
-                            },
                           ),
                         )
                     );

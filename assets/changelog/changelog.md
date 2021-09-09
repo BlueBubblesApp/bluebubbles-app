@@ -2,10 +2,62 @@
 
 Below are the last few BlueBubbles App release changelogs
 
+## v1.5.0
+
+## Changes
+
+### The Big Stuff
+* New notification options
+* New theming options
+  - Ability to dynamically theme the app based on the current song's album cover
+  - Ability to copy and save those dynamic themes
+* Tablet mode
+* Unknown senders tab option
+  - Senders with no associated contact info will be separated
+* Other new features, UI, and UX improvements
+
+### The Nitty Gritty
+
+#### New Features
+
+- **New Notification Options**
+  - Added the option to schedule a reminder for a message by long-pressing the message
+  - Added new notification settings page
+  - Added the ability to change the notification sound
+  - Added the option to disable notifying reactions
+  - Added the ability to set global text detection (only notify when a text contains certain words or phrases)
+  - Added the ability to mute certain individuals in a chat
+  - Added the ability to mute a chat temporarily
+  - Added the ability to set text detection on a specific chat - only notify when a text from the specified chat contains certain words or phrases
+- **New Theming Options**
+   - Added the ability to get background and primary color from album art (requires full notification access)
+   - Added the ability to set an animated gradient background for the chat list (gradient is created between background and primary color)
+- **Other New Features**
+   - Added a better logging mechanism to make it easier to send bug reports to the developers
+   - Added ability to add a camera button above the chat creator button like Signal
+   - Added "Unknown Senders" tab
+
+#### Bug Fixes
+
+- **UI bugs**
+   - Fixed custom bubble color getting reset for new messages
+   - Fixed 24hr time not working properly
+   - Improved smart reply padding in Material theme
+- **UX bugs**
+   - Fixed some bugs with the fullscreen photo viewer
+
+#### Improvements
+
+- **UI Improvements**
+   - Move pinned chat typing indicator to the avatar so the latest message bubble can always be seen
+   - Completely revamped icons for iOS theme to match iOS-style
+   - Improved URL preview
+   - Removed Camera preview from share menu to reduce lag. Replaced by 2 buttons, camera and video
+- **UX Improvements**   
+   - Added pagination to incremental sync (messages should load faster)
+   - Increased chat page size to reduce visible "lag" when resuming the app from the background
+
 ## v1.4.1
-
-### Bug Fixes
-
 ### Enhancements
 
 * Increases message preview to 2 lines (max)

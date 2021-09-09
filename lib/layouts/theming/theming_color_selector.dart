@@ -1,4 +1,5 @@
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -6,7 +7,6 @@ import 'package:bluebubbles/repository/models/theme_entry.dart';
 import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get_utils/src/extensions/context_extensions.dart';
 
 class ThemingColorSelector extends StatefulWidget {
   ThemingColorSelector({Key? key, required this.currentTheme, required this.entry, required this.editable})
@@ -91,7 +91,7 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
                     dialogActionButtons: true,
                   ),
                   constraints: BoxConstraints(
-                      minHeight: 480, minWidth: context.width - 70, maxWidth: context.width - 70),
+                      minHeight: 480, minWidth: CustomNavigator.width(context) - 70, maxWidth: CustomNavigator.width(context) - 70),
                 );
                 widget.entry.color = color;
                 await widget.entry.save(widget.currentTheme);

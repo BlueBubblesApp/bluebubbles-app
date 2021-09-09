@@ -53,6 +53,7 @@ public class MainActivity extends FlutterFragmentActivity {
 
     public static int PICK_IMAGE = 1000;
     public static int OPEN_CAMERA = 2000;
+    public static int NOTIFICATION_SETTINGS = 3000;
     public MethodChannel.Result result = null;
 
 
@@ -128,6 +129,8 @@ public class MainActivity extends FlutterFragmentActivity {
                 Log.d("OPEN_CAMERA", "Something went wrong");
                 result.success(null);
             }
+        } else if (requestCode == NOTIFICATION_SETTINGS) {
+            result.success(null);
         }
     }
 
@@ -304,6 +307,7 @@ public class MainActivity extends FlutterFragmentActivity {
     @Override
     protected void onDestroy() {
         Log.d("MainActivity", "Removing Activity from memory");
+        new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("remove-sendPort", null);
         engine = null;
         super.onDestroy();
     }

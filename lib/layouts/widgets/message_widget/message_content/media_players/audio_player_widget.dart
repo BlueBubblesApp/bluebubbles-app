@@ -1,9 +1,9 @@
 import 'dart:io';
 
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:chewie_audio/chewie_audio.dart';
-import 'package:get/get.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:flutter/material.dart';
 import 'package:tuple/tuple.dart';
@@ -91,7 +91,7 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> with AutomaticKeepA
 
   @override
   Widget build(BuildContext context) {
-    double maxWidth = widget.width ?? context.width - 20;
+    double maxWidth = widget.width ?? CustomNavigator.width(context) - 20;
     if (!(ModalRoute.of(context)?.isCurrent ?? false)) {
       controller.pause();
     }

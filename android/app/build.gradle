@@ -103,6 +103,8 @@ dependencies {
     //for location sending
     implementation "com.google.android.gms:play-services-location:18.0.0"
 
+    // for album art color
+    implementation 'androidx.palette:palette:1.0.0'
 
     // Add the SDK for Firebase Cloud Messaging
     implementation 'com.google.firebase:firebase-messaging:22.0.0'

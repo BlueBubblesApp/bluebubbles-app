@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
@@ -9,7 +10,6 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 enum SetupOutputType { ERROR, LOG }
@@ -56,7 +56,7 @@ class SetupBloc {
   Future<void> connectToServer(FCMData data, String serverURL, String password) async {
     Settings settingsCopy = SettingsManager().settings;
     if (SocketManager().state.value == SocketState.CONNECTED && settingsCopy.serverAddress.value == serverURL) {
-      debugPrint("Not reconnecting to server we are already connected to!");
+      Logger.warn("Not reconnecting to server we are already connected to!");
       return;
     }
 
@@ -143,13 +143,26 @@ class SetupBloc {
         } else {
           try {
             if (!(chat.chatIdentifier ?? "").startsWith("urn:biz")) {
-              await chat.save();
+              Map<String, dynamic> params = Map();
+              params["identifier"] = chat.guid;
+              params["withBlurhash"] = false;
+              params["limit"] = numberOfMessagesPerPage.round();
+              params["where"] = [
+                {"statement": "message.service = 'iMessage'", "args": null}
+              ];
+              List<dynamic> messages = await SocketManager().getChatMessages(params)!;
+              addOutput("Received ${messages.length} messages for chat, '${chat.chatIdentifier}'!", SetupOutputType.LOG);
+              if (!skipEmptyChats || (skipEmptyChats && messages.length > 0)) {
+                await chat.save();
 
-              // Re-match the handles with the contacts
-              await ContactManager().matchHandles();
+                // Re-match the handles with the contacts
+                await ContactManager().matchHandles();
 
-              await syncChat(chat);
-              addOutput("Finished syncing chat, '${chat.chatIdentifier}'", SetupOutputType.LOG);
+                await syncChat(chat, messages);
+                addOutput("Finished syncing chat, '${chat.chatIdentifier}'", SetupOutputType.LOG);
+              } else {
+                addOutput("Skipping syncing chat (empty chat), '${chat.chatIdentifier}'", SetupOutputType.LOG);
+              }
             } else {
               addOutput("Skipping syncing chat, '${chat.chatIdentifier}'", SetupOutputType.LOG);
             }
@@ -184,18 +197,7 @@ class SetupBloc {
     this.startIncrementalSync(settings);
   }
 
-  Future<void> syncChat(Chat chat) async {
-    Map<String, dynamic> params = Map();
-    params["identifier"] = chat.guid;
-    params["withBlurhash"] = false;
-    params["limit"] = numberOfMessagesPerPage.round();
-    params["where"] = [
-      {"statement": "message.service = 'iMessage'", "args": null}
-    ];
-
-    List<dynamic> messages = await SocketManager().getChatMessages(params)!;
-    addOutput("Received ${messages.length} messages for chat, '${chat.chatIdentifier}'!", SetupOutputType.LOG);
-
+  Future<void> syncChat(Chat chat, List<dynamic> messages) async {
     // Since we got the messages in desc order, we want to reverse it.
     // Reversing it will add older messages before newer one. This should help fix
     // issues with associated message GUIDs
@@ -226,7 +228,7 @@ class SetupBloc {
   }
 
   void addOutput(String _output, SetupOutputType type) {
-    debugPrint('[Setup] -> $_output');
+    Logger.info(_output, tag: "Setup");
     output.add(SetupOutputData(_output, type));
     data.value = SetupData(_progress, output);
   }
@@ -235,7 +237,8 @@ class SetupBloc {
       {String? chatGuid, bool saveDate = true, Function? onConnectionError, Function? onComplete}) async {
     // If we are already syncing, don't sync again
     // Or, if we haven't finished setup, or we aren't connected, don't sync
-    if (isSyncing.value || !settings.finishedSetup.value || SocketManager().state.value != SocketState.CONNECTED) return;
+    if (isSyncing.value || !settings.finishedSetup.value || SocketManager().state.value != SocketState.CONNECTED)
+      return;
 
     // Reset the progress
     _progress = 0;
@@ -252,39 +255,45 @@ class SetupBloc {
     int syncStart = DateTime.now().millisecondsSinceEpoch;
     await Future.delayed(Duration(seconds: 3));
 
-    // Build request params. We want all details on the messages
-    Map<String, dynamic> params = Map();
-    if (chatGuid != null) {
-      params["chatGuid"] = chatGuid;
-    }
+    // only get up to 1000 messages (arbitrary limit)
+    int batches = 10;
+    for (int i = 0; i < batches; i++) {
+      // Build request params. We want all details on the messages
+      Map<String, dynamic> params = Map();
+      if (chatGuid != null) {
+        params["chatGuid"] = chatGuid;
+      }
 
-    params["withBlurhash"] = false; // Maybe we want it?
-    params["limit"] = 1000; // This is arbitrary, hopefully there aren't more messages
-    params["after"] = settings.lastIncrementalSync.value; // Get everything since the last sync
-    params["withChats"] = true; // We want the chats too so we can save them correctly
-    params["withAttachments"] = true; // We want the attachment data
-    params["withHandle"] = true; // We want to know who sent it
-    params["sort"] = "DESC"; // Sort my DESC so we receive the newest messages first
-    params["where"] = [
-      {"statement": "message.service = 'iMessage'", "args": null}
-    ];
+      params["withBlurhash"] = false; // Maybe we want it?
+      params["limit"] = 100;
+      params["offset"] = i * batches;
+      params["after"] = settings.lastIncrementalSync.value; // Get everything since the last sync
+      params["withChats"] = true; // We want the chats too so we can save them correctly
+      params["withAttachments"] = true; // We want the attachment data
+      params["withHandle"] = true; // We want to know who sent it
+      params["sort"] = "DESC"; // Sort my DESC so we receive the newest messages first
+      params["where"] = [
+        {"statement": "message.service = 'iMessage'", "args": null}
+      ];
 
-    List<dynamic> messages = await SocketManager().getMessages(params)!;
-    if (messages.isEmpty) {
-      addOutput("No new messages found during incremental sync", SetupOutputType.LOG);
-    } else {
-      addOutput("Incremental sync found ${messages.length} messages. Syncing...", SetupOutputType.LOG);
-    }
+      List<dynamic> messages = await SocketManager().getMessages(params)!;
+      if (messages.isEmpty) {
+        addOutput("No more new messages found during incremental sync", SetupOutputType.LOG);
+        break;
+      } else {
+        addOutput("Incremental sync found ${messages.length} messages. Syncing...", SetupOutputType.LOG);
+      }
 
-    if (messages.length > 0) {
-      await MessageHelper.bulkAddMessages(null, messages, onProgress: (progress, total) {
-        _progress = (progress / total) * 100;
-        data.value = SetupData(_progress, output);
-      });
+      if (messages.length > 0) {
+        await MessageHelper.bulkAddMessages(null, messages, onProgress: (progress, total) {
+          _progress = (progress / total) * 100;
+          data.value = SetupData(_progress, output);
+        });
 
-      // If we want to download the attachments, do it, and wait for them to finish before continuing
-      if (downloadAttachments) {
-        await MessageHelper.bulkDownloadAttachments(null, messages.reversed.toList());
+        // If we want to download the attachments, do it, and wait for them to finish before continuing
+        if (downloadAttachments) {
+          await MessageHelper.bulkDownloadAttachments(null, messages.reversed.toList());
+        }
       }
     }
 

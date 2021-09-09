@@ -232,6 +232,7 @@ class CustomCupertinoTextField extends StatefulWidget {
   ///    characters" and how it may differ from the intuitive meaning.
   const CustomCupertinoTextField({
     Key? key,
+    this.enableIMEPersonalizedLearning = true,
     this.controller,
     this.focusNode,
     this.decoration = _kDefaultRoundedBorderDecoration,
@@ -376,6 +377,7 @@ class CustomCupertinoTextField extends StatefulWidget {
   ///    characters" and how it may differ from the intuitive meaning.
   const CustomCupertinoTextField.borderless({
     Key? key,
+    this.enableIMEPersonalizedLearning = true,
     this.controller,
     this.focusNode,
     this.decoration,
@@ -759,6 +761,8 @@ class CustomCupertinoTextField extends StatefulWidget {
   /// {@macro flutter.material.textfield.restorationId}
   final String? restorationId;
 
+  final bool enableIMEPersonalizedLearning;
+
   @override
   _CustomCupertinoTextFieldState createState() => _CustomCupertinoTextFieldState();
 
@@ -805,6 +809,7 @@ class CustomCupertinoTextField extends StatefulWidget {
     properties.add(DiagnosticsProperty<ScrollPhysics>('scrollPhysics', scrollPhysics, defaultValue: null));
     properties.add(EnumProperty<TextAlign>('textAlign', textAlign, defaultValue: TextAlign.start));
     properties.add(DiagnosticsProperty<TextAlignVertical>('textAlignVertical', textAlignVertical, defaultValue: null));
+    properties.add(DiagnosticsProperty<bool>('enableIMEPersonalizedLearning', enableIMEPersonalizedLearning, defaultValue: true));
   }
 }
 
@@ -1111,7 +1116,7 @@ class _CustomCupertinoTextFieldState extends State<CustomCupertinoTextField>
 
     final Brightness keyboardAppearance = widget.keyboardAppearance ?? CupertinoTheme.brightnessOf(context);
     final Color cursorColor = CupertinoDynamicColor.maybeResolve(widget.cursorColor, context) ?? themeData.primaryColor;
-    final Color disabledColor = CupertinoDynamicColor.resolve(_kDisabledBackground, context);
+    // final Color disabledColor = CupertinoDynamicColor.resolve(_kDisabledBackground, context);
 
     final Color? decorationColor = CupertinoDynamicColor.maybeResolve(widget.decoration?.color, context);
 
@@ -1136,7 +1141,7 @@ class _CustomCupertinoTextFieldState extends State<CustomCupertinoTextField>
 
     final BoxDecoration? effectiveDecoration = widget.decoration?.copyWith(
       border: resolvedBorder,
-      color: enabled ? decorationColor : disabledColor,
+      color: decorationColor,
     );
 
     final Color selectionColor = CupertinoTheme.of(context).primaryColor.withOpacity(0.2);
@@ -1147,6 +1152,7 @@ class _CustomCupertinoTextFieldState extends State<CustomCupertinoTextField>
         child: UnmanagedRestorationScope(
           bucket: bucket,
           child: EditableText(
+            // enableIMEPersonalizedLearning: widget.enableIMEPersonalizedLearning,
             key: editableTextKey,
             controller: controller,
             readOnly: widget.readOnly,
@@ -1218,7 +1224,7 @@ class _CustomCupertinoTextFieldState extends State<CustomCupertinoTextField>
         ignoring: !enabled,
         child: Container(
           decoration: effectiveDecoration,
-          color: !enabled && effectiveDecoration == null ? disabledColor : null,
+          color: null,
           child: _selectionGestureDetectorBuilder.buildGestureDetector(
             behavior: HitTestBehavior.translucent,
             child: Align(

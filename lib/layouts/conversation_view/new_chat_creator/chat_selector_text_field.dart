@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:collection/collection.dart';
 import 'package:contacts_service/contacts_service.dart';
@@ -80,7 +81,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
                     ),
                     InkWell(
                         child: Icon(
-                      Icons.close,
+                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.xmark : Icons.close,
                       size: 15.0,
                     ))
                   ],
@@ -106,7 +107,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
             if (done.isEmail || done.isPhoneNumber) {
               Contact? contact = ContactManager().getCachedContactSync(done);
               if (contact == null) {
-                widget.onSelected(new UniqueContact(address: done, displayName: await formatPhoneNumber(done)));
+                widget.onSelected(new UniqueContact(address: done, displayName: done.isEmail ? done : await formatPhoneNumber(done)));
               } else {
                 widget.onSelected(new UniqueContact(address: done, displayName: contact.displayName ?? done));
               }

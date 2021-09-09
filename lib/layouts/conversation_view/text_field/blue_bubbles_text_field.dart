@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/list/text_field_attachment_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/picker/text_field_attachment_picker.dart';
@@ -139,10 +140,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     EventDispatcher().stream.listen((event) {
       if (!event.containsKey("type")) return;
       if (event["type"] == "unfocus-keyboard" && focusNode!.hasFocus) {
-        print("(EVENT) Unfocus Keyboard");
+        Logger.info("(EVENT) Unfocus Keyboard");
         focusNode!.unfocus();
       } else if (event["type"] == "focus-keyboard" && !focusNode!.hasFocus) {
-        print("(EVENT) Focus Keyboard");
+        Logger.info("(EVENT) Focus Keyboard");
         focusNode!.requestFocus();
       } else if (event["type"] == "text-field-update-attachments") {
         addSharedAttachments();
@@ -241,10 +242,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
   void onContentCommit(CommittedContent content) async {
     // Add some debugging logs
-    debugPrint("[Content Commit] Keyboard received content");
-    debugPrint("  -> Content Type: ${content.mimeType}");
-    debugPrint("  -> URI: ${content.uri}");
-    debugPrint("  -> Content Length: ${content.hasData ? content.data!.length : "null"}");
+    Logger.info("[Content Commit] Keyboard received content");
+    Logger.info("  -> Content Type: ${content.mimeType}");
+    Logger.info("  -> URI: ${content.uri}");
+    Logger.info("  -> Content Length: ${content.hasData ? content.data!.length : "null"}");
 
     // Parse the filename from the URI and read the data as a List<int>
     String filename = uriToFilename(content.uri, content.mimeType);
@@ -322,7 +323,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       await this.disposeCameras();
     }
 
-    debugPrint("[Camera Preview] -> Initializing camera preview");
+    Logger.info("[Camera Preview] -> Initializing camera preview");
 
     // Enumerate the cameras (if we don't have them)
     // We only need to do this once... it's not like it's gonna change very often
@@ -331,7 +332,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     }
 
     if (cameras.length == 0) {
-      debugPrint("[Camera Preview] -> No available cameras!");
+      Logger.info("[Camera Preview] -> No available cameras!");
       return;
     }
 
@@ -349,16 +350,16 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
     cameraState = CameraState.ACTIVE;
     if (this.mounted) setState(() {});
-    debugPrint("[Camera Preview] -> Finished initializing camera preview");
+    Logger.info("[Camera Preview] -> Finished initializing camera preview");
   }
 
   Future<void> disposeCameras() async {
-    debugPrint("[Camera Preview] -> Disposing camera preview");
+    Logger.info("[Camera Preview] -> Disposing camera preview");
     cameraState = CameraState.DISPOSING;
     await cameraController?.dispose();
     cameraController = null;
     cameraState = CameraState.INACTIVE;
-    debugPrint("[Camera Preview] -> Finished disposing camera preview");
+    Logger.info("[Camera Preview] -> Finished disposing camera preview");
   }
 
   Future<void> toggleShareMenu() async {
@@ -455,9 +456,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           child: InkWell(
             onTap: toggleShareMenu,
             child: Padding(
-              padding: EdgeInsets.only(right: 1),
+              padding: EdgeInsets.only(right: SettingsManager().settings.skin.value == Skins.iOS ? 0 : 1),
               child: Icon(
-                Icons.share,
+                SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.share : Icons.share,
                 color: Colors.white.withAlpha(225),
                 size: 20,
               ),
@@ -510,8 +511,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         }
       }
     } catch (ex) {
-      debugPrint("Error setting Text Field Placeholder!");
-      debugPrint(ex.toString());
+      Logger.error("Error setting Text Field Placeholder!");
+      Logger.error(ex.toString());
     }
 
     if (placeholder != this.placeholder.value) {
@@ -531,165 +532,207 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               duration: Duration(milliseconds: 100),
               vsync: this,
               curve: Curves.easeInOut,
-              child: ThemeSwitcher(
-                iOSSkin: CustomCupertinoTextField(
-                  enabled: sendCountdown == null,
-                  textInputAction:
-                      SettingsManager().settings.sendWithReturn.value ? TextInputAction.send : TextInputAction.newline,
-                  cursorColor: Theme.of(context).primaryColor,
-                  onLongPressStart: () {
-                    Feedback.forLongPress(context);
-                  },
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    if (cameraState == CameraState.ACTIVE) {
-                      disposeCameras();
+              child: RawKeyboardListener(
+                focusNode: FocusNode(),
+                onKey: (RawKeyEvent event) async {
+                  if (event.physicalKey == PhysicalKeyboardKey.enter &&
+                      SettingsManager().settings.sendWithReturn.value) {
+                    if (!isNullOrEmpty(controller!.text)!) {
+                      await sendMessage();
+                      focusNode!.previousFocus(); // I genuinely don't know why this works
+                      return;
+                    } else {
+                      controller!.text = ""; // Stop pressing physical enter with enterIsSend from creating newlines
+                      focusNode!.previousFocus(); // I genuinely don't know why this works
+                      return;
                     }
-                  },
-                  key: _searchFormKey,
-                  onSubmitted: (String value) {
-                    if (!SettingsManager().settings.sendWithReturn.value || isNullOrEmpty(value)!) return;
-                    sendMessage();
-                  },
-                  onContentCommitted: onContentCommit,
-                  textCapitalization: TextCapitalization.sentences,
-                  focusNode: focusNode,
-                  autocorrect: true,
-                  controller: controller,
-                  scrollPhysics: CustomBouncingScrollPhysics(),
-                  style: Theme.of(context).textTheme.bodyText1!.apply(
-                        color:
-                            ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.light
-                                ? Colors.black
-                                : Colors.white,
-                        fontSizeDelta: -0.25,
-                      ),
-                  keyboardType: TextInputType.multiline,
-                  maxLines: 14,
-                  minLines: 1,
-                  placeholder: SettingsManager().settings.recipientAsPlaceholder.value == true
-                      ? placeholder.value
-                      : "BlueBubbles",
-                  padding: EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
-                  placeholderStyle: Theme.of(context).textTheme.subtitle1,
-                  autofocus: SettingsManager().settings.autoOpenKeyboard.value,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).backgroundColor,
-                    border: Border.all(
-                      color: Theme.of(context).dividerColor,
-                      width: 1.5,
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-                materialSkin: TextField(
-                  controller: controller,
-                  focusNode: focusNode,
-                  textCapitalization: TextCapitalization.sentences,
-                  autocorrect: true,
-                  autofocus: SettingsManager().settings.autoOpenKeyboard.value,
-                  cursorColor: Theme.of(context).primaryColor,
-                  key: _searchFormKey,
-                  style: Theme.of(context).textTheme.bodyText1!.apply(
-                        color:
-                            ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.light
-                                ? Colors.black
-                                : Colors.white,
-                        fontSizeDelta: -0.25,
-                      ),
-                  onContentCommitted: onContentCommit,
-                  decoration: InputDecoration(
-                    isDense: true,
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        color: Theme.of(context).dividerColor,
-                        width: 1.5,
-                        style: BorderStyle.solid,
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    disabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        color: Theme.of(context).dividerColor,
-                        width: 1.5,
-                        style: BorderStyle.solid,
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        color: Theme.of(context).dividerColor,
-                        width: 1.5,
-                        style: BorderStyle.solid,
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    hintText: SettingsManager().settings.recipientAsPlaceholder.value == true
+                  }
+                  // 99% sure this isn't necessary but keeping it for now
+                  if (event.isKeyPressed(LogicalKeyboardKey.enter) &&
+                      SettingsManager().settings.sendWithReturn.value &&
+                      !isNullOrEmpty(controller!.text)!) {
+                    await sendMessage();
+                    focusNode!.requestFocus();
+                  }
+                },
+                child: ThemeSwitcher(
+                  iOSSkin: CustomCupertinoTextField(
+                    enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
+                    enabled: sendCountdown == null,
+                    textInputAction: SettingsManager().settings.sendWithReturn.value
+                        ? TextInputAction.send
+                        : TextInputAction.newline,
+                    cursorColor: Theme.of(context).primaryColor,
+                    onLongPressStart: () {
+                      Feedback.forLongPress(context);
+                    },
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      if (cameraState == CameraState.ACTIVE) {
+                        disposeCameras();
+                      }
+                    },
+                    key: _searchFormKey,
+                    onSubmitted: (String value) {
+                      if (isNullOrEmpty(value)!) return;
+                      focusNode!.requestFocus();
+                      sendMessage();
+                    },
+                    onContentCommitted: onContentCommit,
+                    textCapitalization: TextCapitalization.sentences,
+                    focusNode: focusNode,
+                    autocorrect: true,
+                    controller: controller,
+                    scrollPhysics: CustomBouncingScrollPhysics(),
+                    style: Theme.of(context).textTheme.bodyText1!.apply(
+                          color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) ==
+                                  Brightness.light
+                              ? Colors.black
+                              : Colors.white,
+                          fontSizeDelta: -0.25,
+                        ),
+                    keyboardType: TextInputType.multiline,
+                    maxLines: 14,
+                    minLines: 1,
+                    placeholder: SettingsManager().settings.recipientAsPlaceholder.value == true
                         ? placeholder.value
                         : "BlueBubbles",
-                    hintStyle: Theme.of(context).textTheme.subtitle1,
-                    contentPadding: EdgeInsets.only(
-                      left: 10,
-                      top: 15,
-                      right: 10,
-                      bottom: 10,
+                    padding: EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
+                    placeholderStyle: Theme.of(context).textTheme.subtitle1,
+                    autofocus: SettingsManager().settings.autoOpenKeyboard.value,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).backgroundColor,
+                      border: Border.all(
+                        color: Theme.of(context).dividerColor,
+                        width: 1.5,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
                     ),
                   ),
-                  keyboardType: TextInputType.multiline,
-                  maxLines: 14,
-                  minLines: 1,
-                ),
-                samsungSkin: TextField(
-                  controller: controller,
-                  focusNode: focusNode,
-                  textCapitalization: TextCapitalization.sentences,
-                  autocorrect: true,
-                  autofocus: SettingsManager().settings.autoOpenKeyboard.value,
-                  cursorColor: Theme.of(context).primaryColor,
-                  key: _searchFormKey,
-                  style: Theme.of(context).textTheme.bodyText1!.apply(
-                        color:
-                            ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.light
-                                ? Colors.black
-                                : Colors.white,
-                        fontSizeDelta: -0.25,
+                  materialSkin: TextField(
+                    // enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
+                    controller: controller,
+                    focusNode: focusNode,
+                    textCapitalization: TextCapitalization.sentences,
+                    autocorrect: true,
+                    textInputAction: SettingsManager().settings.sendWithReturn.value
+                        ? TextInputAction.send
+                        : TextInputAction.newline,
+                    autofocus: SettingsManager().settings.autoOpenKeyboard.value,
+                    cursorColor: Theme.of(context).primaryColor,
+                    key: _searchFormKey,
+                    onSubmitted: (String value) {
+                      if (isNullOrEmpty(value)!) return;
+                      focusNode!.requestFocus();
+                      sendMessage();
+                    },
+                    style: Theme.of(context).textTheme.bodyText1!.apply(
+                          color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) ==
+                                  Brightness.light
+                              ? Colors.black
+                              : Colors.white,
+                          fontSizeDelta: -0.25,
+                        ),
+                    onContentCommitted: onContentCommit,
+                    decoration: InputDecoration(
+                      isDense: true,
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Theme.of(context).dividerColor,
+                          width: 1.5,
+                          style: BorderStyle.solid,
+                        ),
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                  onContentCommitted: onContentCommit,
-                  decoration: InputDecoration(
-                    isDense: true,
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        color: Theme.of(context).dividerColor,
-                        width: 1.5,
-                        style: BorderStyle.solid,
+                      disabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Theme.of(context).dividerColor,
+                          width: 1.5,
+                          style: BorderStyle.solid,
+                        ),
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                      borderRadius: BorderRadius.circular(20),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Theme.of(context).dividerColor,
+                          width: 1.5,
+                          style: BorderStyle.solid,
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      hintText: SettingsManager().settings.recipientAsPlaceholder.value == true
+                          ? placeholder.value
+                          : "BlueBubbles",
+                      hintStyle: Theme.of(context).textTheme.subtitle1,
+                      contentPadding: EdgeInsets.only(
+                        left: 10,
+                        top: 15,
+                        right: 10,
+                        bottom: 10,
+                      ),
                     ),
-                    disabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        color: Theme.of(context).dividerColor,
-                        width: 1.5,
-                        style: BorderStyle.solid,
+                    keyboardType: TextInputType.multiline,
+                    maxLines: 14,
+                    minLines: 1,
+                  ),
+                  samsungSkin: TextField(
+                    // enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
+                    controller: controller,
+                    focusNode: focusNode,
+                    textCapitalization: TextCapitalization.sentences,
+                    autocorrect: true,
+                    autofocus: SettingsManager().settings.autoOpenKeyboard.value,
+                    cursorColor: Theme.of(context).primaryColor,
+                    key: _searchFormKey,
+                    onSubmitted: (String value) {
+                      if (isNullOrEmpty(value)!) return;
+                      focusNode!.requestFocus();
+                      sendMessage();
+                    },
+                    style: Theme.of(context).textTheme.bodyText1!.apply(
+                          color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) ==
+                                  Brightness.light
+                              ? Colors.black
+                              : Colors.white,
+                          fontSizeDelta: -0.25,
+                        ),
+                    onContentCommitted: onContentCommit,
+                    decoration: InputDecoration(
+                      isDense: true,
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Theme.of(context).dividerColor,
+                          width: 1.5,
+                          style: BorderStyle.solid,
+                        ),
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        color: Theme.of(context).dividerColor,
-                        width: 1.5,
-                        style: BorderStyle.solid,
+                      disabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Theme.of(context).dividerColor,
+                          width: 1.5,
+                          style: BorderStyle.solid,
+                        ),
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    hintText: SettingsManager().settings.recipientAsPlaceholder.value == true
-                        ? placeholder.value
-                        : "BlueBubbles",
-                    hintStyle: Theme.of(context).textTheme.subtitle1,
-                    contentPadding: EdgeInsets.only(
-                      left: 10,
-                      top: 15,
-                      right: 10,
-                      bottom: 10,
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Theme.of(context).dividerColor,
+                          width: 1.5,
+                          style: BorderStyle.solid,
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      hintText: SettingsManager().settings.recipientAsPlaceholder.value == true
+                          ? placeholder.value
+                          : "BlueBubbles",
+                      hintStyle: Theme.of(context).textTheme.subtitle1,
+                      contentPadding: EdgeInsets.only(
+                        left: 10,
+                        top: 15,
+                        right: 10,
+                        bottom: 10,
+                      ),
                     ),
                   ),
                 ),
@@ -804,19 +847,19 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           if (sendCountdown != null) Text(sendCountdown.toString()),
           (SettingsManager().settings.skin.value == Skins.iOS)
               ? Container(
-                  constraints: BoxConstraints(maxWidth: 38, maxHeight: 37),
+                  constraints: BoxConstraints(maxWidth: 35, maxHeight: 34),
                   padding: EdgeInsets.only(right: 4, top: 2, bottom: 2),
                   child: ButtonTheme(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        padding: EdgeInsets.only(
-                          right: 0,
-                        ),
-                        primary: Theme.of(context).primaryColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(40),
-                        ),
-                      ),
+                          padding: EdgeInsets.only(
+                            right: 0,
+                          ),
+                          primary: Theme.of(context).primaryColor,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(40),
+                          ),
+                          elevation: 0),
                       onPressed: sendAction,
                       child: Stack(
                         alignment: Alignment.center,
@@ -825,16 +868,16 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                 opacity: sendCountdown == null && canRecord.value ? 1.0 : 0.0,
                                 duration: Duration(milliseconds: 150),
                                 child: Icon(
-                                  Icons.mic,
+                                  CupertinoIcons.waveform,
                                   color: (isRecording.value) ? Colors.red : Colors.white,
-                                  size: 20,
+                                  size: 22,
                                 ),
                               )),
                           Obx(() => AnimatedOpacity(
                                 opacity: (sendCountdown == null && !canRecord.value) && !isRecording.value ? 1.0 : 0.0,
                                 duration: Duration(milliseconds: 150),
                                 child: Icon(
-                                  Icons.arrow_upward,
+                                  CupertinoIcons.arrow_up,
                                   color: Colors.white,
                                   size: 20,
                                 ),
@@ -843,7 +886,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                             opacity: sendCountdown != null ? 1.0 : 0.0,
                             duration: Duration(milliseconds: 50),
                             child: Icon(
-                              Icons.cancel_outlined,
+                              CupertinoIcons.xmark_circle,
                               color: Colors.red,
                               size: 20,
                             ),

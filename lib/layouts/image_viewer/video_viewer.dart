@@ -3,12 +3,12 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:chewie/chewie.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
@@ -109,7 +109,7 @@ class _VideoViewerState extends State<VideoViewer> {
       duration: Duration(milliseconds: 125),
       child: Container(
           height: 150.0,
-          width: context.width,
+          width: CustomNavigator.width(context),
           color: Colors.black.withOpacity(0.65),
           child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Padding(
@@ -120,7 +120,7 @@ class _VideoViewerState extends State<VideoViewer> {
                   Navigator.pop(context);
                 },
                 child: Icon(
-                  SettingsManager().settings.skin.value == Skins.iOS ? Icons.arrow_back_ios : Icons.arrow_back,
+                  SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.back : Icons.arrow_back,
                   color: Colors.white,
                 ),
               ),
@@ -162,7 +162,7 @@ class _VideoViewerState extends State<VideoViewer> {
                           ),
                           backgroundColor: Theme.of(context).accentColor,
                           content: SizedBox(
-                            width: context.width * 3 / 5,
+                            width: CustomNavigator.width(context) * 3 / 5,
                             height: context.height * 1 / 4,
                             child: Container(
                               padding: EdgeInsets.all(10.0),
@@ -192,7 +192,7 @@ class _VideoViewerState extends State<VideoViewer> {
                       );
                     },
                     child: Icon(
-                      Icons.info,
+                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.info : Icons.info,
                       color: Colors.white,
                     ),
                   ),
@@ -237,7 +237,7 @@ class _VideoViewerState extends State<VideoViewer> {
                       if (this.mounted) setState(() {});
                     },
                     child: Icon(
-                      Icons.refresh,
+                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.refresh : Icons.refresh,
                       color: Colors.white,
                     ),
                   ),
@@ -250,7 +250,7 @@ class _VideoViewerState extends State<VideoViewer> {
                       await AttachmentHelper.saveToGallery(context, widget.file);
                     },
                     child: Icon(
-                      Icons.file_download,
+                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.cloud_download : Icons.file_download,
                       color: Colors.white,
                     ),
                   ),
@@ -266,7 +266,7 @@ class _VideoViewerState extends State<VideoViewer> {
                       );
                     },
                     child: Icon(
-                      Icons.share,
+                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.share : Icons.share,
                       color: Colors.white,
                     ),
                   ),
@@ -279,7 +279,13 @@ class _VideoViewerState extends State<VideoViewer> {
                       controller.setVolume(controller.value.volume != 0.0 ? 0.0 : 1.0);
                     },
                     child: Icon(
-                      controller.value.volume == 0.0 ? Icons.volume_mute : Icons.volume_up,
+                      controller.value.volume == 0.0
+                          ? SettingsManager().settings.skin.value == Skins.iOS
+                          ? CupertinoIcons.volume_mute
+                          : Icons.volume_mute
+                          : SettingsManager().settings.skin.value == Skins.iOS
+                          ? CupertinoIcons.volume_up
+                          : Icons.volume_up,
                       color: Colors.white,
                     ),
                   ),

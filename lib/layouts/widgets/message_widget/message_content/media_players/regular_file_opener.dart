@@ -41,28 +41,34 @@ class _RegularFileOpenerState extends State<RegularFileOpener> {
         }
       },
       child: Container(
-        height: 140,
-        width: 200,
+        constraints: BoxConstraints(
+          maxHeight: 140,
+          maxWidth: 200,
+        ),
         color: Theme.of(context).accentColor,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              basename(widget.file.path),
-              textAlign: TextAlign.center,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodyText2,
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Icon(
-                fileIcon,
-                color: Theme.of(context).textTheme.bodyText2!.color,
+        child: Padding(
+          padding: const EdgeInsets.all(15.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Text(
+                basename(widget.file.path),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyText2,
               ),
-            ),
-            Text(widget.attachment.mimeType!, style: Theme.of(context).textTheme.bodyText2),
-          ],
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Icon(
+                  fileIcon,
+                  color: Theme.of(context).textTheme.bodyText2!.color,
+                ),
+              ),
+              Text(widget.attachment.mimeType!, style: Theme.of(context).textTheme.bodyText2),
+            ],
+          ),
         ),
       ),
     );

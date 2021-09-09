@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
@@ -75,7 +76,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
       duration: Duration(milliseconds: 125),
       child: Container(
           height: 150.0,
-          width: context.width,
+          width: CustomNavigator.width(context),
           color: Colors.black.withOpacity(0.65),
           child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Padding(
@@ -86,7 +87,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                   Navigator.pop(context);
                 },
                 child: Icon(
-                  SettingsManager().settings.skin.value == Skins.iOS ? Icons.arrow_back_ios : Icons.arrow_back,
+                  SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.back : Icons.arrow_back,
                   color: Colors.white,
                 ),
               ),
@@ -128,7 +129,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                           ),
                           backgroundColor: Theme.of(context).accentColor,
                           content: SizedBox(
-                            width: context.width * 3 / 5,
+                            width: CustomNavigator.width(context) * 3 / 5,
                             height: context.height * 1 / 4,
                             child: Container(
                               padding: EdgeInsets.all(10.0),
@@ -158,7 +159,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                       );
                     },
                     child: Icon(
-                      Icons.info,
+                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.info : Icons.info,
                       color: Colors.white,
                     ),
                   ),
@@ -181,7 +182,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                       if (this.mounted) setState(() {});
                     },
                     child: Icon(
-                      Icons.refresh,
+                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.refresh : Icons.refresh,
                       color: Colors.white,
                     ),
                   ),
@@ -194,7 +195,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                       await AttachmentHelper.saveToGallery(context, widget.file);
                     },
                     child: Icon(
-                      Icons.file_download,
+                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.cloud_download : Icons.file_download,
                       color: Colors.white,
                     ),
                   ),
@@ -210,7 +211,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                       );
                     },
                     child: Icon(
-                      Icons.share,
+                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.share : Icons.share,
                       color: Colors.white,
                     ),
                   ),
@@ -259,7 +260,9 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                         if (AttachmentFullscreenViewer.of(context) == null) return;
                         if (this.mounted) {
                           AttachmentFullscreenViewerState? state = AttachmentFullscreenViewer.of(context);
-                          if (scale == PhotoViewScaleState.zoomedIn) {
+                          if (scale == PhotoViewScaleState.zoomedIn
+                              || scale == PhotoViewScaleState.covering
+                              || scale == PhotoViewScaleState.originalSize) {
                             if (state!.physics != NeverScrollableScrollPhysics()) {
                               AttachmentFullscreenViewer.of(context)!.setState(() {
                                 AttachmentFullscreenViewer.of(context)!.physics = NeverScrollableScrollPhysics();

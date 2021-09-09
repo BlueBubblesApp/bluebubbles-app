@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/config_entry.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
@@ -39,6 +39,7 @@ class Settings {
   final RxBool recipientAsPlaceholder = false.obs;
   final RxBool hideKeyboardOnScroll = false.obs;
   final RxBool moveChatCreatorToHeader = false.obs;
+  final RxBool cameraFAB = false.obs;
   final RxBool swipeToCloseKeyboard = false.obs;
   final RxBool swipeToOpenKeyboard = false.obs;
   final RxBool openKeyboardOnSTB = false.obs;
@@ -52,6 +53,11 @@ class Settings {
   final RxBool use24HrFormat = false.obs;
   final RxBool alwaysShowAvatars = false.obs;
   final RxBool notifyOnChatList = false.obs;
+  final RxBool notifyReactions = true.obs;
+  final RxString notificationSound = "default".obs;
+  final RxBool colorsFromMedia = false.obs;
+  final RxString globalTextDetection = "".obs;
+  final RxBool filterUnknownSenders = false.obs;
 
   // final RxString emojiFontFamily;
 
@@ -90,6 +96,7 @@ class Settings {
   // Security settings
   final RxBool shouldSecure = RxBool(false);
   final Rx<SecurityLevel> securityLevel = Rx<SecurityLevel>(SecurityLevel.locked);
+  final RxBool incognitoKeyboard = RxBool(false);
 
   final Rx<Skins> skin = Skins.iOS.obs;
   final Rx<ThemeMode> theme = ThemeMode.system.obs;
@@ -174,6 +181,8 @@ class Settings {
         settings.swipeToCloseKeyboard.value = entry.value;
       } else if (entry.name == "moveChatCreatorToHeader") {
         settings.moveChatCreatorToHeader.value = entry.value;
+      } else if (entry.name == "cameraFAB") {
+        settings.cameraFAB.value = entry.value;
       } else if (entry.name == "openKeyboardOnSTB") {
         settings.openKeyboardOnSTB.value = entry.value;
       } else if (entry.name == "swipableConversationTiles") {
@@ -246,19 +255,31 @@ class Settings {
         settings.shouldSecure.value = entry.value;
       } else if (entry.name == "securityLevel") {
         settings.securityLevel.value = SecurityLevel.values[entry.value];
+      } else if (entry.name == "incognitoKeyboard") {
+        settings.incognitoKeyboard.value = entry.value;
       } else if (entry.name == "pinRowsPortrait") {
         settings.pinRowsPortrait.value = entry.value;
       } else if (entry.name == "maxAvatarsInGroupWidget") {
         settings.maxAvatarsInGroupWidget.value = entry.value;
       } else if (entry.name == "notifyOnChatList") {
         settings.notifyOnChatList.value = entry.value;
+      } else if (entry.name == "notifyReactions") {
+        settings.notifyReactions.value = entry.value;
+      } else if (entry.name == "notificationSound") {
+        settings.notificationSound.value = entry.value;
+      } else if (entry.name == "colorsFromMedia") {
+        settings.colorsFromMedia.value = entry.value;
+      } else if (entry.name == "globalTextDetection") {
+        settings.globalTextDetection.value = entry.value;
+      } else if (entry.name == "filterUnknownSenders") {
+        settings.filterUnknownSenders.value = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
       //   settings.emojiFontFamily = entry.value;
       // }
     }
-    settings.save(updateIfAbsent: false);
+    settings.save();
     return settings;
   }
 
@@ -275,17 +296,38 @@ class Settings {
     return mode;
   }
 
-  Future<Settings> save({bool updateIfAbsent = true}) async {
-    List<ConfigEntry> entries = this.toEntries();
-    for (ConfigEntry entry in entries) {
-      await entry.save("config", updateIfAbsent: updateIfAbsent);
-    }
+  Settings save() {
+    Map<String, dynamic> map = this.toMap(includeAll: true);
+    map.forEach((key, value) {
+      if (value is bool) {
+        prefs.setBool(key, value);
+      } else if (value is String) {
+        prefs.setString(key, value);
+      } else if (value is int) {
+        prefs.setInt(key, value);
+      } else if (value is double) {
+        prefs.setDouble(key, value);
+      }
+    });
     return this;
   }
 
-  static Future<Settings> getSettings() async {
-    Database? db = await DBProvider.db.database;
+  static Settings getSettings() {
+    Set<String> keys = prefs.getKeys();
+    print(keys);
 
+    Map<String, dynamic> items = {};
+    for (String s in keys) {
+      items[s] = prefs.get(s);
+    }
+    if (items.isNotEmpty) {
+      return Settings.fromMap(items);
+    } else {
+      return Settings();
+    }
+  }
+
+  static Future<Settings> getSettingsOld(Database db) async {
     List<Map<String, dynamic>> result = await db.query("config");
     if (result.isEmpty) return new Settings();
     List<ConfigEntry> entries = [];
@@ -295,371 +337,8 @@ class Settings {
     return Settings.fromConfigEntries(entries);
   }
 
-  List<ConfigEntry> toEntries() => [
-        ConfigEntry(
-          name: "serverAddress",
-          value: this.serverAddress.value,
-          type: this.serverAddress.runtimeType,
-        ),
-        ConfigEntry(
-          name: "guidAuthKey",
-          value: this.guidAuthKey.value,
-          type: this.guidAuthKey.runtimeType,
-        ),
-        ConfigEntry(
-          name: "finishedSetup",
-          value: this.finishedSetup.value,
-          type: this.finishedSetup.runtimeType,
-        ),
-        ConfigEntry(
-          name: "chunkSize",
-          value: this.chunkSize.value,
-          type: this.chunkSize.runtimeType,
-        ),
-        ConfigEntry(
-          name: "autoOpenKeyboard",
-          value: this.autoOpenKeyboard.value,
-          type: this.autoOpenKeyboard.runtimeType,
-        ),
-        ConfigEntry(
-          name: "autoDownload",
-          value: this.autoDownload.value,
-          type: this.autoDownload.runtimeType,
-        ),
-        ConfigEntry(
-          name: "onlyWifiDownload",
-          value: this.onlyWifiDownload.value,
-          type: this.onlyWifiDownload.runtimeType,
-        ),
-        ConfigEntry(
-          name: "hideTextPreviews",
-          value: this.hideTextPreviews.value,
-          type: this.hideTextPreviews.runtimeType,
-        ),
-        ConfigEntry(
-          name: "showIncrementalSync",
-          value: this.showIncrementalSync.value,
-          type: this.showIncrementalSync.runtimeType,
-        ),
-        ConfigEntry(
-          name: "lowMemoryMode",
-          value: this.lowMemoryMode.value,
-          type: this.lowMemoryMode.runtimeType,
-        ),
-        ConfigEntry(
-          name: "lastIncrementalSync",
-          value: this.lastIncrementalSync.value,
-          type: this.lastIncrementalSync.runtimeType,
-        ),
-        ConfigEntry(
-          name: "displayMode",
-          value: this.refreshRate.value,
-          type: this.refreshRate.runtimeType,
-        ),
-        ConfigEntry(
-          name: "rainbowBubbles",
-          value: this.colorfulAvatars.value,
-          type: this.colorfulAvatars.runtimeType,
-        ),
-        ConfigEntry(
-          name: "colorfulBubbles",
-          value: this.colorfulBubbles.value,
-          type: this.colorfulBubbles.runtimeType,
-        ),
-        ConfigEntry(
-          name: "hideDividers",
-          value: this.hideDividers.value,
-          type: this.hideDividers.runtimeType,
-        ),
-        ConfigEntry(
-          name: "theme",
-          value: this.theme.value.index,
-          type: this.theme.value.index.runtimeType,
-        ),
-        ConfigEntry(
-          name: "skin",
-          value: this.skin.value.index,
-          type: this.skin.value.index.runtimeType,
-        ),
-        ConfigEntry(
-          name: "fullscreenViewerSwipeDir",
-          value: this.fullscreenViewerSwipeDir.value.index,
-          type: this.fullscreenViewerSwipeDir.value.index.runtimeType,
-        ),
-        ConfigEntry(
-          name: "scrollVelocity",
-          value: this.scrollVelocity.value,
-          type: this.scrollVelocity.runtimeType,
-        ),
-        ConfigEntry(
-          name: "sendWithReturn",
-          value: this.sendWithReturn.value,
-          type: this.sendWithReturn.runtimeType,
-        ),
-        ConfigEntry(
-          name: "doubleTapForDetails",
-          value: this.doubleTapForDetails.value,
-          type: this.doubleTapForDetails.runtimeType,
-        ),
-        ConfigEntry(
-          name: "denseChatTiles",
-          value: this.denseChatTiles.value,
-          type: this.denseChatTiles.runtimeType,
-        ),
-        ConfigEntry(
-          name: "smartReply",
-          value: this.smartReply.value,
-          type: this.smartReply.runtimeType,
-        ),
-        ConfigEntry(
-          name: "hideKeyboardOnScroll",
-          value: this.hideKeyboardOnScroll.value,
-          type: this.hideKeyboardOnScroll.runtimeType,
-        ),
-        ConfigEntry(
-          name: "reducedForehead",
-          value: this.reducedForehead.value,
-          type: this.reducedForehead.runtimeType,
-        ),
-        ConfigEntry(
-          name: "preCachePreviewImages",
-          value: this.preCachePreviewImages.value,
-          type: this.preCachePreviewImages.runtimeType,
-        ),
-        ConfigEntry(
-          name: "showConnectionIndicator",
-          value: this.showConnectionIndicator.value,
-          type: this.showConnectionIndicator.runtimeType,
-        ),
-        ConfigEntry(
-          name: "sendDelay",
-          value: this.sendDelay.value,
-          type: this.sendDelay.runtimeType,
-        ),
-        ConfigEntry(
-          name: "recipientAsPlaceholder",
-          value: this.recipientAsPlaceholder.value,
-          type: this.recipientAsPlaceholder.runtimeType,
-        ),
-        ConfigEntry(
-          name: "moveChatCreatorToHeader",
-          value: this.moveChatCreatorToHeader.value,
-          type: this.moveChatCreatorToHeader.runtimeType,
-        ),
-        ConfigEntry(
-          name: "swipeToCloseKeyboard",
-          value: this.swipeToCloseKeyboard.value,
-          type: this.swipeToCloseKeyboard.runtimeType,
-        ),
-        ConfigEntry(
-          name: "swipeToOpenKeyboard",
-          value: this.swipeToOpenKeyboard.value,
-          type: this.swipeToOpenKeyboard.runtimeType,
-        ),
-        ConfigEntry(
-          name: "openKeyboardOnSTB",
-          value: this.openKeyboardOnSTB.value,
-          type: this.openKeyboardOnSTB.runtimeType,
-        ),
-        ConfigEntry(
-          name: "swipableConversationTiles",
-          value: this.swipableConversationTiles.value,
-          type: this.swipableConversationTiles.runtimeType,
-        ),
-        ConfigEntry(
-          name: "enablePrivateAPI",
-          value: this.enablePrivateAPI.value,
-          type: this.enablePrivateAPI.runtimeType,
-        ),
-        ConfigEntry(
-          name: "privateSendTypingIndicators",
-          value: this.privateSendTypingIndicators.value,
-          type: this.privateSendTypingIndicators.runtimeType,
-        ),
-        ConfigEntry(
-          name: "colorblindMode",
-          value: this.colorblindMode.value,
-          type: this.colorblindMode.runtimeType,
-        ),
-        ConfigEntry(
-          name: "privateMarkChatAsRead",
-          value: this.privateMarkChatAsRead.value,
-          type: this.privateMarkChatAsRead.runtimeType,
-        ),
-        ConfigEntry(
-          name: "privateManualMarkAsRead",
-          value: this.privateManualMarkAsRead.value,
-          type: this.privateManualMarkAsRead.runtimeType,
-        ),
-        ConfigEntry(
-            name: "showSyncIndicator", value: this.showSyncIndicator.value, type: this.showSyncIndicator.runtimeType),
-        ConfigEntry(
-            name: "showDeliveryTimestamps",
-            value: this.showDeliveryTimestamps.value,
-            type: this.showDeliveryTimestamps.runtimeType),
-        ConfigEntry(
-          name: "showSyncIndicator",
-          value: this.showSyncIndicator.value,
-          type: this.showSyncIndicator.runtimeType,
-        ),
-        ConfigEntry(
-          name: "redactedMode",
-          value: this.redactedMode.value,
-          type: this.redactedMode.runtimeType,
-        ),
-        ConfigEntry(
-          name: "hideMessageContent",
-          value: this.hideMessageContent.value,
-          type: this.hideMessageContent.runtimeType,
-        ),
-        ConfigEntry(
-          name: "hideReactions",
-          value: this.hideReactions.value,
-          type: this.hideReactions.runtimeType,
-        ),
-        ConfigEntry(
-          name: "hideAttachments",
-          value: this.hideAttachments.value,
-          type: this.hideAttachments.runtimeType,
-        ),
-        ConfigEntry(
-          name: "hideAttachmentTypes",
-          value: this.hideAttachmentTypes.value,
-          type: this.hideAttachmentTypes.runtimeType,
-        ),
-        ConfigEntry(
-          name: "hideContactPhotos",
-          value: this.hideContactPhotos.value,
-          type: this.hideContactPhotos.runtimeType,
-        ),
-        ConfigEntry(
-          name: "hideContactInfo",
-          value: this.hideContactInfo.value,
-          type: this.hideContactInfo.runtimeType,
-        ),
-        ConfigEntry(
-          name: "removeLetterAvatars",
-          value: this.removeLetterAvatars.value,
-          type: this.removeLetterAvatars.runtimeType,
-        ),
-        ConfigEntry(
-          name: "generateFakeContactNames",
-          value: this.generateFakeContactNames.value,
-          type: this.generateFakeContactNames.runtimeType,
-        ),
-        ConfigEntry(
-          name: "generateFakeMessageContent",
-          value: this.generateFakeMessageContent.value,
-          type: this.generateFakeMessageContent.runtimeType,
-        ),
-        ConfigEntry(
-          name: "previewCompressionQuality",
-          value: this.previewCompressionQuality.value,
-          type: this.previewCompressionQuality.runtimeType,
-        ),
-        ConfigEntry(
-          name: "filteredChatList",
-          value: this.filteredChatList.value,
-          type: this.filteredChatList.runtimeType,
-        ),
-        ConfigEntry(
-          name: "startVideosMuted",
-          value: this.startVideosMuted.value,
-          type: this.startVideosMuted.runtimeType,
-        ),
-        ConfigEntry(
-          name: "startVideosMutedFullscreen",
-          value: this.startVideosMutedFullscreen.value,
-          type: this.startVideosMutedFullscreen.runtimeType,
-        ),
-        ConfigEntry(
-          name: "use24HrFormat",
-          value: this.use24HrFormat.value,
-          type: this.use24HrFormat.runtimeType,
-        ),
-        ConfigEntry(
-          name: "enableQuickTapback",
-          value: this.enableQuickTapback.value,
-          type: this.enableQuickTapback.runtimeType,
-        ),
-        ConfigEntry(
-          name: "quickTapbackType",
-          value: this.quickTapbackType.value,
-          type: this.quickTapbackType.runtimeType,
-        ),
-        ConfigEntry(
-          name: "alwaysShowAvatars",
-          value: this.alwaysShowAvatars.value,
-          type: this.alwaysShowAvatars.runtimeType,
-        ),
-        ConfigEntry(
-          name: "iosShowPin",
-          value: this.iosShowPin.value,
-          type: this.iosShowPin.runtimeType,
-        ),
-        ConfigEntry(
-          name: "iosShowAlert",
-          value: this.iosShowAlert.value,
-          type: this.iosShowAlert.runtimeType,
-        ),
-        ConfigEntry(
-          name: "iosShowDelete",
-          value: this.iosShowDelete.value,
-          type: this.iosShowDelete.runtimeType,
-        ),
-        ConfigEntry(
-          name: "iosShowMarkRead",
-          value: this.iosShowMarkRead.value,
-          type: this.iosShowMarkRead.runtimeType,
-        ),
-        ConfigEntry(
-          name: "iosShowArchive",
-          value: this.iosShowArchive.value,
-          type: this.iosShowArchive.runtimeType,
-        ),
-        ConfigEntry(
-          name: "materialRightAction",
-          value: this.materialRightAction.value.index,
-          type: this.materialRightAction.value.index.runtimeType,
-        ),
-        ConfigEntry(
-          name: "materialLeftAction",
-          value: this.materialLeftAction.value.index,
-          type: this.materialLeftAction.value.index.runtimeType,
-        ),
-        ConfigEntry(
-          name: "shouldSecure",
-          value: this.shouldSecure.value,
-          type: this.shouldSecure.runtimeType,
-        ),
-        ConfigEntry(
-          name: "securityLevel",
-          value: this.securityLevel.value.index,
-          type: this.securityLevel.value.index.runtimeType,
-        ),
-        ConfigEntry(
-          name: "pinRowsPortrait",
-          value: this.pinRowsPortrait.value,
-          type: this.pinRowsPortrait.value.runtimeType,
-        ),
-        ConfigEntry(
-          name: "maxAvatarsInGroupWidget",
-          value: this.maxAvatarsInGroupWidget.value,
-          type: this.maxAvatarsInGroupWidget.value.runtimeType,
-        ),
-        ConfigEntry(
-          name: "notifyOnChatList",
-          value: this.notifyOnChatList.value,
-          type: this.notifyOnChatList.runtimeType,
-        )
-        // ConfigEntry(
-        //     name: "emojiFontFamily",
-        //     value: this.emojiFontFamily,
-        //     type: this.emojiFontFamily.runtimeType),
-      ];
-
-  Map<String, dynamic> toMap() {
-    return {
+  Map<String, dynamic> toMap({bool includeAll = false}) {
+    Map<String, dynamic> map = {
       'chunkSize': this.chunkSize.value,
       'autoDownload': this.autoDownload.value,
       'onlyWifiDownload': this.onlyWifiDownload.value,
@@ -685,6 +364,7 @@ class Settings {
       'recipientAsPlaceholder': this.recipientAsPlaceholder.value,
       'hideKeyboardOnScroll': this.hideKeyboardOnScroll.value,
       'moveChatCreatorToHeader': this.moveChatCreatorToHeader.value,
+      'cameraFAB': this.cameraFAB.value,
       'swipeToCloseKeyboard': this.swipeToCloseKeyboard.value,
       'swipeToOpenKeyboard': this.swipeToOpenKeyboard.value,
       'openKeyboardOnSTB': this.openKeyboardOnSTB.value,
@@ -698,6 +378,10 @@ class Settings {
       'use24HrFormat': this.use24HrFormat.value,
       'alwaysShowAvatars': this.alwaysShowAvatars.value,
       'notifyOnChatList': this.notifyOnChatList.value,
+      'notifyReactions': this.notifyReactions.value,
+      'notificationSound': this.notificationSound.value,
+      'globalTextDetection': this.globalTextDetection.value,
+      'filterUnknownSenders': this.filterUnknownSenders.value,
       'enablePrivateAPI': this.enablePrivateAPI.value,
       'privateSendTypingIndicators': this.privateSendTypingIndicators.value,
       'privateMarkChatAsRead': this.privateMarkChatAsRead.value,
@@ -724,6 +408,7 @@ class Settings {
       'materialLeftAction': this.materialLeftAction.value.index,
       'shouldSecure': this.shouldSecure.value,
       'securityLevel': this.securityLevel.value.index,
+      'incognitoKeyboard': this.incognitoKeyboard.value,
       'skin': this.skin.value.index,
       'theme': this.theme.value.index,
       'fullscreenViewerSwipeDir': this.fullscreenViewerSwipeDir.value.index,
@@ -733,81 +418,183 @@ class Settings {
       'pinColumnsLandscape': this.pinColumnsLandscape.value,
       'maxAvatarsInGroupWidget': this.maxAvatarsInGroupWidget.value,
     };
+    if (includeAll) {
+      map.addAll({
+        'guidAuthKey': this.guidAuthKey.value,
+        'serverAddress': this.serverAddress.value,
+        'finishedSetup': this.finishedSetup.value,
+        'colorsFromMedia': this.colorsFromMedia.value,
+      });
+    }
+    return map;
   }
 
   static void updateFromMap(Map<String, dynamic> map) {
-    SettingsManager().settings.chunkSize.value = map['chunkSize'];
-    SettingsManager().settings.autoDownload.value = map['autoDownload'];
-    SettingsManager().settings.onlyWifiDownload.value = map['onlyWifiDownload'];
-    SettingsManager().settings.autoOpenKeyboard.value = map['autoOpenKeyboard'];
-    SettingsManager().settings.hideTextPreviews.value = map['hideTextPreviews'];
-    SettingsManager().settings.showIncrementalSync.value = map['showIncrementalSync'];
-    SettingsManager().settings.lowMemoryMode.value = map['lowMemoryMode'];
-    SettingsManager().settings.lastIncrementalSync.value = map['lastIncrementalSync'];
-    SettingsManager().settings.refreshRate.value = map['refreshRate'];
-    SettingsManager().settings.colorfulAvatars.value = map['colorfulAvatars'];
-    SettingsManager().settings.colorfulBubbles.value = map['colorfulBubbles'];
-    SettingsManager().settings.hideDividers.value = map['hideDividers'];
-    SettingsManager().settings.scrollVelocity.value = map['scrollVelocity'];
-    SettingsManager().settings.sendWithReturn.value = map['sendWithReturn'];
-    SettingsManager().settings.doubleTapForDetails.value = map['doubleTapForDetails'];
-    SettingsManager().settings.denseChatTiles.value = map['denseChatTiles'];
-    SettingsManager().settings.smartReply.value = map['smartReply'];
-    SettingsManager().settings.reducedForehead.value = map['reducedForehead'];
-    SettingsManager().settings.preCachePreviewImages.value = map['preCachePreviewImages'];
-    SettingsManager().settings.showConnectionIndicator.value = map['showConnectionIndicator'];
-    SettingsManager().settings.showSyncIndicator.value = map['showSyncIndicator'];
-    SettingsManager().settings.sendDelay.value = map['sendDelay'];
-    SettingsManager().settings.recipientAsPlaceholder.value = map['recipientAsPlaceholder'];
-    SettingsManager().settings.hideKeyboardOnScroll.value = map['hideKeyboardOnScroll'];
-    SettingsManager().settings.moveChatCreatorToHeader.value = map['moveChatCreatorToHeader'];
-    SettingsManager().settings.swipeToCloseKeyboard.value = map['swipeToCloseKeyboard'];
-    SettingsManager().settings.swipeToOpenKeyboard.value = map['swipeToOpenKeyboard'];
-    SettingsManager().settings.openKeyboardOnSTB.value = map['openKeyboardOnSTB'];
-    SettingsManager().settings.swipableConversationTiles.value = map['swipableConversationTiles'];
-    SettingsManager().settings.colorblindMode.value = map['colorblindMode'];
-    SettingsManager().settings.showDeliveryTimestamps.value = map['showDeliveryTimestamps'];
-    SettingsManager().settings.previewCompressionQuality.value = map['previewCompressionQuality'];
-    SettingsManager().settings.filteredChatList.value = map['filteredChatList'];
-    SettingsManager().settings.startVideosMuted.value = map['startVideosMuted'];
-    SettingsManager().settings.startVideosMutedFullscreen.value = map['startVideosMutedFullscreen'];
-    SettingsManager().settings.use24HrFormat.value = map['use24HrFormat'];
-    SettingsManager().settings.alwaysShowAvatars.value = map['alwaysShowAvatars'];
-    SettingsManager().settings.notifyOnChatList.value = map['notifyOnChatList'];
-    SettingsManager().settings.enablePrivateAPI.value = map['enablePrivateAPI'];
-    SettingsManager().settings.privateSendTypingIndicators.value = map['privateSendTypingIndicators'];
-    SettingsManager().settings.privateMarkChatAsRead.value = map['privateMarkChatAsRead'];
-    SettingsManager().settings.privateManualMarkAsRead.value = map['privateManualMarkAsRead'];
-    SettingsManager().settings.redactedMode.value = map['redactedMode'];
-    SettingsManager().settings.hideMessageContent.value = map['hideMessageContent'];
-    SettingsManager().settings.hideReactions.value = map['hideReactions'];
-    SettingsManager().settings.hideAttachments.value = map['hideAttachments'];
-    SettingsManager().settings.hideEmojis.value = map['hideEmojis'];
-    SettingsManager().settings.hideAttachmentTypes.value = map['hideAttachmentTypes'];
-    SettingsManager().settings.hideContactPhotos.value = map['hideContactPhotos'];
-    SettingsManager().settings.hideContactInfo.value = map['hideContactInfo'];
-    SettingsManager().settings.removeLetterAvatars.value = map['removeLetterAvatars'];
-    SettingsManager().settings.generateFakeContactNames.value = map['generateFakeContactNames'];
-    SettingsManager().settings.generateFakeMessageContent.value = map['generateFakeMessageContent'];
-    SettingsManager().settings.enableQuickTapback.value = map['enableQuickTapback'];
-    SettingsManager().settings.quickTapbackType.value = map['quickTapbackType'];
-    SettingsManager().settings.iosShowPin.value = map['iosShowPin'];
-    SettingsManager().settings.iosShowAlert.value = map['iosShowAlert'];
-    SettingsManager().settings.iosShowDelete.value = map['iosShowDelete'];
-    SettingsManager().settings.iosShowMarkRead.value = map['iosShowMarkRead'];
-    SettingsManager().settings.iosShowArchive.value = map['iosShowArchive'];
-    SettingsManager().settings.materialRightAction.value = MaterialSwipeAction.values[map['materialRightAction']];
-    SettingsManager().settings.materialLeftAction.value = MaterialSwipeAction.values[map['materialLeftAction']];
-    SettingsManager().settings.shouldSecure.value = map['shouldSecure'];
-    SettingsManager().settings.securityLevel.value = SecurityLevel.values[map['securityLevel']];
-    SettingsManager().settings.skin.value = Skins.values[map['skin']];
-    SettingsManager().settings.theme.value = ThemeMode.values[map['theme']];
-    SettingsManager().settings.fullscreenViewerSwipeDir.value = SwipeDirection.values[map['fullscreenViewerSwipeDir']];
-    SettingsManager().settings.pinRowsPortrait.value = map['pinRowsPortrait'];
-    SettingsManager().settings.pinColumnsPortrait.value = map['pinColumnsPortrait'];
-    SettingsManager().settings.pinRowsLandscape.value = map['pinRowsLandscape'];
-    SettingsManager().settings.pinColumnsLandscape.value = map['pinColumnsLandscape'];
-    SettingsManager().settings.maxAvatarsInGroupWidget.value = map['maxAvatarsInGroupWidget'];
+    SettingsManager().settings.chunkSize.value = map['chunkSize'] ?? 500;
+    SettingsManager().settings.autoDownload.value = map['autoDownload'] ?? true;
+    SettingsManager().settings.onlyWifiDownload.value = map['onlyWifiDownload'] ?? false;
+    SettingsManager().settings.autoOpenKeyboard.value = map['autoOpenKeyboard'] ?? true;
+    SettingsManager().settings.hideTextPreviews.value = map['hideTextPreviews'] ?? false;
+    SettingsManager().settings.showIncrementalSync.value = map['showIncrementalSync'] ?? false;
+    SettingsManager().settings.lowMemoryMode.value = map['lowMemoryMode'] ?? false;
+    SettingsManager().settings.lastIncrementalSync.value = map['lastIncrementalSync'] ?? 0;
+    SettingsManager().settings.refreshRate.value = map['refreshRate'] ?? 0;
+    SettingsManager().settings.colorfulAvatars.value = map['colorfulAvatars'] ?? false;
+    SettingsManager().settings.colorfulBubbles.value = map['colorfulBubbles'] ?? false;
+    SettingsManager().settings.hideDividers.value = map['hideDividers'] ?? false;
+    SettingsManager().settings.scrollVelocity.value = map['scrollVelocity'] ?? 1;
+    SettingsManager().settings.sendWithReturn.value = map['sendWithReturn'] ?? false;
+    SettingsManager().settings.doubleTapForDetails.value = map['doubleTapForDetails'] ?? false;
+    SettingsManager().settings.denseChatTiles.value = map['denseChatTiles'] ?? false;
+    SettingsManager().settings.smartReply.value = map['smartReply'] ?? false;
+    SettingsManager().settings.reducedForehead.value = map['reducedForehead'] ?? false;
+    SettingsManager().settings.preCachePreviewImages.value = map['preCachePreviewImages'] ?? true;
+    SettingsManager().settings.showConnectionIndicator.value = map['showConnectionIndicator'] ?? false;
+    SettingsManager().settings.showSyncIndicator.value = map['showSyncIndicator'] ?? true;
+    SettingsManager().settings.sendDelay.value = map['sendDelay'] ?? 0;
+    SettingsManager().settings.recipientAsPlaceholder.value = map['recipientAsPlaceholder'] ?? false;
+    SettingsManager().settings.hideKeyboardOnScroll.value = map['hideKeyboardOnScroll'] ?? false;
+    SettingsManager().settings.moveChatCreatorToHeader.value = map['moveChatCreatorToHeader'] ?? false;
+    SettingsManager().settings.cameraFAB.value = map['cameraFAB'] ?? false;
+    SettingsManager().settings.swipeToCloseKeyboard.value = map['swipeToCloseKeyboard'] ?? false;
+    SettingsManager().settings.swipeToOpenKeyboard.value = map['swipeToOpenKeyboard'] ?? false;
+    SettingsManager().settings.openKeyboardOnSTB.value = map['openKeyboardOnSTB'] ?? false;
+    SettingsManager().settings.swipableConversationTiles.value = map['swipableConversationTiles'] ?? false;
+    SettingsManager().settings.colorblindMode.value = map['colorblindMode'] ?? false;
+    SettingsManager().settings.showDeliveryTimestamps.value = map['showDeliveryTimestamps'] ?? false;
+    SettingsManager().settings.previewCompressionQuality.value = map['previewCompressionQuality'] ?? 50;
+    SettingsManager().settings.filteredChatList.value = map['filteredChatList'] ?? false;
+    SettingsManager().settings.startVideosMuted.value = map['startVideosMuted'] ?? true;
+    SettingsManager().settings.startVideosMutedFullscreen.value = map['startVideosMutedFullscreen'] ?? true;
+    SettingsManager().settings.use24HrFormat.value = map['use24HrFormat'] ?? false;
+    SettingsManager().settings.alwaysShowAvatars.value = map['alwaysShowAvatars'] ?? false;
+    SettingsManager().settings.notifyOnChatList.value = map['notifyOnChatList'] ?? false;
+    SettingsManager().settings.notifyReactions.value = map['notifyReactions'] ?? true;
+    SettingsManager().settings.notificationSound.value = map['notificationSound'] ?? "default";
+    SettingsManager().settings.globalTextDetection.value = map['globalTextDetection'] ?? "";
+    SettingsManager().settings.filterUnknownSenders.value = map['filterUnknownSenders'] ?? false;
+    SettingsManager().settings.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
+    SettingsManager().settings.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
+    SettingsManager().settings.privateMarkChatAsRead.value = map['privateMarkChatAsRead'] ?? false;
+    SettingsManager().settings.privateManualMarkAsRead.value = map['privateManualMarkAsRead'] ?? false;
+    SettingsManager().settings.redactedMode.value = map['redactedMode'] ?? false;
+    SettingsManager().settings.hideMessageContent.value = map['hideMessageContent'] ?? true;
+    SettingsManager().settings.hideReactions.value = map['hideReactions'] ?? false;
+    SettingsManager().settings.hideAttachments.value = map['hideAttachments'] ?? true;
+    SettingsManager().settings.hideEmojis.value = map['hideEmojis'] ?? false;
+    SettingsManager().settings.hideAttachmentTypes.value = map['hideAttachmentTypes'] ?? false;
+    SettingsManager().settings.hideContactPhotos.value = map['hideContactPhotos'] ?? true;
+    SettingsManager().settings.hideContactInfo.value = map['hideContactInfo'] ?? true;
+    SettingsManager().settings.removeLetterAvatars.value = map['removeLetterAvatars'] ?? true;
+    SettingsManager().settings.generateFakeContactNames.value = map['generateFakeContactNames'] ?? false;
+    SettingsManager().settings.generateFakeMessageContent.value = map['generateFakeMessageContent'] ?? false;
+    SettingsManager().settings.enableQuickTapback.value = map['enableQuickTapback'] ?? false;
+    SettingsManager().settings.quickTapbackType.value = map['quickTapbackType'] ?? ReactionTypes.toList()[0];
+    SettingsManager().settings.iosShowPin.value = map['iosShowPin'] ?? true;
+    SettingsManager().settings.iosShowAlert.value = map['iosShowAlert'] ?? true;
+    SettingsManager().settings.iosShowDelete.value = map['iosShowDelete'] ?? true;
+    SettingsManager().settings.iosShowMarkRead.value = map['iosShowMarkRead'] ?? true;
+    SettingsManager().settings.iosShowArchive.value = map['iosShowArchive'] ?? true;
+    SettingsManager().settings.materialRightAction.value = map['materialRightAction'] != null ? MaterialSwipeAction.values[map['materialRightAction']] : MaterialSwipeAction.pin;
+    SettingsManager().settings.materialLeftAction.value = map['materialLeftAction'] != null ? MaterialSwipeAction.values[map['materialLeftAction']] : MaterialSwipeAction.archive;
+    SettingsManager().settings.shouldSecure.value = map['shouldSecure'] ?? false;
+    SettingsManager().settings.securityLevel.value = map['securityLevel'] != null ? SecurityLevel.values[map['securityLevel']] : SecurityLevel.locked;
+    SettingsManager().settings.incognitoKeyboard.value = map['incognitoKeyboard'] ?? false;
+    SettingsManager().settings.skin.value = map['skin'] != null ? Skins.values[map['skin']] : Skins.iOS;
+    SettingsManager().settings.theme.value = map['theme'] != null ? ThemeMode.values[map['theme']] : ThemeMode.system;
+    SettingsManager().settings.fullscreenViewerSwipeDir.value = map['fullscreenViewerSwipeDir'] != null ? SwipeDirection.values[map['fullscreenViewerSwipeDir']] : SwipeDirection.RIGHT;
+    SettingsManager().settings.pinRowsPortrait.value = map['pinRowsPortrait'] ?? 3;
+    SettingsManager().settings.pinColumnsPortrait.value = map['pinColumnsPortrait'] ?? 3;
+    SettingsManager().settings.pinRowsLandscape.value = map['pinRowsLandscape'] ?? 1;
+    SettingsManager().settings.pinColumnsLandscape.value = map['pinColumnsLandscape'] ?? 6;
+    SettingsManager().settings.maxAvatarsInGroupWidget.value = map['maxAvatarsInGroupWidget'] ?? 4;
     SettingsManager().settings.save();
+  }
+
+  static Settings fromMap(Map<String, dynamic> map) {
+    Settings s = new Settings();
+    s.guidAuthKey.value = map['guidAuthKey'] ?? "";
+    s.serverAddress.value = map['serverAddress'] ?? "";
+    s.finishedSetup.value = map['finishedSetup'] ?? false;
+    s.chunkSize.value = map['chunkSize'] ?? 500;
+    s.autoDownload.value = map['autoDownload'] ?? true;
+    s.onlyWifiDownload.value = map['onlyWifiDownload'] ?? false;
+    s.autoOpenKeyboard.value = map['autoOpenKeyboard'] ?? true;
+    s.hideTextPreviews.value = map['hideTextPreviews'] ?? false;
+    s.showIncrementalSync.value = map['showIncrementalSync'] ?? false;
+    s.lowMemoryMode.value = map['lowMemoryMode'] ?? false;
+    s.lastIncrementalSync.value = map['lastIncrementalSync'] ?? 0;
+    s.refreshRate.value = map['refreshRate'] ?? 0;
+    s.colorfulAvatars.value = map['colorfulAvatars'] ?? false;
+    s.colorfulBubbles.value = map['colorfulBubbles'] ?? false;
+    s.hideDividers.value = map['hideDividers'] ?? false;
+    s.scrollVelocity.value = map['scrollVelocity'] ?? 1;
+    s.sendWithReturn.value = map['sendWithReturn'] ?? false;
+    s.doubleTapForDetails.value = map['doubleTapForDetails'] ?? false;
+    s.denseChatTiles.value = map['denseChatTiles'] ?? false;
+    s.smartReply.value = map['smartReply'] ?? false;
+    s.reducedForehead.value = map['reducedForehead'] ?? false;
+    s.preCachePreviewImages.value = map['preCachePreviewImages'] ?? true;
+    s.showConnectionIndicator.value = map['showConnectionIndicator'] ?? false;
+    s.showSyncIndicator.value = map['showSyncIndicator'] ?? true;
+    s.sendDelay.value = map['sendDelay'] ?? 0;
+    s.recipientAsPlaceholder.value = map['recipientAsPlaceholder'] ?? false;
+    s.hideKeyboardOnScroll.value = map['hideKeyboardOnScroll'] ?? false;
+    s.moveChatCreatorToHeader.value = map['moveChatCreatorToHeader'] ?? false;
+    s.cameraFAB.value = map['cameraFAB'] ?? false;
+    s.swipeToCloseKeyboard.value = map['swipeToCloseKeyboard'] ?? false;
+    s.swipeToOpenKeyboard.value = map['swipeToOpenKeyboard'] ?? false;
+    s.openKeyboardOnSTB.value = map['openKeyboardOnSTB'] ?? false;
+    s.swipableConversationTiles.value = map['swipableConversationTiles'] ?? false;
+    s.colorblindMode.value = map['colorblindMode'] ?? false;
+    s.showDeliveryTimestamps.value = map['showDeliveryTimestamps'] ?? false;
+    s.previewCompressionQuality.value = map['previewCompressionQuality'] ?? 50;
+    s.filteredChatList.value = map['filteredChatList'] ?? false;
+    s.startVideosMuted.value = map['startVideosMuted'] ?? true;
+    s.startVideosMutedFullscreen.value = map['startVideosMutedFullscreen'] ?? true;
+    s.use24HrFormat.value = map['use24HrFormat'] ?? false;
+    s.alwaysShowAvatars.value = map['alwaysShowAvatars'] ?? false;
+    s.notifyOnChatList.value = map['notifyOnChatList'] ?? false;
+    s.notifyReactions.value = map['notifyReactions'] ?? true;
+    s.notificationSound.value = map['notificationSound'] ?? "default";
+    s.colorsFromMedia.value = map['colorsFromMedia'] ?? false;
+    s.globalTextDetection.value = map['globalTextDetection'] ?? "";
+    s.filterUnknownSenders.value = map['filterUnknownSenders'] ?? false;
+    s.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
+    s.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
+    s.privateMarkChatAsRead.value = map['privateMarkChatAsRead'] ?? false;
+    s.privateManualMarkAsRead.value = map['privateManualMarkAsRead'] ?? false;
+    s.redactedMode.value = map['redactedMode'] ?? false;
+    s.hideMessageContent.value = map['hideMessageContent'] ?? true;
+    s.hideReactions.value = map['hideReactions'] ?? false;
+    s.hideAttachments.value = map['hideAttachments'] ?? true;
+    s.hideEmojis.value = map['hideEmojis'] ?? false;
+    s.hideAttachmentTypes.value = map['hideAttachmentTypes'] ?? false;
+    s.hideContactPhotos.value = map['hideContactPhotos'] ?? true;
+    s.hideContactInfo.value = map['hideContactInfo'] ?? true;
+    s.removeLetterAvatars.value = map['removeLetterAvatars'] ?? true;
+    s.generateFakeContactNames.value = map['generateFakeContactNames'] ?? false;
+    s.generateFakeMessageContent.value = map['generateFakeMessageContent'] ?? false;
+    s.enableQuickTapback.value = map['enableQuickTapback'] ?? false;
+    s.quickTapbackType.value = map['quickTapbackType'] ?? ReactionTypes.toList()[0];
+    s.iosShowPin.value = map['iosShowPin'] ?? true;
+    s.iosShowAlert.value = map['iosShowAlert'] ?? true;
+    s.iosShowDelete.value = map['iosShowDelete'] ?? true;
+    s.iosShowMarkRead.value = map['iosShowMarkRead'] ?? true;
+    s.iosShowArchive.value = map['iosShowArchive'] ?? true;
+    s.materialRightAction.value = map['materialRightAction'] != null ? MaterialSwipeAction.values[map['materialRightAction']] : MaterialSwipeAction.pin;
+    s.materialLeftAction.value = map['materialLeftAction'] != null ? MaterialSwipeAction.values[map['materialLeftAction']] : MaterialSwipeAction.archive;
+    s.shouldSecure.value = map['shouldSecure'] ?? false;
+    s.securityLevel.value = map['securityLevel'] != null ? SecurityLevel.values[map['securityLevel']] : SecurityLevel.locked;
+    s.incognitoKeyboard.value = map['incognitoKeyboard'] ?? false;
+    s.skin.value = map['skin'] != null ? Skins.values[map['skin']] : Skins.iOS;
+    s.theme.value = map['theme'] != null ? ThemeMode.values[map['theme']] : ThemeMode.system;
+    s.fullscreenViewerSwipeDir.value = map['fullscreenViewerSwipeDir'] != null ? SwipeDirection.values[map['fullscreenViewerSwipeDir']] : SwipeDirection.RIGHT;
+    s.pinRowsPortrait.value = map['pinRowsPortrait'] ?? 3;
+    s.pinColumnsPortrait.value = map['pinColumnsPortrait'] ?? 3;
+    s.pinRowsLandscape.value = map['pinRowsLandscape'] ?? 1;
+    s.pinColumnsLandscape.value = map['pinColumnsLandscape'] ?? 6;
+    s.maxAvatarsInGroupWidget.value = map['maxAvatarsInGroupWidget'] ?? 4;
+    return s;
   }
 }

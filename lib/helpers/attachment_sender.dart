@@ -5,6 +5,7 @@ import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/darty.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -12,7 +13,6 @@ import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:path/path.dart';
@@ -53,7 +53,7 @@ class AttachmentSender {
   }
 
   // resumeChunkingAfterDisconnect() {
-  //     debugPrint("restarting chunking");
+  //     Logger.instance.log("restarting chunking");
   //     sendChunkRecursive(_guid, _currentchunk, _totalchunks, _currentbytes,
   //         _chunksize * 1024, _cb);
   // }
@@ -74,10 +74,7 @@ class AttachmentSender {
     params["hasMore"] = index + _chunkSize < _imageBytes.length;
     params["attachmentName"] = _attachmentName;
     params["attachmentData"] = base64Encode(chunk);
-    debugPrint(chunk.length.toString() + "/" + _imageBytes.length.toString());
-    if (index == 0) {
-      debugPrint("(Sigabrt) Before sending first chunk");
-    }
+    Logger.info(chunk.length.toString() + "/" + _imageBytes.length.toString());
     SocketManager().sendMessage("send-message-chunk", params, (data) async {
       Map<String, dynamic> response = data;
       if (response['status'] == 200) {
@@ -91,7 +88,8 @@ class AttachmentSender {
           SocketManager().finishSender(_attachmentGuid);
         }
       } else {
-        debugPrint("failed to send");
+        Logger.error("Failed to sendattachment");
+
         String? tempGuid = sentMessage!.guid;
         sentMessage!.guid = sentMessage!.guid!.replaceAll("temp", "error-${response['error']['message']}");
         sentMessage!.error.value =
@@ -157,10 +155,8 @@ class AttachmentSender {
     // Save the attachment to device
     String appDocPath = SettingsManager().appDocDir.path;
     String pathName = "$appDocPath/attachments/${messageAttachment!.guid}/$_attachmentName";
-    debugPrint("(Sigabrt) Before saving to device");
     File file = await new File(pathName).create(recursive: true);
     await file.writeAsBytes(Uint8List.fromList(_imageBytes));
-    debugPrint("(Sigabrt) After saving to device");
 
     // Add the message to the chat.
     // This will save the message, attachments, and chat
@@ -175,7 +171,6 @@ class AttachmentSender {
 
     _totalChunks = numOfChunks;
     SocketManager().addAttachmentSender(this);
-    debugPrint("(Sigabrt) Before sending first chunk");
     sendChunkRecursive(0, _totalChunks, messageWithText == null ? "temp-${randomString(8)}" : messageWithText!.guid);
   }
 }

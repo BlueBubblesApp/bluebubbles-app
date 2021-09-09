@@ -1,12 +1,15 @@
 import 'dart:async';
 
+import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -160,7 +163,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
       context,
       widget.handle?.color != null ? HexColor(widget.handle!.color!) : toColorGradient(widget.handle!.address)[0],
       title: Container(
-          width: context.width - 112,
+          width: CustomNavigator.width(context) - 112,
           child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -198,7 +201,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
         dialogActionButtons: true,
       ),
       constraints: BoxConstraints(
-          minHeight: 480, minWidth: context.width - 70, maxWidth: context.width - 70),
+          minHeight: 480, minWidth: CustomNavigator.width(context) - 70, maxWidth: CustomNavigator.width(context) - 70),
     );
 
     if (didReset) return;
@@ -270,7 +273,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
                                   SettingsManager().settings.removeLetterAvatars.value) ||
                               state!.initials == null
                           ? Icon(
-                              Icons.person,
+                              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.person_fill : Icons.person,
                               key: Key("$keyPrefix-avatar-icon"),
                               size: (widget.size ?? 40) / 2,
                             )

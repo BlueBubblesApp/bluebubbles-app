@@ -1,3 +1,5 @@
+import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -35,7 +37,7 @@ class _AttachmentDownloaderWidgetState extends State<AttachmentDownloaderWidget>
                 widget.attachment.getFriendlySize(),
                 style: Theme.of(context).textTheme.bodyText1,
               ),
-              Icon(Icons.cloud_download, size: 28.0),
+              Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.cloud_download : Icons.cloud_download, size: 28.0),
               (widget.attachment.mimeType != null)
                   ? Text(
                       widget.attachment.mimeType!,

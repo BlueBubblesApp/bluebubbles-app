@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/repository/models/message.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:html/dom.dart';
 import 'package:html/parser.dart' as parser;
 import 'package:http/http.dart' as http;
@@ -136,7 +136,7 @@ class MetadataHelper {
       try {
         data = await MetadataFetch.extract(url);
       } catch (ex) {
-        debugPrint('An error occurred while fetching URL Preview Metadata: ${ex.toString()}');
+        Logger.error('An error occurred while fetching URL Preview Metadata: ${ex.toString()}');
       }
     }
 
@@ -202,7 +202,7 @@ class MetadataHelper {
       document = parser.parse(response.body.toString());
       document.requestUrl = response.request!.url.toString();
     } catch (err) {
-      debugPrint("Error parsing HTML document: ${err.toString()}");
+      Logger.error("Error parsing HTML document: ${err.toString()}");
       return document;
     }
 
@@ -240,7 +240,7 @@ class MetadataHelper {
       meta.title = 'Invalid SSL Certificate';
       meta.description = ex.message;
     } catch (ex) {
-      debugPrint('Failed to manually get metadata: ${ex.toString()}');
+      Logger.error('Failed to manually get metadata: ${ex.toString()}');
     }
 
     return meta;

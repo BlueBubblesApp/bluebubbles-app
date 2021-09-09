@@ -5,6 +5,8 @@ import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/socket_singletons.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -30,6 +32,7 @@ import 'package:flutter/cupertino.dart' as Cupertino;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:simple_animations/simple_animations.dart';
 import 'package:slugify/slugify.dart';
 
 mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on State<ConversationView> {
@@ -64,6 +67,12 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   Stream<List<UniqueContact>> get contactStream => _contactStreamController.stream;
 
   TextEditingController chatSelectorController = new TextEditingController(text: " ");
+
+  static Rx<MultiTween<String>> gradientTween = Rx<MultiTween<String>>(
+      MultiTween<String>()
+        ..add("color1", Tween<double>(begin: 0, end: 0.2))
+        ..add("color2", Tween<double>(begin: 0.8, end: 1))
+  );
 
   /// Conversation view methods
   ///
@@ -117,7 +126,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       try {
         await fetchChatSingleton(widget.chat!.guid!);
       } catch (ex) {
-        debugPrint(ex.toString());
+        Logger.error(ex.toString());
       }
 
       setNewChatData(forceUpdate: true);
@@ -185,7 +194,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         return;
       }
 
-      debugPrint("(Convo View) No participants found for chat, fetching...");
+      Logger.info("No participants found for chat, fetching...", tag: "ConversationView");
 
       try {
         // If we don't have participants, we should fetch them from the server
@@ -194,15 +203,15 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         if (data != null) {
           await chat!.getParticipants();
           if (chat!.participants.isNotEmpty) {
-            debugPrint("(Convo View) Got new chat participants. Updating state.");
+            Logger.info("Got new chat participants. Updating state.", tag: "ConversationView");
             if (this.mounted) setState(() {});
           } else {
-            debugPrint("(Convo View) Participants list is still empty, please contact support!");
+            Logger.info("Participants list is still empty, please contact support!", tag: "ConversationView");
           }
         }
       } catch (ex) {
-        debugPrint("There was an error fetching the chat");
-        debugPrint(ex.toString());
+        Logger.error("There was an error fetching the chat");
+        Logger.error(ex.toString());
       }
     }
 
@@ -285,7 +294,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           padding: EdgeInsets.only(right: SettingsManager().settings.colorblindMode.value ? 10.0 : 5.0),
           child: GestureDetector(
             child: Icon(
-              (markedAsRead) ? Icons.check_circle : Icons.check_circle_outline,
+              (markedAsRead) ? Cupertino.CupertinoIcons.check_mark_circled : Cupertino.CupertinoIcons.check_mark_circled_solid,
               color: (markedAsRead) ? HexColor('32CD32').withAlpha(200) : fontColor,
             ),
             onTap: markChatAsRead,
@@ -369,7 +378,13 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                 padding: const EdgeInsets.only(right: 8.0),
                 child: GestureDetector(
                   child: Icon(
-                    (markedAsRead) ? Icons.check_circle : Icons.check_circle_outline,
+                    (markedAsRead)
+                        ? SettingsManager().settings.skin.value == Skins.iOS
+                        ? Cupertino.CupertinoIcons.check_mark_circled_solid
+                        : Icons.check_circle
+                        : SettingsManager().settings.skin.value == Skins.iOS
+                        ? Cupertino.CupertinoIcons.check_mark_circled
+                        : Icons.check_circle_outline,
                     color: (markedAsRead) ? HexColor('32CD32').withAlpha(200) : fontColor,
                   ),
                   onTap: markChatAsRead,
@@ -382,7 +397,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             padding: const EdgeInsets.only(right: 8.0),
             child: GestureDetector(
               child: Icon(
-                Icons.more_vert,
+                SettingsManager().settings.skin.value == Skins.iOS ? Cupertino.CupertinoIcons.ellipsis : Icons.more_vert,
                 color: fontColor,
               ),
               onTap: openDetails,
@@ -426,7 +441,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     // IT KINDA WORKED BUT ULTIMATELY FAILED
 
     // return PreferredSize(
-    //     preferredSize: Size(context.width, 80),
+    //     preferredSize: Size(CustomNavigator.width(context), 80),
     //     child: ClipRect(
     //         child: BackdropFilter(
     //             filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
@@ -507,7 +522,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     return CupertinoNavigationBar(
         backgroundColor: Theme.of(context).accentColor.withAlpha(125),
         border: Border(
-          bottom: BorderSide(color: Colors.white.withOpacity(0.2), width: 0.2),
+          bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1.5),
         ),
         leading: GestureDetector(
           onTap: () {
@@ -564,12 +579,12 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                     Center(
                         child: Container(
                       constraints: BoxConstraints(
-                        maxWidth: context.width / 2,
+                        maxWidth: CustomNavigator.width(context) / 2,
                       ),
                       child: Row(mainAxisSize: MainAxisSize.min, children: [
                         Container(
                           constraints: BoxConstraints(
-                            maxWidth: context.width / 2 - 55,
+                            maxWidth: CustomNavigator.width(context) / 2 - 55,
                           ),
                           child: RichText(
                             maxLines: 1,
@@ -913,7 +928,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         });
 
     params["participants"] = participants;
-    debugPrint("Starting chat with participants: ${participants.join(", ")}");
+    Logger.info("Starting chat with participants: ${participants.join(", ")}");
 
     Function returnChat = (Chat newChat) async {
       await newChat.save();

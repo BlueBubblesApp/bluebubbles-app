@@ -8,6 +8,7 @@ import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:contacts_service/contacts_service.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 
@@ -109,7 +110,7 @@ class _ContactWidgetState extends State<ContactWidget> {
                         padding: EdgeInsets.only(left: 5.0),
                         child: Icon(
                           SettingsManager().settings.skin.value == Skins.iOS
-                              ? Icons.arrow_forward_ios
+                              ? CupertinoIcons.forward
                               : Icons.arrow_forward,
                           color: Colors.grey,
                           size: 15,

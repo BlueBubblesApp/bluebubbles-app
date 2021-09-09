@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_tile.dart';
 import 'package:bluebubbles/layouts/widgets/avatar_crop.dart';
@@ -49,7 +50,7 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
         appBar: PreferredSize(
-          preferredSize: Size(context.width, 80),
+          preferredSize: Size(CustomNavigator.width(context), 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
@@ -167,13 +168,19 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
                                                 .apply(color: Theme.of(context).primaryColor)),
                                         onPressed: () {
                                           Navigator.of(context).pop();
-                                          Get.to(() => AvatarCrop(index: index));
+                                          CustomNavigator.pushSettings(
+                                            context,
+                                            AvatarCrop(index: index),
+                                          );
                                         }),
                                   ]);
                             },
                           );
                         } else {
-                          Get.to(() => AvatarCrop(index: index));
+                          CustomNavigator.pushSettings(
+                            context,
+                            AvatarCrop(index: index),
+                          );
                         }
                       },
                     );

@@ -9,6 +9,7 @@ import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/country_codes.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
@@ -22,7 +23,7 @@ import 'package:collection/collection.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:convert/convert.dart';
 import 'package:device_info/device_info.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
@@ -148,8 +149,8 @@ bool sameAddress(List<String?> options, String? compared) {
 
 String getInitials(Contact contact) {
   // Set default initials
-  String initials = (contact.givenName!.isNotEmpty == true ? contact.givenName![0] : "") +
-      (contact.familyName!.isNotEmpty == true ? contact.familyName![0] : "");
+  String initials = ((contact.givenName ?? "").isNotEmpty == true ? contact.givenName![0] : "") +
+      ((contact.familyName ?? "").isNotEmpty == true ? contact.familyName![0] : "");
 
   // If the initials are empty, get them from the display name
   if (initials.trim().isEmpty) {
@@ -238,7 +239,6 @@ String buildDate(DateTime? dateTime) {
 }
 
 String buildTime(DateTime? dateTime) {
-  SettingsManager().settings.use24HrFormat.value = MediaQuery.of(Get.context!).alwaysUse24HourFormat;
   if (dateTime == null || dateTime.millisecondsSinceEpoch == 0) return "";
   String time = SettingsManager().settings.use24HrFormat.value
       ? intl.DateFormat.Hm().format(dateTime)
@@ -350,6 +350,8 @@ Future<String> getGroupEventText(Message message) async {
     text = "$handle left the conversation";
   } else if (message.itemType == 2 && message.groupTitle != null) {
     text = "$handle named the conversation \"${message.groupTitle}\"";
+  } else if (message.itemType == 6) {
+    text = "$handle started a FaceTime call";
   }
 
   return text;
@@ -455,8 +457,8 @@ Size getGifDimensions(Uint8List bytes) {
   hexString += hex.encode(bytes.sublist(8, 9));
   int height = int.parse(hexString, radix: 16);
 
-  debugPrint("GIF width: $width");
-  debugPrint("GIF height: $height");
+  Logger.debug("GIF width: $width");
+  Logger.debug("GIF height: $height");
   Size size = new Size(width.toDouble(), height.toDouble());
   return size;
 }
@@ -509,8 +511,8 @@ Future<String> getDeviceName() async {
       deviceName = items.join("_").toLowerCase();
     }
   } catch (ex) {
-    debugPrint("Failed to get device name! Defaulting to 'android-client'");
-    debugPrint(ex.toString());
+    Logger.error("Failed to get device name! Defaulting to 'android-client'");
+    Logger.error(ex.toString());
   }
 
   // Fallback for if it happens to be empty or null, somehow... idk

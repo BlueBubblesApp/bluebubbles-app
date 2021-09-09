@@ -1,13 +1,14 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/repository/models/theme_object.dart';
-import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
@@ -41,7 +42,7 @@ class DBProvider {
 
   static Database? _database;
   static String _path = "";
-  static int currentVersion = 11;
+  static int currentVersion = 14;
 
   /// Contains list of functions to invoke when going from a previous to the current database verison
   /// The previous version is always [key - 1], for example for key 2, it will be the upgrade scheme from version 1 to version 2
@@ -49,47 +50,37 @@ class DBProvider {
     new DBUpgradeItem(
         addedInVersion: 2,
         upgrade: (Database db) {
-          db.execute(
-              "ALTER TABLE message ADD COLUMN hasDdResults INTEGER DEFAULT 0;");
+          db.execute("ALTER TABLE message ADD COLUMN hasDdResults INTEGER DEFAULT 0;");
         }),
     new DBUpgradeItem(
         addedInVersion: 3,
         upgrade: (Database db) {
-          db.execute(
-              "ALTER TABLE message ADD COLUMN balloonBundleId TEXT DEFAULT NULL;");
-          db.execute(
-              "ALTER TABLE chat ADD COLUMN isFiltered INTEGER DEFAULT 0;");
+          db.execute("ALTER TABLE message ADD COLUMN balloonBundleId TEXT DEFAULT NULL;");
+          db.execute("ALTER TABLE chat ADD COLUMN isFiltered INTEGER DEFAULT 0;");
         }),
     new DBUpgradeItem(
         addedInVersion: 4,
         upgrade: (Database db) {
-          db.execute(
-              "ALTER TABLE message ADD COLUMN dateDeleted INTEGER DEFAULT NULL;");
+          db.execute("ALTER TABLE message ADD COLUMN dateDeleted INTEGER DEFAULT NULL;");
           db.execute("ALTER TABLE chat ADD COLUMN isPinned INTEGER DEFAULT 0;");
         }),
     new DBUpgradeItem(
         addedInVersion: 5,
         upgrade: (Database db) {
-          db.execute(
-              "ALTER TABLE handle ADD COLUMN originalROWID INTEGER DEFAULT NULL;");
-          db.execute(
-              "ALTER TABLE chat ADD COLUMN originalROWID INTEGER DEFAULT NULL;");
-          db.execute(
-              "ALTER TABLE attachment ADD COLUMN originalROWID INTEGER DEFAULT NULL;");
-          db.execute(
-              "ALTER TABLE message ADD COLUMN otherHandle INTEGER DEFAULT NULL;");
+          db.execute("ALTER TABLE handle ADD COLUMN originalROWID INTEGER DEFAULT NULL;");
+          db.execute("ALTER TABLE chat ADD COLUMN originalROWID INTEGER DEFAULT NULL;");
+          db.execute("ALTER TABLE attachment ADD COLUMN originalROWID INTEGER DEFAULT NULL;");
+          db.execute("ALTER TABLE message ADD COLUMN otherHandle INTEGER DEFAULT NULL;");
         }),
     new DBUpgradeItem(
         addedInVersion: 6,
         upgrade: (Database db) {
-          db.execute(
-              "ALTER TABLE attachment ADD COLUMN metadata TEXT DEFAULT NULL;");
+          db.execute("ALTER TABLE attachment ADD COLUMN metadata TEXT DEFAULT NULL;");
         }),
     new DBUpgradeItem(
         addedInVersion: 7,
         upgrade: (Database db) {
-          db.execute(
-              "ALTER TABLE message ADD COLUMN metadata TEXT DEFAULT NULL;");
+          db.execute("ALTER TABLE message ADD COLUMN metadata TEXT DEFAULT NULL;");
         }),
     new DBUpgradeItem(
         addedInVersion: 8,
@@ -104,14 +95,33 @@ class DBProvider {
     new DBUpgradeItem(
         addedInVersion: 10,
         upgrade: (Database db) {
-          db.execute(
-              "ALTER TABLE chat ADD COLUMN customAvatarPath TEXT DEFAULT NULL;");
+          db.execute("ALTER TABLE chat ADD COLUMN customAvatarPath TEXT DEFAULT NULL;");
         }),
     new DBUpgradeItem(
         addedInVersion: 11,
         upgrade: (Database db) {
-          db.execute(
-              "ALTER TABLE chat ADD COLUMN pinIndex INTEGER DEFAULT NULL;");
+          db.execute("ALTER TABLE chat ADD COLUMN pinIndex INTEGER DEFAULT NULL;");
+        }),
+    new DBUpgradeItem(
+        addedInVersion: 12,
+        upgrade: (Database db) async {
+          db.execute("ALTER TABLE chat ADD COLUMN muteType TEXT DEFAULT NULL;");
+          db.execute("ALTER TABLE chat ADD COLUMN muteArgs TEXT DEFAULT NULL;");
+          await db.update("chat", {'muteType': 'mute'}, where: "isMuted = ?", whereArgs: [1]);
+        }),
+    new DBUpgradeItem(
+        addedInVersion: 13,
+        upgrade: (Database db) {
+          db.execute("ALTER TABLE themes ADD COLUMN gradientBg INTEGER DEFAULT 0;");
+        }),
+    new DBUpgradeItem(
+        addedInVersion: 14,
+        upgrade: (Database db) async {
+          db.execute("ALTER TABLE themes ADD COLUMN previousLightTheme INTEGER DEFAULT 0;");
+          db.execute("ALTER TABLE themes ADD COLUMN previousDarkTheme INTEGER DEFAULT 0;");
+          Settings s = await Settings.getSettingsOld(db);
+          s.save();
+          db.execute("DELETE FROM config");
         }),
   ];
 
@@ -128,35 +138,32 @@ class DBProvider {
   Future<Database> initDB() async {
     Directory documentsDirectory = await getApplicationDocumentsDirectory();
     _path = join(documentsDirectory.path, "chat.db");
-    return await openDatabase(_path,
-        version: currentVersion,
-        onUpgrade: _onUpgrade, onOpen: (Database db) async {
-      debugPrint("Database Opened");
+    return await openDatabase(_path, version: currentVersion, onUpgrade: _onUpgrade, onOpen: (Database db) async {
+      Logger.info("Database Opened");
       _database = db;
       await checkTableExistenceAndCreate(db);
       _database = null;
     }, onCreate: (Database db, int version) async {
-      debugPrint("creating database");
+      Logger.info("creating database");
       _database = db;
       await this.buildDatabase(db);
       _database = null;
     });
   }
 
-  void _onUpgrade(Database db, int oldVersion, int newVersion) async {
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     // Run each upgrade scheme for every difference in version.
     // If the user is on version 1 and they need to upgrade to version 3,
     // then we will run every single scheme from 1 -> 2 and 2 -> 3
 
     for (DBUpgradeItem item in upgradeSchemes) {
       if (oldVersion < item.addedInVersion) {
-        debugPrint(
-            "Upgrading DB from version $oldVersion to version $newVersion");
+        Logger.info("Upgrading DB from version $oldVersion to version $newVersion");
 
         try {
           await item.upgrade(db);
         } catch (ex) {
-          debugPrint("Failed to perform DB upgrade: ${ex.toString()}");
+          Logger.error("Failed to perform DB upgrade: ${ex.toString()}");
         }
       }
     }
@@ -224,8 +231,8 @@ class DBProvider {
             await createScheduledTable(db);
             break;
         }
-        debugPrint(
-            "creating missing table " + tableName.toString().split(".").last);
+
+        Logger.info("Creating missing table " + tableName.toString().split(".").last);
       }
     }
   }
@@ -269,7 +276,8 @@ class DBProvider {
         "isArchived INTEGER DEFAULT 0,"
         "isFiltered INTEGER DEFAULT 0,"
         "isPinned INTEGER DEFAULT 0,"
-        "isMuted INTEGER DEFAULT 0,"
+        "muteType TEXT DEFAULT NULL,"
+        "muteArgs TEXT DEFAULT NULL,"
         "hasUnreadMessage INTEGER DEFAULT 0,"
         "latestMessageDate INTEGER DEFAULT 0,"
         "latestMessageText TEXT,"
@@ -375,12 +383,10 @@ class DBProvider {
   }
 
   static Future<void> createIndexes(Database db) async {
-    await db
-        .execute("CREATE UNIQUE INDEX idx_handle_address ON handle (address);");
+    await db.execute("CREATE UNIQUE INDEX idx_handle_address ON handle (address);");
     await db.execute("CREATE UNIQUE INDEX idx_message_guid ON message (guid);");
     await db.execute("CREATE UNIQUE INDEX idx_chat_guid ON chat (guid);");
-    await db.execute(
-        "CREATE UNIQUE INDEX idx_attachment_guid ON attachment (guid);");
+    await db.execute("CREATE UNIQUE INDEX idx_attachment_guid ON attachment (guid);");
   }
 
   static Future<void> createConfigTable(Database db) async {
@@ -417,7 +423,10 @@ class DBProvider {
         "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
         "name TEXT UNIQUE,"
         "selectedLightTheme INTEGER DEFAULT 0,"
-        "selectedDarkTheme INTEGER DEFAULT 0"
+        "selectedDarkTheme INTEGER DEFAULT 0,"
+        "gradientBg INTEGER DEFAULT 0,"
+        "previousLightTheme INTEGER DEFAULT 0,"
+        "previousDarkTheme INTEGER DEFAULT 0"
         ");");
   }
 

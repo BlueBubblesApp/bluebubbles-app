@@ -6,24 +6,14 @@ import 'dart:ui';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
-import 'package:bluebubbles/layouts/settings/about_panel.dart';
-import 'package:bluebubbles/layouts/settings/attachment_panel.dart';
-import 'package:bluebubbles/layouts/settings/chat_list_panel.dart';
-import 'package:bluebubbles/layouts/settings/conversation_panel.dart';
-import 'package:bluebubbles/layouts/settings/custom_avatar_color_panel.dart';
-import 'package:bluebubbles/layouts/settings/custom_avatar_panel.dart';
-import 'package:bluebubbles/layouts/settings/pinned_order_panel.dart';
-import 'package:bluebubbles/layouts/settings/private_api_panel.dart';
-import 'package:bluebubbles/layouts/settings/redacted_mode_panel.dart';
-import 'package:bluebubbles/layouts/settings/server_management_panel.dart';
-import 'package:bluebubbles/layouts/settings/theme_panel.dart';
 import 'package:bluebubbles/layouts/setup/failure_to_start.dart';
 import 'package:bluebubbles/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/layouts/testing_mode.dart';
-import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/background_isolate.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
@@ -42,12 +32,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' hide Priority;
 import 'package:flutter/services.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 import 'package:get/get.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:secure_application/secure_application.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 
 // final SentryClient _sentry = SentryClient(
 //     dsn:
@@ -65,20 +60,13 @@ bool get isInDebugMode {
   return inDebugMode;
 }
 
+FlutterLocalNotificationsPlugin? flutterLocalNotificationsPlugin;
+late SharedPreferences prefs;
+
 Future<Null> _reportError(dynamic error, dynamic stackTrace) async {
   // Print the exception to the console.
-  debugPrint('Caught error: $error');
-  if (isInDebugMode) {
-    // Print the full stacktrace in debug mode.
-    debugPrint(stackTrace.toString());
-  } else {
-    debugPrint(stackTrace.toString());
-    // Send the Exception and Stacktrace to Sentry in Production mode.
-    // _sentry.captureException(
-    //   exception: error,
-    //   stackTrace: stackTrace,
-    // );
-  }
+  Logger.error('Caught error: $error');
+  Logger.error(stackTrace.toString());
 }
 
 class MyHttpOverrides extends HttpOverrides {
@@ -99,6 +87,8 @@ Future<Null> main() async {
 
   // This captures errors reported by the Flutter framework.
   FlutterError.onError = (FlutterErrorDetails details) {
+    Logger.error(details.exceptionAsString());
+    Logger.error(details.stack.toString());
     if (isInDebugMode) {
       // In development mode simply print to console.
       FlutterError.dumpErrorToConsole(details);
@@ -112,11 +102,19 @@ Future<Null> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   dynamic exception;
   try {
+    prefs = await SharedPreferences.getInstance();
     await DBProvider.db.initDB();
     await initializeDateFormatting('fr_FR', null);
     await SettingsManager().init();
     await SettingsManager().getSavedSettings(headless: true);
     Get.put(AttachmentDownloadService());
+    flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+    const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('ic_stat_icon');
+    final InitializationSettings initializationSettings =
+        InitializationSettings(android: initializationSettingsAndroid);
+    await flutterLocalNotificationsPlugin!.initialize(initializationSettings);
+    tz.initializeTimeZones();
+    tz.setLocalLocation(tz.getLocation(await FlutterNativeTimezone.getLocalTimezone()));
   } catch (e) {
     exception = e;
   }
@@ -238,31 +236,7 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
         defaultTransition: Transition.cupertino,
 
         getPages: [
-          GetPage(page: () => AboutPanel(), name: "/settings/about-panel"),
-          GetPage(page: () => AttachmentPanel(), name: "/settings/attachment-panel"),
-          GetPage(page: () => ChatListPanel(), name: "/settings/chat-list-panel"),
-          GetPage(page: () => ConversationPanel(), name: "/settings/conversation-panel"),
-          GetPage(
-              page: () => CustomAvatarColorPanel(),
-              name: "/settings/custom-avatar-color-panel",
-              binding: CustomAvatarColorPanelBinding()),
-          GetPage(
-              page: () => CustomAvatarPanel(),
-              name: "/settings/custom-avatar-panel",
-              binding: CustomAvatarPanelBinding()),
-          GetPage(page: () => PinnedOrderPanel(), name: "/settings/pinned-order-panel"),
-          GetPage(
-              page: () => PrivateAPIPanel(), name: "/settings/private-api-panel", binding: PrivateAPIPanelBinding()),
-          GetPage(page: () => RedactedModePanel(), name: "/settings/redacted-mode-panel"),
-          GetPage(
-              page: () => ServerManagementPanel(),
-              name: "/settings/server-management-panel",
-              binding: ServerManagementPanelBinding()),
-          GetPage(
-              page: () => TestingMode(),
-              name: "/testing-mode",
-              binding: TestingModeBinding()),
-          GetPage(page: () => ThemePanel(), name: "/settings/theme-panel", binding: ThemePanelBinding()),
+          GetPage(page: () => TestingMode(), name: "/testing-mode", binding: TestingModeBinding()),
         ],
       ),
     );
@@ -327,6 +301,12 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     // Get the saved settings from the settings manager after the first frame
     SchedulerBinding.instance!.addPostFrameCallback((_) async {
       await SettingsManager().getSavedSettings(context: context);
+
+      if (SettingsManager().settings.colorsFromMedia.value) {
+        try {
+          await MethodChannelInterface().invokeMethod("start-notif-listener");
+        } catch (_) {}
+      }
       // Get sharing media from files shared to the app from cold start
       // This one only handles files, not text
       ReceiveSharingIntent.getInitialMedia().then((List<SharedMediaFile> value) async {
@@ -345,12 +325,11 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         if (attachments.length == 0) return;
 
         // Go to the new chat creator, with all of our attachments
-        Navigator.of(context).pushAndRemoveUntil(
-          ThemeSwitcher.buildPageRoute(
-            builder: (context) => ConversationView(
-              existingAttachments: attachments,
-              isCreator: true,
-            ),
+        CustomNavigator.pushAndRemoveUntil(
+          context,
+          ConversationView(
+            existingAttachments: attachments,
+            isCreator: true,
           ),
           (route) => route.isFirst,
         );
@@ -362,12 +341,11 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         if (text == null) return;
 
         // Go to the new chat creator, with all of our text
-        Navigator.of(context).pushAndRemoveUntil(
-          ThemeSwitcher.buildPageRoute(
-            builder: (context) => ConversationView(
-              existingText: text,
-              isCreator: true,
-            ),
+        CustomNavigator.pushAndRemoveUntil(
+          context,
+          ConversationView(
+            existingText: text,
+            isCreator: true,
           ),
           (route) => route.isFirst,
         );
@@ -394,7 +372,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   void didChangeDependencies() async {
     Locale myLocale = Localizations.localeOf(context);
     SettingsManager().countryCode = myLocale.countryCode;
-    SettingsManager().settings.use24HrFormat.value = MediaQuery.of(Get.context!).alwaysUse24HourFormat;
     await FlutterLibphonenumber().init();
     super.didChangeDependencies();
   }
@@ -452,6 +429,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                 ]);
                 return ConversationList(
                   showArchivedChats: false,
+                  showUnknownSenders: false,
                 );
               } else {
                 SystemChrome.setPreferredOrientations([

@@ -1,9 +1,9 @@
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:get/get.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
@@ -147,7 +147,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
         // extendBodyBehindAppBar: true,
         backgroundColor: Theme.of(context).backgroundColor,
         appBar: PreferredSize(
-          preferredSize: Size(context.width, 80),
+          preferredSize: Size(CustomNavigator.width(context), 80),
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
@@ -174,7 +174,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Icon(Icons.search, color: Theme.of(context).textTheme.bodyText1!.color),
+                      Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.search : Icons.search, color: Theme.of(context).textTheme.bodyText1!.color),
                       Container(padding: EdgeInsets.only(right: 5.0)),
                       Flexible(
                           fit: FlexFit.loose,
@@ -275,21 +275,17 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                               children: [
                                 ListTile(
                                   onTap: () {
-                                    Navigator.of(context).push(
-                                      CupertinoPageRoute(
-                                        builder: (BuildContext context) {
-                                          MessageBloc customBloc = new MessageBloc(chat, canLoadMore: false);
-
-                                          return ConversationView(
-                                            chat: chat,
-                                            existingAttachments: [],
-                                            existingText: null,
-                                            isCreator: false,
-                                            customMessageBloc: customBloc,
-                                            onMessagesViewComplete: () {
-                                              customBloc.loadSearchChunk(message);
-                                            },
-                                          );
+                                    MessageBloc customBloc = new MessageBloc(chat, canLoadMore: false);
+                                    CustomNavigator.push(
+                                      context,
+                                      ConversationView(
+                                        chat: chat,
+                                        existingAttachments: [],
+                                        existingText: null,
+                                        isCreator: false,
+                                        customMessageBloc: customBloc,
+                                        onMessagesViewComplete: () {
+                                          customBloc.loadSearchChunk(message);
                                         },
                                       ),
                                     );
@@ -312,7 +308,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                                     ),
                                   ),
                                   trailing: Icon(
-                                    Icons.arrow_forward_ios,
+                                    SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.forward : Icons.arrow_forward_ios,
                                     color: Theme.of(context).textTheme.bodyText1!.color,
                                   ),
                                 ),

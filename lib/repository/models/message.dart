@@ -459,6 +459,14 @@ class Message {
     return Message.fromMap(res.elementAt(0));
   }
 
+  static Future<DateTime?> lastMessageDate() async {
+    final Database db = await DBProvider.db.database;
+
+    // Get the last message
+    var res = await db.query("message", limit: 1, orderBy: "dateCreated DESC");
+    return (res.isNotEmpty) ? res.map((c) => Message.fromMap(c)).toList()[0].dateCreated : null;
+  }
+
   static Future<List<Message>> find([Map<String, dynamic> filters = const {}]) async {
     final Database db = await DBProvider.db.database;
 
