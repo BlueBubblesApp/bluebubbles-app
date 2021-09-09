@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bluebubbles/action_handler.dart';
+import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/group_event.dart';
@@ -32,6 +33,7 @@ class MessageWidget extends StatefulWidget {
     required this.isFirstSentMessage,
     required this.showHero,
     this.onUpdate,
+    this.bloc,
   }) : super(key: key);
 
   final Message message;
@@ -41,6 +43,7 @@ class MessageWidget extends StatefulWidget {
   final bool isFirstSentMessage;
   final bool showHero;
   final Message? Function(NewMessageEvent event)? onUpdate;
+  final MessageBloc? bloc;
 
   @override
   _MessageState createState() => _MessageState();
@@ -161,7 +164,7 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
     associatedMessageRequest = new Completer();
 
     try {
-      await _message.fetchAssociatedMessages();
+      await _message.fetchAssociatedMessages(bloc: widget.bloc);
     } catch (ex) {
       return associatedMessageRequest!.completeError(ex);
     }

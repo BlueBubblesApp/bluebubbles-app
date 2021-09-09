@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
+import 'package:universal_html/html.dart' as html;
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
@@ -64,13 +65,24 @@ class _ContactWidgetState extends State<ContactWidget> {
           color: Theme.of(context).accentColor,
           child: InkWell(
             onTap: () async {
-              MethodChannelInterface().invokeMethod(
-                "open_file",
-                {
-                  "path": "/attachments/" + widget.attachment.guid! + "/" + basename(widget.file.path),
-                  "mimeType": "text/x-vcard",
-                },
-              );
+              if (kIsWeb) {
+                final content = base64.encode(widget.file.bytes!);
+                html.AnchorElement(
+                    href: "data:application/octet-stream;charset=utf-16le;base64,$content")
+                  ..setAttribute("download", widget.file.name)
+                  ..click();
+              } else {
+                MethodChannelInterface().invokeMethod(
+                  "open_file",
+                  {
+                    "path": "/attachments/" +
+                        widget.attachment.guid! +
+                        "/" +
+                        basename(widget.file.path),
+                    "mimeType": "text/x-vcard",
+                  },
+                );
+              }
             },
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 15.0),

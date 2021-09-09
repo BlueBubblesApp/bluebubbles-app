@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
@@ -114,6 +115,8 @@ class AttachmentDownloadController extends GetxController {
           if (!kIsWeb) {
             await AttachmentHelper.compressAttachment(attachment, attachment.getPath());
             await attachment.update();
+          } else if (CurrentChat.activeChat?.chatAttachments.firstWhereOrNull((e) => e.guid == attachment.guid) == null) {
+            CurrentChat.activeChat?.chatAttachments.add(attachment);
           }
         } catch (ex) {
           // So what if it crashes here.... I don't care...

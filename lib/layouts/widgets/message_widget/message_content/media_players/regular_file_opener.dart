@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:file_picker/file_picker.dart';
-import 'package:universal_io/io.dart';
+import 'package:flutter/foundation.dart';
+import 'package:universal_html/html.dart' as html;
 
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
@@ -29,16 +32,27 @@ class _RegularFileOpenerState extends State<RegularFileOpener> {
 
     return GestureDetector(
       onTap: () async {
-        try {
-          await MethodChannelInterface().invokeMethod(
-            "open_file",
-            {
-              "path": "/attachments/" + widget.attachment.guid! + "/" + basename(widget.file.path),
-              "mimeType": widget.attachment.mimeType,
-            },
-          );
-        } catch (ex) {
-          showSnackbar('Error', "No handler for this file type!");
+        if (kIsWeb) {
+          final content = base64.encode(widget.file.bytes!);
+          html.AnchorElement(
+              href: "data:application/octet-stream;charset=utf-16le;base64,$content")
+            ..setAttribute("download", widget.file.name)
+            ..click();
+        } else {
+          try {
+            await MethodChannelInterface().invokeMethod(
+              "open_file",
+              {
+                "path": "/attachments/" +
+                    widget.attachment.guid! +
+                    "/" +
+                    basename(widget.file.path),
+                "mimeType": widget.attachment.mimeType,
+              },
+            );
+          } catch (ex) {
+            showSnackbar('Error', "No handler for this file type!");
+          }
         }
       },
       child: Container(

@@ -340,7 +340,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   bool get showDownload =>
       widget.message.hasAttachments &&
       widget.message.attachments!.where((element) => element!.mimeStart != null).length > 0 &&
-      widget.message.attachments!.where((element) => AttachmentHelper.getContent(element!) is File).length > 0;
+      widget.message.attachments!.where((element) => AttachmentHelper.getContent(element!) is PlatformFile).length > 0;
 
   bool get isSent => !widget.message.guid!.startsWith('temp') && !widget.message.guid!.startsWith('error');
 
@@ -386,7 +386,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             ),
           ),
         ),
-      if (widget.message.fullText.replaceAll("\n", " ").hasUrl)
+      if (widget.message.fullText.replaceAll("\n", " ").hasUrl && !kIsWeb && !kIsDesktop)
         Material(
           color: Colors.transparent,
           child: InkWell(
@@ -513,7 +513,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
           child: InkWell(
             onTap: () {
               Clipboard.setData(new ClipboardData(text: widget.message.fullText));
-              Navigator.of(context, rootNavigator: true).pop();
+              Navigator.of(context).pop();
               showSnackbar("Copied", "Copied to clipboard!", durationMs: 1000);
             },
             child: ListTile(
@@ -557,7 +557,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                           // style: Theme.of(context).textTheme.bodyText1,
                         ),
                         onPressed: () {
-                          Navigator.of(context, rootNavigator: true).pop('dialog');
+                          Navigator.of(context).pop('dialog');
                         },
                       ),
                     ];
@@ -620,8 +620,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
               try {
                 for (Attachment? element in widget.message.attachments!) {
                   dynamic content = AttachmentHelper.getContent(element!);
-                  if (content is PlatformFile && !kIsWeb) {
-                    await AttachmentHelper.saveToGallery(context, File(content.path));
+                  if (content is PlatformFile) {
+                    await AttachmentHelper.saveToGallery(context, content);
                   }
                 }
               } catch (ex, trace) {
@@ -641,7 +641,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             ),
           ),
         ),
-      if (widget.message.hasAttachments || widget.message.text!.length > 0)
+      if ((widget.message.hasAttachments && !kIsWeb) || widget.message.text!.length > 0)
         Material(
           color: Colors.transparent,
           child: InkWell(

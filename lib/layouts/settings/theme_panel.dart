@@ -297,39 +297,42 @@ class ThemePanel extends GetView<ThemePanelController> {
                         child: SettingsDivider(color: headerColor),
                       ),
                     ),
-                    SettingsTile(
-                      title: "Custom Avatar Colors",
-                      trailing: nextIcon,
-                      onTap: () async {
-                        CustomNavigator.pushSettings(
-                          context,
-                          CustomAvatarColorPanel(),
-                          binding: CustomAvatarColorPanelBinding(),
-                        );
-                      },
-                      backgroundColor: tileColor,
-                      subtitle: "Customize the color for different avatars",
-                    ),
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
+                    if (!kIsWeb)
+                      SettingsTile(
+                        title: "Custom Avatar Colors",
+                        trailing: nextIcon,
+                        onTap: () async {
+                          CustomNavigator.pushSettings(
+                            context,
+                            CustomAvatarColorPanel(),
+                            binding: CustomAvatarColorPanelBinding(),
+                          );
+                        },
+                        backgroundColor: tileColor,
+                        subtitle: "Customize the color for different avatars",
                       ),
-                    ),
-                    SettingsTile(
-                      title: "Custom Avatars",
-                      trailing: nextIcon,
-                      onTap: () async {
-                        CustomNavigator.pushSettings(
-                          context,
-                          CustomAvatarPanel(),
-                          binding: CustomAvatarPanelBinding(),
-                        );
-                      },
-                      backgroundColor: tileColor,
-                      subtitle: "Customize the avatar for different chats",
-                    ),
+                    if (!kIsWeb)
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 65.0),
+                          child: SettingsDivider(color: headerColor),
+                        ),
+                      ),
+                    if (!kIsWeb)
+                      SettingsTile(
+                        title: "Custom Avatars",
+                        trailing: nextIcon,
+                        onTap: () async {
+                          CustomNavigator.pushSettings(
+                            context,
+                            CustomAvatarPanel(),
+                            binding: CustomAvatarPanelBinding(),
+                          );
+                        },
+                        backgroundColor: tileColor,
+                        subtitle: "Customize the avatar for different chats",
+                      ),
                     if (!kIsWeb && !kIsDesktop)
                       Obx(() {
                         if (controller.refreshRates.length > 2)

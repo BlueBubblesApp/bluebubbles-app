@@ -16,6 +16,7 @@ import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PrivateAPIPanelBinding extends Bindings {
   @override
@@ -154,9 +155,7 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                     title: "Set up Private API Features",
                     subtitle: "View instructions on how to set up these features",
                     onTap: () async {
-                      MethodChannelInterface().invokeMethod("open-link", {
-                        "link": "https://github.com/BlueBubblesApp/BlueBubbles-Server/wiki/Using-Private-API-Features", "forceBrowser": false
-                      });
+                      await launch("https://github.com/BlueBubblesApp/BlueBubbles-Server/wiki/Using-Private-API-Features");
                     },
                     leading: SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.checkmark_shield,

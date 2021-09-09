@@ -1,4 +1,5 @@
 import 'package:bluebubbles/repository/models/message.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/svg.dart';
@@ -53,12 +54,12 @@ class Reaction {
     // Iterate over the messages and insert the latest reaction for each user
     for (Message msg in current) {
       int cache = msg.isFromMe! ? 0 : msg.handleId ?? 0;
-      if (!handleCache.contains(cache)) {
+      if (!handleCache.contains(cache) && !kIsWeb) {
         handleCache.add(cache);
 
         // Only add the reaction if it's not a "negative"
         if (msg.associatedMessageType != null && !msg.associatedMessageType!.startsWith("-")) output.add(msg);
-      }
+      } else if (msg.associatedMessageType != null && !msg.associatedMessageType!.startsWith("-")) output.add(msg);
     }
 
     return output;

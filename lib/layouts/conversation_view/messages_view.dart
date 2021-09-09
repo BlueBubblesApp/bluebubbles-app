@@ -453,6 +453,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                               isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages[index].guid,
                               showHero: false,
                               onUpdate: (event) => onUpdateMessage(event),
+                              bloc: widget.messageBloc!,
                             ));
                       },
                       childCount: _messages.length,
@@ -500,6 +501,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                                 isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages[index].guid,
                                 showHero: fullAnimation,
                                 onUpdate: (event) => onUpdateMessage(event),
+                                bloc: widget.messageBloc!,
                               ));
 
                           if (fullAnimation) {

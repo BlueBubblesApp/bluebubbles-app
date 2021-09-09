@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:universal_io/io.dart';
+import 'package:universal_html/html.dart' as html;
 import 'dart:isolate';
 import 'dart:typed_data';
 import 'dart:ui';
@@ -162,15 +165,17 @@ class AttachmentHelper {
     return (width / factor) / width;
   }
 
-  static Future<void> saveToGallery(BuildContext context, File? file) async {
-    //todo web support
+  static Future<void> saveToGallery(BuildContext context, PlatformFile file) async {
+    if (kIsWeb) {
+      final content = base64.encode(file.bytes!);
+      html.AnchorElement(
+          href: "data:application/octet-stream;charset=utf-16le;base64,$content")
+        ..setAttribute("download", file.name)
+        ..click();
+    }
     Function showDeniedSnackbar = (String? err) {
       showSnackbar("Save Failed", err ?? "Failed to save attachment!");
     };
-
-    if (file == null) {
-      return showSnackbar("Save Failed", "No file to save!");
-    }
 
     var hasPermissions = await Permission.storage.isGranted;
     var permDenied = await Permission.storage.isPermanentlyDenied;
@@ -187,7 +192,7 @@ class AttachmentHelper {
       return showDeniedSnackbar("BlueBubbles does not have the required permissions!");
     }
 
-    await ImageGallerySaver.saveFile(file.absolute.path);
+    await ImageGallerySaver.saveFile(file.path);
     showSnackbar('Success', 'Saved attachment!');
   }
 
@@ -268,17 +273,19 @@ class AttachmentHelper {
   }
 
   static void redownloadAttachment(Attachment attachment, {Function()? onComplete, Function()? onError}) {
-    File file = new File(attachment.getPath());
-    File compressedFile = new File(attachment.getCompressedPath());
+    if (!kIsWeb) {
+      File file = new File(attachment.getPath());
+      File compressedFile = new File(attachment.getCompressedPath());
 
-    // If neither exist, don't do anything
-    bool fExists = file.existsSync();
-    bool cExists = compressedFile.existsSync();
-    if (!fExists && !cExists) return;
+      // If neither exist, don't do anything
+      bool fExists = file.existsSync();
+      bool cExists = compressedFile.existsSync();
+      if (!fExists && !cExists) return;
 
-    // Delete them if they exist
-    if (fExists) file.deleteSync();
-    if (cExists) compressedFile.deleteSync();
+      // Delete them if they exist
+      if (fExists) file.deleteSync();
+      if (cExists) compressedFile.deleteSync();
+    }
 
     // Redownload the attachment
     Get.put(AttachmentDownloadController(attachment: attachment, onComplete: onComplete, onError: onError),
