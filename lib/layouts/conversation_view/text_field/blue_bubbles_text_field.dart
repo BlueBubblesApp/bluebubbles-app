@@ -532,9 +532,21 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               child: RawKeyboardListener(
                 focusNode: FocusNode(),
                 onKey: (RawKeyEvent event) async {
-                  if (event.isKeyPressed(LogicalKeyboardKey.enter)
-                      && SettingsManager().settings.sendWithReturn.value
-                      && !isNullOrEmpty(controller!.text)!) {
+                  if (event.physicalKey == PhysicalKeyboardKey.enter &&
+                      SettingsManager().settings.sendWithReturn.value) {
+                    if (!isNullOrEmpty(controller!.text)!) {
+                      await sendMessage();
+                      focusNode!.previousFocus(); // I genuinely don't know why this works
+                      return;
+                    } else {
+                      controller!.text = ""; // Stop pressing physical enter with enterIsSend from creating newlines
+                      focusNode!.previousFocus(); // I genuinely don't know why this works
+                      return;
+                    }
+                  }
+                  if (event.isKeyPressed(LogicalKeyboardKey.enter) &&
+                      SettingsManager().settings.sendWithReturn.value &&
+                      !isNullOrEmpty(controller!.text)!) {
                     await sendMessage();
                     focusNode!.requestFocus();
                   }
@@ -543,8 +555,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   iOSSkin: CustomCupertinoTextField(
                     enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
                     enabled: sendCountdown == null,
-                    textInputAction:
-                        SettingsManager().settings.sendWithReturn.value ? TextInputAction.send : TextInputAction.newline,
+                    textInputAction: SettingsManager().settings.sendWithReturn.value
+                        ? TextInputAction.send
+                        : TextInputAction.newline,
                     cursorColor: Theme.of(context).primaryColor,
                     onLongPressStart: () {
                       Feedback.forLongPress(context);
@@ -554,7 +567,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     },
                     key: _searchFormKey,
                     onSubmitted: (String value) {
-                      if (!SettingsManager().settings.sendWithReturn.value || isNullOrEmpty(value)!) return;
+                      if (isNullOrEmpty(value)!) return;
+                      focusNode!.requestFocus();
                       sendMessage();
                     },
                     onContentCommitted: onContentCommit,
@@ -564,10 +578,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     controller: controller,
                     scrollPhysics: CustomBouncingScrollPhysics(),
                     style: Theme.of(context).textTheme.bodyText1!.apply(
-                          color:
-                              ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.light
-                                  ? Colors.black
-                                  : Colors.white,
+                          color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) ==
+                                  Brightness.light
+                              ? Colors.black
+                              : Colors.white,
                           fontSizeDelta: -0.25,
                         ),
                     keyboardType: TextInputType.multiline,
@@ -594,14 +608,22 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     focusNode: focusNode,
                     textCapitalization: TextCapitalization.sentences,
                     autocorrect: true,
+                    textInputAction: SettingsManager().settings.sendWithReturn.value
+                        ? TextInputAction.send
+                        : TextInputAction.newline,
                     autofocus: SettingsManager().settings.autoOpenKeyboard.value,
                     cursorColor: Theme.of(context).primaryColor,
                     key: _searchFormKey,
+                    onSubmitted: (String value) {
+                      if (isNullOrEmpty(value)!) return;
+                      focusNode!.requestFocus();
+                      sendMessage();
+                    },
                     style: Theme.of(context).textTheme.bodyText1!.apply(
-                          color:
-                              ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.light
-                                  ? Colors.black
-                                  : Colors.white,
+                          color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) ==
+                                  Brightness.light
+                              ? Colors.black
+                              : Colors.white,
                           fontSizeDelta: -0.25,
                         ),
                     onContentCommitted: onContentCommit,
@@ -655,14 +677,19 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     autofocus: SettingsManager().settings.autoOpenKeyboard.value,
                     cursorColor: Theme.of(context).primaryColor,
                     key: _searchFormKey,
+                    onSubmitted: (String value) {
+                      if (isNullOrEmpty(value)!) return;
+                      focusNode!.requestFocus();
+                      sendMessage();
+                    },
                     style: Theme.of(context).textTheme.bodyText1!.apply(
-                          color:
-                              ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.light
-                                  ? Colors.black
-                                  : Colors.white,
+                          color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) ==
+                                  Brightness.light
+                              ? Colors.black
+                              : Colors.white,
                           fontSizeDelta: -0.25,
                         ),
-                    onContentCommitted: onContentCommit,
+                    // onContentCommitted: onContentCommit,
                     decoration: InputDecoration(
                       isDense: true,
                       enabledBorder: OutlineInputBorder(
@@ -818,15 +845,14 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   child: ButtonTheme(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        padding: EdgeInsets.only(
-                          right: 0,
-                        ),
-                        primary: Theme.of(context).primaryColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(40),
-                        ),
-                        elevation: 0
-                      ),
+                          padding: EdgeInsets.only(
+                            right: 0,
+                          ),
+                          primary: Theme.of(context).primaryColor,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(40),
+                          ),
+                          elevation: 0),
                       onPressed: sendAction,
                       child: Stack(
                         alignment: Alignment.center,
