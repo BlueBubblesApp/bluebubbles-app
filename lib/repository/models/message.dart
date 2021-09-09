@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:collection/src/iterable_extensions.dart';
 import 'package:crypto/crypto.dart' as crypto;
 
@@ -412,15 +413,19 @@ class Message {
     return (res.isNotEmpty) ? Chat.fromMap(res[0]) : null;
   }
 
-  Future<Message> fetchAssociatedMessages() async {
+  Future<Message> fetchAssociatedMessages({MessageBloc? bloc}) async {
     if (this.associatedMessages.isNotEmpty &&
         this.associatedMessages.length == 1 &&
         this.associatedMessages[0].guid == this.guid) {
       return this;
     }
-    associatedMessages = await Message.find({"associatedMessageGuid": this.guid});
+    if (kIsWeb) {
+      associatedMessages = bloc?.reactionMessages.values.where((element) => element.associatedMessageGuid == guid).toList() ?? [];
+    } else {
+      associatedMessages = await Message.find({"associatedMessageGuid": this.guid});
+    }
     associatedMessages.sort((a, b) => a.originalROWID!.compareTo(b.originalROWID!));
-    associatedMessages = MessageHelper.normalizedAssociatedMessages(associatedMessages);
+    if (!kIsWeb) associatedMessages = MessageHelper.normalizedAssociatedMessages(associatedMessages);
     return this;
   }
 

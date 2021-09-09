@@ -17,6 +17,7 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class UrlPreviewController extends GetxController with SingleGetTickerProviderMixin {
   final List<Attachment?> linkPreviews;
@@ -252,11 +253,8 @@ class UrlPreviewWidget extends StatelessWidget {
                   color: Theme.of(context).accentColor,
                   child: InkResponse(
                     borderRadius: BorderRadius.circular(20),
-                    onTap: () {
-                      MethodChannelInterface().invokeMethod(
-                        "open-link",
-                        {"link": controller.data.value?.url ?? message.text, "forceBrowser": false},
-                      );
+                    onTap: () async {
+                      await launch(controller.data.value?.url ?? message.text ?? '');
                     },
                     child: Container(
                       // The minus 5 here is so the timestamps show OK during swipe

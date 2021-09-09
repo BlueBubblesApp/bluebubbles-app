@@ -56,7 +56,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
   Future<void> initBytes() async {
     if (kIsWeb) {
       bytes = widget.file.bytes;
-    } if (widget.attachment.mimeType == "image/heic") {
+    } else if (widget.attachment.mimeType == "image/heic") {
       bytes =
           await AttachmentHelper.compressAttachment(widget.attachment, widget.file.path, qualityOverride: 100);
     } else {
@@ -196,7 +196,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                   child: CupertinoButton(
                     padding: EdgeInsets.symmetric(horizontal: 5),
                     onPressed: () async {
-                      await AttachmentHelper.saveToGallery(context, File(widget.file.path));
+                      await AttachmentHelper.saveToGallery(context, widget.file);
                     },
                     child: Icon(
                       SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.cloud_download : Icons.file_download,

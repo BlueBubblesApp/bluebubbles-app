@@ -1,3 +1,5 @@
+import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 import 'dart:ui';
 
@@ -86,6 +88,11 @@ class _ConversationDetailsState extends State<ConversationDetails> {
   }
 
   void fetchAttachments() {
+    if (kIsWeb) {
+      attachmentsForChat = CurrentChat.of(context)?.chatAttachments ?? [];
+      if (this.mounted) setState(() {});
+      return;
+    }
     Chat.getAttachments(chat).then((value) {
       attachmentsForChat = value;
       if (this.mounted) setState(() {});
@@ -309,83 +316,84 @@ class _ConversationDetailsState extends State<ConversationDetails> {
             SliverPadding(
               padding: EdgeInsets.symmetric(vertical: 20),
             ),
-            SliverToBoxAdapter(
-              child: InkWell(
-                onTap: () async {
-                  if (chat.customAvatarPath.value != null) {
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                            backgroundColor: Theme.of(context).accentColor,
-                            title: new Text("Custom Avatar",
-                                style: TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
-                            content: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text("You have already set a custom avatar for this chat. What would you like to do?",
-                                    style: Theme.of(context).textTheme.bodyText1),
-                              ],
-                            ),
-                            actions: <Widget>[
-                              TextButton(
-                                  child: Text("Cancel",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .subtitle1!
-                                          .apply(color: Theme.of(context).primaryColor)),
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                  }),
-                              TextButton(
-                                  child: Text("Reset",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .subtitle1!
-                                          .apply(color: Theme.of(context).primaryColor)),
-                                  onPressed: () {
-                                    File file = new File(chat.customAvatarPath.value!);
-                                    file.delete();
-                                    chat.customAvatarPath.value = null;
-                                    chat.save();
-                                    Navigator.of(context).pop();
-                                  }),
-                              TextButton(
-                                  child: Text("Set New",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .subtitle1!
-                                          .apply(color: Theme.of(context).primaryColor)),
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                    Get.to(() => AvatarCrop(chat: chat));
-                                  }),
-                            ]);
-                      },
-                    );
-                  } else {
-                    Get.to(() => AvatarCrop(chat: chat));
-                  }
-                },
-                child: ListTile(
-                  leading: Text(
-                    "Change chat avatar",
-                    style: TextStyle(
-                      color: Theme.of(context).primaryColor,
+            if (!kIsWeb)
+              SliverToBoxAdapter(
+                child: InkWell(
+                  onTap: () async {
+                    if (chat.customAvatarPath.value != null) {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                              backgroundColor: Theme.of(context).accentColor,
+                              title: new Text("Custom Avatar",
+                                  style: TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
+                              content: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text("You have already set a custom avatar for this chat. What would you like to do?",
+                                      style: Theme.of(context).textTheme.bodyText1),
+                                ],
+                              ),
+                              actions: <Widget>[
+                                TextButton(
+                                    child: Text("Cancel",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .subtitle1!
+                                            .apply(color: Theme.of(context).primaryColor)),
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    }),
+                                TextButton(
+                                    child: Text("Reset",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .subtitle1!
+                                            .apply(color: Theme.of(context).primaryColor)),
+                                    onPressed: () {
+                                      File file = new File(chat.customAvatarPath.value!);
+                                      file.delete();
+                                      chat.customAvatarPath.value = null;
+                                      chat.save();
+                                      Navigator.of(context).pop();
+                                    }),
+                                TextButton(
+                                    child: Text("Set New",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .subtitle1!
+                                            .apply(color: Theme.of(context).primaryColor)),
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                      Get.to(() => AvatarCrop(chat: chat));
+                                    }),
+                              ]);
+                        },
+                      );
+                    } else {
+                      Get.to(() => AvatarCrop(chat: chat));
+                    }
+                  },
+                  child: ListTile(
+                    leading: Text(
+                      "Change chat avatar",
+                      style: TextStyle(
+                        color: Theme.of(context).primaryColor,
+                      ),
                     ),
-                  ),
-                  trailing: Padding(
-                    padding: EdgeInsets.only(right: 15),
-                    child: Icon(
-                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.person : Icons.person,
-                      color: Theme.of(context).primaryColor,
+                    trailing: Padding(
+                      padding: EdgeInsets.only(right: 15),
+                      child: Icon(
+                        SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.person : Icons.person,
+                        color: Theme.of(context).primaryColor,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
             SliverToBoxAdapter(
               child: InkWell(
                 onTap: () async {

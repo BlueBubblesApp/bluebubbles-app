@@ -265,7 +265,7 @@ class _VideoViewerState extends State<VideoViewer> {
                   child: CupertinoButton(
                     padding: EdgeInsets.symmetric(horizontal: 5),
                     onPressed: () async {
-                      await AttachmentHelper.saveToGallery(context, File(widget.file.path));
+                      await AttachmentHelper.saveToGallery(context, widget.file);
                     },
                     child: Icon(
                       SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.cloud_download : Icons.file_download,

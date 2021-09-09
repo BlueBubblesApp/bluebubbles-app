@@ -7,6 +7,7 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 // Mixin just for commonly shared functions and properties between the SentMessage and ReceivedMessage
 abstract class MessageWidgetMixin {
@@ -142,7 +143,7 @@ abstract class MessageWidgetMixin {
                         url = "http://" + url;
                       }
 
-                      MethodChannelInterface().invokeMethod("open-link", {"link": url, "forceBrowser": false});
+                      await launch(url);
                     },
                   style: textStyle!.apply(decoration: TextDecoration.underline),
                 ),

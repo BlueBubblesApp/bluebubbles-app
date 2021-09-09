@@ -10,6 +10,7 @@ import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -649,23 +650,25 @@ class ChatListPanel extends StatelessWidget {
                         subtitle: "Replaces the floating button at the bottom to a fixed button at the top",
                         backgroundColor: tileColor,
                       )),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
+                  if (!kIsWeb && !kIsDesktop)
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
                     ),
-                  ),
-                  Obx(() => SettingsSwitch(
-                    onChanged: (bool val) {
-                      SettingsManager().settings.cameraFAB.value = val;
-                      saveSettings();
-                    },
-                    initialVal: SettingsManager().settings.cameraFAB.value,
-                    title: "Add Camera Button",
-                    subtitle: "Adds a dedicated camera button near the new chat creator button to easily send pictures",
-                    backgroundColor: tileColor,
-                  )),
+                  if (!kIsWeb && !kIsDesktop)
+                    Obx(() => SettingsSwitch(
+                      onChanged: (bool val) {
+                        SettingsManager().settings.cameraFAB.value = val;
+                        saveSettings();
+                      },
+                      initialVal: SettingsManager().settings.cameraFAB.value,
+                      title: "Add Camera Button",
+                      subtitle: "Adds a dedicated camera button near the new chat creator button to easily send pictures",
+                      backgroundColor: tileColor,
+                    )),
                   Container(
                     color: tileColor,
                     child: Padding(

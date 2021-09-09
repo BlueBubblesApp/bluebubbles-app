@@ -13,6 +13,7 @@ import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:collection/collection.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
@@ -271,16 +272,16 @@ class ChatBloc {
       }
       if (chats.length == 0) break;
 
-      for (Chat chat in chats) {
+      chats.forEachIndexed((index, chat) async {
         newChats.add(chat);
         await initTileValsForChat(chat);
         if (isNullOrEmpty(chat.participants)!) {
           await chat.getParticipants();
         }
         if (kIsWeb) {
-          getMessageStuffWeb(chat, chat.guid == chats.last.guid);
+          getMessageStuffWeb(chat, index == chats.length - 1);
         }
-      }
+      });
 
       if (newChats.length != 0) {
         _chats.value = newChats;

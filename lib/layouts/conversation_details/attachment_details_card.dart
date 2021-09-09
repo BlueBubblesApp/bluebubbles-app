@@ -43,7 +43,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
     attachmentFile = new PlatformFile(
       name: widget.attachment.transferName!,
       path: kIsWeb ? null : widget.attachment.getPath(),
-      bytes: null,
+      bytes: widget.attachment.bytes,
       size: widget.attachment.totalBytes!,
     );
     subscribeToDownloadStream();
@@ -110,9 +110,6 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
   @override
   Widget build(BuildContext context) {
     Attachment attachment = widget.attachment;
-    File file = new File(
-      "${SettingsManager().appDocDir.path}/attachments/${attachment.guid}/${attachment.transferName}",
-    );
     final bool hideAttachments =
         SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachments.value;
     final bool hideAttachmentTypes =
@@ -130,6 +127,12 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
       return Container(
         color: Theme.of(context).accentColor,
       );
+    if (kIsWeb) {
+      return buildPreview(context);
+    }
+    File file = new File(
+      "${SettingsManager().appDocDir.path}/attachments/${attachment.guid}/${attachment.transferName}",
+    );
     if (!file.existsSync()) {
       return Stack(
         alignment: Alignment.center,
@@ -176,7 +179,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
   }
 
   Future<void> getVideoPreview(PlatformFile file) async {
-    if (previewImage != null) return;
+    if (previewImage != null || kIsWeb) return;
     previewImage = await AttachmentHelper.getVideoThumbnail(file.path);
     Size size = await AttachmentHelper.getImageSizing("${file.path}.thumbnail");
     widget.attachment.width = size.width.toInt();
@@ -188,7 +191,8 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
   Widget _buildPreview(PlatformFile file, BuildContext context) {
     if (widget.attachment.mimeType!.startsWith("image/")) {
       if (previewImage == null) {
-        getCompressedImage();
+        if (file.bytes != null) previewImage = file.bytes;
+        else getCompressedImage();
       }
 
       return Stack(
