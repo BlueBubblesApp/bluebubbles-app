@@ -527,7 +527,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           children: <Widget>[
             AnimatedSize(
               duration: Duration(milliseconds: 100),
-              vsync: this,
               curve: Curves.easeInOut,
               child: RawKeyboardListener(
                 focusNode: FocusNode(),

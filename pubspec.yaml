@@ -30,7 +30,10 @@ dependencies:
   connectivity_plus: ^1.1.0
   tuple: ^2.0.0
   encrypt: ^5.0.1
-  assorted_layout_widgets: ^5.0.2
+  assorted_layout_widgets: # todo upgrade to actual package once their flutter 2.5 fix is merged
+    git:
+      url: https://github.com/josh-burton/assorted_layout_widgets
+      ref: beta-fix
   record: ^3.0.0 # mobile and web
   contacts_service: ^0.6.1 # mobile only
   permission_handler: ^8.1.4+2 # mobile only, todo disable on web and desktop
@@ -59,7 +62,7 @@ dependencies:
   metadata_fetch: ^0.4.1
   maps_launcher: ^2.0.1
   latlong2: ^0.8.0
-  smooth_page_indicator: ^0.3.0-nullsafety.0
+  smooth_page_indicator: ^1.0.0+2
   flex_color_picker: ^2.1.2
   image_gallery_saver: ^1.6.9 # mobile only, todo download differently on web and desktop
   visibility_detector: ^0.2.0
@@ -182,7 +185,7 @@ msix_config:
   display_name: BlueBubbles
   publisher_display_name: BlueBubbles Development Team
   identity_name: com.bluebubbles.app
-  msix_version: 1.0.0.0
+  msix_version: 1.0.0.1
   publisher: CN=BlueBubbles, O=BlueBubbles, C=US
   logo_path: assets/icon/icon.png # todo
   start_menu_icon_path: assets/icon/icon.png # todo
