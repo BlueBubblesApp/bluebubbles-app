@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:file_picker/file_picker.dart';
+import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 
@@ -200,7 +201,9 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
               IconSlideAction(
                 caption: widget.chat.hasUnreadMessage! ? 'Mark Read' : 'Mark Unread',
                 color: Colors.blue,
-                icon: widget.chat.hasUnreadMessage! ? CupertinoIcons.person_crop_circle_badge_checkmark : CupertinoIcons.person_crop_circle_badge_exclam,
+                icon: widget.chat.hasUnreadMessage!
+                    ? CupertinoIcons.person_crop_circle_badge_checkmark
+                    : CupertinoIcons.person_crop_circle_badge_exclam,
                 onTap: () {
                   ChatBloc().toggleChatUnread(widget.chat, !widget.chat.hasUnreadMessage!);
                 },
@@ -323,28 +326,31 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
         });
   }
 
-  Widget _buildDate() => kIsWeb ? Text(buildDate(widget.chat.latestMessageDate),
-    textAlign: TextAlign.right,
-    style: Theme.of(context).textTheme.subtitle2!.copyWith(
-    color: Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),),
-    overflow: TextOverflow.clip) : ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: 100.0),
-        child: FutureBuilder<Message>(
-            future: widget.chat.latestMessage,
-            builder: (context, snapshot) {
-              return Obx(
-                  () {
-                    return Text((snapshot.data?.error.value ?? 0) > 0 ? "Error" : buildDate(widget.chat.latestMessageDate),
-                        textAlign: TextAlign.right,
-                        style: Theme.of(context).textTheme.subtitle2!.copyWith(
-                          color: (snapshot.data?.error.value ?? 0) > 0
-                              ? Colors.red
-                              : Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
-                        ),
-                        overflow: TextOverflow.clip);
-                  });
-            }),
-      );
+  Widget _buildDate() => kIsWeb
+      ? Text(buildDate(widget.chat.latestMessageDate),
+          textAlign: TextAlign.right,
+          style: Theme.of(context).textTheme.subtitle2!.copyWith(
+                color: Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
+              ),
+          overflow: TextOverflow.clip)
+      : ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: 100.0),
+          child: FutureBuilder<Message>(
+              future: widget.chat.latestMessage,
+              builder: (context, snapshot) {
+                return Obx(() {
+                  return Text(
+                      (snapshot.data?.error.value ?? 0) > 0 ? "Error" : buildDate(widget.chat.latestMessageDate),
+                      textAlign: TextAlign.right,
+                      style: Theme.of(context).textTheme.subtitle2!.copyWith(
+                            color: (snapshot.data?.error.value ?? 0) > 0
+                                ? Colors.red
+                                : Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
+                          ),
+                      overflow: TextOverflow.clip);
+                });
+              }),
+        );
 
   void onTap() {
     CustomNavigator.pushAndRemoveUntil(
@@ -430,6 +436,15 @@ class __CupertinoState extends State<_Cupertino> {
             setState(() {
               isPressed = false;
             });
+          },
+          onSecondaryTapUp: (details) {
+            showConversationTileMenu(
+              context,
+              this,
+              widget.parent.widget.chat,
+              details.globalPosition,
+              context.textTheme,
+            );
           },
           onLongPress: () async {
             HapticFeedback.mediumImpact();
@@ -548,76 +563,88 @@ class _Material extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: parent.selected ? Theme.of(context).primaryColor.withAlpha(120) : Theme.of(context).backgroundColor,
-      child: InkWell(
-        onTap: () {
-          if (parent.selected) {
-            parent.onSelect();
-            HapticFeedback.lightImpact();
-          } else if (parent.widget.inSelectMode) {
-            parent.onSelect();
-            HapticFeedback.lightImpact();
-          } else {
-            parent.onTap();
-          }
+      child: GestureDetector(
+        onSecondaryTapUp: (details) {
+          showConversationTileMenu(
+            context,
+            parent,
+            parent.widget.chat,
+            details.globalPosition,
+            context.textTheme,
+          );
         },
-        onLongPress: () {
-          parent.onSelect();
-        },
-        child: Obx(
-          () => Container(
-            decoration: BoxDecoration(
-              border: (!SettingsManager().settings.hideDividers.value)
-                  ? Border(
-                      top: BorderSide(
-                        color: Theme.of(context).dividerColor,
-                        width: 0.5,
-                      ),
-                    )
-                  : null,
-            ),
-            child: ListTile(
-              dense: SettingsManager().settings.denseChatTiles.value,
-              title: parent.buildTitle(),
-              subtitle: parent.widget.subtitle ?? parent.buildSubtitle(),
-              minVerticalPadding: 10,
-              leading: Stack(
-                alignment: Alignment.topRight,
-                children: [
-                  parent.buildLeading(),
-                  if (parent.widget.chat.muteType != "mute")
-                    Container(
-                      width: 10,
-                      height: 10,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        color:
-                            parent.widget.chat.hasUnreadMessage! ? Theme.of(context).primaryColor : Colors.transparent,
-                      ),
-                    ),
-                ],
-              ),
-              trailing: Container(
-                padding: EdgeInsets.only(right: 3),
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: <Widget>[
-                      if (parent.widget.chat.isPinned!) Icon(Icons.star, size: 15, color: Colors.yellow),
-                      if (parent.widget.chat.muteType == "mute")
-                        Icon(
-                          Icons.notifications_off,
-                          color: parent.widget.chat.hasUnreadMessage!
-                              ? Theme.of(context).primaryColor.withOpacity(0.8)
-                              : Theme.of(context).textTheme.subtitle1!.color,
-                          size: 15,
+        child: InkWell(
+          onTap: () {
+            if (parent.selected) {
+              parent.onSelect();
+              HapticFeedback.lightImpact();
+            } else if (parent.widget.inSelectMode) {
+              parent.onSelect();
+              HapticFeedback.lightImpact();
+            } else {
+              parent.onTap();
+            }
+          },
+          onLongPress: () {
+            parent.onSelect();
+          },
+          child: Obx(
+            () => Container(
+              decoration: BoxDecoration(
+                border: (!SettingsManager().settings.hideDividers.value)
+                    ? Border(
+                        top: BorderSide(
+                          color: Theme.of(context).dividerColor,
+                          width: 0.5,
                         ),
+                      )
+                    : null,
+              ),
+              child: ListTile(
+                dense: SettingsManager().settings.denseChatTiles.value,
+                title: parent.buildTitle(),
+                subtitle: parent.widget.subtitle ?? parent.buildSubtitle(),
+                minVerticalPadding: 10,
+                leading: Stack(
+                  alignment: Alignment.topRight,
+                  children: [
+                    parent.buildLeading(),
+                    if (parent.widget.chat.muteType != "mute")
                       Container(
-                        padding: EdgeInsets.only(right: 2, left: 2),
-                        child: parent._buildDate(),
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          color: parent.widget.chat.hasUnreadMessage!
+                              ? Theme.of(context).primaryColor
+                              : Colors.transparent,
+                        ),
                       ),
-                    ],
+                  ],
+                ),
+                trailing: Container(
+                  padding: EdgeInsets.only(right: 3),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: <Widget>[
+                        if (parent.widget.chat.isPinned!) Icon(Icons.star, size: 15, color: Colors.yellow),
+                        if (parent.widget.chat.muteType == "mute")
+                          Icon(
+                            Icons.notifications_off,
+                            color: parent.widget.chat.hasUnreadMessage!
+                                ? Theme.of(context).primaryColor.withOpacity(0.8)
+                                : Theme.of(context).textTheme.subtitle1!.color,
+                            size: 15,
+                          ),
+                        Container(
+                          padding: EdgeInsets.only(right: 2, left: 2),
+                          child: parent._buildDate(),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -638,77 +665,89 @@ class _Samsung extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.transparent,
-      child: InkWell(
-        hoverColor: Colors.red,
-        onTap: () {
-          if (parent.selected) {
-            parent.onSelect();
-            HapticFeedback.lightImpact();
-          } else if (parent.widget.inSelectMode) {
-            parent.onSelect();
-            HapticFeedback.lightImpact();
-          } else {
-            parent.onTap();
-          }
+      child: GestureDetector(
+        onSecondaryTapUp: (details) {
+          showConversationTileMenu(
+            context,
+            parent,
+            parent.widget.chat,
+            details.globalPosition,
+            context.textTheme,
+          );
         },
-        onLongPress: () {
-          parent.onSelect();
-        },
-        child: Obx(
-          () => Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).accentColor,
-              border: (!SettingsManager().settings.hideDividers.value)
-                  ? Border(
-                      top: BorderSide(
-                        //
-                        color: new Color(0xff2F2F2F),
-                        width: 0.5,
-                      ),
-                    )
-                  : null,
-            ),
-            child: ListTile(
-              dense: SettingsManager().settings.denseChatTiles.value,
-              title: parent.buildTitle(),
-              subtitle: parent.widget.subtitle ?? parent.buildSubtitle(),
-              minVerticalPadding: 10,
-              leading: Stack(
-                alignment: Alignment.topRight,
-                children: [
-                  parent.buildLeading(),
-                  if (parent.widget.chat.muteType != "mute")
-                    Container(
-                      width: 15,
-                      height: 15,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(30),
-                        color:
-                            parent.widget.chat.hasUnreadMessage! ? Theme.of(context).primaryColor : Colors.transparent,
-                      ),
-                    ),
-                ],
-              ),
-              trailing: Container(
-                padding: EdgeInsets.only(right: 3),
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: <Widget>[
-                      if (parent.widget.chat.isPinned!) Icon(Icons.star, size: 15, color: Colors.yellow),
-                      if (parent.widget.chat.muteType == "mute")
-                        Icon(
-                          Icons.notifications_off,
-                          color: Theme.of(context).textTheme.subtitle1!.color,
-                          size: 15,
+        child: InkWell(
+          hoverColor: Colors.red,
+          onTap: () {
+            if (parent.selected) {
+              parent.onSelect();
+              HapticFeedback.lightImpact();
+            } else if (parent.widget.inSelectMode) {
+              parent.onSelect();
+              HapticFeedback.lightImpact();
+            } else {
+              parent.onTap();
+            }
+          },
+          onLongPress: () {
+            parent.onSelect();
+          },
+          child: Obx(
+            () => Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).accentColor,
+                border: (!SettingsManager().settings.hideDividers.value)
+                    ? Border(
+                        top: BorderSide(
+                          //
+                          color: new Color(0xff2F2F2F),
+                          width: 0.5,
                         ),
+                      )
+                    : null,
+              ),
+              child: ListTile(
+                dense: SettingsManager().settings.denseChatTiles.value,
+                title: parent.buildTitle(),
+                subtitle: parent.widget.subtitle ?? parent.buildSubtitle(),
+                minVerticalPadding: 10,
+                leading: Stack(
+                  alignment: Alignment.topRight,
+                  children: [
+                    parent.buildLeading(),
+                    if (parent.widget.chat.muteType != "mute")
                       Container(
-                        padding: EdgeInsets.only(right: 2, left: 2),
-                        child: parent._buildDate(),
+                        width: 15,
+                        height: 15,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(30),
+                          color: parent.widget.chat.hasUnreadMessage!
+                              ? Theme.of(context).primaryColor
+                              : Colors.transparent,
+                        ),
                       ),
-                    ],
+                  ],
+                ),
+                trailing: Container(
+                  padding: EdgeInsets.only(right: 3),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: <Widget>[
+                        if (parent.widget.chat.isPinned!) Icon(Icons.star, size: 15, color: Colors.yellow),
+                        if (parent.widget.chat.muteType == "mute")
+                          Icon(
+                            Icons.notifications_off,
+                            color: Theme.of(context).textTheme.subtitle1!.color,
+                            size: 15,
+                          ),
+                        Container(
+                          padding: EdgeInsets.only(right: 2, left: 2),
+                          child: parent._buildDate(),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
@@ -115,7 +116,8 @@ class AttachmentDownloadController extends GetxController {
           if (!kIsWeb) {
             await AttachmentHelper.compressAttachment(attachment, attachment.getPath());
             await attachment.update();
-          } else if (CurrentChat.activeChat?.chatAttachments.firstWhereOrNull((e) => e.guid == attachment.guid) == null) {
+          } else if (CurrentChat.activeChat?.chatAttachments.firstWhereOrNull((e) => e.guid == attachment.guid) ==
+              null) {
             CurrentChat.activeChat?.chatAttachments.add(attachment);
           }
         } catch (ex) {
@@ -127,12 +129,17 @@ class AttachmentDownloadController extends GetxController {
         if (onComplete != null) onComplete!();
         attachment.bytes = base64.decode(attachmentResponse['data']);
         // Add attachment to sink based on if we got data
+
         file.value = PlatformFile(
           name: attachment.transferName!,
           path: kIsWeb ? null : attachment.getPath(),
           size: total,
           bytes: base64.decode(attachmentResponse['data']),
         );
+        if (kIsDesktop) {
+          File _file = await File(attachment.getPath()).create(recursive: true);
+          _file.writeAsBytesSync(base64.decode(attachmentResponse['data']));
+        }
       }
     }, reason: "Attachment downloader " + attachment.guid!, path: kIsWeb ? "" : attachment.getPath());
   }
