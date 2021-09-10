@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:universal_io/io.dart';
 import 'dart:ui';
 
@@ -274,7 +275,12 @@ class _SamsungState extends State<SamsungConversationList> {
                         return;
                       }
 
-                      widget.parent.openNewChatCreator(existing: [file]);
+                      widget.parent.openNewChatCreator(existing: [PlatformFile(
+                        name: file.path.split("/").last,
+                        path: file.path,
+                        bytes: file.readAsBytesSync(),
+                        size: file.lengthSync(),
+                      )]);
                     },
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
@@ -371,7 +377,7 @@ class _SamsungState extends State<SamsungConversationList> {
           ),
           backgroundColor: context.theme.backgroundColor,
           body: Obx(() {
-            if (!ChatBloc().hasChats.value) {
+            if (!ChatBloc().loadedChats.value) {
               return Center(
                 child: Container(
                   padding: EdgeInsets.only(top: 50.0),
@@ -390,7 +396,7 @@ class _SamsungState extends State<SamsungConversationList> {
                 ),
               );
             }
-            if (ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).isEmpty) {
+            if (ChatBloc().loadedChats.value && ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).isEmpty) {
               return Center(
                 child: Container(
                   padding: EdgeInsets.only(top: 50.0),

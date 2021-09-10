@@ -34,7 +34,7 @@ import 'package:photo_manager/photo_manager.dart';
 import 'package:record/record.dart';
 
 class BlueBubblesTextField extends StatefulWidget {
-  final List<File>? existingAttachments;
+  final List<PlatformFile>? existingAttachments;
   final String? existingText;
   final bool? isCreator;
   final bool wasCreator;
@@ -156,12 +156,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     }
 
     if (widget.existingAttachments != null) {
-      this.addAttachments(widget.existingAttachments!.map((e) => PlatformFile(
-        path: e.path,
-        name: e.path.split("/").last,
-        size: e.lengthSync(),
-        bytes: e.readAsBytesSync(),
-      )).toList());
+      this.addAttachments(widget.existingAttachments ?? []);
       updateTextFieldAttachments();
     }
 
@@ -350,6 +345,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   for (var e in res.files) {
                     addAttachment(e);
                   }
+                  Navigator.of(context).pop();
                 },
               ),
               ListTile(

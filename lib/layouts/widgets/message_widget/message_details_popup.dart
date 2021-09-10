@@ -456,15 +456,21 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
         child: InkWell(
           onTap: () async {
             bool shouldShowSnackbar = (await SettingsManager().getMacOSVersion())! >= 11;
+            Navigator.of(context).pop();
             Navigator.pushReplacement(
               context,
               cupertino.CupertinoPageRoute(
                 builder: (BuildContext context) {
-                  List<File> existingAttachments = [];
+                  List<PlatformFile> existingAttachments = [];
                   if (!widget.message.isUrlPreview()) {
                     existingAttachments =
-                        widget.message.attachments!.map((attachment) => File(attachment!.getPath())).toList();
-                  }
+                        widget.message.attachments!.map((attachment) => PlatformFile(
+                          name: attachment!.transferName!,
+                          path: kIsWeb ? null : attachment.getPath(),
+                          bytes: attachment.bytes,
+                          size: attachment.totalBytes!,
+                        )).toList();
+                  };
                   return ConversationView(
                     isCreator: true,
                     existingText: widget.message.text,
@@ -646,7 +652,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
           color: Colors.transparent,
           child: InkWell(
             onTap: () {
-              if (widget.message.hasAttachments && !widget.message.isUrlPreview()) {
+              if (widget.message.hasAttachments && !widget.message.isUrlPreview() && !kIsWeb) {
                 for (Attachment? element in widget.message.attachments!) {
                   Share.file(
                     "${element!.mimeType!.split("/")[0].capitalizeFirst} shared from BlueBubbles: ${element.transferName}",

@@ -10,6 +10,7 @@ import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:sqflite/sqflite.dart';
@@ -214,7 +215,7 @@ class Message {
   }
 
   Future<Message> save([bool updateIfAbsent = true]) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
     // Try to find an existing chat before saving it
     Message? existing = await Message.findOne({"guid": this.guid});
     if (existing != null) {
@@ -251,7 +252,7 @@ class Message {
         map.remove("handle");
       }
 
-      this.id = await db.insert("message", map);
+      this.id = await db?.insert("message", map);
     } else if (updateIfAbsent) {
       await this.update();
     }
@@ -261,7 +262,7 @@ class Message {
 
   static Future<Message?> replaceMessage(String? oldGuid, Message? newMessage,
       {bool awaitNewMessageEvent = true, Chat? chat}) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
     Message? existing = await Message.findOne({"guid": oldGuid});
 
     if (existing == null) {
@@ -305,24 +306,24 @@ class Message {
       newMessage.metadata = existing.metadata;
     }
 
-    await db.update("message", params, where: "ROWID = ?", whereArgs: [existing.id]);
+    await db?.update("message", params, where: "ROWID = ?", whereArgs: [existing.id]);
 
     return newMessage;
   }
 
   Future<Message> updateMetadata(Metadata? metadata) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
     if (this.id == null) return this;
     this.metadata = metadata!.toJson();
 
-    await db.update("message", {"metadata": isNullOrEmpty(this.metadata)! ? null : jsonEncode(this.metadata)},
+    await db?.update("message", {"metadata": isNullOrEmpty(this.metadata)! ? null : jsonEncode(this.metadata)},
         where: "ROWID = ?", whereArgs: [this.id]);
 
     return this;
   }
 
   Future<Message> update() async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
 
     Map<String, dynamic> params = {
       "dateCreated": (this.dateCreated == null) ? null : this.dateCreated!.millisecondsSinceEpoch,
@@ -342,7 +343,7 @@ class Message {
 
     // If it already exists, update it
     if (this.id != null) {
-      await db.update("message", params, where: "ROWID = ?", whereArgs: [this.id]);
+      await db?.update("message", params, where: "ROWID = ?", whereArgs: [this.id]);
     } else {
       await this.save(false);
     }
@@ -360,7 +361,8 @@ class Message {
       if (this.attachments!.length != 0) return this.attachments;
     }
 
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
+    if (db == null) return [];
     if (this.id == null) return [];
 
     var res = await db.rawQuery(
@@ -392,7 +394,8 @@ class Message {
   }
 
   static Future<Chat?> getChat(Message message) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
+    if (db == null) return null;
     var res = await db.rawQuery(
         "SELECT"
         " chat.ROWID AS ROWID,"
@@ -430,7 +433,8 @@ class Message {
   }
 
   Future<Handle?> getHandle() async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
+    if (db == null) return null;
     var res = await db.rawQuery(
         "SELECT"
         " handle.ROWID AS ROWID,"
@@ -450,7 +454,8 @@ class Message {
   }
 
   static Future<Message?> findOne(Map<String, dynamic> filters) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
+    if (db == null) return null;
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];
@@ -465,8 +470,8 @@ class Message {
   }
 
   static Future<List<Message>> find([Map<String, dynamic> filters = const {}]) async {
-    final Database db = await DBProvider.db.database;
-
+    final Database? db = await DBProvider.db.database;
+    if (db == null) return [];
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];
@@ -479,7 +484,7 @@ class Message {
   }
 
   static Future<void> delete(Map<String, dynamic> where) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
 
     List<String> whereParams = [];
     where.keys.forEach((filter) => whereParams.add('$filter = ?'));
@@ -488,13 +493,13 @@ class Message {
 
     List<Message> toDelete = await Message.find(where);
     for (Message msg in toDelete) {
-      await db.delete("chat_message_join", where: "messageId = ?", whereArgs: [msg.id]);
-      await db.delete("message", where: "ROWID = ?", whereArgs: [msg.id]);
+      await db?.delete("chat_message_join", where: "messageId = ?", whereArgs: [msg.id]);
+      await db?.delete("message", where: "ROWID = ?", whereArgs: [msg.id]);
     }
   }
 
   static Future<void> softDelete(Map<String, dynamic> where) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
 
     List<String> whereParams = [];
     where.keys.forEach((filter) => whereParams.add('$filter = ?'));
@@ -503,14 +508,14 @@ class Message {
 
     List<Message> toDelete = await Message.find(where);
     for (Message msg in toDelete) {
-      await db.update("message", {'dateDeleted': DateTime.now().toUtc().millisecondsSinceEpoch},
+      await db?.update("message", {'dateDeleted': DateTime.now().toUtc().millisecondsSinceEpoch},
           where: "ROWID = ?", whereArgs: [msg.id]);
     }
   }
 
   static flush() async {
-    final Database db = await DBProvider.db.database;
-    await db.delete("message");
+    final Database? db = await DBProvider.db.database;
+    await db?.delete("message");
   }
 
   bool isUrlPreview() {
@@ -579,7 +584,8 @@ class Message {
   }
 
   static Future<int?> countForChat(Chat? chat) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
+    if (db == null) return 0;
     if (chat == null || chat.id == null) return 0;
 
     String query = ("SELECT"

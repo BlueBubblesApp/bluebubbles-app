@@ -734,11 +734,8 @@ class SocketManager {
     try {
       String? url;
       if (kIsWeb) {
-        print(SettingsManager().fcmData?.firebaseURL);
         var db = FirebaseDatabase(databaseURL: SettingsManager().fcmData?.firebaseURL);
-        print(db);
         var ref = db.reference().child('config').child('serverUrl');
-        print(ref);
         ref.onValue.listen((event) {
           url = event.snapshot.value;
           url = getServerAddress(address: url);

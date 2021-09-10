@@ -193,7 +193,7 @@ class MethodChannelInterface {
         return new Future.value("");
       case "shareAttachments":
         if (!SettingsManager().settings.finishedSetup.value) return Future.value("");
-        List<File> attachments = <File>[];
+        List<PlatformFile> attachments = [];
 
         // Loop through all of the attachments sent by native code
         call.arguments["attachments"].forEach((element) {
@@ -201,7 +201,12 @@ class MethodChannelInterface {
           File file = File(element);
 
           // Add each file to the attachment list
-          attachments.add(file);
+          attachments.add(PlatformFile(
+            name: file.path.split("/").last,
+            path: file.path,
+            bytes: file.readAsBytesSync(),
+            size: file.lengthSync(),
+          ));
         });
 
         // Get the handle if it is a direct shortcut
@@ -358,7 +363,7 @@ class MethodChannelInterface {
     }
   }
 
-  Future<void> openChat(String id, {List<File> existingAttachments = const [], String? existingText}) async {
+  Future<void> openChat(String id, {List<PlatformFile> existingAttachments = const [], String? existingText}) async {
     if (id == "-1") {
       NavigatorManager().navigatorKey.currentState!.popUntil((route) => route.isFirst);
       return;
@@ -367,12 +372,7 @@ class MethodChannelInterface {
       NotificationManager().switchChat(CurrentChat.activeChat!.chat);
       TextFieldData? data = TextFieldBloc().getTextField(id);
       if (existingAttachments.isNotEmpty && data != null) {
-        data.attachments.addAll(existingAttachments.map((e) => PlatformFile(
-          path: e.path,
-          name: e.path.split("/").last,
-          size: e.lengthSync(),
-          bytes: e.readAsBytesSync(),
-        )).toList());
+        data.attachments.addAll(existingAttachments);
         final ids = data.attachments.map((e) => e.path).toSet();
         data.attachments.retainWhere((element) => ids.remove(element.path));
         EventDispatcher().emit("text-field-update-attachments", null);

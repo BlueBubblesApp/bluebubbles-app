@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:file_picker/file_picker.dart';
 import 'package:universal_io/io.dart';
 import 'dart:ui';
 
@@ -112,7 +113,7 @@ class ConversationListState extends State<ConversationList> {
     });
   }
 
-  void openNewChatCreator({List<File>? existing}) async {
+  void openNewChatCreator({List<PlatformFile>? existing}) async {
     bool shouldShowSnackbar = (await SettingsManager().getMacOSVersion())! >= 11;
     CustomNavigator.pushAndRemoveUntil(
       context,
@@ -263,7 +264,12 @@ class ConversationListState extends State<ConversationList> {
                   return;
                 }
 
-                openNewChatCreator(existing: [file]);
+                openNewChatCreator(existing: [PlatformFile(
+                  name: file.path.split("/").last,
+                  path: file.path,
+                  bytes: file.readAsBytesSync(),
+                  size: file.lengthSync(),
+                )]);
               },
               heroTag: null,
             ),

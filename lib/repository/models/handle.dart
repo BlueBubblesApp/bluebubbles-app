@@ -55,7 +55,7 @@ class Handle {
   }
 
   Future<Handle> save([bool updateIfAbsent = false]) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
 
     // Try to find an existing handle before saving it
     Handle? existing = await Handle.findOne({"address": this.address});
@@ -69,7 +69,7 @@ class Handle {
       var map = this.toMap();
       map.remove("ROWID");
       try {
-        this.id = await db.insert("handle", map);
+        this.id = await db?.insert("handle", map);
       } catch (e) {
         this.id = null;
       }
@@ -81,7 +81,7 @@ class Handle {
   }
 
   Future<Handle> update() async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
 
     // If it already exists, update it
     if (this.id != null) {
@@ -97,7 +97,7 @@ class Handle {
         params["originalROWID"] = this.originalROWID;
       }
 
-      await db.update("handle", params, where: "ROWID = ?", whereArgs: [this.id]);
+      await db?.update("handle", params, where: "ROWID = ?", whereArgs: [this.id]);
     } else {
       await this.save(false);
     }
@@ -106,26 +106,26 @@ class Handle {
   }
 
   Future<Handle> updateColor(String? newColor) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
     if (this.id == null) return this;
 
-    await db.update("handle", {"color": newColor}, where: "ROWID = ?", whereArgs: [this.id]);
+    await db?.update("handle", {"color": newColor}, where: "ROWID = ?", whereArgs: [this.id]);
 
     return this;
   }
 
   Future<Handle> updateDefaultPhone(String newPhone) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
     if (this.id == null) return this;
 
-    await db.update("handle", {"defaultPhone": newPhone}, where: "ROWID = ?", whereArgs: [this.id]);
+    await db?.update("handle", {"defaultPhone": newPhone}, where: "ROWID = ?", whereArgs: [this.id]);
 
     return this;
   }
 
   static Future<Handle?> findOne(Map<String, dynamic> filters) async {
-    final Database db = await DBProvider.db.database;
-
+    final Database? db = await DBProvider.db.database;
+    if (db == null) return null;
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];
@@ -140,8 +140,8 @@ class Handle {
   }
 
   static Future<List<Handle>> find([Map<String, dynamic> filters = const {}]) async {
-    final Database db = await DBProvider.db.database;
-
+    final Database? db = await DBProvider.db.database;
+    if (db == null) return [];
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];
@@ -154,8 +154,8 @@ class Handle {
   }
 
   static Future<List<Chat>> getChats(Handle handle) async {
-    final Database db = await DBProvider.db.database;
-
+    final Database? db = await DBProvider.db.database;
+    if (db == null) return [];
     var res = await db.rawQuery(
         "SELECT"
         " chat.ROWID AS ROWID,"
@@ -175,8 +175,8 @@ class Handle {
   }
 
   static flush() async {
-    final Database db = await DBProvider.db.database;
-    await db.delete("handle");
+    final Database? db = await DBProvider.db.database;
+    await db?.delete("handle");
   }
 
   Map<String, dynamic> toMap() => {

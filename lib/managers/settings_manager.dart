@@ -39,6 +39,7 @@ class SettingsManager {
   late List<ThemeObject> themes;
   String? countryCode;
   int? _macOSVersion;
+  String? _serverVersion;
   bool canAuthenticate = false;
 
   int get compressionQuality {
@@ -170,5 +171,13 @@ class SettingsManager {
       _macOSVersion = int.tryParse(res['data']['os_version'].split(".")[0]);
     }
     return _macOSVersion;
+  }
+
+  FutureOr<String?> getServerVersion() async {
+    if (_macOSVersion == null) {
+      var res = await SocketManager().sendMessage("get-server-metadata", {}, (_) {});
+      _serverVersion = res['data']['server_version'];
+    }
+    return _serverVersion;
   }
 }

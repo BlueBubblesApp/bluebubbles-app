@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:file_picker/file_picker.dart';
 import 'package:universal_io/io.dart';
 import 'dart:math';
 
@@ -27,7 +28,7 @@ import 'package:get/get.dart';
 
 class PinnedConversationTile extends StatefulWidget {
   final Chat chat;
-  final List<File> existingAttachments;
+  final List<PlatformFile> existingAttachments;
   final String? existingText;
 
   PinnedConversationTile({

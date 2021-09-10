@@ -50,7 +50,7 @@ abstract class ChatSelectorTypes {
 }
 
 class ConversationView extends StatefulWidget {
-  final List<File> existingAttachments;
+  final List<PlatformFile> existingAttachments;
   final String? existingText;
   final List<UniqueContact> selected;
 
@@ -85,7 +85,7 @@ class ConversationView extends StatefulWidget {
 }
 
 class ConversationViewState extends State<ConversationView> with ConversationViewMixin, WidgetsBindingObserver {
-  List<File> existingAttachments = [];
+  List<PlatformFile> existingAttachments = [];
   String? existingText;
   Brightness? brightness;
   Color? previousBackgroundColor;

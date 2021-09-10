@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/helpers/logger.dart';
@@ -126,7 +127,8 @@ class DBProvider {
         }),
   ];
 
-  Future<Database> get database async {
+  Future<Database?> get database async {
+    if (kIsWeb) return null;
     if (_database != null) return _database!;
 
     // if _database is null we instantiate it
@@ -137,14 +139,14 @@ class DBProvider {
   String get path => _path;
 
   Future<Database> initDB() async {
-    //ignore: unnecessary_cast, we need this as a workaround
     if (Platform.isWindows || Platform.isLinux) {
       // Initialize FFI
       sqfliteFfiInit();
       // Change the default factory
       databaseFactory = databaseFactoryFfi;
     }
-    Directory documentsDirectory = await getApplicationDocumentsDirectory();
+    //ignore: unnecessary_cast, we need this as a workaround
+    Directory documentsDirectory = (await getApplicationDocumentsDirectory()) as Directory;
     _path = join(documentsDirectory.path, "chat.db");
     return await openDatabase(_path, version: currentVersion, onUpgrade: _onUpgrade, onOpen: (Database db) async {
       Logger.info("Database Opened");
@@ -178,7 +180,8 @@ class DBProvider {
   }
 
   static Future<void> deleteDB() async {
-    Database db = await DBProvider.db.database;
+    if (kIsWeb) return;
+    Database db = (await DBProvider.db.database)!;
     // Remove base tables
     await Handle.flush();
     await Chat.flush();

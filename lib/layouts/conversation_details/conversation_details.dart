@@ -89,7 +89,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
 
   void fetchAttachments() {
     if (kIsWeb) {
-      attachmentsForChat = CurrentChat.of(context)?.chatAttachments ?? [];
+      attachmentsForChat = CurrentChat.activeChat?.chatAttachments ?? [];
       if (this.mounted) setState(() {});
       return;
     }

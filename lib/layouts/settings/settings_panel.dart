@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
+import 'package:universal_html/html.dart' as html;
 import 'dart:ui';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
@@ -509,9 +511,18 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                     String filePath = directoryPath +
                                         "${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}" +
                                         ".json";
+                                    Map<String, dynamic> json = SettingsManager().settings.toMap();
+                                    if (kIsWeb) {
+                                      final bytes = utf8.encode(jsonEncode(json));
+                                      final content = base64.encode(bytes);
+                                      html.AnchorElement(
+                                          href: "data:application/octet-stream;charset=utf-16le;base64,$content")
+                                        ..setAttribute("download", filePath.split("/").last)
+                                        ..click();
+                                      return;
+                                    }
                                     File file = File(filePath);
                                     await file.create(recursive: true);
-                                    Map<String, dynamic> json = SettingsManager().settings.toMap();
                                     String jsonString = jsonEncode(json);
                                     await file.writeAsString(jsonString);
                                     Get.back();
@@ -613,6 +624,15 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                     String filePath = directoryPath +
                                         "${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}" +
                                         ".json";
+                                    if (kIsWeb) {
+                                      final bytes = utf8.encode(jsonStr);
+                                      final content = base64.encode(bytes);
+                                      html.AnchorElement(
+                                          href: "data:application/octet-stream;charset=utf-16le;base64,$content")
+                                        ..setAttribute("download", filePath.split("/").last)
+                                        ..click();
+                                      return;
+                                    }
                                     File file = File(filePath);
                                     await file.create(recursive: true);
                                     await file.writeAsString(jsonStr);

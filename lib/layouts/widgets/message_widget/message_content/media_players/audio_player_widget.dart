@@ -44,7 +44,7 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> with AutomaticKeepA
     super.initState();
 
     CurrentChat? thisChat = CurrentChat.of(widget.context);
-    if (thisChat != null && thisChat.audioPlayers.containsKey(widget.file.path)) {
+    if (!kIsWeb && thisChat != null && thisChat.audioPlayers.containsKey(widget.file.path)) {
       audioController = thisChat.audioPlayers[widget.file.path]!.item2;
       controller = thisChat.audioPlayers[widget.file.path]!.item1;
     } else {
@@ -79,7 +79,7 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> with AutomaticKeepA
       );
 
       thisChat = CurrentChat.of(widget.context);
-      if (thisChat != null) {
+      if (!kIsWeb && thisChat != null) {
         CurrentChat.of(widget.context)!.audioPlayers[widget.file.path] = Tuple2(controller, audioController);
       }
     }

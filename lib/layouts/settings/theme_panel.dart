@@ -155,26 +155,28 @@ class ThemePanel extends GetView<ThemePanelController> {
                       backgroundColor: tileColor,
                       secondaryColor: headerColor,
                     ),
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
+                    if (!kIsWeb)
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 65.0),
+                          child: SettingsDivider(color: headerColor),
+                        ),
                       ),
-                    ),
-                    SettingsTile(
-                      title: "Theming",
-                      subtitle: "Edit existing themes and create custom themes",
-                      trailing: nextIcon,
-                      onTap: () async {
-                        Navigator.of(context).push(
-                          CupertinoPageRoute(
-                            builder: (context) => ThemingPanel(),
-                          ),
-                        );
-                      },
-                      backgroundColor: tileColor,
-                    ),
+                    if (!kIsWeb)
+                      SettingsTile(
+                        title: "Theming",
+                        subtitle: "Edit existing themes and create custom themes",
+                        trailing: nextIcon,
+                        onTap: () async {
+                          Navigator.of(context).push(
+                            CupertinoPageRoute(
+                              builder: (context) => ThemingPanel(),
+                            ),
+                          );
+                        },
+                        backgroundColor: tileColor,
+                      ),
                     SettingsHeader(
                         headerColor: headerColor,
                         tileColor: tileColor,
@@ -290,13 +292,14 @@ class ThemePanel extends GetView<ThemePanelController> {
                           backgroundColor: tileColor,
                           subtitle: "Gives received message bubbles a splash of color",
                         )),
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
+                    if (!kIsWeb)
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 65.0),
+                          child: SettingsDivider(color: headerColor),
+                        ),
                       ),
-                    ),
                     if (!kIsWeb)
                       SettingsTile(
                         title: "Custom Avatar Colors",

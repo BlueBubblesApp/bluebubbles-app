@@ -266,22 +266,19 @@ class ChatBloc {
     for (int i = 0; i < batches; i++) {
       List<Chat> chats = [];
       if (kIsWeb) {
-        chats = await SocketManager().getChats({});
+        chats = await SocketManager().getChats({"withLastMessage": kIsWeb});
       } else {
         chats = await Chat.getChats(limit: batchSize, offset: i * batchSize);
       }
       if (chats.length == 0) break;
 
-      chats.forEachIndexed((index, chat) async {
+      for (Chat chat in chats) {
         newChats.add(chat);
         await initTileValsForChat(chat);
         if (isNullOrEmpty(chat.participants)!) {
           await chat.getParticipants();
         }
-        if (kIsWeb) {
-          getMessageStuffWeb(chat, index == chats.length - 1);
-        }
-      });
+      }
 
       if (newChats.length != 0) {
         _chats.value = newChats;
@@ -298,7 +295,7 @@ class ChatBloc {
     }
   }
 
-  void getMessageStuffWeb(Chat chat, bool last) async {
+  Future<void> getMessageStuffWeb(Chat chat) async {
     Map<String, dynamic> params = Map();
     params["identifier"] = chat.guid;
     params["withBlurhash"] = false;
@@ -315,9 +312,6 @@ class ChatBloc {
       chat.latestMessageText = await MessageHelper.getNotificationText(message);
       chat.fakeLatestMessageText = faker.lorem.words((chat.latestMessageText ?? "").split(" ").length).join(" ");
       chat.latestMessageDate = message.dateCreated;
-    }
-    if (last) {
-      _chats.sort(Chat.sort);
     }
   }
 

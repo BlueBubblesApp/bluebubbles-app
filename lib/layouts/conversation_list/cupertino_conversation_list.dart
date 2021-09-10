@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:universal_io/io.dart';
 import 'dart:math';
 import 'dart:ui';
@@ -215,7 +216,12 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                                       return;
                                     }
 
-                                    widget.parent.openNewChatCreator(existing: [file]);
+                                    widget.parent.openNewChatCreator(existing: [PlatformFile(
+                                      name: file.path.split("/").last,
+                                      path: file.path,
+                                      bytes: file.readAsBytesSync(),
+                                      size: file.lengthSync(),
+                                    )]);
                                   },
                                 ),
                               ),
@@ -356,7 +362,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
             }),
             Obx(() {
               ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).sort(Chat.sort);
-              if (!ChatBloc().hasChats.value) {
+              if (!ChatBloc().loadedChats.value) {
                 return SliverToBoxAdapter(
                   child: Center(
                     child: Container(
@@ -377,7 +383,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                   ),
                 );
               }
-              if (!ChatBloc().hasChats.value) {
+              if (ChatBloc().loadedChats.value && !ChatBloc().hasChats.value) {
                 return SliverToBoxAdapter(
                   child: Center(
                     child: Container(

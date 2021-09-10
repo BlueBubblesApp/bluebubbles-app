@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:universal_io/io.dart';
+import 'package:universal_html/html.dart' as html;
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';
@@ -198,13 +199,14 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                         )
                     );
                   }),
-                  SettingsHeader(
-                      headerColor: headerColor,
-                      tileColor: tileColor,
-                      iosSubtitle: iosSubtitle,
-                      materialSubtitle: materialSubtitle,
-                      text: "Connection & Sync"
-                  ),
+                  if (!kIsWeb)
+                    SettingsHeader(
+                        headerColor: headerColor,
+                        tileColor: tileColor,
+                        iosSubtitle: iosSubtitle,
+                        materialSubtitle: materialSubtitle,
+                        text: "Connection & Sync"
+                    ),
                   if (!kIsWeb && !kIsDesktop)
                     SettingsTile(
                       title: "Re-configure with BlueBubbles Server",
@@ -255,32 +257,33 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                         child: SettingsDivider(color: headerColor),
                       ),
                     ),
-                  Obx(() {
-                    String subtitle;
+                  if (!kIsWeb)
+                    Obx(() {
+                      String subtitle;
 
-                    switch (SocketManager().state.value) {
-                      case SocketState.CONNECTED:
-                        subtitle = "Tap to sync messages";
-                        break;
-                      default:
-                        subtitle = "Disconnected, cannot sync";
-                    }
+                      switch (SocketManager().state.value) {
+                        case SocketState.CONNECTED:
+                          subtitle = "Tap to sync messages";
+                          break;
+                        default:
+                          subtitle = "Disconnected, cannot sync";
+                      }
 
-                    return SettingsTile(
-                        title: "Manually Sync Messages",
-                        subtitle: subtitle,
-                        backgroundColor: tileColor,
-                        leading: SettingsLeadingIcon(
-                          iosIcon: CupertinoIcons.arrow_2_circlepath,
-                          materialIcon: Icons.sync,
-                        ),
-                        onTap: () async {
-                          showDialog(
-                            context: context,
-                            builder: (context) => SyncDialog(),
-                          );
-                        });
-                  }),
+                      return SettingsTile(
+                          title: "Manually Sync Messages",
+                          subtitle: subtitle,
+                          backgroundColor: tileColor,
+                          leading: SettingsLeadingIcon(
+                            iosIcon: CupertinoIcons.arrow_2_circlepath,
+                            materialIcon: Icons.sync,
+                          ),
+                          onTap: () async {
+                            showDialog(
+                              context: context,
+                              builder: (context) => SyncDialog(),
+                            );
+                          });
+                    }),
                   SettingsHeader(
                       headerColor: headerColor,
                       tileColor: tileColor,
@@ -306,6 +309,16 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                         if (res['status'] != 200) {
                           controller.fetchStatus.value = "Failed to fetch logs!";
 
+                          return;
+                        }
+
+                        if (kIsWeb) {
+                          final bytes = utf8.encode(res['data']);
+                          final content = base64.encode(bytes);
+                          html.AnchorElement(
+                              href: "data:application/octet-stream;charset=utf-16le;base64,$content")
+                            ..setAttribute("download", "main.log")
+                            ..click();
                           return;
                         }
 

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 
@@ -32,7 +33,7 @@ import 'package:get/get.dart';
 
 class ConversationTile extends StatefulWidget {
   final Chat chat;
-  final List<File> existingAttachments;
+  final List<PlatformFile> existingAttachments;
   final String? existingText;
   final Function(bool)? onSelect;
   final bool inSelectMode;

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
+import 'package:universal_html/html.dart' as uh;
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
@@ -248,6 +249,13 @@ class NotificationManager {
       bool messageIsFromMe,
       int visibility,
       int summaryId) async {
+    if (kIsWeb && uh.Notification.permission == "granted") {
+      var notif = uh.Notification(chatTitle, body: messageText, icon: "/splash/img/dark-4x.png");
+      notif.onClick.listen((event) {
+        MethodChannelInterface().openChat(chatGuid);
+      });
+      return;
+    }
     await MethodChannelInterface().platform.invokeMethod("new-message-notification", {
       "CHANNEL_ID": NEW_MESSAGE_CHANNEL +
           (SettingsManager().settings.notificationSound.value == "default"

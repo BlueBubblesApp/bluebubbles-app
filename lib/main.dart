@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:collection/collection.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:universal_io/io.dart';
 import 'dart:isolate';
 import 'dart:ui';
@@ -277,13 +279,13 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> with WidgetsBindingObserver {
   ReceivePort port = ReceivePort();
+  bool serverCompatible = true;
 
   @override
   void initState() {
     super.initState();
 
     // Initalize a bunch of managers
-    SettingsManager().init();
     MethodChannelInterface().init();
 
     // We initialize the [LifeCycleManager] so that it is open, because [initState] occurs when the app is opened
@@ -329,6 +331,20 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         } catch (_) {}
       }
 
+      if (kIsWeb) {
+        String? version = await SettingsManager().getServerVersion();
+        int? sum = version?.split(".").mapIndexed((index, e) {
+          if (index == 0) return int.parse(e) * 100;
+          if (index == 1) return int.parse(e) * 21;
+          return int.parse(e);
+        }).sum;
+        if (version == null || (sum ?? 0) < 42) {
+          setState(() {
+            serverCompatible = false;
+          });
+        }
+      }
+
       if (!kIsWeb && !kIsDesktop) {
         // Get sharing media from files shared to the app from cold start
         // This one only handles files, not text
@@ -340,9 +356,13 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           if (!await Permission.storage.request().isGranted) return;
 
           // Add the attached files to a list
-          List<File> attachments = <File>[];
+          List<PlatformFile> attachments = [];
           value.forEach((element) {
-            attachments.add(File(element.path));
+            attachments.add(PlatformFile(
+              name: element.path.split("/").last,
+              path: element.path,
+              size: 0,
+            ));
           });
 
           if (attachments.length == 0) return;
@@ -450,6 +470,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                   DeviceOrientation.portraitUp,
                   DeviceOrientation.portraitDown,
                 ]);
+                if (!serverCompatible && kIsWeb) {
+                  return FailureToStart(otherTitle: "Server version too low, please upgrade!", e: "Required Server Version: v0.2.0",);
+                }
                 return ConversationList(
                   showArchivedChats: false,
                   showUnknownSenders: false,

@@ -10,6 +10,7 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -126,7 +127,7 @@ class SetupBloc {
 
     try {
       addOutput("Getting Chats...", SetupOutputType.LOG);
-      List<Chat> chats = await SocketManager().getChats({});
+      List<Chat> chats = await SocketManager().getChats({"withLastMessage": kIsWeb});
 
       // If we got chats, cancel the timer
       timer.cancel();
@@ -268,6 +269,7 @@ class SetupBloc {
       params["offset"] = i * batches;
       params["after"] = settings.lastIncrementalSync.value; // Get everything since the last sync
       params["withChats"] = true; // We want the chats too so we can save them correctly
+      params["withChatParticipants"] = true; // We want participants on web only
       params["withAttachments"] = true; // We want the attachment data
       params["withHandle"] = true; // We want to know who sent it
       params["sort"] = "DESC"; // Sort my DESC so we receive the newest messages first

@@ -79,9 +79,9 @@ class FCMData {
   }
 
   static Future<FCMData> getFCM() async {
-    Database db = await DBProvider.db.database;
+    Database? db = await DBProvider.db.database;
 
-    List<Map<String, dynamic>> result = await db.query("fcm");
+    List<Map<String, dynamic>> result = (await db?.query("fcm")) ?? [];
     if (result.isEmpty) return new FCMData(
       projectID: prefs.get('projectID'),
       storageBucket: prefs.get('storageBucket'),
