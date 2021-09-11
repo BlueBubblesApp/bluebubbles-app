@@ -259,7 +259,7 @@ class NotificationManager {
     }
     if (kIsDesktop) {
       Logger.info("Sending desktop notification");
-      QuickNotify.notify(content: chatTitle + "\n" + messageText);
+      // QuickNotify.notify(content: chatTitle + "\n" + messageText);
       return;
     }
     await MethodChannelInterface().platform.invokeMethod("new-message-notification", {
