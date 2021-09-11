@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 import 'dart:math';
 
@@ -87,7 +88,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
         }
       });
 
-    controller = new PageController(initialPage: startingIndex ?? 0);
+    controller = new PageController(initialPage: kIsWeb ? 0 : startingIndex ?? 0);
     if (this.mounted) setState(() {});
   }
 
@@ -136,7 +137,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
             ? PageView.builder(
                 physics: physics,
                 reverse: SettingsManager().settings.fullscreenViewerSwipeDir.value == SwipeDirection.RIGHT,
-                itemCount: widget.currentChat?.chatAttachments.length ?? 1,
+                itemCount: kIsWeb ? 1 : widget.currentChat?.chatAttachments.length ?? 1,
                 itemBuilder: (BuildContext context, int index) {
                   return CustomDismissible(
                     direction: physics is NeverScrollableScrollPhysics
@@ -148,7 +149,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                     child: Builder(builder: (_) {
                       Logger.info("Showing index: " + index.toString());
                       Attachment attachment =
-                          widget.currentChat != null ? widget.currentChat!.chatAttachments[index] : widget.attachment;
+                          !kIsWeb && widget.currentChat != null ? widget.currentChat!.chatAttachments[index] : widget.attachment;
                       String mimeType = attachment.mimeType!;
                       mimeType = mimeType.substring(0, mimeType.indexOf("/"));
                       dynamic content = AttachmentHelper.getContent(attachment,
