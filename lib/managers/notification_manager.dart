@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
-import 'package:quick_notify/quick_notify.dart';
+// import 'package:quick_notify/quick_notify.dart';
 import 'package:universal_html/html.dart' as uh;
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -259,7 +259,7 @@ class NotificationManager {
     }
     if (kIsDesktop) {
       Logger.info("Sending desktop notification");
-      QuickNotify.notify(content: chatTitle + "\n" + messageText);
+      // QuickNotify.notify(content: chatTitle + "\n" + messageText);
       return;
     }
     await MethodChannelInterface().platform.invokeMethod("new-message-notification", {
