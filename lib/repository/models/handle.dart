@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:sqflite/sqflite.dart';
 
 import './chat.dart';
@@ -141,7 +142,7 @@ class Handle {
 
   static Future<List<Handle>> find([Map<String, dynamic> filters = const {}]) async {
     final Database? db = await DBProvider.db.database;
-    if (db == null) return [];
+    if (db == null) return ChatBloc().cachedHandles;
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];

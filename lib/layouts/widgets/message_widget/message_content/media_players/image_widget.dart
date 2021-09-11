@@ -44,7 +44,11 @@ class ImageWidgetController extends GetxController {
     if (tmpData == null) {
       // If it's an image, compress the image when loading it
       if (kIsWeb) {
-        data.value = file.bytes;
+        if (attachment.guid != "redacted-mode-demo-attachment") {
+          data.value = file.bytes;
+        } else {
+          data.value = Uint8List.view((await rootBundle.load(attachment.transferName!)).buffer);
+        }
       } else if (AttachmentHelper.canCompress(attachment) &&
           attachment.guid != "redacted-mode-demo-attachment" &&
           !attachment.guid!.contains("theme-selector")) {

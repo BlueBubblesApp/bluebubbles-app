@@ -172,7 +172,7 @@ class _ContactTileState extends State<ContactTile> {
           handle: widget.handle,
           borderThickness: 0.1,
         ),
-        trailing: FittedBox(
+        trailing: kIsWeb ? Container(width: 2) : FittedBox(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             mainAxisSize: MainAxisSize.max,

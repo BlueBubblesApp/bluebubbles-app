@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
@@ -724,6 +725,38 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         child: SettingsDivider(color: headerColor),
                       ),
                     ),
+                    if (!kIsWeb && !kIsDesktop)
+                      SettingsTile(
+                        backgroundColor: tileColor,
+                        onTap: () async {
+                          String json = "[";
+                          await ContactManager().getAvatars();
+                          ContactManager().handleToContact.values.forEachIndexed((index, c) {
+                            if (c == null) return;
+                            json = json + "${jsonEncode(c.toMap())}";
+                            if (index != ContactManager().handleToContact.values.length - 1) {
+                              json = json + ",";
+                            } else {
+                              json = json + "]";
+                            }
+                          });
+                          SocketManager().sendMessage("save-vcf", {"vcf": json}, (_) => showSnackbar("Notice", "Successfully exported contacts to server"));
+                        },
+                        leading: SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.group,
+                          materialIcon: Icons.contacts,
+                        ),
+                        title: "Export Contacts",
+                        subtitle: "Send contacts to server for use on webapp and desktop app",
+                      ),
+                    if (!kIsWeb && !kIsDesktop)
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 65.0),
+                          child: SettingsDivider(color: headerColor),
+                        ),
+                      ),
                     SettingsTile(
                       backgroundColor: tileColor,
                       onTap: () {

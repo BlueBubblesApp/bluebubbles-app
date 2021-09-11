@@ -36,6 +36,8 @@ class ChatBloc {
   final RxBool hasChats = false.obs;
   final RxBool loadedChats = false.obs;
 
+  final List<Handle> cachedHandles = [];
+
   void updateUnreads() {
     _unreads.value = chats.where((element) => element.hasUnreadMessage ?? false).map((e) => e.guid).toList().length;
   }
@@ -277,6 +279,14 @@ class ChatBloc {
         await initTileValsForChat(chat);
         if (isNullOrEmpty(chat.participants)!) {
           await chat.getParticipants();
+        }
+        if (kIsWeb) {
+          chat.participants.forEach((element) {
+            if (cachedHandles.firstWhereOrNull((e) => e.address == element.address) == null) {
+              cachedHandles.add(element);
+            }
+          });
+          await ContactManager().matchHandles();
         }
       }
 
