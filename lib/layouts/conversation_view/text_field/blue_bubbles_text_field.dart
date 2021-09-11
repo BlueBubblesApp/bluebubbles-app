@@ -347,14 +347,14 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   for (var e in res.files) {
                     addAttachment(e);
                   }
-                  Navigator.of(context).pop();
+                  Get.back();
                 },
               ),
               ListTile(
                 title: Text("Send location", style: Theme.of(context).textTheme.bodyText1),
                 onTap: () async {
                   Share.location(CurrentChat.of(context)!.chat);
-                  Navigator.of(context).pop();
+                  Get.back();
                 },
               ),
             ]
