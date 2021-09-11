@@ -52,9 +52,9 @@ class ThemeEntry {
       : color;
 
   Future<ThemeEntry> save(ThemeObject theme, {bool updateIfAbsent = true}) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
 
-    assert(theme.id != null);
+    //assert(theme.id != null);
     this.themeId = theme.id;
 
     // Try to find an existing ConfigEntry before saving it
@@ -69,13 +69,13 @@ class ThemeEntry {
       var map = this.toMap();
       map.remove("ROWID");
       try {
-        this.id = await db.insert("theme_values", map);
+        this.id = (await db?.insert("theme_values", map)) ?? id;
       } catch (e) {
         this.id = null;
       }
 
       if (this.id != null && theme.id != null) {
-        await db.insert("theme_value_join", {"themeValueId": this.id, "themeId": theme.id});
+        await db?.insert("theme_value_join", {"themeValueId": this.id, "themeId": theme.id});
       }
     } else if (updateIfAbsent) {
       await this.update(theme);
@@ -85,11 +85,11 @@ class ThemeEntry {
   }
 
   Future<ThemeEntry> update(ThemeObject theme) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
 
     // If it already exists, update it
     if (this.id != null) {
-      await db.update(
+      await db?.update(
           "theme_values",
           {
             "name": this.name,
@@ -107,8 +107,8 @@ class ThemeEntry {
   }
 
   static Future<ThemeEntry?> findOne(Map<String, dynamic> filters, {Database? database}) async {
-    final Database db = database != null ? database : await DBProvider.db.database;
-
+    final Database? db = database != null ? database : await DBProvider.db.database;
+    if (db == null) return null;
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];

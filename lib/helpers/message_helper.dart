@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -109,6 +110,8 @@ class MessageHelper {
         Logger.info('Saved ${messages.length} messages', tag: "BulkIngest");
       }
     }
+
+    //ChatBloc().chats.add(chat!);
 
     if (notifyForNewMessage || notifyMessageManager) {
       notificationMessages.forEach((message, value) async {

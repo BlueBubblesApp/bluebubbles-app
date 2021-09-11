@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:universal_io/io.dart';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -74,7 +74,7 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
           ),
           slivers: <Widget>[
             Obx(() {
-              if (!ChatBloc().hasChats.value) {
+              if (!ChatBloc().loadedChats.value) {
                 return SliverToBoxAdapter(
                   child: Center(
                     child: Container(
@@ -95,7 +95,7 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
                   ),
                 );
               }
-              if (ChatBloc().hasChats.value && ChatBloc().chats.isEmpty) {
+              if (ChatBloc().loadedChats.value && ChatBloc().chats.isEmpty) {
                 return SliverToBoxAdapter(
                   child: Center(
                     child: Container(

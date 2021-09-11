@@ -9,6 +9,7 @@ import 'package:bluebubbles/helpers/crypto.dart';
 import 'package:bluebubbles/helpers/darty.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/attachment_info_bloc.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
@@ -21,6 +22,9 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
+import 'package:firebase_dart/firebase_dart.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
@@ -417,6 +421,12 @@ class SocketManager {
 
     String? result;
 
+    if (kIsWeb || kIsDesktop) {
+      Logger.debug("Platform Web detected, not authing with FCM!", tag: 'FCM-Auth');
+      isAuthingFcm = false;
+      return;
+    }
+
     try {
       // First, try to send what we currently have
       Logger.info('Authenticating with FCM', tag: 'FCM-Auth');
@@ -493,9 +503,9 @@ class SocketManager {
     return request('get-chat-messages', params, cb: cb);
   }
 
-  Future<dynamic>? request(String path, Map<String, dynamic> params, {Function(List<dynamic>?)? cb}) {
+  Future<dynamic>? request(String path, Map<String, dynamic> params, {Function(List<dynamic>?)? cb}) async {
     Completer<List<dynamic>?> completer = new Completer();
-    if (_manager.socket == null) return null;
+    if (_manager.socket == null) await SocketManager().startSocketIO();
 
     Logger.info("Sending request for '$path'", tag: "Socket");
     _manager.sendMessage(path, params, (Map<String, dynamic> data) async {
@@ -651,10 +661,12 @@ class SocketManager {
           });
         } else {
           _manager.socket!.emitWithAck(event, message, ack: (response) async {
-            await MethodChannelInterface().invokeMethod("download-file", {
-              "data": response['data'],
-              "path": path,
-            });
+            if (!kIsWeb && !kIsDesktop) {
+              await MethodChannelInterface().invokeMethod("download-file", {
+                "data": response['data'],
+                "path": path,
+              });
+            }
             response['byteLength'] = base64.decode(response['data']).length;
             cb(response);
             completer.complete(response);
@@ -720,20 +732,44 @@ class SocketManager {
 
     // Get the server URL
     try {
-      String? url = await MethodChannelInterface().invokeMethod("get-server-url");
-      url = getServerAddress(address: url);
+      String? url;
+      if (kIsWeb || kIsDesktop) {
+        var db = FirebaseDatabase(databaseURL: SettingsManager().fcmData?.firebaseURL);
+        var ref = db.reference().child('config').child('serverUrl');
+        ref.onValue.listen((event) {
+          url = event.snapshot.value;
+          url = getServerAddress(address: url);
 
-      Logger.info("New server URL: $url");
+          Logger.info("New server URL: $url");
 
-      // Set the server URL
-      Settings _settingsCopy = SettingsManager().settings;
-      if (_settingsCopy.serverAddress.value == url) return;
-      _settingsCopy.serverAddress.value = url ?? _settingsCopy.serverAddress.value;
-      await SettingsManager().saveSettings(_settingsCopy);
-      if (connectToSocket) {
-        startSocketIO(forceNewConnection: connectToSocket);
+          // Set the server URL
+          Settings _settingsCopy = SettingsManager().settings;
+          if (_settingsCopy.serverAddress.value == url) return;
+          _settingsCopy.serverAddress.value = url ?? _settingsCopy.serverAddress.value;
+          SettingsManager().saveSettings(_settingsCopy);
+          if (connectToSocket) {
+            startSocketIO(forceNewConnection: connectToSocket);
+          }
+        });
+      } else {
+        url = await MethodChannelInterface().invokeMethod("get-server-url");
+        url = getServerAddress(address: url);
+
+        Logger.info("New server URL: $url");
+
+        // Set the server URL
+        Settings _settingsCopy = SettingsManager().settings;
+        if (_settingsCopy.serverAddress.value == url) return;
+        _settingsCopy.serverAddress.value = url ?? _settingsCopy.serverAddress.value;
+        await SettingsManager().saveSettings(_settingsCopy);
+        if (connectToSocket) {
+          startSocketIO(forceNewConnection: connectToSocket);
+        }
       }
-    } catch (e) {}
+    } catch (e, s) {
+      print(e);
+      print(s);
+    }
   }
 
   Future<Map<String, dynamic>> getFcmClient() async {

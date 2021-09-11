@@ -71,7 +71,7 @@ class ThemeObject {
 
   Future<ThemeObject> save({bool updateIfAbsent = true}) async {
     assert(this.data != null);
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
 
     if (entries.isEmpty) {
       entries = this.toEntries();
@@ -90,7 +90,7 @@ class ThemeObject {
         map.remove("ROWID");
       }
 
-      this.id = await db.insert("themes", map);
+      this.id = (await db?.insert("themes", map)) ?? id;
     } else if (updateIfAbsent) {
       await this.update();
     }
@@ -105,23 +105,23 @@ class ThemeObject {
 
   Future<void> delete() async {
     if (this.isPreset) return;
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
 
     if (this.id == null) await this.save(updateIfAbsent: false);
     await this.fetchData();
     for (ThemeEntry entry in this.entries) {
-      await db.delete("theme_values", where: "ROWID = ?", whereArgs: [entry.id]);
+      await db?.delete("theme_values", where: "ROWID = ?", whereArgs: [entry.id]);
     }
-    await db.delete("theme_value_join", where: "themeId = ?", whereArgs: [this.id]);
-    await db.delete("themes", where: "ROWID = ?", whereArgs: [this.id]);
+    await db?.delete("theme_value_join", where: "themeId = ?", whereArgs: [this.id]);
+    await db?.delete("themes", where: "ROWID = ?", whereArgs: [this.id]);
   }
 
   Future<ThemeObject> update() async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
 
     // If it already exists, update it
     if (this.id != null) {
-      await db.update(
+      await db?.update(
           "themes",
           {
             "name": this.name,
@@ -163,22 +163,22 @@ class ThemeObject {
   }
 
   static Future<void> setSelectedTheme({int? light, int? dark}) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
     if (light != null) {
-      await db.update("themes", {"selectedLightTheme": 0});
-      await db.update("themes", {"selectedLightTheme": 1}, where: "ROWID = ?", whereArgs: [light]);
+      await db?.update("themes", {"selectedLightTheme": 0});
+      await db?.update("themes", {"selectedLightTheme": 1}, where: "ROWID = ?", whereArgs: [light]);
     }
     if (dark != null) {
-      await db.update("themes", {"selectedDarkTheme": 0});
-      await db.update("themes", {"selectedDarkTheme": 1}, where: "ROWID = ?", whereArgs: [dark]);
+      await db?.update("themes", {"selectedDarkTheme": 0});
+      await db?.update("themes", {"selectedDarkTheme": 1}, where: "ROWID = ?", whereArgs: [dark]);
     }
   }
 
   static Future<ThemeObject?> findOne(
     Map<String, dynamic> filters,
   ) async {
-    final Database db = await DBProvider.db.database;
-
+    final Database? db = await DBProvider.db.database;
+    if (db == null) return null;
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];
@@ -193,7 +193,8 @@ class ThemeObject {
   }
 
   static Future<List<ThemeObject>> getThemes() async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
+    if (db == null) return Themes.themes;
     var res = await db.query("themes");
     if (res.isEmpty) return Themes.themes;
 
@@ -213,8 +214,8 @@ class ThemeObject {
       this.entries = this.toEntries();
       return this.entries;
     }
-    final Database db = await DBProvider.db.database;
-
+    final Database? db = await DBProvider.db.database;
+    if (db == null) return this.entries;
     var res = await db.rawQuery(
         "SELECT"
         " theme_values.ROWID as ROWID,"

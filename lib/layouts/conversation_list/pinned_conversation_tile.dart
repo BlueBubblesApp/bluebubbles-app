@@ -1,5 +1,6 @@
 import 'dart:async';
-import 'dart:io';
+import 'package:file_picker/file_picker.dart';
+import 'package:universal_io/io.dart';
 import 'dart:math';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -24,10 +25,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:bluebubbles/helpers/ui_helpers.dart';
 
 class PinnedConversationTile extends StatefulWidget {
   final Chat chat;
-  final List<File> existingAttachments;
+  final List<PlatformFile> existingAttachments;
   final String? existingText;
 
   PinnedConversationTile({
@@ -180,161 +182,21 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
       },
       onTap: onTapUpBypass,
       onLongPress: () {
-        HapticFeedback.mediumImpact();
-        showMenu(
-          color: Get.theme.accentColor,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          context: context,
-          position: RelativeRect.fromLTRB(
-            _tapPosition.dx,
-            _tapPosition.dy,
-            _tapPosition.dx,
-            _tapPosition.dy,
-          ),
-          items: <PopupMenuEntry>[
-            PopupMenuItem(
-              padding: EdgeInsets.zero,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () async {
-                  await widget.chat.togglePin(!widget.chat.isPinned!);
-                  if (this.mounted) setState(() {});
-                  Navigator.pop(context);
-                },
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 12.0),
-                  child: Row(
-                    children: <Widget>[
-                      Padding(
-                        padding: EdgeInsets.only(right: 10),
-                        child: Icon(
-                          widget.chat.isPinned! ? CupertinoIcons.pin_slash : CupertinoIcons.pin,
-                          color: context.textTheme.bodyText1!.color,
-                        ),
-                      ),
-                      Text(
-                        widget.chat.isPinned! ? "Unpin" : "Pin",
-                        style: context.textTheme.bodyText1!,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            PopupMenuItem(
-              padding: EdgeInsets.zero,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () async {
-                  await widget.chat.toggleMute(widget.chat.muteType != "mute");
-                  if (this.mounted) setState(() {});
-                  Navigator.pop(context);
-                },
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 12.0),
-                  child: Row(
-                    children: <Widget>[
-                      Padding(
-                        padding: EdgeInsets.only(right: 10),
-                        child: Icon(
-                          widget.chat.muteType == "mute" ? CupertinoIcons.bell : CupertinoIcons.bell_slash,
-                          color: context.textTheme.bodyText1!.color,
-                        ),
-                      ),
-                      Text(widget.chat.muteType == "mute" ? 'Show Alerts' : 'Hide Alerts',
-                          style: context.textTheme.bodyText1!),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            PopupMenuItem(
-              padding: EdgeInsets.zero,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () {
-                  widget.chat.toggleHasUnread(!widget.chat.hasUnreadMessage!);
-                  if (this.mounted) setState(() {});
-                  Navigator.pop(context);
-                },
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 12.0),
-                  child: Row(
-                    children: <Widget>[
-                      Padding(
-                        padding: EdgeInsets.only(right: 10),
-                        child: Icon(
-                          widget.chat.hasUnreadMessage!
-                              ? CupertinoIcons.person_crop_circle_badge_xmark
-                              : CupertinoIcons.person_crop_circle_badge_checkmark,
-                          color: context.textTheme.bodyText1!.color,
-                        ),
-                      ),
-                      Text(widget.chat.hasUnreadMessage! ? 'Mark Read' : 'Mark Unread',
-                          style: context.textTheme.bodyText1!),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            PopupMenuItem(
-              padding: EdgeInsets.zero,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () {
-                  if (widget.chat.isArchived!) {
-                    ChatBloc().unArchiveChat(widget.chat);
-                  } else {
-                    ChatBloc().archiveChat(widget.chat);
-                  }
-                  if (this.mounted) setState(() {});
-                  Navigator.pop(context);
-                },
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 12.0),
-                  child: Row(
-                    children: <Widget>[
-                      Padding(
-                        padding: EdgeInsets.only(right: 10),
-                        child: Icon(
-                          widget.chat.isArchived! ? CupertinoIcons.tray_arrow_up : CupertinoIcons.tray_arrow_down,
-                          color: context.textTheme.bodyText1!.color,
-                        ),
-                      ),
-                      Text(widget.chat.isArchived! ? 'Unarchive' : 'Archive', style: context.textTheme.bodyText1!),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            PopupMenuItem(
-              padding: EdgeInsets.zero,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () async {
-                  ChatBloc().deleteChat(widget.chat);
-                  Chat.deleteChat(widget.chat);
-                  if (this.mounted) setState(() {});
-                  Navigator.pop(context);
-                },
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 12.0),
-                  child: Row(
-                    children: <Widget>[
-                      Padding(
-                        padding: EdgeInsets.only(right: 10),
-                        child: Icon(
-                          Icons.delete_forever,
-                          color: context.textTheme.bodyText1!.color,
-                        ),
-                      ),
-                      Text('Delete', style: context.textTheme.bodyText1!),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
+        showConversationTileMenu(
+          context,
+          this,
+          widget.chat,
+          _tapPosition,
+          context.textTheme,
+        );
+      },
+      onSecondaryTapUp: (details) {
+        showConversationTileMenu(
+          context,
+          this,
+          widget.chat,
+          details.globalPosition,
+          context.textTheme,
         );
       },
       child: Padding(

@@ -1,5 +1,7 @@
 import 'dart:async';
-import 'dart:io';
+import 'package:bluebubbles/helpers/share.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:universal_io/io.dart';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
@@ -19,7 +21,6 @@ import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/socket_manager.dart';
-import 'package:camera/camera.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -31,14 +32,12 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:record/record.dart';
 
-enum CameraState { INACTIVE, STARTING, ACTIVE, DISPOSING }
-
 class BlueBubblesTextField extends StatefulWidget {
-  final List<File>? existingAttachments;
+  final List<PlatformFile>? existingAttachments;
   final String? existingText;
   final bool? isCreator;
   final bool wasCreator;
-  final Future<bool> Function(List<File> attachments, String text) onSend;
+  final Future<bool> Function(List<PlatformFile> attachments, String text) onSend;
 
   BlueBubblesTextField({
     Key? key,
@@ -60,16 +59,10 @@ class BlueBubblesTextField extends StatefulWidget {
 class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerProviderStateMixin {
   TextEditingController? controller;
   FocusNode? focusNode;
-  List<File> pickedImages = <File>[];
+  List<PlatformFile> pickedImages = [];
   TextFieldData? textFieldData;
   StreamController _streamController = new StreamController.broadcast();
   CurrentChat? safeChat;
-
-  // Camera Vars
-  CameraState cameraState = CameraState.INACTIVE;
-  CameraController? cameraController;
-  int cameraIndex = 0;
-  List<CameraDescription> cameras = [];
 
   bool selfTyping = false;
   int? sendCountdown;
@@ -162,7 +155,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     }
 
     if (widget.existingAttachments != null) {
-      this.addAttachments(widget.existingAttachments!);
+      this.addAttachments(widget.existingAttachments ?? []);
       updateTextFieldAttachments();
     }
 
@@ -180,16 +173,15 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     }
   }
 
-  void addAttachments(List<File> attachments) {
+  void addAttachments(List<PlatformFile> attachments) {
     pickedImages.addAll(attachments);
-    final ids = pickedImages.map((e) => e.path).toSet();
-    pickedImages.retainWhere((element) => ids.remove(element.path));
+    if (!kIsWeb) pickedImages = pickedImages.toSet().toList();
     setCanRecord();
   }
 
   void updateTextFieldAttachments() {
     if (textFieldData != null) {
-      textFieldData!.attachments = pickedImages.where((element) => mime(element.path) != null).toList();
+      textFieldData!.attachments = List<PlatformFile>.from(pickedImages);
       _streamController.sink.add(null);
     }
 
@@ -215,17 +207,18 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   void dispose() {
     focusNode!.dispose();
     _streamController.close();
-    this.disposeCameras();
 
     if (safeChat?.chat == null) controller!.dispose();
 
-    String dir = SettingsManager().appDocDir.path;
-    Directory tempAssets = Directory("$dir/tempAssets");
-    tempAssets.exists().then((value) {
-      if (value) {
-        tempAssets.delete(recursive: true);
-      }
-    });
+    if (!kIsWeb) {
+      String dir = SettingsManager().appDocDir.path;
+      Directory tempAssets = Directory("$dir/tempAssets");
+      tempAssets.exists().then((value) {
+        if (value) {
+          tempAssets.delete(recursive: true);
+        }
+      });
+    }
     pickedImages = [];
     super.dispose();
   }
@@ -252,8 +245,11 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
     // Save the data to a location and add it to the file picker
     if (content.hasData) {
-      File file = AttachmentHelper.saveTempFile(filename, content.data!);
-      this.addAttachments([file]);
+      this.addAttachments([PlatformFile(
+        name: filename,
+        size: content.data!.length,
+        bytes: content.data,
+      )]);
 
       // Update the state
       updateTextFieldAttachments();
@@ -278,7 +274,12 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               Container(height: 10.0),
               AudioPlayerWiget(
                 key: new Key("AudioMessage-${file.length().toString()}"),
-                file: file,
+                file: PlatformFile(
+                  name: file.path.split("/").last,
+                  path: file.absolute.path,
+                  bytes: file.readAsBytesSync(),
+                  size: file.lengthSync(),
+                ),
                 context: originalContext,
               )
             ],
@@ -301,9 +302,19 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               onPressed: () async {
                 CurrentChat? thisChat = CurrentChat.of(originalContext);
                 if (thisChat == null) {
-                  this.addAttachments([file]);
+                  this.addAttachments([PlatformFile(
+                    path: file.path,
+                    name: file.path.split("/").last,
+                    size: file.lengthSync(),
+                    bytes: file.readAsBytesSync(),
+                  )]);
                 } else {
-                  await widget.onSend([file], "");
+                  await widget.onSend([PlatformFile(
+                    path: file.path,
+                    name: file.path.split("/").last,
+                    size: file.lengthSync(),
+                    bytes: file.readAsBytesSync(),
+                  )], "");
                   this.disposeAudioFile(originalContext, file);
                 }
 
@@ -317,52 +328,42 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     );
   }
 
-  Future<void> initializeCameraController() async {
-    // If the state is active, we need to close it
-    if (cameraState == CameraState.ACTIVE) {
-      await this.disposeCameras();
-    }
+  Future<void> toggleShareMenu() async {
+    if (kIsWeb || kIsDesktop) {
+      Get.defaultDialog(
+        title: "What would you like to do?",
+        titleStyle: Theme.of(context).textTheme.headline1,
+        confirm: Container(height: 0, width: 0),
+        cancel: Container(height: 0, width: 0),
+        content: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              ListTile(
+                title: Text("Upload file", style: Theme.of(context).textTheme.bodyText1),
+                onTap: () async {
+                  final res = await FilePicker.platform.pickFiles(withData: true, allowMultiple: true);
+                  if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
 
-    Logger.info("[Camera Preview] -> Initializing camera preview");
-
-    // Enumerate the cameras (if we don't have them)
-    // We only need to do this once... it's not like it's gonna change very often
-    if (cameras.length == 0) {
-      cameras = await availableCameras();
-    }
-
-    if (cameras.length == 0) {
-      Logger.info("[Camera Preview] -> No available cameras!");
+                  for (var e in res.files) {
+                    addAttachment(e);
+                  }
+                  Navigator.of(context).pop();
+                },
+              ),
+              ListTile(
+                title: Text("Send location", style: Theme.of(context).textTheme.bodyText1),
+                onTap: () async {
+                  Share.location(CurrentChat.of(context)!.chat);
+                  Navigator.of(context).pop();
+                },
+              ),
+            ]
+        ),
+        backgroundColor: Theme.of(context).backgroundColor,
+      );
       return;
     }
 
-    // Update the camera state
-    cameraState = CameraState.STARTING;
-
-    // Re-initialize the camera controller
-    // Disable audio so that background music doesn't stop playing
-    cameraController = CameraController(cameras[cameraIndex], ResolutionPreset.max, enableAudio: false);
-
-    // Initialize the camera (if not done already), then update the state
-    if (!cameraController!.value.isInitialized) {
-      await cameraController?.initialize();
-    }
-
-    cameraState = CameraState.ACTIVE;
-    if (this.mounted) setState(() {});
-    Logger.info("[Camera Preview] -> Finished initializing camera preview");
-  }
-
-  Future<void> disposeCameras() async {
-    Logger.info("[Camera Preview] -> Disposing camera preview");
-    cameraState = CameraState.DISPOSING;
-    await cameraController?.dispose();
-    cameraController = null;
-    cameraState = CameraState.INACTIVE;
-    Logger.info("[Camera Preview] -> Finished disposing camera preview");
-  }
-
-  Future<void> toggleShareMenu() async {
     bool showMenu = showShareMenu.value;
 
     // If the image picker is already open, close it, and return
@@ -374,11 +375,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       return;
     }
 
-    // If we are closing, dispose the camera
-    if (showMenu) {
-      this.disposeCameras();
-    }
-
     showShareMenu.value = !showMenu;
   }
 
@@ -386,7 +382,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     if (showShareMenu.value) {
       if (this.mounted) {
         showShareMenu.value = false;
-        disposeCameras();
       }
       return false;
     }
@@ -422,8 +417,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         padding: const EdgeInsets.only(left: 50.0),
         child: TextFieldAttachmentList(
           attachments: pickedImages,
-          onRemove: (File attachment) {
-            pickedImages.removeWhere((element) => element.path == attachment.path);
+          onRemove: (PlatformFile attachment) {
+            pickedImages.removeWhere((element) => kIsWeb ? element.bytes == element.bytes : element.path == attachment.path);
             updateTextFieldAttachments();
             if (this.mounted) setState(() {});
           },
@@ -530,7 +525,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           children: <Widget>[
             AnimatedSize(
               duration: Duration(milliseconds: 100),
-              vsync: this,
               curve: Curves.easeInOut,
               child: RawKeyboardListener(
                 focusNode: FocusNode(),
@@ -568,9 +562,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     },
                     onTap: () {
                       HapticFeedback.selectionClick();
-                      if (cameraState == CameraState.ACTIVE) {
-                        disposeCameras();
-                      }
                     },
                     key: _searchFormKey,
                     onSubmitted: (String value) {
@@ -817,7 +808,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
     if (await widget.onSend(pickedImages, controller!.text)) {
       controller!.text = "";
-      pickedImages = <File>[];
+      pickedImages.clear();
       updateTextFieldAttachments();
     }
   }
@@ -831,7 +822,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     } else if (isRecording.value) {
       await stopRecording();
       shouldUpdate = true;
-    } else if (canRecord.value && !isRecording.value && await Permission.microphone.request().isGranted) {
+    } else if (canRecord.value && !isRecording.value && !kIsDesktop && await Permission.microphone.request().isGranted) {
       await startRecording();
       shouldUpdate = true;
     } else {
@@ -865,7 +856,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         alignment: Alignment.center,
                         children: [
                           Obx(() => AnimatedOpacity(
-                                opacity: sendCountdown == null && canRecord.value ? 1.0 : 0.0,
+                                opacity: sendCountdown == null && canRecord.value && !kIsDesktop ? 1.0 : 0.0,
                                 duration: Duration(milliseconds: 150),
                                 child: Icon(
                                   CupertinoIcons.waveform,
@@ -874,7 +865,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                 ),
                               )),
                           Obx(() => AnimatedOpacity(
-                                opacity: (sendCountdown == null && !canRecord.value) && !isRecording.value ? 1.0 : 0.0,
+                                opacity: (sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value ? 1.0 : 0.0,
                                 duration: Duration(milliseconds: 150),
                                 child: Icon(
                                   CupertinoIcons.arrow_up,
@@ -898,7 +889,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 )
               : GestureDetector(
                   onTapDown: (_) async {
-                    if (canRecord.value && !isRecording.value) {
+                    if (canRecord.value && !isRecording.value && !kIsDesktop) {
                       await startRecording();
                     }
                   },
@@ -918,7 +909,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                             alignment: Alignment.center,
                             children: [
                               Obx(() => AnimatedOpacity(
-                                    opacity: sendCountdown == null && canRecord.value ? 1.0 : 0.0,
+                                    opacity: sendCountdown == null && canRecord.value && !kIsDesktop? 1.0 : 0.0,
                                     duration: Duration(milliseconds: 150),
                                     child: Icon(
                                       Icons.mic,
@@ -928,7 +919,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                   )),
                               Obx(() => AnimatedOpacity(
                                     opacity:
-                                        (sendCountdown == null && !canRecord.value) && !isRecording.value ? 1.0 : 0.0,
+                                        (sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value ? 1.0 : 0.0,
                                     duration: Duration(milliseconds: 150),
                                     child: Icon(
                                       Icons.send,
@@ -957,23 +948,23 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
   Widget buildAttachmentPicker() => Obx(() => TextFieldAttachmentPicker(
         visible: showShareMenu.value,
-        onAddAttachment: (File? file) {
-          if (file == null) return;
-          bool exists = file.existsSync();
-          if (!exists) return;
-
-          for (File image in pickedImages) {
-            if (image.path == file.path) {
-              pickedImages.removeWhere((element) => element.path == file.path);
-              updateTextFieldAttachments();
-              if (this.mounted) setState(() {});
-              return;
-            }
-          }
-
-          this.addAttachments([file]);
-          updateTextFieldAttachments();
-          if (this.mounted) setState(() {});
-        },
+        onAddAttachment: addAttachment,
       ));
+
+  void addAttachment(PlatformFile? file) {
+    if (file == null) return;
+
+    for (PlatformFile image in pickedImages) {
+      if (image.bytes == file.bytes) {
+        pickedImages.removeWhere((element) => element.bytes == file.bytes);
+        updateTextFieldAttachments();
+        if (this.mounted) setState(() {});
+        return;
+      }
+    }
+
+    this.addAttachments([file]);
+    updateTextFieldAttachments();
+    if (this.mounted) setState(() {});
+  }
 }

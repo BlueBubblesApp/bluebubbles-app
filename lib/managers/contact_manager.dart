@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/logger.dart';
@@ -6,7 +7,10 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
+import 'package:bluebubbles/socket_manager.dart';
+import 'package:collection/collection.dart';
 import 'package:contacts_service/contacts_service.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/cupertino.dart';
@@ -56,6 +60,15 @@ class ContactManager {
   }
 
   Future<bool> canAccessContacts() async {
+    if (kIsWeb || kIsDesktop) {
+      String? version = await SettingsManager().getServerVersion();
+      int? sum = version?.split(".").mapIndexed((index, e) {
+        if (index == 0) return int.parse(e) * 100;
+        if (index == 1) return int.parse(e) * 21;
+        return int.parse(e);
+      }).sum;
+      return (sum ?? 0) >= 42;
+    }
     try {
       PermissionStatus status = await Permission.contacts.status;
       if (status.isGranted) return true;
@@ -101,7 +114,18 @@ class ContactManager {
 
     // Fetch the current list of contacts
     Logger.info("Fetching contacts", tag: tag);
-    contacts = (await ContactsService.getContacts(withThumbnails: false)).toList();
+    if (!kIsWeb && !kIsDesktop) {
+      contacts = (await ContactsService.getContacts(withThumbnails: false)).toList();
+    } else {
+      contacts.clear();
+      var vcfs = await SocketManager().sendMessage("get-vcf", {}, (_) {});
+      if (vcfs['data'] != null) {
+        for (var c in jsonDecode(vcfs['data'])) {
+          c["avatar"] = Uint8List.fromList((c["avatar"] as List).cast<int>());
+          contacts.add(Contact.fromMap(c));
+        }
+      }
+    }
     hasFetchedContacts = true;
 
     // Match handles in the database with contacts
@@ -160,7 +184,7 @@ class ContactManager {
     Logger.info("Fetching Avatars", tag: tag);
     for (String address in handleToContact.keys) {
       Contact? contact = handleToContact[address];
-      if (handleToContact[address] == null) continue;
+      if (handleToContact[address] == null || kIsWeb || kIsDesktop) continue;
 
       ContactsService.getAvatar(contact!, photoHighRes: !SettingsManager().settings.lowMemoryMode.value).then((avatar) {
         if (avatar == null) return;
@@ -225,7 +249,7 @@ class ContactManager {
       if (contact != null) break;
     }
 
-    if (fetchAvatar) {
+    if (fetchAvatar && !kIsDesktop && !kIsWeb) {
       Uint8List? avatar =
           await ContactsService.getAvatar(contact!, photoHighRes: !SettingsManager().settings.lowMemoryMode.value);
       contact.avatar = avatar;

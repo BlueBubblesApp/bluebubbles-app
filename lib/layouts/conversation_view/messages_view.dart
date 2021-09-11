@@ -19,6 +19,7 @@ import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
@@ -70,7 +71,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
   }
 
   bool get showSmartReplies =>
-      SettingsManager().settings.smartReply.value &&
+      SettingsManager().settings.smartReply.value && !kIsWeb && !kIsDesktop &&
       (!SettingsManager().settings.redactedMode.value || !SettingsManager().settings.hideMessageContent.value);
 
   @override
@@ -452,6 +453,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                               isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages[index].guid,
                               showHero: false,
                               onUpdate: (event) => onUpdateMessage(event),
+                              bloc: widget.messageBloc!,
                             ));
                       },
                       childCount: _messages.length,
@@ -499,6 +501,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                                 isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages[index].guid,
                                 showHero: fullAnimation,
                                 onUpdate: (event) => onUpdateMessage(event),
+                                bloc: widget.messageBloc!,
                               ));
 
                           if (fullAnimation) {

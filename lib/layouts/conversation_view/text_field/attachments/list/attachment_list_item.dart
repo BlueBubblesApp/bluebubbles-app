@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
@@ -18,7 +18,7 @@ class AttachmentListItem extends StatefulWidget {
     required this.file,
     required this.onRemove,
   }) : super(key: key);
-  final File file;
+  final PlatformFile file;
   final Function() onRemove;
 
   @override
@@ -32,18 +32,18 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
   @override
   void initState() {
     super.initState();
-    mimeType = mime(widget.file.path);
+    mimeType = mime(widget.file.name);
     loadPreview();
   }
 
   Future<void> loadPreview() async {
-    String? mimeType = mime(widget.file.path);
+    String? mimeType = mime(widget.file.name);
     if (mimeType != null && mimeType.startsWith("video/")) {
       preview = await AttachmentHelper.getVideoThumbnail(widget.file.path);
       if (this.mounted) setState(() {});
     } else if (mimeType == null || mimeType.startsWith("image/")) {
       // Compress the file, using a dummy attachment object
-      preview = await File(widget.file.absolute.path).readAsBytes();
+      preview = widget.file.bytes;
       if (this.mounted) setState(() {});
     }
   }
@@ -55,7 +55,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
       final bool hideAttachmentTypes =
           SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachmentTypes.value;
 
-      final mimeType = mime(widget.file.path);
+      final mimeType = mime(widget.file.name);
 
       return Stack(children: <Widget>[
         InkWell(
@@ -69,7 +69,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
             if (mimeType == null) return;
             if (!this.mounted) return;
 
-            Attachment fakeAttachment = new Attachment(transferName: widget.file.path, mimeType: mimeType);
+            Attachment fakeAttachment = new Attachment(transferName: widget.file.name, mimeType: mimeType, bytes: widget.file.bytes);
             await Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (context) => AttachmentFullscreenViewer(
@@ -108,7 +108,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
           ),
         );
       } else {
-        String name = path.basename(widget.file.path);
+        String name = path.basename(widget.file.name);
         if (mimeType == "text/x-vcard") {
           name = "Contact: ${name.split(".")[0]}";
         }

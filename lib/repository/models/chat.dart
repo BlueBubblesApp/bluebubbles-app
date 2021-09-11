@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
+import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
+import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -144,7 +146,10 @@ class Chat {
         fakeParticipants.add(ContactManager().handleToFakeName[participants.last.address]);
       });
     }
-
+    Message? message;
+    if (json['lastMessage'] != null) {
+      message = Message.fromMap(json['lastMessage']);
+    }
     var data = new Chat(
       id: json.containsKey("ROWID") ? json["ROWID"] : null,
       originalROWID: json.containsKey("originalROWID") ? json["originalROWID"] : null,
@@ -169,13 +174,13 @@ class Chat {
               ? json['hasUnreadMessage']
               : ((json['hasUnreadMessage'] == 1) ? true : false)
           : false,
-      latestMessageText: json.containsKey("latestMessageText") ? json["latestMessageText"] : null,
+      latestMessageText: json.containsKey("latestMessageText") ? json["latestMessageText"] : message?.text,
       fakeLatestMessageText: json.containsKey("latestMessageText")
           ? faker.lorem.words((json["latestMessageText"] ?? "").split(" ").length).join(" ")
           : null,
       latestMessageDate: json.containsKey("latestMessageDate") && json['latestMessageDate'] != null
           ? new DateTime.fromMillisecondsSinceEpoch(json['latestMessageDate'] as int)
-          : null,
+          : message?.dateCreated,
       displayName: json.containsKey("displayName") ? json["displayName"] : null,
       customAvatar: json['customAvatarPath'],
       pinnedIndex: json['pinIndex'],
@@ -192,7 +197,7 @@ class Chat {
   }
 
   Future<Chat> save({bool updateIfAbsent = true, bool updateLocalVals = false}) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
 
     // Try to find an existing chat before saving it
     Chat? existing = await Chat.findOne({"guid": this.guid});
@@ -218,7 +223,7 @@ class Chat {
         map.remove("participants");
       }
 
-      this.id = await db.insert("chat", map);
+      this.id = await db?.insert("chat", map);
     } else if (updateIfAbsent) {
       await this.update();
     }
@@ -232,8 +237,8 @@ class Chat {
   }
 
   Future<Chat> changeName(String? name) async {
-    final Database db = await DBProvider.db.database;
-    await db.update("chat", {'displayName': name}, where: "ROWID = ?", whereArgs: [this.id]);
+    final Database? db = await DBProvider.db.database;
+    await db?.update("chat", {'displayName': name}, where: "ROWID = ?", whereArgs: [this.id]);
     this.displayName = name;
     return this;
   }
@@ -289,7 +294,7 @@ class Chat {
   }
 
   Future<Chat> update() async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
 
     // isArchived, isMuted, and isPinned should only be updated by using the helper methods
     Map<String, dynamic> params = {"isFiltered": this.isFiltered! ? 1 : 0};
@@ -318,7 +323,7 @@ class Chat {
 
     // If it already exists, update it
     if (this.id != null) {
-      await db.update("chat", params, where: "ROWID = ?", whereArgs: [this.id]);
+      await db?.update("chat", params, where: "ROWID = ?", whereArgs: [this.id]);
     } else {
       await this.save(updateIfAbsent: false);
     }
@@ -327,8 +332,9 @@ class Chat {
   }
 
   static Future<void> deleteChat(Chat chat) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
     await chat.save();
+    if (db == null) return;
     List<Message> messages = await Chat.getMessages(chat);
     for (Message message in messages) {
       await db.delete("message", where: "ROWID = ?", whereArgs: [message.id]);
@@ -339,7 +345,7 @@ class Chat {
   }
 
   Future<Chat> toggleHasUnread(bool hasUnread) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
     if (hasUnread) {
       if (CurrentChat.isActive(this.guid!)) {
         return this;
@@ -353,7 +359,7 @@ class Chat {
 
     // If it already exists, update it
     if (this.id != null) {
-      await db.update("chat", params, where: "ROWID = ?", whereArgs: [this.id]);
+      await db?.update("chat", params, where: "ROWID = ?", whereArgs: [this.id]);
     }
 
     if (hasUnread) {
@@ -367,7 +373,7 @@ class Chat {
   }
 
   Future<Chat> addMessage(Message message, {bool changeUnreadStatus: true, bool checkForMessageText = true}) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
 
     // Save the message
     Message? existing = await Message.findOne({"guid": message.guid});
@@ -386,7 +392,7 @@ class Chat {
 
     // If the message was saved correctly, update this chat's latestMessage info,
     // but only if the incoming message's date is newer
-    if (newMessage!.id != null && checkForMessageText) {
+    if ((newMessage!.id != null || kIsWeb) && checkForMessageText) {
       if (this.latestMessageDate == null) {
         isNewer = true;
       } else if (this.latestMessageDate!.millisecondsSinceEpoch < message.dateCreated!.millisecondsSinceEpoch) {
@@ -412,7 +418,7 @@ class Chat {
 
     try {
       // Add the relationship
-      await db.insert("chat_message_join", {"chatId": this.id, "messageId": message.id});
+      await db?.insert("chat_message_join", {"chatId": this.id, "messageId": message.id});
     } catch (ex) {
       // Don't do anything if it already exists
     }
@@ -509,14 +515,15 @@ class Chat {
   }
 
   static Future<int?> count() async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
 
-    List<Map<String, dynamic>> test = await db.rawQuery("SELECT COUNT(*) FROM chat;");
-    return test[0]['COUNT(*)'];
+    List<Map<String, dynamic>>? test = await db?.rawQuery("SELECT COUNT(*) FROM chat;");
+    return test?[0]['COUNT(*)'];
   }
 
   static Future<List<Attachment>> getAttachments(Chat chat, {int offset = 0, int limit = 25}) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
+    if (db == null) return [];
     if (chat.id == null) return [];
 
     String query = ("SELECT"
@@ -597,7 +604,8 @@ class Chat {
 
   static Future<List<Message>> getMessages(Chat chat,
       {bool reactionsOnly = false, int offset = 0, int limit = 25, bool includeDeleted: false}) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
+    if (db == null) return [];
     if (chat.id == null) return [];
 
     // String reactionQualifier = reactionsOnly ? "IS NOT" : "IS";
@@ -712,7 +720,8 @@ class Chat {
   }
 
   Future<Chat> getParticipants() async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
+    if (db == null) return this;
     if (this.id == null) return this;
 
     var res = await db.rawQuery(
@@ -737,14 +746,14 @@ class Chat {
   }
 
   Future<Chat> addParticipant(Handle participant) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
 
     // Save participant and add to list
     await participant.save();
     if (participant.id == null) return this;
 
     try {
-      await db.insert("chat_handle_join", {"chatId": this.id, "handleId": participant.id});
+      await db?.insert("chat_handle_join", {"chatId": this.id, "handleId": participant.id});
     } catch (ex) {
       // Don't do anything if it already exists
     }
@@ -757,10 +766,10 @@ class Chat {
   }
 
   Future<Chat> removeParticipant(Handle participant) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
 
     // First, remove from the JOIN table
-    await db.delete("chat_handle_join", where: "chatId = ? AND handleId = ?", whereArgs: [this.id, participant.id]);
+    await db?.delete("chat_handle_join", where: "chatId = ? AND handleId = ?", whereArgs: [this.id, participant.id]);
 
     // Second, remove from this object instance
     this.participants.removeWhere((element) => participant.id == element.id);
@@ -776,42 +785,51 @@ class Chat {
   }
 
   Future<Chat> togglePin(bool isPinned) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
     if (this.id == null) return this;
 
     this.isPinned = isPinned;
     this.pinIndex.value = null;
-    await db.update("chat", {"isPinned": isPinned ? 1 : 0}, where: "ROWID = ?", whereArgs: [this.id]);
+    await db?.update("chat", {"isPinned": isPinned ? 1 : 0}, where: "ROWID = ?", whereArgs: [this.id]);
 
     ChatBloc().updateChat(this);
     return this;
   }
 
   Future<Chat> toggleMute(bool isMuted) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
     if (this.id == null) return this;
 
     this.muteType = isMuted ? "mute" : null;
     this.muteArgs = null;
-    await db.update("chat", {"muteType": muteType, "muteArgs": muteArgs}, where: "ROWID = ?", whereArgs: [this.id]);
+    await db?.update("chat", {"muteType": muteType, "muteArgs": muteArgs}, where: "ROWID = ?", whereArgs: [this.id]);
 
     ChatBloc().updateChat(this);
     return this;
   }
 
   Future<Chat> toggleArchived(bool isArchived) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
     if (this.id == null) return this;
 
     this.isArchived = isArchived;
-    await db.update("chat", {"isArchived": isArchived ? 1 : 0}, where: "ROWID = ?", whereArgs: [this.id]);
+    await db?.update("chat", {"isArchived": isArchived ? 1 : 0}, where: "ROWID = ?", whereArgs: [this.id]);
 
     ChatBloc().updateChat(this);
     return this;
   }
 
   static Future<Chat?> findOne(Map<String, dynamic> filters) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
+    if (db == null) {
+      await ChatBloc().chatRequest!.future;
+      if (filters['guid'] != null) {
+        return ChatBloc().chats.firstWhere((e) => e.guid == filters['guid']);
+      } else if (filters['chatIdentifier'] != null) {
+        return ChatBloc().chats.firstWhereOrNull((e) => e.chatIdentifier == filters['chatIdentifier']);
+      }
+      return null;
+    }
 
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
@@ -827,7 +845,8 @@ class Chat {
   }
 
   static Future<List<Chat>> find([Map<String, dynamic> filters = const {}, limit, offset]) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
+    if (db == null) return [];
 
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
@@ -843,7 +862,8 @@ class Chat {
   }
 
   static Future<List<Chat>> getChats({int limit = 15, int offset = 0}) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
+    if (db == null) return [];
 
     var res = await db.rawQuery(
       "SELECT"
@@ -870,7 +890,7 @@ class Chat {
     if (res.isEmpty) return [];
 
     Iterable<Chat> output = res.map((c) => Chat.fromMap(c));
-    bool shouldFilter = !SettingsManager().settings.filteredChatList.value;
+    bool shouldFilter = SettingsManager().settings.filteredChatList.value;
     if (shouldFilter) {
       output = output.where((item) => !item.isFiltered!);
     }
@@ -883,9 +903,9 @@ class Chat {
   }
 
   Future<void> clearTranscript() async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
 
-    await db.rawQuery(
+    await db?.rawQuery(
         "UPDATE message "
         "SET dateDeleted = ${DateTime.now().toUtc().millisecondsSinceEpoch} "
         "WHERE ROWID IN ("
@@ -920,8 +940,8 @@ class Chat {
   }
 
   static flush() async {
-    final Database db = await DBProvider.db.database;
-    await db.delete("chat");
+    final Database? db = await DBProvider.db.database;
+    await db?.delete("chat");
   }
 
   Map<String, dynamic> toMap() => {

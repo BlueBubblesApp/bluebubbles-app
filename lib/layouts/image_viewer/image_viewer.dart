@@ -1,4 +1,6 @@
-import 'dart:io';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
+import 'package:universal_io/io.dart';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/navigator.dart';
@@ -24,7 +26,7 @@ class ImageViewer extends StatefulWidget {
     required this.attachment,
     required this.showInteractions,
   }) : super(key: key);
-  final File file;
+  final PlatformFile file;
   final Attachment attachment;
   final bool showInteractions;
 
@@ -52,11 +54,13 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
   }
 
   Future<void> initBytes() async {
-    if (widget.attachment.mimeType == "image/heic") {
+    if (kIsWeb) {
+      bytes = widget.file.bytes;
+    } else if (widget.attachment.mimeType == "image/heic") {
       bytes =
-          await AttachmentHelper.compressAttachment(widget.attachment, widget.file.absolute.path, qualityOverride: 100);
+          await AttachmentHelper.compressAttachment(widget.attachment, widget.file.path, qualityOverride: 100);
     } else {
-      bytes = await widget.file.readAsBytes();
+      bytes = await File(widget.file.path).readAsBytes();
     }
     if (this.mounted) setState(() {});
   }

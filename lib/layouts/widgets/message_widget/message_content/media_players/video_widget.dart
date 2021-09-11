@@ -1,4 +1,7 @@
-import 'dart:io';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
+import 'package:universal_io/io.dart';
+import 'package:universal_html/html.dart' as html;
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
@@ -25,7 +28,7 @@ class VideoWidgetController extends GetxController with SingleGetTickerProviderM
   late final VideoPlayerController controller;
   final RxBool showPlayPauseOverlay = true.obs;
   final RxBool muted = true.obs;
-  final File file;
+  final PlatformFile file;
   final Attachment attachment;
   final BuildContext context;
   VideoWidgetController({
@@ -51,10 +54,17 @@ class VideoWidgetController extends GetxController with SingleGetTickerProviderM
   }
 
   void initializeController() async {
-    VideoPlayerController vpc = VideoPlayerController.file(file);
-    controller = vpc;
-    await vpc.initialize();
-    CurrentChat.of(context)!.changeCurrentPlayingVideo({attachment.guid!: vpc});
+    PlatformFile file2 = file;
+    if (kIsWeb) {
+      final blob = html.Blob([file2.bytes]);
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      controller = VideoPlayerController.network(url);
+    } else {
+      dynamic file = File(file2.path);
+      controller = new VideoPlayerController.file(file);
+    }
+    await controller.initialize();
+    CurrentChat.of(context)!.changeCurrentPlayingVideo({attachment.guid!: controller});
   }
 
   void createListener(VideoPlayerController controller) {
@@ -86,7 +96,7 @@ class VideoWidget extends StatelessWidget {
     required this.file,
     required this.attachment,
   }) : super(key: key);
-  final File file;
+  final PlatformFile file;
   final Attachment attachment;
 
   @override

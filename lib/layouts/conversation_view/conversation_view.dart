@@ -1,5 +1,7 @@
 import 'dart:async';
-import 'dart:io';
+import 'dart:typed_data';
+import 'package:file_picker/file_picker.dart';
+import 'package:universal_io/io.dart';
 import 'dart:math';
 import 'dart:ui';
 
@@ -49,7 +51,7 @@ abstract class ChatSelectorTypes {
 }
 
 class ConversationView extends StatefulWidget {
-  final List<File> existingAttachments;
+  final List<PlatformFile> existingAttachments;
   final String? existingText;
   final List<UniqueContact> selected;
 
@@ -84,7 +86,7 @@ class ConversationView extends StatefulWidget {
 }
 
 class ConversationViewState extends State<ConversationView> with ConversationViewMixin, WidgetsBindingObserver {
-  List<File> existingAttachments = [];
+  List<PlatformFile> existingAttachments = [];
   String? existingText;
   Brightness? brightness;
   Color? previousBackgroundColor;
@@ -259,7 +261,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     super.dispose();
   }
 
-  Future<bool> send(List<File> attachments, String text) async {
+  Future<bool> send(List<PlatformFile> attachments, String text) async {
     bool isDifferentChat = currentChat == null || currentChat?.chat.guid != chat?.guid;
 
     if (isCreator!) {

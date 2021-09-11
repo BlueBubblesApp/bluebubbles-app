@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:universal_html/html.dart' as uh;
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
@@ -16,22 +17,39 @@ import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 class NotificationPanelController extends GetxController with SingleGetTickerProviderMixin {
   late final TabController tabController;
+  final List<Widget> tabs = [];
 
   @override
   void onInit() {
-    tabController = TabController(vsync: this, length: 2);
+    tabController = TabController(vsync: this, length: kIsWeb ? 1 : 2);
+    tabs.add(Tab(
+        icon: Icon(
+          SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.globe : Icons.public,
+          color: Theme.of(Get.context!).textTheme.bodyText1!.color,
+        ),
+        text: "GLOBAL OPTIONS"
+    ));
+    if (!kIsWeb) {
+      tabs.add(Tab(
+          icon: Icon(
+            SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.conversation_bubble : Icons.chat_bubble_outline,
+            color: Theme.of(Get.context!).textTheme.bodyText1!.color,
+          ),
+          text: "CHAT-SPECIFIC OPTIONS"
+      ));
+    }
     super.onInit();
   }
 }
 
 class NotificationPanel extends StatelessWidget {
-  final NotificationPanelController controller = Get.put(NotificationPanelController());
 
   @override
   Widget build(BuildContext context) {
@@ -61,218 +79,224 @@ class NotificationPanel extends StatelessWidget {
         systemNavigationBarIconBrightness: headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
-      child: Scaffold(
-        backgroundColor: SettingsManager().settings.skin.value != Skins.iOS ? tileColor : headerColor,
-        appBar: PreferredSize(
-          preferredSize: Size(CustomNavigator.width(context), 80),
-          child: ClipRRect(
-            child: BackdropFilter(
-              child: AppBar(
-                brightness: ThemeData.estimateBrightnessForColor(headerColor),
-                toolbarHeight: 100.0,
-                elevation: 0,
-                leading: buildBackButton(context),
-                backgroundColor: headerColor.withOpacity(0.5),
-                title: Text(
-                  "Notification Settings",
-                  style: Theme.of(context).textTheme.headline1,
+      child: GetBuilder<NotificationPanelController>(
+        init: NotificationPanelController(),
+        builder: (controller) => Scaffold(
+          backgroundColor: SettingsManager().settings.skin.value != Skins.iOS ? tileColor : headerColor,
+          appBar: PreferredSize(
+            preferredSize: Size(CustomNavigator.width(context), 80),
+            child: ClipRRect(
+              child: BackdropFilter(
+                child: AppBar(
+                  brightness: ThemeData.estimateBrightnessForColor(headerColor),
+                  toolbarHeight: 100.0,
+                  elevation: 0,
+                  leading: buildBackButton(context),
+                  backgroundColor: headerColor.withOpacity(0.5),
+                  title: Text(
+                    "Notification Settings",
+                    style: Theme.of(context).textTheme.headline1,
+                  ),
                 ),
+                filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
               ),
-              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
             ),
           ),
-        ),
-        body: TabBarView(
-          physics: ThemeSwitcher.getScrollPhysics(),
-          controller: controller.tabController,
-          children: <Widget>[
-            CustomScrollView(
-              physics: ThemeSwitcher.getScrollPhysics(),
-              slivers: <Widget>[
-                SliverList(
-                  delegate: SliverChildListDelegate(
-                    <Widget>[
-                      Container(
-                          height: SettingsManager().settings.skin.value == Skins.iOS ? 30 : 40,
-                          alignment: Alignment.bottomLeft,
+          body: TabBarView(
+            physics: ThemeSwitcher.getScrollPhysics(),
+            controller: controller.tabController,
+            children: <Widget>[
+              CustomScrollView(
+                physics: ThemeSwitcher.getScrollPhysics(),
+                slivers: <Widget>[
+                  SliverList(
+                    delegate: SliverChildListDelegate(
+                      <Widget>[
+                        Container(
+                            height: SettingsManager().settings.skin.value == Skins.iOS ? 30 : 40,
+                            alignment: Alignment.bottomLeft,
+                            decoration: SettingsManager().settings.skin.value == Skins.iOS
+                                ? BoxDecoration(
+                              color: headerColor,
+                              border: Border(
+                                  bottom: BorderSide(
+                                      color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
+                            )
+                                : BoxDecoration(
+                              color: tileColor,
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.only(bottom: 8.0, left: 15),
+                              child: Text("Notifications".psCapitalize,
+                                  style: SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
+                            )),
+                        Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
+                        if (!kIsWeb)
+                          Obx(() => SettingsSwitch(
+                            onChanged: (bool val) {
+                              SettingsManager().settings.notifyOnChatList.value = val;
+                              saveSettings();
+                            },
+                            initialVal: SettingsManager().settings.notifyOnChatList.value,
+                            title: "Send Notifications on Chat List",
+                            subtitle: "Sends notifications for new messages while in the chat list or chat creator",
+                            backgroundColor: tileColor,
+                          )),
+                        if (kIsWeb)
+                          SettingsTile(
+                            onTap: () async {
+                              String res = await uh.Notification.requestPermission();
+                              controller.update();
+                              showSnackbar("Notice", "Notification permission $res");
+                            },
+                            title: uh.Notification.permission == "granted"
+                                ? "Notifications enabled" : uh.Notification.permission == "denied"
+                                ? "Notifications denied, please update your browser settings to re-enable notifications"
+                                : "Click to enable notifications",
+                            backgroundColor: tileColor,
+                          ),
+                        Container(
+                          color: tileColor,
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 65.0),
+                            child: SettingsDivider(color: headerColor),
+                          ),
+                        ),
+                        Obx(() => SettingsSwitch(
+                          onChanged: (bool val) {
+                            SettingsManager().settings.notifyReactions.value = val;
+                            saveSettings();
+                          },
+                          initialVal: SettingsManager().settings.notifyReactions.value,
+                          title: "Notify for Reactions",
+                          subtitle: "Sends notifications for incoming reactions",
+                          backgroundColor: tileColor,
+                        )),
+                        Container(
+                          color: tileColor,
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 65.0),
+                            child: SettingsDivider(color: headerColor),
+                          ),
+                        ),
+                        if (!kIsWeb)
+                          Obx(() {
+                            if (SettingsManager().settings.skin.value == Skins.iOS)
+                              return Container(
+                                decoration: BoxDecoration(
+                                  color: tileColor,
+                                ),
+                                padding: EdgeInsets.only(left: 15),
+                                child: Text("Select Notification Sound"),
+                              );
+                            else return SizedBox.shrink();
+                          }),
+                        if (!kIsWeb)
+                          Obx(() => SettingsOptions<String>(
+                            initial: SettingsManager().settings.notificationSound.value,
+                            onChanged: (val) {
+                              if (val == null) return;
+                              SettingsManager().settings.notificationSound.value = val;
+                              saveSettings();
+                            },
+                            options: ["default", "twig.wav", "walrus.wav", "sugarfree.wav", "raspberry.wav"],
+                            textProcessing: (val) => val.toString().split(".").first.capitalizeFirst!,
+                            capitalize: false,
+                            title: "Notification Sound",
+                            subtitle: "Set a custom notification sound for the app",
+                            backgroundColor: tileColor,
+                            secondaryColor: headerColor,
+                          )),
+                        if (!kIsWeb)
+                          Container(
+                            color: tileColor,
+                            child: Padding(
+                              padding: const EdgeInsets.only(left: 65.0),
+                              child: SettingsDivider(color: headerColor),
+                            ),
+                          ),
+                        SettingsTile(
+                          title: "Text Detection",
+                          onTap: () async {
+                            final TextEditingController controller = TextEditingController();
+                            controller.text = SettingsManager().settings.globalTextDetection.value;
+                            Get.defaultDialog(
+                              title: "Text detection",
+                              titleStyle: Theme.of(context).textTheme.headline1,
+                              backgroundColor: Theme.of(context).backgroundColor,
+                              buttonColor: Theme.of(context).primaryColor,
+                              content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Text("Enter any text separated by commas to whitelist notifications for. These are case insensitive.\n\nE.g. 'John,hey guys,homework'\n"),
+                                    ),
+                                    Theme(
+                                      data: Theme.of(context).copyWith(
+                                          inputDecorationTheme: const InputDecorationTheme(
+                                            labelStyle: TextStyle(color: Colors.grey),
+                                          )
+                                      ),
+                                      child: TextField(
+                                        controller: controller,
+                                        decoration: InputDecoration(
+                                          labelText: "Enter text to whitelist...",
+                                          enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey,)),
+                                          focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).primaryColor,)),
+                                        ),
+                                      ),
+                                    ),
+                                  ]
+                              ),
+                              onConfirm: () async {
+                                SettingsManager().settings.globalTextDetection.value = controller.text;
+                                saveSettings();
+                                Get.back();
+                              },
+                            );
+                          },
+                          backgroundColor: tileColor,
+                          subtitle: "Mute all chats except when your choice of text is found in a message",
+                        ),
+                        Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
+                        Container(
+                          height: 30,
                           decoration: SettingsManager().settings.skin.value == Skins.iOS
                               ? BoxDecoration(
                             color: headerColor,
                             border: Border(
-                                bottom: BorderSide(
-                                    color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
+                                top: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
                           )
-                              : BoxDecoration(
-                            color: tileColor,
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.only(bottom: 8.0, left: 15),
-                            child: Text("Notifications".psCapitalize,
-                                style: SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
-                          )),
-                      Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
-                      Obx(() => SettingsSwitch(
-                        onChanged: (bool val) {
-                          SettingsManager().settings.notifyOnChatList.value = val;
-                          saveSettings();
-                        },
-                        initialVal: SettingsManager().settings.notifyOnChatList.value,
-                        title: "Send Notifications on Chat List",
-                        subtitle: "Sends notifications for new messages while in the chat list or chat creator",
-                        backgroundColor: tileColor,
-                      )),
-                      Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 65.0),
-                          child: SettingsDivider(color: headerColor),
+                              : null,
                         ),
-                      ),
-                      Obx(() => SettingsSwitch(
-                        onChanged: (bool val) {
-                          SettingsManager().settings.notifyReactions.value = val;
-                          saveSettings();
-                        },
-                        initialVal: SettingsManager().settings.notifyReactions.value,
-                        title: "Notify for Reactions",
-                        subtitle: "Sends notifications for incoming reactions",
-                        backgroundColor: tileColor,
-                      )),
-                      Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 65.0),
-                          child: SettingsDivider(color: headerColor),
-                        ),
-                      ),
-                      Obx(() {
-                        if (SettingsManager().settings.skin.value == Skins.iOS)
-                          return Container(
-                            decoration: BoxDecoration(
-                              color: tileColor,
-                            ),
-                            padding: EdgeInsets.only(left: 15),
-                            child: Text("Select Notification Sound"),
-                          );
-                        else return SizedBox.shrink();
-                      }),
-                      Obx(() => SettingsOptions<String>(
-                        initial: SettingsManager().settings.notificationSound.value,
-                        onChanged: (val) {
-                          if (val == null) return;
-                          SettingsManager().settings.notificationSound.value = val;
-                          saveSettings();
-                        },
-                        options: ["default", "twig.wav", "walrus.wav", "sugarfree.wav", "raspberry.wav"],
-                        textProcessing: (val) => val.toString().split(".").first.capitalizeFirst!,
-                        capitalize: false,
-                        title: "Notification Sound",
-                        subtitle: "Set a custom notification sound for the app",
-                        backgroundColor: tileColor,
-                        secondaryColor: headerColor,
-                      )),
-                      Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 65.0),
-                          child: SettingsDivider(color: headerColor),
-                        ),
-                      ),
-                      SettingsTile(
-                        title: "Text Detection",
-                        onTap: () async {
-                          final TextEditingController controller = TextEditingController();
-                          controller.text = SettingsManager().settings.globalTextDetection.value;
-                          Get.defaultDialog(
-                            title: "Text detection",
-                            titleStyle: Theme.of(context).textTheme.headline1,
-                            backgroundColor: Theme.of(context).backgroundColor,
-                            buttonColor: Theme.of(context).primaryColor,
-                            content: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Text("Enter any text separated by commas to whitelist notifications for. These are case insensitive.\n\nE.g. 'John,hey guys,homework'\n"),
-                                  ),
-                                  Theme(
-                                    data: Theme.of(context).copyWith(
-                                        inputDecorationTheme: const InputDecorationTheme(
-                                          labelStyle: TextStyle(color: Colors.grey),
-                                        )
-                                    ),
-                                    child: TextField(
-                                      controller: controller,
-                                      decoration: InputDecoration(
-                                        labelText: "Enter text to whitelist...",
-                                        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey,)),
-                                        focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).primaryColor,)),
-                                      ),
-                                    ),
-                                  ),
-                                ]
-                            ),
-                            onConfirm: () async {
-                              SettingsManager().settings.globalTextDetection.value = controller.text;
-                              saveSettings();
-                              Get.back();
-                            },
-                          );
-                        },
-                        backgroundColor: tileColor,
-                        subtitle: "Mute all chats except when your choice of text is found in a message",
-                      ),
-                      Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
-                      Container(
-                        height: 30,
-                        decoration: SettingsManager().settings.skin.value == Skins.iOS
-                            ? BoxDecoration(
-                          color: headerColor,
-                          border: Border(
-                              top: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
-                        )
-                            : null,
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                SliverPadding(
-                  padding: EdgeInsets.all(40),
-                ),
-              ],
-            ),
-            ChatList(),
-          ],
-        ),
-        bottomSheet: Container(
-          color: tileColor,
-          child: TabBar(
-            indicatorColor: Theme.of(context).primaryColor,
-            indicator: BoxDecoration(
-              border: Border(
-                top: BorderSide(
-                  color: Colors.blue,
-                  width: 3.0,
-                ),
-              ),
-            ),
-            tabs: [
-              Tab(
-                  icon: Icon(
-                    SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.globe : Icons.public,
-                    color: Theme.of(context).textTheme.bodyText1!.color,
+                  SliverPadding(
+                    padding: EdgeInsets.all(40),
                   ),
-                  text: "GLOBAL OPTIONS"
+                ],
               ),
-              Tab(
-                icon: Icon(
-                  SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.conversation_bubble : Icons.chat_bubble_outline,
-                  color: Theme.of(context).textTheme.bodyText1!.color,
-                ),
-                text: "CHAT-SPECIFIC OPTIONS"
-              ),
+              if (!kIsWeb)
+                ChatList(),
             ],
-            controller: controller.tabController,
+          ),
+          bottomSheet: Container(
+            color: tileColor,
+            child: TabBar(
+              indicatorColor: Theme.of(context).primaryColor,
+              indicator: BoxDecoration(
+                border: Border(
+                  top: BorderSide(
+                    color: Colors.blue,
+                    width: 3.0,
+                  ),
+                ),
+              ),
+              tabs: controller.tabs,
+              controller: controller.tabController,
+            ),
           ),
         ),
       ),
@@ -326,7 +350,7 @@ class ChatListState extends State<ChatList> {
       ),
       slivers: <Widget>[
         Obx(() {
-          if (!ChatBloc().hasChats.value) {
+          if (!ChatBloc().loadedChats.value) {
             return SliverToBoxAdapter(
               child: Center(
                 child: Container(
@@ -347,7 +371,7 @@ class ChatListState extends State<ChatList> {
               ),
             );
           }
-          if (ChatBloc().hasChats.value && ChatBloc().chats.isEmpty) {
+          if (ChatBloc().loadedChats.value && ChatBloc().chats.isEmpty) {
             return SliverToBoxAdapter(
               child: Center(
                 child: Container(

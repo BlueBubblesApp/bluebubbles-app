@@ -1,5 +1,7 @@
 import 'dart:async';
-import 'dart:io';
+import 'package:bluebubbles/helpers/utils.dart';
+import 'package:flutter/foundation.dart';
+import 'package:universal_io/io.dart';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/themes.dart';
@@ -31,16 +33,13 @@ class SettingsManager {
   /// It cannot be accessed by the user, and is private to the app
   late Directory appDocDir;
 
-  /// [sharedFilesPath] is the path where most temporary files like those inserted from the keyboard or shared to the app are stored
-  /// The getter simply is a helper to that path
-  String get sharedFilesPath => "${appDocDir.path}/sharedFiles";
-
   /// [settings] is just an instance of the current settings that are saved
   late Settings settings;
   FCMData? fcmData;
   late List<ThemeObject> themes;
   String? countryCode;
   int? _macOSVersion;
+  String? _serverVersion;
   bool canAuthenticate = false;
 
   int get compressionQuality {
@@ -54,8 +53,11 @@ class SettingsManager {
   /// [init] is run at start and fetches both the [appDocDir] and sets the [settings] to a default value
   Future<void> init() async {
     settings = new Settings();
-    appDocDir = await getApplicationSupportDirectory();
-    canAuthenticate = await LocalAuthentication().isDeviceSupported();
+    if (!kIsWeb) {
+      //ignore: unnecessary_cast, we need this as a workaround
+      appDocDir = (await getApplicationSupportDirectory()) as Directory;
+    }
+    canAuthenticate = !kIsWeb && !kIsDesktop && await LocalAuthentication().isDeviceSupported();
   }
 
   /// Retreives files from disk and stores them in [settings]
@@ -81,7 +83,9 @@ class SettingsManager {
 
     try {
       // Set the [displayMode] to that saved in settings
-      await FlutterDisplayMode.setPreferredMode(await settings.getDisplayMode());
+      if (!kIsWeb && !kIsDesktop) {
+        await FlutterDisplayMode.setPreferredMode(await settings.getDisplayMode());
+      }
     } catch (e) {}
 
     // Change the [finishedSetup] status to that of the settings
@@ -108,7 +112,9 @@ class SettingsManager {
     settings.save();
     try {
       // Set the [displayMode] to that saved in settings
-      await FlutterDisplayMode.setPreferredMode(await settings.getDisplayMode());
+      if (!kIsWeb && !kIsDesktop) {
+        await FlutterDisplayMode.setPreferredMode(await settings.getDisplayMode());
+      }
     } catch (e) {}
   }
 
@@ -165,5 +171,13 @@ class SettingsManager {
       _macOSVersion = int.tryParse(res['data']['os_version'].split(".")[0]);
     }
     return _macOSVersion;
+  }
+
+  FutureOr<String?> getServerVersion() async {
+    if (_macOSVersion == null) {
+      var res = await SocketManager().sendMessage("get-server-metadata", {}, (_) {});
+      _serverVersion = res['data']['server_version'];
+    }
+    return _serverVersion;
   }
 }

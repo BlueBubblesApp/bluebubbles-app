@@ -99,8 +99,8 @@ class ConfigEntry<T> {
   }
 
   static Future<ConfigEntry?> findOne(String table, Map<String, dynamic> filters, {Database? database}) async {
-    final Database db = database != null ? database : await DBProvider.db.database;
-
+    final Database? db = database != null ? database : await DBProvider.db.database;
+    if (db == null) return null;
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];

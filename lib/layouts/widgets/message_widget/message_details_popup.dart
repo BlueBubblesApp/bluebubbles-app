@@ -1,5 +1,7 @@
 import 'dart:async';
-import 'dart:io';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
+import 'package:universal_io/io.dart';
 import 'dart:math';
 import 'dart:ui';
 import 'package:bluebubbles/helpers/logger.dart';
@@ -341,7 +343,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   bool get showDownload =>
       widget.message.hasAttachments &&
       widget.message.attachments!.where((element) => element!.mimeStart != null).length > 0 &&
-      widget.message.attachments!.where((element) => AttachmentHelper.getContent(element!) is File).length > 0;
+      widget.message.attachments!.where((element) => AttachmentHelper.getContent(element!) is PlatformFile).length > 0;
 
   bool get isSent => !widget.message.guid!.startsWith('temp') && !widget.message.guid!.startsWith('error');
 
@@ -387,7 +389,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             ),
           ),
         ),
-      if (widget.message.fullText.replaceAll("\n", " ").hasUrl)
+      if (widget.message.fullText.replaceAll("\n", " ").hasUrl && !kIsWeb && !kIsDesktop)
         Material(
           color: Colors.transparent,
           child: InkWell(
@@ -457,14 +459,20 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
         child: InkWell(
           onTap: () async {
             bool shouldShowSnackbar = (await SettingsManager().getMacOSVersion())! >= 11;
+            Navigator.of(context).pop();
             Navigator.pushReplacement(
               context,
               cupertino.CupertinoPageRoute(
                 builder: (BuildContext context) {
-                  List<File> existingAttachments = [];
+                  List<PlatformFile> existingAttachments = [];
                   if (!widget.message.isUrlPreview()) {
                     existingAttachments =
-                        widget.message.attachments!.map((attachment) => File(attachment!.getPath())).toList();
+                        widget.message.attachments!.map((attachment) => PlatformFile(
+                          name: attachment!.transferName!,
+                          path: kIsWeb ? null : attachment.getPath(),
+                          bytes: attachment.bytes,
+                          size: attachment.totalBytes!,
+                        )).toList();
                   }
                   return ConversationView(
                     isCreator: true,
@@ -514,7 +522,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
           child: InkWell(
             onTap: () {
               Clipboard.setData(new ClipboardData(text: widget.message.fullText));
-              Navigator.of(context, rootNavigator: true).pop();
+              Navigator.of(context).pop();
               showSnackbar("Copied", "Copied to clipboard!", durationMs: 1000);
             },
             child: ListTile(
@@ -558,7 +566,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                           // style: Theme.of(context).textTheme.bodyText1,
                         ),
                         onPressed: () {
-                          Navigator.of(context, rootNavigator: true).pop('dialog');
+                          Navigator.of(context).pop('dialog');
                         },
                       ),
                     ];
@@ -621,7 +629,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
               try {
                 for (Attachment? element in widget.message.attachments!) {
                   dynamic content = AttachmentHelper.getContent(element!);
-                  if (content is File) {
+                  if (content is PlatformFile) {
                     await AttachmentHelper.saveToGallery(context, content);
                   }
                 }
@@ -642,12 +650,12 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             ),
           ),
         ),
-      if (widget.message.hasAttachments || widget.message.text!.length > 0)
+      if ((widget.message.hasAttachments && !kIsWeb) || widget.message.text!.length > 0)
         Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: () {
-              if (widget.message.hasAttachments && !widget.message.isUrlPreview()) {
+              if (widget.message.hasAttachments && !widget.message.isUrlPreview() && !kIsWeb) {
                 for (Attachment? element in widget.message.attachments!) {
                   Share.file(
                     "${element!.mimeType!.split("/")[0].capitalizeFirst} shared from BlueBubbles: ${element.transferName}",
@@ -673,42 +681,43 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             ),
           ),
         ),
-      Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () async {
-            final messageDate = await showDatePicker(
-                context: context,
-                initialDate: DateTime.now().toLocal(),
-                firstDate: DateTime.now().toLocal(),
-                lastDate: DateTime.now().toLocal().add(Duration(days: 365)));
-            if (messageDate != null) {
-              final messageTime = await showTimePicker(context: context, initialTime: TimeOfDay.now());
-              if (messageTime != null) {
-                final finalDate = DateTime(
-                    messageDate.year, messageDate.month, messageDate.day, messageTime.hour, messageTime.minute);
-                if (!finalDate.isAfter(DateTime.now().toLocal())) {
-                  showSnackbar("Error", "Select a date in the future");
-                  return;
+      if (!kIsWeb && !kIsDesktop)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () async {
+              final messageDate = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime.now().toLocal(),
+                  firstDate: DateTime.now().toLocal(),
+                  lastDate: DateTime.now().toLocal().add(Duration(days: 365)));
+              if (messageDate != null) {
+                final messageTime = await showTimePicker(context: context, initialTime: TimeOfDay.now());
+                if (messageTime != null) {
+                  final finalDate = DateTime(
+                      messageDate.year, messageDate.month, messageDate.day, messageTime.hour, messageTime.minute);
+                  if (!finalDate.isAfter(DateTime.now().toLocal())) {
+                    showSnackbar("Error", "Select a date in the future");
+                    return;
+                  }
+                  NotificationManager().scheduleNotification(widget.currentChat!.chat, widget.message, finalDate);
+                  Get.back();
+                  showSnackbar("Notice", "Scheduled reminder for ${buildDate(finalDate)}");
                 }
-                NotificationManager().scheduleNotification(widget.currentChat!.chat, widget.message, finalDate);
-                Get.back();
-                showSnackbar("Notice", "Scheduled reminder for ${buildDate(finalDate)}");
               }
-            }
-          },
-          child: ListTile(
-            title: Text(
-              "Remind Later",
-              style: Theme.of(context).textTheme.bodyText1,
-            ),
-            trailing: Icon(
-              SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.alarm : Icons.alarm,
-              color: Theme.of(context).textTheme.bodyText1!.color,
+            },
+            child: ListTile(
+              title: Text(
+                "Remind Later",
+                style: Theme.of(context).textTheme.bodyText1,
+              ),
+              trailing: Icon(
+                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.alarm : Icons.alarm,
+                color: Theme.of(context).textTheme.bodyText1!.color,
+              ),
             ),
           ),
         ),
-      ),
     ];
 
     List<Widget> detailsActions = [];
