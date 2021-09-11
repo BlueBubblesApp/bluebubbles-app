@@ -7,7 +7,6 @@ import 'package:bluebubbles/repository/models/theme_entry.dart';
 import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get_utils/src/extensions/context_extensions.dart';
 
 class ThemingColorSelector extends StatefulWidget {
   ThemingColorSelector({Key? key, required this.currentTheme, required this.entry, required this.editable})

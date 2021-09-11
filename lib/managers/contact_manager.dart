@@ -10,7 +10,6 @@ import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
 import 'package:contacts_service/contacts_service.dart';
-import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/cupertino.dart';

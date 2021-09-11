@@ -9,7 +9,6 @@ import 'package:bluebubbles/layouts/setup/qr_scan/text_input_url.dart';
 import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -135,40 +134,37 @@ class _QRScanState extends State<QRScan> {
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20.0),
                 child: Text(
-                  kIsWeb || kIsDesktop ? "Please enter your server URL and password to access your messages" : "BlueBubbles tries to make the setup process as easy as possible. We've created a QR code on your server that you can use to easily register this device with the server.",
+                  "BlueBubbles tries to make the setup process as easy as possible. We've created a QR code on your server that you can use to easily register this device with the server.",
                   style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
                   textAlign: TextAlign.center,
                 ),
               ),
               Container(height: 20.0),
-              if (!kIsWeb && !kIsDesktop)
-                ClipOval(
-                  child: Material(
-                    color: Theme.of(context).primaryColor, // button color
-                    child: InkWell(
-                      child: SizedBox(
-                        width: 60,
-                        height: 60,
-                        child: Icon(
-                          Icons.camera,
-                          color: Colors.white,
-                        ),
+              ClipOval(
+                child: Material(
+                  color: Theme.of(context).primaryColor, // button color
+                  child: InkWell(
+                    child: SizedBox(
+                      width: 60,
+                      height: 60,
+                      child: Icon(
+                        Icons.camera,
+                        color: Colors.white,
                       ),
-                      onTap: scanQRCode,
                     ),
+                    onTap: scanQRCode,
                   ),
                 ),
-              if (!kIsWeb && !kIsDesktop)
-                Container(height: 80.0),
-              if (!kIsWeb && !kIsDesktop)
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20.0),
-                  child: Text(
-                    "Or alternatively... you can enter in your url here",
-                    style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.15),
-                    textAlign: TextAlign.center,
-                  ),
+              ),
+              Container(height: 80.0),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20.0),
+                child: Text(
+                  "Or alternatively... you can enter in your url here",
+                  style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.15),
+                  textAlign: TextAlign.center,
                 ),
+              ),
               Padding(
                 padding: EdgeInsets.only(top: 15.0),
                 child: ClipOval(

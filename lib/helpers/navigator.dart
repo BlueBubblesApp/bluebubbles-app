@@ -71,7 +71,7 @@ class BaseNavigator extends GetxService {
     if (Get.keys.containsKey(2) && (!context.isPhone || context.isLandscape)) {
       Get.offUntil(GetPageRoute(
         page: () => widget,
-        transition: Transition.rightToLeft
+        transition: Transition.noTransition
       ), predicate, id: 2);
     } else {
       Navigator.of(context).pushAndRemoveUntil(ThemeSwitcher.buildPageRoute(
@@ -87,7 +87,7 @@ class BaseNavigator extends GetxService {
       Get.offUntil(GetPageRoute(
           page: () => widget,
           binding: binding,
-          transition: Transition.rightToLeft
+          transition: Transition.noTransition
       ), predicate, id: 3);
     } else {
       binding?.dependencies();
@@ -95,6 +95,14 @@ class BaseNavigator extends GetxService {
       Navigator.of(context).push(ThemeSwitcher.buildPageRoute(
         builder: (BuildContext context) => widget,
       ));
+    }
+  }
+
+  void backSettingsCloseOverlays(BuildContext context) {
+    if (Get.keys.containsKey(3) && (!context.isPhone || context.isLandscape)) {
+      Get.back(closeOverlays: true, id: 3);
+    } else {
+      Get.back(closeOverlays: true);
     }
   }
 }

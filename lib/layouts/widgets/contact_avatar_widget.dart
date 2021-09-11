@@ -10,7 +10,6 @@ import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -114,7 +113,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
 
       if (contactRes.length > 0) {
         contact = contactRes.first;
-        if (isNullOrEmpty(contact.avatar)! && !kIsWeb && !kIsDesktop) {
+        if (isNullOrEmpty(contact.avatar)!) {
           contact.avatar =
               await ContactsService.getAvatar(contact, photoHighRes: !SettingsManager().settings.lowMemoryMode.value);
         }

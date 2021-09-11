@@ -401,202 +401,207 @@ class ChatListState extends State<ChatList> {
                       titleStyle: Theme.of(context).textTheme.headline1,
                       confirm: Container(height: 0, width: 0),
                       cancel: Container(height: 0, width: 0),
-                      content: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: <Widget>[
-                            ListTile(
-                                title: Text(chat.muteType == "mute" ? "Unmute" : "Mute", style: Theme.of(context).textTheme.bodyText1),
-                                subtitle: Text("Completely ${chat.muteType == "mute" ? "unmute" : "mute"} this chat", style: Theme.of(context).textTheme.subtitle1),
-                                onTap: () async {
-                                  Get.back();
-                                  await chat.toggleMute(chat.muteType != "mute");
-                                  await chat.update();
-                                  if (this.mounted) setState(() {});
-                                  EventDispatcher().emit("refresh", null);
-                                },
-                            ),
-                            ListTile(
-                                title: Text("Mute Individuals", style: Theme.of(context).textTheme.bodyText1),
-                                subtitle: Text("Mute certain individuals in this chat", style: Theme.of(context).textTheme.subtitle1),
-                                onTap: () async {
-                                  Get.back();
-                                  List<Future<String?>> names = chat.participants.map((e) async =>
-                                  await ContactManager().getContactTitle(e)).toList();
-                                  Future<List<String?>> futureList = Future.wait(names);
-                                  List<String?> result = await futureList;
-                                  List<String> existing = chat.muteArgs?.split(",") ?? [];
-                                  Get.defaultDialog(
-                                      title: "Mute Individuals",
-                                      titleStyle: Theme.of(context).textTheme.headline1,
-                                      backgroundColor: Theme.of(context).backgroundColor,
-                                      buttonColor: Theme.of(context).primaryColor,
-                                      
-                                      content: Container(
-                                        constraints: BoxConstraints(
-                                          maxHeight: 300,
-                                        ),
-                                        child: Center(
-                                          child: Container(
-                                            width: 300,
-                                            height: 200,
-                                            constraints: BoxConstraints(
-                                              maxHeight: Get.height - 300,
-                                            ),
-                                            child: StatefulBuilder(
-                                              builder: (context, setState) {
-                                                return SingleChildScrollView(
-                                                  child: Column(
-                                                    mainAxisSize: MainAxisSize.min,
-                                                    children: [
-                                                      Padding(
-                                                        padding: const EdgeInsets.all(8.0),
-                                                        child: Text("Select the individuals you would like to mute"),
-                                                      ),
-                                                      ListView.builder(
-                                                        shrinkWrap: true,
-                                                        itemCount: chat.participants.length,
-                                                        physics: NeverScrollableScrollPhysics(),
-                                                        itemBuilder: (context, index) {
-                                                          return Theme(
-                                                            data: Theme.of(context).copyWith(unselectedWidgetColor: Theme.of(context).textTheme.headline1!.color),
-                                                            child: CheckboxListTile(
-                                                                value: existing.contains(chat.participants[index].address),
-                                                                onChanged: (val) {
-                                                                  setState(() {
-                                                                    if (val!) {
-                                                                      existing.add(chat.participants[index].address);
-                                                                    } else {
-                                                                      existing.removeWhere((element) => element == chat.participants[index].address);
-                                                                    }
-                                                                  });
-                                                                },
-                                                                activeColor: Theme.of(context).primaryColor,
-                                                                title: Text(result[index] ?? chat.participants[index].address, style: Theme.of(context).textTheme.headline1),
-                                                            ),
-                                                          );
-                                                        },
-                                                      ),
-                                                    ],
-                                                  ),
-                                                );
-                                              }
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      onConfirm: () async {
-                                        if (existing.isEmpty) {
-                                          showSnackbar("Error", "Please select at least one person!");
-                                          return;
-                                        }
-                                        await chat.toggleMute(false);
-                                        chat.muteType = "mute_individuals";
-                                        chat.muteArgs = existing.join(",");
-                                        Get.back();
-                                        await chat.update();
-                                        if (this.mounted) setState(() {});
-                                        EventDispatcher().emit("refresh", null);
-                                      },
-                                  );
-                                },
-                            ),
-                            ListTile(
-                                title: Text(chat.muteType == "temporary_mute" && shouldMuteDateTime(chat.muteArgs) ? "Delete Temporary Mute" : "Temporary Mute", style: Theme.of(context).textTheme.bodyText1),
-                                subtitle: Text(chat.muteType == "temporary_mute" && shouldMuteDateTime(chat.muteArgs) ? "" : "Mute this chat temporarily", style: Theme.of(context).textTheme.subtitle1),
-                                onTap: () async {
-                                  Get.back();
-                                  if (shouldMuteDateTime(chat.muteArgs)) {
-                                    chat.muteType = null;
-                                    chat.muteArgs = null;
-                                  } else {
-                                    final messageDate = await showDatePicker(
-                                        context: context,
-                                        initialDate: DateTime.now().toLocal(),
-                                        firstDate: DateTime.now().toLocal(),
-                                        lastDate: DateTime.now().toLocal().add(Duration(days: 365)));
-                                    if (messageDate != null) {
-                                      final messageTime = await showTimePicker(context: context, initialTime: TimeOfDay.now());
-                                      if (messageTime != null) {
-                                        final finalDate = DateTime(messageDate.year, messageDate.month, messageDate.day, messageTime.hour, messageTime.minute);
-                                        await chat.toggleMute(false);
-                                        chat.muteType = "temporary_mute";
-                                        chat.muteArgs = finalDate.toIso8601String();
-                                        await chat.update();
-                                        if (this.mounted) setState(() {});
-                                        EventDispatcher().emit("refresh", null);
-                                      }
-                                    }
-                                  }
-                                },
-                            ),
-                            ListTile(
-                                title: Text("Text Detection", style: Theme.of(context).textTheme.bodyText1),
-                                subtitle: Text("Completely mute this chat, except when a message contains certain text", style: Theme.of(context).textTheme.subtitle1),
-                                onTap: () async {
-                                  Get.back();
-                                  final TextEditingController controller = TextEditingController();
-                                  if (chat.muteType == "text_detection") {
-                                    controller.text = chat.muteArgs!;
-                                  }
-                                  Get.defaultDialog(
-                                    title: "Text detection",
-                                    titleStyle: Theme.of(context).textTheme.headline1,
-                                    backgroundColor: Theme.of(context).backgroundColor,
-                                    buttonColor: Theme.of(context).primaryColor,
-                                    content: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: Text("Enter any text separated by commas to whitelist notifications for. These are case insensitive.\n\nE.g. 'John,hey guys,homework'\n"),
-                                        ),
-                                        Theme(
-                                          data: Theme.of(context).copyWith(
-                                            inputDecorationTheme: const InputDecorationTheme(
-                                                labelStyle: TextStyle(color: Colors.grey),
-                                              )
-                                            ),
-                                          child: TextField(
-                                            controller: controller,
-                                            decoration: InputDecoration(
-                                              labelText: "Enter text to whitelist...",
-                                              enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey,)),
-                                              focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).primaryColor,)),
-                                            ),
-                                          ),
-                                        ),
-                                      ]
-                                    ),
-                                    onConfirm: () async {
-                                      if (controller.text.isEmpty) {
-                                        showSnackbar("Error", "Please enter text!");
-                                        return;
-                                      }
-                                      await chat.toggleMute(false);
-                                      chat.muteType = "text_detection";
-                                      chat.muteArgs = controller.text;
+                      content: Container(
+                        height: context.height - 200,
+                        child: SingleChildScrollView(
+                          child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: <Widget>[
+                                ListTile(
+                                    title: Text(chat.muteType == "mute" ? "Unmute" : "Mute", style: Theme.of(context).textTheme.bodyText1),
+                                    subtitle: Text("Completely ${chat.muteType == "mute" ? "unmute" : "mute"} this chat", style: Theme.of(context).textTheme.subtitle1),
+                                    onTap: () async {
                                       Get.back();
+                                      await chat.toggleMute(chat.muteType != "mute");
                                       await chat.update();
                                       if (this.mounted) setState(() {});
                                       EventDispatcher().emit("refresh", null);
                                     },
-                                  );
-                                },
-                            ),
-                            ListTile(
-                              title: Text("Reset chat-specific settings", style: Theme.of(context).textTheme.bodyText1),
-                              subtitle: Text("Delete your custom settings", style: Theme.of(context).textTheme.subtitle1),
-                              onTap: () async {
-                                Get.back();
-                                await chat.toggleMute(false);
-                                chat.muteType = null;
-                                chat.muteArgs = null;
-                                await chat.update();
-                                if (this.mounted) setState(() {});
-                                EventDispatcher().emit("refresh", null);
-                              },
-                            ),
-                          ]
+                                ),
+                                ListTile(
+                                    title: Text("Mute Individuals", style: Theme.of(context).textTheme.bodyText1),
+                                    subtitle: Text("Mute certain individuals in this chat", style: Theme.of(context).textTheme.subtitle1),
+                                    onTap: () async {
+                                      Get.back();
+                                      List<Future<String?>> names = chat.participants.map((e) async =>
+                                      await ContactManager().getContactTitle(e)).toList();
+                                      Future<List<String?>> futureList = Future.wait(names);
+                                      List<String?> result = await futureList;
+                                      List<String> existing = chat.muteArgs?.split(",") ?? [];
+                                      Get.defaultDialog(
+                                          title: "Mute Individuals",
+                                          titleStyle: Theme.of(context).textTheme.headline1,
+                                          backgroundColor: Theme.of(context).backgroundColor,
+                                          buttonColor: Theme.of(context).primaryColor,
+
+                                          content: Container(
+                                            constraints: BoxConstraints(
+                                              maxHeight: 300,
+                                            ),
+                                            child: Center(
+                                              child: Container(
+                                                width: 300,
+                                                height: 200,
+                                                constraints: BoxConstraints(
+                                                  maxHeight: Get.height - 300,
+                                                ),
+                                                child: StatefulBuilder(
+                                                  builder: (context, setState) {
+                                                    return SingleChildScrollView(
+                                                      child: Column(
+                                                        mainAxisSize: MainAxisSize.min,
+                                                        children: [
+                                                          Padding(
+                                                            padding: const EdgeInsets.all(8.0),
+                                                            child: Text("Select the individuals you would like to mute"),
+                                                          ),
+                                                          ListView.builder(
+                                                            shrinkWrap: true,
+                                                            itemCount: chat.participants.length,
+                                                            physics: NeverScrollableScrollPhysics(),
+                                                            itemBuilder: (context, index) {
+                                                              return Theme(
+                                                                data: Theme.of(context).copyWith(unselectedWidgetColor: Theme.of(context).textTheme.headline1!.color),
+                                                                child: CheckboxListTile(
+                                                                    value: existing.contains(chat.participants[index].address),
+                                                                    onChanged: (val) {
+                                                                      setState(() {
+                                                                        if (val!) {
+                                                                          existing.add(chat.participants[index].address);
+                                                                        } else {
+                                                                          existing.removeWhere((element) => element == chat.participants[index].address);
+                                                                        }
+                                                                      });
+                                                                    },
+                                                                    activeColor: Theme.of(context).primaryColor,
+                                                                    title: Text(result[index] ?? chat.participants[index].address, style: Theme.of(context).textTheme.headline1),
+                                                                ),
+                                                              );
+                                                            },
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    );
+                                                  }
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          onConfirm: () async {
+                                            if (existing.isEmpty) {
+                                              showSnackbar("Error", "Please select at least one person!");
+                                              return;
+                                            }
+                                            await chat.toggleMute(false);
+                                            chat.muteType = "mute_individuals";
+                                            chat.muteArgs = existing.join(",");
+                                            Get.back();
+                                            await chat.update();
+                                            if (this.mounted) setState(() {});
+                                            EventDispatcher().emit("refresh", null);
+                                          },
+                                      );
+                                    },
+                                ),
+                                ListTile(
+                                    title: Text(chat.muteType == "temporary_mute" && shouldMuteDateTime(chat.muteArgs) ? "Delete Temporary Mute" : "Temporary Mute", style: Theme.of(context).textTheme.bodyText1),
+                                    subtitle: Text(chat.muteType == "temporary_mute" && shouldMuteDateTime(chat.muteArgs) ? "" : "Mute this chat temporarily", style: Theme.of(context).textTheme.subtitle1),
+                                    onTap: () async {
+                                      Get.back();
+                                      if (shouldMuteDateTime(chat.muteArgs)) {
+                                        chat.muteType = null;
+                                        chat.muteArgs = null;
+                                      } else {
+                                        final messageDate = await showDatePicker(
+                                            context: context,
+                                            initialDate: DateTime.now().toLocal(),
+                                            firstDate: DateTime.now().toLocal(),
+                                            lastDate: DateTime.now().toLocal().add(Duration(days: 365)));
+                                        if (messageDate != null) {
+                                          final messageTime = await showTimePicker(context: context, initialTime: TimeOfDay.now());
+                                          if (messageTime != null) {
+                                            final finalDate = DateTime(messageDate.year, messageDate.month, messageDate.day, messageTime.hour, messageTime.minute);
+                                            await chat.toggleMute(false);
+                                            chat.muteType = "temporary_mute";
+                                            chat.muteArgs = finalDate.toIso8601String();
+                                            await chat.update();
+                                            if (this.mounted) setState(() {});
+                                            EventDispatcher().emit("refresh", null);
+                                          }
+                                        }
+                                      }
+                                    },
+                                ),
+                                ListTile(
+                                    title: Text("Text Detection", style: Theme.of(context).textTheme.bodyText1),
+                                    subtitle: Text("Completely mute this chat, except when a message contains certain text", style: Theme.of(context).textTheme.subtitle1),
+                                    onTap: () async {
+                                      Get.back();
+                                      final TextEditingController controller = TextEditingController();
+                                      if (chat.muteType == "text_detection") {
+                                        controller.text = chat.muteArgs!;
+                                      }
+                                      Get.defaultDialog(
+                                        title: "Text detection",
+                                        titleStyle: Theme.of(context).textTheme.headline1,
+                                        backgroundColor: Theme.of(context).backgroundColor,
+                                        buttonColor: Theme.of(context).primaryColor,
+                                        content: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Padding(
+                                              padding: const EdgeInsets.all(8.0),
+                                              child: Text("Enter any text separated by commas to whitelist notifications for. These are case insensitive.\n\nE.g. 'John,hey guys,homework'\n"),
+                                            ),
+                                            Theme(
+                                              data: Theme.of(context).copyWith(
+                                                inputDecorationTheme: const InputDecorationTheme(
+                                                    labelStyle: TextStyle(color: Colors.grey),
+                                                  )
+                                                ),
+                                              child: TextField(
+                                                controller: controller,
+                                                decoration: InputDecoration(
+                                                  labelText: "Enter text to whitelist...",
+                                                  enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey,)),
+                                                  focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).primaryColor,)),
+                                                ),
+                                              ),
+                                            ),
+                                          ]
+                                        ),
+                                        onConfirm: () async {
+                                          if (controller.text.isEmpty) {
+                                            showSnackbar("Error", "Please enter text!");
+                                            return;
+                                          }
+                                          await chat.toggleMute(false);
+                                          chat.muteType = "text_detection";
+                                          chat.muteArgs = controller.text;
+                                          Get.back();
+                                          await chat.update();
+                                          if (this.mounted) setState(() {});
+                                          EventDispatcher().emit("refresh", null);
+                                        },
+                                      );
+                                    },
+                                ),
+                                ListTile(
+                                  title: Text("Reset chat-specific settings", style: Theme.of(context).textTheme.bodyText1),
+                                  subtitle: Text("Delete your custom settings", style: Theme.of(context).textTheme.subtitle1),
+                                  onTap: () async {
+                                    Get.back();
+                                    await chat.toggleMute(false);
+                                    chat.muteType = null;
+                                    chat.muteArgs = null;
+                                    await chat.update();
+                                    if (this.mounted) setState(() {});
+                                    EventDispatcher().emit("refresh", null);
+                                  },
+                                ),
+                              ]
+                          ),
+                        ),
                       ),
                       barrierDismissible: true,
                       backgroundColor: Theme.of(context).backgroundColor,

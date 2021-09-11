@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:core';
-import 'dart:developer';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/constants.dart';

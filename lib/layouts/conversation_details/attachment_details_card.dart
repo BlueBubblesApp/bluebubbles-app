@@ -16,11 +16,9 @@ import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
-import 'package:tuple/tuple.dart';
 
 class AttachmentDetailsCard extends StatefulWidget {
   AttachmentDetailsCard({Key? key, required this.attachment, required this.allAttachments}) : super(key: key);

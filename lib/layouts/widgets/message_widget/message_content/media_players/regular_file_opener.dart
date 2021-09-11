@@ -70,7 +70,7 @@ class _RegularFileOpenerState extends State<RegularFileOpener> {
               Text(
                 widget.file.name,
                 textAlign: TextAlign.center,
-                maxLines: 3,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodyText2,
               ),

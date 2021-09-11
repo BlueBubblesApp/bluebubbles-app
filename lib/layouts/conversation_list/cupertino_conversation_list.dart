@@ -11,12 +11,15 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_tile.dart';
 import 'package:bluebubbles/layouts/conversation_list/pinned_conversation_tile.dart';
+import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/search/search_view.dart';
 import 'package:bluebubbles/layouts/widgets/vertical_split_view.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -34,9 +37,30 @@ class CupertinoConversationList extends StatefulWidget {
 
 class CupertinoConversationListState extends State<CupertinoConversationList> {
   final key = new GlobalKey<NavigatorState>();
+  bool openedChatAlready = false;
+
+  Future<void> openLastChat(BuildContext context) async {
+    if (ChatBloc().chatRequest != null
+        && prefs.getString('lastOpenedChat') != null
+        && (!context.isPhone || context.isLandscape)
+        && CurrentChat.activeChat?.chat.guid != prefs.getString('lastOpenedChat')) {
+      await ChatBloc().chatRequest!.future;
+      CustomNavigator.pushAndRemoveUntil(
+        context,
+        ConversationView(
+          chat: ChatBloc().chats.firstWhere((e) => e.guid == prefs.getString('lastOpenedChat'))
+        ),
+        (route) => route.isFirst,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (!openedChatAlready) {
+      Future.delayed(Duration.zero, () => openLastChat(context));
+      openedChatAlready = true;
+    }
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: context.theme.backgroundColor, // navigation bar color

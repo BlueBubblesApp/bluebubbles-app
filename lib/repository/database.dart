@@ -109,7 +109,7 @@ class DBProvider {
         upgrade: (Database db) async {
           db.execute("ALTER TABLE chat ADD COLUMN muteType TEXT DEFAULT NULL;");
           db.execute("ALTER TABLE chat ADD COLUMN muteArgs TEXT DEFAULT NULL;");
-          await db.update("chat", {'muteType': 'mute'}, where: "isMuted = ? OR isMuted = ?", whereArgs: [true, 1]);
+          await db.update("chat", {'muteType': 'mute'}, where: "isMuted = ?", whereArgs: [1]);
         }),
     new DBUpgradeItem(
         addedInVersion: 13,

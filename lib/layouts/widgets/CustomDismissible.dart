@@ -128,9 +128,7 @@ class CustomDismissible extends StatefulWidget {
     this.crossAxisEndOffset = 0.0,
     this.dragStartBehavior = DragStartBehavior.start,
     this.behavior = HitTestBehavior.opaque,
-  }) : assert(key != null),
-        assert(secondaryBackground == null || background != null),
-        assert(dragStartBehavior != null),
+  }) : assert(secondaryBackground == null || background != null),
         super(key: key);
 
   /// The widget below this widget in the tree.
@@ -233,16 +231,13 @@ class _DismissibleClipper extends CustomClipper<Rect> {
   _DismissibleClipper({
     required this.axis,
     required this.moveAnimation,
-  }) : assert(axis != null),
-        assert(moveAnimation != null),
-        super(reclip: moveAnimation);
+  }) : super(reclip: moveAnimation);
 
   final Axis axis;
   final Animation<Offset> moveAnimation;
 
   @override
   Rect getClip(Size size) {
-    assert(axis != null);
     switch (axis) {
       case Axis.horizontal:
         final double offset = moveAnimation.value.dx * size.width;
@@ -418,7 +413,6 @@ class _CustomDismissibleState extends State<CustomDismissible> with TickerProvid
   }
 
   _FlingGestureKind _describeFlingGesture(Velocity velocity) {
-    assert(widget.direction != null);
     if (_dragExtent == 0.0) {
       // If it was a fling, then it was a fling that was let loose at the exact
       // middle of the range (i.e. when there's no displacement). In that case,
@@ -442,7 +436,6 @@ class _CustomDismissibleState extends State<CustomDismissible> with TickerProvid
       assert(vy != 0.0);
       flingDirection = _extentToDirection(vy);
     }
-    assert(_dismissDirection != null);
     if (flingDirection == _dismissDirection)
       return _FlingGestureKind.forward;
     return _FlingGestureKind.reverse;

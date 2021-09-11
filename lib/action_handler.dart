@@ -25,7 +25,6 @@ import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
@@ -177,10 +176,7 @@ class ActionHandler {
       });
     };
 
-    bool isConnected = kIsWeb;
-    if (!isConnected) {
-      isConnected = await InternetConnectionChecker().hasConnection;
-    }
+    bool isConnected = await InternetConnectionChecker().hasConnection;
     if (!isConnected) {
       InternetConnectionChecker().checkInterval = Duration(seconds: 1);
       StreamSubscription? sub;

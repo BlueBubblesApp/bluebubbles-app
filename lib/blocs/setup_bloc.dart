@@ -145,13 +145,26 @@ class SetupBloc {
         } else {
           try {
             if (!(chat.chatIdentifier ?? "").startsWith("urn:biz")) {
-              await chat.save();
+              Map<String, dynamic> params = Map();
+              params["identifier"] = chat.guid;
+              params["withBlurhash"] = false;
+              params["limit"] = numberOfMessagesPerPage.round();
+              params["where"] = [
+                {"statement": "message.service = 'iMessage'", "args": null}
+              ];
+              List<dynamic> messages = await SocketManager().getChatMessages(params)!;
+              addOutput("Received ${messages.length} messages for chat, '${chat.chatIdentifier}'!", SetupOutputType.LOG);
+              if (!skipEmptyChats || (skipEmptyChats && messages.length > 0)) {
+                await chat.save();
 
-              // Re-match the handles with the contacts
-              await ContactManager().matchHandles();
+                // Re-match the handles with the contacts
+                await ContactManager().matchHandles();
 
-              await syncChat(chat);
-              addOutput("Finished syncing chat, '${chat.chatIdentifier}'", SetupOutputType.LOG);
+                await syncChat(chat, messages);
+                addOutput("Finished syncing chat, '${chat.chatIdentifier}'", SetupOutputType.LOG);
+              } else {
+                addOutput("Skipping syncing chat (empty chat), '${chat.chatIdentifier}'", SetupOutputType.LOG);
+              }
             } else {
               addOutput("Skipping syncing chat, '${chat.chatIdentifier}'", SetupOutputType.LOG);
             }
@@ -186,18 +199,7 @@ class SetupBloc {
     this.startIncrementalSync(settings);
   }
 
-  Future<void> syncChat(Chat chat) async {
-    Map<String, dynamic> params = Map();
-    params["identifier"] = chat.guid;
-    params["withBlurhash"] = false;
-    params["limit"] = numberOfMessagesPerPage.round();
-    params["where"] = [
-      {"statement": "message.service = 'iMessage'", "args": null}
-    ];
-
-    List<dynamic> messages = await SocketManager().getChatMessages(params)!;
-    addOutput("Received ${messages.length} messages for chat, '${chat.chatIdentifier}'!", SetupOutputType.LOG);
-
+  Future<void> syncChat(Chat chat, List<dynamic> messages) async {
     // Since we got the messages in desc order, we want to reverse it.
     // Reversing it will add older messages before newer one. This should help fix
     // issues with associated message GUIDs

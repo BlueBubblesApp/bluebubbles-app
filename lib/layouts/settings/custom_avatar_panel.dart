@@ -170,7 +170,7 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
                                           Navigator.of(context).pop();
                                           CustomNavigator.pushSettings(
                                             context,
-                                            AvatarCrop(),
+                                            AvatarCrop(index: index),
                                           );
                                         }),
                                   ]);
@@ -179,7 +179,7 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
                         } else {
                           CustomNavigator.pushSettings(
                             context,
-                            AvatarCrop(),
+                            AvatarCrop(index: index),
                           );
                         }
                       },

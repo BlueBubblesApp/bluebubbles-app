@@ -33,6 +33,7 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/theme_object.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -116,6 +117,10 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
     isCreator = widget.isCreator;
     chat = widget.chat;
+
+    if (chat != null) {
+      prefs.setString('lastOpenedChat', chat!.guid!);
+    }
 
     if (widget.selected.isEmpty) {
       initChatSelector();
@@ -271,6 +276,8 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
       // If the chat is still null, return false
       if (chat == null) return false;
+
+      prefs.setString('lastOpenedChat', chat!.guid!);
 
       // If the current chat is null, set it
       if (isDifferentChat) {

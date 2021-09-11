@@ -1,6 +1,5 @@
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
-import 'package:flutter/material.dart';
 
 /// The alarm manager is responsible for all scheduled events
 ///

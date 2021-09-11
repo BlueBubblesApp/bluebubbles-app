@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/blocs/setup_bloc.dart';

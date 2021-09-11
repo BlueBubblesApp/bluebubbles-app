@@ -30,7 +30,6 @@ import 'package:bluebubbles/repository/models/theme_object.dart';
 
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' hide Priority;
 import 'package:flutter/services.dart';
