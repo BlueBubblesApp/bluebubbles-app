@@ -524,6 +524,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           alignment: AlignmentDirectional.centerEnd,
           children: <Widget>[
             AnimatedSize(
+              vsync: this,
               duration: Duration(milliseconds: 100),
               curve: Curves.easeInOut,
               child: RawKeyboardListener(
