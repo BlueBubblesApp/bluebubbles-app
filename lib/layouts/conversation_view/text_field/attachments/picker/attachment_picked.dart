@@ -39,7 +39,7 @@ class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepA
   }
 
   bool get containsThis =>
-      BlueBubblesTextField.of(context)!.pickedImages.where((element) => element == image).length > 0;
+      BlueBubblesTextField.of(context)!.pickedImages.where((element) => element.path == path).length > 0;
 
   @override
   Widget build(BuildContext context) {

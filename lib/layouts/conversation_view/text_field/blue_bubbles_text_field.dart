@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:bluebubbles/helpers/share.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:universal_io/io.dart';
 import 'dart:ui';
@@ -244,8 +245,11 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
     // Save the data to a location and add it to the file picker
     if (content.hasData) {
-      File file = AttachmentHelper.saveTempFile(filename, content.data!);
-      this.addAttachments([file]);
+      this.addAttachments([PlatformFile(
+        name: filename,
+        size: content.data!.length,
+        bytes: content.data,
+      )]);
 
       // Update the state
       updateTextFieldAttachments();

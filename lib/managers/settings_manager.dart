@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:bluebubbles/helpers/utils.dart';
+import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 
 import 'package:adaptive_theme/adaptive_theme.dart';

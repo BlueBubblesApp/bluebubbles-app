@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 import 'dart:math';
 import 'dart:typed_data';

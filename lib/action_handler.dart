@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -176,7 +177,10 @@ class ActionHandler {
       });
     };
 
-    bool isConnected = await InternetConnectionChecker().hasConnection;
+    bool isConnected = kIsWeb;
+    if (!isConnected) {
+      isConnected = await InternetConnectionChecker().hasConnection;
+    }
     if (!isConnected) {
       InternetConnectionChecker().checkInterval = Duration(seconds: 1);
       StreamSubscription? sub;
