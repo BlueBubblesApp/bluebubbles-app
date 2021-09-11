@@ -74,7 +74,7 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
           ),
           slivers: <Widget>[
             Obx(() {
-              if (!ChatBloc().loadedChats.value) {
+              if (!ChatBloc().loadedChatBatch.value) {
                 return SliverToBoxAdapter(
                   child: Center(
                     child: Container(
@@ -95,7 +95,7 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
                   ),
                 );
               }
-              if (ChatBloc().loadedChats.value && ChatBloc().chats.isEmpty) {
+              if (ChatBloc().loadedChatBatch.value && ChatBloc().chats.isEmpty) {
                 return SliverToBoxAdapter(
                   child: Center(
                     child: Container(

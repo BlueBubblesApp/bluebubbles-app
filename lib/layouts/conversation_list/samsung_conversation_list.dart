@@ -399,7 +399,7 @@ class _SamsungState extends State<SamsungConversationList> {
           ),
           backgroundColor: context.theme.backgroundColor,
           body: Obx(() {
-            if (!ChatBloc().loadedChats.value) {
+            if (!ChatBloc().loadedChatBatch.value) {
               return Center(
                 child: Container(
                   padding: EdgeInsets.only(top: 50.0),
@@ -418,7 +418,7 @@ class _SamsungState extends State<SamsungConversationList> {
                 ),
               );
             }
-            if (ChatBloc().loadedChats.value && ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).isEmpty) {
+            if (ChatBloc().loadedChatBatch.value && ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).isEmpty) {
               return Center(
                 child: Container(
                   padding: EdgeInsets.only(top: 50.0),

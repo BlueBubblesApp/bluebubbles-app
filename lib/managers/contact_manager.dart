@@ -43,7 +43,7 @@ class ContactManager {
   Map<String, ContactAvatarWidgetState> contactWidgetStates = new Map();
 
   // We need these so we don't have threads fetching at the same time
-  Completer? getContactsFuture;
+  Completer<bool>? getContactsFuture;
   Completer? getAvatarsFuture;
   int lastRefresh = 0;
 
@@ -88,7 +88,7 @@ class ContactManager {
     return false;
   }
 
-  Future getContacts({bool headless = false, bool force = false}) async {
+  Future<bool> getContacts({bool headless = false, bool force = false}) async {
     // If we are fetching the contacts, return the current future so we can await it
     if (getContactsFuture != null && !getContactsFuture!.isCompleted) {
       Logger.info("Already fetching contacts, returning future...", tag: tag);
@@ -100,7 +100,7 @@ class ContactManager {
     int now = DateTime.now().toUtc().millisecondsSinceEpoch;
     if (!force && lastRefresh != 0 && now < lastRefresh + (60000 * 5)) {
       Logger.info("Not fetching contacts; Not enough time has elapsed", tag: tag);
-      return;
+      return false;
     }
 
     // Make sure we have contacts access
@@ -121,7 +121,6 @@ class ContactManager {
       var vcfs = await SocketManager().sendMessage("get-vcf", {}, (_) {});
       if (vcfs['data'] != null) {
         for (var c in jsonDecode(vcfs['data'])) {
-          c["avatar"] = Uint8List.fromList((c["avatar"] as List).cast<int>());
           contacts.add(Contact.fromMap(c));
         }
       }

@@ -350,7 +350,7 @@ class ChatListState extends State<ChatList> {
       ),
       slivers: <Widget>[
         Obx(() {
-          if (!ChatBloc().loadedChats.value) {
+          if (!ChatBloc().loadedChatBatch.value) {
             return SliverToBoxAdapter(
               child: Center(
                 child: Container(
@@ -371,7 +371,7 @@ class ChatListState extends State<ChatList> {
               ),
             );
           }
-          if (ChatBloc().loadedChats.value && ChatBloc().chats.isEmpty) {
+          if (ChatBloc().loadedChatBatch.value && ChatBloc().chats.isEmpty) {
             return SliverToBoxAdapter(
               child: Center(
                 child: Container(

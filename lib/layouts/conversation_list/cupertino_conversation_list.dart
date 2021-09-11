@@ -386,7 +386,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
             }),
             Obx(() {
               ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).sort(Chat.sort);
-              if (!ChatBloc().loadedChats.value) {
+              if (!ChatBloc().loadedChatBatch.value) {
                 return SliverToBoxAdapter(
                   child: Center(
                     child: Container(
@@ -407,7 +407,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                   ),
                 );
               }
-              if (ChatBloc().loadedChats.value && !ChatBloc().hasChats.value) {
+              if (ChatBloc().loadedChatBatch.value && !ChatBloc().hasChats.value) {
                 return SliverToBoxAdapter(
                   child: Center(
                     child: Container(

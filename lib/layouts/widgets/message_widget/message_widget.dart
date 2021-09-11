@@ -4,6 +4,7 @@ import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/group_event.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/url_preview_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
@@ -20,7 +21,9 @@ import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:bluebubbles/helpers/darty.dart';
+import 'package:collection/src/iterable_extensions.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class MessageWidget extends StatefulWidget {
@@ -104,6 +107,22 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
         if (message == null) return;
         if (message.associatedMessageGuid == widget.message.guid) fetchAssoc = true;
         if (message.hasAttachments) fetchAttach = true;
+
+        if (kIsWeb && message.associatedMessageGuid != null) {
+          // someone removed their reaction (remove original)
+          if (message.associatedMessageType!.startsWith("-") && ReactionTypes.toList().contains(message.associatedMessageType!.replaceAll("-", ""))) {
+            MapEntry? entry = widget.bloc?.reactionMessages.entries.firstWhereOrNull((entry) => entry.value.handle?.address == message.handle?.address && entry.value.associatedMessageType == message.associatedMessageType!.replaceAll("-", ""));
+            if (entry != null) widget.bloc?.reactionMessages.remove(entry.key);
+            // someone changed their reaction (remove original and add new)
+          } else if (widget.bloc?.reactionMessages.entries.firstWhereOrNull((e) => e.value.associatedMessageGuid == message.associatedMessageGuid && e.value.handle?.address == message.handle?.address) != null && ReactionTypes.toList().contains(message.associatedMessageType)) {
+            MapEntry? entry = widget.bloc?.reactionMessages.entries.firstWhereOrNull((e) => e.value.associatedMessageGuid == message.associatedMessageGuid && e.value.handle?.address == message.handle?.address);
+            if (entry != null) widget.bloc?.reactionMessages.remove(entry.key);
+            widget.bloc?.reactionMessages[message.guid!] = message;
+            // we have a fresh reaction (add new)
+          } else if (widget.bloc?.reactionMessages[message.guid!] == null && ReactionTypes.toList().contains(message.associatedMessageType)) {
+            widget.bloc?.reactionMessages[message.guid!] = message;
+          }
+        }
 
         // If the associated message GUID matches this one, fetch associated messages
         if (fetchAssoc) fetchAssociatedMessages(forceReload: true);
