@@ -96,6 +96,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.1.0"
+  build_cli_annotations:
+    dependency: transitive
+    description:
+      name: build_cli_annotations
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.0.0"
   build_config:
     dependency: transitive
     description:
@@ -589,6 +596,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "4.3.8"
+  git:
+    dependency: transitive
+    description:
+      name: git
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.0.0"
   glob:
     dependency: transitive
     description:
@@ -1016,6 +1030,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.0.3"
+  peanut:
+    dependency: "direct dev"
+    description:
+      name: peanut
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "4.0.1"
   pedantic:
     dependency: transitive
     description:

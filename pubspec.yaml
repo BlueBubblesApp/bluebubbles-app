@@ -36,8 +36,8 @@ dependencies:
       ref: beta-fix
   record: ^3.0.0 # mobile and web
   contacts_service: ^0.6.1 # mobile only
-  permission_handler: ^8.1.4+2 # mobile only, todo disable on web and desktop
-  path_provider: ^2.0.2 # no web support, todo disable on web (no concept of storage on web) (must *completely* remove all references to dart:io and file.writeAsBytes, etc)
+  permission_handler: ^8.1.4+2 # mobile only, todo disable on desktop
+  path_provider: ^2.0.2 # no web support
   sqflite: ^2.0.0+3 # mobile only
   sqflite_common_ffi: ^2.0.0+3 # desktop
   path: ^1.8.0
@@ -52,7 +52,7 @@ dependencies:
   mime_type: ^1.0.0
   receive_sharing_intent: ^1.4.5 # mobile only
   flutter_map: ^0.13.1
-  video_thumbnail: ^0.4.3 # mobile only, todo disable on web and desktop
+  video_thumbnail: ^0.4.3 # mobile only, todo disable on desktop
   flutter_slidable: ^0.6.0
   image_size_getter: ^1.0.0
   photo_view: ^0.12.0
@@ -64,7 +64,7 @@ dependencies:
   latlong2: ^0.8.0
   smooth_page_indicator: ^1.0.0+2
   flex_color_picker: ^2.1.2
-  image_gallery_saver: ^1.6.9 # mobile only, todo download differently on web and desktop
+  image_gallery_saver: ^1.6.9 # mobile only, todo download differently on desktop
   visibility_detector: ^0.2.0
   flutter_displaymode: ^0.3.2 # android only
   libphonenumber_plugin: ^0.2.3 # no desktop support, todo desktop
@@ -106,6 +106,7 @@ dev_dependencies:
   flutter_launcher_icons: ^0.9.1
   flutter_native_splash: ^1.2.1
   msix: ^2.1.3
+  peanut: ^4.0.1
 
 flutter_icons:
   android: true
