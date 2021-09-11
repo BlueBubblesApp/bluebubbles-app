@@ -119,9 +119,11 @@ class ContactManager {
     } else {
       contacts.clear();
       var vcfs = await SocketManager().sendMessage("get-vcf", {}, (_) {});
-      for (var c in jsonDecode(vcfs['data'])) {
-        c["avatar"] = Uint8List.fromList((c["avatar"] as List).cast<int>());
-        contacts.add(Contact.fromMap(c));
+      if (vcfs['data'] != null) {
+        for (var c in jsonDecode(vcfs['data'])) {
+          c["avatar"] = Uint8List.fromList((c["avatar"] as List).cast<int>());
+          contacts.add(Contact.fromMap(c));
+        }
       }
     }
     hasFetchedContacts = true;

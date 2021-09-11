@@ -156,90 +156,100 @@ class ConversationPanel extends StatelessWidget {
                       materialSubtitle: materialSubtitle,
                       text: "Gestures"
                   ),
-                  Obx(() => SettingsSwitch(
-                    onChanged: (bool val) {
-                      SettingsManager().settings.autoOpenKeyboard.value = val;
-                      saveSettings();
-                    },
-                    initialVal: SettingsManager().settings.autoOpenKeyboard.value,
-                    title: "Auto-open Keyboard",
-                    subtitle: "Automatically open the keyboard when entering a chat",
-                    backgroundColor: tileColor,
-                  )),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
+                  if (!kIsWeb && !kIsDesktop)
+                    Obx(() => SettingsSwitch(
+                      onChanged: (bool val) {
+                        SettingsManager().settings.autoOpenKeyboard.value = val;
+                        saveSettings();
+                      },
+                      initialVal: SettingsManager().settings.autoOpenKeyboard.value,
+                      title: "Auto-open Keyboard",
+                      subtitle: "Automatically open the keyboard when entering a chat",
+                      backgroundColor: tileColor,
+                    )),
+                  if (!kIsWeb && !kIsDesktop)
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
                     ),
-                  ),
-                  Obx(() => SettingsSwitch(
-                    onChanged: (bool val) {
-                      SettingsManager().settings.swipeToCloseKeyboard.value = val;
-                      saveSettings();
-                    },
-                    initialVal: SettingsManager().settings.swipeToCloseKeyboard.value,
-                    title: "Swipe Message Box to Close Keyboard",
-                    subtitle: "Swipe down on the message box to hide the keyboard",
-                    backgroundColor: tileColor,
-                  )),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
+                  if (!kIsWeb && !kIsDesktop)
+                    Obx(() => SettingsSwitch(
+                      onChanged: (bool val) {
+                        SettingsManager().settings.swipeToCloseKeyboard.value = val;
+                        saveSettings();
+                      },
+                      initialVal: SettingsManager().settings.swipeToCloseKeyboard.value,
+                      title: "Swipe Message Box to Close Keyboard",
+                      subtitle: "Swipe down on the message box to hide the keyboard",
+                      backgroundColor: tileColor,
+                    )),
+                  if (!kIsWeb && !kIsDesktop)
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
                     ),
-                  ),
-                  Obx(() => SettingsSwitch(
-                    onChanged: (bool val) {
-                      SettingsManager().settings.swipeToOpenKeyboard.value = val;
-                      saveSettings();
-                    },
-                    initialVal: SettingsManager().settings.swipeToOpenKeyboard.value,
-                    title: "Swipe Message Box to Open Keyboard",
-                    subtitle: "Swipe up on the message box to show the keyboard",
-                    backgroundColor: tileColor,
-                  )),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
+                  if (!kIsWeb && !kIsDesktop)
+                    Obx(() => SettingsSwitch(
+                      onChanged: (bool val) {
+                        SettingsManager().settings.swipeToOpenKeyboard.value = val;
+                        saveSettings();
+                      },
+                      initialVal: SettingsManager().settings.swipeToOpenKeyboard.value,
+                      title: "Swipe Message Box to Open Keyboard",
+                      subtitle: "Swipe up on the message box to show the keyboard",
+                      backgroundColor: tileColor,
+                    )),
+                  if (!kIsWeb && !kIsDesktop)
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
                     ),
-                  ),
-                  Obx(() => SettingsSwitch(
-                    onChanged: (bool val) {
-                      SettingsManager().settings.hideKeyboardOnScroll.value = val;
-                      saveSettings();
-                    },
-                    initialVal: SettingsManager().settings.hideKeyboardOnScroll.value,
-                    title: "Hide Keyboard When Scrolling",
-                    backgroundColor: tileColor,
-                  )),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
+                  if (!kIsWeb && !kIsDesktop)
+                    Obx(() => SettingsSwitch(
+                      onChanged: (bool val) {
+                        SettingsManager().settings.hideKeyboardOnScroll.value = val;
+                        saveSettings();
+                      },
+                      initialVal: SettingsManager().settings.hideKeyboardOnScroll.value,
+                      title: "Hide Keyboard When Scrolling",
+                      backgroundColor: tileColor,
+                    )),
+                  if (!kIsWeb && !kIsDesktop)
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
                     ),
-                  ),
-                  Obx(() => SettingsSwitch(
-                    onChanged: (bool val) {
-                      SettingsManager().settings.openKeyboardOnSTB.value = val;
-                      saveSettings();
-                    },
-                    initialVal: SettingsManager().settings.openKeyboardOnSTB.value,
-                    title: "Open Keyboard After Tapping Scroll To Bottom",
-                    subtitle: "Opens the keyboard after tapping the 'scroll to bottom' button",
-                    backgroundColor: tileColor,
-                  )),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
+                  if (!kIsWeb && !kIsDesktop)
+                    Obx(() => SettingsSwitch(
+                      onChanged: (bool val) {
+                        SettingsManager().settings.openKeyboardOnSTB.value = val;
+                        saveSettings();
+                      },
+                      initialVal: SettingsManager().settings.openKeyboardOnSTB.value,
+                      title: "Open Keyboard After Tapping Scroll To Bottom",
+                      subtitle: "Opens the keyboard after tapping the 'scroll to bottom' button",
+                      backgroundColor: tileColor,
+                    )),
+                  if (!kIsWeb && !kIsDesktop)
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
                     ),
-                  ),
                   Container(
                     color: tileColor,
                     child: Obx(() => SwitchListTile(
