@@ -1,5 +1,7 @@
+import 'package:dart_vlc/dart_vlc.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
+import 'package:tuple/tuple.dart';
 import 'package:universal_io/io.dart';
 import 'package:universal_html/html.dart' as html;
 
@@ -26,11 +28,13 @@ class VideoWidgetController extends GetxController with SingleGetTickerProviderM
   PlayerStatus status = PlayerStatus.NONE;
   bool hasListener = false;
   late final VideoPlayerController controller;
+  late final Player desktopController;
   final RxBool showPlayPauseOverlay = true.obs;
   final RxBool muted = true.obs;
   final PlatformFile file;
   final Attachment attachment;
   final BuildContext context;
+
   VideoWidgetController({
     required this.file,
     required this.attachment,
@@ -41,16 +45,19 @@ class VideoWidgetController extends GetxController with SingleGetTickerProviderM
   void onInit() {
     super.onInit();
     muted.value = SettingsManager().settings.startVideosMuted.value;
-    Map<String, VideoPlayerController> controllers = CurrentChat.of(context)!.currentPlayingVideo;
-    showPlayPauseOverlay.value =
-        !controllers.containsKey(attachment.guid) || !controllers[attachment.guid]!.value.isPlaying;
+    Map<String, Tuple2<VideoPlayerController, Player>> controllers = CurrentChat.of(context)!.currentPlayingVideo;
+    showPlayPauseOverlay.value = !controllers.containsKey(attachment.guid) ||
+        (kIsDesktop
+            ? !controllers[attachment.guid]!.item2.playback.isPlaying
+            : !controllers[attachment.guid]!.item1.value.isPlaying);
 
     if (controllers.containsKey(attachment.guid)) {
-      controller = controllers[attachment.guid]!;
+      desktopController = controllers[attachment.guid]!.item2;
+      controller = controllers[attachment.guid]!.item1;
     } else {
       initializeController();
     }
-    createListener(controller);
+    createListener(controller, desktopController);
   }
 
   void initializeController() async {
@@ -61,30 +68,42 @@ class VideoWidgetController extends GetxController with SingleGetTickerProviderM
       controller = VideoPlayerController.network(url);
     } else {
       dynamic file = File(file2.path);
+      if (kIsDesktop) {
+        desktopController = Player(id: file.hashCode)..open(Media.file(file));
+      }
       controller = new VideoPlayerController.file(file);
     }
     await controller.initialize();
-    CurrentChat.of(context)!.changeCurrentPlayingVideo({attachment.guid!: controller});
+    CurrentChat.of(context)!.changeCurrentPlayingVideo({attachment.guid!: Tuple2(controller, desktopController)});
   }
 
-  void createListener(VideoPlayerController controller) {
+  void createListener(VideoPlayerController controller, desktopPlayer) {
     if (hasListener) return;
 
-    controller.addListener(() async {
-      // Get the current status
-      PlayerStatus currentStatus = await getControllerStatus(controller);
+    if (kIsDesktop) {
+      desktopPlayer!.playbackStream.listen((PlaybackState state) {
+        if (state.isCompleted) {
+          desktopPlayer.pause();
+          desktopPlayer.seek(Duration());
+        }
+      });
+    } else {
+      controller.addListener(() async {
+        // Get the current status
+        PlayerStatus currentStatus = await getControllerStatus(controller);
 
-      // If the status hasn't changed, don't do anything
-      if (currentStatus == status) return;
-      this.status = currentStatus;
+        // If the status hasn't changed, don't do anything
+        if (currentStatus == status) return;
+        this.status = currentStatus;
 
-      // If the status is ended, restart
-      if (this.status == PlayerStatus.ENDED) {
-        showPlayPauseOverlay.value = true;
-        await controller.pause();
-        await controller.seekTo(Duration());
-      }
-    });
+        // If the status is ended, restart
+        if (this.status == PlayerStatus.ENDED) {
+          showPlayPauseOverlay.value = true;
+          await controller.pause();
+          await controller.seekTo(Duration());
+        }
+      });
+    }
 
     hasListener = true;
   }
@@ -103,11 +122,7 @@ class VideoWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetBuilder<VideoWidgetController>(
       global: false,
-      init: VideoWidgetController(
-        file: file,
-        attachment: attachment,
-        context: context
-      ),
+      init: VideoWidgetController(file: file, attachment: attachment, context: context),
       dispose: (state) {
         state.controller?.navigated = true;
       },
@@ -175,7 +190,8 @@ class VideoWidget extends StatelessWidget {
                   aspectRatio: controller.controller.value.aspectRatio,
                   child: Stack(
                     children: <Widget>[
-                      VideoPlayer(controller.controller),
+                      if (kIsDesktop) Video(player: controller.desktopController),
+                      if (!kIsDesktop) VideoPlayer(controller.controller),
                     ],
                   ),
                 ),
@@ -202,7 +218,9 @@ class VideoWidget extends StatelessWidget {
                           )
                         : GestureDetector(
                             child: Icon(
-                              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.play : Icons.play_arrow,
+                              SettingsManager().settings.skin.value == Skins.iOS
+                                  ? CupertinoIcons.play
+                                  : Icons.play_arrow,
                               color: Colors.white,
                               size: 45,
                             ),
@@ -235,16 +253,16 @@ class VideoWidget extends StatelessWidget {
                               ),
                               padding: EdgeInsets.all(5),
                               child: Obx(() => Icon(
-                                controller.muted.value
-                                    ? SettingsManager().settings.skin.value == Skins.iOS
-                                    ? CupertinoIcons.volume_mute
-                                    : Icons.volume_mute
-                                    : SettingsManager().settings.skin.value == Skins.iOS
-                                    ? CupertinoIcons.volume_up
-                                    : Icons.volume_up,
-                                color: Colors.white,
-                                size: 15,
-                              )),
+                                    controller.muted.value
+                                        ? SettingsManager().settings.skin.value == Skins.iOS
+                                            ? CupertinoIcons.volume_mute
+                                            : Icons.volume_mute
+                                        : SettingsManager().settings.skin.value == Skins.iOS
+                                            ? CupertinoIcons.volume_up
+                                            : Icons.volume_up,
+                                    color: Colors.white,
+                                    size: 15,
+                                  )),
                             ),
                           ),
                         ),

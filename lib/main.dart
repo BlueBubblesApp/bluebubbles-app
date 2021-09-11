@@ -27,8 +27,7 @@ import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/theme_object.dart';
-// import 'package:sentry/sentry.dart';
-
+import 'package:dart_vlc/dart_vlc.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -47,6 +46,7 @@ import 'package:secure_application/secure_application.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:window_size/window_size.dart';
 
 // final SentryClient _sentry = SentryClient(
 //     dsn:
@@ -135,6 +135,10 @@ Future<Null> main() async {
       await flutterLocalNotificationsPlugin!.initialize(initializationSettings);
       tz.initializeTimeZones();
       tz.setLocalLocation(tz.getLocation(await FlutterNativeTimezone.getLocalTimezone()));
+    }
+    if (kIsDesktop) {
+      setWindowTitle('BlueBubbles (Beta)');
+      DartVLC.initialize();
     }
   } catch (e) {
     exception = e;

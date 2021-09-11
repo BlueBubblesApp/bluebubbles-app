@@ -30,7 +30,10 @@ dependencies:
   connectivity_plus: ^1.1.0
   tuple: ^2.0.0
   encrypt: ^5.0.1
-  assorted_layout_widgets: ^5.1.1
+  assorted_layout_widgets: # todo upgrade to actual package once their flutter 2.5 fix is merged
+    git:
+      url: https://github.com/josh-burton/assorted_layout_widgets
+      ref: beta-fix
   record: ^3.0.0 # mobile and web
   contacts_service: ^0.6.1 # mobile only
   permission_handler: ^8.1.4+2 # mobile only, todo disable on desktop
@@ -82,6 +85,7 @@ dependencies:
   flutter_screen_lock: ^4.0.4+1
   crop_your_image: ^0.6.0+1
   chewie: ^1.2.2 # no desktop support, todo desktop
+  dart_vlc: ^0.1.7
   simple_animations: ^3.1.1
   flutter_keyboard_visibility: ^5.0.3 # no desktop support, todo desktop
   flutter_local_notifications: ^8.1.1+2 # mobile only
@@ -93,6 +97,12 @@ dependencies:
   universal_html: ^2.0.8 # cross-platform dart:html implementation
   file_picker: ^4.0.2
   firebase_dart: ^1.0.0-dev.45
+  quick_notify: ^0.1.0+2 # desktop
+  window_size: # desktop
+    git:
+      url: git://github.com/google/flutter-desktop-embedding.git
+      path: plugins/window_size
+      ref: 7812516a5c1fc8ef379e244106953a2b534432b9
 
 dependency_overrides:
   rxdart: ^0.27.2
@@ -180,10 +190,10 @@ flutter:
   # see https://flutter.dev/custom-fonts/#from-packages
 
 msix_config:
-  display_name: BlueBubbles
+  display_name: BlueBubbles (Beta)
   publisher_display_name: BlueBubbles Development Team
   identity_name: com.bluebubbles.app
-  msix_version: 1.0.0.1
+  msix_version: 1.0.0.2
   publisher: CN=BlueBubbles, O=BlueBubbles, C=US
   logo_path: assets/icon/icon.png # todo
   start_menu_icon_path: assets/icon/icon.png # todo

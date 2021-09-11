@@ -1,3 +1,4 @@
+import 'package:dart_vlc/dart_vlc.dart';
 import 'package:universal_html/html.dart' as html;
 
 import 'package:file_picker/file_picker.dart';
@@ -34,6 +35,7 @@ class AudioPlayerWiget extends StatefulWidget {
 class _AudioPlayerWigetState extends State<AudioPlayerWiget> with AutomaticKeepAliveClientMixin {
   late final ChewieAudioController controller;
   late final VideoPlayerController audioController;
+  late final Player? desktopController;
 
   @override
   bool get wantKeepAlive => true;
@@ -46,6 +48,7 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> with AutomaticKeepA
     if (!kIsWeb && thisChat != null && thisChat.audioPlayers.containsKey(widget.file.path)) {
       audioController = thisChat.audioPlayers[widget.file.path]!.item2;
       controller = thisChat.audioPlayers[widget.file.path]!.item1;
+      desktopController = thisChat.audioPlayers[widget.file.path]!.item3;
     } else {
       if (kIsWeb) {
         final blob = html.Blob([widget.file.bytes]);
@@ -54,6 +57,7 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> with AutomaticKeepA
       } else {
         dynamic file = File(widget.file.path);
         audioController = new VideoPlayerController.file(file);
+        desktopController = new Player(id: file.hashCode)..open(Media.file(file));
       }
       controller = ChewieAudioController(
         videoPlayerController: audioController,
@@ -79,7 +83,7 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> with AutomaticKeepA
 
       thisChat = CurrentChat.of(widget.context);
       if (!kIsWeb && thisChat != null) {
-        CurrentChat.of(widget.context)!.audioPlayers[widget.file.path] = Tuple2(controller, audioController);
+        CurrentChat.of(widget.context)!.audioPlayers[widget.file.path] = Tuple3(controller, audioController, desktopController);
       }
     }
   }

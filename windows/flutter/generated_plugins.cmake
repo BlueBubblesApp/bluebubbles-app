@@ -4,9 +4,12 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   connectivity_plus_windows
+  dart_vlc
   maps_launcher
+  quick_notify
   secure_application
   url_launcher_windows
+  window_size
 )
 
 set(PLUGIN_BUNDLED_LIBRARIES)

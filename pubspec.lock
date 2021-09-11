@@ -73,6 +73,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.8.1"
+  audio_video_progress_bar:
+    dependency: transitive
+    description:
+      name: audio_video_progress_bar
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.9.0"
   battery_optimization:
     dependency: "direct main"
     description:
@@ -329,6 +336,20 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.1.0"
+  dart_vlc:
+    dependency: "direct main"
+    description:
+      name: dart_vlc
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.1.7"
+  dart_vlc_ffi:
+    dependency: transitive
+    description:
+      name: dart_vlc_ffi
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.1.4"
   dbus:
     dependency: transitive
     description:
@@ -749,7 +770,7 @@ packages:
       name: json_annotation
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "4.1.0"
+    version: "4.0.1"
   latlong2:
     dependency: "direct main"
     description:
@@ -1064,7 +1085,7 @@ packages:
       name: petitparser
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "4.2.0"
+    version: "4.1.0"
   photo_manager:
     dependency: "direct main"
     description:
@@ -1156,6 +1177,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.5.2"
+  quick_notify:
+    dependency: "direct main"
+    description:
+      name: quick_notify
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.1.0+2"
   quiver:
     dependency: transitive
     description:
@@ -1664,7 +1692,7 @@ packages:
       name: vm_service
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "7.3.0"
+    version: "6.2.0"
   wakelock:
     dependency: transitive
     description:
@@ -1728,6 +1756,15 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.2.9"
+  window_size:
+    dependency: "direct main"
+    description:
+      path: "plugins\\window_size"
+      ref: "7812516a5c1fc8ef379e244106953a2b534432b9"
+      resolved-ref: "7812516a5c1fc8ef379e244106953a2b534432b9"
+      url: "git://github.com/google/flutter-desktop-embedding.git"
+    source: git
+    version: "0.1.0"
   wkt_parser:
     dependency: transitive
     description:
@@ -1755,7 +1792,7 @@ packages:
       name: xml
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "5.2.0"
+    version: "5.1.2"
   yaml:
     dependency: transitive
     description:
