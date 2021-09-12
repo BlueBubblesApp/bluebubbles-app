@@ -467,6 +467,27 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.3.2"
+  flutter_dropzone:
+    dependency: "direct main"
+    description:
+      name: flutter_dropzone
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.0.1"
+  flutter_dropzone_platform_interface:
+    dependency: transitive
+    description:
+      name: flutter_dropzone_platform_interface
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.0.0"
+  flutter_dropzone_web:
+    dependency: transitive
+    description:
+      name: flutter_dropzone_web
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.0.4"
   flutter_keyboard_visibility:
     dependency: "direct main"
     description:
@@ -1532,6 +1553,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.0.0"
+  transparent_pointer:
+    dependency: "direct main"
+    description:
+      name: transparent_pointer
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.0"
   tuple:
     dependency: "direct main"
     description:

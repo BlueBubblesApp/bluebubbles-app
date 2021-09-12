@@ -5,7 +5,8 @@ import 'package:universal_io/io.dart';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
-import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'package:flutter_dropzone/flutter_dropzone.dart';
+import 'package:transparent_pointer/transparent_pointer.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -62,6 +63,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   List<PlatformFile> pickedImages = [];
   TextFieldData? textFieldData;
   StreamController _streamController = new StreamController.broadcast();
+  DropzoneViewController? dropZoneController;
   CurrentChat? safeChat;
 
   bool selfTyping = false;
@@ -399,13 +401,36 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             Expanded(
               child: Container(
                 padding: EdgeInsets.only(left: 5, top: 5, bottom: 5, right: 8),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    buildAttachmentList(),
-                    buildTextFieldAlwaysVisible(),
-                    buildAttachmentPicker(),
-                  ],
+                child: Stack(
+                  children: [
+                  Container(
+                    height: 50,
+                    child: DropzoneView(
+                        operation: DragOperation.copy,
+                        cursor: CursorType.copy,
+                        onCreated: (c) {
+                          dropZoneController = c;
+                        },
+                        onDrop: (ev) async {
+                          addAttachment(PlatformFile(
+                            name: await dropZoneController!.getFilename(ev),
+                            bytes: await dropZoneController!.getFileData(ev),
+                            size: await dropZoneController!.getFileSize(ev)
+                          ));
+                        },
+                      ),
+                    ),
+                   TransparentPointer(
+                     child: Column(
+                       mainAxisSize: MainAxisSize.min,
+                       children: <Widget>[
+                         buildAttachmentList(),
+                         buildTextFieldAlwaysVisible(),
+                         buildAttachmentPicker(),
+                       ],
+                     ),
+                   ),
+                  ]
                 ),
               ),
             ),

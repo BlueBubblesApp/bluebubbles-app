@@ -5,6 +5,7 @@ import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:faker/faker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -198,22 +199,24 @@ abstract class MessageWidgetMixin {
         linkIndexMatches.add(Tuple2("link", match.start));
         linkIndexMatches.add(Tuple2("link", match.end));
       });
-      final List<EntityAnnotation> entities = await GoogleMlKit.nlp.entityExtractor(EntityExtractorOptions.ENGLISH).extractEntities(message.text!);
-      entities.forEach((element) {
-        if (element.entities.first is AddressEntity) {
-          linkIndexMatches.add(Tuple2("map", element.start));
-          linkIndexMatches.add(Tuple2("map", element.end));
-          return;
-        } else if (element.entities.first is PhoneEntity) {
-          linkIndexMatches.add(Tuple2("phone", element.start));
-          linkIndexMatches.add(Tuple2("phone", element.end));
-          return;
-        } else if (element.entities.first is EmailEntity) {
-          linkIndexMatches.add(Tuple2("email", element.start));
-          linkIndexMatches.add(Tuple2("email", element.end));
-          return;
-        }
-      });
+      if (!kIsWeb && !kIsDesktop) {
+        final List<EntityAnnotation> entities = await GoogleMlKit.nlp.entityExtractor(EntityExtractorOptions.ENGLISH).extractEntities(message.text!);
+        entities.forEach((element) {
+          if (element.entities.first is AddressEntity) {
+            linkIndexMatches.add(Tuple2("map", element.start));
+            linkIndexMatches.add(Tuple2("map", element.end));
+            return;
+          } else if (element.entities.first is PhoneEntity) {
+            linkIndexMatches.add(Tuple2("phone", element.start));
+            linkIndexMatches.add(Tuple2("phone", element.end));
+            return;
+          } else if (element.entities.first is EmailEntity) {
+            linkIndexMatches.add(Tuple2("email", element.start));
+            linkIndexMatches.add(Tuple2("email", element.end));
+            return;
+          }
+        });
+      }
 
       TextStyle? textStyle = Theme.of(context).textTheme.bodyText2;
       if (!message.isFromMe!) {

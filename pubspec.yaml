@@ -96,6 +96,8 @@ dependencies:
   universal_html: ^2.0.8 # cross-platform dart:html implementation
   file_picker: ^4.0.2
   firebase_dart: ^1.0.0-dev.45
+  flutter_dropzone: ^2.0.1
+  transparent_pointer: ^1.0.0
 
 dependency_overrides:
   rxdart: ^0.27.2
