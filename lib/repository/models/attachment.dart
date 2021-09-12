@@ -41,6 +41,7 @@ class Attachment {
   int? width;
   Map<String, dynamic>? metadata;
   Uint8List? bytes;
+  String? webUrl;
 
   Attachment({
     this.id,
@@ -59,6 +60,7 @@ class Attachment {
     this.width,
     this.metadata,
     this.bytes,
+    this.webUrl,
   });
 
   bool get existsOnDisk {

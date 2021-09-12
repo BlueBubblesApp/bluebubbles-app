@@ -79,6 +79,7 @@ class AttachmentDownloadController extends GetxController {
     params["compress"] = false;
     if (kIsWeb) {
       var response = await api.downloadAttachment(attachment.guid!);
+      attachment.webUrl = response.requestOptions.path;
       Logger.info("Finished fetching attachment");
       stopwatch.stop();
       Logger.info("Attachment downloaded in ${stopwatch.elapsedMilliseconds} ms");

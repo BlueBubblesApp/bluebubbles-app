@@ -174,7 +174,7 @@ class Chat {
               ? json['hasUnreadMessage']
               : ((json['hasUnreadMessage'] == 1) ? true : false)
           : false,
-      latestMessageText: json.containsKey("latestMessageText") ? json["latestMessageText"] : message?.text,
+      latestMessageText: json.containsKey("latestMessageText") ? json["latestMessageText"] : message != null ? MessageHelper.getNotificationTextSync(message) : null,
       fakeLatestMessageText: json.containsKey("latestMessageText")
           ? faker.lorem.words((json["latestMessageText"] ?? "").split(" ").length).join(" ")
           : null,
