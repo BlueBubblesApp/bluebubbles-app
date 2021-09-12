@@ -378,6 +378,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.1.0"
+  dio_http:
+    dependency: "direct main"
+    description:
+      name: dio_http
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "5.0.4"
   encrypt:
     dependency: "direct main"
     description:
@@ -594,7 +601,7 @@ packages:
     source: hosted
     version: "0.22.0"
   flutter_test:
-    dependency: transitive
+    dependency: "direct dev"
     description: flutter
     source: sdk
     version: "0.0.0"

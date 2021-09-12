@@ -30,6 +30,8 @@ import 'package:get/get.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:socket_io_client/socket_io_client.dart';
 
+export 'package:bluebubbles/api_manager.dart';
+
 enum SocketState {
   CONNECTED,
   DISCONNECTED,
