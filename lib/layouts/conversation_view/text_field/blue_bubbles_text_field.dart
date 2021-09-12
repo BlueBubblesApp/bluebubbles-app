@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:universal_io/io.dart';
+import 'package:universal_html/html.dart' as html;
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
@@ -69,6 +70,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   bool selfTyping = false;
   int? sendCountdown;
   bool? stopSending;
+  bool fileDragged = false;
 
   final RxString placeholder = "BlueBubbles".obs;
   final RxBool isRecording = false.obs;
@@ -130,6 +132,23 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       }
 
       EventDispatcher().emit("keyboard-status", focusNode!.hasFocus);
+    });
+
+    html.document.onDragOver.listen((event) {
+      var t = event.dataTransfer;
+      if (t.types != null && t.types!.length == 1 && t.types!.first == "Files" && fileDragged == false) {
+        setState(() {
+          fileDragged = true;
+        });
+      }
+    });
+
+    html.document.onDragLeave.listen((event) {
+      if (fileDragged == true) {
+        setState(() {
+          fileDragged = false;
+        });
+      }
     });
 
     EventDispatcher().stream.listen((event) {
@@ -401,36 +420,13 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             Expanded(
               child: Container(
                 padding: EdgeInsets.only(left: 5, top: 5, bottom: 5, right: 8),
-                child: Stack(
-                  children: [
-                  Container(
-                    height: 50,
-                    child: DropzoneView(
-                        operation: DragOperation.copy,
-                        cursor: CursorType.copy,
-                        onCreated: (c) {
-                          dropZoneController = c;
-                        },
-                        onDrop: (ev) async {
-                          addAttachment(PlatformFile(
-                            name: await dropZoneController!.getFilename(ev),
-                            bytes: await dropZoneController!.getFileData(ev),
-                            size: await dropZoneController!.getFileSize(ev)
-                          ));
-                        },
-                      ),
-                    ),
-                   TransparentPointer(
-                     child: Column(
-                       mainAxisSize: MainAxisSize.min,
-                       children: <Widget>[
-                         buildAttachmentList(),
-                         buildTextFieldAlwaysVisible(),
-                         buildAttachmentPicker(),
-                       ],
-                     ),
-                   ),
-                  ]
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    buildAttachmentList(),
+                    buildTextFieldAlwaysVisible(),
+                    buildAttachmentPicker(),
+                  ],
                 ),
               ),
             ),
@@ -466,24 +462,50 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
   Widget buildShareButton() {
     double size = SettingsManager().settings.skin.value == Skins.iOS ? 35 : 40;
-    return Container(
-      height: size,
-      width: size,
-      margin: EdgeInsets.only(left: 5.0, right: 5.0),
-      child: ClipOval(
-        child: Material(
+    return AnimatedSize(
+      duration: Duration(milliseconds: 300),
+      child: Container(
+        height: size,
+        width: fileDragged ? size * 3 : size,
+        margin: EdgeInsets.only(left: 5.0, right: 5.0),
+        decoration: BoxDecoration(
           color: Theme.of(context).primaryColor,
-          child: InkWell(
-            onTap: toggleShareMenu,
-            child: Padding(
-              padding: EdgeInsets.only(right: SettingsManager().settings.skin.value == Skins.iOS ? 0 : 1),
-              child: Icon(
-                SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.share : Icons.share,
-                color: Colors.white.withAlpha(225),
-                size: 20,
+          borderRadius: BorderRadius.circular(fileDragged ? 5 : 40),
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            DropzoneView(
+              operation: DragOperation.copy,
+              cursor: CursorType.auto,
+              onCreated: (c) {
+                dropZoneController = c;
+              },
+              onDrop: (ev) async {
+                fileDragged = false;
+                addAttachment(PlatformFile(
+                    name: await dropZoneController!.getFilename(ev),
+                    bytes: await dropZoneController!.getFileData(ev),
+                    size: await dropZoneController!.getFileSize(ev)
+                ));
+              },
+            ),
+            TransparentPointer(
+              child: ClipRRect(
+                child: InkWell(
+                  onTap: toggleShareMenu,
+                  child: Padding(
+                    padding: EdgeInsets.only(right: SettingsManager().settings.skin.value == Skins.iOS ? 0 : 1),
+                    child: fileDragged ? Center(child: Text("Drop file here")) : Icon(
+                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.share : Icons.share,
+                      color: Colors.white.withAlpha(225),
+                      size: 20,
+                    ),
+                  ),
+                ),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );
