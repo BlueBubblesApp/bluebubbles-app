@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:file_picker/file_picker.dart';
-import 'package:universal_io/io.dart';
+import 'package:flutter/foundation.dart';
+import 'package:universal_html/html.dart' as html;
 import 'dart:math';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -190,7 +191,10 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
           context.textTheme,
         );
       },
-      onSecondaryTapUp: (details) {
+      onSecondaryTapUp: (details) async {
+        if (kIsWeb) {
+          (await html.document.onContextMenu.first).preventDefault();
+        }
         showConversationTileMenu(
           context,
           this,

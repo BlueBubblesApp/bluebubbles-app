@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:file_picker/file_picker.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:flutter/foundation.dart';
-import 'package:universal_io/io.dart';
+import 'package:universal_html/html.dart' as html;
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
@@ -338,17 +338,26 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
           child: FutureBuilder<Message>(
               future: widget.chat.latestMessage,
               builder: (context, snapshot) {
-                return Obx(() {
-                  return Text(
-                      (snapshot.data?.error.value ?? 0) > 0 ? "Error" : buildDate(widget.chat.latestMessageDate),
-                      textAlign: TextAlign.right,
-                      style: Theme.of(context).textTheme.subtitle2!.copyWith(
-                            color: (snapshot.data?.error.value ?? 0) > 0
-                                ? Colors.red
-                                : Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
-                          ),
-                      overflow: TextOverflow.clip);
-                });
+                if (snapshot.data != null) {
+                  return Obx(() {
+                    return Text(
+                        snapshot.data!.error.value > 0 ? "Error" : buildDate(widget.chat.latestMessageDate),
+                        textAlign: TextAlign.right,
+                        style: Theme.of(context).textTheme.subtitle2!.copyWith(
+                          color: snapshot.data!.error.value > 0
+                              ? Colors.red
+                              : Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
+                        ),
+                        overflow: TextOverflow.clip);
+                  });
+                }
+                return Text(
+                    buildDate(widget.chat.latestMessageDate),
+                    textAlign: TextAlign.right,
+                    style: Theme.of(context).textTheme.subtitle2!.copyWith(
+                      color: Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
+                    ),
+                    overflow: TextOverflow.clip);
               }),
         );
 
@@ -437,7 +446,10 @@ class __CupertinoState extends State<_Cupertino> {
               isPressed = false;
             });
           },
-          onSecondaryTapUp: (details) {
+          onSecondaryTapUp: (details) async {
+            if (kIsWeb) {
+              (await html.document.onContextMenu.first).preventDefault();
+            }
             showConversationTileMenu(
               context,
               this,
@@ -564,7 +576,10 @@ class _Material extends StatelessWidget {
     return Material(
       color: parent.selected ? Theme.of(context).primaryColor.withAlpha(120) : Theme.of(context).backgroundColor,
       child: GestureDetector(
-        onSecondaryTapUp: (details) {
+        onSecondaryTapUp: (details) async {
+          if (kIsWeb) {
+            (await html.document.onContextMenu.first).preventDefault();
+          }
           showConversationTileMenu(
             context,
             parent,
@@ -666,7 +681,10 @@ class _Samsung extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: GestureDetector(
-        onSecondaryTapUp: (details) {
+        onSecondaryTapUp: (details) async {
+          if (kIsWeb) {
+            (await html.document.onContextMenu.first).preventDefault();
+          }
           showConversationTileMenu(
             context,
             parent,

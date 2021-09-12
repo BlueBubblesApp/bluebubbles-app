@@ -192,7 +192,7 @@ class NotificationManager {
     // Try to load in an avatar for the person
     try {
       // If there is a contact specified, we can use it's avatar
-      if (contact != null) {
+      if (contact != null && contact.avatar != null) {
         if (contact.avatar!.length > 0) contactIcon = contact.avatar;
         // Otherwise if there isn't, we use the [defaultAvatar]
       } else {

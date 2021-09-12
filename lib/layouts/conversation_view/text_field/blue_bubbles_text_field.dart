@@ -5,7 +5,8 @@ import 'package:universal_io/io.dart';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
-import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'package:flutter_dropzone/flutter_dropzone.dart';
+import 'package:transparent_pointer/transparent_pointer.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -62,6 +63,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   List<PlatformFile> pickedImages = [];
   TextFieldData? textFieldData;
   StreamController _streamController = new StreamController.broadcast();
+  DropzoneViewController? dropZoneController;
   CurrentChat? safeChat;
 
   bool selfTyping = false;
@@ -302,23 +304,19 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               onPressed: () async {
                 CurrentChat? thisChat = CurrentChat.of(originalContext);
                 if (thisChat == null) {
-                  this.addAttachments([
-                    PlatformFile(
-                      path: file.path,
-                      name: file.path.split("/").last,
-                      size: file.lengthSync(),
-                      bytes: file.readAsBytesSync(),
-                    )
-                  ]);
+                  this.addAttachments([PlatformFile(
+                    path: file.path,
+                    name: file.path.split("/").last,
+                    size: file.lengthSync(),
+                    bytes: file.readAsBytesSync(),
+                  )]);
                 } else {
-                  await widget.onSend([
-                    PlatformFile(
-                      path: file.path,
-                      name: file.path.split("/").last,
-                      size: file.lengthSync(),
-                      bytes: file.readAsBytesSync(),
-                    )
-                  ], "");
+                  await widget.onSend([PlatformFile(
+                    path: file.path,
+                    name: file.path.split("/").last,
+                    size: file.lengthSync(),
+                    bytes: file.readAsBytesSync(),
+                  )], "");
                   this.disposeAudioFile(originalContext, file);
                 }
 
@@ -339,27 +337,30 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         titleStyle: Theme.of(context).textTheme.headline1,
         confirm: Container(height: 0, width: 0),
         cancel: Container(height: 0, width: 0),
-        content: Column(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
-          ListTile(
-            title: Text("Upload file", style: Theme.of(context).textTheme.bodyText1),
-            onTap: () async {
-              final res = await FilePicker.platform.pickFiles(withData: true, allowMultiple: true);
-              if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
+        content: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              ListTile(
+                title: Text("Upload file", style: Theme.of(context).textTheme.bodyText1),
+                onTap: () async {
+                  final res = await FilePicker.platform.pickFiles(withData: true, allowMultiple: true);
+                  if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
 
-              for (var e in res.files) {
-                addAttachment(e);
-              }
-              Navigator.of(context).pop();
-            },
-          ),
-          ListTile(
-            title: Text("Send location", style: Theme.of(context).textTheme.bodyText1),
-            onTap: () async {
-              Share.location(CurrentChat.of(context)!.chat);
-              Navigator.of(context).pop();
-            },
-          ),
-        ]),
+                  for (var e in res.files) {
+                    addAttachment(e);
+                  }
+                  Get.back();
+                },
+              ),
+              ListTile(
+                title: Text("Send location", style: Theme.of(context).textTheme.bodyText1),
+                onTap: () async {
+                  Share.location(CurrentChat.of(context)!.chat);
+                  Get.back();
+                },
+              ),
+            ]
+        ),
         backgroundColor: Theme.of(context).backgroundColor,
       );
       return;
@@ -400,13 +401,36 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             Expanded(
               child: Container(
                 padding: EdgeInsets.only(left: 5, top: 5, bottom: 5, right: 8),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    buildAttachmentList(),
-                    buildTextFieldAlwaysVisible(),
-                    buildAttachmentPicker(),
-                  ],
+                child: Stack(
+                  children: [
+                  Container(
+                    height: 50,
+                    child: DropzoneView(
+                        operation: DragOperation.copy,
+                        cursor: CursorType.copy,
+                        onCreated: (c) {
+                          dropZoneController = c;
+                        },
+                        onDrop: (ev) async {
+                          addAttachment(PlatformFile(
+                            name: await dropZoneController!.getFilename(ev),
+                            bytes: await dropZoneController!.getFileData(ev),
+                            size: await dropZoneController!.getFileSize(ev)
+                          ));
+                        },
+                      ),
+                    ),
+                   TransparentPointer(
+                     child: Column(
+                       mainAxisSize: MainAxisSize.min,
+                       children: <Widget>[
+                         buildAttachmentList(),
+                         buildTextFieldAlwaysVisible(),
+                         buildAttachmentPicker(),
+                       ],
+                     ),
+                   ),
+                  ]
                 ),
               ),
             ),
@@ -419,8 +443,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         child: TextFieldAttachmentList(
           attachments: pickedImages,
           onRemove: (PlatformFile attachment) {
-            pickedImages
-                .removeWhere((element) => kIsWeb ? element.bytes == element.bytes : element.path == attachment.path);
+            pickedImages.removeWhere((element) => kIsWeb ? element.bytes == element.bytes : element.path == attachment.path);
             updateTextFieldAttachments();
             if (this.mounted) setState(() {});
           },
@@ -526,51 +549,11 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           alignment: AlignmentDirectional.centerEnd,
           children: <Widget>[
             AnimatedSize(
-              vsync: this,
               duration: Duration(milliseconds: 100),
               curve: Curves.easeInOut,
               child: RawKeyboardListener(
                 focusNode: FocusNode(),
                 onKey: (RawKeyEvent event) async {
-                  if (!(event is RawKeyUpEvent)) return;
-                  if (isNullOrEmpty(controller!.text)!) {
-                    controller!.text = ""; // Gotta find a better way to support shift + enter
-                    return;
-                  }
-                  if (event.data is RawKeyEventDataWindows) {
-                    var data = event.data as RawKeyEventDataWindows;
-                    if (data.keyCode == 13 && !event.isShiftPressed) {
-                      await sendMessage();
-                      focusNode!.requestFocus();
-                    }
-                    return;
-                  }
-                  // TODO figure out the Linux keycode
-                  if (event.data is RawKeyEventDataLinux) {
-                    var data = event.data as RawKeyEventDataLinux;
-                    if (data.keyCode == 13 && !event.isShiftPressed) {
-                      await sendMessage();
-                      focusNode!.requestFocus();
-                    }
-                    return;
-                  }
-                  // TODO figure out the MacOs keycode
-                  if (event.data is RawKeyEventDataMacOs) {
-                    var data = event.data as RawKeyEventDataMacOs;
-                    if (data.keyCode == 13 && !event.isShiftPressed) {
-                      await sendMessage();
-                      focusNode!.requestFocus();
-                    }
-                    return;
-                  }
-                  if (event.data is RawKeyEventDataWeb) {
-                    var data = event.data as RawKeyEventDataWeb;
-                    if (data.code == "Enter" && !event.isShiftPressed) {
-                      await sendMessage();
-                      focusNode!.requestFocus();
-                    }
-                    return;
-                  }
                   if (event.physicalKey == PhysicalKeyboardKey.enter &&
                       SettingsManager().settings.sendWithReturn.value) {
                     if (!isNullOrEmpty(controller!.text)!) {
@@ -584,18 +567,18 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     }
                   }
                   // 99% sure this isn't necessary but keeping it for now
-                  // if (event.isKeyPressed(LogicalKeyboardKey.enter) &&
-                  //     SettingsManager().settings.sendWithReturn.value &&
-                  //     !isNullOrEmpty(controller!.text)!) {
-                  //   await sendMessage();
-                  //   focusNode!.requestFocus();
-                  // }
+                  if (event.isKeyPressed(LogicalKeyboardKey.enter) &&
+                      SettingsManager().settings.sendWithReturn.value &&
+                      !isNullOrEmpty(controller!.text)!) {
+                    await sendMessage();
+                    focusNode!.requestFocus();
+                  }
                 },
                 child: ThemeSwitcher(
                   iOSSkin: CustomCupertinoTextField(
                     enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
                     enabled: sendCountdown == null,
-                    textInputAction: SettingsManager().settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
+                    textInputAction: SettingsManager().settings.sendWithReturn.value
                         ? TextInputAction.send
                         : TextInputAction.newline,
                     cursorColor: Theme.of(context).primaryColor,
@@ -632,7 +615,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         : "BlueBubbles",
                     padding: EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
                     placeholderStyle: Theme.of(context).textTheme.subtitle1,
-                    autofocus: SettingsManager().settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop,
+                    autofocus: SettingsManager().settings.autoOpenKeyboard.value,
                     decoration: BoxDecoration(
                       color: Theme.of(context).backgroundColor,
                       border: Border.all(
@@ -648,10 +631,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     focusNode: focusNode,
                     textCapitalization: TextCapitalization.sentences,
                     autocorrect: true,
-                    textInputAction: SettingsManager().settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
+                    textInputAction: SettingsManager().settings.sendWithReturn.value
                         ? TextInputAction.send
                         : TextInputAction.newline,
-                    autofocus: SettingsManager().settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop,
+                    autofocus: SettingsManager().settings.autoOpenKeyboard.value,
                     cursorColor: Theme.of(context).primaryColor,
                     key: _searchFormKey,
                     onSubmitted: (String value) {
@@ -714,10 +697,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     focusNode: focusNode,
                     textCapitalization: TextCapitalization.sentences,
                     autocorrect: true,
-                    textInputAction: SettingsManager().settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
-                        ? TextInputAction.send
-                        : TextInputAction.newline,
-                    autofocus: SettingsManager().settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop,
+                    autofocus: SettingsManager().settings.autoOpenKeyboard.value,
                     cursorColor: Theme.of(context).primaryColor,
                     key: _searchFormKey,
                     onSubmitted: (String value) {
@@ -867,10 +847,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     } else if (isRecording.value) {
       await stopRecording();
       shouldUpdate = true;
-    } else if (canRecord.value &&
-        !isRecording.value &&
-        !kIsDesktop &&
-        await Permission.microphone.request().isGranted) {
+    } else if (canRecord.value && !isRecording.value && !kIsDesktop && await Permission.microphone.request().isGranted) {
       await startRecording();
       shouldUpdate = true;
     } else {
@@ -913,10 +890,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                 ),
                               )),
                           Obx(() => AnimatedOpacity(
-                                opacity:
-                                    (sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value
-                                        ? 1.0
-                                        : 0.0,
+                                opacity: (sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value ? 1.0 : 0.0,
                                 duration: Duration(milliseconds: 150),
                                 child: Icon(
                                   CupertinoIcons.arrow_up,
@@ -960,7 +934,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                             alignment: Alignment.center,
                             children: [
                               Obx(() => AnimatedOpacity(
-                                    opacity: sendCountdown == null && canRecord.value && !kIsDesktop ? 1.0 : 0.0,
+                                    opacity: sendCountdown == null && canRecord.value && !kIsDesktop? 1.0 : 0.0,
                                     duration: Duration(milliseconds: 150),
                                     child: Icon(
                                       Icons.mic,
@@ -969,10 +943,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                     ),
                                   )),
                               Obx(() => AnimatedOpacity(
-                                    opacity: (sendCountdown == null && (!canRecord.value || kIsDesktop)) &&
-                                            !isRecording.value
-                                        ? 1.0
-                                        : 0.0,
+                                    opacity:
+                                        (sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value ? 1.0 : 0.0,
                                     duration: Duration(milliseconds: 150),
                                     child: Icon(
                                       Icons.send,

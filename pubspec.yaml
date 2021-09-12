@@ -85,7 +85,6 @@ dependencies:
   flutter_screen_lock: ^4.0.4+1
   crop_your_image: ^0.6.0+1
   chewie: ^1.2.2 # no desktop support, todo desktop
-  dart_vlc: ^0.1.7
   simple_animations: ^3.1.1
   flutter_keyboard_visibility: ^5.0.3 # no desktop support, todo desktop
   flutter_local_notifications: ^8.1.1+2 # mobile only
@@ -97,12 +96,8 @@ dependencies:
   universal_html: ^2.0.8 # cross-platform dart:html implementation
   file_picker: ^4.0.2
   firebase_dart: ^1.0.0-dev.45
-#  quick_notify: ^0.1.0+2 # desktop
-  window_size: # desktop
-    git:
-      url: git://github.com/google/flutter-desktop-embedding.git
-      path: plugins/window_size
-      ref: 7812516a5c1fc8ef379e244106953a2b534432b9
+  flutter_dropzone: ^2.0.1
+  transparent_pointer: ^1.0.0
 
 dependency_overrides:
   rxdart: ^0.27.2
@@ -190,10 +185,10 @@ flutter:
   # see https://flutter.dev/custom-fonts/#from-packages
 
 msix_config:
-  display_name: BlueBubbles (Beta)
+  display_name: BlueBubbles
   publisher_display_name: BlueBubbles Development Team
   identity_name: com.bluebubbles.app
-  msix_version: 1.0.0.2
+  msix_version: 1.0.0.1
   publisher: CN=BlueBubbles, O=BlueBubbles, C=US
   logo_path: assets/icon/icon.png # todo
   start_menu_icon_path: assets/icon/icon.png # todo

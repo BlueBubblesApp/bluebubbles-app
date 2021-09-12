@@ -1,3 +1,5 @@
+import 'package:universal_html/html.dart' as html;
+
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
@@ -7,6 +9,7 @@ import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/message.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -131,6 +134,13 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
                 }
               : null,
       onLongPress: this.openMessageDetails,
+      onSecondaryTapUp: (details) async {
+        if (!kIsWeb && !kIsDesktop) return;
+        if (kIsWeb) {
+          (await html.document.onContextMenu.first).preventDefault();
+        }
+        this.openMessageDetails();
+      },
       child: Opacity(
         child: widget.child,
         opacity: visible ? 1 : 0,
