@@ -1,5 +1,7 @@
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
+import 'package:tuple/tuple.dart';
 import 'package:universal_io/io.dart';
 import 'package:universal_html/html.dart' as html;
 
@@ -31,6 +33,7 @@ class VideoWidgetController extends GetxController with SingleGetTickerProviderM
   final PlatformFile file;
   final Attachment attachment;
   final BuildContext context;
+
   VideoWidgetController({
     required this.file,
     required this.attachment,
@@ -103,11 +106,7 @@ class VideoWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetBuilder<VideoWidgetController>(
       global: false,
-      init: VideoWidgetController(
-        file: file,
-        attachment: attachment,
-        context: context
-      ),
+      init: VideoWidgetController(file: file, attachment: attachment, context: context),
       dispose: (state) {
         state.controller?.navigated = true;
       },
@@ -175,7 +174,15 @@ class VideoWidget extends StatelessWidget {
                   aspectRatio: controller.controller.value.aspectRatio,
                   child: Stack(
                     children: <Widget>[
-                      VideoPlayer(controller.controller),
+                      if (kIsDesktop)
+                        RegularFileOpener(
+                          file: PlatformFile(
+                            name: attachment.transferName!,
+                            size: attachment.totalBytes ?? 0,
+                          ),
+                          attachment: attachment,
+                        ),
+                      if (!kIsDesktop) VideoPlayer(controller.controller),
                     ],
                   ),
                 ),
@@ -202,7 +209,9 @@ class VideoWidget extends StatelessWidget {
                           )
                         : GestureDetector(
                             child: Icon(
-                              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.play : Icons.play_arrow,
+                              SettingsManager().settings.skin.value == Skins.iOS
+                                  ? CupertinoIcons.play
+                                  : Icons.play_arrow,
                               color: Colors.white,
                               size: 45,
                             ),
@@ -235,16 +244,16 @@ class VideoWidget extends StatelessWidget {
                               ),
                               padding: EdgeInsets.all(5),
                               child: Obx(() => Icon(
-                                controller.muted.value
-                                    ? SettingsManager().settings.skin.value == Skins.iOS
-                                    ? CupertinoIcons.volume_mute
-                                    : Icons.volume_mute
-                                    : SettingsManager().settings.skin.value == Skins.iOS
-                                    ? CupertinoIcons.volume_up
-                                    : Icons.volume_up,
-                                color: Colors.white,
-                                size: 15,
-                              )),
+                                    controller.muted.value
+                                        ? SettingsManager().settings.skin.value == Skins.iOS
+                                            ? CupertinoIcons.volume_mute
+                                            : Icons.volume_mute
+                                        : SettingsManager().settings.skin.value == Skins.iOS
+                                            ? CupertinoIcons.volume_up
+                                            : Icons.volume_up,
+                                    color: Colors.white,
+                                    size: 15,
+                                  )),
                             ),
                           ),
                         ),

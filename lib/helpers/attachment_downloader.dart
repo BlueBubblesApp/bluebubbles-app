@@ -159,11 +159,13 @@ class AttachmentDownloadController extends GetxController {
           name: attachment.transferName!,
           path: kIsWeb ? null : attachment.getPath(),
           size: total,
-          bytes: base64.decode(attachmentResponse['data']),
+          bytes: attachment.bytes,
         );
         if (kIsDesktop) {
-          File _file = await File(attachment.getPath()).create(recursive: true);
-          _file.writeAsBytesSync(base64.decode(attachmentResponse['data']));
+          if (attachment.bytes != null) {
+            File _file = await File(attachment.getPath()).create(recursive: true);
+            _file.writeAsBytesSync(attachment.bytes!.toList());
+          }
         }
       }
     }, reason: "Attachment downloader " + attachment.guid!, path: kIsWeb ? "" : attachment.getPath());

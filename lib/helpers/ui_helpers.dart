@@ -79,7 +79,7 @@ void showConversationTileMenu(context, _this, chat, tapPosition, textTheme) {
   bool ios = SettingsManager().settings.skin.value == Skins.iOS;
   HapticFeedback.mediumImpact();
   showMenu(
-    color: Get.theme.colorScheme.secondary,
+    color: Theme.of(context).accentColor,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(ios ? 10 : 0)),
     context: context,
     position: RelativeRect.fromLTRB(

@@ -7,6 +7,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   maps_launcher
   secure_application
   url_launcher_windows
+  window_size
 )
 
 set(PLUGIN_BUNDLED_LIBRARIES)

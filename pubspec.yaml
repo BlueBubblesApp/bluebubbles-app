@@ -99,6 +99,11 @@ dependencies:
   dio_http: ^5.0.4
   flutter_dropzone: ^2.0.1
   transparent_pointer: ^1.0.0
+  window_size:
+    git:
+      url: git://github.com/google/flutter-desktop-embedding.git
+      path: plugins/window_size
+      ref: fd519be1e8398c6b6c2062c2447bac960a71bc02
 
 dependency_overrides:
   rxdart: ^0.27.2

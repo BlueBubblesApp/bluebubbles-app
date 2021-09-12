@@ -1,4 +1,5 @@
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 import 'dart:math';
 import 'dart:ui';
@@ -40,16 +41,14 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
   bool openedChatAlready = false;
 
   Future<void> openLastChat(BuildContext context) async {
-    if (ChatBloc().chatRequest != null
-        && prefs.getString('lastOpenedChat') != null
-        && (!context.isPhone || context.isLandscape)
-        && CurrentChat.activeChat?.chat.guid != prefs.getString('lastOpenedChat')) {
+    if (ChatBloc().chatRequest != null &&
+        prefs.getString('lastOpenedChat') != null &&
+        (!context.isPhone || context.isLandscape) &&
+        CurrentChat.activeChat?.chat.guid != prefs.getString('lastOpenedChat')) {
       await ChatBloc().chatRequest!.future;
       CustomNavigator.pushAndRemoveUntil(
         context,
-        ConversationView(
-          chat: ChatBloc().chats.firstWhere((e) => e.guid == prefs.getString('lastOpenedChat'))
-        ),
+        ConversationView(chat: ChatBloc().chats.firstWhere((e) => e.guid == prefs.getString('lastOpenedChat'))),
         (route) => route.isFirst,
       );
     }
@@ -78,58 +77,60 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
     Brightness brightness = ThemeData.estimateBrightnessForColor(context.theme.backgroundColor);
     return Obx(
       () => Scaffold(
-        appBar: PreferredSize(
-          preferredSize: Size(
-            (showAltLayout) ? CustomNavigator.width(context) * 0.33 : CustomNavigator.width(context),
-            context.orientation == Orientation.landscape
-                ? 0
-                : SettingsManager().settings.reducedForehead.value
-                    ? 10
-                    : 40,
-          ),
-          child: ClipRRect(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-              child: StreamBuilder<Color?>(
-                stream: widget.parent.headerColorStream.stream,
-                builder: (context, snapshot) {
-                  return AnimatedCrossFade(
-                    crossFadeState: widget.parent.theme == Colors.transparent
-                        ? CrossFadeState.showFirst
-                        : CrossFadeState.showSecond,
-                    duration: Duration(milliseconds: 250),
-                    secondChild: AppBar(
-                      iconTheme: IconThemeData(color: context.theme.primaryColor),
-                      elevation: 0,
-                      backgroundColor: widget.parent.theme,
-                      centerTitle: true,
-                      brightness: brightness,
-                      title: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: <Widget>[
-                          Text(
-                            showArchived
-                                ? "Archive"
-                                : showUnknown
-                                    ? "Unknown Senders"
-                                    : "Messages",
-                            style: context.textTheme.bodyText1,
+        appBar: kIsWeb || kIsDesktop
+            ? null
+            : PreferredSize(
+                preferredSize: Size(
+                  (showAltLayout) ? CustomNavigator.width(context) * 0.33 : CustomNavigator.width(context),
+                  context.orientation == Orientation.landscape
+                      ? 0
+                      : SettingsManager().settings.reducedForehead.value
+                          ? 10
+                          : 40,
+                ),
+                child: ClipRRect(
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                    child: StreamBuilder<Color?>(
+                      stream: widget.parent.headerColorStream.stream,
+                      builder: (context, snapshot) {
+                        return AnimatedCrossFade(
+                          crossFadeState: widget.parent.theme == Colors.transparent
+                              ? CrossFadeState.showFirst
+                              : CrossFadeState.showSecond,
+                          duration: Duration(milliseconds: 250),
+                          secondChild: AppBar(
+                            iconTheme: IconThemeData(color: context.theme.primaryColor),
+                            elevation: 0,
+                            backgroundColor: widget.parent.theme,
+                            centerTitle: true,
+                            brightness: brightness,
+                            title: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: <Widget>[
+                                Text(
+                                  showArchived
+                                      ? "Archive"
+                                      : showUnknown
+                                          ? "Unknown Senders"
+                                          : "Messages",
+                                  style: context.textTheme.bodyText1,
+                                ),
+                              ],
+                            ),
                           ),
-                        ],
-                      ),
+                          firstChild: AppBar(
+                            leading: new Container(),
+                            elevation: 0,
+                            brightness: brightness,
+                            backgroundColor: context.theme.backgroundColor,
+                          ),
+                        );
+                      },
                     ),
-                    firstChild: AppBar(
-                      leading: new Container(),
-                      elevation: 0,
-                      brightness: brightness,
-                      backgroundColor: context.theme.backgroundColor,
-                    ),
-                  );
-                },
+                  ),
+                ),
               ),
-            ),
-          ),
-        ),
         backgroundColor: context.theme.backgroundColor,
         extendBodyBehindAppBar: true,
         body: CustomScrollView(
@@ -157,7 +158,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                 title: Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: <Widget>[
-                    Container(height: 20),
+                    if (!kIsWeb && !kIsDesktop) Container(height: 20),
                     Container(
                       margin: EdgeInsets.only(right: 10),
                       child: Row(
@@ -240,12 +241,14 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                                       return;
                                     }
 
-                                    widget.parent.openNewChatCreator(existing: [PlatformFile(
-                                      name: file.path.split("/").last,
-                                      path: file.path,
-                                      bytes: file.readAsBytesSync(),
-                                      size: file.lengthSync(),
-                                    )]);
+                                    widget.parent.openNewChatCreator(existing: [
+                                      PlatformFile(
+                                        name: file.path.split("/").last,
+                                        path: file.path,
+                                        bytes: file.readAsBytesSync(),
+                                        size: file.lengthSync(),
+                                      )
+                                    ]);
                                   },
                                 ),
                               ),
@@ -463,55 +466,58 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
 
   Widget buildForLandscape(BuildContext context, Widget chatList) {
     return VerticalSplitView(
-        dividerWidth: 10.0,
-        initialRatio: 0.4,
-        minRatio: 0.33,
-        maxRatio: 0.5,
-        allowResize: true,
-        left: LayoutBuilder(
-          builder: (context, constraints) {
-            CustomNavigator.maxWidthLeft = constraints.maxWidth;
-            return WillPopScope(
-              onWillPop: () async {
-                Get.back(id: 1);
+      dividerWidth: 10.0,
+      initialRatio: 0.4,
+      minRatio: 0.33,
+      maxRatio: 0.5,
+      allowResize: true,
+      left: LayoutBuilder(builder: (context, constraints) {
+        CustomNavigator.maxWidthLeft = constraints.maxWidth;
+        return WillPopScope(
+          onWillPop: () async {
+            Get.back(id: 1);
+            return false;
+          },
+          child: Navigator(
+            key: Get.nestedKey(1),
+            onPopPage: (route, _) {
+              return false;
+            },
+            pages: [CupertinoPage(name: "initial", child: chatList)],
+          ),
+        );
+      }),
+      right: LayoutBuilder(
+        builder: (context, constraints) {
+          CustomNavigator.maxWidthRight = constraints.maxWidth;
+          return WillPopScope(
+            onWillPop: () async {
+              Get.back(id: 2);
+              return false;
+            },
+            child: Navigator(
+              key: Get.nestedKey(2),
+              onPopPage: (route, _) {
                 return false;
               },
-              child: Navigator(
-                key: Get.nestedKey(1),
-                onPopPage: (route, _) {
-                  return false;
-                },
-                pages: [CupertinoPage(name: "initial", child: chatList)],
-              ),
-            );
-          }
-        ),
-        right: LayoutBuilder(
-          builder: (context, constraints) {
-            CustomNavigator.maxWidthRight = constraints.maxWidth;
-            return WillPopScope(
-              onWillPop: () async {
-                Get.back(id: 2);
-                return false;
-              },
-              child: Navigator(
-                key: Get.nestedKey(2),
-                onPopPage: (route, _) {
-                  return false;
-                },
-                pages: [CupertinoPage(name: "initial", child: Scaffold(
-                  backgroundColor: context.theme.backgroundColor,
-                  extendBodyBehindAppBar: true,
-                  body: Center(
-                    child: Container(
-                        child: Text("Select a chat from the list", style: Theme.of(Get.context!).textTheme.subtitle1!.copyWith(fontSize: 18))
+              pages: [
+                CupertinoPage(
+                  name: "initial",
+                  child: Scaffold(
+                    backgroundColor: context.theme.backgroundColor,
+                    extendBodyBehindAppBar: true,
+                    body: Center(
+                      child: Container(
+                          child: Text("Select a chat from the list",
+                              style: Theme.of(Get.context!).textTheme.subtitle1!.copyWith(fontSize: 18))),
                     ),
                   ),
-                ))],
-              ),
-            );
-          }
-        ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
