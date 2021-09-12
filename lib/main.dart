@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:universal_io/io.dart';
+import 'package:universal_html/html.dart' as html;
 import 'dart:isolate';
 import 'dart:ui';
 
@@ -290,6 +291,12 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+
+    // we want to refresh the page rather than loading a new instance of [Home]
+    // to avoid errors
+    if (LifeCycleManager().isAlive && kIsWeb) {
+      html.window.location.reload();
+    }
 
     // Initalize a bunch of managers
     MethodChannelInterface().init();
