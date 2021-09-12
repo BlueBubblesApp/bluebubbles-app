@@ -13,7 +13,6 @@ import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:chewie_audio/chewie_audio.dart';
-import 'package:dart_vlc/dart_vlc.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
@@ -41,9 +40,9 @@ class CurrentChat {
 
   Map<String, Uint8List> imageData = {};
   Map<String, Metadata> urlPreviews = {};
-  Map<String, Tuple2<VideoPlayerController, Player>> currentPlayingVideo = {};
-  Map<String, Tuple3<ChewieAudioController, VideoPlayerController, Player?>> audioPlayers = {};
-  List<Tuple2<VideoPlayerController, Player?>> videoControllersToDispose = [];
+  Map<String, VideoPlayerController> currentPlayingVideo = {};
+  Map<String, Tuple2<ChewieAudioController, VideoPlayerController>> audioPlayers = {};
+  List<VideoPlayerController> videoControllersToDispose = [];
   List<Attachment> chatAttachments = [];
   List<Message?> sentMessages = [];
   bool showTypingIndicator = false;
@@ -215,10 +214,10 @@ class CurrentChat {
       Uint8List data = imageData.remove(oldGuid)!;
       imageData[newAttachmentGuid!] = data;
     } else if (currentPlayingVideo.containsKey(oldGuid)) {
-      Tuple2<VideoPlayerController, Player> data = currentPlayingVideo.remove(oldGuid)!;
+      VideoPlayerController data = currentPlayingVideo.remove(oldGuid)!;
       currentPlayingVideo[newAttachmentGuid!] = data;
     } else if (audioPlayers.containsKey(oldGuid)) {
-      Tuple3<ChewieAudioController, VideoPlayerController, Player?> data = audioPlayers.remove(oldGuid)!;
+      Tuple2<ChewieAudioController, VideoPlayerController> data = audioPlayers.remove(oldGuid)!;
       audioPlayers[newAttachmentGuid!] = data;
     } else if (urlPreviews.containsKey(oldGuid)) {
       Metadata data = urlPreviews.remove(oldGuid)!;
@@ -279,7 +278,7 @@ class CurrentChat {
     chatAttachments = await Chat.getAttachments(chat);
   }
 
-  void changeCurrentPlayingVideo(Map<String, Tuple2<VideoPlayerController, Player>> video) {
+  void changeCurrentPlayingVideo(Map<String, VideoPlayerController> video) {
     if (!isNullOrEmpty(currentPlayingVideo)!) {
       currentPlayingVideo.values.forEach((element) {
         videoControllersToDispose.add(element);
@@ -298,8 +297,7 @@ class CurrentChat {
   void dispose() {
     if (!isNullOrEmpty(currentPlayingVideo)!) {
       currentPlayingVideo.values.forEach((element) {
-        element.item1.dispose();
-        element.item2.dispose();
+        element.dispose();
       });
     }
 
@@ -307,7 +305,6 @@ class CurrentChat {
       audioPlayers.values.forEach((element) {
         element.item1.dispose();
         element.item2.dispose();
-        element.item3?.dispose();
       });
       audioPlayers = {};
     }
@@ -326,7 +323,6 @@ class CurrentChat {
     audioPlayers.forEach((key, value) async {
       value.item1.dispose();
       value.item2.dispose();
-      value.item3?.dispose();
       audioPlayers.remove(key);
     });
     chatAttachments = [];
@@ -362,8 +358,7 @@ class CurrentChat {
 
   void disposeVideoControllers() {
     videoControllersToDispose.forEach((element) {
-      element.item1.dispose();
-      element.item2?.dispose();
+      element.dispose();
     });
     videoControllersToDispose = [];
   }
@@ -373,7 +368,6 @@ class CurrentChat {
       try {
         player.item1.dispose();
         player.item2.dispose();
-        player.item3?.dispose();
       } catch (_) {}
     });
     audioPlayers = {};

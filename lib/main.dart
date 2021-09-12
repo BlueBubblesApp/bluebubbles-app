@@ -28,7 +28,6 @@ import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/theme_object.dart';
-import 'package:dart_vlc/dart_vlc.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -142,7 +141,6 @@ Future<Null> main() async {
     }
     if (kIsDesktop) {
       setWindowTitle('BlueBubbles (Beta)');
-      DartVLC.initialize();
     }
   } catch (e) {
     exception = e;

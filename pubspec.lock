@@ -73,13 +73,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.8.1"
-  audio_video_progress_bar:
-    dependency: transitive
-    description:
-      name: audio_video_progress_bar
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.9.0"
   battery_optimization:
     dependency: "direct main"
     description:
@@ -336,20 +329,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.1.0"
-  dart_vlc:
-    dependency: "direct main"
-    description:
-      name: dart_vlc
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.1.7"
-  dart_vlc_ffi:
-    dependency: transitive
-    description:
-      name: dart_vlc_ffi
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.1.4"
   dbus:
     dependency: transitive
     description:
@@ -1781,8 +1760,8 @@ packages:
     dependency: "direct main"
     description:
       path: "plugins\\window_size"
-      ref: "7812516a5c1fc8ef379e244106953a2b534432b9"
-      resolved-ref: "7812516a5c1fc8ef379e244106953a2b534432b9"
+      ref: fd519be1e8398c6b6c2062c2447bac960a71bc02
+      resolved-ref: fd519be1e8398c6b6c2062c2447bac960a71bc02
       url: "git://github.com/google/flutter-desktop-embedding.git"
     source: git
     version: "0.1.0"

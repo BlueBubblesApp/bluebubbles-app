@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:dart_vlc/dart_vlc.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
@@ -43,9 +42,6 @@ class _VideoViewerState extends State<VideoViewer> {
   final RxBool isReloading = false.obs;
   Timer? _debounce;
 
-  // Desktop stuff
-  Player? _player;
-
   @override
   void initState() {
     super.initState();
@@ -57,11 +53,6 @@ class _VideoViewerState extends State<VideoViewer> {
       final blob = html.Blob([widget.file.bytes]);
       final url = html.Url.createObjectUrlFromBlob(blob);
       controller = VideoPlayerController.network(url);
-    } else if (kIsDesktop) {
-      File file = File(widget.file.path);
-      _player = Player(id: widget.attachment.hashCode);
-      final media = Media.file(file);
-      _player!.open(media);
     } else {
       dynamic file = File(widget.file.path);
       controller = new VideoPlayerController.file(file);
@@ -232,11 +223,6 @@ class _VideoViewerState extends State<VideoViewer> {
                           final blob = html.Blob([widget.file.bytes]);
                           final url = html.Url.createObjectUrlFromBlob(blob);
                           controller = VideoPlayerController.network(url);
-                        } else if (kIsDesktop) {
-                          File file = File(widget.file.path);
-                          _player = Player(id: widget.attachment.hashCode);
-                          final media = Media.file(file);
-                          _player!.open(media);
                         } else {
                           dynamic file = File(widget.file.path);
                           controller = new VideoPlayerController.file(file);
@@ -360,11 +346,7 @@ class _VideoViewerState extends State<VideoViewer> {
                               iconTheme: Theme.of(context)
                                   .iconTheme
                                   .copyWith(color: Theme.of(context).textTheme.bodyText1?.color)),
-                          child: kIsDesktop
-                              ? Video(
-                                  player: _player,
-                                )
-                              : Chewie(
+                          child: Chewie(
                                   controller: chewieController!,
                                 ),
                         ),

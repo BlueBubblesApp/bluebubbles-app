@@ -29,6 +29,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:socket_io_client/socket_io_client.dart';
+import 'dart:io';
 
 enum SocketState {
   CONNECTED,
@@ -422,7 +423,7 @@ class SocketManager {
     String? result;
 
     if (kIsWeb || kIsDesktop) {
-      Logger.debug("Platform Web detected, not authing with FCM!", tag: 'FCM-Auth');
+      Logger.debug("Platform ${kIsWeb ? "web" : Platform.operatingSystem} detected, not authing with FCM!", tag: 'FCM-Auth');
       isAuthingFcm = false;
       return;
     }

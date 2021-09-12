@@ -4,7 +4,6 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   connectivity_plus_windows
-  dart_vlc
   maps_launcher
   secure_application
   url_launcher_windows

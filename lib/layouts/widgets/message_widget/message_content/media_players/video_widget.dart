@@ -1,4 +1,4 @@
-import 'package:dart_vlc/dart_vlc.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:tuple/tuple.dart';
@@ -28,7 +28,6 @@ class VideoWidgetController extends GetxController with SingleGetTickerProviderM
   PlayerStatus status = PlayerStatus.NONE;
   bool hasListener = false;
   late final VideoPlayerController controller;
-  late final Player desktopController;
   final RxBool showPlayPauseOverlay = true.obs;
   final RxBool muted = true.obs;
   final PlatformFile file;
@@ -45,19 +44,16 @@ class VideoWidgetController extends GetxController with SingleGetTickerProviderM
   void onInit() {
     super.onInit();
     muted.value = SettingsManager().settings.startVideosMuted.value;
-    Map<String, Tuple2<VideoPlayerController, Player>> controllers = CurrentChat.of(context)!.currentPlayingVideo;
-    showPlayPauseOverlay.value = !controllers.containsKey(attachment.guid) ||
-        (kIsDesktop
-            ? !controllers[attachment.guid]!.item2.playback.isPlaying
-            : !controllers[attachment.guid]!.item1.value.isPlaying);
+    Map<String, VideoPlayerController> controllers = CurrentChat.of(context)!.currentPlayingVideo;
+    showPlayPauseOverlay.value =
+        !controllers.containsKey(attachment.guid) || !controllers[attachment.guid]!.value.isPlaying;
 
     if (controllers.containsKey(attachment.guid)) {
-      desktopController = controllers[attachment.guid]!.item2;
-      controller = controllers[attachment.guid]!.item1;
+      controller = controllers[attachment.guid]!;
     } else {
       initializeController();
     }
-    createListener(controller, desktopController);
+    createListener(controller);
   }
 
   void initializeController() async {
@@ -68,42 +64,30 @@ class VideoWidgetController extends GetxController with SingleGetTickerProviderM
       controller = VideoPlayerController.network(url);
     } else {
       dynamic file = File(file2.path);
-      if (kIsDesktop) {
-        desktopController = Player(id: file.hashCode)..open(Media.file(file));
-      }
       controller = new VideoPlayerController.file(file);
     }
     await controller.initialize();
-    CurrentChat.of(context)!.changeCurrentPlayingVideo({attachment.guid!: Tuple2(controller, desktopController)});
+    CurrentChat.of(context)!.changeCurrentPlayingVideo({attachment.guid!: controller});
   }
 
-  void createListener(VideoPlayerController controller, desktopPlayer) {
+  void createListener(VideoPlayerController controller) {
     if (hasListener) return;
 
-    if (kIsDesktop) {
-      desktopPlayer!.playbackStream.listen((PlaybackState state) {
-        if (state.isCompleted) {
-          desktopPlayer.pause();
-          desktopPlayer.seek(Duration());
-        }
-      });
-    } else {
-      controller.addListener(() async {
-        // Get the current status
-        PlayerStatus currentStatus = await getControllerStatus(controller);
+    controller.addListener(() async {
+      // Get the current status
+      PlayerStatus currentStatus = await getControllerStatus(controller);
 
-        // If the status hasn't changed, don't do anything
-        if (currentStatus == status) return;
-        this.status = currentStatus;
+      // If the status hasn't changed, don't do anything
+      if (currentStatus == status) return;
+      this.status = currentStatus;
 
-        // If the status is ended, restart
-        if (this.status == PlayerStatus.ENDED) {
-          showPlayPauseOverlay.value = true;
-          await controller.pause();
-          await controller.seekTo(Duration());
-        }
-      });
-    }
+      // If the status is ended, restart
+      if (this.status == PlayerStatus.ENDED) {
+        showPlayPauseOverlay.value = true;
+        await controller.pause();
+        await controller.seekTo(Duration());
+      }
+    });
 
     hasListener = true;
   }
@@ -190,7 +174,14 @@ class VideoWidget extends StatelessWidget {
                   aspectRatio: controller.controller.value.aspectRatio,
                   child: Stack(
                     children: <Widget>[
-                      if (kIsDesktop) Video(player: controller.desktopController),
+                      if (kIsDesktop)
+                        RegularFileOpener(
+                          file: PlatformFile(
+                            name: attachment.transferName!,
+                            size: attachment.totalBytes ?? 0,
+                          ),
+                          attachment: attachment,
+                        ),
                       if (!kIsDesktop) VideoPlayer(controller.controller),
                     ],
                   ),
