@@ -29,7 +29,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:mime_type/mime_type.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:record/record.dart';
@@ -134,22 +133,24 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       EventDispatcher().emit("keyboard-status", focusNode!.hasFocus);
     });
 
-    html.document.onDragOver.listen((event) {
-      var t = event.dataTransfer;
-      if (t.types != null && t.types!.length == 1 && t.types!.first == "Files" && fileDragged == false) {
-        setState(() {
-          fileDragged = true;
-        });
-      }
-    });
+    if (kIsWeb) {
+      html.document.onDragOver.listen((event) {
+        var t = event.dataTransfer;
+        if (t.types != null && t.types!.length == 1 && t.types!.first == "Files" && fileDragged == false) {
+          setState(() {
+            fileDragged = true;
+          });
+        }
+      });
 
-    html.document.onDragLeave.listen((event) {
-      if (fileDragged == true) {
-        setState(() {
-          fileDragged = false;
-        });
-      }
-    });
+      html.document.onDragLeave.listen((event) {
+        if (fileDragged == true) {
+          setState(() {
+            fileDragged = false;
+          });
+        }
+      });
+    }
 
     EventDispatcher().stream.listen((event) {
       if (!event.containsKey("type")) return;
@@ -498,32 +499,34 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         child: Stack(
           alignment: Alignment.center,
           children: [
-            DropzoneView(
-              operation: DragOperation.copy,
-              cursor: CursorType.auto,
-              onCreated: (c) {
-                dropZoneController = c;
-              },
-              onDrop: (ev) async {
-                fileDragged = false;
-                addAttachment(PlatformFile(
-                    name: await dropZoneController!.getFilename(ev),
-                    bytes: await dropZoneController!.getFileData(ev),
-                    size: await dropZoneController!.getFileSize(ev)
-                ));
-              },
-            ),
+            if (kIsWeb)
+              DropzoneView(
+                operation: DragOperation.copy,
+                cursor: CursorType.auto,
+                onCreated: (c) {
+                  dropZoneController = c;
+                },
+                onDrop: (ev) async {
+                  fileDragged = false;
+                  addAttachment(PlatformFile(
+                      name: await dropZoneController!.getFilename(ev),
+                      bytes: await dropZoneController!.getFileData(ev),
+                      size: await dropZoneController!.getFileSize(ev)));
+                },
+              ),
             TransparentPointer(
               child: ClipRRect(
                 child: InkWell(
                   onTap: toggleShareMenu,
                   child: Padding(
                     padding: EdgeInsets.only(right: SettingsManager().settings.skin.value == Skins.iOS ? 0 : 1),
-                    child: fileDragged ? Center(child: Text("Drop file here")) : Icon(
-                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.share : Icons.share,
-                      color: Colors.white.withAlpha(225),
-                      size: 20,
-                    ),
+                    child: fileDragged
+                        ? Center(child: Text("Drop file here"))
+                        : Icon(
+                            SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.share : Icons.share,
+                            color: Colors.white.withAlpha(225),
+                            size: 20,
+                          ),
                   ),
                 ),
               ),
