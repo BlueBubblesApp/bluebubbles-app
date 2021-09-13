@@ -564,6 +564,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 focusNode: FocusNode(),
                 onKey: (RawKeyEvent event) async {
                   if (!(event is RawKeyUpEvent)) return;
+                  Logger.info("Got key label ${event.data.keyLabel}, physical key ${event.data.physicalKey.toString()}, logical key ${event.data.logicalKey.toString()}", tag: "RawKeyboardListener");
                   if (isNullOrEmpty(controller!.text)! && pickedImages.isEmpty) {
                     controller!.text = ""; // Gotta find a better way to support shift + enter
                     return;
