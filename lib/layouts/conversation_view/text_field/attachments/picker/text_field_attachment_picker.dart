@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:file_picker/file_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/helpers/constants.dart';
@@ -53,6 +54,18 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
   }
 
   Future<void> openFullCamera({String type: 'camera'}) async {
+    bool camera = await Permission.camera.isGranted;
+    if (!camera) {
+      bool granted = (await Permission.camera.request()) == PermissionStatus.granted;
+      if (!granted) {
+        showSnackbar(
+            "Error",
+            "Camera was denied"
+        );
+        return;
+      }
+    }
+
     // Create a file that the camera can write to
     String appDocPath = SettingsManager().appDocDir.path;
     String ext = (type == 'video') ? ".mp4" : ".png";

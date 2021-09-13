@@ -71,7 +71,8 @@ class _TextInputURLState extends State<TextInputURL> {
   Widget build(BuildContext context) {
     if (!connecting) {
       return AlertDialog(
-        title: Text("Type in the URL from the server"),
+        scrollable: true,
+        title: Text("Type in your server details"),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -85,6 +86,7 @@ class _TextInputURLState extends State<TextInputURL> {
                 labelText: "URL",
               ),
             ),
+            SizedBox(height: 10),
             TextField(
               cursorColor: Theme.of(context).primaryColor,
               autocorrect: false,

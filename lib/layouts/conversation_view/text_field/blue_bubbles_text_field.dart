@@ -564,9 +564,12 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 focusNode: FocusNode(),
                 onKey: (RawKeyEvent event) async {
                   if (!(event is RawKeyUpEvent)) return;
-                  if (isNullOrEmpty(controller!.text)!) {
+                  if (isNullOrEmpty(controller!.text)! && pickedImages.isEmpty) {
                     controller!.text = ""; // Gotta find a better way to support shift + enter
                     return;
+                  }
+                  if (pickedImages.isNotEmpty && isNullOrEmpty(controller!.text)!) {
+                    controller!.text = "";
                   }
                   if (event.data is RawKeyEventDataWindows) {
                     var data = event.data as RawKeyEventDataWindows;
@@ -638,7 +641,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     },
                     key: _searchFormKey,
                     onSubmitted: (String value) {
-                      if (isNullOrEmpty(value)!) return;
+                      if (isNullOrEmpty(value)! && pickedImages.isEmpty) return;
                       focusNode!.requestFocus();
                       sendMessage();
                     },
@@ -686,7 +689,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     cursorColor: Theme.of(context).primaryColor,
                     key: _searchFormKey,
                     onSubmitted: (String value) {
-                      if (isNullOrEmpty(value)!) return;
+                      if (isNullOrEmpty(value)! && pickedImages.isEmpty) return;
                       focusNode!.requestFocus();
                       sendMessage();
                     },
@@ -752,7 +755,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     cursorColor: Theme.of(context).primaryColor,
                     key: _searchFormKey,
                     onSubmitted: (String value) {
-                      if (isNullOrEmpty(value)!) return;
+                      if (isNullOrEmpty(value)! && pickedImages.isEmpty) return;
                       focusNode!.requestFocus();
                       sendMessage();
                     },

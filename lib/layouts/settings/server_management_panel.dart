@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:bluebubbles/layouts/setup/qr_scan/text_input_url.dart';
 import 'package:universal_io/io.dart';
 import 'package:universal_html/html.dart' as html;
 import 'dart:ui';
@@ -41,6 +42,9 @@ class ServerManagementPanelController extends GetxController {
   final RxnString serverVersion = RxnString();
   final RxnString macOSVersion = RxnString();
   final RxnInt serverVersionCode = RxnInt();
+  final RxBool privateAPIStatus = RxBool(false);
+  final RxBool helperBundleStatus = RxBool(false);
+  final RxnString proxyService = RxnString();
 
   // Restart trackers
   int? lastRestart;
@@ -67,9 +71,12 @@ class ServerManagementPanelController extends GetxController {
         serverVersion.value = res['data']['server_version'];
         serverVersionCode.value = serverVersion.value?.split(".").mapIndexed((index, e) {
           if (index == 0) return int.parse(e) * 100;
-          if (index == 1) return int.parse(e) * 10;
+          if (index == 1) return int.parse(e) * 21;
           return int.parse(e);
         }).sum;
+        privateAPIStatus.value = res['data']['private_api'] ?? false;
+        helperBundleStatus.value = res['data']['helper_connected'] ?? false;
+        proxyService.value = res['data']['proxy_service'];
       });
     }
     super.onInit();
@@ -171,6 +178,22 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                                     TextSpan(text: "Connection Status: "),
                                     TextSpan(text: describeEnum(SocketManager().state.value), style: TextStyle(color: getIndicatorColor(SocketManager().state.value))),
                                     TextSpan(text: "\n\n"),
+                                    if ((controller.serverVersionCode.value ?? 0) >= 42)
+                                      TextSpan(text: "Private API Status: "),
+                                    if ((controller.serverVersionCode.value ?? 0) >= 42)
+                                      TextSpan(text: controller.privateAPIStatus.value ? "ENABLED" : "DISABLED", style: TextStyle(color: getIndicatorColor(controller.privateAPIStatus.value
+                                          ? SocketState.CONNECTED
+                                          : SocketState.DISCONNECTED))),
+                                    if ((controller.serverVersionCode.value ?? 0) >= 42)
+                                      TextSpan(text: "\n\n"),
+                                    if ((controller.serverVersionCode.value ?? 0) >= 42)
+                                      TextSpan(text: "Private API Helper Bundle Status: "),
+                                    if ((controller.serverVersionCode.value ?? 0) >= 42)
+                                      TextSpan(text: controller.helperBundleStatus.value ? "CONNECTED" : "DISCONNECTED", style: TextStyle(color: getIndicatorColor(controller.helperBundleStatus.value
+                                          ? SocketState.CONNECTED
+                                          : SocketState.DISCONNECTED))),
+                                    if ((controller.serverVersionCode.value ?? 0) >= 42)
+                                      TextSpan(text: "\n\n"),
                                     TextSpan(text: "Server URL: ${redact ? "Redacted" : controller._settingsCopy.serverAddress}"),
                                     TextSpan(text: "\n\n"),
                                     TextSpan(text: "Latency: ${redact ? "Redacted" : ((controller.latency.value ?? "N/A").toString() + " ms")}"),
@@ -191,6 +214,9 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                                   controller.latency.value = later - now;
                                   controller.macOSVersion.value = res['data']['os_version'];
                                   controller.serverVersion.value = res['data']['server_version'];
+                                  controller.privateAPIStatus.value = res['data']['private_api'];
+                                  controller.helperBundleStatus.value = res['data']['helper_connected'];
+                                  controller.proxyService.value = res['data']['proxy_service'];
                                   controller.opacity.value = 1.0;
                                 });
                               },
@@ -199,23 +225,127 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                         )
                     );
                   }),
-                  if (!kIsWeb)
-                    SettingsHeader(
-                        headerColor: headerColor,
-                        tileColor: tileColor,
-                        iosSubtitle: iosSubtitle,
-                        materialSubtitle: materialSubtitle,
-                        text: "Connection & Sync"
+                  SettingsHeader(
+                      headerColor: headerColor,
+                      tileColor: tileColor,
+                      iosSubtitle: iosSubtitle,
+                      materialSubtitle: materialSubtitle,
+                      text: "Connection & Sync"
+                  ),
+                  Obx(() {
+                    if (controller.proxyService.value != null && SettingsManager().settings.skin.value == Skins.iOS)
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: tileColor,
+                        ),
+                        padding: EdgeInsets.only(left: 15, top: 5),
+                        child: Text("Select Proxy Service"),
+                      );
+                    else return SizedBox.shrink();
+                  }),
+                  Obx(() => controller.proxyService.value != null ? SettingsOptions<String>(
+                    title: "Proxy Service",
+                    options: ["Ngrok", "LocalTunnel", "Dynamic DNS"],
+                    initial: controller.proxyService.value!,
+                    capitalize: false,
+                    textProcessing: (val) => val,
+                    onChanged: (val) async {
+                      String? url;
+                      if (val == "Dynamic DNS") {
+                        TextEditingController controller = TextEditingController();
+                        await showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            actions: [
+                              TextButton(
+                                child: Text("OK"),
+                                onPressed: () async {
+                                  if (!controller.text.isURL) {
+                                    showSnackbar("Error", "Please enter a valid URL");
+                                    return;
+                                  }
+                                  url = controller.text;
+                                  Get.back();
+                                },
+                              ),
+                              TextButton(
+                                child: Text("Cancel"),
+                                onPressed: () {
+                                  Get.back();
+                                },
+                              )
+                            ],
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                TextField(
+                                  controller: controller,
+                                  decoration: InputDecoration(
+                                    labelText: "Server Address",
+                                    border: OutlineInputBorder(),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            title: Text("Enter Server Address"),
+                          )
+                        );
+                        if (url == null) return;
+                      }
+                      var res = await SocketManager().sendMessage("change-proxy-service", {"service": val}, (_) {});
+                      if (res['status'] == 200) {
+                        controller.proxyService.value = val;
+                        await Future.delayed(Duration(seconds: 2));
+                        await SocketManager().refreshConnection();
+                        controller.opacity.value = 0.0;
+                        int now = DateTime.now().toUtc().millisecondsSinceEpoch;
+                        SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
+                          int later = DateTime.now().toUtc().millisecondsSinceEpoch;
+                          controller.latency.value = later - now;
+                          controller.macOSVersion.value = res['data']['os_version'];
+                          controller.serverVersion.value = res['data']['server_version'];
+                          controller.privateAPIStatus.value = res['data']['private_api'];
+                          controller.helperBundleStatus.value = res['data']['helper_connected'];
+                          controller.proxyService.value = res['data']['proxy_service'];
+                          controller.opacity.value = 1.0;
+                        });
+                      }
+                    },
+                    backgroundColor: tileColor,
+                    secondaryColor: headerColor,
+                  ) : SizedBox.shrink()),
+                  Obx(() => controller.proxyService.value != null && !kIsWeb ? Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
                     ),
+                  ) : SizedBox.shrink()),
                   if (!kIsWeb && !kIsDesktop)
                     SettingsTile(
                       title: "Re-configure with BlueBubbles Server",
-                      subtitle: "Scan QR code",
+                      subtitle: "Tap to scan QR code   |   Long press for manual entry",
                       leading: SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.gear,
                         materialIcon: Icons.room_preferences,
                       ),
                       backgroundColor: tileColor,
+                      onLongPress: () {
+                        showDialog(
+                          context: context,
+                          builder: (connectContext) => TextInputURL(
+                            onConnect: () {
+                              Get.back();
+                              SocketManager().authFCM();
+                              SocketManager()
+                                  .startSocketIO(forceNewConnection: true);
+                            },
+                            onClose: () {
+                              Get.back();
+                            },
+                          ),
+                        );
+                      },
                       onTap: () async {
                         var fcmData;
                         try {
@@ -409,7 +539,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                   }),
                   Obx(() {
                     if (SettingsManager().settings.enablePrivateAPI.value
-                        && (controller.serverVersionCode.value ?? 0) > 29) {
+                        && (controller.serverVersionCode.value ?? 0) >= 41) {
                       return SettingsTile(
                           title: "Restart Private API",
                           subtitle: controller.isRestartingPrivateAPI.value && SocketManager().state.value == SocketState.CONNECTED
