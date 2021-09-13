@@ -422,35 +422,14 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             Expanded(
               child: Container(
                 padding: EdgeInsets.only(left: 5, top: 5, bottom: 5, right: 8),
-                child: Stack(children: [
-                  if (kIsWeb)
-                    Container(
-                      height: 50,
-                      child: DropzoneView(
-                        operation: DragOperation.copy,
-                        cursor: CursorType.copy,
-                        onCreated: (c) {
-                          dropZoneController = c;
-                        },
-                        onDrop: (ev) async {
-                          addAttachment(PlatformFile(
-                              name: await dropZoneController!.getFilename(ev),
-                              bytes: await dropZoneController!.getFileData(ev),
-                              size: await dropZoneController!.getFileSize(ev)));
-                        },
-                      ),
-                    ),
-                  TransparentPointer(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        buildAttachmentList(),
-                        buildTextFieldAlwaysVisible(),
-                        buildAttachmentPicker(),
-                      ],
-                    ),
-                  ),
-                ]),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    buildAttachmentList(),
+                    buildTextFieldAlwaysVisible(),
+                    buildAttachmentPicker(),
+                  ],
+                ),
               ),
             ),
           ],
@@ -511,7 +490,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   addAttachment(PlatformFile(
                       name: await dropZoneController!.getFilename(ev),
                       bytes: await dropZoneController!.getFileData(ev),
-                      size: await dropZoneController!.getFileSize(ev)));
+                      size: await dropZoneController!.getFileSize(ev)
+                  ));
                 },
               ),
             TransparentPointer(
