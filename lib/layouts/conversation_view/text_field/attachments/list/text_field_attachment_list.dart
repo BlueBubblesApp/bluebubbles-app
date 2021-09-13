@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/list/attachment_list_item.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
@@ -6,8 +6,8 @@ import 'package:flutter/material.dart';
 
 class TextFieldAttachmentList extends StatefulWidget {
   TextFieldAttachmentList({Key? key, required this.attachments, required this.onRemove}) : super(key: key);
-  final List<File> attachments;
-  final Function(File) onRemove;
+  final List<PlatformFile> attachments;
+  final Function(PlatformFile) onRemove;
 
   @override
   _TextFieldAttachmentListState createState() => _TextFieldAttachmentListState();
@@ -33,7 +33,7 @@ class _TextFieldAttachmentListState extends State<TextFieldAttachmentList> with 
           ),
           itemBuilder: (context, int index) {
             return AttachmentListItem(
-              key: Key("attachmentList" + widget.attachments[index].path),
+              key: Key("attachmentList" + widget.attachments[index].name),
               file: widget.attachments[index],
               onRemove: () {
                 widget.onRemove(widget.attachments[index]);

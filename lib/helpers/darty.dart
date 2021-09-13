@@ -1,7 +1,8 @@
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:flutter/foundation.dart';
 
 extension UrlParsing on String {
-  bool get hasUrl => urlRegex.hasMatch(this);
+  bool get hasUrl => urlRegex.hasMatch(this) && !kIsWeb;
 }
 
 enum MessageError { NO_ERROR, TIMEOUT, NO_CONNECTION, BAD_REQUEST, SERVER_ERROR }

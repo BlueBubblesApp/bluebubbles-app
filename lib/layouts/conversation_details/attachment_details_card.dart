@@ -1,5 +1,7 @@
 import 'dart:async';
-import 'dart:io';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
+import 'package:universal_io/io.dart';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/constants.dart';
@@ -30,20 +32,25 @@ class AttachmentDetailsCard extends StatefulWidget {
 class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
   Uint8List? previewImage;
   double aspectRatio = 4 / 3;
-  late File attachmentFile;
+  late PlatformFile attachmentFile;
 
   @override
   void initState() {
     super.initState();
 
-    attachmentFile = new File(widget.attachment.getPath());
+    attachmentFile = new PlatformFile(
+      name: widget.attachment.transferName!,
+      path: kIsWeb ? null : widget.attachment.getPath(),
+      bytes: widget.attachment.bytes,
+      size: widget.attachment.totalBytes!,
+    );
     subscribeToDownloadStream();
   }
 
   void subscribeToDownloadStream() {
     if (Get.find<AttachmentDownloadService>().downloaders.contains(widget.attachment.guid)) {
       AttachmentDownloadController controller = Get.find<AttachmentDownloadController>(tag: widget.attachment.guid);
-      ever<File?>(controller.file,
+      ever<PlatformFile?>(controller.file,
           (file) {
         if (file != null && this.mounted) {
           Future.delayed(Duration(milliseconds: 500), () {
@@ -101,9 +108,6 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
   @override
   Widget build(BuildContext context) {
     Attachment attachment = widget.attachment;
-    File file = new File(
-      "${SettingsManager().appDocDir.path}/attachments/${attachment.guid}/${attachment.transferName}",
-    );
     final bool hideAttachments =
         SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachments.value;
     final bool hideAttachmentTypes =
@@ -121,6 +125,12 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
       return Container(
         color: Theme.of(context).accentColor,
       );
+    if (kIsWeb) {
+      return buildPreview(context);
+    }
+    File file = new File(
+      "${SettingsManager().appDocDir.path}/attachments/${attachment.guid}/${attachment.transferName}",
+    );
     if (!file.existsSync()) {
       return Stack(
         alignment: Alignment.center,
@@ -133,7 +143,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
                 ? buildReadyToDownload(context)
                 : Builder(
                     builder: (context) {
-                      bool attachmentExists = this.attachmentFile.existsSync();
+                      bool attachmentExists = kIsWeb ? false : File(this.attachmentFile.path).existsSync();
 
                       // If the attachment exists, build the preview
                       if (attachmentExists) return buildPreview(context);
@@ -166,8 +176,8 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
     }
   }
 
-  Future<void> getVideoPreview(File file) async {
-    if (previewImage != null) return;
+  Future<void> getVideoPreview(PlatformFile file) async {
+    if (previewImage != null || kIsWeb) return;
     previewImage = await AttachmentHelper.getVideoThumbnail(file.path);
     Size size = await AttachmentHelper.getImageSizing("${file.path}.thumbnail");
     widget.attachment.width = size.width.toInt();
@@ -176,10 +186,11 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
     if (this.mounted) setState(() {});
   }
 
-  Widget _buildPreview(File file, BuildContext context) {
+  Widget _buildPreview(PlatformFile file, BuildContext context) {
     if (widget.attachment.mimeType!.startsWith("image/")) {
       if (previewImage == null) {
-        getCompressedImage();
+        if (file.bytes != null) previewImage = file.bytes;
+        else getCompressedImage();
       }
 
       return Stack(

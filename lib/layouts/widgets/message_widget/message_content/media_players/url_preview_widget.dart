@@ -1,5 +1,6 @@
 import 'dart:async';
-import 'dart:io';
+import 'package:flutter/foundation.dart';
+import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
@@ -16,6 +17,7 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class UrlPreviewController extends GetxController with SingleGetTickerProviderMixin {
   final List<Attachment?> linkPreviews;
@@ -42,10 +44,10 @@ class UrlPreviewController extends GetxController with SingleGetTickerProviderMi
 
   void fetchMissingAttachments() {
     for (Attachment? attachment in linkPreviews) {
-      if (AttachmentHelper.attachmentExists(attachment!)) continue;
+      if (!kIsWeb && AttachmentHelper.attachmentExists(attachment!)) continue;
       Get.put(
           AttachmentDownloadController(
-              attachment: attachment,
+              attachment: attachment!,
               onComplete: () {
                 update();
               }),
@@ -104,7 +106,7 @@ class UrlPreviewWidget extends StatelessWidget {
   final PageController pageController = PageController();
 
   /// Returns a File object representing the [attachment]
-  File attachmentFile(Attachment attachment) {
+  dynamic attachmentFile(Attachment attachment) {
     String appDocPath = SettingsManager().appDocDir.path;
     String pathName = "$appDocPath/attachments/${attachment.guid}/${attachment.transferName}";
     return new File(pathName);
@@ -126,22 +128,24 @@ class UrlPreviewWidget extends StatelessWidget {
               SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachmentTypes.value;
 
           List<Widget> items = [
-            Obx(() {
-              if (controller.data.value?.image != null && controller.data.value!.image!.isNotEmpty) {
-                if (controller.data.value!.image!.startsWith("/")) {
-                  return Image.file(new File(controller.data.value!.image!),
-                      filterQuality: FilterQuality.low, errorBuilder: (context, error, stackTrace) => Container());
-                } else {
-                  return Image.network(controller.data.value!.image!,
+            if (!kIsWeb)
+              Obx(() {
+                if (controller.data.value?.image != null && controller.data.value!.image!.isNotEmpty) {
+                  if (controller.data.value!.image!.startsWith("/")) {
+                    dynamic file = File(controller.data.value!.image!);
+                    return Image.file(file,
+                        filterQuality: FilterQuality.low, errorBuilder: (context, error, stackTrace) => Container());
+                  } else {
+                    return Image.network(controller.data.value!.image!,
+                        filterQuality: FilterQuality.low, errorBuilder: (context, error, stackTrace) => Container());
+                  }
+                } else if (linkPreviews.length > 1 && linkPreviews.last!.existsOnDisk) {
+                  return Image.file(attachmentFile(linkPreviews.last!),
                       filterQuality: FilterQuality.low, errorBuilder: (context, error, stackTrace) => Container());
                 }
-              } else if (linkPreviews.length > 1 && linkPreviews.last!.existsOnDisk) {
-                return Image.file(attachmentFile(linkPreviews.last!),
-                    filterQuality: FilterQuality.low, errorBuilder: (context, error, stackTrace) => Container());
-              }
 
-              return Container();
-            }),
+                return Container();
+              }),
             Padding(
               padding: EdgeInsets.only(left: 14.0, right: 14.0, top: 14.0),
               child: Row(
@@ -196,7 +200,7 @@ class UrlPreviewWidget extends StatelessWidget {
                       ],
                     ),
                   ),
-                  (linkPreviews.length > 0 && linkPreviews.first!.existsOnDisk)
+                  (!kIsWeb && linkPreviews.length > 0 && linkPreviews.first!.existsOnDisk)
                       ? Padding(
                           padding: EdgeInsets.only(left: 10.0, bottom: 10.0),
                           child: ClipRRect(
@@ -249,11 +253,8 @@ class UrlPreviewWidget extends StatelessWidget {
                   color: Theme.of(context).accentColor,
                   child: InkResponse(
                     borderRadius: BorderRadius.circular(20),
-                    onTap: () {
-                      MethodChannelInterface().invokeMethod(
-                        "open-link",
-                        {"link": controller.data.value?.url ?? message.text, "forceBrowser": false},
-                      );
+                    onTap: () async {
+                      await launch(controller.data.value?.url ?? message.text ?? '');
                     },
                     child: Container(
                       // The minus 5 here is so the timestamps show OK during swipe

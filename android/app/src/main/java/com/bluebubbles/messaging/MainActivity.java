@@ -132,6 +132,7 @@ public class MainActivity extends FlutterFragmentActivity {
         } else if (requestCode == NOTIFICATION_SETTINGS) {
             result.success(null);
         }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     List<String> readPathsFromIntent(Intent intent) {

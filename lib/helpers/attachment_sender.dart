@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
+import 'package:universal_io/io.dart';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
@@ -27,9 +29,9 @@ class AttachmentSender {
 
   // String _tempGuid;
 
-  late File _attachment;
+  late PlatformFile _attachment;
   late String _attachmentGuid;
-  late List<int> _imageBytes;
+  late Uint8List _imageBytes;
   late String _text;
   String? _attachmentName;
   Attachment? messageAttachment;
@@ -40,7 +42,7 @@ class AttachmentSender {
   String? get guid => _attachmentGuid;
 
   AttachmentSender(
-    File attachment,
+    PlatformFile attachment,
     Chat chat,
     String text,
   ) {
@@ -114,8 +116,8 @@ class AttachmentSender {
   }
 
   Future<void> send() async {
-    _attachmentName = basename(_attachment.path);
-    _imageBytes = await _attachment.readAsBytes();
+    _attachmentName = _attachment.name;
+    _imageBytes = _attachment.bytes!;
 
     int numOfChunks = (_imageBytes.length / _chunkSize).ceil();
 
@@ -129,10 +131,10 @@ class AttachmentSender {
       transferName: _attachmentName,
       mimeType: mime(_attachmentName),
       width: mime(_attachmentName)!.startsWith("image")
-          ? (await AttachmentHelper.getImageSizing(_attachment.path)).width.toInt()
+          ? (await AttachmentHelper.getImageSizing(kIsWeb ? _attachment.name : _attachment.path, bytes: _attachment.bytes)).width.toInt()
           : null,
       height: mime(_attachmentName)!.startsWith("image")
-          ? (await AttachmentHelper.getImageSizing(_attachment.path)).height.toInt()
+          ? (await AttachmentHelper.getImageSizing(kIsWeb ? _attachment.name : _attachment.path, bytes: _attachment.bytes)).height.toInt()
           : null,
     );
 
@@ -153,10 +155,12 @@ class AttachmentSender {
     }
 
     // Save the attachment to device
-    String appDocPath = SettingsManager().appDocDir.path;
-    String pathName = "$appDocPath/attachments/${messageAttachment!.guid}/$_attachmentName";
-    File file = await new File(pathName).create(recursive: true);
-    await file.writeAsBytes(Uint8List.fromList(_imageBytes));
+    if (!kIsWeb) {
+      String appDocPath = SettingsManager().appDocDir.path;
+      String pathName = "$appDocPath/attachments/${messageAttachment!.guid}/$_attachmentName";
+      File file = await new File(pathName).create(recursive: true);
+      await file.writeAsBytes(_imageBytes);
+    }
 
     // Add the message to the chat.
     // This will save the message, attachments, and chat

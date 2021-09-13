@@ -63,7 +63,7 @@ class PinnedOrderPanel extends StatelessWidget {
             child: Column(
               children: <Widget>[
                 Obx(() {
-                  if (!ChatBloc().hasChats.value) {
+                  if (!ChatBloc().loadedChatBatch.value) {
                     return Center(
                       child: Container(
                         padding: EdgeInsets.only(top: 50.0),

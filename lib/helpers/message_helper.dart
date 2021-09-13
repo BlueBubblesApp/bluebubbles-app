@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
+import 'package:universal_html/html.dart' as html;
 
+import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -110,6 +113,8 @@ class MessageHelper {
       }
     }
 
+    //ChatBloc().chats.add(chat!);
+
     if (notifyForNewMessage || notifyMessageManager) {
       notificationMessages.forEach((message, value) async {
         //this should always be non-null
@@ -216,7 +221,7 @@ class MessageHelper {
     if (message.isFromMe! || message.handle == null) return; // Don't notify if the text is from me
 
     CurrentChat? currChat = CurrentChat.activeChat;
-    if (LifeCycleManager().isAlive &&
+    if (((LifeCycleManager().isAlive && !kIsWeb) || (kIsWeb && !(html.window.document.hidden ?? false))) &&
         ((!SettingsManager().settings.notifyOnChatList.value &&
                 currChat == null &&
                 !Get.currentRoute.contains("settings")) ||

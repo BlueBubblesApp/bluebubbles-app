@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:universal_io/io.dart';
 import 'dart:math';
 import 'dart:ui';
 
@@ -54,6 +54,7 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
     return Obx(
       () {
         if (widget.chat.customAvatarPath.value != null) {
+          dynamic file = File(widget.chat.customAvatarPath.value!);
           return Stack(
             children: [
               Container(
@@ -66,7 +67,7 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
               CircleAvatar(
                 key: Key("${participants.first.address}-avatar"),
                 radius: widget.size / 2,
-                backgroundImage: FileImage(File(widget.chat.customAvatarPath.value!)),
+                backgroundImage: FileImage(file),
                 backgroundColor: Colors.transparent,
               ),
             ]

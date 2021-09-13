@@ -18,6 +18,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class AboutPanel extends StatelessWidget {
   @override
@@ -97,9 +98,8 @@ class AboutPanel extends StatelessWidget {
                   SettingsTile(
                     backgroundColor: tileColor,
                     title: "Support Us",
-                    onTap: () {
-                      MethodChannelInterface().invokeMethod(
-                          "open-link", {"link": "https://bluebubbles.app/donate/", "forceBrowser": false});
+                    onTap: () async {
+                      await launch("https://bluebubbles.app/donate/");
                     },
                     leading: SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.money_dollar_circle,
@@ -116,9 +116,8 @@ class AboutPanel extends StatelessWidget {
                   SettingsTile(
                     backgroundColor: tileColor,
                     title: "Website",
-                    onTap: () {
-                      MethodChannelInterface()
-                          .invokeMethod("open-link", {"link": "https://bluebubbles.app/", "forceBrowser": false});
+                    onTap: () async {
+                      await launch("https://bluebubbles.app/");
                     },
                     leading: SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.globe,
@@ -135,9 +134,8 @@ class AboutPanel extends StatelessWidget {
                   SettingsTile(
                     backgroundColor: tileColor,
                     title: "Source Code",
-                    onTap: () {
-                      MethodChannelInterface().invokeMethod(
-                          "open-link", {"link": "https://github.com/BlueBubblesApp", "forceBrowser": false});
+                    onTap: () async {
+                      await launch("https://github.com/BlueBubblesApp");
                     },
                     leading: SettingsLeadingIcon(
                       iosIcon: CupertinoIcons.chevron_left_slash_chevron_right,
@@ -154,9 +152,8 @@ class AboutPanel extends StatelessWidget {
                   SettingsTile(
                     backgroundColor: tileColor,
                     title: "Join Our Discord",
-                    onTap: () {
-                      MethodChannelInterface()
-                          .invokeMethod("open-link", {"link": "https://discord.gg/hbx7EhNFjp", "forceBrowser": false});
+                    onTap: () async {
+                      await launch("https://discord.gg/hbx7EhNFjp");
                     },
                     leading: SvgPicture.asset(
                       "assets/icon/discord.svg",
@@ -261,9 +258,8 @@ class AboutPanel extends StatelessWidget {
                                         text: "Zach",
                                         style: TextStyle(decoration: TextDecoration.underline, color: Colors.blue),
                                         recognizer: TapGestureRecognizer()
-                                          ..onTap = () {
-                                            MethodChannelInterface().invokeMethod("open-link",
-                                                {"link": "https://github.com/zlshames", "forceBrowser": false});
+                                          ..onTap = () async {
+                                            await launch("https://github.com/zlshames");
                                           }),
                                   ),
                                 ),
@@ -275,9 +271,8 @@ class AboutPanel extends StatelessWidget {
                                         text: "Tanay",
                                         style: TextStyle(decoration: TextDecoration.underline, color: Colors.blue),
                                         recognizer: TapGestureRecognizer()
-                                          ..onTap = () {
-                                            MethodChannelInterface().invokeMethod("open-link",
-                                                {"link": "https://github.com/tneotia", "forceBrowser": false});
+                                          ..onTap = () async {
+                                            await launch("https://github.com/tneotia");
                                           }),
                                   ),
                                 ),
@@ -289,9 +284,8 @@ class AboutPanel extends StatelessWidget {
                                         text: "Joel",
                                         style: TextStyle(decoration: TextDecoration.underline, color: Colors.blue),
                                         recognizer: TapGestureRecognizer()
-                                          ..onTap = () {
-                                            MethodChannelInterface().invokeMethod("open-link",
-                                                {"link": "https://github.com/jjoelj", "forceBrowser": false});
+                                          ..onTap = () async {
+                                            await launch("https://github.com/jjoelj");
                                           }),
                                   ),
                                 ),

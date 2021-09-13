@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
+import 'package:universal_io/io.dart';
 import 'dart:isolate';
 import 'dart:math';
 import 'dart:ui';
@@ -69,7 +71,7 @@ class MethodChannelInterface {
 
     // We set the handler for all of the method calls from the platform to be the [callHandler]
     platform.setMethodCallHandler(_callHandler);
-    platform.invokeMethod<void>('MessagingBackground#initialized');
+    if (!kIsWeb && !kIsDesktop) platform.invokeMethod<void>('MessagingBackground#initialized');
   }
 
   /// Helper method to invoke a method in the native code
@@ -190,12 +192,7 @@ class MethodChannelInterface {
         return new Future.value("");
       case "shareAttachments":
         if (!SettingsManager().settings.finishedSetup.value) return Future.value("");
-        List<File> attachments = <File>[];
-
-        // Get the path to where the temp files are stored
-        String sharedFilesPath = SettingsManager().sharedFilesPath;
-
-        Logger.info("shareAttachments " + sharedFilesPath);
+        List<PlatformFile> attachments = [];
 
         // Loop through all of the attachments sent by native code
         call.arguments["attachments"].forEach((element) {
@@ -203,7 +200,12 @@ class MethodChannelInterface {
           File file = File(element);
 
           // Add each file to the attachment list
-          attachments.add(file);
+          attachments.add(PlatformFile(
+            name: file.path.split("/").last,
+            path: file.path,
+            bytes: file.readAsBytesSync(),
+            size: file.lengthSync(),
+          ));
         });
 
         // Get the handle if it is a direct shortcut
@@ -358,7 +360,7 @@ class MethodChannelInterface {
     }
   }
 
-  Future<void> openChat(String id, {List<File> existingAttachments = const [], String? existingText}) async {
+  Future<void> openChat(String id, {List<PlatformFile> existingAttachments = const [], String? existingText}) async {
     if (id == "-1") {
       NavigatorManager().navigatorKey.currentState!.popUntil((route) => route.isFirst);
       return;
