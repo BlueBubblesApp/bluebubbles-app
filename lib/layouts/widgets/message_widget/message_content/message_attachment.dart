@@ -98,7 +98,6 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
             child: RegularFileOpener(
               file: content,
               attachment: widget.attachment,
-              path: widget.attachment.getPath(),
             ),
           );
         }
