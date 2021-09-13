@@ -28,6 +28,7 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 class ServerManagementPanelBinding extends Bindings {
   @override
@@ -225,6 +226,57 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                         )
                     );
                   }),
+                  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
+                    ),
+                  ),
+                  SettingsTile(
+                    title: "Show QR Code",
+                    subtitle: "Generate QR Code to screenshot or sync other devices",
+                    backgroundColor: tileColor,
+                    leading: SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.qrcode,
+                      materialIcon: Icons.qr_code,
+                    ),
+                    onTap: () {
+                      /*projectID: result[2],
+                      storageBucket: result[3],
+                      apiKey: result[4],
+                      firebaseURL: result[5],
+                      clientID: result[6],
+                      applicationID: result[7],*/
+                      List<dynamic> json = [
+                        SettingsManager().settings.guidAuthKey.value,
+                        SettingsManager().settings.serverAddress.value,
+                        SettingsManager().fcmData!.projectID,
+                        SettingsManager().fcmData!.storageBucket,
+                        SettingsManager().fcmData!.apiKey,
+                        SettingsManager().fcmData!.firebaseURL,
+                        SettingsManager().fcmData!.clientID,
+                        SettingsManager().fcmData!.applicationID,
+                      ];
+                      String qrtext = jsonEncode(json);
+                      showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            content: Container(
+                              height: 320,
+                              width: 320,
+                              child: QrImage(
+                                data: qrtext,
+                                version: QrVersions.auto,
+                                size: 320,
+                                gapless: true,
+                              ),
+                            ),
+                            title: Text("QR Code"),
+                          )
+                      );
+                    },
+                  ),
                   SettingsHeader(
                       headerColor: headerColor,
                       tileColor: tileColor,
