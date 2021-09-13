@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:bluebubbles/helpers/share.dart';
+import 'package:dio_http/dio_http.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:universal_io/io.dart';
 import 'package:universal_html/html.dart' as html;
@@ -29,7 +30,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:record/record.dart';
 
@@ -245,14 +245,14 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     super.dispose();
   }
 
-  void disposeAudioFile(BuildContext context, File file) {
+  void disposeAudioFile(BuildContext context, PlatformFile file) {
     // Dispose of the audio controller
     CurrentChat.of(context)?.audioPlayers[file.path]?.item1.dispose();
     CurrentChat.of(context)?.audioPlayers[file.path]?.item2.pause();
     CurrentChat.of(context)?.audioPlayers.removeWhere((key, _) => key == file.path);
 
     // Delete the file
-    file.delete();
+    File(file.path).delete();
   }
 
   void onContentCommit(CommittedContent content) async {
@@ -281,7 +281,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     }
   }
 
-  Future<void> reviewAudio(BuildContext originalContext, File file) async {
+  Future<void> reviewAudio(BuildContext originalContext, PlatformFile file) async {
     showDialog(
       context: originalContext,
       barrierDismissible: false,
@@ -295,13 +295,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               Text("Review your audio snippet before sending it", style: Theme.of(context).textTheme.subtitle1),
               Container(height: 10.0),
               AudioPlayerWiget(
-                key: new Key("AudioMessage-${file.length().toString()}"),
-                file: PlatformFile(
-                  name: file.path.split("/").last,
-                  path: file.absolute.path,
-                  bytes: file.readAsBytesSync(),
-                  size: file.lengthSync(),
-                ),
+                key: new Key("AudioMessage-${file.size}"),
+                file: file,
                 context: originalContext,
               )
             ],
@@ -311,10 +306,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 child: new Text("Discard", style: Theme.of(context).textTheme.subtitle1),
                 onPressed: () {
                   // Dispose of the audio controller
-                  this.disposeAudioFile(originalContext, file);
+                  if (!kIsWeb) this.disposeAudioFile(originalContext, file);
 
                   // Remove the OG alert dialog
-                  Navigator.of(originalContext).pop();
+                  Get.back();
                 }),
             new TextButton(
               child: new Text(
@@ -324,28 +319,14 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               onPressed: () async {
                 CurrentChat? thisChat = CurrentChat.of(originalContext);
                 if (thisChat == null) {
-                  this.addAttachments([
-                    PlatformFile(
-                      path: file.path,
-                      name: file.path.split("/").last,
-                      size: file.lengthSync(),
-                      bytes: file.readAsBytesSync(),
-                    )
-                  ]);
+                  this.addAttachments([file]);
                 } else {
-                  await widget.onSend([
-                    PlatformFile(
-                      path: file.path,
-                      name: file.path.split("/").last,
-                      size: file.lengthSync(),
-                      bytes: file.readAsBytesSync(),
-                    )
-                  ], "");
-                  this.disposeAudioFile(originalContext, file);
+                  await widget.onSend([file], "");
+                  if (!kIsWeb) this.disposeAudioFile(originalContext, file);
                 }
 
                 // Remove the OG alert dialog
-                Navigator.of(originalContext).pop();
+                Get.back();
               },
             ),
           ],
@@ -833,14 +814,17 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
   Future<void> startRecording() async {
     HapticFeedback.lightImpact();
-    String appDocPath = SettingsManager().appDocDir.path;
-    Directory directory = Directory("$appDocPath/attachments/");
-    if (!await directory.exists()) {
-      directory.createSync();
+    String? pathName;
+    if (!kIsWeb) {
+      String appDocPath = SettingsManager().appDocDir.path;
+      Directory directory = Directory("$appDocPath/attachments/");
+      if (!await directory.exists()) {
+        directory.createSync();
+      }
+      pathName = "$appDocPath/attachments/OutgoingAudioMessage.m4a";
+      File file = new File(pathName);
+      if (file.existsSync()) file.deleteSync();
     }
-    String pathName = "$appDocPath/attachments/OutgoingAudioMessage.m4a";
-    File file = new File(pathName);
-    if (file.existsSync()) file.deleteSync();
 
     if (!isRecording.value) {
       await Record().start(
@@ -860,15 +844,18 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     HapticFeedback.lightImpact();
 
     if (isRecording.value) {
-      await Record().stop();
+      String? pathName = await Record().stop();
 
       if (this.mounted) {
         isRecording.value = false;
       }
 
-      String appDocPath = SettingsManager().appDocDir.path;
-      String pathName = "$appDocPath/attachments/OutgoingAudioMessage.m4a";
-      reviewAudio(context, new File(pathName));
+      if (pathName != null) reviewAudio(context, PlatformFile(
+        name: "${randomString(8)}.m4a",
+        path: kIsWeb ? null : pathName,
+        size: 0,
+        bytes: kIsWeb ? (await Dio().get(pathName, options: Options(responseType: ResponseType.bytes))).data : null,
+      ));
     }
   }
 
@@ -920,7 +907,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     } else if (canRecord.value &&
         !isRecording.value &&
         !kIsDesktop &&
-        await Permission.microphone.request().isGranted) {
+        await Record().hasPermission()) {
       await startRecording();
       shouldUpdate = true;
     } else {
