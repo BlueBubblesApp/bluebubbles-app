@@ -815,7 +815,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
       topMinimum = upperLimit;
     }
 
-    print(topMinimum.toString() + ' | ' + upperLimit.toString());
     double topOffset = (messageTopOffset + widget.childSize!.height).toDouble().clamp(topMinimum, upperLimit);
     bool shiftRight = currentChat!.chat.isGroup() || SettingsManager().settings.alwaysShowAvatars.value;
     double leftOffset =

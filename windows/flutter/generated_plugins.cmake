@@ -5,6 +5,7 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   connectivity_plus_windows
   maps_launcher
+  quick_notify
   secure_application
   url_launcher_windows
   window_size
