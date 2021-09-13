@@ -13,7 +13,11 @@ import 'package:share_plus/share_plus.dart' as sp;
 class Share {
   /// Share a file with other apps.
   static void file(String subject, String filepath) async {
-    sp.Share.shareFiles([filepath], text: subject);
+    if (kIsDesktop) {
+      showSnackbar("Unsupported", "Can't share files on desktop yet!");
+    } else {
+      sp.Share.shareFiles([filepath], text: subject);
+    }
   }
 
   /// Share text with other apps.

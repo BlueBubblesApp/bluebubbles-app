@@ -582,6 +582,45 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               child: RawKeyboardListener(
                 focusNode: FocusNode(),
                 onKey: (RawKeyEvent event) async {
+                  if (!(event is RawKeyUpEvent)) return;
+                  if (isNullOrEmpty(controller!.text)!) {
+                    controller!.text = ""; // Gotta find a better way to support shift + enter
+                    return;
+                  }
+                  if (event.data is RawKeyEventDataWindows) {
+                    var data = event.data as RawKeyEventDataWindows;
+                    if (data.keyCode == 13 && !event.isShiftPressed) {
+                      await sendMessage();
+                      focusNode!.requestFocus();
+                    }
+                    return;
+                  }
+                  // TODO figure out the Linux keycode
+                  if (event.data is RawKeyEventDataLinux) {
+                    var data = event.data as RawKeyEventDataLinux;
+                    if (data.keyCode == 13 && !event.isShiftPressed) {
+                      await sendMessage();
+                      focusNode!.requestFocus();
+                    }
+                    return;
+                  }
+                  // TODO figure out the MacOs keycode
+                  if (event.data is RawKeyEventDataMacOs) {
+                    var data = event.data as RawKeyEventDataMacOs;
+                    if (data.keyCode == 13 && !event.isShiftPressed) {
+                      await sendMessage();
+                      focusNode!.requestFocus();
+                    }
+                    return;
+                  }
+                  if (event.data is RawKeyEventDataWeb) {
+                    var data = event.data as RawKeyEventDataWeb;
+                    if (data.code == "Enter" && !event.isShiftPressed) {
+                      await sendMessage();
+                      focusNode!.requestFocus();
+                    }
+                    return;
+                  }
                   if (event.physicalKey == PhysicalKeyboardKey.enter &&
                       SettingsManager().settings.sendWithReturn.value) {
                     if (!isNullOrEmpty(controller!.text)!) {
@@ -606,7 +645,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   iOSSkin: CustomCupertinoTextField(
                     enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
                     enabled: sendCountdown == null,
-                    textInputAction: SettingsManager().settings.sendWithReturn.value
+                    textInputAction: SettingsManager().settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
                         ? TextInputAction.send
                         : TextInputAction.newline,
                     cursorColor: Theme.of(context).primaryColor,
@@ -643,7 +682,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         : "BlueBubbles",
                     padding: EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
                     placeholderStyle: Theme.of(context).textTheme.subtitle1,
-                    autofocus: SettingsManager().settings.autoOpenKeyboard.value,
+                    autofocus: SettingsManager().settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop,
                     decoration: BoxDecoration(
                       color: Theme.of(context).backgroundColor,
                       border: Border.all(
@@ -659,10 +698,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     focusNode: focusNode,
                     textCapitalization: TextCapitalization.sentences,
                     autocorrect: true,
-                    textInputAction: SettingsManager().settings.sendWithReturn.value
+                    textInputAction: SettingsManager().settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
                         ? TextInputAction.send
                         : TextInputAction.newline,
-                    autofocus: SettingsManager().settings.autoOpenKeyboard.value,
+                    autofocus: SettingsManager().settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop,
                     cursorColor: Theme.of(context).primaryColor,
                     key: _searchFormKey,
                     onSubmitted: (String value) {
@@ -725,7 +764,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     focusNode: focusNode,
                     textCapitalization: TextCapitalization.sentences,
                     autocorrect: true,
-                    autofocus: SettingsManager().settings.autoOpenKeyboard.value,
+                    textInputAction: SettingsManager().settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
+                        ? TextInputAction.send
+                        : TextInputAction.newline,
+                    autofocus: SettingsManager().settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop,
                     cursorColor: Theme.of(context).primaryColor,
                     key: _searchFormKey,
                     onSubmitted: (String value) {

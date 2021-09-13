@@ -1,7 +1,5 @@
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:universal_io/io.dart';
-
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:get/get.dart';
@@ -95,13 +93,13 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
         );
       } else if (mimeType == "video") {
         if (kIsDesktop) {
-          return RegularFileOpener(
-            file: PlatformFile(
-              name: widget.attachment.transferName!,
-              size: widget.attachment.totalBytes ?? 0,
+          return MediaFile(
+            attachment: widget.attachment,
+            child: RegularFileOpener(
+              file: content,
+              attachment: widget.attachment,
               path: widget.attachment.getPath(),
             ),
-            attachment: widget.attachment,
           );
         }
         return MediaFile(

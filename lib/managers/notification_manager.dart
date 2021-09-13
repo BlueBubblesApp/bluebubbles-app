@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
-// import 'package:quick_notify/quick_notify.dart';
+import 'package:quick_notify/quick_notify.dart';
 import 'package:universal_html/html.dart' as uh;
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -19,7 +19,6 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart' as fln;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -259,7 +258,7 @@ class NotificationManager {
     }
     if (kIsDesktop) {
       Logger.info("Sending desktop notification");
-      // QuickNotify.notify(content: chatTitle + "\n" + messageText);
+      QuickNotify.notify(content: chatTitle + ":\n" + messageText);
       return;
     }
     await MethodChannelInterface().platform.invokeMethod("new-message-notification", {
