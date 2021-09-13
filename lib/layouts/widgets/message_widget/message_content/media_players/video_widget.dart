@@ -172,19 +172,7 @@ class VideoWidget extends StatelessWidget {
               children: <Widget>[
                 AspectRatio(
                   aspectRatio: controller.controller.value.aspectRatio,
-                  child: Stack(
-                    children: <Widget>[
-                      if (kIsDesktop)
-                        RegularFileOpener(
-                          file: PlatformFile(
-                            name: attachment.transferName!,
-                            size: attachment.totalBytes ?? 0,
-                          ),
-                          attachment: attachment,
-                        ),
-                      if (!kIsDesktop) VideoPlayer(controller.controller),
-                    ],
-                  ),
+                  child: VideoPlayer(controller.controller),
                 ),
                 AnimatedOpacity(
                   opacity: controller.showPlayPauseOverlay.value ? 1 : 0,

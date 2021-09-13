@@ -654,4 +654,4 @@ extension LastChars on String {
   String lastChars(int n) => substring(length - n);
 }
 
-bool get kIsDesktop => Platform.isWindows || Platform.isLinux || Platform.isMacOS;
+bool get kIsDesktop => (Platform.isWindows || Platform.isLinux || Platform.isMacOS) && !kIsWeb;
