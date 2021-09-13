@@ -1,5 +1,9 @@
 import 'dart:convert';
-import 'dart:io';
+import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
+import 'package:universal_io/io.dart';
+import 'package:universal_html/html.dart' as html;
 import 'dart:ui';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
@@ -104,698 +108,744 @@ class _SettingsPanelState extends State<SettingsPanel> {
       tileColor = headerColor;
     }
     return Obx(() => Scaffold(
-      backgroundColor: SettingsManager().settings.skin.value != Skins.iOS ? tileColor : headerColor,
-      appBar: PreferredSize(
-        preferredSize: Size(CustomNavigator.width(context), 80),
-        child: ClipRRect(
-          child: BackdropFilter(
-            child: AppBar(
-              brightness: ThemeData.estimateBrightnessForColor(headerColor),
-              toolbarHeight: 100.0,
-              elevation: 0,
-              leading: buildBackButton(context),
-              backgroundColor: headerColor.withOpacity(0.5),
-              title: Text(
-                "Settings",
-                style: Theme.of(context).textTheme.headline1,
+          backgroundColor: SettingsManager().settings.skin.value != Skins.iOS ? tileColor : headerColor,
+          appBar: PreferredSize(
+            preferredSize: Size(CustomNavigator.width(context), 80),
+            child: ClipRRect(
+              child: BackdropFilter(
+                child: AppBar(
+                  brightness: ThemeData.estimateBrightnessForColor(headerColor),
+                  toolbarHeight: 100.0,
+                  elevation: 0,
+                  leading: buildBackButton(context),
+                  backgroundColor: headerColor.withOpacity(0.5),
+                  title: Text(
+                    "Settings",
+                    style: Theme.of(context).textTheme.headline1,
+                  ),
+                ),
+                filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
               ),
             ),
-            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
           ),
-        ),
-      ),
-      body: CustomScrollView(
-        physics: ThemeSwitcher.getScrollPhysics(),
-        slivers: <Widget>[
-          SliverList(
-            delegate: SliverChildListDelegate(
-              <Widget>[
-                Container(
-                    height: SettingsManager().settings.skin.value == Skins.iOS ? 30 : 40,
-                    alignment: Alignment.bottomLeft,
-                    decoration: SettingsManager().settings.skin.value == Skins.iOS
-                        ? BoxDecoration(
-                      color: headerColor,
-                      border: Border(
-                          bottom: BorderSide(
-                              color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
-                    )
-                        : BoxDecoration(
-                      color: tileColor,
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0, left: 15),
-                      child: Text("Server Management".psCapitalize,
-                          style: SettingsManager().settings.skin.value == Skins.iOS
-                              ? iosSubtitle
-                              : materialSubtitle),
-                    )),
-                Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
-                Obx(() {
-                  String? subtitle;
-                  switch (SocketManager().state.value) {
-                    case SocketState.CONNECTED:
-                      subtitle = "Connected";
-                      break;
-                    case SocketState.DISCONNECTED:
-                      subtitle = "Disconnected";
-                      break;
-                    case SocketState.ERROR:
-                      subtitle = "Error";
-                      break;
-                    case SocketState.CONNECTING:
-                      subtitle = "Connecting...";
-                      break;
-                    case SocketState.FAILED:
-                      subtitle = "Failed to connect";
-                      break;
-                    default:
-                      subtitle = "Error";
-                      break;
-                  }
+          body: CustomScrollView(
+            physics: ThemeSwitcher.getScrollPhysics(),
+            slivers: <Widget>[
+              SliverList(
+                delegate: SliverChildListDelegate(
+                  <Widget>[
+                    Container(
+                        height: SettingsManager().settings.skin.value == Skins.iOS ? 30 : 40,
+                        alignment: Alignment.bottomLeft,
+                        decoration: SettingsManager().settings.skin.value == Skins.iOS
+                            ? BoxDecoration(
+                                color: headerColor,
+                                border: Border(
+                                    bottom: BorderSide(
+                                        color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
+                              )
+                            : BoxDecoration(
+                                color: tileColor,
+                              ),
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0, left: 15),
+                          child: Text("Server Management".psCapitalize,
+                              style:
+                                  SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
+                        )),
+                    Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
+                    Obx(() {
+                      String? subtitle;
+                      switch (SocketManager().state.value) {
+                        case SocketState.CONNECTED:
+                          subtitle = "Connected";
+                          break;
+                        case SocketState.DISCONNECTED:
+                          subtitle = "Disconnected";
+                          break;
+                        case SocketState.ERROR:
+                          subtitle = "Error";
+                          break;
+                        case SocketState.CONNECTING:
+                          subtitle = "Connecting...";
+                          break;
+                        case SocketState.FAILED:
+                          subtitle = "Failed to connect";
+                          break;
+                        default:
+                          subtitle = "Error";
+                          break;
+                      }
 
-                  return SettingsTile(
-                    backgroundColor: tileColor,
-                    title: "Connection & Server",
-                    subtitle: subtitle,
-                    onTap: () async {
-                      CustomNavigator.pushAndRemoveSettingsUntil(
-                        context,
-                        ServerManagementPanel(),
-                        (route) => route.isFirst,
-                        binding: ServerManagementPanelBinding(),
+                      return SettingsTile(
+                        backgroundColor: tileColor,
+                        title: "Connection & Server",
+                        subtitle: subtitle,
+                        onTap: () async {
+                          CustomNavigator.pushAndRemoveSettingsUntil(
+                            context,
+                            ServerManagementPanel(),
+                            (route) => route.isFirst,
+                            binding: ServerManagementPanelBinding(),
+                          );
+                        },
+                        onLongPress: () {
+                          Clipboard.setData(new ClipboardData(text: _settingsCopy.serverAddress.value));
+                          showSnackbar('Copied', "Address copied to clipboard");
+                        },
+                        leading: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: SettingsManager().settings.skin.value == Skins.iOS
+                                    ? getIndicatorColor(SocketManager().state.value)
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                              alignment: Alignment.center,
+                              child: Stack(children: [
+                                Icon(
+                                  SettingsManager().settings.skin.value == Skins.iOS
+                                      ? CupertinoIcons.antenna_radiowaves_left_right
+                                      : Icons.router,
+                                  color:
+                                      SettingsManager().settings.skin.value == Skins.iOS ? Colors.white : Colors.grey,
+                                  size: SettingsManager().settings.skin.value == Skins.iOS ? 23 : 30,
+                                ),
+                                if (SettingsManager().settings.skin.value != Skins.iOS)
+                                  Positioned.fill(
+                                    child: Align(
+                                        alignment: Alignment.bottomRight,
+                                        child:
+                                            getIndicatorIcon(SocketManager().state.value, size: 15, showAlpha: false)),
+                                  ),
+                              ]),
+                            ),
+                          ],
+                        ),
+                        trailing: nextIcon,
                       );
-                    },
-                    onLongPress: () {
-                      Clipboard.setData(new ClipboardData(text: _settingsCopy.serverAddress.value));
-                      showSnackbar('Copied', "Address copied to clipboard");
-                    },
-                    leading: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: SettingsManager().settings.skin.value == Skins.iOS
-                                ? getIndicatorColor(SocketManager().state.value)
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                          alignment: Alignment.center,
-                          child: Stack(children: [
-                            Icon(
-                              SettingsManager().settings.skin.value == Skins.iOS
-                                  ? CupertinoIcons.antenna_radiowaves_left_right
-                                  : Icons.router,
-                              color:
-                              SettingsManager().settings.skin.value == Skins.iOS ? Colors.white : Colors.grey,
-                              size: SettingsManager().settings.skin.value == Skins.iOS ? 23 : 30,
-                            ),
-                            if (SettingsManager().settings.skin.value != Skins.iOS)
-                              Positioned.fill(
-                                child: Align(
-                                    alignment: Alignment.bottomRight,
-                                    child: getIndicatorIcon(SocketManager().state.value,
-                                        size: 15, showAlpha: false)),
-                              ),
-                          ]),
-                        ),
-                      ],
-                    ),
-                    trailing: nextIcon,
-                  );
-                }),
-                SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
-                    iosSubtitle: iosSubtitle,
-                    materialSubtitle: materialSubtitle,
-                    text: "Appearance"),
-                SettingsTile(
-                  backgroundColor: tileColor,
-                  title: "Theme Settings",
-                  subtitle: SettingsManager().settings.skin.value.toString().split(".").last +
-                      "   |   " +
-                      AdaptiveTheme.of(context).mode.toString().split(".").last.capitalizeFirst! +
-                      " Mode",
-                  onTap: () {
-                    CustomNavigator.pushAndRemoveSettingsUntil(
-                      context,
-                      ThemePanel(),
-                      (route) => route.isFirst,
-                      binding: ThemePanelBinding(),
-                    );
-                  },
-                  trailing: nextIcon,
-                  leading: SettingsLeadingIcon(
-                    iosIcon: CupertinoIcons.paintbrush,
-                    materialIcon: Icons.palette,
-                  ),
-                ),
-                SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
-                    iosSubtitle: iosSubtitle,
-                    materialSubtitle: materialSubtitle,
-                    text: "Application Settings"),
-                SettingsTile(
-                  backgroundColor: tileColor,
-                  title: "Media Settings",
-                  onTap: () {
-                    CustomNavigator.pushAndRemoveSettingsUntil(
-                      context,
-                      AttachmentPanel(),
-                      (route) => route.isFirst,
-                    );
-                  },
-                  leading: SettingsLeadingIcon(
-                    iosIcon: CupertinoIcons.paperclip,
-                    materialIcon: Icons.attachment,
-                  ),
-                  trailing: nextIcon,
-                ),
-                Container(
-                  color: tileColor,
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 65.0),
-                    child: SettingsDivider(color: headerColor),
-                  ),
-                ),
-                SettingsTile(
-                  backgroundColor: tileColor,
-                  title: "Notification Settings",
-                  onTap: () {
-                    CustomNavigator.pushAndRemoveSettingsUntil(
-                      context,
-                      NotificationPanel(),
-                      (route) => route.isFirst,
-                    );
-                  },
-                  leading: SettingsLeadingIcon(
-                    iosIcon: CupertinoIcons.bell,
-                    materialIcon: Icons.notifications_on,
-                  ),
-                  trailing: nextIcon,
-                ),
-                Container(
-                  color: tileColor,
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 65.0),
-                    child: SettingsDivider(color: headerColor),
-                  ),
-                ),
-                SettingsTile(
-                  backgroundColor: tileColor,
-                  title: "Chat List Settings",
-                  onTap: () {
-                    CustomNavigator.pushAndRemoveSettingsUntil(
-                      context,
-                      ChatListPanel(),
-                      (route) => route.isFirst,
-                    );
-                  },
-                  leading: SettingsLeadingIcon(
-                    iosIcon: CupertinoIcons.square_list,
-                    materialIcon: Icons.list,
-                  ),
-                  trailing: nextIcon,
-                ),
-                Container(
-                  color: tileColor,
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 65.0),
-                    child: SettingsDivider(color: headerColor),
-                  ),
-                ),
-                SettingsTile(
-                  backgroundColor: tileColor,
-                  title: "Conversation Settings",
-                  onTap: () {
-                    CustomNavigator.pushAndRemoveSettingsUntil(
-                      context,
-                      ConversationPanel(),
-                      (route) => route.isFirst,
-                    );
-                  },
-                  leading: SettingsLeadingIcon(
-                    iosIcon: CupertinoIcons.chat_bubble,
-                    materialIcon: Icons.sms,
-                  ),
-                  trailing: nextIcon,
-                ),
-                Container(
-                  color: tileColor,
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 65.0),
-                    child: SettingsDivider(color: headerColor),
-                  ),
-                ),
-                SettingsTile(
-                  backgroundColor: tileColor,
-                  title: "Misc and Advanced Settings",
-                  onTap: () {
-                    CustomNavigator.pushAndRemoveSettingsUntil(
-                      context,
-                      MiscPanel(),
-                      (route) => route.isFirst,
-                    );
-                  },
-                  leading: SettingsLeadingIcon(
-                    iosIcon: CupertinoIcons.ellipsis_circle,
-                    materialIcon: Icons.more_vert,
-                  ),
-                  trailing: nextIcon,
-                ),
-                SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
-                    iosSubtitle: iosSubtitle,
-                    materialSubtitle: materialSubtitle,
-                    text: "Advanced"),
-                SettingsTile(
-                  backgroundColor: tileColor,
-                  title: "Private API Features",
-                  subtitle:
-                  "Private API ${SettingsManager().settings.enablePrivateAPI.value ? "Enabled" : "Disabled"}",
-                  trailing: nextIcon,
-                  onTap: () async {
-                    CustomNavigator.pushAndRemoveSettingsUntil(
-                      context,
-                      PrivateAPIPanel(),
-                      (route) => route.isFirst,
-                      binding: PrivateAPIPanelBinding(),
-                    );
-                  },
-                  leading: SettingsLeadingIcon(
-                    iosIcon: CupertinoIcons.exclamationmark_shield,
-                    materialIcon: Icons.gpp_maybe,
-                    containerColor: getIndicatorColor(SettingsManager().settings.enablePrivateAPI.value
-                        ? SocketState.CONNECTED
-                        : SocketState.CONNECTING),
-                  ),
-                ),
-                Container(
-                  color: tileColor,
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 65.0),
-                    child: SettingsDivider(color: headerColor),
-                  ),
-                ),
-                SettingsTile(
-                  backgroundColor: tileColor,
-                  title: "Redacted Mode",
-                  subtitle:
-                  "Redacted Mode ${SettingsManager().settings.redactedMode.value ? "Enabled" : "Disabled"}",
-                  trailing: nextIcon,
-                  onTap: () async {
-                    CustomNavigator.pushAndRemoveSettingsUntil(
-                      context,
-                      RedactedModePanel(),
-                      (route) => route.isFirst,
-                    );
-                  },
-                  leading: SettingsLeadingIcon(
-                    iosIcon: CupertinoIcons.wand_stars,
-                    materialIcon: Icons.auto_fix_high,
-                    containerColor: getIndicatorColor(SettingsManager().settings.redactedMode.value
-                        ? SocketState.CONNECTED
-                        : SocketState.CONNECTING),
-                  ),
-                ),
-                // SettingsTile(
-                //   title: "Message Scheduling",
-                //   trailing: Icon(Icons.arrow_forward_ios,
-                //       color: Theme.of(context).primaryColor),
-                //   onTap: () async {
-                //     Navigator.of(context).push(
-                //       CupertinoPageRoute(
-                //         builder: (context) => SchedulingPanel(),
-                //       ),
-                //     );
-                //   },
-                // ),
-                // SettingsTile(
-                //   title: "Search",
-                //   trailing: Icon(Icons.arrow_forward_ios,
-                //       color: Theme.of(context).primaryColor),
-                //   onTap: () async {
-                //     Navigator.of(context).push(
-                //       CupertinoPageRoute(
-                //         builder: (context) => SearchView(),
-                //       ),
-                //     );
-                //   },
-                // ),
-                SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
-                    iosSubtitle: iosSubtitle,
-                    materialSubtitle: materialSubtitle,
-                    text: "About"),
-                SettingsTile(
-                  backgroundColor: tileColor,
-                  title: "About & Links",
-                  subtitle: "Donate, Rate, Changelog, & More",
-                  onTap: () {
-                    CustomNavigator.pushAndRemoveSettingsUntil(
-                      context,
-                      AboutPanel(),
-                      (route) => route.isFirst,
-                    );
-                  },
-                  trailing: nextIcon,
-                  leading: SettingsLeadingIcon(
-                    iosIcon: CupertinoIcons.info_circle,
-                    materialIcon: Icons.info,
-                  ),
-                ),
-                SettingsHeader(
-                    headerColor: headerColor,
-                    tileColor: tileColor,
-                    iosSubtitle: iosSubtitle,
-                    materialSubtitle: materialSubtitle,
-                    text: "Backup and Reset"),
-                SettingsTile(
-                  backgroundColor: tileColor,
-                  onTap: () {
-                    Get.defaultDialog(
-                      title: "Backup and Restore",
-                      titleStyle: Theme.of(context).textTheme.headline1,
-                      confirm: Container(height: 0, width: 0),
-                      cancel: Container(height: 0, width: 0),
-                      content: Column(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
-                        SizedBox(
-                          height: 15.0,
-                        ),
-                        Text("Load / Save Locally", style: Theme.of(context).textTheme.subtitle1),
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                          child: Container(color: Colors.grey, height: 0.5),
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                primary: Theme.of(context).primaryColor,
-                              ),
-                              onPressed: () async {
-                                String directoryPath = "/storage/emulated/0/Download/BlueBubbles-settings-";
-                                DateTime now = DateTime.now().toLocal();
-                                String filePath = directoryPath +
-                                    "${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}" +
-                                    ".json";
-                                File file = File(filePath);
-                                await file.create(recursive: true);
-                                Map<String, dynamic> json = SettingsManager().settings.toMap();
-                                String jsonString = jsonEncode(json);
-                                await file.writeAsString(jsonString);
-                                Get.back();
-                                showSnackbar(
-                                  "Success",
-                                  "Settings exported successfully to downloads folder",
-                                  durationMs: 2000,
-                                  button: TextButton(
-                                    style: TextButton.styleFrom(
-                                      backgroundColor: Get.theme.accentColor,
-                                    ),
-                                    onPressed: () {
-                                      Share.file("BlueBubbles Settings", filePath);
-                                    },
-                                    child: Text("SHARE", style: TextStyle(color: Theme.of(context).primaryColor)),
-                                  ),
-                                );
-                              },
-                              child: Text(
-                                "Save Settings",
-                                style: TextStyle(
-                                  color: Theme.of(context).textTheme.bodyText1!.color,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                            SizedBox(width: 10),
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    side: BorderSide(color: Theme.of(context).primaryColor)),
-                                primary: Theme.of(context).backgroundColor,
-                              ),
-                              onPressed: () async {
-                                List<dynamic>? res = await MethodChannelInterface().invokeMethod("pick-file", {
-                                  "mimeTypes": ["application/json"],
-                                  "allowMultiple": false,
-                                });
-                                if (res == null || res.isEmpty) return;
-
-                                try {
-                                  String jsonString = await File(res.first.toString()).readAsString();
-                                  Map<String, dynamic> json = jsonDecode(jsonString);
-                                  Settings.updateFromMap(json);
-                                  Get.back();
-                                  showSnackbar("Success", "Settings restored successfully");
-                                } catch (e, s) {
-                                  print(e);
-                                  print(s);
-                                  Get.back();
-                                  showSnackbar("Error", "Something went wrong");
-                                }
-                              },
-                              child: Text(
-                                "Load Settings",
-                                style: TextStyle(
-                                  color: Theme.of(context).textTheme.bodyText1!.color,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                primary: Theme.of(context).primaryColor,
-                              ),
-                              onPressed: () async {
-                                List<ThemeObject> allThemes = await ThemeObject.getThemes();
-                                String jsonStr = "[";
-                                allThemes.forEachIndexed((index, e) async {
-                                  String entryJson = "[";
-                                  await e.fetchData();
-                                  e.entries.forEachIndexed((index, e2) {
-                                    entryJson = entryJson + "${jsonEncode(e2.toMap())}";
-                                    if (index != e.entries.length - 1) {
-                                      entryJson = entryJson + ",";
-                                    } else {
-                                      entryJson = entryJson + "]";
-                                    }
-                                  });
-                                  Map<String, dynamic> map = e.toMap();
-                                  Logger.debug(entryJson);
-                                  map['entries'] = jsonDecode(entryJson);
-                                  jsonStr = jsonStr + "${jsonEncode(map)}";
-                                  if (index != allThemes.length - 1) {
-                                    jsonStr = jsonStr + ",";
-                                  } else {
-                                    jsonStr = jsonStr + "]";
-                                  }
-                                });
-                                String directoryPath = "/storage/emulated/0/Download/BlueBubbles-theming-";
-                                DateTime now = DateTime.now().toLocal();
-                                String filePath = directoryPath +
-                                    "${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}" +
-                                    ".json";
-                                File file = File(filePath);
-                                await file.create(recursive: true);
-                                await file.writeAsString(jsonStr);
-                                Get.back();
-                                showSnackbar(
-                                  "Success",
-                                  "Theming exported successfully to downloads folder",
-                                  durationMs: 2000,
-                                  button: TextButton(
-                                    style: TextButton.styleFrom(
-                                      backgroundColor: Get.theme.accentColor,
-                                    ),
-                                    onPressed: () {
-                                      Share.file("BlueBubbles Theming", filePath);
-                                    },
-                                    child: Text("SHARE", style: TextStyle(color: Theme.of(context).primaryColor)),
-                                  ),
-                                );
-                              },
-                              child: Text(
-                                "Save Theming",
-                                style: TextStyle(
-                                  color: Theme.of(context).textTheme.bodyText1!.color,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                            SizedBox(width: 10),
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    side: BorderSide(color: Theme.of(context).primaryColor)),
-                                primary: Theme.of(context).backgroundColor,
-                              ),
-                              onPressed: () async {
-                                List<dynamic>? res = await MethodChannelInterface().invokeMethod("pick-file", {
-                                  "mimeTypes": ["application/json"],
-                                  "allowMultiple": false,
-                                });
-                                if (res == null || res.isEmpty) return;
-
-                                try {
-                                  String jsonString = await File(res.first.toString()).readAsString();
-                                  List<dynamic> json = jsonDecode(jsonString);
-                                  for (var e in json) {
-                                    ThemeObject object = ThemeObject.fromMap(e);
-                                    List<dynamic> entriesJson = e['entries'];
-                                    List<ThemeEntry> entries = [];
-                                    for (var e2 in entriesJson) {
-                                      entries.add(ThemeEntry.fromMap(e2));
-                                    }
-                                    object.entries = entries;
-                                    object.data = object.themeData;
-                                    await object.save();
-                                  }
-                                  await SettingsManager().saveSelectedTheme(context);
-                                  Get.back();
-                                  showSnackbar("Success", "Theming restored successfully");
-                                } catch (_) {
-                                  Get.back();
-                                  showSnackbar("Error", "Something went wrong");
-                                }
-                              },
-                              child: Text(
-                                "Load Theming",
-                                style: TextStyle(
-                                  color: Theme.of(context).textTheme.bodyText1!.color,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ]),
-                      barrierDismissible: true,
-                      backgroundColor: Theme.of(context).backgroundColor,
-                    );
-                  },
-                  leading: SettingsLeadingIcon(
-                    iosIcon: CupertinoIcons.cloud_upload,
-                    materialIcon: Icons.backup,
-                  ),
-                  title: "Backup & Restore",
-                  subtitle: "Backup and restore all app settings",
-                ),
-                Container(
-                  color: tileColor,
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 65.0),
-                    child: SettingsDivider(color: headerColor),
-                  ),
-                ),
-                SettingsTile(
-                  backgroundColor: tileColor,
-                  onTap: () {
-                    showDialog(
-                      barrierDismissible: false,
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: Text(
-                            "Are you sure?",
-                            style: Theme.of(context).textTheme.bodyText1,
-                          ),
-                          backgroundColor: Theme.of(context).backgroundColor,
-                          actions: <Widget>[
-                            TextButton(
-                              child: Text("Yes"),
-                              onPressed: () async {
-                                await DBProvider.deleteDB();
-                                await SettingsManager().resetConnection();
-                                SettingsManager().settings.finishedSetup.value = false;
-                                SocketManager().finishedSetup.sink.add(false);
-                                Navigator.of(context).popUntil((route) => route.isFirst);
-                              },
-                            ),
-                            TextButton(
-                              child: Text("Cancel"),
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                              },
-                            ),
-                          ],
+                    }),
+                    SettingsHeader(
+                        headerColor: headerColor,
+                        tileColor: tileColor,
+                        iosSubtitle: iosSubtitle,
+                        materialSubtitle: materialSubtitle,
+                        text: "Appearance"),
+                    SettingsTile(
+                      backgroundColor: tileColor,
+                      title: "Theme Settings",
+                      subtitle: SettingsManager().settings.skin.value.toString().split(".").last +
+                          "   |   " +
+                          AdaptiveTheme.of(context).mode.toString().split(".").last.capitalizeFirst! +
+                          " Mode",
+                      onTap: () {
+                        CustomNavigator.pushAndRemoveSettingsUntil(
+                          context,
+                          ThemePanel(),
+                          (route) => route.isFirst,
+                          binding: ThemePanelBinding(),
                         );
                       },
-                    );
-                  },
-                  leading: SettingsLeadingIcon(
-                    iosIcon: CupertinoIcons.floppy_disk,
-                    materialIcon: Icons.storage,
-                  ),
-                  title: "Reset",
-                  subtitle: "Resets the app to default settings",
+                      trailing: nextIcon,
+                      leading: SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.paintbrush,
+                        materialIcon: Icons.palette,
+                      ),
+                    ),
+                    SettingsHeader(
+                        headerColor: headerColor,
+                        tileColor: tileColor,
+                        iosSubtitle: iosSubtitle,
+                        materialSubtitle: materialSubtitle,
+                        text: "Application Settings"),
+                    SettingsTile(
+                      backgroundColor: tileColor,
+                      title: "Media Settings",
+                      onTap: () {
+                        CustomNavigator.pushAndRemoveSettingsUntil(
+                          context,
+                          AttachmentPanel(),
+                          (route) => route.isFirst,
+                        );
+                      },
+                      leading: SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.paperclip,
+                        materialIcon: Icons.attachment,
+                      ),
+                      trailing: nextIcon,
+                    ),
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
+                    ),
+                    SettingsTile(
+                      backgroundColor: tileColor,
+                      title: "Notification Settings",
+                      onTap: () {
+                        CustomNavigator.pushAndRemoveSettingsUntil(
+                          context,
+                          NotificationPanel(),
+                          (route) => route.isFirst,
+                        );
+                      },
+                      leading: SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.bell,
+                        materialIcon: Icons.notifications_on,
+                      ),
+                      trailing: nextIcon,
+                    ),
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
+                    ),
+                    SettingsTile(
+                      backgroundColor: tileColor,
+                      title: "Chat List Settings",
+                      onTap: () {
+                        CustomNavigator.pushAndRemoveSettingsUntil(
+                          context,
+                          ChatListPanel(),
+                          (route) => route.isFirst,
+                        );
+                      },
+                      leading: SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.square_list,
+                        materialIcon: Icons.list,
+                      ),
+                      trailing: nextIcon,
+                    ),
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
+                    ),
+                    SettingsTile(
+                      backgroundColor: tileColor,
+                      title: "Conversation Settings",
+                      onTap: () {
+                        CustomNavigator.pushAndRemoveSettingsUntil(
+                          context,
+                          ConversationPanel(),
+                          (route) => route.isFirst,
+                        );
+                      },
+                      leading: SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.chat_bubble,
+                        materialIcon: Icons.sms,
+                      ),
+                      trailing: nextIcon,
+                    ),
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
+                    ),
+                    SettingsTile(
+                      backgroundColor: tileColor,
+                      title: "Misc and Advanced Settings",
+                      onTap: () {
+                        CustomNavigator.pushAndRemoveSettingsUntil(
+                          context,
+                          MiscPanel(),
+                          (route) => route.isFirst,
+                        );
+                      },
+                      leading: SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.ellipsis_circle,
+                        materialIcon: Icons.more_vert,
+                      ),
+                      trailing: nextIcon,
+                    ),
+                    SettingsHeader(
+                        headerColor: headerColor,
+                        tileColor: tileColor,
+                        iosSubtitle: iosSubtitle,
+                        materialSubtitle: materialSubtitle,
+                        text: "Advanced"),
+                    SettingsTile(
+                      backgroundColor: tileColor,
+                      title: "Private API Features",
+                      subtitle:
+                          "Private API ${SettingsManager().settings.enablePrivateAPI.value ? "Enabled" : "Disabled"}",
+                      trailing: nextIcon,
+                      onTap: () async {
+                        CustomNavigator.pushAndRemoveSettingsUntil(
+                          context,
+                          PrivateAPIPanel(),
+                          (route) => route.isFirst,
+                          binding: PrivateAPIPanelBinding(),
+                        );
+                      },
+                      leading: SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.exclamationmark_shield,
+                        materialIcon: Icons.gpp_maybe,
+                        containerColor: getIndicatorColor(SettingsManager().settings.enablePrivateAPI.value
+                            ? SocketState.CONNECTED
+                            : SocketState.CONNECTING),
+                      ),
+                    ),
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
+                    ),
+                    SettingsTile(
+                      backgroundColor: tileColor,
+                      title: "Redacted Mode",
+                      subtitle:
+                          "Redacted Mode ${SettingsManager().settings.redactedMode.value ? "Enabled" : "Disabled"}",
+                      trailing: nextIcon,
+                      onTap: () async {
+                        CustomNavigator.pushAndRemoveSettingsUntil(
+                          context,
+                          RedactedModePanel(),
+                          (route) => route.isFirst,
+                        );
+                      },
+                      leading: SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.wand_stars,
+                        materialIcon: Icons.auto_fix_high,
+                        containerColor: getIndicatorColor(SettingsManager().settings.redactedMode.value
+                            ? SocketState.CONNECTED
+                            : SocketState.CONNECTING),
+                      ),
+                    ),
+                    // SettingsTile(
+                    //   title: "Message Scheduling",
+                    //   trailing: Icon(Icons.arrow_forward_ios,
+                    //       color: Theme.of(context).primaryColor),
+                    //   onTap: () async {
+                    //     Navigator.of(context).push(
+                    //       CupertinoPageRoute(
+                    //         builder: (context) => SchedulingPanel(),
+                    //       ),
+                    //     );
+                    //   },
+                    // ),
+                    // SettingsTile(
+                    //   title: "Search",
+                    //   trailing: Icon(Icons.arrow_forward_ios,
+                    //       color: Theme.of(context).primaryColor),
+                    //   onTap: () async {
+                    //     Navigator.of(context).push(
+                    //       CupertinoPageRoute(
+                    //         builder: (context) => SearchView(),
+                    //       ),
+                    //     );
+                    //   },
+                    // ),
+                    SettingsHeader(
+                        headerColor: headerColor,
+                        tileColor: tileColor,
+                        iosSubtitle: iosSubtitle,
+                        materialSubtitle: materialSubtitle,
+                        text: "About"),
+                    SettingsTile(
+                      backgroundColor: tileColor,
+                      title: "About & Links",
+                      subtitle: "Donate, Rate, Changelog, & More",
+                      onTap: () {
+                        CustomNavigator.pushAndRemoveSettingsUntil(
+                          context,
+                          AboutPanel(),
+                          (route) => route.isFirst,
+                        );
+                      },
+                      trailing: nextIcon,
+                      leading: SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.info_circle,
+                        materialIcon: Icons.info,
+                      ),
+                    ),
+                    SettingsHeader(
+                        headerColor: headerColor,
+                        tileColor: tileColor,
+                        iosSubtitle: iosSubtitle,
+                        materialSubtitle: materialSubtitle,
+                        text: "Backup and Reset"),
+                    SettingsTile(
+                      backgroundColor: tileColor,
+                      onTap: () {
+                        Get.defaultDialog(
+                          title: "Backup and Restore",
+                          titleStyle: Theme.of(context).textTheme.headline1,
+                          confirm: Container(height: 0, width: 0),
+                          cancel: Container(height: 0, width: 0),
+                          content: Column(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
+                            SizedBox(
+                              height: 15.0,
+                            ),
+                            Text("Load / Save Locally", style: Theme.of(context).textTheme.subtitle1),
+                            Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                              child: Container(color: Colors.grey, height: 0.5),
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    primary: Theme.of(context).primaryColor,
+                                  ),
+                                  onPressed: () async {
+                                    String directoryPath = "/storage/emulated/0/Download/BlueBubbles-settings-";
+                                    DateTime now = DateTime.now().toLocal();
+                                    String filePath = directoryPath +
+                                        "${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}" +
+                                        ".json";
+                                    Map<String, dynamic> json = SettingsManager().settings.toMap();
+                                    if (kIsWeb) {
+                                      final bytes = utf8.encode(jsonEncode(json));
+                                      final content = base64.encode(bytes);
+                                      html.AnchorElement(
+                                          href: "data:application/octet-stream;charset=utf-16le;base64,$content")
+                                        ..setAttribute("download", filePath.split("/").last)
+                                        ..click();
+                                      return;
+                                    }
+                                    File file = File(filePath);
+                                    await file.create(recursive: true);
+                                    String jsonString = jsonEncode(json);
+                                    await file.writeAsString(jsonString);
+                                    Get.back();
+                                    showSnackbar(
+                                      "Success",
+                                      "Settings exported successfully to downloads folder",
+                                      durationMs: 2000,
+                                      button: TextButton(
+                                        style: TextButton.styleFrom(
+                                          backgroundColor: Get.theme.accentColor,
+                                        ),
+                                        onPressed: () {
+                                          Share.file("BlueBubbles Settings", filePath);
+                                        },
+                                        child: Text("SHARE", style: TextStyle(color: Theme.of(context).primaryColor)),
+                                      ),
+                                    );
+                                  },
+                                  child: Text(
+                                    "Save Settings",
+                                    style: TextStyle(
+                                      color: Theme.of(context).textTheme.bodyText1!.color,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 10),
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        side: BorderSide(color: Theme.of(context).primaryColor)),
+                                    primary: Theme.of(context).backgroundColor,
+                                  ),
+                                  onPressed: () async {
+                                    final res = await FilePicker.platform
+                                        .pickFiles(withData: true, type: FileType.custom, allowedExtensions: ["json"]);
+                                    if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
+
+                                    try {
+                                      String jsonString = Utf8Decoder().convert(res.files.first.bytes!);
+                                      Map<String, dynamic> json = jsonDecode(jsonString);
+                                      Settings.updateFromMap(json);
+                                      Get.back();
+                                      showSnackbar("Success", "Settings restored successfully");
+                                    } catch (e, s) {
+                                      print(e);
+                                      print(s);
+                                      Get.back();
+                                      showSnackbar("Error", "Something went wrong");
+                                    }
+                                  },
+                                  child: Text(
+                                    "Load Settings",
+                                    style: TextStyle(
+                                      color: Theme.of(context).textTheme.bodyText1!.color,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    primary: Theme.of(context).primaryColor,
+                                  ),
+                                  onPressed: () async {
+                                    List<ThemeObject> allThemes = await ThemeObject.getThemes();
+                                    String jsonStr = "[";
+                                    allThemes.forEachIndexed((index, e) async {
+                                      String entryJson = "[";
+                                      await e.fetchData();
+                                      e.entries.forEachIndexed((index, e2) {
+                                        entryJson = entryJson + "${jsonEncode(e2.toMap())}";
+                                        if (index != e.entries.length - 1) {
+                                          entryJson = entryJson + ",";
+                                        } else {
+                                          entryJson = entryJson + "]";
+                                        }
+                                      });
+                                      Map<String, dynamic> map = e.toMap();
+                                      Logger.debug(entryJson);
+                                      map['entries'] = jsonDecode(entryJson);
+                                      jsonStr = jsonStr + "${jsonEncode(map)}";
+                                      if (index != allThemes.length - 1) {
+                                        jsonStr = jsonStr + ",";
+                                      } else {
+                                        jsonStr = jsonStr + "]";
+                                      }
+                                    });
+                                    String directoryPath = "/storage/emulated/0/Download/BlueBubbles-theming-";
+                                    DateTime now = DateTime.now().toLocal();
+                                    String filePath = directoryPath +
+                                        "${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}" +
+                                        ".json";
+                                    if (kIsWeb) {
+                                      final bytes = utf8.encode(jsonStr);
+                                      final content = base64.encode(bytes);
+                                      html.AnchorElement(
+                                          href: "data:application/octet-stream;charset=utf-16le;base64,$content")
+                                        ..setAttribute("download", filePath.split("/").last)
+                                        ..click();
+                                      return;
+                                    }
+                                    File file = File(filePath);
+                                    await file.create(recursive: true);
+                                    await file.writeAsString(jsonStr);
+                                    Get.back();
+                                    showSnackbar(
+                                      "Success",
+                                      "Theming exported successfully to downloads folder",
+                                      durationMs: 2000,
+                                      button: TextButton(
+                                        style: TextButton.styleFrom(
+                                          backgroundColor: Get.theme.accentColor,
+                                        ),
+                                        onPressed: () {
+                                          Share.file("BlueBubbles Theming", filePath);
+                                        },
+                                        child: Text("SHARE", style: TextStyle(color: Theme.of(context).primaryColor)),
+                                      ),
+                                    );
+                                  },
+                                  child: Text(
+                                    "Save Theming",
+                                    style: TextStyle(
+                                      color: Theme.of(context).textTheme.bodyText1!.color,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 10),
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        side: BorderSide(color: Theme.of(context).primaryColor)),
+                                    primary: Theme.of(context).backgroundColor,
+                                  ),
+                                  onPressed: () async {
+                                    final res = await FilePicker.platform
+                                        .pickFiles(withData: true, type: FileType.custom, allowedExtensions: ["json"]);
+                                    if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
+
+                                    try {
+                                      String jsonString = Utf8Decoder().convert(res.files.first.bytes!);
+                                      List<dynamic> json = jsonDecode(jsonString);
+                                      for (var e in json) {
+                                        ThemeObject object = ThemeObject.fromMap(e);
+                                        List<dynamic> entriesJson = e['entries'];
+                                        List<ThemeEntry> entries = [];
+                                        for (var e2 in entriesJson) {
+                                          entries.add(ThemeEntry.fromMap(e2));
+                                        }
+                                        object.entries = entries;
+                                        object.data = object.themeData;
+                                        await object.save();
+                                      }
+                                      await SettingsManager().saveSelectedTheme(context);
+                                      Get.back();
+                                      showSnackbar("Success", "Theming restored successfully");
+                                    } catch (_) {
+                                      Get.back();
+                                      showSnackbar("Error", "Something went wrong");
+                                    }
+                                  },
+                                  child: Text(
+                                    "Load Theming",
+                                    style: TextStyle(
+                                      color: Theme.of(context).textTheme.bodyText1!.color,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ]),
+                          barrierDismissible: true,
+                          backgroundColor: Theme.of(context).backgroundColor,
+                        );
+                      },
+                      leading: SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.cloud_upload,
+                        materialIcon: Icons.backup,
+                      ),
+                      title: "Backup & Restore",
+                      subtitle: "Backup and restore all app settings",
+                    ),
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
+                    ),
+                    if (!kIsWeb && !kIsDesktop)
+                      SettingsTile(
+                        backgroundColor: tileColor,
+                        onTap: () async {
+                          String json = "[";
+                          ContactManager().handleToContact.values.forEachIndexed((index, c) {
+                            if (c == null) return;
+                            var map = c.toMap();
+                            map.remove("avatar");
+                            json = json + "${jsonEncode(map)}";
+                            if (index != ContactManager().handleToContact.values.length - 1) {
+                              json = json + ",";
+                            } else {
+                              json = json + "]";
+                            }
+                          });
+                          SocketManager().sendMessage("save-vcf", {"vcf": json}, (_) => showSnackbar("Notice", "Successfully exported contacts to server"));
+                        },
+                        leading: SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.group,
+                          materialIcon: Icons.contacts,
+                        ),
+                        title: "Export Contacts",
+                        subtitle: "Send contacts to server for use on webapp and desktop app",
+                      ),
+                    if (!kIsWeb && !kIsDesktop)
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 65.0),
+                          child: SettingsDivider(color: headerColor),
+                        ),
+                      ),
+                    SettingsTile(
+                      backgroundColor: tileColor,
+                      onTap: () {
+                        showDialog(
+                          barrierDismissible: false,
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: Text(
+                                "Are you sure?",
+                                style: Theme.of(context).textTheme.bodyText1,
+                              ),
+                              backgroundColor: Theme.of(context).backgroundColor,
+                              actions: <Widget>[
+                                TextButton(
+                                  child: Text("Yes"),
+                                  onPressed: () async {
+                                    await DBProvider.deleteDB();
+                                    await SettingsManager().resetConnection();
+                                    SettingsManager().settings.finishedSetup.value = false;
+                                    SocketManager().finishedSetup.sink.add(false);
+                                    Navigator.of(context).popUntil((route) => route.isFirst);
+                                  },
+                                ),
+                                TextButton(
+                                  child: Text("Cancel"),
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      },
+                      leading: SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.floppy_disk,
+                        materialIcon: Icons.storage,
+                      ),
+                      title: "Reset",
+                      subtitle: "Resets the app to default settings",
+                    ),
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
+                    ),
+                    SettingsTile(
+                      backgroundColor: tileColor,
+                      onTap: () async {
+                        CustomNavigator.pushAndRemoveSettingsUntil(
+                          context,
+                          TroubleshootPanel(),
+                          (route) => route.isFirst,
+                        );
+                      },
+                      leading: SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.question_circle,
+                        materialIcon: Icons.help_outline,
+                      ),
+                      title: "Troubleshooting",
+                      trailing: nextIcon,
+                    ),
+                    Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
+                    Container(
+                      height: 30,
+                      decoration: SettingsManager().settings.skin.value == Skins.iOS
+                          ? BoxDecoration(
+                              color: headerColor,
+                              border: Border(
+                                  top: BorderSide(
+                                      color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
+                            )
+                          : null,
+                    ),
+                  ],
                 ),
-                Container(
-                  color: tileColor,
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 65.0),
-                    child: SettingsDivider(color: headerColor),
-                  ),
+              ),
+              SliverList(
+                delegate: SliverChildListDelegate(
+                  <Widget>[],
                 ),
-                SettingsTile(
-                  backgroundColor: tileColor,
-                  onTap: () async {
-                    CustomNavigator.pushAndRemoveSettingsUntil(
-                      context,
-                      TroubleshootPanel(),
-                      (route) => route.isFirst,
-                    );
-                  },
-                  leading: SettingsLeadingIcon(
-                    iosIcon: CupertinoIcons.question_circle,
-                    materialIcon: Icons.help_outline,
-                  ),
-                  title: "Troubleshooting",
-                  trailing: nextIcon,
-                ),
-                Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
-                Container(
-                  height: 30,
-                  decoration: SettingsManager().settings.skin.value == Skins.iOS
-                      ? BoxDecoration(
-                    color: headerColor,
-                    border: Border(
-                        top: BorderSide(
-                            color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
-                  )
-                      : null,
-                ),
-              ],
-            ),
+              )
+            ],
           ),
-          SliverList(
-            delegate: SliverChildListDelegate(
-              <Widget>[],
-            ),
-          )
-        ],
-      ),
-    ));
+        ));
   }
 
   Widget buildForLandscape(BuildContext context, Widget settingsList) {
@@ -819,34 +869,33 @@ class _SettingsPanelState extends State<SettingsPanel> {
       maxRatio: 0.5,
       allowResize: true,
       left: settingsList,
-      right: LayoutBuilder(
-        builder: (context, constraints) {
-          CustomNavigator.maxWidthSettings = constraints.maxWidth;
-          return WillPopScope(
-            onWillPop: () async {
-              Get.back(id: 3);
+      right: LayoutBuilder(builder: (context, constraints) {
+        CustomNavigator.maxWidthSettings = constraints.maxWidth;
+        return WillPopScope(
+          onWillPop: () async {
+            Get.back(id: 3);
+            return false;
+          },
+          child: Navigator(
+            key: Get.nestedKey(3),
+            onPopPage: (route, _) {
+              route.didPop(false);
               return false;
             },
-            child: Navigator(
-              key: Get.nestedKey(3),
-              onPopPage: (route, _) {
-                route.didPop(false);
-                return false;
-              },
-              pages: [
-                CupertinoPage(name: "initial", child: Scaffold(
-                  backgroundColor: SettingsManager().settings.skin.value != Skins.iOS ? tileColor : headerColor,
-                  body: Center(
-                    child: Container(
-                        child: Text("Select a settings page from the list", style: Theme.of(Get.context!).textTheme.subtitle1!.copyWith(fontSize: 18))
-                    ),
-                  )
-                )),
-              ],
-            ),
-          );
-        }
-      ),
+            pages: [
+              CupertinoPage(
+                  name: "initial",
+                  child: Scaffold(
+                      backgroundColor: SettingsManager().settings.skin.value != Skins.iOS ? tileColor : headerColor,
+                      body: Center(
+                        child: Container(
+                            child: Text("Select a settings page from the list",
+                                style: Theme.of(Get.context!).textTheme.subtitle1!.copyWith(fontSize: 18))),
+                      ))),
+            ],
+          ),
+        );
+      }),
     );
   }
 

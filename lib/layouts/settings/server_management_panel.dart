@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
+import 'package:universal_io/io.dart';
+import 'package:universal_html/html.dart' as html;
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';
@@ -198,87 +199,91 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                         )
                     );
                   }),
-                  SettingsHeader(
-                      headerColor: headerColor,
-                      tileColor: tileColor,
-                      iosSubtitle: iosSubtitle,
-                      materialSubtitle: materialSubtitle,
-                      text: "Connection & Sync"
-                  ),
-                  SettingsTile(
-                    title: "Re-configure with BlueBubbles Server",
-                    subtitle: "Scan QR code",
-                    leading: SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.gear,
-                      materialIcon: Icons.room_preferences,
+                  if (!kIsWeb)
+                    SettingsHeader(
+                        headerColor: headerColor,
+                        tileColor: tileColor,
+                        iosSubtitle: iosSubtitle,
+                        materialSubtitle: materialSubtitle,
+                        text: "Connection & Sync"
                     ),
-                    backgroundColor: tileColor,
-                    onTap: () async {
-                      var fcmData;
-                      try {
-                        fcmData = jsonDecode(
-                          await Navigator.of(context).push(
-                            CupertinoPageRoute(
-                              builder: (BuildContext context) {
-                                return QRCodeScanner();
-                              },
+                  if (!kIsWeb && !kIsDesktop)
+                    SettingsTile(
+                      title: "Re-configure with BlueBubbles Server",
+                      subtitle: "Scan QR code",
+                      leading: SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.gear,
+                        materialIcon: Icons.room_preferences,
+                      ),
+                      backgroundColor: tileColor,
+                      onTap: () async {
+                        var fcmData;
+                        try {
+                          fcmData = jsonDecode(
+                            await Navigator.of(context).push(
+                              CupertinoPageRoute(
+                                builder: (BuildContext context) {
+                                  return QRCodeScanner();
+                                },
+                              ),
                             ),
-                          ),
-                        );
-                      } catch (e) {
-                        return;
-                      }
-                      if (fcmData != null && fcmData[0] != null && getServerAddress(address: fcmData[1]) != null) {
-                        controller._fcmDataCopy = FCMData(
-                          projectID: fcmData[2],
-                          storageBucket: fcmData[3],
-                          apiKey: fcmData[4],
-                          firebaseURL: fcmData[5],
-                          clientID: fcmData[6],
-                          applicationID: fcmData[7],
-                        );
-                        controller._settingsCopy.guidAuthKey.value = fcmData[0];
-                        controller._settingsCopy.serverAddress.value = getServerAddress(address: fcmData[1])!;
-
-                        SettingsManager().saveSettings(controller._settingsCopy);
-                        SettingsManager().saveFCMData(controller._fcmDataCopy!);
-                        SocketManager().authFCM();
-                      }
-                    },
-                  ),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
-                    ),
-                  ),
-                  Obx(() {
-                    String subtitle;
-
-                    switch (SocketManager().state.value) {
-                      case SocketState.CONNECTED:
-                        subtitle = "Tap to sync messages";
-                        break;
-                      default:
-                        subtitle = "Disconnected, cannot sync";
-                    }
-
-                    return SettingsTile(
-                        title: "Manually Sync Messages",
-                        subtitle: subtitle,
-                        backgroundColor: tileColor,
-                        leading: SettingsLeadingIcon(
-                          iosIcon: CupertinoIcons.arrow_2_circlepath,
-                          materialIcon: Icons.sync,
-                        ),
-                        onTap: () async {
-                          showDialog(
-                            context: context,
-                            builder: (context) => SyncDialog(),
                           );
-                        });
-                  }),
+                        } catch (e) {
+                          return;
+                        }
+                        if (fcmData != null && fcmData[0] != null && getServerAddress(address: fcmData[1]) != null) {
+                          controller._fcmDataCopy = FCMData(
+                            projectID: fcmData[2],
+                            storageBucket: fcmData[3],
+                            apiKey: fcmData[4],
+                            firebaseURL: fcmData[5],
+                            clientID: fcmData[6],
+                            applicationID: fcmData[7],
+                          );
+                          controller._settingsCopy.guidAuthKey.value = fcmData[0];
+                          controller._settingsCopy.serverAddress.value = getServerAddress(address: fcmData[1])!;
+
+                          SettingsManager().saveSettings(controller._settingsCopy);
+                          SettingsManager().saveFCMData(controller._fcmDataCopy!);
+                          SocketManager().authFCM();
+                        }
+                      },
+                    ),
+                  if (!kIsWeb && !kIsDesktop)
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
+                    ),
+                  if (!kIsWeb)
+                    Obx(() {
+                      String subtitle;
+
+                      switch (SocketManager().state.value) {
+                        case SocketState.CONNECTED:
+                          subtitle = "Tap to sync messages";
+                          break;
+                        default:
+                          subtitle = "Disconnected, cannot sync";
+                      }
+
+                      return SettingsTile(
+                          title: "Manually Sync Messages",
+                          subtitle: subtitle,
+                          backgroundColor: tileColor,
+                          leading: SettingsLeadingIcon(
+                            iosIcon: CupertinoIcons.arrow_2_circlepath,
+                            materialIcon: Icons.sync,
+                          ),
+                          onTap: () async {
+                            showDialog(
+                              context: context,
+                              builder: (context) => SyncDialog(),
+                            );
+                          });
+                    }),
                   SettingsHeader(
                       headerColor: headerColor,
                       tileColor: tileColor,
@@ -304,6 +309,16 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                         if (res['status'] != 200) {
                           controller.fetchStatus.value = "Failed to fetch logs!";
 
+                          return;
+                        }
+
+                        if (kIsWeb) {
+                          final bytes = utf8.encode(res['data']);
+                          final content = base64.encode(bytes);
+                          html.AnchorElement(
+                              href: "data:application/octet-stream;charset=utf-16le;base64,$content")
+                            ..setAttribute("download", "main.log")
+                            ..click();
                           return;
                         }
 

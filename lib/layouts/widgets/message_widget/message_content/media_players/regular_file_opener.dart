@@ -1,4 +1,8 @@
-import 'dart:io';
+import 'dart:convert';
+
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
+import 'package:universal_html/html.dart' as html;
 
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
@@ -15,7 +19,7 @@ class RegularFileOpener extends StatefulWidget {
     required this.file,
   }) : super(key: key);
   final Attachment attachment;
-  final File file;
+  final PlatformFile file;
 
   @override
   _RegularFileOpenerState createState() => _RegularFileOpenerState();
@@ -28,16 +32,27 @@ class _RegularFileOpenerState extends State<RegularFileOpener> {
 
     return GestureDetector(
       onTap: () async {
-        try {
-          await MethodChannelInterface().invokeMethod(
-            "open_file",
-            {
-              "path": "/attachments/" + widget.attachment.guid! + "/" + basename(widget.file.path),
-              "mimeType": widget.attachment.mimeType,
-            },
-          );
-        } catch (ex) {
-          showSnackbar('Error', "No handler for this file type!");
+        if (kIsWeb) {
+          final content = base64.encode(widget.file.bytes!);
+          html.AnchorElement(
+              href: "data:application/octet-stream;charset=utf-16le;base64,$content")
+            ..setAttribute("download", widget.file.name)
+            ..click();
+        } else {
+          try {
+            await MethodChannelInterface().invokeMethod(
+              "open_file",
+              {
+                "path": "/attachments/" +
+                    widget.attachment.guid! +
+                    "/" +
+                    basename(widget.file.path),
+                "mimeType": widget.attachment.mimeType,
+              },
+            );
+          } catch (ex) {
+            showSnackbar('Error', "No handler for this file type!");
+          }
         }
       },
       child: Container(
@@ -53,7 +68,7 @@ class _RegularFileOpenerState extends State<RegularFileOpener> {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               Text(
-                basename(widget.file.path),
+                widget.file.name,
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,

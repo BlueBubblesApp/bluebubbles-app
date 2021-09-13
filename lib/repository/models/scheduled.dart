@@ -35,7 +35,7 @@ class ScheduledMessage {
   }
 
   Future<ScheduledMessage> save([bool updateIfAbsent = false]) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
 
     // Try to find an existing handle before saving it
     ScheduledMessage? existing = await ScheduledMessage.findOne(
@@ -50,7 +50,7 @@ class ScheduledMessage {
       var map = this.toMap();
       map.remove("ROWID");
       try {
-        this.id = await db.insert("scheduled", map);
+        this.id = await db?.insert("scheduled", map);
       } catch (e) {
         this.id = null;
       }
@@ -62,11 +62,11 @@ class ScheduledMessage {
   }
 
   Future<ScheduledMessage> update() async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
 
     // If it already exists, update it
     if (this.id != null) {
-      await db.update(
+      await db?.update(
           "scheduled",
           {
             "chatGuid": this.chatGuid,
@@ -84,8 +84,8 @@ class ScheduledMessage {
   }
 
   static Future<ScheduledMessage?> findOne(Map<String, dynamic> filters) async {
-    final Database db = await DBProvider.db.database;
-
+    final Database? db = await DBProvider.db.database;
+    if (db == null) return null;
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];
@@ -100,8 +100,8 @@ class ScheduledMessage {
   }
 
   static Future<List<ScheduledMessage>> find([Map<String, dynamic> filters = const {}]) async {
-    final Database db = await DBProvider.db.database;
-
+    final Database? db = await DBProvider.db.database;
+    if (db == null) return [];
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];
@@ -114,8 +114,8 @@ class ScheduledMessage {
   }
 
   static Future<List<ScheduledMessage>> getScheduledMessages(Chat chat) async {
-    final Database db = await DBProvider.db.database;
-
+    final Database? db = await DBProvider.db.database;
+    if (db == null) return [];
     var res = await db.rawQuery(
         "SELECT"
         " scheduled.ROWID AS ROWID,"
@@ -131,8 +131,8 @@ class ScheduledMessage {
   }
 
   static flush() async {
-    final Database db = await DBProvider.db.database;
-    await db.delete("scheduled");
+    final Database? db = await DBProvider.db.database;
+    await db?.delete("scheduled");
   }
 
   Map<String, dynamic> toMap() =>

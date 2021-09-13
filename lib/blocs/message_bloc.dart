@@ -33,6 +33,7 @@ class MessageBlocEvent {
 class MessageBloc {
   final Rxn<MessageBlocEvent> event = Rxn<MessageBlocEvent>();
   LinkedHashMap<String, Message> _allMessages = new LinkedHashMap();
+  LinkedHashMap<String, Message> _reactionMessages = new LinkedHashMap();
   int _reactions = 0;
   bool showDeleted = false;
   bool _canLoadMore = true;
@@ -44,6 +45,14 @@ class MessageBloc {
     }
 
     return _allMessages;
+  }
+
+  LinkedHashMap<String, Message> get reactionMessages {
+    if (!showDeleted) {
+      _reactionMessages.removeWhere((key, value) => value.dateDeleted != null);
+    }
+
+    return _reactionMessages;
   }
 
   Chat? _currentChat;
@@ -198,6 +207,7 @@ class MessageBloc {
         if (element.associatedMessageGuid == null && element.guid != null) {
           _allMessages.addAll({element.guid!: element});
         } else {
+          _reactionMessages.addAll({element.guid!: element});
           _reactions++;
         }
       }
@@ -305,6 +315,7 @@ class MessageBloc {
         if (element.associatedMessageGuid == null && element.guid != null) {
           _allMessages.addAll({element.guid!: element});
         } else {
+          _reactionMessages.addAll({element.guid!: element});
           _reactions++;
         }
       }
@@ -332,6 +343,7 @@ class MessageBloc {
 
   Future<void> refresh() async {
     _allMessages = new LinkedHashMap();
+    _reactionMessages.clear();
     _reactions = 0;
 
     await this.getMessages();

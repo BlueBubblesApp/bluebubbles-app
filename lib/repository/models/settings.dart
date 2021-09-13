@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/config_entry.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:get/get.dart';
@@ -27,7 +29,7 @@ class Settings {
   final RxBool colorfulBubbles = false.obs;
   final RxBool hideDividers = false.obs;
   final RxDouble scrollVelocity = 1.00.obs;
-  final RxBool sendWithReturn = false.obs;
+  final RxBool sendWithReturn = (kIsWeb || kIsDesktop).obs;
   final RxBool doubleTapForDetails = false.obs;
   final RxBool denseChatTiles = false.obs;
   final RxBool smartReply = false.obs;
@@ -443,7 +445,7 @@ class Settings {
     SettingsManager().settings.colorfulBubbles.value = map['colorfulBubbles'] ?? false;
     SettingsManager().settings.hideDividers.value = map['hideDividers'] ?? false;
     SettingsManager().settings.scrollVelocity.value = map['scrollVelocity'] ?? 1;
-    SettingsManager().settings.sendWithReturn.value = map['sendWithReturn'] ?? false;
+    SettingsManager().settings.sendWithReturn.value = map['sendWithReturn'] ?? (kIsWeb || kIsDesktop);
     SettingsManager().settings.doubleTapForDetails.value = map['doubleTapForDetails'] ?? false;
     SettingsManager().settings.denseChatTiles.value = map['denseChatTiles'] ?? false;
     SettingsManager().settings.smartReply.value = map['smartReply'] ?? false;
@@ -529,7 +531,7 @@ class Settings {
     s.colorfulBubbles.value = map['colorfulBubbles'] ?? false;
     s.hideDividers.value = map['hideDividers'] ?? false;
     s.scrollVelocity.value = map['scrollVelocity'] ?? 1;
-    s.sendWithReturn.value = map['sendWithReturn'] ?? false;
+    s.sendWithReturn.value = map['sendWithReturn'] ?? (kIsWeb || kIsDesktop);
     s.doubleTapForDetails.value = map['doubleTapForDetails'] ?? false;
     s.denseChatTiles.value = map['denseChatTiles'] ?? false;
     s.smartReply.value = map['smartReply'] ?? false;

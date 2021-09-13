@@ -54,6 +54,7 @@ class ReceivedMessage extends StatefulWidget {
 class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMixin {
   bool checkedHandle = false;
   final Rx<Skins> skin = Rx<Skins>(SettingsManager().settings.skin.value);
+  late final spanFuture = MessageWidgetMixin.buildMessageSpansAsync(context, widget.message, colors: widget.message.handle?.color != null ? getBubbleColors() : null);
 
   @override
   initState() {
@@ -80,6 +81,26 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
   void didChangeDependencies() {
     super.didChangeDependencies();
     didChangeMessageDependencies(widget.message, widget.showHandle);
+  }
+
+  List<Color> getBubbleColors() {
+    List<Color> bubbleColors = [Theme
+        .of(context)
+        .accentColor, Theme
+        .of(context)
+        .accentColor
+    ];
+    if (SettingsManager().settings.colorfulBubbles.value) {
+      if (widget.message.handle?.color == null) {
+        bubbleColors = toColorGradient(widget.message.handle?.address);
+      } else {
+        bubbleColors = [
+          HexColor(widget.message.handle!.color!),
+          HexColor(widget.message.handle!.color!).lightenAmount(0.02),
+        ];
+      }
+    }
+    return bubbleColors;
   }
 
   Future<void> didChangeMessageDependencies(Message message, bool? showHandle) async {
@@ -140,30 +161,13 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
       );
     }
 
-    List<Color> bubbleColors = [Theme
-        .of(context)
-        .accentColor, Theme
-        .of(context)
-        .accentColor
-    ];
-    if (SettingsManager().settings.colorfulBubbles.value) {
-      if (message.handle?.color == null) {
-        bubbleColors = toColorGradient(message.handle?.address);
-      } else {
-        bubbleColors = [
-          HexColor(message.handle!.color!),
-          HexColor(message.handle!.color!).lightenAmount(0.02),
-        ];
-      }
-    }
-
     return Stack(
       alignment: AlignmentDirectional.bottomStart,
       children: [
         if (widget.showTail && skin.value == Skins.iOS)
           MessageTail(
             isFromMe: false,
-            color: bubbleColors[0],
+            color: getBubbleColors()[0],
           ),
         Container(
           margin: EdgeInsets.only(
@@ -213,18 +217,28 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
             gradient: LinearGradient(
               begin: AlignmentDirectional.bottomCenter,
               end: AlignmentDirectional.topCenter,
-              colors: bubbleColors,
+              colors: getBubbleColors(),
             ),
           ),
-          child: RichText(
-            text: TextSpan(
-              children: MessageWidgetMixin.buildMessageSpans(context, widget.message,
-                  colors: widget.message.handle?.color != null ? bubbleColors : null),
-              style: Theme
-                  .of(context)
-                  .textTheme
-                  .bodyText2,
-            ),
+          child: FutureBuilder<List<InlineSpan>>(
+              future: spanFuture,
+              builder: (context, snapshot) {
+                if (snapshot.data != null) {
+                  return RichText(
+                    text: TextSpan(
+                      children: snapshot.data!,
+                      style: Theme.of(context).textTheme.bodyText2,
+                    ),
+                  );
+                }
+                return RichText(
+                  text: TextSpan(
+                    children: MessageWidgetMixin.buildMessageSpans(context, widget.message,
+                        colors: widget.message.handle?.color != null ? getBubbleColors() : null),
+                    style: Theme.of(context).textTheme.bodyText2,
+                  ),
+                );
+              }
           ),
         ),
       ],

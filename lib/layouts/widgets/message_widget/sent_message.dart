@@ -27,7 +27,7 @@ import 'package:flutter/material.dart';
 
 class SentMessageHelper {
   static Widget buildMessageWithTail(
-      BuildContext context, Message? message, bool showTail, bool hasReactions, bool bigEmoji,
+      BuildContext context, Message? message, bool showTail, bool hasReactions, bool bigEmoji, Future<List<InlineSpan>> msgSpanFuture,
       {Widget? customContent,
       Message? olderMessage,
       CurrentChat? currentChat,
@@ -136,11 +136,24 @@ class SentMessageHelper {
                 color: customColor ?? bubbleColor,
               ),
               child: customContent == null
-                  ? RichText(
-                      text: TextSpan(
-                        children: MessageWidgetMixin.buildMessageSpans(context, message),
-                        style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
-                      ),
+                  ? FutureBuilder<List<InlineSpan>>(
+                      future: msgSpanFuture,
+                      builder: (context, snapshot) {
+                        if (snapshot.data != null) {
+                          return RichText(
+                            text: TextSpan(
+                              children: snapshot.data!,
+                              style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
+                            ),
+                          );
+                        }
+                        return RichText(
+                          text: TextSpan(
+                            children: MessageWidgetMixin.buildMessageSpans(context, message),
+                            style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
+                          ),
+                        );
+                      }
                     )
                   : customContent,
             );
@@ -280,6 +293,7 @@ class SentMessage extends StatefulWidget {
 
 class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin, MessageWidgetMixin {
   final Rx<Skins> skin = Rx<Skins>(SettingsManager().settings.skin.value);
+  late final spanFuture = MessageWidgetMixin.buildMessageSpansAsync(context, widget.message);
 
   @override
   void initState() {
@@ -316,7 +330,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
       message = BalloonBundleWidget(message: widget.message);
     } else if (!isEmptyString(widget.message.text)) {
       message = SentMessageHelper.buildMessageWithTail(
-          context, widget.message, widget.showTail, widget.message.hasReactions, widget.message.bigEmoji ?? false,
+          context, widget.message, widget.showTail, widget.message.hasReactions, widget.message.bigEmoji ?? false, spanFuture,
           olderMessage: widget.olderMessage);
       if (widget.showHero) {
         message = Hero(
