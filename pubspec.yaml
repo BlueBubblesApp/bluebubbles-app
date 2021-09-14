@@ -197,7 +197,7 @@ msix_config:
   display_name: BlueBubbles
   publisher_display_name: BlueBubbles Development Team
   identity_name: com.bluebubbles.app
-  msix_version: 1.0.0.3
+  msix_version: 1.0.0.4
   publisher: CN=BlueBubbles, O=BlueBubbles, C=US
   logo_path: assets/icon/icon.png # todo
   start_menu_icon_path: assets/icon/icon.png # todo
