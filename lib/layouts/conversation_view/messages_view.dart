@@ -131,6 +131,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     // If there are no messages or the latest message is from me, reset the replies
     if (isNullOrEmpty(_messages)!) return resetReplies();
     if (_messages.first.isFromMe!) return resetReplies();
+    if (kIsWeb || kIsDesktop) return resetReplies();
 
     Logger.info("Getting smart replies...");
     Map<String, dynamic> results = await smartReply.suggestReplies();
@@ -268,7 +269,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
       List<Message> reversed = _messages.reversed.toList();
       int sampleSize = (_messages.length > 5) ? 5 : _messages.length;
       reversed.sublist(reversed.length - sampleSize).forEach((message) {
-        if (!isEmptyString(message.fullText, stripWhitespace: true)) {
+        if (!isEmptyString(message.fullText, stripWhitespace: true) && !kIsWeb && !kIsDesktop) {
           if (message.isFromMe ?? false) {
             smartReply.addConversationForLocalUser(message.fullText);
           } else {

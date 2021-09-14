@@ -79,6 +79,7 @@ class MethodChannelInterface {
   /// @param [method] is the tag to be recognized in native code
   /// @param [arguments] is an optional parameter which can be used to send other data along with the method call
   Future invokeMethod(String method, [dynamic arguments]) async {
+    if (kIsWeb || kIsDesktop) return;
     return platform.invokeMethod(method, arguments);
   }
 
