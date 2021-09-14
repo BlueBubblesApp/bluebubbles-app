@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:dio_http/dio_http.dart';
 import 'package:file_picker/file_picker.dart';
@@ -574,6 +575,40 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       await sendMessage();
                       focusNode!.requestFocus();
                     }
+                    if (data.keyCode == 8 && event.isControlPressed) {
+                      // Delete bad character (code 127)
+                      String text = controller!.text;
+                      text = text.characters.where((char) => char.codeUnits[0] != 127).join();
+                      TextSelection selection = controller!.selection;
+                      TextPosition base = selection.base;
+                      int startPos = base.offset;
+                      controller!.text = text;
+                      controller!.selection = TextSelection.fromPosition(TextPosition(offset: startPos - 1));
+
+                      // Check if at end of a word
+                      if (startPos - 1 == text.length || text.characters.toList()[startPos - 1].isBlank!) {
+                        // Get the word
+                        int trailing = text.length - text.trimRight().length;
+                        List<String> words = text.trimRight().split(" ");
+                        print(words);
+                        List<int> counts = words.map((word) => word.length).toList();
+                        int end = startPos - 1 - trailing;
+                        int start = 0;
+                        for (int i = 0; i < counts.length; i++) {
+                          int count = counts[i];
+                          if (start + count < end) start += count + (i == counts.length - 1 ? 0 : 1);
+                          else break;
+                        }
+                        end += trailing; // Account for trimming
+                        start -= 1; // Remove the space after the previous word
+                        start = max(0, start); // Make sure it's not negative
+                        text = text.substring(0, start) + text.substring(end);
+                        // Set the text
+                        controller!.text = text;
+                        // Set the position
+                        controller!.selection = TextSelection.fromPosition(TextPosition(offset: start));
+                      }
+                    }
                     return;
                   }
                   // TODO figure out the Linux keycode
@@ -583,6 +618,40 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       await sendMessage();
                       focusNode!.requestFocus();
                     }
+                    if (data.keyCode == 8 && event.isControlPressed) {
+                      // Delete bad character (code 127)
+                      String text = controller!.text;
+                      text = text.characters.where((char) => char.codeUnits[0] != 127).join();
+                      TextSelection selection = controller!.selection;
+                      TextPosition base = selection.base;
+                      int startPos = base.offset;
+                      controller!.text = text;
+                      controller!.selection = TextSelection.fromPosition(TextPosition(offset: startPos - 1));
+
+                      // Check if at end of a word
+                      if (startPos - 1 == text.length || text.characters.toList()[startPos - 1].isBlank!) {
+                        // Get the word
+                        int trailing = text.length - text.trimRight().length;
+                        List<String> words = text.trimRight().split(" ");
+                        print(words);
+                        List<int> counts = words.map((word) => word.length).toList();
+                        int end = startPos - 1 - trailing;
+                        int start = 0;
+                        for (int i = 0; i < counts.length; i++) {
+                          int count = counts[i];
+                          if (start + count < end) start += count + (i == counts.length - 1 ? 0 : 1);
+                          else break;
+                        }
+                        end += trailing; // Account for trimming
+                        start -= 1; // Remove the space after the previous word
+                        start = max(0, start); // Make sure it's not negative
+                        text = text.substring(0, start) + text.substring(end);
+                        // Set the text
+                        controller!.text = text;
+                        // Set the position
+                        controller!.selection = TextSelection.fromPosition(TextPosition(offset: start));
+                      }
+                    }
                     return;
                   }
                   // TODO figure out the MacOs keycode
@@ -591,6 +660,40 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     if (data.keyCode == 13 && !event.isShiftPressed) {
                       await sendMessage();
                       focusNode!.requestFocus();
+                    }
+                    if (data.keyCode == 8 && event.isControlPressed) {
+                      // Delete bad character (code 127)
+                      String text = controller!.text;
+                      text = text.characters.where((char) => char.codeUnits[0] != 127).join();
+                      TextSelection selection = controller!.selection;
+                      TextPosition base = selection.base;
+                      int startPos = base.offset;
+                      controller!.text = text;
+                      controller!.selection = TextSelection.fromPosition(TextPosition(offset: startPos - 1));
+
+                      // Check if at end of a word
+                      if (startPos - 1 == text.length || text.characters.toList()[startPos - 1].isBlank!) {
+                        // Get the word
+                        int trailing = text.length - text.trimRight().length;
+                        List<String> words = text.trimRight().split(" ");
+                        print(words);
+                        List<int> counts = words.map((word) => word.length).toList();
+                        int end = startPos - 1 - trailing;
+                        int start = 0;
+                        for (int i = 0; i < counts.length; i++) {
+                          int count = counts[i];
+                          if (start + count < end) start += count + (i == counts.length - 1 ? 0 : 1);
+                          else break;
+                        }
+                        end += trailing; // Account for trimming
+                        start -= 1; // Remove the space after the previous word
+                        start = max(0, start); // Make sure it's not negative
+                        text = text.substring(0, start) + text.substring(end);
+                        // Set the text
+                        controller!.text = text;
+                        // Set the position
+                        controller!.selection = TextSelection.fromPosition(TextPosition(offset: start));
+                      }
                     }
                     return;
                   }
