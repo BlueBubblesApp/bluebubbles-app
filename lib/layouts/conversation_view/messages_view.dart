@@ -61,6 +61,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
 
   List<Message> currentMessages = [];
   List<String> replies = [];
+  Map<String, Widget> internalSmartReplies = {};
 
   late StreamController<List<String>> smartReplyController;
 
@@ -114,6 +115,15 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
               }
             });
           }
+        }
+      } else if (event["type"] == "add-custom-smartreply") {
+        if (event["data"]["path"] != null) {
+          internalSmartReplies.addEntries([_buildReply("Attach recent photo", onTap: () {
+            EventDispatcher().emit('add-attachment', event['data']);
+            internalSmartReplies.remove('Attach recent photo');
+            setState(() {});
+          })]);
+          setState(() {});
         }
       }
     });
@@ -334,7 +344,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     return message;
   }
 
-  Widget _buildReply(String text) => Container(
+  MapEntry<String, Widget> _buildReply(String text, {Function()? onTap}) => MapEntry(text, Container(
         margin: EdgeInsets.all(5),
         decoration: BoxDecoration(
           border: Border.all(
@@ -348,7 +358,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
           customBorder: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(19),
           ),
-          onTap: () {
+          onTap: onTap ?? () {
             ActionHandler.sendMessage(currentChat!.chat, text);
           },
           child: Padding(
@@ -359,7 +369,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
             ),
           ),
         ),
-      );
+      ));
 
   @override
   Widget build(BuildContext context) {
@@ -391,15 +401,12 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                       child: AnimatedSize(
                         duration: Duration(milliseconds: 400),
                         vsync: this,
-                        child: replies.isEmpty
+                        child: internalSmartReplies.isEmpty
                             ? Container()
                             : Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
-                                children: replies
-                                    .map(
-                                      (e) => _buildReply(e),
-                                    )
-                                    .toList()),
+                                children: (internalSmartReplies..addEntries(replies
+                                    .map((e) => _buildReply(e)))).values.toList()),
                       ),
                     ),
                   );
