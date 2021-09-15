@@ -44,7 +44,7 @@ class _TextInputURLState extends State<TextInputURL> {
     copy.guidAuthKey.value = password;
     await SettingsManager().saveSettings(copy);
     try {
-      await SocketManager().startSocketIO(forceNewConnection: true, catchException: false);
+      SocketManager().startSocketIO(forceNewConnection: true, catchException: false);
     } catch (e) {
       error = e.toString();
       if (this.mounted) setState(() {});

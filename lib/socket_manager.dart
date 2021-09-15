@@ -215,7 +215,7 @@ class SocketManager {
     return new Future.value("");
   }
 
-  Future<void> startSocketIO({bool forceNewConnection = false, bool catchException = true}) async {
+  void startSocketIO({bool forceNewConnection = false, bool catchException = true}) {
     //removed check for settings being null here, could be an issue later but I doubt it (tneotia)
     if ((state.value == SocketState.CONNECTING || state.value == SocketState.CONNECTED) && !forceNewConnection) {
       Logger.debug("Already connected", tag: tag);
@@ -508,7 +508,7 @@ class SocketManager {
 
   Future<dynamic>? request(String path, Map<String, dynamic> params, {Function(List<dynamic>?)? cb}) async {
     Completer<List<dynamic>?> completer = new Completer();
-    if (_manager.socket == null) await SocketManager().startSocketIO();
+    if (_manager.socket == null) SocketManager().startSocketIO();
 
     Logger.info("Sending request for '$path'", tag: "Socket");
     _manager.sendMessage(path, params, (Map<String, dynamic> data) async {
