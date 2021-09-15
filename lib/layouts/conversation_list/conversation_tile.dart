@@ -1,17 +1,17 @@
 import 'dart:async';
-import 'package:file_picker/file_picker.dart';
-import 'package:bluebubbles/helpers/ui_helpers.dart';
-import 'package:flutter/foundation.dart';
-import 'package:universal_html/html.dart' as html;
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/indicator.dart';
 import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/helpers/message_marker.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/socket_singletons.dart';
+import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
@@ -24,13 +24,16 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
+import 'package:universal_html/html.dart' as html;
 
 class ConversationTile extends StatefulWidget {
   final Chat chat;
@@ -159,6 +162,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
   }
 
   Widget buildSlider(Widget child) {
+    if (kIsWeb || kIsDesktop) return child;
     return Obx(() => Slidable(
           actionPane: SlidableStrechActionPane(),
           actionExtentRatio: 0.2,
@@ -242,32 +246,40 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
   }
 
   Widget buildSubtitle() {
-    return Obx(() {
-      final hideContent =
-          SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value;
-      final generateContent =
-          SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeMessageContent.value;
+    return FutureBuilder<String>(
+      initialData: widget.chat.latestMessageText,
+      future: widget.chat.latestMessage != null
+          ? MessageHelper.getNotificationText(widget.chat.latestMessage!)
+          : Future.value(widget.chat.latestMessageText),
+      builder: (BuildContext context, AsyncSnapshot snapshot) {
+        String latestText = snapshot.data ?? "";
+        return Obx(
+          () {
+            final hideContent =
+                SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value;
+            final generateContent = SettingsManager().settings.redactedMode.value &&
+                SettingsManager().settings.generateFakeMessageContent.value;
 
-      TextStyle style = Theme.of(context).textTheme.subtitle1!.apply(
-            color: Theme.of(context).textTheme.subtitle1!.color!.withOpacity(
-                  0.85,
-                ),
-          );
-      String? message = widget.chat.latestMessageText != null ? widget.chat.latestMessageText : "";
+            TextStyle style = Theme.of(context).textTheme.subtitle1!.apply(
+                  color: Theme.of(context).textTheme.subtitle1!.color!.withOpacity(
+                        0.85,
+                      ),
+                );
 
-      if (generateContent)
-        message = widget.chat.fakeLatestMessageText;
-      else if (hideContent) style = style.copyWith(color: Colors.transparent);
+            if (generateContent)
+              latestText = widget.chat.fakeLatestMessageText ?? "";
+            else if (hideContent) style = style.copyWith(color: Colors.transparent);
 
-      return widget.chat.latestMessageText != null && !(widget.chat.latestMessageText is String)
-          ? widget.chat.latestMessageText as Widget
-          : Text(
-              message ?? "",
+            return Text(
+              latestText,
               style: style,
               overflow: TextOverflow.ellipsis,
               maxLines: 2,
             );
-    });
+          },
+        );
+      },
+    );
   }
 
   Widget buildLeading() {
@@ -336,29 +348,46 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
       : ConstrainedBox(
           constraints: BoxConstraints(maxWidth: 100.0),
           child: FutureBuilder<Message>(
-              future: widget.chat.latestMessageFuture,
-              builder: (context, snapshot) {
-                if (snapshot.data != null) {
-                  return Obx(() {
+            initialData: widget.chat.latestMessage,
+            future: widget.chat.latestMessageFuture,
+            builder: (BuildContext builder, AsyncSnapshot snapshot) {
+              return Obx(
+                () {
+                  Message? message = snapshot.data;
+                  MessageMarkers? markers =
+                      CurrentChat.getCurrentChat(widget.chat)?.messageMarkers.markers.value ?? null.obs.value;
+                  Indicator show = shouldShow(
+                      message, markers?.myLastMessage, markers?.lastReadMessage, markers?.lastDeliveredMessage);
+                  if (message != null) {
                     return Text(
-                        snapshot.data!.error.value > 0 ? "Error" : buildDate(widget.chat.latestMessageDate),
+                        message.error.value > 0
+                            ? "Error"
+                            : ((show == Indicator.READ
+                                    ? "Read\n"
+                                    : show == Indicator.DELIVERED
+                                        ? "Delivered\n"
+                                        : show == Indicator.SENT
+                                            ? "Sent\n"
+                                            : "") +
+                                buildDate(widget.chat.latestMessageDate)),
                         textAlign: TextAlign.right,
                         style: Theme.of(context).textTheme.subtitle2!.copyWith(
-                          color: snapshot.data!.error.value > 0
-                              ? Colors.red
-                              : Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
-                        ),
+                              color: message.error.value > 0
+                                  ? Colors.red
+                                  : Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
+                            ),
                         overflow: TextOverflow.clip);
-                  });
-                }
-                return Text(
-                    buildDate(widget.chat.latestMessageDate),
-                    textAlign: TextAlign.right,
-                    style: Theme.of(context).textTheme.subtitle2!.copyWith(
-                      color: Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
-                    ),
-                    overflow: TextOverflow.clip);
-              }),
+                  }
+                  return Text(buildDate(widget.chat.latestMessageDate),
+                      textAlign: TextAlign.right,
+                      style: Theme.of(context).textTheme.subtitle2!.copyWith(
+                            color: Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
+                          ),
+                      overflow: TextOverflow.clip);
+                },
+              );
+            },
+          ),
         );
 
   void onTap() {

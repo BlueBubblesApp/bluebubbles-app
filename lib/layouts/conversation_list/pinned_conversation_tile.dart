@@ -1,14 +1,12 @@
 import 'dart:async';
-import 'package:bluebubbles/helpers/message_marker.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:flutter/foundation.dart';
-import 'package:universal_html/html.dart' as html;
 import 'dart:math';
 
-import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/helpers/indicator.dart';
 import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/helpers/message_marker.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/socket_singletons.dart';
+import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/pinned_tile_text_bubble.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
@@ -21,13 +19,15 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:universal_html/html.dart' as html;
 
 class PinnedConversationTile extends StatefulWidget {
   final Chat chat;
@@ -307,7 +307,8 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
                             showTypingIndicator.value = snapshot.data["data"];
                           }
                           return Obx(() {
-                            MessageMarkers? markers = CurrentChat.getCurrentChat(widget.chat)?.messageMarkers.markers.value ?? null.obs.value;
+                            MessageMarkers? markers =
+                                CurrentChat.getCurrentChat(widget.chat)?.messageMarkers.markers.value ?? null.obs.value;
                             if (showTypingIndicator.value) {
                               return Positioned(
                                 top: -sqrt(maxWidth / 2),
@@ -322,54 +323,48 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
                                 ),
                               );
                             }
-                            if (shouldShow(markers?.myLastMessage, markers?.lastReadMessage, markers?.lastDeliveredMessage) != Indicator.NONE) {
+                            if (shouldShow(widget.chat.latestMessage, markers?.myLastMessage, markers?.lastReadMessage,
+                                    markers?.lastDeliveredMessage) !=
+                                Indicator.NONE) {
                               return Positioned(
-                                  left: sqrt(maxWidth) - maxWidth * 0.05 * sqrt(2),
-                                  top: maxWidth - maxWidth * 0.13 * 2,
-                                  child: Stack(
-                                    alignment: Alignment.center,
-                                    children: <Widget>[
-                                      Container(
-                                        width: maxWidth * 0.27,
-                                        height: maxWidth * 0.27,
-                                        decoration: BoxDecoration(
-                                          border: Border.all(color: Theme
-                                              .of(context)
-                                              .backgroundColor, width: 1),
-                                          borderRadius: BorderRadius.circular(30),
-                                          color: (widget.chat.hasUnreadMessage ?? false)
-                                              ? alphaWithoutAlpha
-                                              : context.textTheme.subtitle1!.color,
-                                        ),
+                                left: sqrt(maxWidth) - maxWidth * 0.05 * sqrt(2),
+                                top: maxWidth - maxWidth * 0.13 * 2,
+                                child: Stack(
+                                  alignment: Alignment.center,
+                                  children: <Widget>[
+                                    Container(
+                                      width: maxWidth * 0.27,
+                                      height: maxWidth * 0.27,
+                                      decoration: BoxDecoration(
+                                        border: Border.all(color: Theme.of(context).backgroundColor, width: 1),
+                                        borderRadius: BorderRadius.circular(30),
+                                        color: (widget.chat.hasUnreadMessage ?? false)
+                                            ? alphaWithoutAlpha
+                                            : context.textTheme.subtitle1!.color,
                                       ),
-                                      Transform.rotate(
-                                        angle: shouldShow(
-                                            markers?.myLastMessage,
-                                            markers?.lastReadMessage,
-                                            markers?.lastDeliveredMessage) !=
-                                            Indicator.SENT ? pi / 2 : 0,
-                                        child: Icon(
-                                          shouldShow(markers?.myLastMessage,
-                                              markers?.lastReadMessage,
-                                              markers
-                                                  ?.lastDeliveredMessage) ==
-                                              Indicator.DELIVERED
-                                              ? CupertinoIcons
-                                              .location_north_fill
-                                              : shouldShow(
-                                              markers?.myLastMessage,
-                                              markers?.lastReadMessage,
-                                              markers
-                                                  ?.lastDeliveredMessage) ==
-                                              Indicator.READ
-                                              ? CupertinoIcons.location_north
-                                              : CupertinoIcons.location_fill,
-                                          color: Colors.white,
-                                          size: maxWidth * 0.14,
-                                        ),
+                                    ),
+                                    Transform.rotate(
+                                      angle: shouldShow(widget.chat.latestMessage, markers?.myLastMessage,
+                                                  markers?.lastReadMessage, markers?.lastDeliveredMessage) !=
+                                              Indicator.SENT
+                                          ? pi / 2
+                                          : 0,
+                                      child: Icon(
+                                        shouldShow(widget.chat.latestMessage, markers?.myLastMessage,
+                                                    markers?.lastReadMessage, markers?.lastDeliveredMessage) ==
+                                                Indicator.DELIVERED
+                                            ? CupertinoIcons.location_north_fill
+                                            : shouldShow(widget.chat.latestMessage, markers?.myLastMessage,
+                                                        markers?.lastReadMessage, markers?.lastDeliveredMessage) ==
+                                                    Indicator.READ
+                                                ? CupertinoIcons.location_north
+                                                : CupertinoIcons.location_fill,
+                                        color: Colors.white,
+                                        size: maxWidth * 0.14,
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
+                                ),
                               );
                             }
                             return Container();
@@ -415,16 +410,6 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
     );
   }
 
-  Indicator shouldShow(Message? myLastMessage, Message? lastReadMessage, Message? lastDeliveredMessage) {
-    if (widget.chat.latestMessage?.dateRead != null && (widget.chat.latestMessage?.isFromMe ?? false)) return Indicator.READ;
-    if (widget.chat.latestMessage?.dateDelivered != null && (widget.chat.latestMessage?.isFromMe ?? false)) return Indicator.DELIVERED;
-    if (widget.chat.latestMessage?.dateCreated != null && (widget.chat.latestMessage?.isFromMe ?? false)) return Indicator.SENT;
-
-    return Indicator.NONE;
-  }
-
   @override
   bool get wantKeepAlive => true;
 }
-
-enum Indicator {READ, DELIVERED, SENT, NONE}
