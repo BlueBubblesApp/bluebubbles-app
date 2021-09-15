@@ -336,7 +336,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
       : ConstrainedBox(
           constraints: BoxConstraints(maxWidth: 100.0),
           child: FutureBuilder<Message>(
-              future: widget.chat.latestMessage,
+              future: widget.chat.latestMessageFuture,
               builder: (context, snapshot) {
                 if (snapshot.data != null) {
                   return Obx(() {
