@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:flutter/foundation.dart';
@@ -159,6 +160,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
   }
 
   Widget buildSlider(Widget child) {
+    if (kIsWeb || kIsDesktop) return child;
     return Obx(() => Slidable(
           actionPane: SlidableStrechActionPane(),
           actionExtentRatio: 0.2,
@@ -242,32 +244,43 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
   }
 
   Widget buildSubtitle() {
-    return Obx(() {
-      final hideContent =
-          SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value;
-      final generateContent =
-          SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeMessageContent.value;
+    return FutureBuilder<Message>(
+      future: widget.chat.latestMessage,
+      builder: (BuildContext context, AsyncSnapshot snapshot) {
+        return FutureBuilder<String>(
+          initialData: widget.chat.latestMessageText,
+          future: snapshot.hasData ? MessageHelper.getNotificationText(snapshot.data) : Future.value(widget.chat.latestMessageText),
+          builder: (BuildContext context, AsyncSnapshot _snapshot) {
+            String latestText = _snapshot.data ?? "";
+            return Obx(
+              () {
+                final hideContent = SettingsManager().settings.redactedMode.value &&
+                    SettingsManager().settings.hideMessageContent.value;
+                final generateContent = SettingsManager().settings.redactedMode.value &&
+                    SettingsManager().settings.generateFakeMessageContent.value;
 
-      TextStyle style = Theme.of(context).textTheme.subtitle1!.apply(
-            color: Theme.of(context).textTheme.subtitle1!.color!.withOpacity(
-                  0.85,
-                ),
-          );
-      String? message = widget.chat.latestMessageText != null ? widget.chat.latestMessageText : "";
+                TextStyle style = Theme.of(context).textTheme.subtitle1!.apply(
+                      color: Theme.of(context).textTheme.subtitle1!.color!.withOpacity(
+                            0.85,
+                          ),
+                    );
 
-      if (generateContent)
-        message = widget.chat.fakeLatestMessageText;
-      else if (hideContent) style = style.copyWith(color: Colors.transparent);
+                if (generateContent)
+                  latestText = widget.chat.fakeLatestMessageText ?? "";
+                else if (hideContent) style = style.copyWith(color: Colors.transparent);
 
-      return widget.chat.latestMessageText != null && !(widget.chat.latestMessageText is String)
-          ? widget.chat.latestMessageText as Widget
-          : Text(
-              message ?? "",
-              style: style,
-              overflow: TextOverflow.ellipsis,
-              maxLines: 2,
+                return Text(
+                  latestText,
+                  style: style,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 2,
+                );
+              },
             );
-    });
+          },
+        );
+      },
+    );
   }
 
   Widget buildLeading() {
@@ -340,23 +353,21 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
               builder: (context, snapshot) {
                 if (snapshot.data != null) {
                   return Obx(() {
-                    return Text(
-                        snapshot.data!.error.value > 0 ? "Error" : buildDate(widget.chat.latestMessageDate),
+                    return Text(snapshot.data!.error.value > 0 ? "Error" : buildDate(widget.chat.latestMessageDate),
                         textAlign: TextAlign.right,
                         style: Theme.of(context).textTheme.subtitle2!.copyWith(
-                          color: snapshot.data!.error.value > 0
-                              ? Colors.red
-                              : Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
-                        ),
+                              color: snapshot.data!.error.value > 0
+                                  ? Colors.red
+                                  : Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
+                            ),
                         overflow: TextOverflow.clip);
                   });
                 }
-                return Text(
-                    buildDate(widget.chat.latestMessageDate),
+                return Text(buildDate(widget.chat.latestMessageDate),
                     textAlign: TextAlign.right,
                     style: Theme.of(context).textTheme.subtitle2!.copyWith(
-                      color: Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
-                    ),
+                          color: Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
+                        ),
                     overflow: TextOverflow.clip);
               }),
         );

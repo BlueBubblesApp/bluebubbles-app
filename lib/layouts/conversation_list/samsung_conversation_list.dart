@@ -1,4 +1,5 @@
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 import 'dart:ui';
 
@@ -461,9 +462,9 @@ class _SamsungState extends State<SamsungConversationList> {
                           return Obx(() {
                             if (SettingsManager().settings.swipableConversationTiles.value) {
                               return Dismissible(
-                                background: Obx(
+                                background: (kIsDesktop || kIsWeb) ? Container() : Obx(
                                         () => slideRightBackground(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index])),
-                                secondaryBackground: Obx(
+                                secondaryBackground: (kIsDesktop || kIsWeb) ? Container() : Obx(
                                         () => slideLeftBackground(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index])),
                                 // Each Dismissible must contain a Key. Keys allow Flutter to
                                 // uniquely identify widgets.

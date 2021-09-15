@@ -1,4 +1,5 @@
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 import 'dart:ui';
 
@@ -478,9 +479,9 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                     if (SettingsManager().settings.swipableConversationTiles.value) {
                       return Dismissible(
                           background:
-                          Obx(() => slideRightBackground(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index])),
+                          (kIsDesktop || kIsWeb) ? null : Obx(() => slideRightBackground(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index])),
                           secondaryBackground:
-                          Obx(() => slideLeftBackground(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index])),
+                          (kIsDesktop || kIsWeb) ? null : Obx(() => slideLeftBackground(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index])),
                           // Each Dismissible must contain a Key. Keys allow Flutter to
                           // uniquely identify widgets.
                           key: UniqueKey(),
