@@ -134,6 +134,8 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
   void resetReplies() {
     if (replies.length == 0) return;
     replies = [];
+    internalSmartReplies.clear();
+    setState(() {});
     return smartReplyController.sink.add(replies);
   }
 
@@ -403,10 +405,14 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                         vsync: this,
                         child: internalSmartReplies.isEmpty
                             ? Container()
-                            : Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
+                            : Container(
+                              height: Theme.of(context).textTheme.bodyText1!.fontSize! + 30,
+                              child: ListView(
+                                reverse: true,
+                                scrollDirection: Axis.horizontal,
                                 children: (internalSmartReplies..addEntries(replies
-                                    .map((e) => _buildReply(e)))).values.toList()),
+                                    .map((e) => _buildReply(e)))).values.toList().reversed.toList()),
+                            ),
                       ),
                     ),
                   );
