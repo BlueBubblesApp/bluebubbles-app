@@ -448,6 +448,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   Widget buildShareButton() {
     double size = SettingsManager().settings.skin.value == Skins.iOS ? 35 : 40;
     return AnimatedSize(
+      vsync: this,
       duration: Duration(milliseconds: 300),
       child: Container(
         height: size,
@@ -559,6 +560,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           alignment: AlignmentDirectional.centerEnd,
           children: <Widget>[
             AnimatedSize(
+              vsync: this,
               duration: Duration(milliseconds: 100),
               curve: Curves.easeInOut,
               child: RawKeyboardListener(
