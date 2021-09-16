@@ -554,8 +554,8 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                             : buildChatSelectorBody(),
                       ),
                     ),
-                    Obx(() {
-                      if (widget.onSelect == null) {
+                    if (widget.onSelect == null)
+                      Obx(() {
                         if (SettingsManager().settings.swipeToCloseKeyboard.value ||
                             SettingsManager().settings.swipeToOpenKeyboard.value) {
                           return GestureDetector(
@@ -573,9 +573,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                               child: textField);
                         }
                         return textField;
-                      }
-                      return Container();
-                    }),
+                      }),
                   ]),
                   AnimatedPositioned(
                     duration: Duration(milliseconds: 300),
@@ -606,6 +604,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                               true,
                               false,
                               message?.isBigEmoji() ?? false,
+                              MessageWidgetMixin.buildMessageSpansAsync(context, message),
                               currentChat: currentChat,
                               customWidth:
                               (message?.hasAttachments ?? false) && (message?.text?.isEmpty ?? true) ? null : value,
@@ -629,10 +628,8 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
             ],
           ),
         )),
-        floatingActionButton: currentChat != null
-            ? AnimatedOpacity(
-                duration: Duration(milliseconds: 250), opacity: 1, curve: Curves.easeInOut, child: buildFAB())
-            : null,
+        floatingActionButton: AnimatedOpacity(
+            duration: Duration(milliseconds: 250), opacity: 1, curve: Curves.easeInOut, child: buildFAB()),
       ),
     );
   }

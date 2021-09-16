@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
+import 'package:quick_notify/quick_notify.dart';
 import 'package:universal_html/html.dart' as uh;
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -18,7 +19,6 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart' as fln;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -191,7 +191,7 @@ class NotificationManager {
     // Try to load in an avatar for the person
     try {
       // If there is a contact specified, we can use it's avatar
-      if (contact != null) {
+      if (contact != null && contact.avatar != null) {
         if (contact.avatar!.length > 0) contactIcon = contact.avatar;
         // Otherwise if there isn't, we use the [defaultAvatar]
       } else {
@@ -254,6 +254,11 @@ class NotificationManager {
       notif.onClick.listen((event) {
         MethodChannelInterface().openChat(chatGuid);
       });
+      return;
+    }
+    if (kIsDesktop) {
+      Logger.info("Sending desktop notification");
+      QuickNotify.notify(content: chatTitle + ":\n" + messageText);
       return;
     }
     await MethodChannelInterface().platform.invokeMethod("new-message-notification", {

@@ -10,6 +10,7 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -68,7 +69,7 @@ class SetupBloc {
     await SettingsManager().saveSettings(settingsCopy);
     await SettingsManager().saveFCMData(data);
     await SocketManager().authFCM(catchException: false, force: true);
-    await SocketManager().startSocketIO(forceNewConnection: true, catchException: false);
+    SocketManager().startSocketIO(forceNewConnection: true, catchException: false);
     connectionSubscription = ever<SocketState>(SocketManager().state, (event) {
       connectionStatus.value = event;
 
@@ -129,7 +130,7 @@ class SetupBloc {
       addOutput("Getting Chats...", SetupOutputType.LOG);
       List<Chat> chats = await SocketManager().getChats({"withLastMessage": kIsWeb});
 
-      // If we got chats, cancel the timer
+      // If we got chats, cancel the timerCo
       timer.cancel();
 
       if (chats.isEmpty) {
@@ -139,6 +140,31 @@ class SetupBloc {
       }
 
       addOutput("Received initial chat list. Size: ${chats.length}", SetupOutputType.LOG);
+      if (kIsWeb) {
+        ChatBloc().chats.clear();
+        ChatBloc().chats.addAll(chats);
+        ChatBloc().hasChats.value = true;
+        ChatBloc().loadedChatBatch.value = true;
+        for (Chat chat in chats) {
+          chat.participants.forEach((element) {
+            if (ChatBloc().cachedHandles.firstWhereOrNull((e) => e.address == element.address) == null) {
+              ChatBloc().cachedHandles.add(element);
+            }
+            addOutput("Finished syncing chat, '${chat.chatIdentifier}'", SetupOutputType.LOG);
+          });
+          _currentIndex += 1;
+          _progress = ((_currentIndex / chats.length) * 100).clamp(0, 99);
+        }
+        addOutput("Fetching contacts from server...", SetupOutputType.LOG);
+        await ContactManager().getContacts(force: true);
+        addOutput("Received contacts list. Size: ${ContactManager().contacts.length}", SetupOutputType.LOG);
+        addOutput("Matching contacts to chats...", SetupOutputType.LOG);
+        await ContactManager().matchHandles();
+        _progress = 100;
+        finishSetup();
+        this.startIncrementalSync(settings);
+        return;
+      }
       for (Chat chat in chats) {
         if (chat.guid == "ERROR") {
           addOutput("Failed to save chat data, '${chat.displayName}'", SetupOutputType.ERROR);
@@ -222,9 +248,9 @@ class SetupBloc {
     _settingsCopy.finishedSetup.value = true;
     await SettingsManager().saveSettings(_settingsCopy);
 
-    ContactManager().contacts = [];
-    await ContactManager().getContacts(force: true);
-    await ChatBloc().refreshChats(force: true);
+    if (!kIsWeb) ContactManager().contacts = [];
+    if (!kIsWeb) await ContactManager().getContacts(force: true);
+    if (!kIsWeb) await ChatBloc().refreshChats(force: true);
     await SocketManager().authFCM(force: true);
     closeSync();
   }

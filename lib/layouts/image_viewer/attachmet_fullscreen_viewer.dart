@@ -51,7 +51,11 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
   @override
   void initState() {
     super.initState();
-    init();
+    if (kIsWeb) {
+      controller = new PageController(initialPage: 0);
+    } else {
+      init();
+    }
   }
 
   Future<void> init() async {
@@ -143,7 +147,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                         ? CustomDismissDirection.none
                         : CustomDismissDirection.vertical,
                     key: Key(
-                        '${widget.currentChat != null ? widget.currentChat!.chatAttachments[index].guid : widget.attachment.guid}'),
+                        '${kIsWeb ? widget.attachment.guid : widget.currentChat != null ? widget.currentChat!.chatAttachments[index].guid : widget.attachment.guid}'),
                     onDismissed: (_) => Navigator.of(context).pop(),
                     child: Builder(builder: (_) {
                       Logger.info("Showing index: " + index.toString());

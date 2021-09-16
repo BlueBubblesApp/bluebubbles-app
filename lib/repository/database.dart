@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
@@ -147,6 +148,8 @@ class DBProvider {
     }
     //ignore: unnecessary_cast, we need this as a workaround
     Directory documentsDirectory = (await getApplicationDocumentsDirectory()) as Directory;
+    //ignore: unnecessary_cast, we need this as a workaround
+    if (kIsDesktop) documentsDirectory = (await getApplicationSupportDirectory()) as Directory;
     _path = join(documentsDirectory.path, "chat.db");
     return await openDatabase(_path, version: currentVersion, onUpgrade: _onUpgrade, onOpen: (Database db) async {
       Logger.info("Database Opened");

@@ -60,6 +60,7 @@ class Settings {
   final RxBool colorsFromMedia = false.obs;
   final RxString globalTextDetection = "".obs;
   final RxBool filterUnknownSenders = false.obs;
+  final RxBool tabletMode = true.obs;
 
   // final RxString emojiFontFamily;
 
@@ -275,6 +276,8 @@ class Settings {
         settings.globalTextDetection.value = entry.value;
       } else if (entry.name == "filterUnknownSenders") {
         settings.filterUnknownSenders.value = entry.value;
+      } else if (entry.name == "tabletMode") {
+        settings.tabletMode.value = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -316,7 +319,6 @@ class Settings {
 
   static Settings getSettings() {
     Set<String> keys = prefs.getKeys();
-    print(keys);
 
     Map<String, dynamic> items = {};
     for (String s in keys) {
@@ -384,6 +386,7 @@ class Settings {
       'notificationSound': this.notificationSound.value,
       'globalTextDetection': this.globalTextDetection.value,
       'filterUnknownSenders': this.filterUnknownSenders.value,
+      'tabletMode': this.tabletMode.value,
       'enablePrivateAPI': this.enablePrivateAPI.value,
       'privateSendTypingIndicators': this.privateSendTypingIndicators.value,
       'privateMarkChatAsRead': this.privateMarkChatAsRead.value,
@@ -475,6 +478,7 @@ class Settings {
     SettingsManager().settings.notificationSound.value = map['notificationSound'] ?? "default";
     SettingsManager().settings.globalTextDetection.value = map['globalTextDetection'] ?? "";
     SettingsManager().settings.filterUnknownSenders.value = map['filterUnknownSenders'] ?? false;
+    SettingsManager().settings.tabletMode.value = map['tabletMode'] ?? true;
     SettingsManager().settings.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     SettingsManager().settings.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
     SettingsManager().settings.privateMarkChatAsRead.value = map['privateMarkChatAsRead'] ?? false;
@@ -562,6 +566,7 @@ class Settings {
     s.colorsFromMedia.value = map['colorsFromMedia'] ?? false;
     s.globalTextDetection.value = map['globalTextDetection'] ?? "";
     s.filterUnknownSenders.value = map['filterUnknownSenders'] ?? false;
+    s.tabletMode.value = map['tabletMode'] ?? true;
     s.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     s.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
     s.privateMarkChatAsRead.value = map['privateMarkChatAsRead'] ?? false;

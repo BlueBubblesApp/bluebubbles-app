@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/helpers/constants.dart';
@@ -39,6 +41,16 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
     LifeCycleManager().stream.listen((event) async {
       if (event && widget.visible) getAttachments();
     });
+
+    EventDispatcher().stream.listen((Map<String, dynamic> event) {
+      if (!this.mounted) return;
+      if (!event.containsKey("type")) return;
+
+      if (event["type"] == "add-attachment") {
+        PlatformFile file = PlatformFile.fromMap(event['data']);
+        widget.onAddAttachment(file);
+      }
+    });
   }
 
   Future<void> getAttachments() async {
@@ -47,12 +59,33 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
     if (list.length > 0) {
       List<AssetEntity> images = await list.first.getAssetListRange(start: 0, end: 60);
       _images = images;
+      if (DateTime.now().toLocal().isWithin(images.first.modifiedDateTime, minutes: 10)) {
+        dynamic file = await images.first.file;
+        EventDispatcher().emit('add-custom-smartreply', {
+          "path": file.path,
+          "name": file.path.split('/').last,
+          "size": file.lengthSync(),
+          "bytes": file.readAsBytesSync(),
+        });
+      }
     }
 
     if (this.mounted) setState(() {});
   }
 
   Future<void> openFullCamera({String type: 'camera'}) async {
+    bool camera = await Permission.camera.isGranted;
+    if (!camera) {
+      bool granted = (await Permission.camera.request()) == PermissionStatus.granted;
+      if (!granted) {
+        showSnackbar(
+            "Error",
+            "Camera was denied"
+        );
+        return;
+      }
+    }
+
     // Create a file that the camera can write to
     String appDocPath = SettingsManager().appDocDir.path;
     String ext = (type == 'video') ? ".mp4" : ".png";

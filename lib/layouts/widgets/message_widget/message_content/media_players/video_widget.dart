@@ -31,6 +31,7 @@ class VideoWidgetController extends GetxController with SingleGetTickerProviderM
   final PlatformFile file;
   final Attachment attachment;
   final BuildContext context;
+
   VideoWidgetController({
     required this.file,
     required this.attachment,
@@ -103,11 +104,7 @@ class VideoWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetBuilder<VideoWidgetController>(
       global: false,
-      init: VideoWidgetController(
-        file: file,
-        attachment: attachment,
-        context: context
-      ),
+      init: VideoWidgetController(file: file, attachment: attachment, context: context),
       dispose: (state) {
         state.controller?.navigated = true;
       },
@@ -173,11 +170,7 @@ class VideoWidget extends StatelessWidget {
               children: <Widget>[
                 AspectRatio(
                   aspectRatio: controller.controller.value.aspectRatio,
-                  child: Stack(
-                    children: <Widget>[
-                      VideoPlayer(controller.controller),
-                    ],
-                  ),
+                  child: VideoPlayer(controller.controller),
                 ),
                 AnimatedOpacity(
                   opacity: controller.showPlayPauseOverlay.value ? 1 : 0,
@@ -202,7 +195,9 @@ class VideoWidget extends StatelessWidget {
                           )
                         : GestureDetector(
                             child: Icon(
-                              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.play : Icons.play_arrow,
+                              SettingsManager().settings.skin.value == Skins.iOS
+                                  ? CupertinoIcons.play
+                                  : Icons.play_arrow,
                               color: Colors.white,
                               size: 45,
                             ),
@@ -235,16 +230,16 @@ class VideoWidget extends StatelessWidget {
                               ),
                               padding: EdgeInsets.all(5),
                               child: Obx(() => Icon(
-                                controller.muted.value
-                                    ? SettingsManager().settings.skin.value == Skins.iOS
-                                    ? CupertinoIcons.volume_mute
-                                    : Icons.volume_mute
-                                    : SettingsManager().settings.skin.value == Skins.iOS
-                                    ? CupertinoIcons.volume_up
-                                    : Icons.volume_up,
-                                color: Colors.white,
-                                size: 15,
-                              )),
+                                    controller.muted.value
+                                        ? SettingsManager().settings.skin.value == Skins.iOS
+                                            ? CupertinoIcons.volume_mute
+                                            : Icons.volume_mute
+                                        : SettingsManager().settings.skin.value == Skins.iOS
+                                            ? CupertinoIcons.volume_up
+                                            : Icons.volume_up,
+                                    color: Colors.white,
+                                    size: 15,
+                                  )),
                             ),
                           ),
                         ),

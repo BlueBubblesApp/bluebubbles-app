@@ -70,13 +70,39 @@ class AttachmentDownloadController extends GetxController {
     getChunkRecursive(attachment.guid!, 0, numOfChunks, []);
   }
 
-  void getChunkRecursive(String guid, int index, int total, List<int> currentBytes) {
+  Future<void> getChunkRecursive(String guid, int index, int total, List<int> currentBytes) async {
     // if (index <= total) {
     Map<String, dynamic> params = new Map();
     params["identifier"] = guid;
     params["start"] = index * chunkSize;
     params["chunkSize"] = chunkSize;
     params["compress"] = false;
+    if (kIsWeb) {
+      var response = await api.downloadAttachment(attachment.guid!);
+      attachment.webUrl = response.requestOptions.path;
+      Logger.info("Finished fetching attachment");
+      stopwatch.stop();
+      Logger.info("Attachment downloaded in ${stopwatch.elapsedMilliseconds} ms");
+
+      if (CurrentChat.activeChat?.chatAttachments.firstWhereOrNull((e) => e.guid == attachment.guid) ==
+          null) {
+        CurrentChat.activeChat?.chatAttachments.add(attachment);
+      }
+
+      // Finish the downloader
+      Get.find<AttachmentDownloadService>().removeFromQueue(this);
+      if (onComplete != null) onComplete!();
+      attachment.bytes = response.data;
+      // Add attachment to sink based on if we got data
+
+      file.value = PlatformFile(
+        name: attachment.transferName!,
+        path: kIsWeb ? null : attachment.getPath(),
+        size: total,
+        bytes: response.data,
+      );
+      return;
+    }
     SocketManager().sendMessage("get-attachment-chunk", params, (attachmentResponse) async {
       if (attachmentResponse['status'] != 200 ||
           (attachmentResponse.containsKey("error") && attachmentResponse["error"] != null)) {
@@ -134,11 +160,13 @@ class AttachmentDownloadController extends GetxController {
           name: attachment.transferName!,
           path: kIsWeb ? null : attachment.getPath(),
           size: total,
-          bytes: base64.decode(attachmentResponse['data']),
+          bytes: attachment.bytes,
         );
         if (kIsDesktop) {
-          File _file = await File(attachment.getPath()).create(recursive: true);
-          _file.writeAsBytesSync(base64.decode(attachmentResponse['data']));
+          if (attachment.bytes != null) {
+            File _file = await File(attachment.getPath()).create(recursive: true);
+            _file.writeAsBytesSync(attachment.bytes!.toList());
+          }
         }
       }
     }, reason: "Attachment downloader " + attachment.guid!, path: kIsWeb ? "" : attachment.getPath());

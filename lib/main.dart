@@ -2,7 +2,9 @@ import 'dart:async';
 import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
+import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:universal_io/io.dart';
+import 'package:universal_html/html.dart' as html;
 import 'dart:isolate';
 import 'dart:ui';
 
@@ -27,8 +29,6 @@ import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/theme_object.dart';
-// import 'package:sentry/sentry.dart';
-
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -47,6 +47,7 @@ import 'package:secure_application/secure_application.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:window_size/window_size.dart';
 
 // final SentryClient _sentry = SentryClient(
 //     dsn:
@@ -135,6 +136,12 @@ Future<Null> main() async {
       await flutterLocalNotificationsPlugin!.initialize(initializationSettings);
       tz.initializeTimeZones();
       tz.setLocalLocation(tz.getLocation(await FlutterNativeTimezone.getLocalTimezone()));
+      if (!await GoogleMlKit.nlp.entityModelManager().isModelDownloaded(EntityExtractorOptions.ENGLISH)) {
+        GoogleMlKit.nlp.entityModelManager().downloadModel(EntityExtractorOptions.ENGLISH, isWifiRequired: false);
+      }
+    }
+    if (kIsDesktop) {
+      setWindowTitle('BlueBubbles (Beta)');
     }
   } catch (e) {
     exception = e;
@@ -285,6 +292,12 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   void initState() {
     super.initState();
 
+    // we want to refresh the page rather than loading a new instance of [Home]
+    // to avoid errors
+    if (LifeCycleManager().isAlive && kIsWeb) {
+      html.window.location.reload();
+    }
+
     // Initalize a bunch of managers
     MethodChannelInterface().init();
 
@@ -311,6 +324,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       // the UI thread is active
       IsolateNameServer.registerPortWithName(port.sendPort, 'bg_isolate');
       port.listen((dynamic data) {
+        Logger.info("SendPort received action ${data['action']}");
         if (data['action'] == 'new-message') {
           // Add it to the queue with the data as the item
           IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_MESSAGE_EVENT, item: {"data": data}));

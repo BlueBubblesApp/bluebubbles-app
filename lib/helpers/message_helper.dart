@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
+import 'package:universal_html/html.dart' as html;
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
@@ -219,7 +221,7 @@ class MessageHelper {
     if (message.isFromMe! || message.handle == null) return; // Don't notify if the text is from me
 
     CurrentChat? currChat = CurrentChat.activeChat;
-    if (LifeCycleManager().isAlive &&
+    if (((LifeCycleManager().isAlive && !kIsWeb) || (kIsWeb && !(html.window.document.hidden ?? false))) &&
         ((!SettingsManager().settings.notifyOnChatList.value &&
                 currChat == null &&
                 !Get.currentRoute.contains("settings")) ||
@@ -270,6 +272,8 @@ class MessageHelper {
           key = "movie";
         } else if (mime.contains("image/gif")) {
           key = "GIF";
+        } else if (mime.contains("application/pdf")) {
+          key = "PDF";
         } else {
           key = mime.split("/").first;
         }
@@ -328,6 +332,8 @@ class MessageHelper {
           key = "movie";
         } else if (mime.contains("image/gif")) {
           key = "GIF";
+        } else if (mime.contains("application/pdf")) {
+          key = "PDF";
         } else {
           key = mime.split("/").first;
         }

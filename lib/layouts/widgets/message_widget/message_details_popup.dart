@@ -42,6 +42,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:sprung/sprung.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class MessageDetailsPopup extends StatefulWidget {
   MessageDetailsPopup({
@@ -403,6 +404,25 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             child: ListTile(
               title: Text(
                 "Open In Browser",
+                style: Theme.of(context).textTheme.bodyText1,
+              ),
+              trailing: Icon(
+                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.macwindow : Icons.open_in_browser,
+                color: Theme.of(context).textTheme.bodyText1!.color,
+              ),
+            ),
+          ),
+        ),
+      if (showDownload && kIsWeb && widget.message.attachments!.first?.webUrl != null)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () async {
+              await launch(widget.message.attachments!.first!.webUrl! + "?guid=${SettingsManager().settings.guidAuthKey}");
+            },
+            child: ListTile(
+              title: Text(
+                "Open In New Tab",
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               trailing: Icon(
@@ -795,7 +815,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
       topMinimum = upperLimit;
     }
 
-    print(topMinimum.toString() + ' | ' + upperLimit.toString());
     double topOffset = (messageTopOffset + widget.childSize!.height).toDouble().clamp(topMinimum, upperLimit);
     bool shiftRight = currentChat!.chat.isGroup() || SettingsManager().settings.alwaysShowAvatars.value;
     double leftOffset =

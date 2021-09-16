@@ -34,7 +34,7 @@ class ChatBloc {
   RxInt get unreads => _unreads;
 
   final RxBool hasChats = false.obs;
-  final RxBool loadedChats = false.obs;
+  final RxBool loadedChatBatch = false.obs;
 
   final List<Handle> cachedHandles = [];
 
@@ -226,7 +226,7 @@ class ChatBloc {
         chat.participants.length == 1 ? await ContactManager().getCachedContact(chat.participants.first) : null;
     try {
       // If there is a contact specified, we can use it's avatar
-      if (contact != null && contact.avatar!.isNotEmpty) {
+      if (contact != null && contact.avatar != null && contact.avatar!.isNotEmpty) {
         icon = contact.avatar;
         // Otherwise if there isn't, we use the [defaultAvatar]
       } else {
@@ -321,6 +321,10 @@ class ChatBloc {
         _chats.value = newChats;
         _chats.sort(Chat.sort);
       }
+
+      if (i == 0) {
+        loadedChatBatch.value = true;
+      }
     }
 
     Logger.info("Finished fetching chats (${_chats.length}).", tag: "ChatBloc");
@@ -328,7 +332,6 @@ class ChatBloc {
 
     if (chatRequest != null && !chatRequest!.isCompleted) {
       chatRequest!.complete();
-      loadedChats.value = true;
     }
   }
 

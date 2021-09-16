@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
+import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
@@ -61,6 +63,14 @@ class _SettingsPanelState extends State<SettingsPanel> {
   void initState() {
     super.initState();
     _settingsCopy = SettingsManager().settings;
+
+    EventDispatcher().stream.listen((Map<String, dynamic> event) {
+      if (!event.containsKey("type")) return;
+
+      if (event["type"] == 'theme-update' && this.mounted) {
+        setState(() {});
+      }
+    });
   }
 
   @override
@@ -78,7 +88,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
         systemNavigationBarIconBrightness: headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
-      child: buildForDevice(),
+      child: Obx(() => buildForDevice()),
     );
   }
 
@@ -237,7 +247,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         text: "Appearance"),
                     SettingsTile(
                       backgroundColor: tileColor,
-                      title: "Theme Settings",
+                      title: "Appearance Settings",
                       subtitle: SettingsManager().settings.skin.value.toString().split(".").last +
                           "   |   " +
                           AdaptiveTheme.of(context).mode.toString().split(".").last.capitalizeFirst! +
@@ -730,10 +740,11 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         backgroundColor: tileColor,
                         onTap: () async {
                           String json = "[";
-                          await ContactManager().getAvatars();
                           ContactManager().handleToContact.values.forEachIndexed((index, c) {
                             if (c == null) return;
-                            json = json + "${jsonEncode(c.toMap())}";
+                            var map = c.toMap();
+                            map.remove("avatar");
+                            json = json + "${jsonEncode(map)}";
                             if (index != ContactManager().handleToContact.values.length - 1) {
                               json = json + ",";
                             } else {
@@ -779,6 +790,10 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                     SettingsManager().settings.finishedSetup.value = false;
                                     SocketManager().finishedSetup.sink.add(false);
                                     Navigator.of(context).popUntil((route) => route.isFirst);
+                                    SettingsManager().settings = new Settings();
+                                    SettingsManager().settings.save();
+                                    SettingsManager().fcmData = null;
+                                    FCMData.deleteFcmData();
                                   },
                                 ),
                                 TextButton(
@@ -796,8 +811,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         iosIcon: CupertinoIcons.floppy_disk,
                         materialIcon: Icons.storage,
                       ),
-                      title: "Reset",
-                      subtitle: "Resets the app to default settings",
+                      title: kIsWeb ? "Logout" : "Reset",
+                      subtitle: kIsWeb ? "" : "Resets the app to default settings",
                     ),
                     Container(
                       color: tileColor,
@@ -899,7 +914,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
   }
 
   Widget buildForDevice() {
-    bool showAltLayout = !context.isPhone || context.isLandscape;
+    bool showAltLayout = SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape);
     Widget settingsList = buildSettingsList();
     if (showAltLayout) {
       return buildForLandscape(context, settingsList);

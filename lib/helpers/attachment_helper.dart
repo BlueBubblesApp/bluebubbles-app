@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:universal_io/io.dart';
 import 'package:universal_html/html.dart' as html;
 import 'dart:isolate';
@@ -173,6 +175,11 @@ class AttachmentHelper {
         ..setAttribute("download", file.name)
         ..click();
     }
+    if (kIsDesktop) {
+      String downloadsPath = (await getDownloadsDirectory())!.path;
+      File(join(downloadsPath, file.name))..writeAsBytes(file.bytes!);
+      return showSnackbar('Success', 'Saved attachment to $downloadsPath!');
+    }
     Function showDeniedSnackbar = (String? err) {
       showSnackbar("Save Failed", err ?? "Failed to save attachment!");
     };
@@ -214,9 +221,9 @@ class AttachmentHelper {
   }
 
   static dynamic getContent(Attachment attachment, {String? path}) {
-    if (kIsWeb && attachment.bytes == null && attachment.guid != "redacted-mode-demo-attachment") {
+    if ((kIsWeb || kIsDesktop) && attachment.bytes == null && attachment.guid != "redacted-mode-demo-attachment") {
       return Get.put(AttachmentDownloadController(attachment: attachment), tag: attachment.guid);
-    } else if (kIsWeb) {
+    } else if (kIsWeb || kIsDesktop) {
       return PlatformFile(
         name: attachment.transferName!,
         path: null,
