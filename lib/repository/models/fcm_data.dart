@@ -7,12 +7,12 @@ import 'package:firebase_dart/firebase_dart.dart';
 import 'package:sqflite/sqflite.dart';
 
 class FCMData {
-  dynamic projectID;
-  dynamic storageBucket;
-  dynamic apiKey;
-  dynamic firebaseURL;
-  dynamic clientID;
-  dynamic applicationID;
+  String? projectID;
+  String? storageBucket;
+  String? apiKey;
+  String? firebaseURL;
+  String? clientID;
+  String? applicationID;
 
   FCMData({
     this.projectID,
@@ -66,11 +66,20 @@ class FCMData {
     return this;
   }
 
+  static void deleteFcmData() {
+    prefs.remove('projectID');
+    prefs.remove('storageBucket');
+    prefs.remove('apiKey');
+    prefs.remove('firebaseURL');
+    prefs.remove('clientID');
+    prefs.remove('applicationID');
+  }
+
   static Future<void> initializeFirebase(FCMData data) async {
     var options = FirebaseOptions(
-        appId: data.applicationID,
-        apiKey: data.apiKey,
-        projectId: data.projectID,
+        appId: data.applicationID!,
+        apiKey: data.apiKey!,
+        projectId: data.projectID!,
         storageBucket: data.storageBucket,
         databaseURL: data.firebaseURL,
         messagingSenderId: data.clientID,
@@ -83,12 +92,12 @@ class FCMData {
 
     List<Map<String, dynamic>> result = (await db?.query("fcm")) ?? [];
     if (result.isEmpty) return new FCMData(
-      projectID: prefs.get('projectID'),
-      storageBucket: prefs.get('storageBucket'),
-      apiKey: prefs.get('apiKey'),
-      firebaseURL: prefs.get('firebaseURL'),
-      clientID: prefs.get('clientID'),
-      applicationID: prefs.get('applicationID'),
+      projectID: prefs.getString('projectID'),
+      storageBucket: prefs.getString('storageBucket'),
+      apiKey: prefs.getString('apiKey'),
+      firebaseURL: prefs.getString('firebaseURL'),
+      clientID: prefs.getString('clientID'),
+      applicationID: prefs.getString('applicationID'),
     );
     List<ConfigEntry> entries = [];
     for (Map<String, dynamic> setting in result) {

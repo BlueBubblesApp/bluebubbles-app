@@ -3,7 +3,9 @@ import 'dart:ui';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/settings/scheduler_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/scheduled.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -178,8 +180,7 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
             Navigator.of(context).push(
               ThemeSwitcher.buildPageRoute(
                 builder: (BuildContext context) {
-                  //todo
-                  /*return SchedulePanel();*/
+                  return SchedulePanel(chat: Chat());
                 },
               ),
             );

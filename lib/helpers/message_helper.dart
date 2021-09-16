@@ -272,6 +272,8 @@ class MessageHelper {
           key = "movie";
         } else if (mime.contains("image/gif")) {
           key = "GIF";
+        } else if (mime.contains("application/pdf")) {
+          key = "PDF";
         } else {
           key = mime.split("/").first;
         }
@@ -330,6 +332,8 @@ class MessageHelper {
           key = "movie";
         } else if (mime.contains("image/gif")) {
           key = "GIF";
+        } else if (mime.contains("application/pdf")) {
+          key = "PDF";
         } else {
           key = mime.split("/").first;
         }

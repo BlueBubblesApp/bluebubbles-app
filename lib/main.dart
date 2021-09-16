@@ -324,6 +324,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       // the UI thread is active
       IsolateNameServer.registerPortWithName(port.sendPort, 'bg_isolate');
       port.listen((dynamic data) {
+        Logger.info("SendPort received action ${data['action']}");
         if (data['action'] == 'new-message') {
           // Add it to the queue with the data as the item
           IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_MESSAGE_EVENT, item: {"data": data}));

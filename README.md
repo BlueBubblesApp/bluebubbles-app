@@ -1,10 +1,29 @@
 # BlueBubbles Android App
 
-For those of you that do not know; BlueBubbles is an open-source and cross-platform ecosystem of apps aimed to bring iMessage to all of your devices. That includes Android, Windows, Linux, etc. As such, this app allows you to bring iMessage to your Android device! With BlueBubbles, you'll be able to send messages, images, audio, GIFs, and much more to your friends and family.
+BlueBubbles is an open-source and cross-platform ecosystem of apps aimed to bring iMessage to Android, Windows, Linux, and more! With BlueBubbles, you'll be able to send messages, media, and much more to your friends and family.
 
-We want to be more than just another iMessage app. We want to be community-driven and as open as possible to show that we encourage all forms of help to improve the ecosystem. All help is appreciated! Of course, we will add our _touch_ to it as much as possible to make your experience as flawless and as enjoyable as it possibly can. This means quality of life updates that even our Apple OS app-counterparts do not support. The only requirement is that you have access to a device running macOS High Sierra or later. We hope you enjoy using the app!
+**Please note that BlueBubbles requires a Mac and an Apple ID to function! A macOS VM on Windows or Linux can suffice as well.
 
-If you would like to find out more, you can visit our website: https://bluebubbles.app
+Key Features:
+
+- Send & receive texts, media, and location
+- View tapbacks, reactions, and stickers
+- Create new chats (macOS 11+ has limited support while macOS 10 has full support)
+- View read/delivered timestamps
+- Mute or archive conversations
+- Robust theming engine
+- Choose between an iOS or Android-style interface
+- Lots of customizations and options to personalize your experience
+
+Private API Features:
+
+- Send tapbacks
+- See typing indicators
+- Send read receipts
+
+**Private API Features are not enabled by default and require extra configurations. Details can be found in the settings page of the app.**
+
+If you need help setting up the app, have any issues or feature requests, or just want to come hang out, feel free to join our Discord, linked below! We hope you enjoy using the app!
 
 ## Useful links
 
@@ -17,11 +36,11 @@ If you would like to find out more, you can visit our website: https://bluebubbl
 
 ## Getting Started
 
-All android builds can be found in [here](https://github.com/BlueBubblesApp/BlueBubbles-Android-App/releases)
+All Android builds can be found in [here](https://github.com/BlueBubblesApp/BlueBubbles-Android-App/releases).
 
-All server builds can be found in [here](https://github.com/BlueBubblesApp/BlueBubbles-Server/releases)
+All Server builds can be found in [here](https://github.com/BlueBubblesApp/BlueBubbles-Server/releases).
 
-After downloading both, follow our tutorial [here](https://bluebubbles.app/install/)
+After downloading both, follow our tutorial [here](https://bluebubbles.app/install/).
 
 ## Contributing
 

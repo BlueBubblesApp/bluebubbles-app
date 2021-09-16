@@ -109,6 +109,7 @@ class Chat {
   String? displayName;
   List<Handle> participants = [];
   List<String?> fakeParticipants = [];
+  Message? latestMessage;
   final RxnString customAvatarPath = RxnString();
   final RxnInt pinIndex = RxnInt();
 
@@ -129,6 +130,7 @@ class Chat {
     int? pinnedIndex,
     this.participants = const [],
     this.fakeParticipants = const [],
+    this.latestMessage,
     this.latestMessageDate,
     this.latestMessageText,
     this.fakeLatestMessageText,
@@ -174,6 +176,7 @@ class Chat {
               ? json['hasUnreadMessage']
               : ((json['hasUnreadMessage'] == 1) ? true : false)
           : false,
+      latestMessage: message,
       latestMessageText: json.containsKey("latestMessageText") ? json["latestMessageText"] : message != null ? MessageHelper.getNotificationTextSync(message) : null,
       fakeLatestMessageText: json.containsKey("latestMessageText")
           ? faker.lorem.words((json["latestMessageText"] ?? "").split(" ").length).join(" ")
@@ -401,6 +404,7 @@ class Chat {
     }
 
     if (isNewer && checkForMessageText) {
+      this.latestMessage = message;
       this.latestMessageText = await MessageHelper.getNotificationText(message);
       this.fakeLatestMessageText = faker.lorem.words((this.latestMessageText ?? "").split(" ").length).join(" ");
       this.latestMessageDate = message.dateCreated;
@@ -918,9 +922,11 @@ class Chat {
         [this.guid]);
   }
 
-  Future<Message> get latestMessage async {
+  Future<Message> get latestMessageFuture async {
+    if (latestMessage != null) return latestMessage!;
     List<Message> latests = await Chat.getMessages(this, limit: 1);
     Message message = latests.first;
+    latestMessage = message;
     if (message.hasAttachments) {
       await message.fetchAttachments();
     }

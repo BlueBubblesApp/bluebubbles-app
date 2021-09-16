@@ -1,5 +1,5 @@
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/foundation.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:universal_io/io.dart';
 import 'dart:ui';
 
@@ -174,6 +174,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
     if (ChatBloc().chatRequest != null
         && prefs.getString('lastOpenedChat') != null
         && (!context.isPhone || context.isLandscape)
+        && SettingsManager().settings.tabletMode.value
         && CurrentChat.activeChat?.chat.guid != prefs.getString('lastOpenedChat')) {
       await ChatBloc().chatRequest!.future;
       CustomNavigator.pushAndRemoveUntil(
@@ -200,7 +201,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
         context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
-      child: buildForDevice(),
+      child: Obx(() => buildForDevice()),
     );
   }
 
@@ -285,6 +286,18 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                       && !showArchived && !showUnknown)
                       ? GestureDetector(
                     onTap: () async {
+                      bool camera = await Permission.camera.isGranted;
+                      if (!camera) {
+                        bool granted = (await Permission.camera.request()) == PermissionStatus.granted;
+                        if (!granted) {
+                          showSnackbar(
+                              "Error",
+                              "Camera was denied"
+                          );
+                          return;
+                        }
+                      }
+
                       String appDocPath = SettingsManager().appDocDir.path;
                       String ext = ".png";
                       File file = new File("$appDocPath/attachments/" + randomString(16) + ext);
@@ -654,7 +667,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
   }
 
   Widget buildForDevice() {
-    bool showAltLayout = !context.isPhone || context.isLandscape;
+    bool showAltLayout = SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape);
     Widget chatList = buildChatList();
     if (showAltLayout && !widget.parent.widget.showUnknownSenders && !widget.parent.widget.showArchivedChats) {
       return buildForLandscape(context, chatList);

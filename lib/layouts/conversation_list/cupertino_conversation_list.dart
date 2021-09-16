@@ -1,5 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:universal_io/io.dart';
 import 'dart:math';
 import 'dart:ui';
@@ -44,6 +45,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
     if (ChatBloc().chatRequest != null &&
         prefs.getString('lastOpenedChat') != null &&
         (!context.isPhone || context.isLandscape) &&
+        SettingsManager().settings.tabletMode.value &&
         CurrentChat.activeChat?.chat.guid != prefs.getString('lastOpenedChat')) {
       await ChatBloc().chatRequest!.future;
       CustomNavigator.pushAndRemoveUntil(
@@ -67,7 +69,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
             context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
-      child: buildForDevice(context),
+      child: Obx(() => buildForDevice(context)),
     );
   }
 
@@ -225,6 +227,18 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                                     child: Icon(CupertinoIcons.camera, color: context.theme.primaryColor, size: 12),
                                   ),
                                   onTap: () async {
+                                    bool camera = await Permission.camera.isGranted;
+                                    if (!camera) {
+                                      bool granted = (await Permission.camera.request()) == PermissionStatus.granted;
+                                      if (!granted) {
+                                        showSnackbar(
+                                            "Error",
+                                            "Camera was denied"
+                                        );
+                                        return;
+                                      }
+                                    }
+
                                     String appDocPath = SettingsManager().appDocDir.path;
                                     String ext = ".png";
                                     File file = new File("$appDocPath/attachments/" + randomString(16) + ext);
@@ -522,7 +536,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
   }
 
   Widget buildForDevice(BuildContext context) {
-    bool showAltLayout = !context.isPhone || context.isLandscape;
+    bool showAltLayout = SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape);
     Widget chatList = buildChatList(context, showAltLayout);
     if (showAltLayout && !widget.parent.widget.showUnknownSenders && !widget.parent.widget.showArchivedChats) {
       return buildForLandscape(context, chatList);
