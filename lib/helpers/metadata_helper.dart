@@ -220,19 +220,21 @@ class MetadataHelper {
 
       if (document == null) return meta;
 
-      for (var i in document.head?.children ?? []) {
+      for (Element i in document.head?.children ?? []) {
         if (i.localName != "meta") continue;
         for (var entry in i.attributes.entries) {
           String? prop = entry.key as String?;
-          String? value = entry.value;
+          String value = entry.value;
           if (prop != "property" && prop != "name") continue;
 
-          if (value!.contains("title")) {
+          if (value.contains("title")) {
             meta.title = i.attributes["content"];
           } else if (value.contains("description")) {
             meta.description = i.attributes["content"];
           } else if (value == "og:image") {
             meta.image = i.attributes["content"];
+          } else if (value == "og:video") {
+            meta.url = i.attributes["content"];
           }
         }
       }

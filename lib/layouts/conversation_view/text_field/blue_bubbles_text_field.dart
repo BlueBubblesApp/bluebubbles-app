@@ -1,16 +1,11 @@
 import 'dart:async';
-import 'package:bluebubbles/helpers/share.dart';
-import 'package:dio_http/dio_http.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:universal_io/io.dart';
-import 'package:universal_html/html.dart' as html;
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
-import 'package:flutter_dropzone/flutter_dropzone.dart';
-import 'package:transparent_pointer/transparent_pointer.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/list/text_field_attachment_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/picker/text_field_attachment_picker.dart';
@@ -25,13 +20,19 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
+import 'package:dio_http/dio_http.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_dropzone/flutter_dropzone.dart';
 import 'package:get/get.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:record/record.dart';
+import 'package:transparent_pointer/transparent_pointer.dart';
+import 'package:universal_html/html.dart' as html;
+import 'package:universal_io/io.dart';
 
 class BlueBubblesTextField extends StatefulWidget {
   final List<PlatformFile>? existingAttachments;
@@ -564,15 +565,56 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 focusNode: FocusNode(),
                 onKey: (RawKeyEvent event) async {
                   if (!(event is RawKeyUpEvent)) return;
-                  if (isNullOrEmpty(controller!.text)!) {
+                  Logger.info("Got key label ${event.data.keyLabel}, physical key ${event.data.physicalKey.toString()}, logical key ${event.data.logicalKey.toString()}", tag: "RawKeyboardListener");
+                  if (isNullOrEmpty(controller!.text)! && pickedImages.isEmpty) {
                     controller!.text = ""; // Gotta find a better way to support shift + enter
                     return;
+                  }
+                  if (pickedImages.isNotEmpty && isNullOrEmpty(controller!.text)!) {
+                    controller!.text = "";
                   }
                   if (event.data is RawKeyEventDataWindows) {
                     var data = event.data as RawKeyEventDataWindows;
                     if (data.keyCode == 13 && !event.isShiftPressed) {
                       await sendMessage();
                       focusNode!.requestFocus();
+                    }
+                    if (data.keyCode == 8 && event.isControlPressed) {
+                      // Delete bad character (code 127)
+                      String text = controller!.text;
+                      text = text.characters.where((char) => char.codeUnits[0] != 127).join();
+                      TextSelection selection = controller!.selection;
+                      TextPosition base = selection.base;
+                      int startPos = base.offset;
+                      controller!.text = text;
+                      controller!.selection = TextSelection.fromPosition(TextPosition(offset: startPos - 1));
+
+                      if (text.isEmpty) return;
+
+                      // Get the word
+                      List<String> words = text.trimRight().split(RegExp("[ \n]"));
+                      RegExp punctuation = RegExp("[\!\"\#\$\%\&\'\(\)\*\+\,\-\.\/\:\;\<\=\>\?\@\[\\\]\^\_\`\{\|\}\~]");
+                      int trailing = text.length - text.trimRight().length;
+                      List<int> counts = words.map((word) => word.length).toList();
+                      int end = startPos - 1 - trailing;
+                      int start = 0;
+                      if (punctuation.hasMatch(text.characters.toList()[end - 1])) {
+                        start = end - 1;
+                      } else {
+                        for (int i = 0; i < counts.length; i++) {
+                          int count = counts[i];
+                          if (start + count < end)
+                            start += count + (i == counts.length - 1 ? 0 : 1);
+                          else
+                            break;
+                        }
+                      }
+                      end += trailing; // Account for trimming
+                      start = max(0, start); // Make sure it's not negative
+                      text = text.substring(0, start) + text.substring(end);
+                      controller!.text = text; // Set the text
+                      controller!.selection =
+                          TextSelection.fromPosition(TextPosition(offset: start)); // Set the position
                     }
                     return;
                   }
@@ -583,6 +625,42 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       await sendMessage();
                       focusNode!.requestFocus();
                     }
+                    if (data.keyCode == 8 && event.isControlPressed) {
+                      // Delete bad character (code 127)
+                      String text = controller!.text;
+                      text = text.characters.where((char) => char.codeUnits[0] != 127).join();
+                      TextSelection selection = controller!.selection;
+                      TextPosition base = selection.base;
+                      int startPos = base.offset;
+                      controller!.text = text;
+                      controller!.selection = TextSelection.fromPosition(TextPosition(offset: startPos - 1));
+
+                      // Check if at end of a word
+                      if (startPos - 1 == text.length || text.characters.toList()[startPos - 1].isBlank!) {
+                        // Get the word
+                        int trailing = text.length - text.trimRight().length;
+                        List<String> words = text.trimRight().split(" ");
+                        print(words);
+                        List<int> counts = words.map((word) => word.length).toList();
+                        int end = startPos - 1 - trailing;
+                        int start = 0;
+                        for (int i = 0; i < counts.length; i++) {
+                          int count = counts[i];
+                          if (start + count < end)
+                            start += count + (i == counts.length - 1 ? 0 : 1);
+                          else
+                            break;
+                        }
+                        end += trailing; // Account for trimming
+                        start -= 1; // Remove the space after the previous word
+                        start = max(0, start); // Make sure it's not negative
+                        text = text.substring(0, start) + text.substring(end);
+                        // Set the text
+                        controller!.text = text;
+                        // Set the position
+                        controller!.selection = TextSelection.fromPosition(TextPosition(offset: start));
+                      }
+                    }
                     return;
                   }
                   // TODO figure out the MacOs keycode
@@ -591,6 +669,42 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     if (data.keyCode == 13 && !event.isShiftPressed) {
                       await sendMessage();
                       focusNode!.requestFocus();
+                    }
+                    if (data.keyCode == 8 && event.isControlPressed) {
+                      // Delete bad character (code 127)
+                      String text = controller!.text;
+                      text = text.characters.where((char) => char.codeUnits[0] != 127).join();
+                      TextSelection selection = controller!.selection;
+                      TextPosition base = selection.base;
+                      int startPos = base.offset;
+                      controller!.text = text;
+                      controller!.selection = TextSelection.fromPosition(TextPosition(offset: startPos - 1));
+
+                      // Check if at end of a word
+                      if (startPos - 1 == text.length || text.characters.toList()[startPos - 1].isBlank!) {
+                        // Get the word
+                        int trailing = text.length - text.trimRight().length;
+                        List<String> words = text.trimRight().split(" ");
+                        print(words);
+                        List<int> counts = words.map((word) => word.length).toList();
+                        int end = startPos - 1 - trailing;
+                        int start = 0;
+                        for (int i = 0; i < counts.length; i++) {
+                          int count = counts[i];
+                          if (start + count < end)
+                            start += count + (i == counts.length - 1 ? 0 : 1);
+                          else
+                            break;
+                        }
+                        end += trailing; // Account for trimming
+                        start -= 1; // Remove the space after the previous word
+                        start = max(0, start); // Make sure it's not negative
+                        text = text.substring(0, start) + text.substring(end);
+                        // Set the text
+                        controller!.text = text;
+                        // Set the position
+                        controller!.selection = TextSelection.fromPosition(TextPosition(offset: start));
+                      }
                     }
                     return;
                   }
@@ -638,7 +752,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     },
                     key: _searchFormKey,
                     onSubmitted: (String value) {
-                      if (isNullOrEmpty(value)!) return;
+                      if (isNullOrEmpty(value)! && pickedImages.isEmpty) return;
                       focusNode!.requestFocus();
                       sendMessage();
                     },
@@ -686,7 +800,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     cursorColor: Theme.of(context).primaryColor,
                     key: _searchFormKey,
                     onSubmitted: (String value) {
-                      if (isNullOrEmpty(value)!) return;
+                      if (isNullOrEmpty(value)! && pickedImages.isEmpty) return;
                       focusNode!.requestFocus();
                       sendMessage();
                     },
@@ -752,7 +866,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     cursorColor: Theme.of(context).primaryColor,
                     key: _searchFormKey,
                     onSubmitted: (String value) {
-                      if (isNullOrEmpty(value)!) return;
+                      if (isNullOrEmpty(value)! && pickedImages.isEmpty) return;
                       focusNode!.requestFocus();
                       sendMessage();
                     },

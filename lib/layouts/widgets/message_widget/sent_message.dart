@@ -228,6 +228,7 @@ class SentMessageHelper {
                           NotificationManager().clearFailedToSend();
                           // Get the "new" latest info
                           List<Message> latest = await Chat.getMessages(chat, limit: 1);
+                          chat.latestMessage = latest.first;
                           chat.latestMessageDate = latest.first.dateCreated;
                           chat.latestMessageText = await MessageHelper.getNotificationText(latest.first);
 
