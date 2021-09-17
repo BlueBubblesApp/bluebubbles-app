@@ -49,97 +49,91 @@ class _PinnedTileTextBubbleState extends State<PinnedTileTextBubble> with Automa
 
     bool showTail = !widget.chat.isGroup();
 
-    return FutureBuilder<Message>(
-      future: widget.chat.latestMessageFuture,
-      builder: (BuildContext context, AsyncSnapshot snapshot) {
-        if (!snapshot.hasData) return Container();
-        if (!(widget.chat.hasUnreadMessage ?? false)) return Container();
-        Message message = snapshot.data;
-        bool leftSide = Random(message.id).nextBool();
-        bool hide =
-            SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value;
-        bool generate = SettingsManager().settings.redactedMode.value &&
-            SettingsManager().settings.generateFakeMessageContent.value;
+    if (!(widget.chat.hasUnreadMessage ?? false)) return Container();
+    Message message = widget.chat.latestMessageGetter;
+    bool leftSide = Random(message.id).nextBool();
+    bool hide =
+        SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value;
+    bool generate = SettingsManager().settings.redactedMode.value &&
+        SettingsManager().settings.generateFakeMessageContent.value;
 
-        String messageText = MessageHelper.getNotificationTextSync(message);
-        if (generate) messageText = widget.chat.fakeLatestMessageText ?? "";
-        if (message.associatedMessageGuid != null ||
-            message.isFromMe! ||
-            isNullOrEmpty(messageText, trimString: true)!) {
-          return Container();
-        }
+    String messageText = MessageHelper.getNotificationTextSync(message);
+    if (generate) messageText = widget.chat.fakeLatestMessageText ?? "";
+    if (message.associatedMessageGuid != null ||
+        message.isFromMe! ||
+        isNullOrEmpty(messageText, trimString: true)!) {
+      return Container();
+    }
 
-        TextStyle style = Get.textTheme.subtitle1!.apply(fontSizeFactor: 0.85);
+    TextStyle style = Get.textTheme.subtitle1!.apply(fontSizeFactor: 0.85);
 
-        if (hide && !generate) style = style.apply(color: Colors.transparent);
+    if (hide && !generate) style = style.apply(color: Colors.transparent);
 
-        return Align(
-          alignment: showTail
+    return Align(
+      alignment: showTail
+          ? leftSide
+          ? Alignment.centerLeft
+          : Alignment.centerRight
+          : Alignment.center,
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: showTail
               ? leftSide
-                  ? Alignment.centerLeft
-                  : Alignment.centerRight
-              : Alignment.center,
-          child: Padding(
-            padding: EdgeInsets.only(
-              left: showTail
-                  ? leftSide
-                      ? widget.size * 0.06
-                      : widget.size * 0.02
-                  : widget.size * 0.04,
-              right: showTail
-                  ? leftSide
-                      ? widget.size * 0.02
-                      : widget.size * 0.06
-                  : widget.size * 0.04,
-            ),
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: <Widget>[
-                if (showTail)
-                  Positioned(
-                    top: -8.5,
-                    right: leftSide ? null : 7,
-                    left: leftSide ? 7 : null,
-                    child: CustomPaint(
-                      size: Size(18, 9),
-                      painter: TailPainter(leftSide: leftSide),
-                    ),
+              ? widget.size * 0.06
+              : widget.size * 0.02
+              : widget.size * 0.04,
+          right: showTail
+              ? leftSide
+              ? widget.size * 0.02
+              : widget.size * 0.06
+              : widget.size * 0.04,
+        ),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: <Widget>[
+            if (showTail)
+              Positioned(
+                top: -8.5,
+                right: leftSide ? null : 7,
+                left: leftSide ? 7 : null,
+                child: CustomPaint(
+                  size: Size(18, 9),
+                  painter: TailPainter(leftSide: leftSide),
+                ),
+              ),
+            ConstrainedBox(
+              constraints: BoxConstraints(minWidth: showTail ? 30 : 0),
+              child: ClipRRect(
+                clipBehavior: Clip.antiAlias,
+                borderRadius: BorderRadius.circular(10.0),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(
+                    sigmaX: 2,
+                    sigmaY: 2,
                   ),
-                ConstrainedBox(
-                  constraints: BoxConstraints(minWidth: showTail ? 30 : 0),
-                  child: ClipRRect(
-                    clipBehavior: Clip.antiAlias,
-                    borderRadius: BorderRadius.circular(10.0),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(
-                        sigmaX: 2,
-                        sigmaY: 2,
-                      ),
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          vertical: 3.0,
-                          horizontal: 6.0,
-                        ),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10.0),
-                          color: context.theme.accentColor.withOpacity(0.8),
-                        ),
-                        child: Text(
-                          messageText,
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 2,
-                          textAlign: TextAlign.center,
-                          style: style,
-                        ),
-                      ),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      vertical: 3.0,
+                      horizontal: 6.0,
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10.0),
+                      color: context.theme.accentColor.withOpacity(0.8),
+                    ),
+                    child: Text(
+                      messageText,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
+                      textAlign: TextAlign.center,
+                      style: style,
                     ),
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
-        );
-      },
+          ],
+        ),
+      ),
     );
   }
 

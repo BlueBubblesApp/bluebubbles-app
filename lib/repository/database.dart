@@ -12,7 +12,6 @@ import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/helpers/logger.dart';
-import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
@@ -47,8 +46,6 @@ class DBProvider {
   DBProvider._();
   static final DBProvider db = DBProvider._();
 
-  static Database? _database;
-  static String _path = "";
   static int currentVersion = 14;
 
   /// Contains list of functions to invoke when going from a previous to the current database verison
@@ -132,17 +129,6 @@ class DBProvider {
         }),
   ];
 
-  Future<Database?> get database async {
-    if (kIsWeb) return null;
-    if (_database != null) return _database!;
-
-    // if _database is null we instantiate it
-    _database = await initDB();
-    return _database!;
-  }
-
-  String get path => _path;
-
   Future<Database> initDB({Future<void> Function()? initStore}) async {
     if (Platform.isWindows || Platform.isLinux) {
       // Initialize FFI
@@ -154,15 +140,10 @@ class DBProvider {
     Directory documentsDirectory = (await getApplicationDocumentsDirectory()) as Directory;
     //ignore: unnecessary_cast, we need this as a workaround
     if (kIsDesktop) documentsDirectory = (await getApplicationSupportDirectory()) as Directory;
-    _path = join(documentsDirectory.path, "chat.db");
-    return await openDatabase(_path, version: currentVersion, onUpgrade: _onUpgrade, onOpen: (Database db) async {
+    String path = join(documentsDirectory.path, "chat.db");
+    return await openDatabase(path, version: currentVersion, onUpgrade: _onUpgrade, onOpen: (Database db) async {
       Logger.info("Database Opened");
-      _database = db;
       await checkTableExistenceAndCreate(db, initStore);
-    }, onCreate: (Database db, int version) async {
-      Logger.info("creating database");
-      _database = db;
-      await this.buildDatabase(db);
     });
   }
 
@@ -186,17 +167,18 @@ class DBProvider {
 
   static Future<void> deleteDB() async {
     if (kIsWeb) return;
-    Database db = (await DBProvider.db.database)!;
-    // Remove base tables
-    await Handle.flush();
-    await Chat.flush();
-    await Attachment.flush();
-    await Message.flush();
-
-    // Remove join tables
-    await db.execute("DELETE FROM chat_handle_join");
-    await db.execute("DELETE FROM chat_message_join");
-    await db.execute("DELETE FROM attachment_message_join");
+    attachmentBox.removeAll();
+    chatBox.removeAll();
+    fcmDataBox.removeAll();
+    handleBox.removeAll();
+    messageBox.removeAll();
+    scheduledBox.removeAll();
+    themeEntryBox.removeAll();
+    themeObjectBox.removeAll();
+    amJoinBox.removeAll();
+    chJoinBox.removeAll();
+    cmJoinBox.removeAll();
+    tvJoinBox.removeAll();
   }
 
   Future<void> checkTableExistenceAndCreate(Database db, Future<void> Function()? initStore) async {
@@ -282,227 +264,6 @@ class DBProvider {
       final fcm = FCMData.fromConfigEntries(entries);
       fcm.save();
       prefs.setBool('objectbox-migration', true);
-    }
-  }
-
-  Future<void> buildDatabase(Database db) async {
-    await createHandleTable(db);
-    await createChatTable(db);
-    await createMessageTable(db);
-    await createAttachmentTable(db);
-    await createAttachmentMessageJoinTable(db);
-    await createChatHandleJoinTable(db);
-    await createChatMessageJoinTable(db);
-    await createIndexes(db);
-    await createConfigTable(db);
-    await createFCMTable(db);
-    await createThemeTable(db);
-    await createThemeValuesTable(db);
-    await createThemeValueJoin(db);
-    await createScheduledTable(db);
-  }
-
-  static Future<void> createHandleTable(Database db) async {
-    await db.execute("CREATE TABLE handle ("
-        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "originalROWID INTEGER DEFAULT NULL,"
-        "address TEXT UNIQUE NOT NULL,"
-        "country TEXT DEFAULT NULL,"
-        "color TEXT DEFAULT NULL,"
-        "defaultPhone TEXT DEFAULT NULL,"
-        "uncanonicalizedId TEXT DEFAULT NULL"
-        ");");
-  }
-
-  static Future<void> createChatTable(Database db) async {
-    await db.execute("CREATE TABLE chat ("
-        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "originalROWID INTEGER DEFAULT NULL,"
-        "guid TEXT UNIQUE NOT NULL,"
-        "style INTEGER NOT NULL,"
-        "chatIdentifier TEXT NOT NULL,"
-        "isArchived INTEGER DEFAULT 0,"
-        "isFiltered INTEGER DEFAULT 0,"
-        "isPinned INTEGER DEFAULT 0,"
-        "muteType TEXT DEFAULT NULL,"
-        "muteArgs TEXT DEFAULT NULL,"
-        "hasUnreadMessage INTEGER DEFAULT 0,"
-        "latestMessageDate INTEGER DEFAULT 0,"
-        "latestMessageText TEXT,"
-        "displayName TEXT DEFAULT NULL,"
-        "customAvatarPath TEXT DEFAULT NULL,"
-        "pinIndex INTEGER DEFAULT NULL"
-        ");");
-  }
-
-  static Future<void> createMessageTable(Database db) async {
-    await db.execute("CREATE TABLE message ("
-        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "originalROWID INTEGER DEFAULT NULL,"
-        "handleId INTEGER NOT NULL,"
-        "otherHandle INTEGER DEFAULT NULL,"
-        "guid TEXT UNIQUE NOT NULL,"
-        "text TEXT,"
-        "subject TEXT DEFAULT NULL,"
-        "country TEXT DEFAULT NULL,"
-        "error INTEGER DEFAULT 0,"
-        "dateCreated INTEGER,"
-        "dateRead INTEGER DEFAULT 0,"
-        "dateDelivered INTEGER DEFAULT 0,"
-        "isFromMe INTEGER DEFAULT 0,"
-        "isDelayed INTEGER DEFAULT 0,"
-        "isAutoReply INTEGER DEFAULT 0,"
-        "isSystemMessage INTEGER DEFAULT 0,"
-        "isServiceMessage INTEGER DEFAULT 0,"
-        "isForward INTEGER DEFAULT 0,"
-        "isArchived INTEGER DEFAULT 0,"
-        "hasDdResults INTEGER DEFAULT 0,"
-        "cacheRoomnames TEXT DEFAULT NULL,"
-        "isAudioMessage INTEGER DEFAULT 0,"
-        "datePlayed INTEGER DEFAULT 0,"
-        "itemType INTEGER NOT NULL,"
-        "groupTitle TEXT DEFAULT NULL,"
-        "groupActionType INTEGER DEFAULT 0,"
-        "isExpired INTEGER DEFAULT 0,"
-        "balloonBundleId INTEGER DEFAULT NULL,"
-        "associatedMessageGuid TEXT DEFAULT NULL,"
-        "associatedMessageType TEXT DEFAULT NULL,"
-        "expressiveSendStyleId TEXT DEFAULT NULL,"
-        "timeExpressiveSendStyleId INTEGER DEFAULT 0,"
-        "hasAttachments INTEGER DEFAULT 0,"
-        "hasReactions INTEGER DEFAULT 0,"
-        "metadata TEXT DEFAULT NULL,"
-        "dateDeleted INTEGER DEFAULT NULL,"
-        "FOREIGN KEY(handleId) REFERENCES handle(ROWID)"
-        ");");
-  }
-
-  static Future<void> createAttachmentTable(Database db) async {
-    await db.execute("CREATE TABLE attachment ("
-        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "originalROWID INTEGER DEFAULT NULL,"
-        "guid TEXT UNIQUE NOT NULL,"
-        "uti TEXT NOT NULL,"
-        "mimeType TEXT DEFAULT NULL,"
-        "transferState INTEGER DEFAULT 0,"
-        "isOutgoing INTEGER DEFAULT 0,"
-        "transferName INTEGER NOT NULL,"
-        "totalBytes INTEGER NOT NULL,"
-        "isSticker INTEGER DEFAULT 0,"
-        "hideAttachment INTEGER DEFAULT 0,"
-        "blurhash VARCHAR(64) DEFAULT NULL,"
-        "height INTEGER DEFAULT NULL,"
-        "width INTEGER DEFAULT NULL,"
-        "metadata TEXT DEFAULT NULL"
-        ");");
-  }
-
-  static Future<void> createChatHandleJoinTable(Database db) async {
-    await db.execute("CREATE TABLE chat_handle_join ("
-        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "chatId INTEGER NOT NULL,"
-        "handleId INTEGER NOT NULL,"
-        "FOREIGN KEY(chatId) REFERENCES chat(ROWID),"
-        "FOREIGN KEY(handleId) REFERENCES handle(ROWID),"
-        "UNIQUE (chatId, handleId)"
-        ");");
-  }
-
-  static Future<void> createChatMessageJoinTable(Database db) async {
-    await db.execute("CREATE TABLE chat_message_join ("
-        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "chatId INTEGER NOT NULL,"
-        "messageId INTEGER NOT NULL,"
-        "FOREIGN KEY(chatId) REFERENCES chat(ROWID),"
-        "FOREIGN KEY(messageId) REFERENCES message(ROWID),"
-        "UNIQUE (chatId, messageId)"
-        ");");
-  }
-
-  static Future<void> createAttachmentMessageJoinTable(Database db) async {
-    await db.execute("CREATE TABLE attachment_message_join ("
-        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "attachmentId INTEGER NOT NULL,"
-        "messageId INTEGER NOT NULL,"
-        "FOREIGN KEY(attachmentId) REFERENCES attachment(ROWID),"
-        "FOREIGN KEY(messageId) REFERENCES message(ROWID),"
-        "UNIQUE (attachmentId, messageId)"
-        ");");
-  }
-
-  static Future<void> createIndexes(Database db) async {
-    await db.execute("CREATE UNIQUE INDEX idx_handle_address ON handle (address);");
-    await db.execute("CREATE UNIQUE INDEX idx_message_guid ON message (guid);");
-    await db.execute("CREATE UNIQUE INDEX idx_chat_guid ON chat (guid);");
-    await db.execute("CREATE UNIQUE INDEX idx_attachment_guid ON attachment (guid);");
-  }
-
-  static Future<void> createConfigTable(Database db) async {
-    await db.execute("CREATE TABLE config ("
-        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "name TEXT,"
-        "value TEXT,"
-        "type TEXT NOT NULL"
-        ");");
-  }
-
-  static Future<void> createFCMTable(Database db) async {
-    await db.execute("CREATE TABLE fcm ("
-        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "name TEXT,"
-        "value TEXT,"
-        "type TEXT NOT NULL"
-        ");");
-  }
-
-  static Future<void> createThemeValuesTable(Database db) async {
-    await db.execute("CREATE TABLE theme_values ("
-        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "themeId INTEGER NOT NULL,"
-        "name TEXT NOT NULL,"
-        "color TEXT NOT NULL,"
-        "isFont INTEGER DEFAULT 0,"
-        "fontSize INTEGER"
-        ");");
-  }
-
-  static Future<void> createThemeTable(Database db) async {
-    await db.execute("CREATE TABLE themes ("
-        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "name TEXT UNIQUE,"
-        "selectedLightTheme INTEGER DEFAULT 0,"
-        "selectedDarkTheme INTEGER DEFAULT 0,"
-        "gradientBg INTEGER DEFAULT 0,"
-        "previousLightTheme INTEGER DEFAULT 0,"
-        "previousDarkTheme INTEGER DEFAULT 0"
-        ");");
-  }
-
-  static Future<void> createThemeValueJoin(Database db) async {
-    await db.execute("CREATE TABLE theme_value_join ("
-        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "themeId INTEGER NOT NULL,"
-        "themeValueId INTEGER NOT NULL,"
-        "FOREIGN KEY(themeId) REFERENCES theme_values(ROWID),"
-        "FOREIGN KEY(themeValueId) REFERENCES themes(ROWID),"
-        "UNIQUE (themeId, themeValueId)"
-        ");");
-  }
-
-  static Future<void> createScheduledTable(Database db) async {
-    await db.execute("CREATE TABLE scheduled ("
-        "ROWID INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "chatGuid TEXT NOT NULL,"
-        "message TEXT NOT NULL,"
-        "epochTime INTEGER NOT NULL,"
-        "completed INTEGER DEFAULT 0,"
-        "UNIQUE (chatGuid, message, epochTime)"
-        ");");
-  }
-
-  static Future<void> setupConfigRows() async {
-    for (ThemeObject theme in Themes.themes) {
-      await theme.save(updateIfAbsent: false);
     }
   }
 }

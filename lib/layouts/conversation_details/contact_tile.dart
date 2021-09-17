@@ -240,10 +240,10 @@ class _ContactTileState extends State<ContactTile> {
                               child: Text("${phones[i].value} (${phones[i].label})",
                                   style: TextStyle(color: Theme.of(context).textTheme.bodyText1!.color),
                                   textAlign: TextAlign.start),
-                              onPressed: () async {
+                              onPressed: () {
                                 if (data.value) {
                                   widget.handle.defaultPhone = phones[i].value!;
-                                  await widget.handle.updateDefaultPhone(phones[i].value!);
+                                  widget.handle.updateDefaultPhone(phones[i].value!);
                                 }
                                 makeCall(phones[i].value!);
                                 Navigator.of(context).pop();
@@ -320,9 +320,9 @@ class _ContactTileState extends State<ContactTile> {
 
                     if (response["status"] == 200) {
                       Chat updatedChat = Chat.fromMap(response["data"]);
-                      await updatedChat.save();
+                      updatedChat.save();
                       await ChatBloc().updateChatPosition(updatedChat);
-                      Chat chatWithParticipants = await updatedChat.getParticipants();
+                      Chat chatWithParticipants = updatedChat.getParticipants();
 
                       Logger.info("Updating chat with ${chatWithParticipants.participants.length} participants");
                       widget.updateChat(chatWithParticipants);

@@ -38,7 +38,7 @@ class CustomAvatarColorPanelController extends GetxController {
   Future<void> getCustomHandles({force: false}) async {
     // If we are already fetching or have results,
     if (!false && (isFetching || !isNullOrEmpty(this.handleWidgets)!)) return;
-    List<Handle> handles = await Handle.find();
+    List<Handle> handles = Handle.find();
     if (isNullOrEmpty(handles)!) return;
 
     // Filter handles down by ones with colors

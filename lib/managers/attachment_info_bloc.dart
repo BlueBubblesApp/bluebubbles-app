@@ -34,20 +34,20 @@ class AttachmentInfoBloc {
     chatData[currentChat.chat.guid!] = currentChat;
   }
 
-  Future<CurrentChat?> initChat(Chat chat) async {
+  CurrentChat? initChat(Chat chat) {
     if (chat.guid == null) return null;
     if (!chatData.containsKey(chat.guid)) {
-      chatData[chat.guid!] = await _initChat(chat);
+      chatData[chat.guid!] = _initChat(chat);
     } else {
-      await chatData[chat.guid]!.preloadMessageAttachments();
+      chatData[chat.guid]!.preloadMessageAttachments();
     }
 
     return chatData[chat.guid];
   }
 
-  Future<CurrentChat> _initChat(Chat chat) async {
+  CurrentChat _initChat(Chat chat) {
     CurrentChat currentChat = new CurrentChat(chat);
-    await currentChat.preloadMessageAttachments();
+    currentChat.preloadMessageAttachments();
     return currentChat;
   }
 }

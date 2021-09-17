@@ -356,8 +356,8 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                             .contains(selected.where((element) => element.hasUnreadMessage!).length))
                           GestureDetector(
                             onTap: () {
-                              selected.forEach((element) async {
-                                await element.toggleHasUnread(!element.hasUnreadMessage!);
+                              selected.forEach((element) {
+                                element.toggleHasUnread(!element.hasUnreadMessage!);
                               });
                               selected = [];
                               if (this.mounted) setState(() {});
@@ -374,8 +374,8 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                             .contains(selected.where((element) => element.muteType == "mute").length))
                           GestureDetector(
                             onTap: () {
-                              selected.forEach((element) async {
-                                await element.toggleMute(element.muteType != "mute");
+                              selected.forEach((element) {
+                                element.toggleMute(element.muteType != "mute");
                               });
                               selected = [];
                               if (this.mounted) setState(() {});
@@ -501,10 +501,10 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                           key: UniqueKey(),
                           // Provide a function that tells the app
                           // what to do after an item has been swiped away.
-                          onDismissed: (direction) async {
+                          onDismissed: (direction) {
                             if (direction == DismissDirection.endToStart) {
                               if (SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.pin) {
-                                await ChatBloc()
+                                ChatBloc()
                                     .chats
                                     .archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]
                                     .togglePin(!ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isPinned!);
@@ -512,7 +512,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                                 if (this.mounted) setState(() {});
                               } else if (SettingsManager().settings.materialLeftAction.value ==
                                   MaterialSwipeAction.alerts) {
-                                await ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].toggleMute(
+                                ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].toggleMute(
                                     ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].muteType != "mute");
                                 if (this.mounted) setState(() {});
                               } else if (SettingsManager().settings.materialLeftAction.value ==
@@ -532,7 +532,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                               }
                             } else {
                               if (SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.pin) {
-                                await ChatBloc()
+                                ChatBloc()
                                     .chats
                                     .archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]
                                     .togglePin(!ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isPinned!);
@@ -540,7 +540,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                                 if (this.mounted) setState(() {});
                               } else if (SettingsManager().settings.materialRightAction.value ==
                                   MaterialSwipeAction.alerts) {
-                                await ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].toggleMute(
+                                ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].toggleMute(
                                     ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].muteType != "mute");
                                 if (this.mounted) setState(() {});
                               } else if (SettingsManager().settings.materialRightAction.value ==

@@ -54,9 +54,7 @@ class MessageWidget extends StatefulWidget {
 
 class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMixin {
   bool showTail = true;
-  Completer<void>? associatedMessageRequest;
   Completer<void>? attachmentsRequest;
-  Completer<void>? handleRequest;
   int lastRequestCount = -1;
   int attachmentCount = 0;
   int associatedCount = 0;
@@ -70,12 +68,6 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
   @override
   void initState() {
     super.initState();
-    init();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
     init();
   }
 
@@ -156,37 +148,24 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
     super.dispose();
   }
 
-  Future<void> checkHandle() async {
-    // If we've already started, return the request
-    if (handleRequest != null) return handleRequest!.future;
-    handleRequest = new Completer();
-
+  void checkHandle() {
     // Checks ordered in a specific way to ever so slightly reduce processing
-    if (_message.isFromMe!) return handleRequest!.complete();
-    if (_message.handle != null) return handleRequest!.complete();
+    if (_message.isFromMe!) return;
+    if (_message.handle != null) return;
 
     try {
-      Handle? handle = await _message.getHandle();
-      if (this.mounted && handle != null) {
+      Handle? handle = _message.getHandle();
+      //todo check setstate
+      /*if (this.mounted && handle != null) {
         setState(() {});
-      }
-    } catch (ex) {
-      handleRequest!.completeError(ex);
-    }
+      }*/
+    } catch (_) {}
   }
 
-  Future<void> fetchAssociatedMessages({bool forceReload = false}) async {
-    // If there is already a request being made, return that request
-    if (!forceReload && associatedMessageRequest != null) return associatedMessageRequest!.future;
-
-    // Create a new request and get the messages
-    associatedMessageRequest = new Completer();
-
+  void fetchAssociatedMessages({bool forceReload = false}) {
     try {
-      await _message.fetchAssociatedMessages(bloc: widget.bloc);
-    } catch (ex) {
-      return associatedMessageRequest!.completeError(ex);
-    }
+      _message.fetchAssociatedMessages(bloc: widget.bloc);
+    } catch (_) {}
 
     bool hasChanges = false;
     if (_message.associatedMessages.length != associatedCount || forceReload) {
@@ -200,13 +179,11 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
       // Update the DB so it saves that we have reactions
       if (!_message.hasReactions && _message.getReactions().length > 0) {
         _message.hasReactions = true;
-        _message.update();
+        _message.save();
       }
 
-      if (this.mounted) setState(() {});
+      if (this.mounted && forceReload) setState(() {});
     }
-
-    associatedMessageRequest!.complete();
   }
 
   Future<void> fetchAttachments({bool forceReload = false}) async {

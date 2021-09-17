@@ -1,10 +1,9 @@
-import 'dart:async';
-
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/repository/database.dart';
+import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/repository/models/join_tables.dart';
 import 'package:bluebubbles/repository/models/theme_object.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:objectbox/objectbox.dart';
 
@@ -15,6 +14,8 @@ class ThemeEntry {
   int? themeId;
   String? name;
   Color? color;
+  String? get dbColor => color?.value.toRadixString(16);
+  set dbColor(String? s) => s == null ? color = null : color = HexColor(s);
   bool? isFont;
   int? fontSize;
 
@@ -55,63 +56,28 @@ class ThemeEntry {
         )
       : color;
 
-  Future<ThemeEntry> save(ThemeObject theme, {bool updateIfAbsent = true}) async {
-    /*final Database? db = await DBProvider.db.database;
-
-    //assert(theme.id != null);
+  ThemeEntry save(ThemeObject theme) {
+    if (kIsWeb) return this;
+    assert(theme.id != null);
     this.themeId = theme.id;
-
-    // Try to find an existing ConfigEntry before saving it
-    ThemeEntry? existing = await ThemeEntry.findOne({"name": this.name, "themeId": this.themeId});
+    ThemeEntry? existing = ThemeEntry.findOne(this.name!, this.themeId!);
     if (existing != null) {
       this.id = existing.id;
     }
-
-    // If it already exists, update it
-    if (existing == null) {
-      // Remove the ID from the map for inserting
-      var map = this.toMap();
-      map.remove("ROWID");
-      try {
-        this.id = (await db?.insert("theme_values", map)) ?? id;
-      } catch (e) {
-        this.id = null;
-      }
-
-      if (this.id != null && theme.id != null) {
-        await db?.insert("theme_value_join", {"themeValueId": this.id, "themeId": theme.id});
-      }
-    } else if (updateIfAbsent) {
-      await this.update(theme);
-    }*/
     themeEntryBox.put(this);
-    if (this.id != null && theme.id != null)
+    if (this.id != null && theme.id != null && existing == null)
       tvJoinBox.put(ThemeValueJoin(themeValueId: this.id!, themeId: theme.id!));
 
     return this;
   }
 
-  Future<ThemeEntry> update(ThemeObject theme) async {
-    /*final Database? db = await DBProvider.db.database;
-
-    // If it already exists, update it
-    if (this.id != null) {
-      await db?.update(
-          "theme_values",
-          {
-            "name": this.name,
-            "color": this.color!.value.toRadixString(16),
-            "isFont": this.isFont! ? 1 : 0,
-            "fontSize": this.fontSize,
-          },
-          where: "ROWID = ?",
-          whereArgs: [this.id]);
-    } else {
-      await this.save(theme, updateIfAbsent: false);
-    }*/
-    this.save(theme);
-
-    return this;
+  static ThemeEntry? findOne(String name, int themeId) {
+    if (kIsWeb) return null;
+    final query = themeEntryBox.query(ThemeEntry_.name.equals(name).and(ThemeEntry_.themeId.equals(themeId))).build();
+    query..limit = 1;
+    final result = query.findFirst();
+    query.close();
+    return result;
   }
 
   Map<String, dynamic> toMap() => {

@@ -103,11 +103,7 @@ class ActionHandler {
 
       // Make sure to save the chat
       // If we already have the ID, we don't have to wait to resave it
-      if (chat.id == null) {
-        await chat.save();
-      } else {
-        chat.save();
-      }
+      chat.save();
 
       // Send all the messages
       messages.forEachIndexed((index, message) async {
@@ -134,11 +130,7 @@ class ActionHandler {
 
       // Make sure to save the chat
       // If we already have the ID, we don't have to wait to resave it
-      if (chat.id == null) {
-        await chat.save();
-      } else {
-        chat.save();
-      }
+      chat.save();
 
       // Add the message to the UI and DB
       NewMessageManager().addMessage(chat, message, outgoing: true);
@@ -277,10 +269,10 @@ class ActionHandler {
     if (message.error == 0) return;
 
     // Get message's chat
-    Chat? chat = await Message.getChat(message);
+    Chat? chat = Message.getChat(message);
     if (chat == null) throw ("Could not find chat!");
 
-    await message.fetchAttachments();
+    message.fetchAttachments();
     for (int i = 0; i < message.attachments!.length; i++) {
       String appDocPath = SettingsManager().appDocDir.path;
       String pathName =
@@ -332,8 +324,7 @@ class ActionHandler {
     message.dateCreated = DateTime.now();
 
     // Delete the old message
-    Map<String, dynamic> msgOpts = {'guid': oldGuid};
-    await Message.delete(msgOpts);
+    Message.delete(oldGuid);
     NewMessageManager().removeMessage(chat, oldGuid);
 
     // Add the new message
@@ -371,7 +362,7 @@ class ActionHandler {
 
     Chat? chat;
     if (data["chats"] == null && updatedMessage.id != null) {
-      chat = await Message.getChat(updatedMessage);
+      chat = Message.getChat(updatedMessage);
     } else if (data["chats"] != null) {
       chat = Chat.fromMap(data["chats"][0]);
     }
@@ -387,10 +378,15 @@ class ActionHandler {
   static Future<void> handleChatStatusChange(String? chatGuid, bool? status) async {
     if (chatGuid == null) return;
 
-    Chat? chat = await Chat.findOne({"guid": chatGuid});
+    Chat? chat;
+    if (kIsWeb) {
+      chat = await Chat.findOneWeb(guid: chatGuid);
+    } else {
+      chat = Chat.findOne(guid: chatGuid);
+    }
     if (chat == null) return;
 
-    await chat.toggleHasUnread(status!);
+    chat.toggleHasUnread(status!);
     ChatBloc().updateChat(chat);
   }
 
@@ -413,13 +409,17 @@ class ActionHandler {
 
     // If we are told to check if the chat exists, do it
     if (checkIfExists) {
-      currentChat = await Chat.findOne({"guid": newChat.guid});
+      if (kIsWeb) {
+        currentChat = await Chat.findOneWeb(guid: newChat.guid);
+      } else {
+        currentChat = Chat.findOne(guid: newChat.guid);
+      }
     }
 
     // Save the new chat only if current chat isn't found
     if (currentChat == null) {
       Logger.info("Chat did not exist. Saving.", tag: "Actions-HandleChat");
-      await newChat.save();
+      newChat.save();
     }
 
     // If we already have a chat, don't fetch the participants
@@ -452,14 +452,14 @@ class ActionHandler {
     // Handle message differently depending on if there is a temp GUID match
     if (data.containsKey("tempGuid")) {
       // Check if the GUID exists
-      Message? existing = await Message.findOne({'guid': data['guid']});
+      Message? existing = Message.findOne(guid: data['guid']);
 
       // If the GUID exists already, delete the temporary entry
       // Otherwise, replace the temp message
       if (existing != null) {
         Logger.info("Deleting message: [${data["text"]}] - ${data["guid"]} - ${data["tempGuid"]}",
             tag: "MessageStatus");
-        await Message.delete({'guid': data['tempGuid']});
+        Message.delete(data['tempGuid']);
         NewMessageManager().removeMessage(chats.first, data['tempGuid']);
       } else {
         await Message.replaceMessage(data["tempGuid"], message, chat: chats.first);
@@ -469,7 +469,7 @@ class ActionHandler {
           Attachment file = Attachment.fromMap(attachmentItem);
 
           try {
-            await Attachment.replaceAttachment(data["tempGuid"], file);
+            Attachment.replaceAttachment(data["tempGuid"], file);
           } catch (ex) {
             Logger.warn("Attachment's Old GUID doesn't exist. Skipping");
           }
@@ -498,7 +498,7 @@ class ActionHandler {
           message.handle?.defaultPhone = handle.defaultPhone;
         }
 
-        await chat.getParticipants();
+        chat.getParticipants();
         // Handle the notification based on the message and chat
         await MessageHelper.handleNotification(message, chat);
 
@@ -506,7 +506,7 @@ class ActionHandler {
         await chat.addMessage(message);
 
         if (message.itemType == 2 && message.groupTitle != null) {
-          chat = await chat.changeName(message.groupTitle);
+          chat = chat.changeName(message.groupTitle);
           ChatBloc().updateChat(chat);
         }
 
@@ -531,7 +531,7 @@ class ActionHandler {
         if (!isHeadless) NewMessageManager().addMessage(element, message);
       });
     } else if (NotificationManager().hasProcessed(data["guid"])) {
-      Message? existing = await Message.findOne({'guid': data['guid']});
+      Message? existing = Message.findOne(guid: data['guid']);
       if (existing != null) {
         handleUpdatedMessage(data, headless: isHeadless);
       }

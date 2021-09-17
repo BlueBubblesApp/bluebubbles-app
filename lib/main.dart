@@ -217,9 +217,9 @@ Future<Null> main() async {
   }
 
   if (exception == null) {
-    runZonedGuarded<Future<Null>>(() async {
-      ThemeObject light = await ThemeObject.getLightTheme();
-      ThemeObject dark = await ThemeObject.getDarkTheme();
+    runZonedGuarded<Null>(() {
+      ThemeObject light = ThemeObject.getLightTheme();
+      ThemeObject dark = ThemeObject.getDarkTheme();
 
       runApp(Main(
         lightTheme: light.themeData,

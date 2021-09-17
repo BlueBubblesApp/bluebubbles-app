@@ -34,7 +34,7 @@ class _AddingParticipantPopupState extends State<AddingParticipantPopup> {
     Map<String, dynamic> params = {};
     params["identifier"] = widget.chat.guid;
     params["address"] = cleansePhoneNumber(widget.contacts[i].address!);
-    SocketManager().sendMessage("add-participant", params, (data) async {
+    SocketManager().sendMessage("add-participant", params, (data) {
       if (data['status'] != 200) {
         if (this.mounted)
           setState(() {
@@ -51,7 +51,7 @@ class _AddingParticipantPopupState extends State<AddingParticipantPopup> {
         });
       } else {
         Chat chat = Chat.fromMap(data["data"]);
-        await chat.save();
+        chat.save();
         if (i < widget.contacts.length - 1) {
           recursiveAddParticipants(i + 1);
         } else {

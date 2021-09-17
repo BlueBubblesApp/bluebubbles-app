@@ -93,8 +93,8 @@ void showConversationTileMenu(context, _this, chat, tapPosition, textTheme) {
         padding: EdgeInsets.zero,
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onTap: () async {
-            await chat.togglePin(!chat.isPinned!);
+          onTap: () {
+            chat.togglePin(!chat.isPinned!);
             if (_this.mounted) _this.setState(() {});
             Navigator.pop(context);
           },
@@ -124,8 +124,8 @@ void showConversationTileMenu(context, _this, chat, tapPosition, textTheme) {
         padding: EdgeInsets.zero,
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onTap: () async {
-            await chat.toggleMute(chat.muteType != "mute");
+          onTap: () {
+            chat.toggleMute(chat.muteType != "mute");
             if (_this.mounted) _this.setState(() {});
             Navigator.pop(context);
           },

@@ -608,11 +608,11 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                     primary: Theme.of(context).primaryColor,
                                   ),
                                   onPressed: () async {
-                                    List<ThemeObject> allThemes = await ThemeObject.getThemes();
+                                    List<ThemeObject> allThemes = ThemeObject.getThemes();
                                     String jsonStr = "[";
-                                    allThemes.forEachIndexed((index, e) async {
+                                    allThemes.forEachIndexed((index, e) {
                                       String entryJson = "[";
-                                      await e.fetchData();
+                                      e.fetchData();
                                       e.entries.forEachIndexed((index, e2) {
                                         entryJson = entryJson + "${jsonEncode(e2.toMap())}";
                                         if (index != e.entries.length - 1) {
@@ -697,9 +697,9 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                         }
                                         object.entries = entries;
                                         object.data = object.themeData;
-                                        await object.save();
+                                        object.save();
                                       }
-                                      await SettingsManager().saveSelectedTheme(context);
+                                      SettingsManager().saveSelectedTheme(context);
                                       Get.back();
                                       showSnackbar("Success", "Theming restored successfully");
                                     } catch (_) {
@@ -786,18 +786,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                 TextButton(
                                   child: Text("Yes"),
                                   onPressed: () async {
-                                    attachmentBox.removeAll();
-                                    chatBox.removeAll();
-                                    fcmDataBox.removeAll();
-                                    handleBox.removeAll();
-                                    messageBox.removeAll();
-                                    scheduledBox.removeAll();
-                                    themeEntryBox.removeAll();
-                                    themeObjectBox.removeAll();
-                                    amJoinBox.removeAll();
-                                    chJoinBox.removeAll();
-                                    cmJoinBox.removeAll();
-                                    tvJoinBox.removeAll();
+                                    DBProvider.deleteDB();
                                     await SettingsManager().resetConnection();
                                     SettingsManager().settings.finishedSetup.value = false;
                                     SocketManager().finishedSetup.sink.add(false);

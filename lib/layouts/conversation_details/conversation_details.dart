@@ -70,7 +70,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
     ever(ChatBloc().chats, (List<Chat> chats) async {
       Chat? _chat = chats.firstWhereOrNull((e) => e.guid == widget.chat.guid);
       if (_chat == null) return;
-      await _chat.getParticipants();
+      _chat.getParticipants();
       chat = _chat;
       if (this.mounted) setState(() {});
     });
@@ -80,7 +80,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
   void didChangeDependencies() async {
     super.didChangeDependencies();
 
-    await chat.getParticipants();
+    chat.getParticipants();
     readOnly = !(chat.participants.length > 1);
 
     Logger.info("Updated readonly $readOnly");
@@ -93,10 +93,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
       if (this.mounted) setState(() {});
       return;
     }
-    Chat.getAttachments(chat).then((value) {
-      attachmentsForChat = value;
-      if (this.mounted) setState(() {});
-    });
+    attachmentsForChat = Chat.getAttachments(chat);
+    if (this.mounted) setState(() {});
   }
 
   @override
@@ -163,7 +161,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                   cursorColor: Theme.of(context).primaryColor,
                                   readOnly: !chat.isGroup() || redactedMode,
                                   onSubmitted: (String newName) async {
-                                    await widget.chat.changeName(newName);
+                                    widget.chat.changeName(newName);
                                     await widget.chat.getTitle();
                                     setState(() {
                                       showNameField = newName.isNotEmpty;
@@ -459,8 +457,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                         activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
                         inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
                         inactiveThumbColor: Theme.of(context).accentColor,
-                        onChanged: (value) async {
-                          await widget.chat.togglePin(!widget.chat.isPinned!);
+                        onChanged: (value) {
+                          widget.chat.togglePin(!widget.chat.isPinned!);
                           EventDispatcher().emit("refresh", null);
                           if (this.mounted) setState(() {});
                         }))),
@@ -476,8 +474,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                         activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
                         inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
                         inactiveThumbColor: Theme.of(context).accentColor,
-                        onChanged: (value) async {
-                          await widget.chat.toggleMute(value);
+                        onChanged: (value) {
+                          widget.chat.toggleMute(value);
                           EventDispatcher().emit("refresh", null);
 
                           if (this.mounted) setState(() {});
@@ -506,14 +504,14 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                         }))),
             SliverToBoxAdapter(
               child: InkWell(
-                onTap: () async {
+                onTap: () {
                   if (this.mounted)
                     setState(() {
                       isClearing = true;
                     });
 
                   try {
-                    await widget.chat.clearTranscript();
+                    widget.chat.clearTranscript();
                     EventDispatcher().emit("refresh-messagebloc", {"chatGuid": widget.chat.guid});
                     if (this.mounted)
                       setState(() {
@@ -606,10 +604,10 @@ class _SyncDialogState extends State<SyncDialog> {
     syncMessages();
   }
 
-  void syncMessages() async {
+  void syncMessages() {
     int offset = 0;
     if (widget.withOffset) {
-      offset = await Message.countForChat(widget.chat) ?? 0;
+      offset = Message.countForChat(widget.chat) ?? 0;
     }
 
     SocketManager().fetchMessages(widget.chat, offset: offset, limit: widget.limit)!.then((dynamic messages) {

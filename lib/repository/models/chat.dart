@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:math';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/repository/models/join_tables.dart';
@@ -8,7 +6,6 @@ import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:objectbox/objectbox.dart';
 import 'package:universal_io/io.dart';
-
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/logger.dart';
@@ -25,32 +22,19 @@ import 'package:bluebubbles/helpers/darty.dart';
 import 'package:get/get.dart';
 import 'package:faker/faker.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
-
-
 import '../../helpers/utils.dart';
-import '../database.dart';
 import 'handle.dart';
 import 'message.dart';
-
-Chat chatFromJson(String str) {
-  final jsonData = json.decode(str);
-  return Chat.fromMap(jsonData);
-}
-
-String chatToJson(Chat data) {
-  final dyn = data.toMap();
-  return json.encode(dyn);
-}
 
 Future<String> getFullChatTitle(Chat _chat) async {
   String? title = "";
   if (isNullOrEmpty(_chat.displayName)!) {
-    Chat chat = await _chat.getParticipants();
+    Chat chat = _chat.getParticipants();
 
     // If there are no participants, try to get them from the server
     if (chat.participants.isEmpty) {
       await ActionHandler.handleChat(chat: chat);
-      chat = await chat.getParticipants();
+      chat = chat.getParticipants();
     }
 
     List<String> titles = [];
@@ -83,16 +67,6 @@ Future<String> getFullChatTitle(Chat _chat) async {
   }
 
   return title!;
-}
-
-Future<String?> getShortChatTitle(Chat _chat) async {
-  if (_chat.participants.length == 1) {
-    return await ContactManager().getContactTitle(_chat.participants[0]);
-  } else if (_chat.displayName != null && _chat.displayName!.length != 0) {
-    return _chat.displayName;
-  } else {
-    return "${_chat.participants.length} people";
-  }
 }
 
 @Entity()
@@ -210,58 +184,28 @@ class Chat {
     return data;
   }
 
-  Future<Chat> save({bool updateIfAbsent = true, bool updateLocalVals = false}) async {
-    Chat? existing = await Chat.findOne({"guid": this.guid});
+  Chat save() {
+    if (kIsWeb) return this;
+    Chat? existing = Chat.findOne(guid: this.guid);
     this.id = existing?.id ?? this.id;
     try {
       chatBox.put(this);
     } on UniqueViolationException catch (_) {}
-    /*final Database? db = await DBProvider.db.database;
-
-    // Try to find an existing chat before saving it
-    Chat? existing = await Chat.findOne({"guid": this.guid});
-    if (existing != null) {
-      this.id = existing.id;
-      if (!updateLocalVals) {
-        this.muteType = existing.muteType;
-        this.muteArgs = existing.muteArgs;
-        this.isPinned = existing.isPinned;
-        this.isArchived = existing.isArchived;
-        this.hasUnreadMessage = existing.hasUnreadMessage;
-      }
-    }
-
-    // If it already exists, update it
-    if (existing == null) {
-      // Remove the ID from the map for inserting
-      var map = this.toMap();
-      if (map.containsKey("ROWID")) {
-        map.remove("ROWID");
-      }
-      if (map.containsKey("participants")) {
-        map.remove("participants");
-      }
-
-      this.id = await db?.insert("chat", map);
-    } else if (updateIfAbsent) {
-      await this.update();
-    }*/
-
     // Save participants to the chat
     for (int i = 0; i < this.participants.length; i++) {
-      await this.addParticipant(this.participants[i]);
+      this.addParticipant(this.participants[i]);
     }
 
     return this;
   }
 
-  Future<Chat> changeName(String? name) async {
-    Chat? c = chatBox.get(this.id!);
-    c?.displayName = name;
-    if (c != null) chatBox.put(c);
-    /*final Database? db = await DBProvider.db.database;
-    await db?.update("chat", {'displayName': name}, where: "ROWID = ?", whereArgs: [this.id]);
-    this.displayName = name;*/
+  Chat changeName(String? name) {
+    if (kIsWeb) {
+      this.displayName = name;
+      return this;
+    }
+    this.displayName = name;
+    chatBox.put(this);
     return this;
   }
 
@@ -274,7 +218,7 @@ class Chat {
     return buildDate(this.latestMessageDate);
   }
 
-  Future<bool> shouldMuteNotification(Message? message) async {
+  bool shouldMuteNotification(Message? message) {
     if (SettingsManager().settings.filterUnknownSenders.value
         && this.participants.length == 1
         && ContactManager().handleToContact[this.participants[0].address] == null) {
@@ -296,10 +240,10 @@ class Chat {
       DateTime time = DateTime.parse(muteArgs!);
       bool shouldMute = DateTime.now().toLocal().difference(time).inSeconds.isNegative;
       if (!shouldMute) {
-        await this.toggleMute(false);
+        this.toggleMute(false);
         this.muteType = null;
         this.muteArgs = null;
-        await this.update();
+        this.save();
       }
       return shouldMute;
     } else if (muteType == "text_detection") {
@@ -315,50 +259,9 @@ class Chat {
         ReactionTypes.toList().contains(message?.associatedMessageType ?? "");
   }
 
-  Future<Chat> update() async {
-    /*final Database? db = await DBProvider.db.database;
-
-    // isArchived, isMuted, and isPinned should only be updated by using the helper methods
-    Map<String, dynamic> params = {"isFiltered": this.isFiltered! ? 1 : 0};
-
-    if (this.originalROWID != null) {
-      params["originalROWID"] = this.originalROWID;
-    }
-
-    // Only update the latestMessage info if it's not null,
-    // and it's not some time in the future
-    int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-    if (this.latestMessageDate != null && now > this.latestMessageDate!.millisecondsSinceEpoch) {
-      params["latestMessageText"] = this.latestMessageText;
-      params["latestMessageDate"] = this.latestMessageDate!.millisecondsSinceEpoch;
-    }
-
-    // Add display name if it's been updated
-    if (this.displayName != null) {
-      params["displayName"] = this.displayName;
-    }
-
-    params["_customAvatarPath"] = this._customAvatarPath;
-    params["_pinIndex"] = this._pinIndex.value;
-    params["muteType"] = this.muteType;
-    params["muteArgs"] = this.muteArgs;
-
-    // If it already exists, update it
-    if (this.id != null) {
-      await db?.update("chat", params, where: "ROWID = ?", whereArgs: [this.id]);
-    } else {
-      await this.save(updateIfAbsent: false);
-    }*/
-    this.save();
-
-    return this;
-  }
-
-  static Future<void> deleteChat(Chat chat) async {
-    /*final Database? db = await DBProvider.db.database;
-    await chat.save();
-    if (db == null) return;*/
-    List<Message> messages = await Chat.getMessages(chat);
+  static void deleteChat(Chat chat) {
+    if (kIsWeb) return;
+    List<Message> messages = Chat.getMessages(chat);
     chatBox.remove(chat.id!);
     messageBox.removeMany(messages.map((e) => e.id!).toList());
     final query = chJoinBox.query(ChatHandleJoin_.chatId.equals(chat.id!)).build();
@@ -369,16 +272,9 @@ class Chat {
     final results2 = query2.property(ChatMessageJoin_.id).find();
     query2.close();
     cmJoinBox.removeMany(results2);
-    /*for (Message message in messages) {
-      await db.delete("message", where: "ROWID = ?", whereArgs: [message.id]);
-    }
-    await db.delete("chat", where: "ROWID = ?", whereArgs: [chat.id]);
-    await db.delete("chat_handle_join", where: "chatId = ?", whereArgs: [chat.id]);
-    await db.delete("chat_message_join", where: "chatId = ?", whereArgs: [chat.id]);*/
   }
 
-  Future<Chat> toggleHasUnread(bool hasUnread) async {
-    //final Database? db = await DBProvider.db.database;
+  Chat toggleHasUnread(bool hasUnread) {
     if (hasUnread) {
       if (CurrentChat.isActive(this.guid!)) {
         return this;
@@ -386,7 +282,6 @@ class Chat {
     }
 
     this.hasUnreadMessage = hasUnread;
-
     this.save();
 
     if (hasUnread) {
@@ -403,13 +298,13 @@ class Chat {
     //final Database? db = await DBProvider.db.database;
 
     // Save the message
-    Message? existing = await Message.findOne({"guid": message.guid});
+    Message? existing = Message.findOne(guid: message.guid);
     Message? newMessage;
 
     try {
-      newMessage = await message.save();
+      newMessage = message.save();
     } catch (ex, stacktrace) {
-      newMessage = await Message.findOne({"guid": message.guid});
+      newMessage = Message.findOne(guid: message.guid);
       if (newMessage == null) {
         Logger.error(ex.toString());
         Logger.error(stacktrace.toString());
@@ -436,13 +331,13 @@ class Chat {
 
     // Save any attachments
     for (Attachment? attachment in message.attachments ?? []) {
-      await attachment!.save(newMessage);
+      attachment!.save(newMessage);
     }
 
     // Save the chat.
     // This will update the latestMessage info as well as update some
     // other fields that we want to "mimic" from the server
-    await this.save();
+    this.save();
 
     try {
       // Add the relationship
@@ -456,9 +351,9 @@ class Chat {
       // If the message is from me, mark it unread
       // If the message is not from the same chat as the current chat, mark unread
       if (message.isFromMe!) {
-        await this.toggleHasUnread(false);
+        this.toggleHasUnread(false);
       } else if (!CurrentChat.isActive(this.guid!)) {
-        await this.toggleHasUnread(true);
+        this.toggleHasUnread(true);
       }
     }
 
@@ -495,7 +390,7 @@ class Chat {
           }
         }
 
-        message.update();
+        message.save();
       });
     }
 
@@ -505,14 +400,14 @@ class Chat {
 
   void serverSyncParticipants() {
     // Send message to server to get the participants
-    SocketManager().sendMessage("get-participants", {"identifier": this.guid}, (response) async {
+    SocketManager().sendMessage("get-participants", {"identifier": this.guid}, (response) {
       if (response["status"] == 200) {
         // Get all the participants from the server
         List data = response["data"];
         List<Handle> handles = data.map((e) => Handle.fromMap(e)).toList();
 
         // Make sure that all participants for our local chat are fetched
-        await this.getParticipants();
+        this.getParticipants();
 
         // We want to determine all the participants that exist in the response that are not already in our locally saved chat (AKA all the new participants)
         List<Handle> newParticipants = handles
@@ -527,13 +422,13 @@ class Chat {
 
         // Add all participants that are missing from our local db
         for (Handle newParticipant in newParticipants) {
-          await this.addParticipant(newParticipant);
+          this.addParticipant(newParticipant);
         }
 
         // Remove all extraneous participants from our local db
         for (Handle removedParticipant in removedParticipants) {
-          await removedParticipant.save();
-          await this.removeParticipant(removedParticipant);
+          removedParticipant.save();
+          this.removeParticipant(removedParticipant);
         }
 
         // Sync all changes with the chatbloc
@@ -542,18 +437,12 @@ class Chat {
     });
   }
 
-  static Future<int?> count() async {
-    /*final Database? db = await DBProvider.db.database;
-
-    List<Map<String, dynamic>>? test = await db?.rawQuery("SELECT COUNT(*) FROM chat;");
-    return test?[0]['COUNT(*)'];*/
+  static int? count() {
     return chatBox.count();
   }
 
-  static Future<List<Attachment>> getAttachments(Chat chat, {int offset = 0, int limit = 25}) async {
-    /*final Database? db = await DBProvider.db.database;
-    if (db == null) return [];*/
-    if (chat.id == null) return [];
+  static List<Attachment> getAttachments(Chat chat, {int offset = 0, int limit = 25}) {
+    if (kIsWeb || chat.id == null) return [];
     final amJoinValues = amJoinBox.getAll();
     final cmJoinValues = cmJoinBox.getAll().where((element) => element.chatId == chat.id).map((e) => e.messageId).toList();
     final query2 = (messageBox.query(Message_.id.oneOf(cmJoinValues))..order(Message_.dateCreated, flags: Order.descending)).build();
@@ -566,7 +455,7 @@ class Chat {
     final attachments = query.find()..removeWhere((element) => element.mimeType == null);
     final actualAttachments = <Attachment>[];
     for (Message m in messages) {
-      m.attachments = await m.fetchAttachments();
+      m.attachments = m.fetchAttachments();
       for (Attachment a in attachments) {
         if (m.attachments?.map((e) => e!.guid).contains(a.guid) ?? false) {
           actualAttachments.add(a);
@@ -579,89 +468,14 @@ class Chat {
     }
     query.close();
     return actualAttachments;
-    /*String query = ("SELECT"
-        " attachment.ROWID AS ROWID,"
-        " attachment.originalROWID AS originalROWID,"
-        " attachment.guid AS guid,"
-        " attachment.uti AS uti,"
-        " attachment.mimeType AS mimeType,"
-        " attachment.totalBytes AS totalBytes,"
-        " attachment.transferName AS transferName,"
-        " attachment.blurhash AS blurhash,"
-        " attachment.metadata AS metadata"
-        " FROM attachment"
-        " JOIN attachment_message_join AS amj ON amj.attachmentId = attachment.ROWID"
-        " JOIN message ON amj.messageId = message.ROWID"
-        " JOIN chat_message_join AS cmj ON cmj.messageId = message.ROWID"
-        " JOIN chat ON chat.ROWID = cmj.chatId"
-        " WHERE chat.ROWID = ? AND attachment.mimeType IS NOT NULL");
-
-    // Add pagination
-    query += " ORDER BY message.dateCreated DESC LIMIT $limit OFFSET $offset";
-
-    // Execute the query
-    var res = await db.rawQuery("$query;", [chat.id]);
-    List<Attachment> attachments = res.map((attachment) => Attachment.fromMap(attachment)).where((element) {
-      String? mimeType = element.mimeType;
-      if (mimeType == null) return false;
-      mimeType = mimeType.substring(0, mimeType.indexOf("/"));
-      return mimeType == "image" || mimeType == "video";
-    }).toList();
-    if (attachments.length > 0) {
-      final guids = attachments.map((e) => e.guid).toSet();
-      attachments.retainWhere((element) => guids.remove(element.guid));
-    }
-    return attachments;*/
   }
 
-  static Map<String, Completer<List<Message>>> _getMessagesRequests = {};
-
-  static Future<List<Message>> getMessagesSingleton(Chat? chat,
-      {bool reactionsOnly = false, int offset = 0, int limit = 25, bool includeDeleted: false}) async {
-    if (chat == null) return [];
-
-    String req = "${chat.guid}-$offset-$limit-$reactionsOnly-$includeDeleted";
-
-    // If a current request is in progress, return that future
-    if (_getMessagesRequests.containsKey(req) && !_getMessagesRequests[req]!.isCompleted)
-      return _getMessagesRequests[req]!.future;
-
-    _getMessagesRequests[req] = new Completer();
-
-    try {
-      List<Message> messages = await Chat.getMessages(chat,
-          reactionsOnly: reactionsOnly, offset: offset, limit: limit, includeDeleted: includeDeleted);
-
-      if (_getMessagesRequests.containsKey(req) && !_getMessagesRequests[req]!.isCompleted)
-        _getMessagesRequests[req]!.complete(messages);
-    } catch (ex) {
-      Logger.error(ex.toString());
-
-      if (_getMessagesRequests.containsKey(req) && !_getMessagesRequests[req]!.isCompleted)
-        _getMessagesRequests[req]!.completeError(ex);
-    }
-
-    // Remove the request from the "cache" after 10 seconds
-    Future.delayed(new Duration(seconds: 10), () {
-      if (_getMessagesRequests.containsKey(req)) {
-        _getMessagesRequests.remove(req);
-      }
-    });
-
-    if (_getMessagesRequests.containsKey(req)) {
-      return _getMessagesRequests[req]!.future;
-    } else {
-      return [];
-    }
-  }
-
-  static Future<List<Message>> getMessages(Chat chat,
-      {bool reactionsOnly = false, int offset = 0, int limit = 25, bool includeDeleted: false}) async {
-    /*final Database? db = await DBProvider.db.database;
-    if (db == null) return [];*/
-    if (chat.id == null) return [];
+  static List<Message> getMessages(Chat chat, {int offset = 0, int limit = 25, bool includeDeleted: false}) {
+    if (kIsWeb || chat.id == null) return [];
     final messageIds = cmJoinBox.getAll().where((element) => element.chatId == chat.id).map((e) => e.messageId).toList();
-    final query = (messageBox.query(Message_.id.oneOf(messageIds))..order(Message_.dateCreated, flags: Order.descending)).build();
+    final query = (messageBox.query(Message_.id.oneOf(messageIds)
+        .and(includeDeleted ? Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull()) : Message_.dateDeleted.isNull()))
+      ..order(Message_.dateCreated, flags: Order.descending)).build();
     query
       ..limit = limit
       ..offset = offset;
@@ -673,182 +487,55 @@ class Chat {
         element.handle = handles.firstWhere((e) => e?.id == element.handleId);
     });
     return messages;
-    /*// String reactionQualifier = reactionsOnly ? "IS NOT" : "IS";
-    String query = ("SELECT"
-        " message.ROWID AS ROWID,"
-        " message.originalROWID AS originalROWID,"
-        " message.guid AS guid,"
-        " message.handleId AS handleId,"
-        " message.otherHandle AS otherHandle,"
-        " message.text AS text,"
-        " message.subject AS subject,"
-        " message.country AS country,"
-        " message.error AS error,"
-        " message.dateCreated AS dateCreated,"
-        " message.dateDelivered AS dateDelivered,"
-        " message.dateDeleted AS dateDeleted,"
-        " message.dateRead AS dateRead,"
-        " message.isFromMe AS isFromMe,"
-        " message.isDelayed AS isDelayed,"
-        " message.isAutoReply AS isAutoReply,"
-        " message.isSystemMessage AS isSystemMessage,"
-        " message.isForward AS isForward,"
-        " message.isArchived AS isArchived,"
-        " message.cacheRoomnames AS cacheRoomnames,"
-        " message.isAudioMessage AS isAudioMessage,"
-        " message.datePlayed AS datePlayed,"
-        " message.itemType AS itemType,"
-        " message.groupTitle AS groupTitle,"
-        " message.groupActionType AS groupActionType,"
-        " message.isExpired AS isExpired,"
-        " message.balloonBundleId AS balloonBundleId,"
-        " message.associatedMessageGuid AS associatedMessageGuid,"
-        " message.associatedMessageType AS associatedMessageType,"
-        " message.expressiveSendStyleId AS texexpressiveSendStyleIdt,"
-        " message.timeExpressiveSendStyleId AS timeExpressiveSendStyleId,"
-        " message.hasAttachments AS hasAttachments,"
-        " message.hasReactions AS hasReactions,"
-        " message.metadata AS metadata,"
-        " message.hasDdResults AS hasDdResults,"
-        " handle.ROWID AS handleId,"
-        " handle.originalROWID AS handleOriginalROWID,"
-        " handle.address AS handleAddress,"
-        " handle.country AS handleCountry,"
-        " handle.color AS handleColor,"
-        " handle.defaultPhone AS defaultPhone,"
-        " handle.uncanonicalizedId AS handleUncanonicalizedId"
-        " FROM message"
-        " JOIN chat_message_join AS cmj ON message.ROWID = cmj.messageId"
-        " JOIN chat ON cmj.chatId = chat.ROWID"
-        " LEFT OUTER JOIN handle ON handle.ROWID = message.handleId"
-        " WHERE chat.ROWID = ?");
-
-    if (!includeDeleted) {
-      query += " AND message.dateDeleted IS NULL";
-    }
-
-    // Add pagination
-    String pagination = " ORDER BY message.originalROWID DESC LIMIT $limit OFFSET $offset;";
-
-    // Execute the query
-    var res = await db
-        .rawQuery("$query" + " AND message.originalROWID IS NOT NULL GROUP BY message.ROWID" + pagination, [chat.id]);
-
-    // Add the from/handle data to the messages
-    List<Message> output = [];
-    for (int i = 0; i < res.length; i++) {
-      Message msg = Message.fromMap(res[i]);
-
-      // If the handle is not null, load the handle data
-      // The handle is null if the message.handleId is 0
-      // the handleId is 0 when isFromMe is true and the chat is a group chat
-      if (res[i].containsKey('handleAddress') && res[i]['handleAddress'] != null) {
-        msg.handle = Handle.fromMap({
-          'id': res[i]['handleId'],
-          'originalROWID': res[i]['handleOriginalROWID'],
-          'address': res[i]['handleAddress'],
-          'country': res[i]['handleCountry'],
-          'color': res[i]['handleColor'],
-          'uncanonicalizedId': res[i]['handleUncanonicalizedId']
-        });
-      }
-
-      output.add(msg);
-    }
-
-    var res2 = await db.rawQuery("$query" + " AND message.originalROWID IS NULL GROUP BY message.ROWID;", [chat.id]);
-    for (int i = 0; i < res2.length; i++) {
-      Message msg = Message.fromMap(res2[i]);
-
-      // If the handle is not null, load the handle data
-      // The handle is null if the message.handleId is 0
-      // the handleId is 0 when isFromMe is true and the chat is a group chat
-      if (res2[i].containsKey('handleAddress') && res2[i]['handleAddress'] != null) {
-        msg.handle = Handle.fromMap({
-          'id': res2[i]['handleId'],
-          'originalROWID': res2[i]['handleOriginalROWID'],
-          'address': res2[i]['handleAddress'],
-          'country': res2[i]['handleCountry'],
-          'color': res2[i]['handleColor'],
-          'uncanonicalizedId': res2[i]['handleUncanonicalizedId']
-        });
-      }
-      for (int j = 0; j < output.length; j++) {
-        if (output[j].id! < msg.id!) {
-          output.insert(j, msg);
-          break;
-        }
-      }
-    }
-
-    return output;*/
   }
 
-  Future<Chat> getParticipants() async {
-    /*final Database? db = await DBProvider.db.database;
-    if (db == null) return this;*/
-    if (this.id == null) return this;
+  Chat getParticipants() {
+    if (kIsWeb || this.id == null) return this;
     final handleIds = chJoinBox.getAll().where((element) => element.chatId == this.id).map((e) => e.handleId);
     final handles = handleBox.getMany(handleIds.toList(), growableResult: true)..retainWhere((e) => e != null);
     final nonNullHandles = List<Handle>.from(handles);
     this.participants = nonNullHandles;
     this._deduplicateParticipants();
     this.fakeParticipants = this.participants.map((p) => ContactManager().handleToFakeName[p.address] ?? "Unknown").toList();
-    /*var res = await db.rawQuery(
-        "SELECT"
-        " handle.ROWID AS ROWID,"
-        " handle.originalROWID as originalROWID,"
-        " handle.address AS address,"
-        " handle.country AS country,"
-        " handle.color AS color,"
-        " handle.defaultPhone AS defaultPhone,"
-        " handle.uncanonicalizedId AS uncanonicalizedId"
-        " FROM chat"
-        " JOIN chat_handle_join AS chj ON chat.ROWID = chj.chatId"
-        " JOIN handle ON handle.ROWID = chj.handleId"
-        " WHERE chat.ROWID = ?;",
-        [this.id]);
-
-    this.participants = (res.isNotEmpty) ? res.map((c) => Handle.fromMap(c)).toList() : [];
-    this._deduplicateParticipants();
-    this.fakeParticipants = this.participants.map((p) => ContactManager().handleToFakeName[p.address]).toList();*/
     return this;
   }
 
-  Future<Chat> addParticipant(Handle participant) async {
-    //final Database? db = await DBProvider.db.database;
-
+  Chat addParticipant(Handle participant) {
+    if (kIsWeb) {
+      this.participants.add(participant);
+      this._deduplicateParticipants();
+      return this;
+    }
     // Save participant and add to list
-    await participant.save();
+    participant.save();
     if (participant.id == null) return this;
 
     try {
       chJoinBox.put(ChatHandleJoin(chatId: this.id!, handleId: participant.id!));
-    } catch (ex) {
-      // Don't do anything if it already exists
-    }
+    } catch (ex) {}
 
     // Add to the class and deduplicate
     this.participants.add(participant);
     this._deduplicateParticipants();
-
     return this;
   }
 
-  Future<Chat> removeParticipant(Handle participant) async {
-    //final Database? db = await DBProvider.db.database;
+  Chat removeParticipant(Handle participant) {
+    if (kIsWeb) {
+      this.participants.removeWhere((element) => participant.id == element.id);
+      this._deduplicateParticipants();
+      return this;
+    }
 
+    // find the join item and delete it
     final query = chJoinBox.query(ChatHandleJoin_.handleId.equals(participant.id!).and(ChatHandleJoin_.chatId.equals(this.id!))).build();
     final result = query.find().first;
     query.close();
     chJoinBox.remove(result.id!);
-    // First, remove from the JOIN table
-    //await db?.delete("chat_handle_join", where: "chatId = ? AND handleId = ?", whereArgs: [this.id, participant.id]);
 
     // Second, remove from this object instance
     this.participants.removeWhere((element) => participant.id == element.id);
     this._deduplicateParticipants();
-
     return this;
   }
 
@@ -858,80 +545,59 @@ class Chat {
     this.participants.retainWhere((element) => ids.remove(element.address));
   }
 
-  Future<Chat> togglePin(bool isPinned) async {
-    //final Database? db = await DBProvider.db.database;
+  Chat togglePin(bool isPinned) {
     if (this.id == null) return this;
-
     this.isPinned = isPinned;
     this._pinIndex.value = null;
-    //await db?.update("chat", {"isPinned": isPinned ? 1 : 0}, where: "ROWID = ?", whereArgs: [this.id]);
     this.save();
     ChatBloc().updateChat(this);
     return this;
   }
 
-  Future<Chat> toggleMute(bool isMuted) async {
-    //final Database? db = await DBProvider.db.database;
+  Chat toggleMute(bool isMuted) {
     if (this.id == null) return this;
-
     this.muteType = isMuted ? "mute" : null;
     this.muteArgs = null;
-    //await db?.update("chat", {"muteType": muteType, "muteArgs": muteArgs}, where: "ROWID = ?", whereArgs: [this.id]);
     this.save();
     ChatBloc().updateChat(this);
     return this;
   }
 
-  Future<Chat> toggleArchived(bool isArchived) async {
-    //final Database? db = await DBProvider.db.database;
+  Chat toggleArchived(bool isArchived) {
     if (this.id == null) return this;
-
     this.isArchived = isArchived;
-    //await db?.update("chat", {"isArchived": isArchived ? 1 : 0}, where: "ROWID = ?", whereArgs: [this.id]);
     this.save();
     ChatBloc().updateChat(this);
     return this;
   }
 
-  static Future<Chat?> findOne(Map<String, dynamic> filters) async {
-    /*final Database? db = await DBProvider.db.database;
-    if (db == null) {
-      await ChatBloc().chatRequest!.future;
-      if (filters['guid'] != null) {
-        return ChatBloc().chats.firstWhere((e) => e.guid == filters['guid']);
-      } else if (filters['chatIdentifier'] != null) {
-        return ChatBloc().chats.firstWhereOrNull((e) => e.chatIdentifier == filters['chatIdentifier']);
-      }
-      return null;
-    }*/
+  static Future<Chat?> findOneWeb({String? guid, String? chatIdentifier}) async {
+    await ChatBloc().chatRequest!.future;
+    if (guid != null) {
+      return ChatBloc().chats.firstWhere((e) => e.guid == guid);
+    } else if (chatIdentifier != null) {
+      return ChatBloc().chats.firstWhereOrNull((e) => e.chatIdentifier == chatIdentifier);
+    }
+    return null;
+  }
 
-    if (filters['guid'] != null) {
-      final query = chatBox.query(Chat_.guid.equals(filters['guid'])).build();
+  static Chat? findOne({String? guid, String? chatIdentifier}) {
+    if (guid != null) {
+      final query = chatBox.query(Chat_.guid.equals(guid)).build();
       final result = query.findFirst();
       query.close();
       return result;
-    } else if (filters['chatIdentifier'] != null) {
-      final query = chatBox.query(Chat_.chatIdentifier.equals(filters['chatIdentifier'])).build();
+    } else if (chatIdentifier != null) {
+      final query = chatBox.query(Chat_.chatIdentifier.equals(chatIdentifier)).build();
       final result = query.findFirst();
       query.close();
       return result;
     }
     return null;
-/*
-    List<String> whereParams = [];
-    filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
-    List<dynamic> whereArgs = [];
-    filters.values.forEach((filter) => whereArgs.add(filter));
-    var res = await db.query("chat", where: whereParams.join(" AND "), whereArgs: whereArgs, limit: 1);
-
-    if (res.isEmpty) {
-      return null;
-    }
-
-    return Chat.fromMap(res.elementAt(0));*/
   }
 
-  static Future<List<Chat>> getChats({int limit = 15, int offset = 0}) async {
+  static List<Chat> getChats({int limit = 15, int offset = 0}) {
+    if (kIsWeb) throw Exception("Use socket to get chats on Web!");
     final query = (chatBox.query()..order(Chat_.isPinned, flags: Order.descending)..order(Chat_.latestMessageDate, flags: Order.descending)).build();
     query
       ..limit = limit
@@ -939,74 +605,29 @@ class Chat {
     final chats = query.find();
     query.close();
     return chats;
-    /*final Database? db = await DBProvider.db.database;
-    if (db == null) return [];
-
-    var res = await db.rawQuery(
-      "SELECT"
-      " chat.ROWID as ROWID,"
-      " chat.originalROWID as originalROWID,"
-      " chat.guid as guid,"
-      " chat.style as style,"
-      " chat.chatIdentifier as chatIdentifier,"
-      " chat.isFiltered as isFiltered,"
-      " chat.isPinned as isPinned,"
-      " chat.isArchived as isArchived,"
-      " chat.muteType as muteType,"
-      " chat.muteArgs as muteArgs,"
-      " chat.hasUnreadMessage as hasUnreadMessage,"
-      " chat.latestMessageDate as latestMessageDate,"
-      " chat.latestMessageText as latestMessageText,"
-      " chat.displayName as displayName,"
-      " chat._customAvatarPath as _customAvatarPath,"
-      " chat._pinIndex as _pinIndex"
-      " FROM chat"
-      " ORDER BY chat.isPinned DESC, chat.latestMessageDate DESC LIMIT $limit OFFSET $offset;",
-    );
-
-    if (res.isEmpty) return [];
-
-    Iterable<Chat> output = res.map((c) => Chat.fromMap(c));
-    bool shouldFilter = SettingsManager().settings.filteredChatList.value;
-    if (shouldFilter) {
-      output = output.where((item) => !item.isFiltered!);
-    }
-
-    return output.toList();*/
   }
 
   bool isGroup() {
     return this.participants.length > 1;
   }
 
-  Future<void> clearTranscript() async {
-    //final Database? db = await DBProvider.db.database;
+  void clearTranscript() {
+    if (kIsWeb) return;
     final messageIds = cmJoinBox.getAll().where((element) => element.chatId == this.id!).map((e) => e.messageId);
     final messages = messageBox.getAll().where((element) => messageIds.contains(element.id)).toList();
     messages.forEach((element) {
       element.dateDeleted = DateTime.now().toUtc();
     });
     messageBox.putMany(messages);
-   /* await db?.rawQuery(
-        "UPDATE message "
-        "SET dateDeleted = ${DateTime.now().toUtc().millisecondsSinceEpoch} "
-        "WHERE ROWID IN ("
-        "    SELECT m.ROWID "
-        "    FROM message m"
-        "    INNER JOIN chat_message_join cmj ON cmj.messageId = m.ROWID "
-        "    INNER JOIN chat c ON cmj.chatId = c.ROWID "
-        "    WHERE c.guid = ?"
-        ");",
-        [this.guid]);*/
   }
 
-  Future<Message> get latestMessageFuture async {
+  Message get latestMessageGetter {
     if (latestMessage != null) return latestMessage!;
-    List<Message> latests = await Chat.getMessages(this, limit: 1);
-    Message message = latests.first;
+    List<Message> latest = Chat.getMessages(this, limit: 1);
+    Message message = latest.first;
     latestMessage = message;
     if (message.hasAttachments) {
-      await message.fetchAttachments();
+      message.fetchAttachments();
     }
     return message;
   }
@@ -1023,10 +644,9 @@ class Chat {
     return -a.latestMessageDate!.compareTo(b.latestMessageDate!);
   }
 
-  static flush() async {
+  static void flush() {
+    if (kIsWeb) return;
     chatBox.removeAll();
-    /*final Database? db = await DBProvider.db.database;
-    await db?.delete("chat");*/
   }
 
   Map<String, dynamic> toMap() => {

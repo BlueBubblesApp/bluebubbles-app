@@ -321,7 +321,7 @@ Future<String> getGroupEventText(Message message) async {
 
   String? other = "someone";
   if (message.otherHandle != null && [1, 2].contains(message.itemType)) {
-    Handle? item = await Handle.findOne({"originalROWID": message.otherHandle});
+    Handle? item = Handle.findOne(originalROWID: message.otherHandle);
     if (item != null) {
       other = await ContactManager().getContactTitle(item);
     }

@@ -233,7 +233,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
               ScheduledMessage scheduled = new ScheduledMessage(
                   chatGuid: _chat!.guid, message: messageController.text, epochTime: occurs.millisecondsSinceEpoch);
 
-              await scheduled.save();
+              scheduled.save();
               Navigator.of(context).pop();
             }
           },

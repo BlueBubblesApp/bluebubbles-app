@@ -410,10 +410,10 @@ class ChatListState extends State<ChatList> {
                                 ListTile(
                                     title: Text(chat.muteType == "mute" ? "Unmute" : "Mute", style: Theme.of(context).textTheme.bodyText1),
                                     subtitle: Text("Completely ${chat.muteType == "mute" ? "unmute" : "mute"} this chat", style: Theme.of(context).textTheme.subtitle1),
-                                    onTap: () async {
+                                    onTap: () {
                                       Get.back();
-                                      await chat.toggleMute(chat.muteType != "mute");
-                                      await chat.update();
+                                      chat.toggleMute(chat.muteType != "mute");
+                                      chat.save();
                                       if (this.mounted) setState(() {});
                                       EventDispatcher().emit("refresh", null);
                                     },
@@ -492,11 +492,11 @@ class ChatListState extends State<ChatList> {
                                               showSnackbar("Error", "Please select at least one person!");
                                               return;
                                             }
-                                            await chat.toggleMute(false);
+                                            chat.toggleMute(false);
                                             chat.muteType = "mute_individuals";
                                             chat.muteArgs = existing.join(",");
                                             Get.back();
-                                            await chat.update();
+                                            chat.save();
                                             if (this.mounted) setState(() {});
                                             EventDispatcher().emit("refresh", null);
                                           },
@@ -521,10 +521,10 @@ class ChatListState extends State<ChatList> {
                                           final messageTime = await showTimePicker(context: context, initialTime: TimeOfDay.now());
                                           if (messageTime != null) {
                                             final finalDate = DateTime(messageDate.year, messageDate.month, messageDate.day, messageTime.hour, messageTime.minute);
-                                            await chat.toggleMute(false);
+                                            chat.toggleMute(false);
                                             chat.muteType = "temporary_mute";
                                             chat.muteArgs = finalDate.toIso8601String();
-                                            await chat.update();
+                                            chat.save();
                                             if (this.mounted) setState(() {});
                                             EventDispatcher().emit("refresh", null);
                                           }
@@ -575,11 +575,11 @@ class ChatListState extends State<ChatList> {
                                             showSnackbar("Error", "Please enter text!");
                                             return;
                                           }
-                                          await chat.toggleMute(false);
+                                          chat.toggleMute(false);
                                           chat.muteType = "text_detection";
                                           chat.muteArgs = controller.text;
                                           Get.back();
-                                          await chat.update();
+                                          chat.save();
                                           if (this.mounted) setState(() {});
                                           EventDispatcher().emit("refresh", null);
                                         },
@@ -591,10 +591,10 @@ class ChatListState extends State<ChatList> {
                                   subtitle: Text("Delete your custom settings", style: Theme.of(context).textTheme.subtitle1),
                                   onTap: () async {
                                     Get.back();
-                                    await chat.toggleMute(false);
+                                    chat.toggleMute(false);
                                     chat.muteType = null;
                                     chat.muteArgs = null;
-                                    await chat.update();
+                                    chat.save();
                                     if (this.mounted) setState(() {});
                                     EventDispatcher().emit("refresh", null);
                                   },

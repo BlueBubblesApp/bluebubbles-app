@@ -51,8 +51,8 @@ class SocketManager {
 
   SocketManager._internal();
 
-  Future<void> removeChatNotification(Chat chat) async {
-    await chat.toggleHasUnread(false);
+  void removeChatNotification(Chat chat) {
+    chat.toggleHasUnread(false);
     ChatBloc().updateChat(chat);
   }
 
@@ -201,18 +201,18 @@ class SocketManager {
     }
   }
 
-  Future<String> handleNewMessage(_data) async {
+  String handleNewMessage(_data) {
     Map<String, dynamic>? data = _data;
     IncomingQueue().add(new QueueItem(event: "handle-message", item: {"data": data}));
-    return new Future.value("");
+    return "";
   }
 
-  Future<String> handleChatStatusChange(_data) async {
-    if (!SettingsManager().settings.enablePrivateAPI.value) return new Future.value("");
+  String handleChatStatusChange(_data) {
+    if (!SettingsManager().settings.enablePrivateAPI.value) return "";
 
     Map<String, dynamic>? data = _data;
     IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_CHAT_STATUS_CHANGE, item: {"data": data}));
-    return new Future.value("");
+    return "";
   }
 
   void startSocketIO({bool forceNewConnection = false, bool catchException = true}) {
@@ -336,7 +336,7 @@ class SocketManager {
         }
 
         // Lastly, find the message
-        Message msg = (await Message.findOne({'guid': message.guid}))!;
+        Message msg = Message.findOne(guid: message.guid)!;
 
         // Check if we already have an error, and save if we don't
         if (msg.error == 0) {
@@ -356,7 +356,7 @@ class SocketManager {
         Logger.info("Client received message timeout", tag: tag);
         Map<String, dynamic> data = _data;
 
-        Message? message = await Message.findOne({"guid": data["tempGuid"]});
+        Message? message = Message.findOne(guid: data['tempGuid']);
         if (message == null) return new Future.value("");
         message.error = 1003;
         message.guid = message.guid!.replaceAll("temp", "error-Message Timeout");

@@ -151,20 +151,20 @@ ThemeData whiteLightTheme = ThemeData(
   backgroundColor: Colors.white,
 );
 
-Future<void> loadTheme(BuildContext? context, {ThemeObject? lightOverride, ThemeObject? darkOverride}) async {
+void loadTheme(BuildContext? context, {ThemeObject? lightOverride, ThemeObject? darkOverride}) {
   if (context == null) return;
 
   // Set the theme to match those of the settings
-  ThemeObject light = lightOverride ?? await ThemeObject.getLightTheme();
-  ThemeObject dark = darkOverride ?? await ThemeObject.getDarkTheme();
+  ThemeObject light = lightOverride ?? ThemeObject.getLightTheme();
+  ThemeObject dark = darkOverride ?? ThemeObject.getDarkTheme();
   AdaptiveTheme.of(context).setTheme(
     light: light.themeData,
     dark: dark.themeData,
   );
 }
 
-Future<ThemeObject> revertToPreviousDarkTheme() async {
-  List<ThemeObject> allThemes = await ThemeObject.getThemes();
+ThemeObject revertToPreviousDarkTheme() {
+  List<ThemeObject> allThemes = ThemeObject.getThemes();
   ThemeObject? previous = allThemes.firstWhereOrNull((e) => e.previousDarkTheme);
 
   if (previous == null) {
@@ -175,11 +175,11 @@ Future<ThemeObject> revertToPreviousDarkTheme() async {
   previous!.previousDarkTheme = false;
 
   // Save the theme and set it accordingly
-  return await previous.save();
+  return previous.save();
 }
 
-Future<ThemeObject> revertToPreviousLightTheme() async {
-  List<ThemeObject> allThemes = await ThemeObject.getThemes();
+ThemeObject revertToPreviousLightTheme() {
+  List<ThemeObject> allThemes = ThemeObject.getThemes();
   ThemeObject? previous = allThemes.firstWhereOrNull((e) => e.previousDarkTheme);
 
   if (previous == null) {
@@ -190,5 +190,5 @@ Future<ThemeObject> revertToPreviousLightTheme() async {
   previous!.previousDarkTheme = false;
 
   // Save the theme and set it accordingly
-  return await previous.save();
+  return previous.save();
 }

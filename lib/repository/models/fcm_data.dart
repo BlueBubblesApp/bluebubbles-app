@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/config_entry.dart';
 import 'package:firebase_dart/firebase_dart.dart';
+import 'package:flutter/foundation.dart';
 import 'package:objectbox/objectbox.dart';
 
 
@@ -61,7 +61,8 @@ class FCMData {
     return data;
   }
 
-  Future<FCMData> save() async {
+  FCMData save() {
+    if (kIsWeb) return this;
     fcmDataBox.put(this);
     return this;
   }
@@ -87,10 +88,17 @@ class FCMData {
     app = await Firebase.initializeApp(options: options);
   }
 
-  static Future<FCMData> getFCM() async {
-    /*Database? db = await DBProvider.db.database;
-
-    List<Map<String, dynamic>> result = (await db?.query("fcm")) ?? [];*/
+  static FCMData getFCM() {
+    if (kIsWeb) {
+      return new FCMData(
+        projectID: prefs.getString('projectID'),
+        storageBucket: prefs.getString('storageBucket'),
+        apiKey: prefs.getString('apiKey'),
+        firebaseURL: prefs.getString('firebaseURL'),
+        clientID: prefs.getString('clientID'),
+        applicationID: prefs.getString('applicationID'),
+      );
+    }
     final result = fcmDataBox.getAll();
     if (result.isEmpty) return new FCMData(
       projectID: prefs.getString('projectID'),

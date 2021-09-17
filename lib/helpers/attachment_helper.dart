@@ -445,7 +445,7 @@ class AttachmentHelper {
     }
 
     // If we should update the attachment data, do it right before we return, no awaiting
-    attachment.update();
+    attachment.save(null);
 
     // Return the bytes
     return previewData;

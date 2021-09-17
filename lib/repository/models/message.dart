@@ -5,7 +5,6 @@ import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:collection/src/iterable_extensions.dart';
 import 'package:crypto/crypto.dart' as crypto;
-
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/darty.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
@@ -16,22 +15,9 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:objectbox/objectbox.dart';
-
 import '../../helpers/utils.dart';
-
-import '../database.dart';
 import 'chat.dart';
 import 'handle.dart';
-
-Message messageFromJson(String str) {
-  final jsonData = json.decode(str);
-  return Message.fromMap(jsonData);
-}
-
-String messageToJson(Message data) {
-  final dyn = data.toMap();
-  return json.encode(dyn);
-}
 
 @Entity()
 class Message {
@@ -75,7 +61,6 @@ class Message {
   bool hasReactions;
   DateTime? dateDeleted;
   Map<String, dynamic>? metadata;
-
   List<Attachment?>? attachments = [];
   List<Message> associatedMessages = [];
   bool? bigEmoji;
@@ -221,47 +206,31 @@ class Message {
     return data;
   }
 
-  Future<Message> save([bool updateIfAbsent = true]) async {
-    /*final Database? db = await DBProvider.db.database;*/
-    Message? existing = await Message.findOne({"guid": this.guid});
+  Message save() {
+   if (kIsWeb) return this;
+    Message? existing = Message.findOne(guid: this.guid);
     if (existing != null) {
       this.id = existing.id;
     }
 
     // Save the participant & set the handle ID to the new participant
     if (this.handle != null) {
-      await this.handle!.save();
+      this.handle!.save();
       this.handleId = this.handle!.id;
     }
     if (this.associatedMessageType != null && this.associatedMessageGuid != null) {
-      Message? associatedMessage = await Message.findOne({"guid": this.associatedMessageGuid});
+      Message? associatedMessage = Message.findOne(guid: this.associatedMessageGuid);
       if (associatedMessage != null) {
         associatedMessage.hasReactions = true;
-        await associatedMessage.save();
+        associatedMessage.save();
       }
     } else if (!this.hasReactions) {
-      Message? reaction = await Message.findOne({"associatedMessageGuid": this.guid});
+      Message? reaction = Message.findOne(associatedMessageGuid: this.guid);
       if (reaction != null) {
         this.hasReactions = true;
       }
     }
 
-    /*// If it already exists, update it
-    if (existing == null) {
-      // Remove the ID from the map for inserting
-      if (this.handleId == null) this.handleId = 0;
-      var map = this.toMap();
-      if (map.containsKey("ROWID")) {
-        map.remove("ROWID");
-      }
-      if (map.containsKey("handle")) {
-        map.remove("handle");
-      }
-
-      this.id = await db?.insert("message", map);
-    } else if (updateIfAbsent) {
-      await this.update();
-    }*/
     try {
       messageBox.put(this);
     } on UniqueViolationException catch (_) {}
@@ -271,8 +240,7 @@ class Message {
 
   static Future<Message?> replaceMessage(String? oldGuid, Message? newMessage,
       {bool awaitNewMessageEvent = true, Chat? chat}) async {
-    //final Database? db = await DBProvider.db.database;
-    Message? existing = await Message.findOne({"guid": oldGuid});
+    Message? existing = Message.findOne(guid: oldGuid);
 
     if (existing == null) {
       if (awaitNewMessageEvent) {
@@ -290,150 +258,43 @@ class Message {
     }
 
     newMessage!.id = existing.id;
-    /*Map<String, dynamic> params = newMessage!.toMap();
-    if (params.containsKey("ROWID")) {
-      params.remove("ROWID");
-    }
-    if (params.containsKey("handle")) {
-      params.remove("handle");
-    }
-
-    var theMap = existing.toMap();
-    if (theMap.containsKey("handleId")) {
-      params["handleId"] = theMap["handleId"];
-      newMessage.handleId = existing.handleId;
-    }
-    if (existing.hasAttachments) {
-      params["hasAttachments"] = existing.hasAttachments ? 1 : 0;
-      newMessage.hasAttachments = existing.hasAttachments;
-    }
-    if (theMap.containsKey("hasReactions")) {
-      params["hasReactions"] = theMap["hasReactions"];
-      newMessage.hasReactions = existing.hasReactions;
-    }
-    if (theMap.containsKey("metadata")) {
-      params["metadata"] = theMap["metadata"];
-      newMessage.metadata = existing.metadata;
-    }
-
-    await db?.update("message", params, where: "ROWID = ?", whereArgs: [existing.id]);*/
     messageBox.put(newMessage);
 
     return newMessage;
   }
 
-  Future<Message> updateMetadata(Metadata? metadata) async {
-    /*final Database? db = await DBProvider.db.database;
-    if (this.id == null) return this;*/
+  Message updateMetadata(Metadata? metadata) {
+    if (kIsWeb || this.id == null) return this;
     this.metadata = metadata!.toJson();
-
-    /*await db?.update("message", {"metadata": isNullOrEmpty(this.metadata)! ? null : jsonEncode(this.metadata)},
-        where: "ROWID = ?", whereArgs: [this.id]);*/
     this.save();
-
     return this;
   }
 
-  Future<Message> update() async {
-    /*final Database? db = await DBProvider.db.database;
-
-    Map<String, dynamic> params = {
-      "dateCreated": (this.dateCreated == null) ? null : this.dateCreated!.millisecondsSinceEpoch,
-      "dateRead": (this.dateRead == null) ? null : this.dateRead!.millisecondsSinceEpoch,
-      "dateDelivered": (this.dateDelivered == null) ? null : this.dateDelivered!.millisecondsSinceEpoch,
-      "isArchived": this.isArchived! ? 1 : 0,
-      "datePlayed": (this.datePlayed == null) ? null : this.datePlayed!.millisecondsSinceEpoch,
-      "_error": this._error.value,
-      "hasReactions": this.hasReactions ? 1 : 0,
-      "hasDdResults": this.hasDdResults! ? 1 : 0,
-      "metadata": isNullOrEmpty(this.metadata)! ? null : jsonEncode(this.metadata)
-    };
-
-    if (this.originalROWID != null) {
-      params["originalROWID"] = this.originalROWID;
-    }
-
-    // If it already exists, update it
-    if (this.id != null) {
-      await db?.update("message", params, where: "ROWID = ?", whereArgs: [this.id]);
-    } else {
-      await this.save(false);
-    }*/
-    this.save();
-
-    return this;
-  }
-
-  Future<List<Attachment?>?> fetchAttachments({CurrentChat? currentChat}) async {
-    if (this.hasAttachments && this.attachments != null && this.attachments!.length != 0) {
+  List<Attachment?>? fetchAttachments({CurrentChat? currentChat}) {
+    if (kIsWeb || (this.hasAttachments && this.attachments != null && this.attachments!.length != 0)) {
       return this.attachments;
     }
 
     if (currentChat != null) {
       this.attachments = currentChat.getAttachmentsForMessage(this);
+      if (this.attachments == null) this.attachments = [];
       if (this.attachments!.length != 0) return this.attachments;
     }
 
-    /*final Database? db = await DBProvider.db.database;
-    if (db == null) return [];*/
     if (this.id == null) return [];
     final attachmentIds = amJoinBox.getAll().where((element) => element.messageId == this.id!).map((e) => e.attachmentId).toList();
     final attachments = attachmentBox.getMany(attachmentIds, growableResult: true);
+    this.attachments = attachments;
     return attachments;
-    /*var res = await db.rawQuery(
-        "SELECT"
-        " attachment.ROWID AS ROWID,"
-        " attachment.originalROWID AS originalROWID,"
-        " attachment.guid AS guid,"
-        " attachment.uti AS uti,"
-        " attachment.mimeType AS mimeType,"
-        " attachment.transferState AS transferState,"
-        " attachment.isOutgoing AS isOutgoing,"
-        " attachment.transferName AS transferName,"
-        " attachment.totalBytes AS totalBytes,"
-        " attachment.isSticker AS isSticker,"
-        " attachment.hideAttachment AS hideAttachment,"
-        " attachment.blurhash AS blurhash,"
-        " attachment.metadata AS metadata,"
-        " attachment.width AS width,"
-        " attachment.height AS height"
-        " FROM message"
-        " JOIN attachment_message_join AS amj ON message.ROWID = amj.messageId"
-        " JOIN attachment ON attachment.ROWID = amj.attachmentId"
-        " WHERE message.ROWID = ?;",
-        [this.id]);
-
-    this.attachments = (res.isNotEmpty) ? res.map((c) => Attachment.fromMap(c)).toList() : [];
-
-    return this.attachments;*/
   }
 
-  static Future<Chat?> getChat(Message message) async {
-    /*final Database? db = await DBProvider.db.database;
-    if (db == null) return null;*/
+  static Chat? getChat(Message message) {
+    if (kIsWeb) return null;
     final chatId = cmJoinBox.getAll().firstWhere((element) => element.messageId == message.id).chatId;
     return chatBox.get(chatId);
-    /*var res = await db.rawQuery(
-        "SELECT"
-        " chat.ROWID AS ROWID,"
-        " chat.originalROWID AS originalROWID,"
-        " chat.guid AS guid,"
-        " chat.style AS style,"
-        " chat.chatIdentifier AS chatIdentifier,"
-        " chat.isArchived AS isArchived,"
-        " chat.displayName AS displayName,"
-        " chat.customAvatarPath AS customAvatarPath,"
-        " chat.pinIndex AS pinIndex"
-        " FROM chat"
-        " JOIN chat_message_join AS cmj ON chat.ROWID = cmj.chatId"
-        " JOIN message ON message.ROWID = cmj.messageId"
-        " WHERE message.ROWID = ?;",
-        [message.id]);
-
-    return (res.isNotEmpty) ? Chat.fromMap(res[0]) : null;*/
   }
 
-  Future<Message> fetchAssociatedMessages({MessageBloc? bloc}) async {
+  Message fetchAssociatedMessages({MessageBloc? bloc}) {
     if (this.associatedMessages.isNotEmpty &&
         this.associatedMessages.length == 1 &&
         this.associatedMessages[0].guid == this.guid) {
@@ -442,59 +303,29 @@ class Message {
     if (kIsWeb) {
       associatedMessages = bloc?.reactionMessages.values.where((element) => element.associatedMessageGuid == guid).toList() ?? [];
     } else {
-      associatedMessages = (await Message.find()).where((element) => element.associatedMessageGuid == this.guid).toList();
+      associatedMessages = Message.find().where((element) => element.associatedMessageGuid == this.guid).toList();
     }
     associatedMessages.sort((a, b) => a.originalROWID!.compareTo(b.originalROWID!));
     if (!kIsWeb) associatedMessages = MessageHelper.normalizedAssociatedMessages(associatedMessages);
     return this;
   }
 
-  Future<Handle?> getHandle() async {
-    /*final Database? db = await DBProvider.db.database;
-    if (db == null) return null;*/
+  Handle? getHandle() {
+    if (kIsWeb) return null;
     this.handle = handleBox.get(this.handleId!);
     return handleBox.get(this.handleId!);
-    /*var res = await db.rawQuery(
-        "SELECT"
-        " handle.ROWID AS ROWID,"
-        " handle.originalROWID AS originalROWID,"
-        " handle.address AS address,"
-        " handle.country AS country,"
-        " handle.color AS color,"
-        " handle.defaultPhone AS defaultPhone,"
-        " handle.uncanonicalizedId AS uncanonicalizedId"
-        " FROM handle"
-        " JOIN message ON message.handleId = handle.ROWID"
-        " WHERE message.ROWID = ?;",
-        [this.id]);
-
-    this.handle = (res.isNotEmpty) ? res.map((c) => Handle.fromMap(c)).toList()[0] : null;
-    return this.handle;*/
   }
 
-  static Future<Message?> findOne(Map<String, dynamic> filters) async {
-    /*final Database? db = await DBProvider.db.database;
-    if (db == null) return null;
-    List<String> whereParams = [];
-    filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
-    List<dynamic> whereArgs = [];
-    filters.values.forEach((filter) => whereArgs.add(filter));
-    var res = await db.query("message", where: whereParams.join(" AND "), whereArgs: whereArgs, limit: 1);
-
-    if (res.isEmpty) {
-      return null;
-    }
-
-    return Message.fromMap(res.elementAt(0));*/
-
-    if (filters['guid'] != null) {
-      final query = messageBox.query(Message_.guid.equals(filters['guid'])).build();
+  static Message? findOne({String? guid, String? associatedMessageGuid}) {
+    if (kIsWeb) return null;
+    if (guid != null) {
+      final query = messageBox.query(Message_.guid.equals(guid)).build();
       query..limit = 1;
       final result = query.findFirst();
       query.close();
       return result;
-    } else if (filters['associatedMessageGuid'] != null) {
-      final query = messageBox.query(Message_.associatedMessageGuid.equals(filters['associatedMessageGuid'])).build();
+    } else if (associatedMessageGuid != null) {
+      final query = messageBox.query(Message_.associatedMessageGuid.equals(associatedMessageGuid)).build();
       query..limit = 1;
       final result = query.findFirst();
       query.close();
@@ -503,11 +334,8 @@ class Message {
     return null;
   }
 
-  static Future<DateTime?> lastMessageDate() async {
-    /*final Database? db = await DBProvider.db.database;
-    if (db == null) return null;
-    // Get the last message
-    var res = await db.query("message", limit: 1, orderBy: "dateCreated DESC");*/
+  static DateTime? lastMessageDate() {
+    if (kIsWeb) return null;
     final query = (messageBox.query()..order(Message_.dateCreated, flags: Order.descending)).build();
     query..limit = 1;
     final messages = query.find();
@@ -515,12 +343,13 @@ class Message {
     return messages.isEmpty ? null : messages.first.dateCreated;
   }
 
-  static Future<List<Message>> find() async {
+  static List<Message> find() {
     return messageBox.getAll();
   }
 
-  static Future<void> delete(Map<String, dynamic> where) async {
-    final query = messageBox.query(Message_.guid.equals(where['guid'])).build();
+  static void delete(String guid) {
+    if (kIsWeb) return;
+    final query = messageBox.query(Message_.guid.equals(guid)).build();
     final results = query.find();
     final ids = results.map((e) => e.id!).toList();
     query.close();
@@ -529,42 +358,18 @@ class Message {
     query2.close();
     cmJoinBox.removeMany(results2.map((e) => e.id!).toList());
     messageBox.removeMany(ids);
-    /*final Database? db = await DBProvider.db.database;
-
-    List<String> whereParams = [];
-    where.keys.forEach((filter) => whereParams.add('$filter = ?'));
-    List<dynamic> whereArgs = [];
-    where.values.forEach((filter) => whereArgs.add(filter));
-
-
-    List<Message> toDelete = await Message.find(where);
-    for (Message msg in toDelete) {
-      await db?.delete("chat_message_join", where: "messageId = ?", whereArgs: [msg.id]);
-      await db?.delete("message", where: "ROWID = ?", whereArgs: [msg.id]);
-    }*/
   }
 
-  static Future<void> softDelete(Map<String, dynamic> where) async {
-    /*final Database? db = await DBProvider.db.database;
-
-    List<String> whereParams = [];
-    where.keys.forEach((filter) => whereParams.add('$filter = ?'));
-    List<dynamic> whereArgs = [];
-    where.values.forEach((filter) => whereArgs.add(filter));*/
-
-    Message? toDelete = await Message.findOne(where);
+  static void softDelete(String guid) {
+    if (kIsWeb) return null;
+    Message? toDelete = Message.findOne(guid: guid);
     toDelete?.dateDeleted = DateTime.now().toUtc();
     toDelete?.save();
-   /* for (Message msg in toDelete) {
-      await db?.update("message", {'dateDeleted': DateTime.now().toUtc().millisecondsSinceEpoch},
-          where: "ROWID = ?", whereArgs: [msg.id]);
-    }*/
   }
 
-  static flush() async {
+  static void flush() {
+    if (kIsWeb) return;
     messageBox.removeAll();
-   /* final Database? db = await DBProvider.db.database;
-    await db?.delete("message");*/
   }
 
   bool isUrlPreview() {
@@ -632,23 +437,9 @@ class Message {
     this.guid = "temp-$hashed";
   }
 
-  static Future<int?> countForChat(Chat? chat) async {
-   /* final Database? db = await DBProvider.db.database;
-    if (db == null) return 0;*/
-    if (chat == null || chat.id == null) return 0;
+  static int? countForChat(Chat? chat) {
+    if (kIsWeb || chat == null || chat.id == null) return 0;
     return cmJoinBox.getAll().where((element) => element.chatId == chat.id).length;
-    /*String query = ("SELECT"
-        " count(message.ROWID) AS count"
-        " FROM message"
-        " JOIN chat_message_join AS cmj ON cmj.messageId = message.ROWID"
-        " JOIN chat ON chat.ROWID = cmj.chatId"
-        " WHERE chat.ROWID = ?");
-
-    // Execute the query
-    var res = await db.rawQuery("$query;", [chat.id]);
-    if (res.length == 0) return 0;
-
-    return res[0]["count"] as int?;*/
   }
 
   void merge(Message otherMessage) {

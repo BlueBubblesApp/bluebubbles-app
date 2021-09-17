@@ -47,7 +47,7 @@ class MessageHelper {
     if (chat?.guid != null) {
       chats[chat!.guid!] = chat;
       if (chat.id == null) {
-        await chat.save();
+        chat.save();
       }
     }
 
@@ -68,7 +68,7 @@ class MessageHelper {
         if (msgChat != null && chats.containsKey(msgChat.guid)) {
           msgChat = chats[msgChat.guid];
         } else if (msgChat?.guid != null) {
-          await msgChat!.save();
+          msgChat!.save();
           chats[msgChat.guid!] = msgChat;
         }
       }
@@ -77,7 +77,7 @@ class MessageHelper {
       if (msgChat == null) continue;
 
       Message message = Message.fromMap(item);
-      Message? existing = await Message.findOne({"guid": message.guid});
+      Message? existing = Message.findOne(guid: message.guid);
       await msgChat.addMessage(
         message,
         changeUnreadStatus: notifyForNewMessage,
@@ -143,7 +143,7 @@ class MessageHelper {
     if (chat?.guid != null) {
       chats[chat!.guid!] = chat;
       if (chat.id == null) {
-        await chat.save();
+        chat.save();
       }
     }
 
@@ -159,7 +159,7 @@ class MessageHelper {
         if (msgChat != null && chats.containsKey(msgChat.guid)) {
           msgChat = chats[msgChat.guid];
         } else if (msgChat?.guid != null) {
-          await msgChat!.save();
+          msgChat!.save();
           chats[msgChat.guid!] = msgChat;
         }
       }
@@ -209,7 +209,7 @@ class MessageHelper {
       {bool force = false, int visibility = NotificationVisibility.PUBLIC}) async {
     // See if there is an existing message for the given GUID
     Message? existingMessage;
-    if (!force) existingMessage = await Message.findOne({"guid": message.guid});
+    if (!force) existingMessage = Message.findOne(guid: message.guid);
     // If we've already processed the GUID, skip it
     if (NotificationManager().hasProcessed(message.guid!)) return;
     // Add the message to the "processed" list
@@ -217,7 +217,7 @@ class MessageHelper {
     // Handle all the cases that would mean we don't show the notification
     if (!SettingsManager().settings.finishedSetup.value) return; // Don't notify if not fully setup
     if (existingMessage != null) return;
-    if (await chat.shouldMuteNotification(message)) return; // Don''t notify if the chat is muted
+    if (chat.shouldMuteNotification(message)) return; // Don''t notify if the chat is muted
     if (message.isFromMe! || message.handle == null) return; // Don't notify if the text is from me
 
     CurrentChat? currChat = CurrentChat.activeChat;

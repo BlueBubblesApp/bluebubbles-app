@@ -191,18 +191,6 @@ class ConversationListState extends State<ConversationList> {
                       TextButton(
                         child: Text("Yes"),
                         onPressed: () async {
-                          attachmentBox.removeAll();
-                          chatBox.removeAll();
-                          fcmDataBox.removeAll();
-                          handleBox.removeAll();
-                          messageBox.removeAll();
-                          scheduledBox.removeAll();
-                          themeEntryBox.removeAll();
-                          themeObjectBox.removeAll();
-                          amJoinBox.removeAll();
-                          chJoinBox.removeAll();
-                          cmJoinBox.removeAll();
-                          tvJoinBox.removeAll();
                           await SettingsManager().resetConnection();
                           SettingsManager().settings.finishedSetup.value = false;
                           SocketManager().finishedSetup.sink.add(false);

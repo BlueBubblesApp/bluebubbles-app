@@ -533,7 +533,7 @@ final _entities = <ModelEntity>[
   ModelEntity(
       id: const IdUid(7, 1462868055402691409),
       name: 'ThemeEntry',
-      lastPropertyId: const IdUid(5, 80109056724467926),
+      lastPropertyId: const IdUid(6, 2250820418310055866),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
@@ -560,6 +560,11 @@ final _entities = <ModelEntity>[
             id: const IdUid(5, 80109056724467926),
             name: 'fontSize',
             type: 6,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(6, 2250820418310055866),
+            name: 'dbColor',
+            type: 9,
             flags: 0)
       ],
       relations: <ModelRelation>[],
@@ -1254,12 +1259,15 @@ ModelDefinition getObjectBoxModel() {
         objectToFB: (ThemeEntry object, fb.Builder fbb) {
           final nameOffset =
               object.name == null ? null : fbb.writeString(object.name!);
-          fbb.startTable(6);
+          final dbColorOffset =
+              object.dbColor == null ? null : fbb.writeString(object.dbColor!);
+          fbb.startTable(7);
           fbb.addInt64(0, object.id ?? 0);
           fbb.addInt64(1, object.themeId);
           fbb.addOffset(2, nameOffset);
           fbb.addBool(3, object.isFont);
           fbb.addInt64(4, object.fontSize);
+          fbb.addOffset(5, dbColorOffset);
           fbb.finish(fbb.endTable());
           return object.id ?? 0;
         },
@@ -1277,7 +1285,9 @@ ModelDefinition getObjectBoxModel() {
               isFont: const fb.BoolReader()
                   .vTableGetNullable(buffer, rootOffset, 10),
               fontSize: const fb.Int64Reader()
-                  .vTableGetNullable(buffer, rootOffset, 12));
+                  .vTableGetNullable(buffer, rootOffset, 12))
+            ..dbColor = const fb.StringReader()
+                .vTableGetNullable(buffer, rootOffset, 14);
 
           return object;
         }),
@@ -1837,6 +1847,10 @@ class ThemeEntry_ {
   /// see [ThemeEntry.fontSize]
   static final fontSize =
       QueryIntegerProperty<ThemeEntry>(_entities[6].properties[4]);
+
+  /// see [ThemeEntry.dbColor]
+  static final dbColor =
+      QueryStringProperty<ThemeEntry>(_entities[6].properties[5]);
 }
 
 /// [ThemeObject] entity fields to define ObjectBox queries.

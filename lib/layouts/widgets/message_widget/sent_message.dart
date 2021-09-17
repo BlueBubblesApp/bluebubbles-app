@@ -210,7 +210,7 @@ class SentMessageHelper {
                           // Remove the OG alert dialog
                           Navigator.of(context).pop();
                           NewMessageManager().removeMessage(chat, message.guid);
-                          await Message.softDelete({'guid': message.guid});
+                          Message.softDelete(message.guid!);
                           NotificationManager().clearFailedToSend();
                           ActionHandler.retryMessage(message);
                         },
@@ -221,13 +221,13 @@ class SentMessageHelper {
                         onPressed: () async {
                           Navigator.of(context).pop();
                           // Delete the message from the DB
-                          await Message.softDelete({'guid': message.guid});
+                          Message.softDelete(message.guid!);
 
                           // Remove the message from the Bloc
                           NewMessageManager().removeMessage(chat, message.guid);
                           NotificationManager().clearFailedToSend();
                           // Get the "new" latest info
-                          List<Message> latest = await Chat.getMessages(chat, limit: 1);
+                          List<Message> latest = Chat.getMessages(chat, limit: 1);
                           chat.latestMessage = latest.first;
                           chat.latestMessageDate = latest.first.dateCreated;
                           chat.latestMessageText = await MessageHelper.getNotificationText(latest.first);

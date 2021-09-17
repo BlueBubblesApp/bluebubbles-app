@@ -26,13 +26,7 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
   void initState() {
     super.initState();
 
-    ScheduledMessage.find().then((List<ScheduledMessage> messages) {
-      if (this.mounted) {
-        setState(() {
-          scheduled = messages;
-        });
-      }
-    });
+    scheduled = ScheduledMessage.find();
   }
 
   List<TableRow> _buildRows(Iterable<ScheduledMessage> messages) {

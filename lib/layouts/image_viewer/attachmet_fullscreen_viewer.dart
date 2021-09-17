@@ -59,13 +59,13 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
     }
   }
 
-  Future<void> init() async {
+  void init() {
     getStartingIndex();
 
     // If the allAttachments is not updated
     if (startingIndex == null) {
       // Then fetch all of them and try again
-      await widget.currentChat?.updateChatAttachments();
+      widget.currentChat?.updateChatAttachments();
       getStartingIndex();
     }
 
@@ -80,7 +80,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
         List<Attachment> older = widget.currentChat!.chatAttachments.sublist(0);
 
         // Update all of the attachments
-        await widget.currentChat!.updateChatAttachments();
+        widget.currentChat!.updateChatAttachments();
         List<Attachment> newer = widget.currentChat!.chatAttachments.sublist(0);
         if (newer.length > older.length) {
           Logger.info("Increasing currentIndex from " +
@@ -93,7 +93,6 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
       });
 
     controller = new PageController(initialPage: kIsWeb ? 0 : startingIndex ?? 0);
-    if (this.mounted) setState(() {});
   }
 
   void getStartingIndex() {

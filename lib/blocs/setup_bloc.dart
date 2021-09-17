@@ -67,7 +67,7 @@ class SetupBloc {
     settingsCopy.guidAuthKey.value = password;
 
     await SettingsManager().saveSettings(settingsCopy);
-    await SettingsManager().saveFCMData(data);
+    SettingsManager().saveFCMData(data);
     await SocketManager().authFCM(catchException: false, force: true);
     SocketManager().startSocketIO(forceNewConnection: true, catchException: false);
     connectionSubscription = ever<SocketState>(SocketManager().state, (event) {
@@ -181,7 +181,7 @@ class SetupBloc {
               List<dynamic> messages = await SocketManager().getChatMessages(params)!;
               addOutput("Received ${messages.length} messages for chat, '${chat.chatIdentifier}'!", SetupOutputType.LOG);
               if (!skipEmptyChats || (skipEmptyChats && messages.length > 0)) {
-                await chat.save();
+                chat.save();
 
                 // Re-match the handles with the contacts
                 await ContactManager().matchHandles();

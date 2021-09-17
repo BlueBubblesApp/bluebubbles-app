@@ -71,14 +71,14 @@ class NotificationManager {
   /// Sets the currently active [chat]. As a result,
   /// the chat will be marked as read, and the notifications
   /// for the chat will be cleared
-  Future<void> switchChat(Chat? chat) async {
+  void switchChat(Chat? chat) {
     if (chat == null) {
       // CurrentChat.getCurrentChat(chat)?.dispose();
       return;
     }
 
     CurrentChat.getCurrentChat(chat)?.isAlive = true;
-    await chat.toggleHasUnread(false);
+    chat.toggleHasUnread(false);
 
     if (SettingsManager().settings.enablePrivateAPI.value) {
       if (SettingsManager().settings.privateMarkChatAsRead.value) {
@@ -167,7 +167,7 @@ class NotificationManager {
   /// @param [contact] optional parameter of the contact of the message
   Future<void> createNotificationFromMessage(Chat chat, Message message, int visibility) async {
     // sanity check to make sure we don't notify if the chat is muted
-    if (await chat.shouldMuteNotification(message)) return;
+    if (chat.shouldMuteNotification(message)) return;
     Uint8List? contactIcon;
 
     // Get the contact name if the message is not from you

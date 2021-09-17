@@ -12,6 +12,7 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -99,7 +100,11 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
       if (chatCache.containsKey(data['chat'].guid)) {
         data['chat'] = chatCache[data['chat'].guid];
       } else {
-        data['chat'] = await Chat.findOne({'guid': data['chat'].guid});
+        if (kIsWeb) {
+          data['chat'] = await Chat.findOneWeb(guid: data['chat'].guid);
+        } else {
+          data['chat'] = Chat.findOne(guid: data['chat'].guid);
+        }
 
         // Add the chat to the cache
         if (data['chat'] != null) {

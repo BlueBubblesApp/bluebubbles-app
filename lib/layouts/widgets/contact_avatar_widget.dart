@@ -175,7 +175,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
                     didReset = true;
                     Navigator.of(context).pop();
                     widget.handle!.color = null;
-                    await widget.handle!.update();
+                    widget.handle!.save();
                     ContactManager().colorStreamObject.sink.add({widget.handle!.address: null});
                   },
                   child: Text("RESET"),
@@ -216,7 +216,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
       widget.handle!.color = color.value.toRadixString(16);
     }
 
-    await widget.handle!.updateColor(widget.handle!.color);
+    widget.handle!.updateColor(widget.handle!.color);
 
     ContactManager()
         .colorStreamObject

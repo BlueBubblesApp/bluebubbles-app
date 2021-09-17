@@ -1,17 +1,15 @@
-import 'dart:async';
 import 'dart:core';
-
+import 'dart:developer';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/objectbox.g.dart';
-import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/theme_entry.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:objectbox/objectbox.dart';
-
 
 @Entity()
 class ThemeObject {
@@ -36,6 +34,7 @@ class ThemeObject {
     this.previousDarkTheme = false,
     this.data,
   });
+
   factory ThemeObject.fromData(ThemeData data, String name, {bool gradientBg = false}) {
     ThemeObject object = new ThemeObject(
       data: data.copyWith(),
@@ -74,106 +73,64 @@ class ThemeObject {
         ThemeEntry(name: ThemeColors.PrimaryColor, color: data!.primaryColor, isFont: false),
       ];
 
-  Future<ThemeObject> save({bool updateIfAbsent = true}) async {
+  ThemeObject save({bool updateIfNotAbsent = true}) {
     assert(this.data != null);
-    /*final Database? db = await DBProvider.db.database;
-
     if (entries.isEmpty) {
       entries = this.toEntries();
     }
-
-    ThemeObject? existing = await ThemeObject.findOne({"name": this.name});
+    ThemeObject? existing = ThemeObject.findOne(this.name!);
     if (existing != null) {
       this.id = existing.id;
     }
-
-    // If it already exists, update it
-    if (existing == null) {
-      // Remove the ID from the map for inserting
-      var map = this.toMap();
-      if (map.containsKey("ROWID")) {
-        map.remove("ROWID");
-      }
-
-      this.id = (await db?.insert("themes", map)) ?? id;
-    } else if (updateIfAbsent) {
-      await this.update();
-    }*/
     try {
-      themeObjectBox.put(this);
+      if (this.id != null && existing != null && updateIfNotAbsent) {
+        this.id = themeObjectBox.put(this);
+      } else if (this.id == null || existing == null) {
+        this.id = themeObjectBox.put(this);
+      }
     } on UniqueViolationException catch (_) {}
 
     if (this.isPreset && !this.name!.contains("Music")) return this;
     for (ThemeEntry entry in this.entries) {
-      await entry.save(this);
+      entry.save(this);
     }
 
     return this;
   }
 
-  Future<void> delete() async {
-   /* if (this.isPreset) return;
-    final Database? db = await DBProvider.db.database;
-
-    if (this.id == null) await this.save(updateIfAbsent: false);*/
-    await this.fetchData();
+  void delete() {
+    if (kIsWeb || this.isPreset || this.id == null) return;
+    this.fetchData();
     themeEntryBox.removeMany(this.entries.map((e) => e.id!).toList());
     final query = tvJoinBox.query(ThemeValueJoin_.themeId.equals(this.id!)).build();
     tvJoinBox.remove(query.find().first.themeId);
     query.close();
     themeObjectBox.remove(this.id!);
-    /*await db?.delete("theme_value_join", where: "themeId = ?", whereArgs: [this.id]);
-    await db?.delete("themes", where: "ROWID = ?", whereArgs: [this.id]);*/
   }
 
-  Future<ThemeObject> update() async {
-    /*final Database? db = await DBProvider.db.database;
-
-    // If it already exists, update it
-    if (this.id != null) {
-      await db?.update(
-          "themes",
-          {
-            "name": this.name,
-            "selectedLightTheme": this.selectedLightTheme ? 1 : 0,
-            "selectedDarkTheme": this.selectedDarkTheme ? 1 : 0,
-            "gradientBg": this.gradientBg ? 1 : 0,
-            "previousLightTheme": this.previousLightTheme ? 1 : 0,
-            "previousDarkTheme": this.previousDarkTheme ? 1 : 0,
-          },
-          where: "ROWID = ?",
-          whereArgs: [this.id]);
-    } else {
-      await this.save(updateIfAbsent: false);
-    }*/
-    this.save();
-
-    return this;
-  }
-
-  static Future<ThemeObject> getLightTheme() async {
-    List<ThemeObject> res = await ThemeObject.getThemes();
+  static ThemeObject getLightTheme() {
+    List<ThemeObject> res = ThemeObject.getThemes();
     List<ThemeObject> themes = res.where((element) => element.selectedLightTheme).toList();
     if (themes.isEmpty) {
       return Themes.themes[1];
     }
     ThemeObject theme = themes.first;
-    await theme.fetchData();
+    theme.fetchData();
     return theme;
   }
 
-  static Future<ThemeObject> getDarkTheme() async {
-    List<ThemeObject> res = await ThemeObject.getThemes();
+  static ThemeObject getDarkTheme() {
+    List<ThemeObject> res = ThemeObject.getThemes();
     List<ThemeObject> themes = res.where((element) => element.selectedDarkTheme).toList();
     if (themes.isEmpty) {
       return Themes.themes[0];
     }
     ThemeObject theme = themes.first;
-    await theme.fetchData();
+    theme.fetchData();
     return theme;
   }
 
-  static Future<void> setSelectedTheme({int? light, int? dark}) async {
+  static void setSelectedTheme({int? light, int? dark}) {
     if (light != null) {
       final query = themeObjectBox.query(ThemeObject_.selectedLightTheme.equals(true)).build();
       final result = query.find().first;
@@ -196,39 +153,22 @@ class ThemeObject {
     }
   }
 
-  static Future<ThemeObject?> findOne(
-    Map<String, dynamic> filters,
-  ) async {
-    /*final Database? db = await DBProvider.db.database;
-    if (db == null) return null;
-    List<String> whereParams = [];
-    filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
-    List<dynamic> whereArgs = [];
-    filters.values.forEach((filter) => whereArgs.add(filter));
-    var res = await db.query("themes", where: whereParams.join(" AND "), whereArgs: whereArgs, limit: 1);
-
-    if (res.isEmpty) {
-      return null;
-    }*/
-    final query = themeObjectBox.query(ThemeObject_.name.equals(filters['name'])).build();
+  static ThemeObject? findOne(String name) {
+    if (kIsWeb) return null;
+    final query = themeObjectBox.query(ThemeObject_.name.equals(name)).build();
     query..limit = 1;
     final result = query.findFirst();
     query.close();
-
     return result;
   }
 
-  static Future<List<ThemeObject>> getThemes() async {
-    /*final Database? db = await DBProvider.db.database;
-    if (db == null) return Themes.themes;
-    var res = await db.query("themes");
-    if (res.isEmpty) return Themes.themes;*/
+  static List<ThemeObject> getThemes() {
+    if (kIsWeb) return Themes.themes;
     final results = themeObjectBox.getAll();
-
     return (results.isNotEmpty) ? results.map((e) => e..fetchData()).toList() : Themes.themes;
   }
 
-  Future<List<ThemeEntry>> fetchData() async {
+  List<ThemeEntry> fetchData() {
     if (isPreset && !name!.contains("Music")) {
       if (name == "OLED Dark") {
         this.data = oledDarkTheme;
@@ -241,25 +181,12 @@ class ThemeObject {
       this.entries = this.toEntries();
       return this.entries;
     }
-    //final Database? db = await DBProvider.db.database;
+    if (kIsWeb) return this.entries;
     final query = tvJoinBox.query(ThemeValueJoin_.themeId.equals(this.id!)).build();
     final themeEntryIds = query.property(ThemeValueJoin_.themeValueId).find();
     final themeEntries2 = themeEntryBox.getMany(themeEntryIds, growableResult: true);
     themeEntries2.retainWhere((element) => element != null);
     final themeEntries = List<ThemeEntry>.from(themeEntries2);
-    /*if (db == null) return this.entries;
-    var res = await db.rawQuery(
-        "SELECT"
-        " theme_values.ROWID as ROWID,"
-        " theme_values.name as name,"
-        " theme_values.color as color,"
-        " theme_values.isFont as isFont,"
-        " theme_values.fontSize as fontSize"
-        " FROM themes"
-        " JOIN theme_value_join AS tvj ON themes.ROWID = tvj.themeId"
-        " JOIN theme_values ON theme_values.ROWID = tvj.themeValueId"
-        " WHERE themes.ROWID = ?;",
-        [this.id]);*/
     if (name == "Music Theme (Light)" && themeEntries.isEmpty) {
       data = whiteLightTheme;
       entries = this.toEntries();

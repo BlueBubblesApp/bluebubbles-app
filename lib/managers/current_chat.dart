@@ -32,10 +32,6 @@ class CurrentChat {
 
   Stream get stream => _stream.stream;
 
-  StreamController<Map<String, List<Attachment?>>> _attachmentStream = StreamController.broadcast();
-
-  Stream get attachmentStream => _attachmentStream.stream;
-
   Chat chat;
 
   Map<String, Uint8List> imageData = {};
@@ -144,10 +140,6 @@ class CurrentChat {
       _stream = StreamController.broadcast();
     }
 
-    if (_attachmentStream.isClosed) {
-      _attachmentStream = StreamController.broadcast();
-    }
-
     if (timeStampOffsetStream.isClosed) {
       timeStampOffsetStream = StreamController.broadcast();
     }
@@ -189,12 +181,8 @@ class CurrentChat {
   List<Attachment?>? getAttachmentsForMessage(Message? message) {
     // If we have already disposed, do nothing
     if (!messageAttachments.containsKey(message!.guid)) {
-      preloadMessageAttachments(specificMessages: [message]).then(
-        (value) => _attachmentStream.sink.add(
-          {message.guid!: messageAttachments[message.guid] ?? []},
-        ),
-      );
-      return [];
+      preloadMessageAttachments(specificMessages: [message]);
+      return messageAttachments[message.guid];
     }
     if (messageAttachments[message.guid] != null && messageAttachments[message.guid]!.length > 0) {
       final guids = messageAttachments[message.guid]!.map((e) => e!.guid).toSet();
@@ -244,12 +232,12 @@ class CurrentChat {
     imageData.remove(attachment.guid);
   }
 
-  Future<void> preloadMessageAttachments({List<Message?>? specificMessages}) async {
+  void preloadMessageAttachments({List<Message?>? specificMessages}) {
     List<Message?> messages =
-        specificMessages != null ? specificMessages : await Chat.getMessagesSingleton(chat, limit: 25);
+        specificMessages != null ? specificMessages : Chat.getMessages(chat, limit: 25);
     for (Message? message in messages) {
       if (message!.hasAttachments) {
-        List<Attachment?>? attachments = await message.fetchAttachments();
+        List<Attachment?>? attachments = message.fetchAttachments();
         messageAttachments[message.guid!] = attachments ?? [];
       }
     }
@@ -278,8 +266,8 @@ class CurrentChat {
   }
 
   /// Retrieve all of the attachments associated with a chat
-  Future<void> updateChatAttachments() async {
-    chatAttachments = await Chat.getAttachments(chat);
+  void updateChatAttachments() {
+    chatAttachments = Chat.getAttachments(chat);
   }
 
   void changeCurrentPlayingVideo(Map<String, VideoPlayerController> video) {
@@ -314,7 +302,6 @@ class CurrentChat {
     }
 
     if (_stream.isClosed) _stream.close();
-    if (!_attachmentStream.isClosed) _attachmentStream.close();
     if (!timeStampOffsetStream.isClosed) timeStampOffsetStream.close();
 
     _timeStampOffset = 0;

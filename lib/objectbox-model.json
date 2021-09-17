@@ -517,7 +517,7 @@
     },
     {
       "id": "7:1462868055402691409",
-      "lastPropertyId": "5:80109056724467926",
+      "lastPropertyId": "6:2250820418310055866",
       "name": "ThemeEntry",
       "properties": [
         {
@@ -545,6 +545,11 @@
           "id": "5:80109056724467926",
           "name": "fontSize",
           "type": 6
+        },
+        {
+          "id": "6:2250820418310055866",
+          "name": "dbColor",
+          "type": 9
         }
       ],
       "relations": []

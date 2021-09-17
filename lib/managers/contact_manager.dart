@@ -142,7 +142,7 @@ class ContactManager {
 
   Future<void> matchHandles() async {
     // Match handles to contacts
-    List<Handle> handles = await Handle.find();
+    List<Handle> handles = Handle.find();
     for (Handle handle in handles) {
       // If we already have a "match", skip
       if (handleToContact.containsKey(handle.address)) {

@@ -94,12 +94,12 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
                       minHeight: 480, minWidth: CustomNavigator.width(context) - 70, maxWidth: CustomNavigator.width(context) - 70),
                 );
                 widget.entry.color = color;
-                await widget.entry.save(widget.currentTheme);
-                await widget.currentTheme.fetchData();
+                widget.entry.save(widget.currentTheme);
+                widget.currentTheme.fetchData();
                 if (widget.currentTheme.selectedDarkTheme) {
-                  await SettingsManager().saveSelectedTheme(_context, selectedDarkTheme: widget.currentTheme);
+                  SettingsManager().saveSelectedTheme(_context, selectedDarkTheme: widget.currentTheme);
                 } else if (widget.currentTheme.selectedLightTheme) {
-                  await SettingsManager().saveSelectedTheme(_context, selectedLightTheme: widget.currentTheme);
+                  SettingsManager().saveSelectedTheme(_context, selectedLightTheme: widget.currentTheme);
                 }
               } else {
                 showSnackbar('Customization', "Please click the edit button to start customizing!");

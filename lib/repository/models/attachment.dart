@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:bluebubbles/main.dart';
@@ -7,26 +6,11 @@ import 'package:bluebubbles/repository/models/join_tables.dart';
 import 'package:flutter/foundation.dart';
 import 'package:objectbox/objectbox.dart';
 import 'package:universal_io/io.dart';
-
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:mime_type/mime_type.dart';
-
-
-import '../database.dart';
-
-Attachment attachmentFromJson(String str) {
-  final jsonData = json.decode(str);
-  return Attachment.fromMap(jsonData);
-}
-
-String attachmentToJson(Attachment data) {
-  final dyn = data.toMap();
-  return json.encode(dyn);
-}
 
 @Entity()
 class Attachment {
@@ -138,8 +122,12 @@ class Attachment {
     return data;
   }
 
-  Future<Attachment> save(Message? message) async {
-    Attachment? existing = await Attachment.findOne(this.guid!);
+  /// save a new attachment or update an existing attachment on disk
+  /// [message] is used to create a link between the attachment and message,
+  /// when provided
+  Attachment save(Message? message) {
+    if (kIsWeb) return this;
+    Attachment? existing = Attachment.findOne(this.guid!);
     if (existing != null) {
       this.id = existing.id;
     }
@@ -148,63 +136,18 @@ class Attachment {
       if (this.id != null && message?.id != null)
         amJoinBox.put(AttachmentMessageJoin(attachmentId: this.id!, messageId: message!.id!));
     } on UniqueViolationException catch (_) {}
-    /*final Database? db = await DBProvider.db.database;
-
-    // Try to find an existing attachment before saving it
-    Attachment? existing = await Attachment.findOne({"guid": this.guid});
-    if (existing != null) {
-      this.id = existing.id;
-    }
-
-    // If it already exists, update it
-    if (existing == null) {
-      // Remove the ID from the map for inserting
-      var map = this.toMap();
-      if (map.containsKey("ROWID")) {
-        map.remove("ROWID");
-      }
-      if (map.containsKey("participants")) {
-        map.remove("participants");
-      }
-
-      this.id = (await db?.insert("attachment", map)) ?? id;
-
-      if (this.id != null && message!.id != null) {
-        await db?.insert("attachment_message_join", {"attachmentId": this.id, "messageId": message.id});
-      }
-    }*/
 
     return this;
   }
 
-  Future<Attachment> update() async {
-    /*final Database? db = await DBProvider.db.database;
-
-    Map<String, dynamic> params = {
-      "width": this.width,
-      "height": this.height,
-      // If it's null or empty, save it as null
-      "metadata": isNullOrEmpty(this.metadata)! ? null : jsonEncode(this.metadata)
-    };
-
-    if (this.originalROWID != null) {
-      params["originalROWID"] = this.originalROWID;
-    }
-
-    if (this.id != null) {
-      await db?.update("attachment", params, where: "ROWID = ?", whereArgs: [this.id]);
-    }*/
-    this.save(null);
-
-    return this;
-  }
-
-  static Future<Attachment> replaceAttachment(String? oldGuid, Attachment newAttachment) async {
-    //final Database? db = await DBProvider.db.database;
-    Attachment? existing = await Attachment.findOne(oldGuid!);
+  /// replaces a temporary attachment with the new one from the server
+  static Attachment replaceAttachment(String? oldGuid, Attachment newAttachment) {
+    if (kIsWeb) return newAttachment;
+    Attachment? existing = Attachment.findOne(oldGuid!);
     if (existing == null) {
       throw ("Old GUID does not exist!");
     }
+    // update values and save
     existing.guid = newAttachment.guid;
     existing.originalROWID = newAttachment.originalROWID;
     existing.uti = newAttachment.uti;
@@ -219,30 +162,12 @@ class Attachment {
     existing.bytes = newAttachment.bytes;
     existing.webUrl = newAttachment.webUrl;
     attachmentBox.put(existing);
-    /*Map<String, dynamic> params = newAttachment.toMap();
-    if (params.containsKey("ROWID")) {
-      params.remove("ROWID");
-    }
-    if (params.containsKey("width")) {
-      params.remove("width");
-    }
-    if (params.containsKey("height")) {
-      params.remove("height");
-    }
-    if (params.containsKey("metadata")) {
-      params.remove("metadata");
-    }
-
-    // Don't override the mimetype if it's null
-    if (newAttachment.mimeType == null) {
-      params.remove("mimeType");
-    }
-
-    await db?.update("attachment", params, where: "ROWID = ?", whereArgs: [existing.id]);*/
+    // change the directory path
     String appDocPath = SettingsManager().appDocDir.path;
     String pathName = "$appDocPath/attachments/$oldGuid";
     Directory directory = Directory(pathName);
-    await directory.rename("$appDocPath/attachments/${newAttachment.guid}");
+    directory.renameSync("$appDocPath/attachments/${newAttachment.guid}");
+    // grab values from existing
     newAttachment.id = existing.id;
     newAttachment.width = existing.width;
     newAttachment.height = existing.height;
@@ -250,34 +175,23 @@ class Attachment {
     return newAttachment;
   }
 
-  static Future<Attachment?> findOne(String guid) async {
+  /// find an attachment by its guid
+  static Attachment? findOne(String guid) {
+    if (kIsWeb) return null;
     final query = attachmentBox.query(Attachment_.guid.equals(guid)).build();
     query..limit = 1;
     final result = query.findFirst();
     query.close();
     return result;
-    /*final Database? db = await DBProvider.db.database;
-    if (db == null) return null;
-    List<String> whereParams = [];
-    filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
-    List<dynamic> whereArgs = [];
-    filters.values.forEach((filter) => whereArgs.add(filter));
-    var res = await db.query("attachment", where: whereParams.join(" AND "), whereArgs: whereArgs, limit: 1);
-
-    if (res.isEmpty) {
-      return null;
-    }
-
-    return Attachment.fromMap(res.elementAt(0));*/
   }
 
-  static flush() async {
-    attachmentBox.removeAll();
-    /*final Database? db = await DBProvider.db.database;
-    await db?.delete("attachment");*/
+  /// clear the attachment DB
+  static void flush() {
+    if (!kIsWeb)
+      attachmentBox.removeAll();
   }
 
-  getFriendlySize({decimals: 2}) {
+  String getFriendlySize({decimals: 2}) {
     double size = (this.totalBytes! / 1024000.0);
     String postfix = "MB";
     if (size < 1) {
