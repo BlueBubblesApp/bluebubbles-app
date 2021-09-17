@@ -120,7 +120,7 @@ class ContactManager {
       contacts.clear();
       var vcfs = await SocketManager().sendMessage("get-vcf", {}, (_) {});
       if (vcfs['data'] != null) {
-        for (var c in jsonDecode(vcfs['data'])) {
+        for (var c in vcfs['data']) {
           contacts.add(Contact.fromMap(c));
         }
       }
