@@ -92,10 +92,10 @@ BEGIN
             VALUE "CompanyName", "com.bluebubbles" "\0"
             VALUE "FileDescription", "A new Flutter project." "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "bluebubbles_android_app" "\0"
+            VALUE "InternalName", "bluebubbles_app" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2021 com.bluebubbles. All rights reserved." "\0"
-            VALUE "OriginalFilename", "bluebubbles_android_app.exe" "\0"
-            VALUE "ProductName", "bluebubbles_android_app" "\0"
+            VALUE "OriginalFilename", "bluebubbles_app.exe" "\0"
+            VALUE "ProductName", "bluebubbles_app" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
