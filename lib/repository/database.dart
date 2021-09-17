@@ -213,6 +213,18 @@ class DBProvider {
       s.stop();
       Logger.info("Pulled data in ${s.elapsedMilliseconds} ms");
       await initStore.call();
+      attachmentBox.removeAll();
+      chatBox.removeAll();
+      fcmDataBox.removeAll();
+      handleBox.removeAll();
+      messageBox.removeAll();
+      scheduledBox.removeAll();
+      themeEntryBox.removeAll();
+      themeObjectBox.removeAll();
+      amJoinBox.removeAll();
+      chJoinBox.removeAll();
+      cmJoinBox.removeAll();
+      tvJoinBox.removeAll();
       store.runInTransaction(TxMode.write, () {
         List<Chat> chats = tableData[0].map((e) => Chat.fromMap(e)).toList();
         chats.forEach((element) {
@@ -269,6 +281,7 @@ class DBProvider {
       }
       final fcm = FCMData.fromConfigEntries(entries);
       fcm.save();
+      prefs.setBool('objectbox-migration', true);
     }
   }
 

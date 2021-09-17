@@ -166,7 +166,17 @@ Future<Null> main() async {
         s.stop();
         Logger.info("Migrated in ${s.elapsedMilliseconds} ms");
       } else {
-        await initStore();
+        if (File(sqlitePath).existsSync() && prefs.getBool('objectbox-migration') != true) {
+          runApp(UpgradingDB());
+          print("Converting sqflite to ObjectBox...");
+          Stopwatch s = Stopwatch();
+          s.start();
+          await DBProvider.db.initDB(initStore: initStore);
+          s.stop();
+          print("Migrated in ${s.elapsedMilliseconds} ms");
+        } else {
+          await initStore();
+        }
       }
     };
     FirebaseDart.setup(
