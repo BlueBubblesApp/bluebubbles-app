@@ -65,7 +65,7 @@ class BaseLogger extends GetxService {
     if (kIsDesktop) {
       filePath = (await getDownloadsDirectory())!.path;
       DateTime now = DateTime.now().toLocal();
-      filePath += "${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}" + ".txt";
+      filePath = join(filePath, "${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}.txt");
     }
     File file = File(filePath);
     await file.create(recursive: true);
