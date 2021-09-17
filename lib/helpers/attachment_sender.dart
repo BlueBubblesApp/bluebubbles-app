@@ -94,7 +94,7 @@ class AttachmentSender {
 
         String? tempGuid = sentMessage!.guid;
         sentMessage!.guid = sentMessage!.guid!.replaceAll("temp", "error-${response['error']['message']}");
-        sentMessage!.error.value =
+        sentMessage!.error =
             response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
 
         await Message.replaceMessage(tempGuid, sentMessage);
@@ -102,7 +102,7 @@ class AttachmentSender {
         if (messageWithText != null) {
           tempGuid = messageWithText!.guid;
           messageWithText!.guid = messageWithText!.guid!.replaceAll("temp", "error-${response['error']['message']}");
-          messageWithText!.error.value =
+          messageWithText!.error =
               response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
 
           await Message.replaceMessage(tempGuid, messageWithText);

@@ -74,7 +74,7 @@ class ContactSelectorOption extends StatelessWidget {
     String title = "";
     if (generateName) {
       if (item.isChat) {
-        title = item.chat!.fakeParticipants.length == 1 ? item.chat!.fakeParticipants[0] ?? "Unknown" : "Group Chat";
+        title = item.chat!.fakeParticipants.length == 1 ? item.chat!.fakeParticipants[0] : "Group Chat";
       } else {
         title = "Person ${index + 1}";
       }

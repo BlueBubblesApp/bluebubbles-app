@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/helpers/db_converter.dart';
-import 'package:sqflite/sqflite.dart';
+
 
 class ConfigEntry<T> {
   int? id;
@@ -51,8 +51,8 @@ class ConfigEntry<T> {
     }
   }
 
-  Future<ConfigEntry> save(String table, {bool updateIfAbsent = true, Database? database}) async {
-    final Database? db = database != null ? database : await DBProvider.db.database;
+  Future<ConfigEntry> save(String table, {bool updateIfAbsent = true}) async {
+    /*final Database? db = database != null ? database : await DBProvider.db.database;
 
     // Try to find an existing ConfigEntry before saving it
     ConfigEntry? existing = await ConfigEntry.findOne(table, {"name": this.name}, database: database);
@@ -72,13 +72,13 @@ class ConfigEntry<T> {
       }
     } else if (updateIfAbsent) {
       await this.update(table, database: database);
-    }
+    }*/
 
     return this;
   }
 
-  Future<ConfigEntry> update(String table, {Database? database}) async {
-    final Database? db = database != null ? database : await DBProvider.db.database;
+  Future<ConfigEntry> update(String table) async {
+    /*final Database? db = database != null ? database : await DBProvider.db.database;
 
     // If it already exists, update it
     if (this.id != null) {
@@ -93,13 +93,13 @@ class ConfigEntry<T> {
           whereArgs: [this.id]);
     } else {
       await this.save(table, updateIfAbsent: false, database: database);
-    }
+    }*/
 
     return this;
   }
 
-  static Future<ConfigEntry?> findOne(String table, Map<String, dynamic> filters, {Database? database}) async {
-    final Database? db = database != null ? database : await DBProvider.db.database;
+  static Future<ConfigEntry?> findOne(String table, Map<String, dynamic> filters) async {
+    /*final Database? db = database != null ? database : await DBProvider.db.database;
     if (db == null) return null;
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
@@ -111,7 +111,7 @@ class ConfigEntry<T> {
       return null;
     }
 
-    return fromMap(res.first);
+    return fromMap(res.first);*/
   }
 
   Map<String, dynamic> toMap() =>

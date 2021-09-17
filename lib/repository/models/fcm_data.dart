@@ -2,11 +2,13 @@ import 'dart:async';
 
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/repository/database.dart';
-import 'package:bluebubbles/repository/models/config_entry.dart';
 import 'package:firebase_dart/firebase_dart.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:objectbox/objectbox.dart';
 
+
+@Entity()
 class FCMData {
+  int? id;
   String? projectID;
   String? storageBucket;
   String? apiKey;
@@ -15,6 +17,7 @@ class FCMData {
   String? applicationID;
 
   FCMData({
+    this.id,
     this.projectID,
     this.storageBucket,
     this.apiKey,
@@ -37,32 +40,8 @@ class FCMData {
     );
   }
 
-  factory FCMData.fromConfigEntries(List<ConfigEntry> entries) {
-    FCMData data = new FCMData();
-    for (ConfigEntry entry in entries) {
-      if (entry.name == "projectID") {
-        data.projectID = entry.value;
-      } else if (entry.name == "storageBucket") {
-        data.storageBucket = entry.value;
-      } else if (entry.name == "apiKey") {
-        data.apiKey = entry.value;
-      } else if (entry.name == "firebaseURL") {
-        data.firebaseURL = entry.value;
-      } else if (entry.name == "clientID") {
-        data.clientID = entry.value;
-      } else if (entry.name == "applicationID") {
-        data.applicationID = entry.value;
-      }
-    }
-    return data;
-  }
-
-  Future<FCMData> save({Database? database}) async {
-    List<ConfigEntry> entries = this.toEntries();
-    for (ConfigEntry entry in entries) {
-      await entry.save("fcm", database: database);
-      prefs.setString(entry.name!, entry.value);
-    }
+  Future<FCMData> save() async {
+    fcmDataBox.put(this);
     return this;
   }
 
@@ -88,9 +67,10 @@ class FCMData {
   }
 
   static Future<FCMData> getFCM() async {
-    Database? db = await DBProvider.db.database;
+    /*Database? db = await DBProvider.db.database;
 
-    List<Map<String, dynamic>> result = (await db?.query("fcm")) ?? [];
+    List<Map<String, dynamic>> result = (await db?.query("fcm")) ?? [];*/
+    final result = fcmDataBox.getAll();
     if (result.isEmpty) return new FCMData(
       projectID: prefs.getString('projectID'),
       storageBucket: prefs.getString('storageBucket'),
@@ -99,11 +79,7 @@ class FCMData {
       clientID: prefs.getString('clientID'),
       applicationID: prefs.getString('applicationID'),
     );
-    List<ConfigEntry> entries = [];
-    for (Map<String, dynamic> setting in result) {
-      entries.add(ConfigEntry.fromMap(setting));
-    }
-    return FCMData.fromConfigEntries(entries);
+    return result.first;
   }
 
   Map<String, dynamic> toMap() => {
@@ -114,15 +90,6 @@ class FCMData {
         "client_id": this.clientID,
         "application_id": this.applicationID,
       };
-
-  List<ConfigEntry> toEntries() => [
-        ConfigEntry(name: "projectID", value: this.projectID, type: this.projectID.runtimeType),
-        ConfigEntry(name: "storageBucket", value: this.storageBucket, type: this.storageBucket.runtimeType),
-        ConfigEntry(name: "apiKey", value: this.apiKey, type: this.apiKey.runtimeType),
-        ConfigEntry(name: "firebaseURL", value: this.firebaseURL, type: this.firebaseURL.runtimeType),
-        ConfigEntry(name: "clientID", value: this.clientID, type: this.clientID.runtimeType),
-        ConfigEntry(name: "applicationID", value: this.applicationID, type: this.applicationID.runtimeType),
-      ];
   bool get isNull =>
       this.projectID == null ||
       this.storageBucket == null ||

@@ -1,11 +1,15 @@
 import 'dart:async';
 
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/repository/database.dart';
+import 'package:bluebubbles/repository/models/join_tables.dart';
 import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:flutter/material.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:objectbox/objectbox.dart';
 
+
+@Entity()
 class ThemeEntry {
   int? id;
   int? themeId;
@@ -52,7 +56,7 @@ class ThemeEntry {
       : color;
 
   Future<ThemeEntry> save(ThemeObject theme, {bool updateIfAbsent = true}) async {
-    final Database? db = await DBProvider.db.database;
+    /*final Database? db = await DBProvider.db.database;
 
     //assert(theme.id != null);
     this.themeId = theme.id;
@@ -79,13 +83,16 @@ class ThemeEntry {
       }
     } else if (updateIfAbsent) {
       await this.update(theme);
-    }
+    }*/
+    themeEntryBox.put(this);
+    if (this.id != null && theme.id != null)
+      tvJoinBox.put(ThemeValueJoin(themeValueId: this.id!, themeId: theme.id!));
 
     return this;
   }
 
   Future<ThemeEntry> update(ThemeObject theme) async {
-    final Database? db = await DBProvider.db.database;
+    /*final Database? db = await DBProvider.db.database;
 
     // If it already exists, update it
     if (this.id != null) {
@@ -101,25 +108,10 @@ class ThemeEntry {
           whereArgs: [this.id]);
     } else {
       await this.save(theme, updateIfAbsent: false);
-    }
+    }*/
+    this.save(theme);
 
     return this;
-  }
-
-  static Future<ThemeEntry?> findOne(Map<String, dynamic> filters, {Database? database}) async {
-    final Database? db = database != null ? database : await DBProvider.db.database;
-    if (db == null) return null;
-    List<String> whereParams = [];
-    filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
-    List<dynamic> whereArgs = [];
-    filters.values.forEach((filter) => whereArgs.add(filter));
-    var res = await db.query("theme_values", where: whereParams.join(" AND "), whereArgs: whereArgs, limit: 1);
-
-    if (res.isEmpty) {
-      return null;
-    }
-
-    return ThemeEntry.fromMap(res.first);
   }
 
   Map<String, dynamic> toMap() => {

@@ -360,7 +360,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
                       message, markers?.myLastMessage, markers?.lastReadMessage, markers?.lastDeliveredMessage);
                   if (message != null) {
                     return Text(
-                        message.error.value > 0
+                        message.error > 0
                             ? "Error"
                             : ((show == Indicator.READ
                                     ? "Read\n"
@@ -372,7 +372,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
                                 buildDate(widget.chat.latestMessageDate)),
                         textAlign: TextAlign.right,
                         style: Theme.of(context).textTheme.subtitle2!.copyWith(
-                              color: message.error.value > 0
+                              color: message.error > 0
                                   ? Colors.red
                                   : Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
                             ),

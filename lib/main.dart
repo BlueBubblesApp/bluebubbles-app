@@ -1,4 +1,13 @@
 import 'dart:async';
+import 'package:bluebubbles/objectbox.g.dart';
+import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/fcm_data.dart';
+import 'package:bluebubbles/repository/models/handle.dart';
+import 'package:bluebubbles/repository/models/join_tables.dart';
+import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/scheduled.dart';
+import 'package:bluebubbles/repository/models/theme_entry.dart';
 import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
@@ -34,7 +43,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' hide Priority;
 import 'package:flutter/services.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart' hide Message;
 import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 import 'package:firebase_dart/firebase_dart.dart';
 import 'package:firebase_dart/src/auth/utils.dart' as fdu;
@@ -68,6 +77,19 @@ bool get isInDebugMode {
 FlutterLocalNotificationsPlugin? flutterLocalNotificationsPlugin;
 late SharedPreferences prefs;
 late FirebaseApp app;
+late final Store store;
+late final Box<Attachment> attachmentBox;
+late final Box<Chat> chatBox;
+late final Box<FCMData> fcmDataBox;
+late final Box<Handle> handleBox;
+late final Box<Message> messageBox;
+late final Box<ScheduledMessage> scheduledBox;
+late final Box<ThemeEntry> themeEntryBox;
+late final Box<ThemeObject> themeObjectBox;
+late final Box<AttachmentMessageJoin> amJoinBox;
+late final Box<ChatHandleJoin> chJoinBox;
+late final Box<ChatMessageJoin> cmJoinBox;
+late final Box<ThemeValueJoin> tvJoinBox;
 
 Future<Null> _reportError(dynamic error, dynamic stackTrace) async {
   // Print the exception to the console.
@@ -109,7 +131,21 @@ Future<Null> main() async {
   dynamic exception;
   try {
     prefs = await SharedPreferences.getInstance();
-    if (!kIsWeb) await DBProvider.db.initDB();
+    if (!kIsWeb) {
+      store = await openStore();
+      attachmentBox = store.box<Attachment>();
+      chatBox = store.box<Chat>();
+      fcmDataBox = store.box<FCMData>();
+      handleBox = store.box<Handle>();
+      messageBox = store.box<Message>();
+      scheduledBox = store.box<ScheduledMessage>();
+      themeEntryBox = store.box<ThemeEntry>();
+      themeObjectBox = store.box<ThemeObject>();
+      amJoinBox = store.box<AttachmentMessageJoin>();
+      chJoinBox = store.box<ChatHandleJoin>();
+      cmJoinBox = store.box<ChatMessageJoin>();
+      tvJoinBox = store.box<ThemeValueJoin>();
+    }
     FirebaseDart.setup(
       platform: fdu.Platform.web(
         currentUrl: Uri.base.toString(),

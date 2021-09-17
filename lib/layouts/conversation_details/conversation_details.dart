@@ -320,7 +320,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
               SliverToBoxAdapter(
                 child: InkWell(
                   onTap: () async {
-                    if (chat.customAvatarPath.value != null) {
+                    if (chat.customAvatarPath != null) {
                       showDialog(
                         context: context,
                         builder: (BuildContext context) {
@@ -354,9 +354,9 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                             .subtitle1!
                                             .apply(color: Theme.of(context).primaryColor)),
                                     onPressed: () {
-                                      File file = new File(chat.customAvatarPath.value!);
+                                      File file = new File(chat.customAvatarPath!);
                                       file.delete();
-                                      chat.customAvatarPath.value = null;
+                                      chat.customAvatarPath = null;
                                       chat.save();
                                       Navigator.of(context).pop();
                                     }),

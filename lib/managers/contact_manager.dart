@@ -118,12 +118,12 @@ class ContactManager {
       contacts = (await ContactsService.getContacts(withThumbnails: false)).toList();
     } else {
       contacts.clear();
-      var vcfs = await SocketManager().sendMessage("get-vcf", {}, (_) {});
+      /*var vcfs = await SocketManager().sendMessage("get-vcf", {}, (_) {});
       if (vcfs['data'] != null) {
         for (var c in jsonDecode(vcfs['data'])) {
           contacts.add(Contact.fromMap(c));
         }
-      }
+      }*/
     }
     hasFetchedContacts = true;
 
@@ -142,7 +142,7 @@ class ContactManager {
 
   Future<void> matchHandles() async {
     // Match handles to contacts
-    List<Handle> handles = await Handle.find({});
+    List<Handle> handles = await Handle.find();
     for (Handle handle in handles) {
       // If we already have a "match", skip
       if (handleToContact.containsKey(handle.address)) {

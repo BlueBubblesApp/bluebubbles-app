@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:sqflite/sqflite.dart';
+import 'package:bluebubbles/main.dart';
+import 'package:objectbox/objectbox.dart';
+
 
 import './chat.dart';
 import '../database.dart';
@@ -16,6 +18,7 @@ String scheduledToJson(ScheduledMessage data) {
   return json.encode(dyn);
 }
 
+@Entity()
 class ScheduledMessage {
   int? id;
   String? chatGuid;
@@ -35,7 +38,7 @@ class ScheduledMessage {
   }
 
   Future<ScheduledMessage> save([bool updateIfAbsent = false]) async {
-    final Database? db = await DBProvider.db.database;
+    /*final Database? db = await DBProvider.db.database;
 
     // Try to find an existing handle before saving it
     ScheduledMessage? existing = await ScheduledMessage.findOne(
@@ -56,13 +59,14 @@ class ScheduledMessage {
       }
     } else if (updateIfAbsent) {
       await this.update();
-    }
+    }*/
+    scheduledBox.put(this);
 
     return this;
   }
 
   Future<ScheduledMessage> update() async {
-    final Database? db = await DBProvider.db.database;
+    /*final Database? db = await DBProvider.db.database;
 
     // If it already exists, update it
     if (this.id != null) {
@@ -78,61 +82,20 @@ class ScheduledMessage {
           whereArgs: [this.id]);
     } else {
       await this.save(false);
-    }
+    }*/
+    this.save();
 
     return this;
   }
 
-  static Future<ScheduledMessage?> findOne(Map<String, dynamic> filters) async {
-    final Database? db = await DBProvider.db.database;
-    if (db == null) return null;
-    List<String> whereParams = [];
-    filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
-    List<dynamic> whereArgs = [];
-    filters.values.forEach((filter) => whereArgs.add(filter));
-    var res = await db.query("scheduled", where: whereParams.join(" AND "), whereArgs: whereArgs, limit: 1);
-
-    if (res.isEmpty) {
-      return null;
-    }
-
-    return ScheduledMessage.fromMap(res.elementAt(0));
-  }
-
   static Future<List<ScheduledMessage>> find([Map<String, dynamic> filters = const {}]) async {
-    final Database? db = await DBProvider.db.database;
-    if (db == null) return [];
-    List<String> whereParams = [];
-    filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
-    List<dynamic> whereArgs = [];
-    filters.values.forEach((filter) => whereArgs.add(filter));
-    var res = await db.query("scheduled",
-        where: (whereParams.length > 0) ? whereParams.join(" AND ") : null,
-        whereArgs: (whereArgs.length > 0) ? whereArgs : null);
-
-    return (res.isNotEmpty) ? res.map((c) => ScheduledMessage.fromMap(c)).toList() : [];
-  }
-
-  static Future<List<ScheduledMessage>> getScheduledMessages(Chat chat) async {
-    final Database? db = await DBProvider.db.database;
-    if (db == null) return [];
-    var res = await db.rawQuery(
-        "SELECT"
-        " scheduled.ROWID AS ROWID,"
-        " scheduled.chatGuid AS chatGuid,"
-        " scheduled.message AS message,"
-        " scheduled.epochTime AS epochTime,"
-        " scheduled.completed AS completed,"
-        " FROM scheduled"
-        " WHERE scheduled.chatGuid = ?;",
-        [chat.guid]);
-
-    return (res.isNotEmpty) ? res.map((c) => ScheduledMessage.fromMap(c)).toList() : [];
+    return scheduledBox.getAll();
   }
 
   static flush() async {
-    final Database? db = await DBProvider.db.database;
-    await db?.delete("scheduled");
+    scheduledBox.removeAll();
+    /*final Database? db = await DBProvider.db.database;
+    await db?.delete("scheduled");*/
   }
 
   Map<String, dynamic> toMap() =>

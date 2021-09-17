@@ -23,7 +23,6 @@ import com.tekartik.sqflite.SqflitePlugin;
 
 import java.util.Map;
 
-import flutter.plugins.contactsservice.contactsservice.ContactsServicePlugin;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugins.pathprovider.PathProviderPlugin;
 import io.flutter.plugins.sharedpreferences.SharedPreferencesPlugin;

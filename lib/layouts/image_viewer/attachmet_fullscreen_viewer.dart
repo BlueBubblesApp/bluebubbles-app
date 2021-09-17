@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
@@ -175,6 +176,11 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                             file: content,
                             attachment: attachment,
                             showInteractions: widget.showInteractions,
+                          );
+                        } else {
+                          return RegularFileOpener(
+                            attachment: attachment,
+                            file: content,
                           );
                         }
                       } else if (content is Attachment) {

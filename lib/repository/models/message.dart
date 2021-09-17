@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:bluebubbles/blocs/message_bloc.dart';
+import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/objectbox.g.dart';
 import 'package:collection/src/iterable_extensions.dart';
 import 'package:crypto/crypto.dart' as crypto;
 
@@ -13,7 +15,8 @@ import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:objectbox/objectbox.dart';
+
 import '../../helpers/utils.dart';
 
 import '../database.dart';
@@ -30,16 +33,20 @@ String messageToJson(Message data) {
   return json.encode(dyn);
 }
 
+@Entity()
 class Message {
   int? id;
   int? originalROWID;
+  @Unique()
   String? guid;
   int? handleId;
   int? otherHandle;
   String? text;
   String? subject;
   String? country;
-  final RxInt error = RxInt(0);
+  final RxInt _error = RxInt(0);
+  int get error => _error.value;
+  set error(int i) => _error.value = i;
   DateTime? dateCreated;
   DateTime? dateRead;
   DateTime? dateDelivered;
@@ -113,7 +120,7 @@ class Message {
       this.associatedMessages = const [],
       this.dateDeleted,
       this.metadata}) {
-    if (error2 != null) error.value = error2;
+    if (error2 != null) _error.value = error2;
   }
 
   String get fullText {
@@ -167,7 +174,7 @@ class Message {
       text: sanitizeString(json["text"]),
       subject: json.containsKey("subject") ? json["subject"] : null,
       country: json.containsKey("country") ? json["country"] : null,
-      error2: json.containsKey("error") ? json["error"] : 0,
+      error2: json.containsKey("_error") ? json["_error"] : 0,
       dateCreated: json.containsKey("dateCreated") ? parseDate(json["dateCreated"]) : null,
       dateRead: json.containsKey("dateRead") ? parseDate(json["dateRead"]) : null,
       dateDelivered: json.containsKey("dateDelivered") ? parseDate(json["dateDelivered"]) : null,
@@ -215,8 +222,7 @@ class Message {
   }
 
   Future<Message> save([bool updateIfAbsent = true]) async {
-    final Database? db = await DBProvider.db.database;
-    // Try to find an existing chat before saving it
+    /*final Database? db = await DBProvider.db.database;*/
     Message? existing = await Message.findOne({"guid": this.guid});
     if (existing != null) {
       this.id = existing.id;
@@ -240,7 +246,7 @@ class Message {
       }
     }
 
-    // If it already exists, update it
+    /*// If it already exists, update it
     if (existing == null) {
       // Remove the ID from the map for inserting
       if (this.handleId == null) this.handleId = 0;
@@ -255,14 +261,17 @@ class Message {
       this.id = await db?.insert("message", map);
     } else if (updateIfAbsent) {
       await this.update();
-    }
+    }*/
+    try {
+      messageBox.put(this);
+    } on UniqueViolationException catch (_) {}
 
     return this;
   }
 
   static Future<Message?> replaceMessage(String? oldGuid, Message? newMessage,
       {bool awaitNewMessageEvent = true, Chat? chat}) async {
-    final Database? db = await DBProvider.db.database;
+    //final Database? db = await DBProvider.db.database;
     Message? existing = await Message.findOne({"guid": oldGuid});
 
     if (existing == null) {
@@ -280,7 +289,8 @@ class Message {
       return newMessage;
     }
 
-    Map<String, dynamic> params = newMessage!.toMap();
+    newMessage!.id = existing.id;
+    /*Map<String, dynamic> params = newMessage!.toMap();
     if (params.containsKey("ROWID")) {
       params.remove("ROWID");
     }
@@ -306,24 +316,26 @@ class Message {
       newMessage.metadata = existing.metadata;
     }
 
-    await db?.update("message", params, where: "ROWID = ?", whereArgs: [existing.id]);
+    await db?.update("message", params, where: "ROWID = ?", whereArgs: [existing.id]);*/
+    messageBox.put(newMessage);
 
     return newMessage;
   }
 
   Future<Message> updateMetadata(Metadata? metadata) async {
-    final Database? db = await DBProvider.db.database;
-    if (this.id == null) return this;
+    /*final Database? db = await DBProvider.db.database;
+    if (this.id == null) return this;*/
     this.metadata = metadata!.toJson();
 
-    await db?.update("message", {"metadata": isNullOrEmpty(this.metadata)! ? null : jsonEncode(this.metadata)},
-        where: "ROWID = ?", whereArgs: [this.id]);
+    /*await db?.update("message", {"metadata": isNullOrEmpty(this.metadata)! ? null : jsonEncode(this.metadata)},
+        where: "ROWID = ?", whereArgs: [this.id]);*/
+    this.save();
 
     return this;
   }
 
   Future<Message> update() async {
-    final Database? db = await DBProvider.db.database;
+    /*final Database? db = await DBProvider.db.database;
 
     Map<String, dynamic> params = {
       "dateCreated": (this.dateCreated == null) ? null : this.dateCreated!.millisecondsSinceEpoch,
@@ -331,7 +343,7 @@ class Message {
       "dateDelivered": (this.dateDelivered == null) ? null : this.dateDelivered!.millisecondsSinceEpoch,
       "isArchived": this.isArchived! ? 1 : 0,
       "datePlayed": (this.datePlayed == null) ? null : this.datePlayed!.millisecondsSinceEpoch,
-      "error": this.error.value,
+      "_error": this._error.value,
       "hasReactions": this.hasReactions ? 1 : 0,
       "hasDdResults": this.hasDdResults! ? 1 : 0,
       "metadata": isNullOrEmpty(this.metadata)! ? null : jsonEncode(this.metadata)
@@ -346,7 +358,8 @@ class Message {
       await db?.update("message", params, where: "ROWID = ?", whereArgs: [this.id]);
     } else {
       await this.save(false);
-    }
+    }*/
+    this.save();
 
     return this;
   }
@@ -361,11 +374,13 @@ class Message {
       if (this.attachments!.length != 0) return this.attachments;
     }
 
-    final Database? db = await DBProvider.db.database;
-    if (db == null) return [];
+    /*final Database? db = await DBProvider.db.database;
+    if (db == null) return [];*/
     if (this.id == null) return [];
-
-    var res = await db.rawQuery(
+    final attachmentIds = amJoinBox.getAll().where((element) => element.messageId == this.id!).map((e) => e.attachmentId).toList();
+    final attachments = attachmentBox.getMany(attachmentIds, growableResult: true);
+    return attachments;
+    /*var res = await db.rawQuery(
         "SELECT"
         " attachment.ROWID AS ROWID,"
         " attachment.originalROWID AS originalROWID,"
@@ -390,13 +405,15 @@ class Message {
 
     this.attachments = (res.isNotEmpty) ? res.map((c) => Attachment.fromMap(c)).toList() : [];
 
-    return this.attachments;
+    return this.attachments;*/
   }
 
   static Future<Chat?> getChat(Message message) async {
-    final Database? db = await DBProvider.db.database;
-    if (db == null) return null;
-    var res = await db.rawQuery(
+    /*final Database? db = await DBProvider.db.database;
+    if (db == null) return null;*/
+    final chatId = cmJoinBox.getAll().firstWhere((element) => element.messageId == message.id).chatId;
+    return chatBox.get(chatId);
+    /*var res = await db.rawQuery(
         "SELECT"
         " chat.ROWID AS ROWID,"
         " chat.originalROWID AS originalROWID,"
@@ -413,7 +430,7 @@ class Message {
         " WHERE message.ROWID = ?;",
         [message.id]);
 
-    return (res.isNotEmpty) ? Chat.fromMap(res[0]) : null;
+    return (res.isNotEmpty) ? Chat.fromMap(res[0]) : null;*/
   }
 
   Future<Message> fetchAssociatedMessages({MessageBloc? bloc}) async {
@@ -425,7 +442,7 @@ class Message {
     if (kIsWeb) {
       associatedMessages = bloc?.reactionMessages.values.where((element) => element.associatedMessageGuid == guid).toList() ?? [];
     } else {
-      associatedMessages = await Message.find({"associatedMessageGuid": this.guid});
+      associatedMessages = (await Message.find()).where((element) => element.associatedMessageGuid == this.guid).toList();
     }
     associatedMessages.sort((a, b) => a.originalROWID!.compareTo(b.originalROWID!));
     if (!kIsWeb) associatedMessages = MessageHelper.normalizedAssociatedMessages(associatedMessages);
@@ -433,9 +450,11 @@ class Message {
   }
 
   Future<Handle?> getHandle() async {
-    final Database? db = await DBProvider.db.database;
-    if (db == null) return null;
-    var res = await db.rawQuery(
+    /*final Database? db = await DBProvider.db.database;
+    if (db == null) return null;*/
+    this.handle = handleBox.get(this.handleId!);
+    return handleBox.get(this.handleId!);
+    /*var res = await db.rawQuery(
         "SELECT"
         " handle.ROWID AS ROWID,"
         " handle.originalROWID AS originalROWID,"
@@ -450,11 +469,11 @@ class Message {
         [this.id]);
 
     this.handle = (res.isNotEmpty) ? res.map((c) => Handle.fromMap(c)).toList()[0] : null;
-    return this.handle;
+    return this.handle;*/
   }
 
   static Future<Message?> findOne(Map<String, dynamic> filters) async {
-    final Database? db = await DBProvider.db.database;
+    /*final Database? db = await DBProvider.db.database;
     if (db == null) return null;
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
@@ -466,64 +485,86 @@ class Message {
       return null;
     }
 
-    return Message.fromMap(res.elementAt(0));
+    return Message.fromMap(res.elementAt(0));*/
+
+    if (filters['guid'] != null) {
+      final query = messageBox.query(Message_.guid.equals(filters['guid'])).build();
+      query..limit = 1;
+      final result = query.findFirst();
+      query.close();
+      return result;
+    } else if (filters['associatedMessageGuid'] != null) {
+      final query = messageBox.query(Message_.associatedMessageGuid.equals(filters['associatedMessageGuid'])).build();
+      query..limit = 1;
+      final result = query.findFirst();
+      query.close();
+      return result;
+    }
+    return null;
   }
 
   static Future<DateTime?> lastMessageDate() async {
-    final Database? db = await DBProvider.db.database;
+    /*final Database? db = await DBProvider.db.database;
     if (db == null) return null;
     // Get the last message
-    var res = await db.query("message", limit: 1, orderBy: "dateCreated DESC");
-    return (res.isNotEmpty) ? res.map((c) => Message.fromMap(c)).toList()[0].dateCreated : null;
+    var res = await db.query("message", limit: 1, orderBy: "dateCreated DESC");*/
+    final query = (messageBox.query()..order(Message_.dateCreated, flags: Order.descending)).build();
+    query..limit = 1;
+    final messages = query.find();
+    query.close();
+    return messages.isEmpty ? null : messages.first.dateCreated;
   }
 
-  static Future<List<Message>> find([Map<String, dynamic> filters = const {}]) async {
-    final Database? db = await DBProvider.db.database;
-    if (db == null) return [];
-    List<String> whereParams = [];
-    filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
-    List<dynamic> whereArgs = [];
-    filters.values.forEach((filter) => whereArgs.add(filter));
-
-    var res = await db.query("message",
-        where: (whereParams.length > 0) ? whereParams.join(" AND ") : null,
-        whereArgs: (whereArgs.length > 0) ? whereArgs : null);
-    return (res.isNotEmpty) ? res.map((c) => Message.fromMap(c)).toList() : [];
+  static Future<List<Message>> find() async {
+    return messageBox.getAll();
   }
 
   static Future<void> delete(Map<String, dynamic> where) async {
-    final Database? db = await DBProvider.db.database;
+    final query = messageBox.query(Message_.guid.equals(where['guid'])).build();
+    final results = query.find();
+    final ids = results.map((e) => e.id!).toList();
+    query.close();
+    final query2 = cmJoinBox.query(ChatMessageJoin_.messageId.oneOf(ids)).build();
+    final results2 = query2.find();
+    query2.close();
+    cmJoinBox.removeMany(results2.map((e) => e.id!).toList());
+    messageBox.removeMany(ids);
+    /*final Database? db = await DBProvider.db.database;
 
     List<String> whereParams = [];
     where.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];
     where.values.forEach((filter) => whereArgs.add(filter));
+
 
     List<Message> toDelete = await Message.find(where);
     for (Message msg in toDelete) {
       await db?.delete("chat_message_join", where: "messageId = ?", whereArgs: [msg.id]);
       await db?.delete("message", where: "ROWID = ?", whereArgs: [msg.id]);
-    }
+    }*/
   }
 
   static Future<void> softDelete(Map<String, dynamic> where) async {
-    final Database? db = await DBProvider.db.database;
+    /*final Database? db = await DBProvider.db.database;
 
     List<String> whereParams = [];
     where.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];
-    where.values.forEach((filter) => whereArgs.add(filter));
+    where.values.forEach((filter) => whereArgs.add(filter));*/
 
-    List<Message> toDelete = await Message.find(where);
-    for (Message msg in toDelete) {
+    Message? toDelete = await Message.findOne(where);
+    toDelete?.dateDeleted = DateTime.now().toUtc();
+    toDelete?.save();
+   /* for (Message msg in toDelete) {
       await db?.update("message", {'dateDeleted': DateTime.now().toUtc().millisecondsSinceEpoch},
           where: "ROWID = ?", whereArgs: [msg.id]);
-    }
+    }*/
   }
 
   static flush() async {
-    final Database? db = await DBProvider.db.database;
-    await db?.delete("message");
+    messageBox.removeAll();
+   /* final Database? db = await DBProvider.db.database;
+    await db?.delete("message");*/
   }
 
   bool isUrlPreview() {
@@ -592,11 +633,11 @@ class Message {
   }
 
   static Future<int?> countForChat(Chat? chat) async {
-    final Database? db = await DBProvider.db.database;
-    if (db == null) return 0;
+   /* final Database? db = await DBProvider.db.database;
+    if (db == null) return 0;*/
     if (chat == null || chat.id == null) return 0;
-
-    String query = ("SELECT"
+    return cmJoinBox.getAll().where((element) => element.chatId == chat.id).length;
+    /*String query = ("SELECT"
         " count(message.ROWID) AS count"
         " FROM message"
         " JOIN chat_message_join AS cmj ON cmj.messageId = message.ROWID"
@@ -607,7 +648,7 @@ class Message {
     var res = await db.rawQuery("$query;", [chat.id]);
     if (res.length == 0) return 0;
 
-    return res[0]["count"] as int?;
+    return res[0]["count"] as int?;*/
   }
 
   void merge(Message otherMessage) {
@@ -638,8 +679,8 @@ class Message {
     if (!this.hasReactions && otherMessage.hasReactions) {
       this.hasReactions = otherMessage.hasReactions;
     }
-    if (this.error.value == 0 && otherMessage.error.value != 0) {
-      this.error.value = otherMessage.error.value;
+    if (this._error.value == 0 && otherMessage._error.value != 0) {
+      this._error.value = otherMessage._error.value;
     }
   }
 
@@ -652,7 +693,7 @@ class Message {
         "text": sanitizeString(text),
         "subject": subject,
         "country": country,
-        "error": error.value,
+        "_error": _error.value,
         "dateCreated": (dateCreated == null) ? null : dateCreated!.millisecondsSinceEpoch,
         "dateRead": (dateRead == null) ? null : dateRead!.millisecondsSinceEpoch,
         "dateDelivered": (dateDelivered == null) ? null : dateDelivered!.millisecondsSinceEpoch,

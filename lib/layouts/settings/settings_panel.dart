@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/repository/models/fcm_data.dart';
@@ -785,7 +786,18 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                 TextButton(
                                   child: Text("Yes"),
                                   onPressed: () async {
-                                    await DBProvider.deleteDB();
+                                    attachmentBox.removeAll();
+                                    chatBox.removeAll();
+                                    fcmDataBox.removeAll();
+                                    handleBox.removeAll();
+                                    messageBox.removeAll();
+                                    scheduledBox.removeAll();
+                                    themeEntryBox.removeAll();
+                                    themeObjectBox.removeAll();
+                                    amJoinBox.removeAll();
+                                    chJoinBox.removeAll();
+                                    cmJoinBox.removeAll();
+                                    tvJoinBox.removeAll();
                                     await SettingsManager().resetConnection();
                                     SettingsManager().settings.finishedSetup.value = false;
                                     SocketManager().finishedSetup.sink.add(false);

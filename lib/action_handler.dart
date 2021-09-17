@@ -29,7 +29,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
-import 'package:sqflite/sqflite.dart';
+
 
 /// This helper class allows us to section off all socket "actions"
 /// These actions allow us to interact with the server, whether it
@@ -166,7 +166,7 @@ class ActionHandler {
         // If there is an error, replace the temp value with an error
         if (response['status'] != 200) {
           message.guid = message.guid!.replaceAll("temp", "error-${response['error']['message']}");
-          message.error.value =
+          message.error =
               response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
 
           await Message.replaceMessage(tempGuid, message);
@@ -191,7 +191,7 @@ class ActionHandler {
         String? tempGuid = message.guid;
         message.guid = message.guid!
             .replaceAll("temp", "error-Connection timeout, please check your internet connection and try again");
-        message.error.value = MessageError.BAD_REQUEST.code;
+        message.error = MessageError.BAD_REQUEST.code;
         CurrentChat? currChat = CurrentChat.activeChat;
         if (!LifeCycleManager().isAlive || currChat?.chat.guid != chat.guid) {
           NotificationManager().createFailedToSendMessage();
@@ -274,7 +274,7 @@ class ActionHandler {
   /// ```
   static Future<void> retryMessage(Message message) async {
     // Don't allow us to retry an un-errored message
-    if (message.error.value == 0) return;
+    if (message.error == 0) return;
 
     // Get message's chat
     Chat? chat = await Message.getChat(message);
@@ -327,7 +327,7 @@ class ActionHandler {
 
     // Reset error, guid, and send date
     message.id = null;
-    message.error.value = 0;
+    message.error = 0;
     message.guid = tempGuid;
     message.dateCreated = DateTime.now();
 
@@ -345,69 +345,11 @@ class ActionHandler {
       if (response['status'] != 200) {
         NewMessageManager().removeMessage(chat, message.guid);
         message.guid = message.guid!.replaceAll("temp", "error-${response['error']['message']}");
-        message.error.value = response['status'] == 400 ? 1001 : 1002;
+        message.error = response['status'] == 400 ? 1001 : 1002;
         await Message.replaceMessage(tempGuid, message);
         NewMessageManager().addMessage(chat, message);
       }
     });
-  }
-
-  /// Resyncs a [chat] by removing all currently saved messages
-  /// for the given [chat], then redownloads its' messages from the server
-  ///
-  /// ```dart
-  /// resyncChat(chatObj)
-  /// ```
-  static Future<void> resyncChat(Chat chat, MessageBloc messageBloc) async {
-    final Database? db = await DBProvider.db.database;
-    if (db == null) return;
-    await chat.save();
-
-    // Fetch messages associated with the chat
-    var items = await db.rawQuery(
-        "SELECT"
-        " ROWID,"
-        " chatId,"
-        " messageId"
-        " FROM chat_message_join"
-        " WHERE chatId = ?",
-        [chat.id]);
-
-    // If there are no messages, return
-    Logger.info("Deleting ${items.length} messages");
-    if (isNullOrEmpty(items)!) return;
-
-    Batch batch = db.batch();
-    for (Map<String, dynamic> message in items) {
-      // Find all attachments associated with a message
-      var attachments = await db.rawQuery(
-          "SELECT"
-          " ROWID,"
-          " attachmentId,"
-          " messageId"
-          " FROM attachment_message_join"
-          " WHERE messageId = ?",
-          [message["messageId"]]);
-
-      // 1 -> Delete all attachments associated with a message
-      for (Map<String, dynamic> attachment in attachments) {
-        batch.delete("attachment", where: "ROWID = ?", whereArgs: [attachment["attachmentId"]]);
-
-        batch.delete("attachment_message_join", where: "ROWID = ?", whereArgs: [attachment["ROWID"]]);
-      }
-
-      // 2 -> Delete all messages associated with a chat
-      batch.delete("message", where: "ROWID = ?", whereArgs: [message["messageId"]]);
-      // 3 -> Delete all chat_message_join entries associated with a chat
-      batch.delete("chat_message_join", where: "ROWID = ?", whereArgs: [message["ROWID"]]);
-    }
-
-    // Commit the deletes
-    await batch.commit(noResult: true, continueOnError: true);
-
-    // Now, let's re-fetch the messages for the chat
-    await messageBloc.loadMessageChunk(0, includeReactions: false);
-    ChatBloc().refreshChats();
   }
 
   /// Handles the ingestion of a 'updated-message' event. It takes the

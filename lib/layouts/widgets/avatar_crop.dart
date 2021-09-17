@@ -32,22 +32,22 @@ class _AvatarCropState extends State<AvatarCrop> {
   void onCropped(Uint8List croppedData) async {
     String appDocPath = SettingsManager().appDocDir.path;
     if (widget.index != null) {
-      File file = new File(ChatBloc().chats[widget.index!].customAvatarPath.value ?? "$appDocPath/avatars/${ChatBloc().chats[widget.index!].guid!.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar.jpg");
-      if (ChatBloc().chats[widget.index!].customAvatarPath.value == null) {
+      File file = new File(ChatBloc().chats[widget.index!].customAvatarPath ?? "$appDocPath/avatars/${ChatBloc().chats[widget.index!].guid!.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar.jpg");
+      if (ChatBloc().chats[widget.index!].customAvatarPath == null) {
         await file.create(recursive: true);
       }
       await file.writeAsBytes(croppedData);
-      ChatBloc().chats[widget.index!].customAvatarPath.value = file.path;
+      ChatBloc().chats[widget.index!].customAvatarPath = file.path;
       ChatBloc().chats[widget.index!].save();
       CustomNavigator.backSettingsCloseOverlays(context);
       showSnackbar("Notice", "Custom chat avatar saved successfully");
     } else {
-      File file = new File(widget.chat!.customAvatarPath.value ?? "$appDocPath/avatars/${widget.chat!.guid!.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar.jpg");
-      if (widget.chat!.customAvatarPath.value == null) {
+      File file = new File(widget.chat!.customAvatarPath ?? "$appDocPath/avatars/${widget.chat!.guid!.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar.jpg");
+      if (widget.chat!.customAvatarPath == null) {
         await file.create(recursive: true);
       }
       await file.writeAsBytes(croppedData);
-      widget.chat!.customAvatarPath.value = file.path;
+      widget.chat!.customAvatarPath = file.path;
       widget.chat!.save();
       Get.back(closeOverlays: true);
       showSnackbar("Notice", "Custom chat avatar saved successfully");

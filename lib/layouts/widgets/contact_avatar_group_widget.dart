@@ -53,8 +53,8 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
 
     return Obx(
       () {
-        if (widget.chat.customAvatarPath.value != null) {
-          dynamic file = File(widget.chat.customAvatarPath.value!);
+        if (widget.chat.customAvatarPath != null) {
+          dynamic file = File(widget.chat.customAvatarPath!);
           return Stack(
             children: [
               Container(

@@ -17,7 +17,6 @@ import 'package:collection/collection.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../repository/models/chat.dart';
@@ -378,7 +377,7 @@ class ChatBloc {
 
   void removePinIndices() async {
     _chats.bigPinHelper(true).forEach((element) {
-      element.pinIndex.value = null;
+      element.pinIndex = null;
       element.save();
     });
     _chats.sort(Chat.sort);
@@ -390,19 +389,19 @@ class ChatBloc {
       newIndex = newIndex - 1;
       _chats
           .bigPinHelper(true)
-          .where((p0) => p0.pinIndex.value != null && p0.pinIndex.value! <= newIndex)
+          .where((p0) => p0.pinIndex != null && p0.pinIndex! <= newIndex)
           .forEach((element) {
-        element.pinIndex.value = element.pinIndex.value! - 1;
+        element.pinIndex = element.pinIndex! - 1;
       });
-      item.pinIndex.value = newIndex;
+      item.pinIndex = newIndex;
     } else {
       _chats
           .bigPinHelper(true)
-          .where((p0) => p0.pinIndex.value != null && p0.pinIndex.value! >= newIndex)
+          .where((p0) => p0.pinIndex != null && p0.pinIndex! >= newIndex)
           .forEach((element) {
-        element.pinIndex.value = element.pinIndex.value! + 1;
+        element.pinIndex = element.pinIndex! + 1;
       });
-      item.pinIndex.value = newIndex;
+      item.pinIndex = newIndex;
     }
     _chats.sort(Chat.sort);
     await item.save();

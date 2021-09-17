@@ -1,7 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
+import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/objectbox.g.dart';
+import 'package:bluebubbles/repository/models/join_tables.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
+import 'package:objectbox/objectbox.dart';
 import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/action_handler.dart';
@@ -20,7 +25,7 @@ import 'package:bluebubbles/helpers/darty.dart';
 import 'package:get/get.dart';
 import 'package:faker/faker.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
-import 'package:sqflite/sqflite.dart';
+
 
 import '../../helpers/utils.dart';
 import '../database.dart';
@@ -90,9 +95,11 @@ Future<String?> getShortChatTitle(Chat _chat) async {
   }
 }
 
+@Entity()
 class Chat {
   int? id;
   int? originalROWID;
+  @Unique()
   String? guid;
   int? style;
   String? chatIdentifier;
@@ -108,10 +115,14 @@ class Chat {
   String? title;
   String? displayName;
   List<Handle> participants = [];
-  List<String?> fakeParticipants = [];
+  List<String> fakeParticipants = [];
   Message? latestMessage;
-  final RxnString customAvatarPath = RxnString();
-  final RxnInt pinIndex = RxnInt();
+  final RxnString _customAvatarPath = RxnString();
+  String? get customAvatarPath => _customAvatarPath.value;
+  set customAvatarPath(String? s) => _customAvatarPath.value = s;
+  final RxnInt _pinIndex = RxnInt();
+  int? get pinIndex => _pinIndex.value;
+  set pinIndex(int? i) => _pinIndex.value = i;
 
   Chat({
     this.id,
@@ -135,17 +146,17 @@ class Chat {
     this.latestMessageText,
     this.fakeLatestMessageText,
   }) {
-    customAvatarPath.value = customAvatar;
-    pinIndex.value = pinnedIndex;
+    customAvatarPath = customAvatar;
+    pinIndex = pinnedIndex;
   }
 
   factory Chat.fromMap(Map<String, dynamic> json) {
     List<Handle> participants = [];
-    List<String?> fakeParticipants = [];
+    List<String> fakeParticipants = [];
     if (json.containsKey('participants')) {
       (json['participants'] as List<dynamic>).forEach((item) {
         participants.add(Handle.fromMap(item));
-        fakeParticipants.add(ContactManager().handleToFakeName[participants.last.address]);
+        fakeParticipants.add(ContactManager().handleToFakeName[participants.last.address] ?? "Unknown");
       });
     }
     Message? message;
@@ -185,8 +196,8 @@ class Chat {
           ? new DateTime.fromMillisecondsSinceEpoch(json['latestMessageDate'] as int)
           : message?.dateCreated,
       displayName: json.containsKey("displayName") ? json["displayName"] : null,
-      customAvatar: json['customAvatarPath'],
-      pinnedIndex: json['pinIndex'],
+      customAvatar: json['_customAvatarPath'],
+      pinnedIndex: json['_pinIndex'],
       participants: participants,
       fakeParticipants: fakeParticipants,
     );
@@ -200,7 +211,12 @@ class Chat {
   }
 
   Future<Chat> save({bool updateIfAbsent = true, bool updateLocalVals = false}) async {
-    final Database? db = await DBProvider.db.database;
+    Chat? existing = await Chat.findOne({"guid": this.guid});
+    this.id = existing?.id ?? this.id;
+    try {
+      chatBox.put(this);
+    } on UniqueViolationException catch (_) {}
+    /*final Database? db = await DBProvider.db.database;
 
     // Try to find an existing chat before saving it
     Chat? existing = await Chat.findOne({"guid": this.guid});
@@ -229,7 +245,7 @@ class Chat {
       this.id = await db?.insert("chat", map);
     } else if (updateIfAbsent) {
       await this.update();
-    }
+    }*/
 
     // Save participants to the chat
     for (int i = 0; i < this.participants.length; i++) {
@@ -240,9 +256,12 @@ class Chat {
   }
 
   Future<Chat> changeName(String? name) async {
-    final Database? db = await DBProvider.db.database;
+    Chat? c = chatBox.get(this.id!);
+    c?.displayName = name;
+    if (c != null) chatBox.put(c);
+    /*final Database? db = await DBProvider.db.database;
     await db?.update("chat", {'displayName': name}, where: "ROWID = ?", whereArgs: [this.id]);
-    this.displayName = name;
+    this.displayName = name;*/
     return this;
   }
 
@@ -297,7 +316,7 @@ class Chat {
   }
 
   Future<Chat> update() async {
-    final Database? db = await DBProvider.db.database;
+    /*final Database? db = await DBProvider.db.database;
 
     // isArchived, isMuted, and isPinned should only be updated by using the helper methods
     Map<String, dynamic> params = {"isFiltered": this.isFiltered! ? 1 : 0};
@@ -319,8 +338,8 @@ class Chat {
       params["displayName"] = this.displayName;
     }
 
-    params["customAvatarPath"] = this.customAvatarPath.value;
-    params["pinIndex"] = this.pinIndex.value;
+    params["_customAvatarPath"] = this._customAvatarPath;
+    params["_pinIndex"] = this._pinIndex.value;
     params["muteType"] = this.muteType;
     params["muteArgs"] = this.muteArgs;
 
@@ -329,26 +348,37 @@ class Chat {
       await db?.update("chat", params, where: "ROWID = ?", whereArgs: [this.id]);
     } else {
       await this.save(updateIfAbsent: false);
-    }
+    }*/
+    this.save();
 
     return this;
   }
 
   static Future<void> deleteChat(Chat chat) async {
-    final Database? db = await DBProvider.db.database;
+    /*final Database? db = await DBProvider.db.database;
     await chat.save();
-    if (db == null) return;
+    if (db == null) return;*/
     List<Message> messages = await Chat.getMessages(chat);
-    for (Message message in messages) {
+    chatBox.remove(chat.id!);
+    messageBox.removeMany(messages.map((e) => e.id!).toList());
+    final query = chJoinBox.query(ChatHandleJoin_.chatId.equals(chat.id!)).build();
+    final results = query.property(ChatHandleJoin_.id).find();
+    query.close();
+    chJoinBox.removeMany(results);
+    final query2 = cmJoinBox.query(ChatMessageJoin_.chatId.equals(chat.id!)).build();
+    final results2 = query2.property(ChatMessageJoin_.id).find();
+    query2.close();
+    cmJoinBox.removeMany(results2);
+    /*for (Message message in messages) {
       await db.delete("message", where: "ROWID = ?", whereArgs: [message.id]);
     }
     await db.delete("chat", where: "ROWID = ?", whereArgs: [chat.id]);
     await db.delete("chat_handle_join", where: "chatId = ?", whereArgs: [chat.id]);
-    await db.delete("chat_message_join", where: "chatId = ?", whereArgs: [chat.id]);
+    await db.delete("chat_message_join", where: "chatId = ?", whereArgs: [chat.id]);*/
   }
 
   Future<Chat> toggleHasUnread(bool hasUnread) async {
-    final Database? db = await DBProvider.db.database;
+    //final Database? db = await DBProvider.db.database;
     if (hasUnread) {
       if (CurrentChat.isActive(this.guid!)) {
         return this;
@@ -356,14 +386,8 @@ class Chat {
     }
 
     this.hasUnreadMessage = hasUnread;
-    Map<String, dynamic> params = {
-      "hasUnreadMessage": this.hasUnreadMessage! ? 1 : 0,
-    };
 
-    // If it already exists, update it
-    if (this.id != null) {
-      await db?.update("chat", params, where: "ROWID = ?", whereArgs: [this.id]);
-    }
+    this.save();
 
     if (hasUnread) {
       EventDispatcher().emit("add-unread-chat", {"chatGuid": this.guid});
@@ -376,7 +400,7 @@ class Chat {
   }
 
   Future<Chat> addMessage(Message message, {bool changeUnreadStatus: true, bool checkForMessageText = true}) async {
-    final Database? db = await DBProvider.db.database;
+    //final Database? db = await DBProvider.db.database;
 
     // Save the message
     Message? existing = await Message.findOne({"guid": message.guid});
@@ -422,7 +446,7 @@ class Chat {
 
     try {
       // Add the relationship
-      await db?.insert("chat_message_join", {"chatId": this.id, "messageId": message.id});
+      cmJoinBox.put(ChatMessageJoin(chatId: this.id!, messageId: message.id!));
     } catch (ex) {
       // Don't do anything if it already exists
     }
@@ -519,18 +543,32 @@ class Chat {
   }
 
   static Future<int?> count() async {
-    final Database? db = await DBProvider.db.database;
+    /*final Database? db = await DBProvider.db.database;
 
     List<Map<String, dynamic>>? test = await db?.rawQuery("SELECT COUNT(*) FROM chat;");
-    return test?[0]['COUNT(*)'];
+    return test?[0]['COUNT(*)'];*/
+    return chatBox.count();
   }
 
   static Future<List<Attachment>> getAttachments(Chat chat, {int offset = 0, int limit = 25}) async {
-    final Database? db = await DBProvider.db.database;
-    if (db == null) return [];
+    /*final Database? db = await DBProvider.db.database;
+    if (db == null) return [];*/
     if (chat.id == null) return [];
-
-    String query = ("SELECT"
+    final amJoinValues = amJoinBox.getAll();
+    final cmJoinValues = cmJoinBox.getAll().where((element) => element.chatId == chat.id).map((e) => e.messageId);
+    final attachmentIds = amJoinValues.where((element) => cmJoinValues.contains(element.messageId)).map((e) => e.attachmentId).toList();
+    final query = attachmentBox.query(Attachment_.id.oneOf(attachmentIds)).build();
+    query
+      ..limit = limit
+      ..offset = offset;
+    final attachments = query.find()..removeWhere((element) => element.mimeType == null);
+    if (attachments.length > 0) {
+      final guids = attachments.map((e) => e.guid).toSet();
+      attachments.retainWhere((element) => guids.remove(element.guid));
+    }
+    query.close();
+    return attachments;
+    /*String query = ("SELECT"
         " attachment.ROWID AS ROWID,"
         " attachment.originalROWID AS originalROWID,"
         " attachment.guid AS guid,"
@@ -562,7 +600,7 @@ class Chat {
       final guids = attachments.map((e) => e.guid).toSet();
       attachments.retainWhere((element) => guids.remove(element.guid));
     }
-    return attachments;
+    return attachments;*/
   }
 
   static Map<String, Completer<List<Message>>> _getMessagesRequests = {};
@@ -608,11 +646,23 @@ class Chat {
 
   static Future<List<Message>> getMessages(Chat chat,
       {bool reactionsOnly = false, int offset = 0, int limit = 25, bool includeDeleted: false}) async {
-    final Database? db = await DBProvider.db.database;
-    if (db == null) return [];
+    /*final Database? db = await DBProvider.db.database;
+    if (db == null) return [];*/
     if (chat.id == null) return [];
-
-    // String reactionQualifier = reactionsOnly ? "IS NOT" : "IS";
+    final messageIds = cmJoinBox.getAll().where((element) => element.chatId == chat.id).map((e) => e.messageId).toList();
+    final query = messageBox.query(Message_.id.oneOf(messageIds)).build();
+    query
+      ..limit = limit
+      ..offset = offset;
+    final messages = query.find();
+    query.close();
+    final handles = handleBox.getMany(messages.map((e) => e.handleId!).toList()..removeWhere((element) => element == 0));
+    messages.forEach((element) {
+      if (handles.isNotEmpty && element.handleId != 0)
+        element.handle = handles.firstWhere((e) => e?.id == element.handleId);
+    });
+    return messages;
+    /*// String reactionQualifier = reactionsOnly ? "IS NOT" : "IS";
     String query = ("SELECT"
         " message.ROWID AS ROWID,"
         " message.originalROWID AS originalROWID,"
@@ -720,15 +770,20 @@ class Chat {
       }
     }
 
-    return output;
+    return output;*/
   }
 
   Future<Chat> getParticipants() async {
-    final Database? db = await DBProvider.db.database;
-    if (db == null) return this;
+    /*final Database? db = await DBProvider.db.database;
+    if (db == null) return this;*/
     if (this.id == null) return this;
-
-    var res = await db.rawQuery(
+    final handleIds = chJoinBox.getAll().where((element) => element.chatId == this.id).map((e) => e.handleId);
+    final handles = handleBox.getMany(handleIds.toList(), growableResult: true)..retainWhere((e) => e != null);
+    final nonNullHandles = List<Handle>.from(handles);
+    this.participants = nonNullHandles;
+    this._deduplicateParticipants();
+    this.fakeParticipants = this.participants.map((p) => ContactManager().handleToFakeName[p.address] ?? "Unknown").toList();
+    /*var res = await db.rawQuery(
         "SELECT"
         " handle.ROWID AS ROWID,"
         " handle.originalROWID as originalROWID,"
@@ -745,19 +800,19 @@ class Chat {
 
     this.participants = (res.isNotEmpty) ? res.map((c) => Handle.fromMap(c)).toList() : [];
     this._deduplicateParticipants();
-    this.fakeParticipants = this.participants.map((p) => ContactManager().handleToFakeName[p.address]).toList();
+    this.fakeParticipants = this.participants.map((p) => ContactManager().handleToFakeName[p.address]).toList();*/
     return this;
   }
 
   Future<Chat> addParticipant(Handle participant) async {
-    final Database? db = await DBProvider.db.database;
+    //final Database? db = await DBProvider.db.database;
 
     // Save participant and add to list
     await participant.save();
     if (participant.id == null) return this;
 
     try {
-      await db?.insert("chat_handle_join", {"chatId": this.id, "handleId": participant.id});
+      chJoinBox.put(ChatHandleJoin(chatId: this.id!, handleId: participant.id!));
     } catch (ex) {
       // Don't do anything if it already exists
     }
@@ -770,10 +825,14 @@ class Chat {
   }
 
   Future<Chat> removeParticipant(Handle participant) async {
-    final Database? db = await DBProvider.db.database;
+    //final Database? db = await DBProvider.db.database;
 
+    final query = chJoinBox.query(ChatHandleJoin_.handleId.equals(participant.id!).and(ChatHandleJoin_.chatId.equals(this.id!))).build();
+    final result = query.find().first;
+    query.close();
+    chJoinBox.remove(result.id!);
     // First, remove from the JOIN table
-    await db?.delete("chat_handle_join", where: "chatId = ? AND handleId = ?", whereArgs: [this.id, participant.id]);
+    //await db?.delete("chat_handle_join", where: "chatId = ? AND handleId = ?", whereArgs: [this.id, participant.id]);
 
     // Second, remove from this object instance
     this.participants.removeWhere((element) => participant.id == element.id);
@@ -789,42 +848,42 @@ class Chat {
   }
 
   Future<Chat> togglePin(bool isPinned) async {
-    final Database? db = await DBProvider.db.database;
+    //final Database? db = await DBProvider.db.database;
     if (this.id == null) return this;
 
     this.isPinned = isPinned;
-    this.pinIndex.value = null;
-    await db?.update("chat", {"isPinned": isPinned ? 1 : 0}, where: "ROWID = ?", whereArgs: [this.id]);
-
+    this._pinIndex.value = null;
+    //await db?.update("chat", {"isPinned": isPinned ? 1 : 0}, where: "ROWID = ?", whereArgs: [this.id]);
+    this.save();
     ChatBloc().updateChat(this);
     return this;
   }
 
   Future<Chat> toggleMute(bool isMuted) async {
-    final Database? db = await DBProvider.db.database;
+    //final Database? db = await DBProvider.db.database;
     if (this.id == null) return this;
 
     this.muteType = isMuted ? "mute" : null;
     this.muteArgs = null;
-    await db?.update("chat", {"muteType": muteType, "muteArgs": muteArgs}, where: "ROWID = ?", whereArgs: [this.id]);
-
+    //await db?.update("chat", {"muteType": muteType, "muteArgs": muteArgs}, where: "ROWID = ?", whereArgs: [this.id]);
+    this.save();
     ChatBloc().updateChat(this);
     return this;
   }
 
   Future<Chat> toggleArchived(bool isArchived) async {
-    final Database? db = await DBProvider.db.database;
+    //final Database? db = await DBProvider.db.database;
     if (this.id == null) return this;
 
     this.isArchived = isArchived;
-    await db?.update("chat", {"isArchived": isArchived ? 1 : 0}, where: "ROWID = ?", whereArgs: [this.id]);
-
+    //await db?.update("chat", {"isArchived": isArchived ? 1 : 0}, where: "ROWID = ?", whereArgs: [this.id]);
+    this.save();
     ChatBloc().updateChat(this);
     return this;
   }
 
   static Future<Chat?> findOne(Map<String, dynamic> filters) async {
-    final Database? db = await DBProvider.db.database;
+    /*final Database? db = await DBProvider.db.database;
     if (db == null) {
       await ChatBloc().chatRequest!.future;
       if (filters['guid'] != null) {
@@ -833,8 +892,21 @@ class Chat {
         return ChatBloc().chats.firstWhereOrNull((e) => e.chatIdentifier == filters['chatIdentifier']);
       }
       return null;
-    }
+    }*/
 
+    if (filters['guid'] != null) {
+      final query = chatBox.query(Chat_.guid.equals(filters['guid'])).build();
+      final result = query.findFirst();
+      query.close();
+      return result;
+    } else if (filters['chatIdentifier'] != null) {
+      final query = chatBox.query(Chat_.chatIdentifier.equals(filters['chatIdentifier'])).build();
+      final result = query.findFirst();
+      query.close();
+      return result;
+    }
+    return null;
+/*
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];
@@ -845,28 +917,18 @@ class Chat {
       return null;
     }
 
-    return Chat.fromMap(res.elementAt(0));
-  }
-
-  static Future<List<Chat>> find([Map<String, dynamic> filters = const {}, limit, offset]) async {
-    final Database? db = await DBProvider.db.database;
-    if (db == null) return [];
-
-    List<String> whereParams = [];
-    filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
-    List<dynamic> whereArgs = [];
-    filters.values.forEach((filter) => whereArgs.add(filter));
-
-    var res = await db.query("chat",
-        where: (whereParams.length > 0) ? whereParams.join(" AND ") : null,
-        whereArgs: (whereArgs.length > 0) ? whereArgs : null,
-        limit: limit,
-        offset: offset);
-    return (res.isNotEmpty) ? res.map((c) => Chat.fromMap(c)).toList() : [];
+    return Chat.fromMap(res.elementAt(0));*/
   }
 
   static Future<List<Chat>> getChats({int limit = 15, int offset = 0}) async {
-    final Database? db = await DBProvider.db.database;
+    final query = (chatBox.query()..order(Chat_.isPinned, flags: Order.descending)..order(Chat_.latestMessageDate, flags: Order.descending)).build();
+    query
+      ..limit = limit
+      ..offset = offset;
+    final chats = query.find();
+    query.close();
+    return chats;
+    /*final Database? db = await DBProvider.db.database;
     if (db == null) return [];
 
     var res = await db.rawQuery(
@@ -885,8 +947,8 @@ class Chat {
       " chat.latestMessageDate as latestMessageDate,"
       " chat.latestMessageText as latestMessageText,"
       " chat.displayName as displayName,"
-      " chat.customAvatarPath as customAvatarPath,"
-      " chat.pinIndex as pinIndex"
+      " chat._customAvatarPath as _customAvatarPath,"
+      " chat._pinIndex as _pinIndex"
       " FROM chat"
       " ORDER BY chat.isPinned DESC, chat.latestMessageDate DESC LIMIT $limit OFFSET $offset;",
     );
@@ -899,7 +961,7 @@ class Chat {
       output = output.where((item) => !item.isFiltered!);
     }
 
-    return output.toList();
+    return output.toList();*/
   }
 
   bool isGroup() {
@@ -907,9 +969,14 @@ class Chat {
   }
 
   Future<void> clearTranscript() async {
-    final Database? db = await DBProvider.db.database;
-
-    await db?.rawQuery(
+    //final Database? db = await DBProvider.db.database;
+    final messageIds = cmJoinBox.getAll().where((element) => element.chatId == this.id!).map((e) => e.messageId);
+    final messages = messageBox.getAll().where((element) => messageIds.contains(element.id)).toList();
+    messages.forEach((element) {
+      element.dateDeleted = DateTime.now().toUtc();
+    });
+    messageBox.putMany(messages);
+   /* await db?.rawQuery(
         "UPDATE message "
         "SET dateDeleted = ${DateTime.now().toUtc().millisecondsSinceEpoch} "
         "WHERE ROWID IN ("
@@ -919,7 +986,7 @@ class Chat {
         "    INNER JOIN chat c ON cmj.chatId = c.ROWID "
         "    WHERE c.guid = ?"
         ");",
-        [this.guid]);
+        [this.guid]);*/
   }
 
   Future<Message> get latestMessageFuture async {
@@ -934,9 +1001,9 @@ class Chat {
   }
 
   static int sort(Chat? a, Chat? b) {
-    if (a!.pinIndex.value != null && b!.pinIndex.value != null) return a.pinIndex.value!.compareTo(b.pinIndex.value!);
-    if (b!.pinIndex.value != null) return 1;
-    if (a.pinIndex.value != null) return -1;
+    if (a!._pinIndex.value != null && b!._pinIndex.value != null) return a._pinIndex.value!.compareTo(b._pinIndex.value!);
+    if (b!._pinIndex.value != null) return 1;
+    if (a._pinIndex.value != null) return -1;
     if (!a.isPinned! && b.isPinned!) return 1;
     if (a.isPinned! && !b.isPinned!) return -1;
     if (a.latestMessageDate == null && b.latestMessageDate == null) return 0;
@@ -946,8 +1013,9 @@ class Chat {
   }
 
   static flush() async {
-    final Database? db = await DBProvider.db.database;
-    await db?.delete("chat");
+    chatBox.removeAll();
+    /*final Database? db = await DBProvider.db.database;
+    await db?.delete("chat");*/
   }
 
   Map<String, dynamic> toMap() => {
@@ -966,7 +1034,7 @@ class Chat {
         "hasUnreadMessage": hasUnreadMessage! ? 1 : 0,
         "latestMessageDate": latestMessageDate != null ? latestMessageDate!.millisecondsSinceEpoch : 0,
         "latestMessageText": latestMessageText,
-        "customAvatarPath": customAvatarPath.value,
-        "pinIndex": pinIndex.value,
+        "_customAvatarPath": _customAvatarPath,
+        "_pinIndex": _pinIndex.value,
       };
 }

@@ -14,9 +14,8 @@ import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:sqflite/sqflite.dart';
 
-enum Tables {
+/*enum Tables {
   chat,
   handle,
   message,
@@ -471,4 +470,4 @@ class DBProvider {
       await theme.save(updateIfAbsent: false);
     }
   }
-}
+}*/

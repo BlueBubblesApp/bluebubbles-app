@@ -196,6 +196,10 @@ class CurrentChat {
       );
       return [];
     }
+    if (messageAttachments[message.guid] != null && messageAttachments[message.guid]!.length > 0) {
+      final guids = messageAttachments[message.guid]!.map((e) => e!.guid).toSet();
+      messageAttachments[message.guid]!.retainWhere((element) => guids.remove(element!.guid));
+    }
     return messageAttachments[message.guid];
   }
 

@@ -94,7 +94,7 @@ class UrlPreviewController extends GetxController with SingleGetTickerProviderMi
 
     // Save the metadata
     if (data.value != null) {
-      CurrentChat.of(context)!.urlPreviews[message.text!] = data.value!;
+      CurrentChat.activeChat?.urlPreviews[message.text!] = data.value!;
     }
   }
 }

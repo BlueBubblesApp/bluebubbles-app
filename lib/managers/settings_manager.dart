@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 
@@ -68,10 +69,15 @@ class SettingsManager {
   /// @param [context] is an optional parameter to be used for setting the adaptive theme based on the settings.
   /// Setting to null will prevent the theme from being set and will be set to null in the background isolate
   Future<void> getSavedSettings({bool headless = false, BuildContext? context}) async {
-    await DBProvider.setupConfigRows();
+    if (!headless) {
+      for (ThemeObject theme in Themes.themes) {
+        await theme.save(updateIfAbsent: false);
+      }
+    }
     settings = Settings.getSettings();
 
     fcmData = await FCMData.getFCM();
+    if (headless) return;
     // await DBProvider.setupDefaultPresetThemes(await DBProvider.db.database);
     themes = await ThemeObject.getThemes();
     for (ThemeObject theme in themes) {
@@ -90,7 +96,18 @@ class SettingsManager {
 
     // Change the [finishedSetup] status to that of the settings
     if (!settings.finishedSetup.value) {
-      await DBProvider.deleteDB();
+      attachmentBox.removeAll();
+      chatBox.removeAll();
+      fcmDataBox.removeAll();
+      handleBox.removeAll();
+      messageBox.removeAll();
+      scheduledBox.removeAll();
+      themeEntryBox.removeAll();
+      themeObjectBox.removeAll();
+      amJoinBox.removeAll();
+      chJoinBox.removeAll();
+      cmJoinBox.removeAll();
+      tvJoinBox.removeAll();
     }
     SocketManager().finishedSetup.sink.add(settings.finishedSetup.value);
 
