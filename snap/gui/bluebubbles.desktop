@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=BlueBubbles
+Comment=BlueBubbles client for Linux
+Exec=bluebubbles
+Icon=${SNAP}/meta/gui/bluebubbles.png
+Terminal=false
+Type=Application
+Categories=Social;
