@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:bluebubbles/layouts/setup/upgrading_db.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
@@ -157,11 +158,11 @@ Future<Null> main() async {
       };
 
       if (!objectBoxDirectory.existsSync() && File(sqlitePath).existsSync()) {
+        runApp(UpgradingDB());
         print("Converting sqflite to ObjectBox...");
         Stopwatch s = Stopwatch();
         s.start();
-        await initStore();
-        await DBProvider.db.initDB();
+        await DBProvider.db.initDB(initStore: initStore);
         s.stop();
         Logger.info("Migrated in ${s.elapsedMilliseconds} ms");
       } else {

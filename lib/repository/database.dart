@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/repository/models/config_entry.dart';
 import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/join_tables.dart';
@@ -32,9 +33,7 @@ enum Tables {
   themes,
   theme_values,
   theme_value_join,
-  config,
   fcm,
-  scheduled
 }
 
 class DBUpgradeItem {
@@ -144,7 +143,7 @@ class DBProvider {
 
   String get path => _path;
 
-  Future<Database> initDB() async {
+  Future<Database> initDB({Future<void> Function()? initStore}) async {
     if (Platform.isWindows || Platform.isLinux) {
       // Initialize FFI
       sqfliteFfiInit();
@@ -159,7 +158,7 @@ class DBProvider {
     return await openDatabase(_path, version: currentVersion, onUpgrade: _onUpgrade, onOpen: (Database db) async {
       Logger.info("Database Opened");
       _database = db;
-      await checkTableExistenceAndCreate(db);
+      await checkTableExistenceAndCreate(db, initStore);
     }, onCreate: (Database db, int version) async {
       Logger.info("creating database");
       _database = db;
@@ -200,128 +199,76 @@ class DBProvider {
     await db.execute("DELETE FROM attachment_message_join");
   }
 
-  Future<void> checkTableExistenceAndCreate(Database db) async {
+  Future<void> checkTableExistenceAndCreate(Database db, Future<void> Function()? initStore) async {
     //this is to ensure that all tables are created on start
     //this will allow us to also add more tables and make it so that users will not have to
-    for (Tables tableName in Tables.values) {
-      var table = await db.rawQuery(
-          "SELECT * FROM sqlite_master WHERE name ='${tableName.toString().split(".").last}' and type='table'; ");
-      var test = await db.rawQuery("SELECT * FROM ${tableName.toString().split(".").last}");
-      switch (tableName) {
-        case Tables.chat:
-          List<Chat> test2 = test.map((e) => Chat.fromMap(e)).toList();
-          test2.forEach((element) {
-            element.id = null;
-          });
-          chatBox.putMany(test2);
-          break;
-        case Tables.handle:
-          List<Handle> test2 = test.map((e) => Handle.fromMap(e)).toList();
-          test2.forEach((element) {
-            element.id = null;
-          });
-          handleBox.putMany(test2);
-          break;
-        case Tables.message:
-          List<Message> test2 = test.map((e) => Message.fromMap(e)).toList();
-          test2.forEach((element) {
-            element.id = null;
-          });
-          messageBox.putMany(test2);
-          break;
-        case Tables.attachment:
-          List<Attachment> test2 = test.map((e) => Attachment.fromMap(e)).toList();
-          test2.forEach((element) {
-            element.id = null;
-          });
-          attachmentBox.putMany(test2);
-          break;
-        case Tables.chat_handle_join:
-          List<ChatHandleJoin> test2 = test.map((e) => ChatHandleJoin.fromMap(e)).toList();
-          chJoinBox.putMany(test2);
-          break;
-        case Tables.chat_message_join:
-          List<ChatMessageJoin> test2 = test.map((e) => ChatMessageJoin.fromMap(e)).toList();
-          cmJoinBox.putMany(test2);
-          break;
-        case Tables.attachment_message_join:
-          List<AttachmentMessageJoin> test2 = test.map((e) => AttachmentMessageJoin.fromMap(e)).toList();
-          amJoinBox.putMany(test2);
-          break;
-        case Tables.themes:
-          List<ThemeObject> test2 = test.map((e) => ThemeObject.fromMap(e)).toList();
-          test2.forEach((element) {
-            element.id = null;
-          });
-          themeObjectBox.putMany(test2);
-          break;
-        case Tables.theme_values:
-          List<ThemeEntry> test2 = test.map((e) => ThemeEntry.fromMap(e)).toList();
-          test2.forEach((element) {
-            element.id = null;
-          });
-          themeEntryBox.putMany(test2);
-          break;
-        case Tables.theme_value_join:
-          List<ThemeValueJoin> test2 = test.map((e) => ThemeValueJoin.fromMap(e)).toList();
-          tvJoinBox.putMany(test2);
-          break;
-        case Tables.fcm:
-          List<ConfigEntry> entries = [];
-          for (Map<String, dynamic> setting in test) {
-            entries.add(ConfigEntry.fromMap(setting));
-          }
-          final fcm = FCMData.fromConfigEntries(entries);
-          fcm.save();
-          break;
-        default:
-          break;
+    if (initStore != null) {
+      Stopwatch s = Stopwatch();
+      s.start();
+      List<List<dynamic>> tableData = [];
+      for (Tables tableName in Tables.values) {
+        final table = await db.rawQuery("SELECT * FROM ${tableName.toString().split(".").last}");
+        tableData.add(table);
       }
-      if (table.isEmpty) {
-        switch (tableName) {
-          case Tables.chat:
-            await createChatTable(db);
-            break;
-          case Tables.handle:
-            await createHandleTable(db);
-            break;
-          case Tables.message:
-            await createMessageTable(db);
-            break;
-          case Tables.attachment:
-            await createAttachmentTable(db);
-            break;
-          case Tables.chat_handle_join:
-            await createChatHandleJoinTable(db);
-            break;
-          case Tables.chat_message_join:
-            await createChatMessageJoinTable(db);
-            break;
-          case Tables.attachment_message_join:
-            await createAttachmentMessageJoinTable(db);
-            break;
-          case Tables.themes:
-            await createThemeTable(db);
-            break;
-          case Tables.theme_values:
-            await createThemeValuesTable(db);
-            break;
-          case Tables.theme_value_join:
-            await createThemeValueJoin(db);
-            break;
-          case Tables.config:
-            await createConfigTable(db);
-            break;
-          case Tables.fcm:
-            await createFCMTable(db);
-            break;
-          case Tables.scheduled:
-            await createScheduledTable(db);
-            break;
-        }
-
-        Logger.info("Creating missing table " + tableName.toString().split(".").last);
+      s.stop();
+      Logger.info("Pulled data in ${s.elapsedMilliseconds} ms");
+      await initStore.call();
+      store.runInTransaction(TxMode.write, () {
+        List<Chat> chats = tableData[0].map((e) => Chat.fromMap(e)).toList();
+        chats.forEach((element) {
+          element.id = null;
+        });
+        chatBox.putMany(chats);
+        chats.clear();
+        List<Handle> handles = tableData[1].map((e) => Handle.fromMap(e)).toList();
+        handles.forEach((element) {
+          element.id = null;
+        });
+        handleBox.putMany(handles);
+        handles.clear();
+        List<Message> messages = tableData[2].map((e) => Message.fromMap(e)).toList();
+        messages.forEach((element) {
+          element.id = null;
+        });
+        messageBox.putMany(messages);
+        messages.clear();
+        List<Attachment> attachments = tableData[3].map((e) => Attachment.fromMap(e)).toList();
+        attachments.forEach((element) {
+          element.id = null;
+        });
+        attachmentBox.putMany(attachments);
+        attachments.clear();
+        List<ChatHandleJoin> chJoins = tableData[4].map((e) => ChatHandleJoin.fromMap(e)).toList();
+        chJoinBox.putMany(chJoins);
+        chJoins.clear();
+        List<ChatMessageJoin> cmJoins = tableData[5].map((e) => ChatMessageJoin.fromMap(e)).toList();
+        cmJoinBox.putMany(cmJoins);
+        cmJoins.clear();
+        List<AttachmentMessageJoin> amJoins = tableData[6].map((e) => AttachmentMessageJoin.fromMap(e)).toList();
+        amJoinBox.putMany(amJoins);
+        amJoins.clear();
+        List<ThemeObject> themeObjects = tableData[7].map((e) => ThemeObject.fromMap(e)).toList();
+        themeObjects.forEach((element) {
+          element.id = null;
+        });
+        themeObjectBox.putMany(themeObjects);
+        themeObjects.clear();
+        List<ThemeEntry> themeEntries = tableData[8].map((e) => ThemeEntry.fromMap(e)).toList();
+        themeEntries.forEach((element) {
+          element.id = null;
+        });
+        themeEntryBox.putMany(themeEntries);
+        themeEntries.clear();
+        List<ThemeValueJoin> tvJoins = tableData[9].map((e) => ThemeValueJoin.fromMap(e)).toList();
+        tvJoinBox.putMany(tvJoins);
+        tvJoins.clear();
+      });
+      List<ConfigEntry> entries = [];
+      for (Map<String, dynamic> setting in tableData[10]) {
+        entries.add(ConfigEntry.fromMap(setting));
       }
+      final fcm = FCMData.fromConfigEntries(entries);
+      fcm.save();
     }
   }
 
