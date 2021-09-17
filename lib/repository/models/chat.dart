@@ -650,7 +650,7 @@ class Chat {
     if (db == null) return [];*/
     if (chat.id == null) return [];
     final messageIds = cmJoinBox.getAll().where((element) => element.chatId == chat.id).map((e) => e.messageId).toList();
-    final query = messageBox.query(Message_.id.oneOf(messageIds)).build();
+    final query = (messageBox.query(Message_.id.oneOf(messageIds))..order(Message_.dateCreated, flags: Order.descending)).build();
     query
       ..limit = limit
       ..offset = offset;
