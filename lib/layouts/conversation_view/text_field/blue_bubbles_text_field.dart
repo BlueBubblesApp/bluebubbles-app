@@ -525,7 +525,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           }
         } else if (!isNullOrEmpty(CurrentChat.of(context)?.chat.participants)!) {
           if (generateNames) {
-            placeholder = CurrentChat.of(context)!.chat.fakeParticipants[0] ?? "BlueBubbles";
+            placeholder = CurrentChat.of(context)!.chat.fakeParticipants[0];
           } else if (hideInfo) {
             placeholder = "BlueBubbles";
           } else {

@@ -10,6 +10,13 @@ class AttachmentMessageJoin {
     required this.attachmentId,
     required this.messageId,
   });
+
+  factory AttachmentMessageJoin.fromMap(Map<String, dynamic> map) {
+    return AttachmentMessageJoin(
+      attachmentId: map['attachmentId'] as int,
+      messageId: map['messageId'] as int,
+    );
+  }
 }
 
 @Entity()
@@ -22,6 +29,13 @@ class ChatHandleJoin {
     required this.chatId,
     required this.handleId,
   });
+
+  factory ChatHandleJoin.fromMap(Map<String, dynamic> map) {
+    return ChatHandleJoin(
+      chatId: map['chatId'] as int,
+      handleId: map['handleId'] as int,
+    );
+  }
 }
 
 @Entity()
@@ -34,6 +48,13 @@ class ChatMessageJoin {
     required this.chatId,
     required this.messageId,
   });
+
+  factory ChatMessageJoin.fromMap(Map<String, dynamic> map) {
+    return ChatMessageJoin(
+      chatId: map['chatId'] as int,
+      messageId: map['messageId'] as int,
+    );
+  }
 }
 
 @Entity()
@@ -46,4 +67,11 @@ class ThemeValueJoin {
     required this.themeId,
     required this.themeValueId,
   });
+
+  factory ThemeValueJoin.fromMap(Map<String, dynamic> map) {
+    return ThemeValueJoin(
+      themeId: map['themeId'] as int,
+      themeValueId: map['themeValueId'] as int,
+    );
+  }
 }

@@ -10,6 +10,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:get/get.dart';
+import 'package:sqflite/sqflite.dart';
 
 
 class Settings {
@@ -331,7 +332,7 @@ class Settings {
     }
   }
 
-  /*static Future<Settings> getSettingsOld(Database db) async {
+  static Future<Settings> getSettingsOld(Database db) async {
     List<Map<String, dynamic>> result = await db.query("config");
     if (result.isEmpty) return new Settings();
     List<ConfigEntry> entries = [];
@@ -339,7 +340,7 @@ class Settings {
       entries.add(ConfigEntry.fromMap(setting));
     }
     return Settings.fromConfigEntries(entries);
-  }*/
+  }
 
   Map<String, dynamic> toMap({bool includeAll = false}) {
     Map<String, dynamic> map = {

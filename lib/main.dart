@@ -12,6 +12,8 @@ import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
+import 'package:path/path.dart' show join;
+import 'package:path_provider/path_provider.dart';
 import 'package:universal_io/io.dart';
 import 'package:universal_html/html.dart' as html;
 import 'dart:isolate';
@@ -132,20 +134,40 @@ Future<Null> main() async {
   try {
     prefs = await SharedPreferences.getInstance();
     if (!kIsWeb) {
-      store = await openStore();
-      attachmentBox = store.box<Attachment>();
-      chatBox = store.box<Chat>();
-      fcmDataBox = store.box<FCMData>();
-      handleBox = store.box<Handle>();
-      messageBox = store.box<Message>();
-      scheduledBox = store.box<ScheduledMessage>();
-      themeEntryBox = store.box<ThemeEntry>();
-      themeObjectBox = store.box<ThemeObject>();
-      amJoinBox = store.box<AttachmentMessageJoin>();
-      chJoinBox = store.box<ChatHandleJoin>();
-      cmJoinBox = store.box<ChatMessageJoin>();
-      tvJoinBox = store.box<ThemeValueJoin>();
-    }
+      var documentsDirectory = await getApplicationDocumentsDirectory();
+      final objectBoxDirectory = Directory(documentsDirectory.path + '/objectbox/');
+      //ignore: unnecessary_cast, we need this as a workaround
+      if (kIsDesktop) documentsDirectory = (await getApplicationSupportDirectory()) as Directory;
+      final sqlitePath = join(documentsDirectory.path, "chat.db");
+
+      Future<void> Function() initStore = () async {
+        store = await openStore();
+        attachmentBox = store.box<Attachment>();
+        chatBox = store.box<Chat>();
+        fcmDataBox = store.box<FCMData>();
+        handleBox = store.box<Handle>();
+        messageBox = store.box<Message>();
+        scheduledBox = store.box<ScheduledMessage>();
+        themeEntryBox = store.box<ThemeEntry>();
+        themeObjectBox = store.box<ThemeObject>();
+        amJoinBox = store.box<AttachmentMessageJoin>();
+        chJoinBox = store.box<ChatHandleJoin>();
+        cmJoinBox = store.box<ChatMessageJoin>();
+        tvJoinBox = store.box<ThemeValueJoin>();
+      };
+
+      if (!objectBoxDirectory.existsSync() && File(sqlitePath).existsSync()) {
+        print("Converting sqflite to ObjectBox...");
+        Stopwatch s = Stopwatch();
+        s.start();
+        await initStore();
+        await DBProvider.db.initDB();
+        s.stop();
+        Logger.info("Migrated in ${s.elapsedMilliseconds} ms");
+      } else {
+        await initStore();
+      }
+    };
     FirebaseDart.setup(
       platform: fdu.Platform.web(
         currentUrl: Uri.base.toString(),
