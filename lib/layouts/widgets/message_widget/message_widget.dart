@@ -154,11 +154,7 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
     if (_message.handle != null) return;
 
     try {
-      Handle? handle = _message.getHandle();
-      //todo check setstate
-      /*if (this.mounted && handle != null) {
-        setState(() {});
-      }*/
+      _message.getHandle();
     } catch (_) {}
   }
 
