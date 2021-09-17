@@ -555,19 +555,30 @@ class Chat {
     if (db == null) return [];*/
     if (chat.id == null) return [];
     final amJoinValues = amJoinBox.getAll();
-    final cmJoinValues = cmJoinBox.getAll().where((element) => element.chatId == chat.id).map((e) => e.messageId);
+    final cmJoinValues = cmJoinBox.getAll().where((element) => element.chatId == chat.id).map((e) => e.messageId).toList();
+    final query2 = (messageBox.query(Message_.id.oneOf(cmJoinValues))..order(Message_.dateCreated, flags: Order.descending)).build();
+    final messages = query2.find();
     final attachmentIds = amJoinValues.where((element) => cmJoinValues.contains(element.messageId)).map((e) => e.attachmentId).toList();
     final query = attachmentBox.query(Attachment_.id.oneOf(attachmentIds)).build();
     query
       ..limit = limit
       ..offset = offset;
     final attachments = query.find()..removeWhere((element) => element.mimeType == null);
-    if (attachments.length > 0) {
-      final guids = attachments.map((e) => e.guid).toSet();
-      attachments.retainWhere((element) => guids.remove(element.guid));
+    final actualAttachments = <Attachment>[];
+    for (Message m in messages) {
+      m.attachments = await m.fetchAttachments();
+      for (Attachment a in attachments) {
+        if (m.attachments?.map((e) => e!.guid).contains(a.guid) ?? false) {
+          actualAttachments.add(a);
+        }
+      }
+    }
+    if (actualAttachments.length > 0) {
+      final guids = actualAttachments.map((e) => e.guid).toSet();
+      actualAttachments.retainWhere((element) => guids.remove(element.guid));
     }
     query.close();
-    return attachments;
+    return actualAttachments;
     /*String query = ("SELECT"
         " attachment.ROWID AS ROWID,"
         " attachment.originalROWID AS originalROWID,"
