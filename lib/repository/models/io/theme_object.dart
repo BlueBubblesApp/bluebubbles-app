@@ -82,10 +82,8 @@ class ThemeObject {
     }
     try {
       if (this.id != null && existing != null && updateIfNotAbsent) {
-        // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
         this.id = themeObjectBox.put(this);
       } else if (this.id == null || existing == null) {
-        // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
         this.id = themeObjectBox.put(this);
       }
     } on UniqueViolationException catch (_) {}
@@ -102,7 +100,6 @@ class ThemeObject {
     if (kIsWeb || this.isPreset || this.id == null) return;
     this.fetchData();
     themeEntryBox.removeMany(this.entries.map((e) => e.id!).toList());
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     final query = tvJoinBox.query(ThemeValueJoin_.themeId.equals(this.id!)).build();
     tvJoinBox.remove(query.find().first.themeId);
     query.close();
@@ -113,7 +110,6 @@ class ThemeObject {
     List<ThemeObject> res = ThemeObject.getThemes();
     List<ThemeObject> themes = res.where((element) => element.selectedLightTheme).toList();
     if (themes.isEmpty) {
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       return Themes.themes[1];
     }
     ThemeObject theme = themes.first;
@@ -125,7 +121,6 @@ class ThemeObject {
     List<ThemeObject> res = ThemeObject.getThemes();
     List<ThemeObject> themes = res.where((element) => element.selectedDarkTheme).toList();
     if (themes.isEmpty) {
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       return Themes.themes[0];
     }
     ThemeObject theme = themes.first;
@@ -135,7 +130,6 @@ class ThemeObject {
 
   static void setSelectedTheme({int? light, int? dark}) {
     if (light != null) {
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       final query = themeObjectBox.query(ThemeObject_.selectedLightTheme.equals(true)).build();
       final result = query.find().first;
       query.close();
@@ -146,7 +140,6 @@ class ThemeObject {
       lightTheme.save();
     }
     if (dark != null) {
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       final query = themeObjectBox.query(ThemeObject_.selectedDarkTheme.equals(true)).build();
       final result = query.find().first;
       query.close();
@@ -160,20 +153,16 @@ class ThemeObject {
 
   static ThemeObject? findOne(String name) {
     if (kIsWeb) return null;
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     final query = themeObjectBox.query(ThemeObject_.name.equals(name)).build();
     query..limit = 1;
     final result = query.findFirst();
     query.close();
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     return result;
   }
 
   static List<ThemeObject> getThemes() {
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     if (kIsWeb) return Themes.themes;
     final results = themeObjectBox.getAll();
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     return (results.isNotEmpty) ? results.map((e) => e..fetchData()).toList() : Themes.themes;
   }
 
@@ -191,9 +180,7 @@ class ThemeObject {
       return this.entries;
     }
     if (kIsWeb) return this.entries;
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     final query = tvJoinBox.query(ThemeValueJoin_.themeId.equals(this.id!)).build();
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     final themeEntryIds = query.property(ThemeValueJoin_.themeValueId).find();
     final themeEntries2 = themeEntryBox.getMany(themeEntryIds, growableResult: true);
     themeEntries2.retainWhere((element) => element != null);

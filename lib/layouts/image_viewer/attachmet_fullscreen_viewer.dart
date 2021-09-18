@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
-import 'package:universal_io/io.dart';
 import 'dart:math';
 
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
@@ -270,8 +269,6 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                           ],
                         );
                       }
-
-                      return Container();
                     }),
                   );
                 },

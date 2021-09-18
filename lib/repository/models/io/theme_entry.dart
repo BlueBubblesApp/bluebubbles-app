@@ -62,10 +62,8 @@ class ThemeEntry {
     if (existing != null) {
       this.id = existing.id;
     }
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     themeEntryBox.put(this);
     if (this.id != null && theme.id != null && existing == null)
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       tvJoinBox.put(ThemeValueJoin(themeValueId: this.id!, themeId: theme.id!));
 
     return this;
@@ -73,12 +71,10 @@ class ThemeEntry {
 
   static ThemeEntry? findOne(String name, int themeId) {
     if (kIsWeb) return null;
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     final query = themeEntryBox.query(ThemeEntry_.name.equals(name).and(ThemeEntry_.themeId.equals(themeId))).build();
     query..limit = 1;
     final result = query.findFirst();
     query.close();
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     return result;
   }
 

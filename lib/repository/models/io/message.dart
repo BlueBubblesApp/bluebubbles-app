@@ -231,7 +231,6 @@ class Message {
     }
 
     try {
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       messageBox.put(this);
     } on UniqueViolationException catch (_) {}
 
@@ -249,7 +248,6 @@ class Message {
       } else {
         if (chat != null) {
           await chat.addMessage(newMessage!);
-          // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
           NewMessageManager().addMessage(chat, newMessage, outgoing: false);
           return newMessage;
         }
@@ -259,7 +257,6 @@ class Message {
     }
 
     newMessage!.id = existing.id;
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     messageBox.put(newMessage);
 
     return newMessage;
@@ -278,7 +275,6 @@ class Message {
     }
 
     if (currentChat != null) {
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       this.attachments = currentChat.getAttachmentsForMessage(this);
       if (this.attachments == null) this.attachments = [];
       if (this.attachments!.length != 0) return this.attachments;
@@ -287,16 +283,13 @@ class Message {
     if (this.id == null) return [];
     final attachmentIds = amJoinBox.getAll().where((element) => element.messageId == this.id!).map((e) => e.attachmentId).toList();
     final attachments = attachmentBox.getMany(attachmentIds, growableResult: true);
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     this.attachments = attachments;
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     return attachments;
   }
 
   static Chat? getChat(Message message) {
     if (kIsWeb) return null;
     final chatId = cmJoinBox.getAll().firstWhere((element) => element.messageId == message.id).chatId;
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     return chatBox.get(chatId);
   }
 
@@ -307,42 +300,34 @@ class Message {
       return this;
     }
     if (kIsWeb) {
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       associatedMessages = bloc?.reactionMessages.values.where((element) => element.associatedMessageGuid == guid).toList() ?? [];
     } else {
       associatedMessages = Message.find().where((element) => element.associatedMessageGuid == this.guid).toList();
     }
     associatedMessages.sort((a, b) => a.originalROWID!.compareTo(b.originalROWID!));
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     if (!kIsWeb) associatedMessages = MessageHelper.normalizedAssociatedMessages(associatedMessages);
     return this;
   }
 
   Handle? getHandle() {
     if (kIsWeb) return null;
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     this.handle = handleBox.get(this.handleId!);
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     return handleBox.get(this.handleId!);
   }
 
   static Message? findOne({String? guid, String? associatedMessageGuid}) {
     if (kIsWeb) return null;
     if (guid != null) {
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       final query = messageBox.query(Message_.guid.equals(guid)).build();
       query..limit = 1;
       final result = query.findFirst();
       query.close();
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       return result;
     } else if (associatedMessageGuid != null) {
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       final query = messageBox.query(Message_.associatedMessageGuid.equals(associatedMessageGuid)).build();
       query..limit = 1;
       final result = query.findFirst();
       query.close();
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       return result;
     }
     return null;
@@ -350,7 +335,6 @@ class Message {
 
   static DateTime? lastMessageDate() {
     if (kIsWeb) return null;
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     final query = (messageBox.query()..order(Message_.dateCreated, flags: Order.descending)).build();
     query..limit = 1;
     final messages = query.find();
@@ -359,18 +343,15 @@ class Message {
   }
 
   static List<Message> find() {
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     return messageBox.getAll();
   }
 
   static void delete(String guid) {
     if (kIsWeb) return;
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     final query = messageBox.query(Message_.guid.equals(guid)).build();
     final results = query.find();
     final ids = results.map((e) => e.id!).toList();
     query.close();
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     final query2 = cmJoinBox.query(ChatMessageJoin_.messageId.oneOf(ids)).build();
     final results2 = query2.find();
     query2.close();

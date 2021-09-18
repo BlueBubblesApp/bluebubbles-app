@@ -277,7 +277,7 @@ class ChatBloc {
   }
 
   Future<void> getChatBatches({int batchSize = 15}) async {
-    int count = Chat.count() ?? 0;
+    int count = Chat.count() ?? /*(await Dio().get("${SettingsManager().settings.serverAddress.value}/api/v1/chat/count?guid=${SettingsManager().settings.guidAuthKey}")).data['data']['total']*/ 0;
     if (count == 0 && !kIsWeb) {
       hasChats.value = false;
     } else {
@@ -291,6 +291,11 @@ class ChatBloc {
     for (int i = 0; i < batches; i++) {
       List<Chat> chats = [];
       if (kIsWeb) {
+       /* Stopwatch s = Stopwatch();
+        s.start();
+        chats = await SocketManager().getChats({"withLastMessage": false, "limit": batchSize, "offset": i * batchSize});
+        s.stop();
+        Logger.info("Chats downloaded in ${s.elapsedMilliseconds} ms");*/
         chats = await SocketManager().getChats({"withLastMessage": kIsWeb});
       } else {
         chats = Chat.getChats(limit: batchSize, offset: i * batchSize);
@@ -321,6 +326,27 @@ class ChatBloc {
       if (i == 0) {
         loadedChatBatch.value = true;
       }
+    }
+
+    if (ContactManager().contacts.isEmpty) {
+      String json = "[";
+      cachedHandles.forEachIndexed((index, c) {
+        var map = c.toMap();
+        json = json + "${jsonEncode(map)}";
+        if (index != cachedHandles.length - 1) {
+          json = json + ",";
+        } else {
+          json = json + "]";
+        }
+      });
+      /*var vcfs = await SocketManager().sendMessage("get-contacts-from-db", {}, (_) {}, otherMessage: cachedHandles.map((e) {
+        var map = e.toMap();
+        map['firstName'] = "";
+        map['lastName'] = "";
+        print(map);
+        return map;
+      }).toList());
+      print(vcfs);*/
     }
 
     Logger.info("Finished fetching chats (${_chats.length}).", tag: "ChatBloc");

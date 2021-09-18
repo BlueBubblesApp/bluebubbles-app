@@ -534,7 +534,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             if (contact == null) {
               placeholder = await formatPhoneNumber(handle);
             } else {
-              placeholder = contact.displayName ?? "BlueBubbles";
+              placeholder = contact.displayName;
             }
           }
         }

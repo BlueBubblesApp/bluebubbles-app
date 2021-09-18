@@ -54,7 +54,6 @@ class Attachment {
 
   bool get existsOnDisk {
     if (kIsWeb) return false;
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     File attachment = new File(AttachmentHelper.getAttachmentPath(this));
     return attachment.existsSync();
   }
@@ -132,10 +131,8 @@ class Attachment {
       this.id = existing.id;
     }
     try {
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       attachmentBox.put(this);
       if (this.id != null && message?.id != null)
-        // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
         amJoinBox.put(AttachmentMessageJoin(attachmentId: this.id!, messageId: message!.id!));
     } on UniqueViolationException catch (_) {}
 
@@ -163,7 +160,6 @@ class Attachment {
     existing.blurhash = newAttachment.blurhash;
     existing.bytes = newAttachment.bytes;
     existing.webUrl = newAttachment.webUrl;
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     attachmentBox.put(existing);
     // change the directory path
     String appDocPath = SettingsManager().appDocDir.path;
@@ -181,12 +177,10 @@ class Attachment {
   /// find an attachment by its guid
   static Attachment? findOne(String guid) {
     if (kIsWeb) return null;
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     final query = attachmentBox.query(Attachment_.guid.equals(guid)).build();
     query..limit = 1;
     final result = query.findFirst();
     query.close();
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     return result;
   }
 

@@ -422,7 +422,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
               if (contact == null) {
                 uniqueContact = UniqueContact(address: address, displayName: (await formatPhoneNumber(handle)));
               } else {
-                uniqueContact = UniqueContact(address: address, displayName: contact.displayName ?? address);
+                uniqueContact = UniqueContact(address: address, displayName: contact.displayName);
               }
               Navigator.pushReplacement(
                 context,

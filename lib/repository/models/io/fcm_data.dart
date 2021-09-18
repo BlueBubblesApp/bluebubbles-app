@@ -63,7 +63,6 @@ class FCMData {
 
   FCMData save() {
     if (kIsWeb) return this;
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     fcmDataBox.put(this);
     return this;
   }
@@ -109,7 +108,6 @@ class FCMData {
       clientID: prefs.getString('clientID'),
       applicationID: prefs.getString('applicationID'),
     );
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     return result.first;
   }
 

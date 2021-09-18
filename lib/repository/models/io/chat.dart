@@ -6,7 +6,6 @@ import 'package:bluebubbles/repository/models/io/attachment.dart';
 import 'package:bluebubbles/repository/models/io/join_tables.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
-import 'package:bluebubbles/objectbox.g.dart';
 import 'package:universal_io/io.dart';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -33,14 +32,12 @@ Future<String> getFullChatTitle(Chat _chat) async {
 
     // If there are no participants, try to get them from the server
     if (chat.participants.isEmpty) {
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       await ActionHandler.handleChat(chat: chat);
       chat = chat.getParticipants();
     }
 
     List<String> titles = [];
     for (int i = 0; i < chat.participants.length; i++) {
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       String? name = await ContactManager().getContactTitle(chat.participants[i]);
 
       if (chat.participants.length > 1 && !name!.isPhoneNumber) {
@@ -164,7 +161,6 @@ class Chat {
               : ((json['hasUnreadMessage'] == 1) ? true : false)
           : false,
       latestMessage: message,
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       latestMessageText: json.containsKey("latestMessageText") ? json["latestMessageText"] : message != null ? MessageHelper.getNotificationTextSync(message) : null,
       fakeLatestMessageText: json.containsKey("latestMessageText")
           ? faker.lorem.words((json["latestMessageText"] ?? "").split(" ").length).join(" ")
@@ -192,7 +188,6 @@ class Chat {
     Chat? existing = Chat.findOne(guid: this.guid);
     this.id = existing?.id ?? this.id;
     try {
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       chatBox.put(this);
     } on UniqueViolationException catch (_) {}
     // Save participants to the chat
@@ -209,7 +204,6 @@ class Chat {
       return this;
     }
     this.displayName = name;
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     chatBox.put(this);
     return this;
   }
@@ -269,15 +263,11 @@ class Chat {
     List<Message> messages = Chat.getMessages(chat);
     chatBox.remove(chat.id!);
     messageBox.removeMany(messages.map((e) => e.id!).toList());
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     final query = chJoinBox.query(ChatHandleJoin_.chatId.equals(chat.id!)).build();
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     final results = query.property(ChatHandleJoin_.id).find();
     query.close();
     chJoinBox.removeMany(results);
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     final query2 = cmJoinBox.query(ChatMessageJoin_.chatId.equals(chat.id!)).build();
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     final results2 = query2.property(ChatMessageJoin_.id).find();
     query2.close();
     cmJoinBox.removeMany(results2);
@@ -333,7 +323,6 @@ class Chat {
 
     if (isNewer && checkForMessageText) {
       this.latestMessage = message;
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       this.latestMessageText = await MessageHelper.getNotificationText(message);
       this.fakeLatestMessageText = faker.lorem.words((this.latestMessageText ?? "").split(" ").length).join(" ");
       this.latestMessageDate = message.dateCreated;
@@ -351,7 +340,6 @@ class Chat {
 
     try {
       // Add the relationship
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       cmJoinBox.put(ChatMessageJoin(chatId: this.id!, messageId: message.id!));
     } catch (ex) {
       // Don't do anything if it already exists
@@ -370,20 +358,17 @@ class Chat {
 
     if (checkForMessageText) {
       // Update the chat position
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       ChatBloc().updateChatPosition(this);
     }
 
     // If the message is for adding or removing participants,
     // we need to ensure that all of the chat participants are correct by syncing with the server
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     if (isParticipantEvent(message) && checkForMessageText) {
       serverSyncParticipants();
     }
 
     // If this is a message preview and we don't already have metadata for this, get it
     if (message.fullText.replaceAll("\n", " ").hasUrl && !MetadataHelper.mapIsNotEmpty(message.metadata)) {
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       MetadataHelper.fetchMetadata(message).then((Metadata? meta) async {
         // If the metadata is empty, don't do anything
         if (!MetadataHelper.isNotEmpty(meta)) return;
@@ -446,7 +431,6 @@ class Chat {
         }
 
         // Sync all changes with the chatbloc
-        // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
         ChatBloc().updateChat(this);
       }
     });
@@ -460,21 +444,17 @@ class Chat {
     if (kIsWeb || chat.id == null) return [];
     final amJoinValues = amJoinBox.getAll();
     final cmJoinValues = cmJoinBox.getAll().where((element) => element.chatId == chat.id).map((e) => e.messageId).toList();
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     final query2 = (messageBox.query(Message_.id.oneOf(cmJoinValues))..order(Message_.dateCreated, flags: Order.descending)).build();
     final messages = query2.find();
     final attachmentIds = amJoinValues.where((element) => cmJoinValues.contains(element.messageId)).map((e) => e.attachmentId).toList();
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     final query = attachmentBox.query(Attachment_.id.oneOf(attachmentIds)).build();
     query
       ..limit = limit
       ..offset = offset;
     final attachments = query.find()..removeWhere((element) => element.mimeType == null);
     final actualAttachments = <Attachment>[];
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     for (Message m in messages) {
       m.attachments = m.fetchAttachments();
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       for (Attachment a in attachments) {
         if (m.attachments?.map((e) => e!.guid).contains(a.guid) ?? false) {
           actualAttachments.add(a);
@@ -492,10 +472,8 @@ class Chat {
   static List<Message> getMessages(Chat chat, {int offset = 0, int limit = 25, bool includeDeleted: false}) {
     if (kIsWeb || chat.id == null) return [];
     final messageIds = cmJoinBox.getAll().where((element) => element.chatId == chat.id).map((e) => e.messageId).toList();
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     final query = (messageBox.query(Message_.id.oneOf(messageIds)
         .and(includeDeleted ? Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull()) : Message_.dateDeleted.isNull()))
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       ..order(Message_.dateCreated, flags: Order.descending)).build();
     query
       ..limit = limit
@@ -507,7 +485,6 @@ class Chat {
       if (handles.isNotEmpty && element.handleId != 0)
         element.handle = handles.firstWhere((e) => e?.id == element.handleId);
     });
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     return messages;
   }
 
@@ -533,7 +510,6 @@ class Chat {
     if (participant.id == null) return this;
 
     try {
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       chJoinBox.put(ChatHandleJoin(chatId: this.id!, handleId: participant.id!));
     } catch (ex) {}
 
@@ -551,7 +527,6 @@ class Chat {
     }
 
     // find the join item and delete it
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     final query = chJoinBox.query(ChatHandleJoin_.handleId.equals(participant.id!).and(ChatHandleJoin_.chatId.equals(this.id!))).build();
     final result = query.find().first;
     query.close();
@@ -574,7 +549,6 @@ class Chat {
     this.isPinned = isPinned;
     this._pinIndex.value = null;
     this.save();
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     ChatBloc().updateChat(this);
     return this;
   }
@@ -584,7 +558,6 @@ class Chat {
     this.muteType = isMuted ? "mute" : null;
     this.muteArgs = null;
     this.save();
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     ChatBloc().updateChat(this);
     return this;
   }
@@ -593,7 +566,6 @@ class Chat {
     if (this.id == null) return this;
     this.isArchived = isArchived;
     this.save();
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     ChatBloc().updateChat(this);
     return this;
   }
@@ -601,10 +573,8 @@ class Chat {
   static Future<Chat?> findOneWeb({String? guid, String? chatIdentifier}) async {
     await ChatBloc().chatRequest!.future;
     if (guid != null) {
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       return ChatBloc().chats.firstWhere((e) => e.guid == guid);
     } else if (chatIdentifier != null) {
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       return ChatBloc().chats.firstWhereOrNull((e) => e.chatIdentifier == chatIdentifier);
     }
     return null;
@@ -612,18 +582,14 @@ class Chat {
 
   static Chat? findOne({String? guid, String? chatIdentifier}) {
     if (guid != null) {
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       final query = chatBox.query(Chat_.guid.equals(guid)).build();
       final result = query.findFirst();
       query.close();
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       return result;
     } else if (chatIdentifier != null) {
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       final query = chatBox.query(Chat_.chatIdentifier.equals(chatIdentifier)).build();
       final result = query.findFirst();
       query.close();
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       return result;
     }
     return null;
@@ -631,14 +597,12 @@ class Chat {
 
   static List<Chat> getChats({int limit = 15, int offset = 0}) {
     if (kIsWeb) throw Exception("Use socket to get chats on Web!");
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     final query = (chatBox.query()..order(Chat_.isPinned, flags: Order.descending)..order(Chat_.latestMessageDate, flags: Order.descending)).build();
     query
       ..limit = limit
       ..offset = offset;
     final chats = query.find();
     query.close();
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     return chats;
   }
 

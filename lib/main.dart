@@ -51,7 +51,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:window_size/window_size.dart';
-import 'repository/models/objectbox.dart';
+import 'package:bluebubbles/repository/models/objectbox.dart';
 
 // final SentryClient _sentry = SentryClient(
 //     dsn:

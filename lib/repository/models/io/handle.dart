@@ -50,7 +50,6 @@ class Handle {
       this.id = existing.id;
     }
     try {
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       handleBox.put(this);
     } on UniqueViolationException catch (_) {}
 
@@ -72,26 +71,21 @@ class Handle {
   static Handle? findOne({int? originalROWID, String? address}) {
     if (kIsWeb) return null;
     if (originalROWID != null) {
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       final query = handleBox.query(Handle_.originalROWID.equals(originalROWID)).build();
       query..limit = 1;
       final result = query.findFirst();
       query.close();
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       return result;
     } else {
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       final query = handleBox.query(Handle_.address.equals(address!)).build();
       query..limit = 1;
       final result = query.findFirst();
       query.close();
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       return result;
     }
   }
 
   static List<Handle> find() {
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     return handleBox.getAll();
   }
 
@@ -99,7 +93,6 @@ class Handle {
     if (kIsWeb) return [];
     final chatIds = chJoinBox.getAll().where((element) => element.handleId == handle.id).map((e) => e.chatId);
     final chats = chatBox.getAll().where((element) => chatIds.contains(element.id)).toList();
-    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
     return chats;
   }
 

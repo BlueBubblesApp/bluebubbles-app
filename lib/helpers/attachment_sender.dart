@@ -15,7 +15,6 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:get/get.dart';
 import 'package:mime_type/mime_type.dart';
-import 'package:path/path.dart';
 import 'package:tuple/tuple.dart';
 
 class AttachmentSender {

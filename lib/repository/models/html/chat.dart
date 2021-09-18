@@ -1,10 +1,8 @@
 import 'dart:async';
 import 'package:bluebubbles/helpers/darty.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/repository/models/html/attachment.dart';
 import 'package:bluebubbles/repository/models/html/handle.dart';
-import 'package:bluebubbles/repository/models/html/join_tables.dart';
 import 'package:bluebubbles/repository/models/html/message.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
@@ -312,14 +310,6 @@ class Chat {
     // other fields that we want to "mimic" from the server
     this.save();
 
-    try {
-      // Add the relationship
-      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
-      cmJoinBox.put(ChatMessageJoin(chatId: this.id!, messageId: message.id!));
-    } catch (ex) {
-      // Don't do anything if it already exists
-    }
-
     // If the incoming message was newer than the "last" one, set the unread status accordingly
     if (checkForMessageText && changeUnreadStatus && isNewer && existing == null) {
       // If the message is from me, mark it unread
@@ -416,7 +406,7 @@ class Chat {
   }
 
   static int? count() {
-    return chatBox.count();
+    return 0;
   }
 
   static List<Attachment> getAttachments(Chat chat, {int offset = 0, int limit = 25}) {

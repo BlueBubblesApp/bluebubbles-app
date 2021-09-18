@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/main.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 
