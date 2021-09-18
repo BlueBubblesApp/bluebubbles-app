@@ -18,7 +18,6 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
-import 'package:contacts_service/contacts_service.dart';
 import 'package:convert/convert.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/cupertino.dart';
@@ -139,12 +138,12 @@ bool sameAddress(List<String?> options, String? compared) {
 
 String getInitials(Contact contact) {
   // Set default initials
-  String initials = (contact.givenName!.isNotEmpty == true ? contact.givenName![0] : "") +
-      (contact.familyName!.isNotEmpty == true ? contact.familyName![0] : "");
+  String initials = (contact.structuredName?.givenName.isNotEmpty == true ? contact.structuredName!.givenName[0] : "") +
+      (contact.structuredName?.familyName.isNotEmpty == true ? contact.structuredName!.familyName[0] : "");
 
   // If the initials are empty, get them from the display name
   if (initials.trim().isEmpty) {
-    initials = contact.displayName != null ? contact.displayName![0] : "";
+    initials = contact.displayName[0];
   }
 
   return initials.toUpperCase();

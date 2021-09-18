@@ -19,7 +19,6 @@ import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
-import 'package:contacts_service/contacts_service.dart';
 import 'package:dio_http/dio_http.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';

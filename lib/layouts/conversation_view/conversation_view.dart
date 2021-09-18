@@ -423,7 +423,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     loadBrightness();
     currentChat?.isAlive = true;
 
-    if (messageBloc == null) {
+    if (messageBloc == null && !widget.isCreator) {
       messageBloc = initMessageBloc();
       messageBloc!.getMessages();
     }

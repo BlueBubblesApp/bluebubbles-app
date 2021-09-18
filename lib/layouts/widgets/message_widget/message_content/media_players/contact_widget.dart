@@ -12,7 +12,6 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
@@ -48,7 +47,7 @@ class _ContactWidgetState extends State<ContactWidget> {
     try {
       contact = AttachmentHelper.parseAppleContact(appleContact);
     } catch (ex) {
-      contact = new Contact(displayName: "Invalid Contact");
+      contact = new Contact(displayName: "Invalid Contact", id: randomString(8));
     }
 
     if (this.mounted) setState(() {});

@@ -3,7 +3,6 @@ import 'dart:ui';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
-import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
@@ -73,7 +72,7 @@ class _ContactTileState extends State<ContactTile> {
   void getContact() {
     ContactManager().getCachedContact(widget.handle).then((Contact? contact) {
       if (contact != null) {
-        if (this.contact == null || this.contact!.identifier != contact.identifier) {
+        if (this.contact == null || this.contact!.id != contact.id) {
           this.contact = contact;
           if (this.mounted) setState(() {});
         }
@@ -91,12 +90,12 @@ class _ContactTileState extends State<ContactTile> {
     launch('mailto:$email');
   }
 
-  List<Item> getUniqueNumbers(Iterable<Item> numbers) {
-    List<Item> phones = [];
-    for (Item phone in numbers) {
+  List<String> getUniqueNumbers(Iterable<String> numbers) {
+    List<String> phones = [];
+    for (String phone in numbers) {
       bool exists = false;
-      for (Item current in phones) {
-        if (cleansePhoneNumber(phone.value!) == cleansePhoneNumber(current.value!)) {
+      for (String current in phones) {
+        if (cleansePhoneNumber(phone) == cleansePhoneNumber(current)) {
           exists = true;
           break;
         }
@@ -125,7 +124,7 @@ class _ContactTileState extends State<ContactTile> {
           await MethodChannelInterface().invokeMethod("open-contact-form",
               {'address': widget.handle.address, 'addressType': widget.handle.address.isEmail ? 'email' : 'phone'});
         } else {
-          await MethodChannelInterface().invokeMethod("view-contact-form", {'id': contact!.identifier});
+          await MethodChannelInterface().invokeMethod("view-contact-form", {'id': contact!.id});
         }
       },
       child: ListTile(
@@ -190,7 +189,7 @@ class _ContactTileState extends State<ContactTile> {
                     child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.mail : Icons.email, color: Theme.of(context).primaryColor, size: 20),
                   ),
                 ),
-              (((contact == null && !isEmail) || (contact?.phones?.length ?? 0) > 0) && !kIsWeb && !kIsDesktop)
+              (((contact == null && !isEmail) || (contact?.phones.length ?? 0) > 0) && !kIsWeb && !kIsDesktop)
                   ? ButtonTheme(
                       minWidth: 1,
                       child: TextButton(
@@ -215,9 +214,9 @@ class _ContactTileState extends State<ContactTile> {
     if (contact == null) {
       makeCall(widget.handle.address);
     } else {
-      List<Item> phones = getUniqueNumbers(contact!.phones!);
+      List<String> phones = getUniqueNumbers(contact!.phones);
       if (phones.length == 1) {
-        makeCall(contact!.phones!.first.value!);
+        makeCall(contact!.phones.first);
       } else if (widget.handle.defaultPhone != null && !longPressed) {
         makeCall(widget.handle.defaultPhone!);
       } else {
@@ -236,15 +235,15 @@ class _ContactTileState extends State<ContactTile> {
                         children: [
                           for (int i = 0; i < phones.length; i++)
                             TextButton(
-                              child: Text("${phones[i].value} (${phones[i].label})",
+                              child: Text("${phones[i]}",
                                   style: TextStyle(color: Theme.of(context).textTheme.bodyText1!.color),
                                   textAlign: TextAlign.start),
                               onPressed: () {
                                 if (data.value) {
-                                  widget.handle.defaultPhone = phones[i].value!;
-                                  widget.handle.updateDefaultPhone(phones[i].value!);
+                                  widget.handle.defaultPhone = phones[i];
+                                  widget.handle.updateDefaultPhone(phones[i]);
                                 }
-                                makeCall(phones[i].value!);
+                                makeCall(phones[i]);
                                 Navigator.of(context).pop();
                               },
                             ),

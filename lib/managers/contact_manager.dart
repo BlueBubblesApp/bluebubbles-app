@@ -9,7 +9,7 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
-import 'package:contacts_service/contacts_service.dart';
+import 'package:fast_contacts/fast_contacts.dart' hide Contact;
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:faker/faker.dart';
@@ -115,7 +115,13 @@ class ContactManager {
     // Fetch the current list of contacts
     Logger.info("Fetching contacts", tag: tag);
     if (!kIsWeb && !kIsDesktop) {
-      contacts = (await ContactsService.getContacts(withThumbnails: false)).toList();
+      contacts = (await FastContacts.allContacts).map((e) => Contact(
+        displayName: e.displayName,
+        emails: e.emails,
+        phones: e.phones,
+        structuredName: e.structuredName,
+        id: e.id,
+      )).toList();
     } else {
       contacts.clear();
       /*var vcfs = await SocketManager().sendMessage("get-vcf", {}, (_) {});
@@ -185,7 +191,7 @@ class ContactManager {
       Contact? contact = handleToContact[address];
       if (handleToContact[address] == null || kIsWeb || kIsDesktop) continue;
 
-      ContactsService.getAvatar(contact!, photoHighRes: !SettingsManager().settings.lowMemoryMode.value).then((avatar) {
+      FastContacts.getContactImage(contact!.id).then((avatar) {
         if (avatar == null) return;
 
         contact.avatar = avatar;
@@ -220,11 +226,8 @@ class ContactManager {
     for (Contact c in contacts) {
       // Get a phone number match
       if (!isEmailAddr) {
-        for (Item item in c.phones ?? []) {
-          String compStr = "";
-          if (item.value != null) {
-            compStr = item.value!.replaceAll(" ", "").trim().numericOnly();
-          }
+        for (String item in c.phones) {
+          String compStr = item.replaceAll(" ", "").trim().numericOnly();
 
           if (!compStr.endsWith(lastDigits)) continue;
           if (sameAddress(opts, compStr)) {
@@ -236,8 +239,8 @@ class ContactManager {
 
       // Get an email match
       if (isEmailAddr) {
-        for (Item item in c.emails ?? []) {
-          if (item.value == handle.address) {
+        for (String item in c.emails) {
+          if (item == handle.address) {
             contact = c;
             break;
           }
@@ -250,7 +253,7 @@ class ContactManager {
 
     if (fetchAvatar && !kIsDesktop && !kIsWeb) {
       Uint8List? avatar =
-          await ContactsService.getAvatar(contact!, photoHighRes: !SettingsManager().settings.lowMemoryMode.value);
+          await FastContacts.getContactImage(contact!.id);
       contact.avatar = avatar;
     }
 
@@ -267,7 +270,7 @@ class ContactManager {
 
     try {
       Contact? contact = await getContact(handle);
-      if (contact != null && contact.displayName != null) return contact.displayName;
+      if (contact != null) return contact.displayName;
     } catch (ex) {
       Logger.error('Failed to getContact() in getContactTitle(), for address, "$address": ${ex.toString()}', tag: tag);
     }

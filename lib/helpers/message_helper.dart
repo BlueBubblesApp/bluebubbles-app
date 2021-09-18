@@ -13,7 +13,6 @@ import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'emoji_regex.dart';
@@ -352,7 +351,7 @@ class MessageHelper {
       if (!message.isFromMe! && message.handle != null) {
         Contact? contact = await ContactManager().getCachedContact(message.handle);
         if (contact != null) {
-          sender = contact.givenName ?? contact.displayName;
+          sender = contact.structuredName?.givenName ?? contact.displayName;
         }
       }
 

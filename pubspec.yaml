@@ -35,7 +35,7 @@ dependencies:
       url: https://github.com/josh-burton/assorted_layout_widgets
       ref: beta-fix
   record: ^3.0.0 # mobile and web
-  contacts_service: ^0.6.1 # mobile only
+  fast_contacts: ^1.1.0 # mobile only
   permission_handler: ^8.1.4+2 # mobile only, todo disable on desktop
   path_provider: ^2.0.2 # no web support
   sqflite: ^2.0.0+3 # mobile only
