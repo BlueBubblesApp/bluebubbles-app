@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:bluebubbles/managers/current_chat.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 
 class AttachmentInfoBloc {
   factory AttachmentInfoBloc() {

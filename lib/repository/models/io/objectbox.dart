@@ -1,0 +1,1 @@
+export 'package:bluebubbles/objectbox.g.dart';

@@ -16,9 +16,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/stickers_widget.dart'
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:bluebubbles/helpers/darty.dart';
 import 'package:collection/src/iterable_extensions.dart';

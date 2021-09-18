@@ -6,106 +6,106 @@ import 'dart:typed_data';
 
 import 'package:objectbox/flatbuffers/flat_buffers.dart' as fb;
 import 'package:objectbox/internal.dart'; // generated code can access "internal" functionality
-import 'package:objectbox/objectbox.dart';
+import 'package:bluebubbles/objectbox.g.dart';
 import 'package:objectbox_flutter_libs/objectbox_flutter_libs.dart';
 
-import 'repository/models/attachment.dart';
-import 'repository/models/chat.dart';
-import 'repository/models/fcm_data.dart';
-import 'repository/models/handle.dart';
-import 'repository/models/join_tables.dart';
-import 'repository/models/message.dart';
-import 'repository/models/scheduled.dart';
-import 'repository/models/theme_entry.dart';
-import 'repository/models/theme_object.dart';
+import 'repository/models/io/attachment.dart';
+import 'repository/models/io/chat.dart';
+import 'repository/models/io/fcm_data.dart';
+import 'repository/models/io/handle.dart';
+import 'repository/models/io/join_tables.dart';
+import 'repository/models/io/message.dart';
+import 'repository/models/io/scheduled.dart';
+import 'repository/models/io/theme_entry.dart';
+import 'repository/models/io/theme_object.dart';
 
 export 'package:objectbox/objectbox.dart'; // so that callers only have to import this file
 
 final _entities = <ModelEntity>[
   ModelEntity(
-      id: const IdUid(1, 5636756020347489224),
+      id: const IdUid(1, 2065429213543838585),
       name: 'Attachment',
-      lastPropertyId: const IdUid(16, 5401479817248495953),
+      lastPropertyId: const IdUid(16, 396659320299238462),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
-            id: const IdUid(1, 8693603267900198095),
+            id: const IdUid(1, 1511554263230297197),
             name: 'id',
             type: 6,
             flags: 1),
         ModelProperty(
-            id: const IdUid(2, 6856548206356608866),
+            id: const IdUid(2, 2178477183992316459),
             name: 'originalROWID',
             type: 6,
             flags: 0),
         ModelProperty(
-            id: const IdUid(3, 642423011304918962),
+            id: const IdUid(3, 895699641082029197),
             name: 'guid',
             type: 9,
             flags: 2080,
-            indexId: const IdUid(12, 871162635557036689)),
+            indexId: const IdUid(1, 1274831956298930522)),
         ModelProperty(
-            id: const IdUid(4, 6472398705044253119),
+            id: const IdUid(4, 6047065591027683672),
             name: 'uti',
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(5, 6468391474044183822),
+            id: const IdUid(5, 8856072667843358452),
             name: 'mimeType',
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(6, 5217116740256684500),
+            id: const IdUid(6, 2957720185959973011),
             name: 'transferState',
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(7, 3032125173662237367),
+            id: const IdUid(7, 2217746424870068461),
             name: 'isOutgoing',
             type: 1,
             flags: 0),
         ModelProperty(
-            id: const IdUid(8, 2434158114444426785),
+            id: const IdUid(8, 5943814485048944977),
             name: 'transferName',
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(9, 8831058129101907911),
+            id: const IdUid(9, 2227654525168892418),
             name: 'totalBytes',
             type: 6,
             flags: 0),
         ModelProperty(
-            id: const IdUid(10, 6273918102995985372),
+            id: const IdUid(10, 226618350909080419),
             name: 'isSticker',
             type: 1,
             flags: 0),
         ModelProperty(
-            id: const IdUid(11, 3111216942063806968),
+            id: const IdUid(11, 7216531465575414151),
             name: 'hideAttachment',
             type: 1,
             flags: 0),
         ModelProperty(
-            id: const IdUid(12, 2962903551193245932),
+            id: const IdUid(12, 8776591297555015451),
             name: 'blurhash',
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(13, 1679424220585547230),
+            id: const IdUid(13, 171869175523313868),
             name: 'height',
             type: 6,
             flags: 0),
         ModelProperty(
-            id: const IdUid(14, 8600661885396964271),
+            id: const IdUid(14, 2450795986531805384),
             name: 'width',
             type: 6,
             flags: 0),
         ModelProperty(
-            id: const IdUid(15, 2179065843947296739),
+            id: const IdUid(15, 5516087858141459065),
             name: 'bytes',
             type: 23,
             flags: 0),
         ModelProperty(
-            id: const IdUid(16, 5401479817248495953),
+            id: const IdUid(16, 396659320299238462),
             name: 'webUrl',
             type: 9,
             flags: 0)
@@ -113,104 +113,128 @@ final _entities = <ModelEntity>[
       relations: <ModelRelation>[],
       backlinks: <ModelBacklink>[]),
   ModelEntity(
-      id: const IdUid(2, 7655897984831475506),
-      name: 'Chat',
-      lastPropertyId: const IdUid(19, 3876709740745146476),
+      id: const IdUid(2, 1619417403499629985),
+      name: 'AttachmentMessageJoin',
+      lastPropertyId: const IdUid(3, 6032584536718919119),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
-            id: const IdUid(1, 1880017237828131464),
+            id: const IdUid(1, 977456607049558352),
             name: 'id',
             type: 6,
             flags: 1),
         ModelProperty(
-            id: const IdUid(2, 3950164872323877500),
+            id: const IdUid(2, 2275379924137725049),
+            name: 'attachmentId',
+            type: 6,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(3, 6032584536718919119),
+            name: 'messageId',
+            type: 6,
+            flags: 0)
+      ],
+      relations: <ModelRelation>[],
+      backlinks: <ModelBacklink>[]),
+  ModelEntity(
+      id: const IdUid(3, 9017250848141753702),
+      name: 'Chat',
+      lastPropertyId: const IdUid(19, 4234470006262207812),
+      flags: 0,
+      properties: <ModelProperty>[
+        ModelProperty(
+            id: const IdUid(1, 297833828287439140),
+            name: 'id',
+            type: 6,
+            flags: 1),
+        ModelProperty(
+            id: const IdUid(2, 8252364803444354563),
             name: 'originalROWID',
             type: 6,
             flags: 0),
         ModelProperty(
-            id: const IdUid(3, 477879858635570732),
+            id: const IdUid(3, 318412581013308394),
             name: 'guid',
             type: 9,
             flags: 2080,
-            indexId: const IdUid(13, 6507016670835863959)),
+            indexId: const IdUid(2, 4712841847590882583)),
         ModelProperty(
-            id: const IdUid(4, 3516964772281787630),
+            id: const IdUid(4, 4143511131199296878),
             name: 'style',
             type: 6,
             flags: 0),
         ModelProperty(
-            id: const IdUid(5, 5857974903220055014),
+            id: const IdUid(5, 9099706644901956287),
             name: 'chatIdentifier',
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(6, 187914747110257540),
+            id: const IdUid(6, 9117376896883192460),
             name: 'isArchived',
             type: 1,
             flags: 0),
         ModelProperty(
-            id: const IdUid(7, 5538068556008948740),
+            id: const IdUid(7, 172817608355620424),
             name: 'isFiltered',
             type: 1,
             flags: 0),
         ModelProperty(
-            id: const IdUid(8, 2734178026575835758),
+            id: const IdUid(8, 2937507201037513710),
             name: 'muteType',
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(9, 3131349602340664591),
+            id: const IdUid(9, 3354772670242853270),
             name: 'muteArgs',
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(10, 3340217014115733899),
+            id: const IdUid(10, 3734639758158862923),
             name: 'isPinned',
             type: 1,
             flags: 0),
         ModelProperty(
-            id: const IdUid(11, 823994482667699960),
+            id: const IdUid(11, 2937716363156975856),
             name: 'hasUnreadMessage',
             type: 1,
             flags: 0),
         ModelProperty(
-            id: const IdUid(12, 2753200985244019342),
+            id: const IdUid(12, 526293286661780207),
             name: 'latestMessageDate',
             type: 10,
             flags: 0),
         ModelProperty(
-            id: const IdUid(13, 5261339330459694287),
+            id: const IdUid(13, 4983193271800913860),
             name: 'latestMessageText',
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(14, 6891050863056339478),
+            id: const IdUid(14, 130925169208448361),
             name: 'fakeLatestMessageText',
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(15, 1403686968974488028),
+            id: const IdUid(15, 4266631519717388837),
             name: 'title',
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(16, 2029479927215016281),
+            id: const IdUid(16, 1181486482872028222),
             name: 'displayName',
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(17, 2064894493176780814),
+            id: const IdUid(17, 8308083337629235136),
             name: 'fakeParticipants',
             type: 30,
             flags: 0),
         ModelProperty(
-            id: const IdUid(18, 8329914874449689989),
+            id: const IdUid(18, 3666111733726849006),
             name: 'customAvatarPath',
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(19, 3876709740745146476),
+            id: const IdUid(19, 4234470006262207812),
             name: 'pinIndex',
             type: 6,
             flags: 0)
@@ -218,43 +242,91 @@ final _entities = <ModelEntity>[
       relations: <ModelRelation>[],
       backlinks: <ModelBacklink>[]),
   ModelEntity(
-      id: const IdUid(3, 802318764109036539),
-      name: 'FCMData',
-      lastPropertyId: const IdUid(7, 5843357141260679145),
+      id: const IdUid(4, 4450451951397945314),
+      name: 'ChatHandleJoin',
+      lastPropertyId: const IdUid(3, 8224006478743498888),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
-            id: const IdUid(1, 9087636751539709632),
+            id: const IdUid(1, 7725198227526963956),
             name: 'id',
             type: 6,
             flags: 1),
         ModelProperty(
-            id: const IdUid(2, 7026222770216548615),
+            id: const IdUid(2, 4236934751716676271),
+            name: 'chatId',
+            type: 6,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(3, 8224006478743498888),
+            name: 'handleId',
+            type: 6,
+            flags: 0)
+      ],
+      relations: <ModelRelation>[],
+      backlinks: <ModelBacklink>[]),
+  ModelEntity(
+      id: const IdUid(5, 1700370751061310153),
+      name: 'ChatMessageJoin',
+      lastPropertyId: const IdUid(3, 4510870919779209192),
+      flags: 0,
+      properties: <ModelProperty>[
+        ModelProperty(
+            id: const IdUid(1, 7392117204304535224),
+            name: 'id',
+            type: 6,
+            flags: 1),
+        ModelProperty(
+            id: const IdUid(2, 5590979280237537790),
+            name: 'chatId',
+            type: 6,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(3, 4510870919779209192),
+            name: 'messageId',
+            type: 6,
+            flags: 0)
+      ],
+      relations: <ModelRelation>[],
+      backlinks: <ModelBacklink>[]),
+  ModelEntity(
+      id: const IdUid(6, 5390756932993878582),
+      name: 'FCMData',
+      lastPropertyId: const IdUid(7, 4724783625435560776),
+      flags: 0,
+      properties: <ModelProperty>[
+        ModelProperty(
+            id: const IdUid(1, 843767696595301490),
+            name: 'id',
+            type: 6,
+            flags: 1),
+        ModelProperty(
+            id: const IdUid(2, 4393840145875077709),
             name: 'projectID',
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(3, 6410247068948090782),
+            id: const IdUid(3, 7264245173656870052),
             name: 'storageBucket',
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(4, 480990701082819338),
+            id: const IdUid(4, 3998672972942379984),
             name: 'apiKey',
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(5, 7434711874814188466),
+            id: const IdUid(5, 3295687739104688136),
             name: 'firebaseURL',
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(6, 1147582743268732770),
+            id: const IdUid(6, 8856592728926530171),
             name: 'clientID',
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(7, 5843357141260679145),
+            id: const IdUid(7, 4724783625435560776),
             name: 'applicationID',
             type: 9,
             flags: 0)
@@ -262,44 +334,44 @@ final _entities = <ModelEntity>[
       relations: <ModelRelation>[],
       backlinks: <ModelBacklink>[]),
   ModelEntity(
-      id: const IdUid(4, 3978498765598706232),
+      id: const IdUid(7, 1716592500251888002),
       name: 'Handle',
-      lastPropertyId: const IdUid(7, 7087605193975797253),
+      lastPropertyId: const IdUid(7, 549408491521049277),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
-            id: const IdUid(1, 6553229072011226285),
+            id: const IdUid(1, 683096758365457558),
             name: 'id',
             type: 6,
             flags: 1),
         ModelProperty(
-            id: const IdUid(2, 2947219604619176824),
+            id: const IdUid(2, 191994702917313644),
             name: 'originalROWID',
             type: 6,
             flags: 0),
         ModelProperty(
-            id: const IdUid(3, 7331966002854573867),
+            id: const IdUid(3, 2544513926695389102),
             name: 'address',
             type: 9,
             flags: 2080,
-            indexId: const IdUid(15, 8376622246943281247)),
+            indexId: const IdUid(3, 9132680703832217528)),
         ModelProperty(
-            id: const IdUid(4, 2077144733144318968),
+            id: const IdUid(4, 8884526609844353946),
             name: 'country',
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(5, 2337138172616289428),
+            id: const IdUid(5, 3522974353771163433),
             name: 'color',
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(6, 6757440411505726564),
+            id: const IdUid(6, 57094839621772204),
             name: 'defaultPhone',
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(7, 7087605193975797253),
+            id: const IdUid(7, 549408491521049277),
             name: 'uncanonicalizedId',
             type: 9,
             flags: 0)
@@ -307,189 +379,189 @@ final _entities = <ModelEntity>[
       relations: <ModelRelation>[],
       backlinks: <ModelBacklink>[]),
   ModelEntity(
-      id: const IdUid(5, 1777055777990229716),
+      id: const IdUid(8, 7018417362319461469),
       name: 'Message',
-      lastPropertyId: const IdUid(36, 5371657780578355776),
+      lastPropertyId: const IdUid(36, 861137718943970360),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
-            id: const IdUid(1, 4118593632180577377),
+            id: const IdUid(1, 8075530627827069587),
             name: 'id',
             type: 6,
             flags: 1),
         ModelProperty(
-            id: const IdUid(2, 8254377283008156346),
+            id: const IdUid(2, 614139107975861462),
             name: 'originalROWID',
             type: 6,
             flags: 0),
         ModelProperty(
-            id: const IdUid(3, 9106527856567703198),
+            id: const IdUid(3, 4854433937459051257),
             name: 'guid',
             type: 9,
             flags: 2080,
-            indexId: const IdUid(14, 2451614700084883646)),
+            indexId: const IdUid(4, 1267669174868830776)),
         ModelProperty(
-            id: const IdUid(4, 8541995138318107705),
+            id: const IdUid(4, 5895852794473158582),
             name: 'handleId',
             type: 6,
             flags: 0),
         ModelProperty(
-            id: const IdUid(5, 3336115590719717231),
+            id: const IdUid(5, 3012867958425492030),
             name: 'otherHandle',
             type: 6,
             flags: 0),
         ModelProperty(
-            id: const IdUid(6, 2529775584935063506),
+            id: const IdUid(6, 7948534483488402365),
             name: 'text',
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(7, 7949618411743019721),
+            id: const IdUid(7, 7283017531024613481),
             name: 'subject',
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(8, 7674950630548191418),
+            id: const IdUid(8, 6884032144126638879),
             name: 'country',
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(9, 3365058815328818806),
+            id: const IdUid(9, 6176853844548763600),
             name: 'dateCreated',
             type: 10,
             flags: 0),
         ModelProperty(
-            id: const IdUid(10, 1366181429967713897),
+            id: const IdUid(10, 9009878668681532753),
             name: 'dateRead',
             type: 10,
             flags: 0),
         ModelProperty(
-            id: const IdUid(11, 1413951679586903049),
+            id: const IdUid(11, 7709208038424465489),
             name: 'dateDelivered',
             type: 10,
             flags: 0),
         ModelProperty(
-            id: const IdUid(12, 95659294744187119),
+            id: const IdUid(12, 3701890428713468427),
             name: 'isFromMe',
             type: 1,
             flags: 0),
         ModelProperty(
-            id: const IdUid(13, 5873235040208188963),
+            id: const IdUid(13, 735091670169932122),
             name: 'isDelayed',
             type: 1,
             flags: 0),
         ModelProperty(
-            id: const IdUid(14, 8896925230382686059),
+            id: const IdUid(14, 3235490937430157681),
             name: 'isAutoReply',
             type: 1,
             flags: 0),
         ModelProperty(
-            id: const IdUid(15, 1453581299787112935),
+            id: const IdUid(15, 8126854405033462697),
             name: 'isSystemMessage',
             type: 1,
             flags: 0),
         ModelProperty(
-            id: const IdUid(16, 540721464977836031),
+            id: const IdUid(16, 82657294837234349),
             name: 'isServiceMessage',
             type: 1,
             flags: 0),
         ModelProperty(
-            id: const IdUid(17, 2371491005408157265),
+            id: const IdUid(17, 8117526523647192200),
             name: 'isForward',
             type: 1,
             flags: 0),
         ModelProperty(
-            id: const IdUid(18, 5909384338604692946),
+            id: const IdUid(18, 8413228078295213488),
             name: 'isArchived',
             type: 1,
             flags: 0),
         ModelProperty(
-            id: const IdUid(19, 664712553654229838),
+            id: const IdUid(19, 6626097234365517692),
             name: 'hasDdResults',
             type: 1,
             flags: 0),
         ModelProperty(
-            id: const IdUid(20, 3387050565454132845),
+            id: const IdUid(20, 939052079357746566),
             name: 'cacheRoomnames',
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(21, 3318185869986092735),
+            id: const IdUid(21, 3171806281750931518),
             name: 'isAudioMessage',
             type: 1,
             flags: 0),
         ModelProperty(
-            id: const IdUid(22, 6793113338757674598),
+            id: const IdUid(22, 4464802064429422611),
             name: 'datePlayed',
             type: 10,
             flags: 0),
         ModelProperty(
-            id: const IdUid(23, 4259716758486724624),
+            id: const IdUid(23, 5542585324402061600),
             name: 'itemType',
             type: 6,
             flags: 0),
         ModelProperty(
-            id: const IdUid(24, 3759826866186316290),
+            id: const IdUid(24, 572939669859263693),
             name: 'groupTitle',
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(25, 4454745076120261698),
+            id: const IdUid(25, 3185617998247778963),
             name: 'groupActionType',
             type: 6,
             flags: 0),
         ModelProperty(
-            id: const IdUid(26, 474244973546807393),
+            id: const IdUid(26, 769751664576031863),
             name: 'isExpired',
             type: 1,
             flags: 0),
         ModelProperty(
-            id: const IdUid(27, 8406884830732966384),
+            id: const IdUid(27, 4077882089992206144),
             name: 'balloonBundleId',
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(28, 883386380420289365),
+            id: const IdUid(28, 7238968990385881383),
             name: 'associatedMessageGuid',
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(29, 1778052144631688572),
+            id: const IdUid(29, 2316337434845256835),
             name: 'associatedMessageType',
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(30, 7497032030707123256),
+            id: const IdUid(30, 3331740086129339824),
             name: 'expressiveSendStyleId',
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(31, 5867684840297367302),
+            id: const IdUid(31, 4741144250901643688),
             name: 'timeExpressiveSendStyleId',
             type: 10,
             flags: 0),
         ModelProperty(
-            id: const IdUid(32, 8183755968597629970),
+            id: const IdUid(32, 1646799728535719055),
             name: 'hasAttachments',
             type: 1,
             flags: 0),
         ModelProperty(
-            id: const IdUid(33, 4784459657424290264),
+            id: const IdUid(33, 2482744653836740926),
             name: 'hasReactions',
             type: 1,
             flags: 0),
         ModelProperty(
-            id: const IdUid(34, 9123100654958526965),
+            id: const IdUid(34, 3558704390717166171),
             name: 'dateDeleted',
             type: 10,
             flags: 0),
         ModelProperty(
-            id: const IdUid(35, 6685534689277940397),
+            id: const IdUid(35, 6156393125011218685),
             name: 'bigEmoji',
             type: 1,
             flags: 0),
         ModelProperty(
-            id: const IdUid(36, 5371657780578355776),
+            id: const IdUid(36, 861137718943970360),
             name: 'error',
             type: 6,
             flags: 0)
@@ -497,33 +569,33 @@ final _entities = <ModelEntity>[
       relations: <ModelRelation>[],
       backlinks: <ModelBacklink>[]),
   ModelEntity(
-      id: const IdUid(6, 2946007897443499125),
+      id: const IdUid(9, 2687525031757751054),
       name: 'ScheduledMessage',
-      lastPropertyId: const IdUid(5, 1896638784156728642),
+      lastPropertyId: const IdUid(5, 7323923293952799044),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
-            id: const IdUid(1, 1488002543338942429),
+            id: const IdUid(1, 4613854641642738901),
             name: 'id',
             type: 6,
             flags: 1),
         ModelProperty(
-            id: const IdUid(2, 213546286686366952),
+            id: const IdUid(2, 5956431335972854454),
             name: 'chatGuid',
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(3, 8404120816558502647),
+            id: const IdUid(3, 8252934173466443273),
             name: 'message',
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(4, 4272968969960624020),
+            id: const IdUid(4, 7658149783933949012),
             name: 'epochTime',
             type: 6,
             flags: 0),
         ModelProperty(
-            id: const IdUid(5, 1896638784156728642),
+            id: const IdUid(5, 7323923293952799044),
             name: 'completed',
             type: 1,
             flags: 0)
@@ -531,38 +603,38 @@ final _entities = <ModelEntity>[
       relations: <ModelRelation>[],
       backlinks: <ModelBacklink>[]),
   ModelEntity(
-      id: const IdUid(7, 1462868055402691409),
+      id: const IdUid(10, 7380334062783734091),
       name: 'ThemeEntry',
-      lastPropertyId: const IdUid(6, 2250820418310055866),
+      lastPropertyId: const IdUid(6, 205399809771216750),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
-            id: const IdUid(1, 5091392742641028323),
+            id: const IdUid(1, 3364349183457626105),
             name: 'id',
             type: 6,
             flags: 1),
         ModelProperty(
-            id: const IdUid(2, 1732548762823851542),
+            id: const IdUid(2, 378260260370164099),
             name: 'themeId',
             type: 6,
             flags: 0),
         ModelProperty(
-            id: const IdUid(3, 8139314960807963395),
+            id: const IdUid(3, 1711484628702995090),
             name: 'name',
             type: 9,
             flags: 0),
         ModelProperty(
-            id: const IdUid(4, 410044398812148236),
+            id: const IdUid(4, 5820153989252425651),
             name: 'isFont',
             type: 1,
             flags: 0),
         ModelProperty(
-            id: const IdUid(5, 80109056724467926),
+            id: const IdUid(5, 357044983311472123),
             name: 'fontSize',
             type: 6,
             flags: 0),
         ModelProperty(
-            id: const IdUid(6, 2250820418310055866),
+            id: const IdUid(6, 205399809771216750),
             name: 'dbColor',
             type: 9,
             flags: 0)
@@ -570,44 +642,44 @@ final _entities = <ModelEntity>[
       relations: <ModelRelation>[],
       backlinks: <ModelBacklink>[]),
   ModelEntity(
-      id: const IdUid(8, 7102013928011129368),
+      id: const IdUid(11, 1550674322389882817),
       name: 'ThemeObject',
-      lastPropertyId: const IdUid(7, 6973085402682640656),
+      lastPropertyId: const IdUid(7, 63810393639568631),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
-            id: const IdUid(1, 8031032626144498831),
+            id: const IdUid(1, 115725376021487478),
             name: 'id',
             type: 6,
             flags: 1),
         ModelProperty(
-            id: const IdUid(2, 1032765298976566553),
+            id: const IdUid(2, 8802290647274083834),
             name: 'name',
             type: 9,
             flags: 2080,
-            indexId: const IdUid(16, 1397796027232769352)),
+            indexId: const IdUid(5, 9084358340755218005)),
         ModelProperty(
-            id: const IdUid(3, 1831352951497229583),
+            id: const IdUid(3, 5487740941825196608),
             name: 'selectedLightTheme',
             type: 1,
             flags: 0),
         ModelProperty(
-            id: const IdUid(4, 397549370056674545),
+            id: const IdUid(4, 2406258303326474883),
             name: 'selectedDarkTheme',
             type: 1,
             flags: 0),
         ModelProperty(
-            id: const IdUid(5, 4950729307887560818),
+            id: const IdUid(5, 245348312617052981),
             name: 'gradientBg',
             type: 1,
             flags: 0),
         ModelProperty(
-            id: const IdUid(6, 8436118668888231789),
+            id: const IdUid(6, 3858153704624052397),
             name: 'previousLightTheme',
             type: 1,
             flags: 0),
         ModelProperty(
-            id: const IdUid(7, 6973085402682640656),
+            id: const IdUid(7, 63810393639568631),
             name: 'previousDarkTheme',
             type: 1,
             flags: 0)
@@ -615,95 +687,23 @@ final _entities = <ModelEntity>[
       relations: <ModelRelation>[],
       backlinks: <ModelBacklink>[]),
   ModelEntity(
-      id: const IdUid(9, 3987535430387190268),
-      name: 'AttachmentMessageJoin',
-      lastPropertyId: const IdUid(3, 4467860992763339461),
-      flags: 0,
-      properties: <ModelProperty>[
-        ModelProperty(
-            id: const IdUid(1, 4037844847967696071),
-            name: 'id',
-            type: 6,
-            flags: 1),
-        ModelProperty(
-            id: const IdUid(2, 9043781543327844759),
-            name: 'attachmentId',
-            type: 6,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(3, 4467860992763339461),
-            name: 'messageId',
-            type: 6,
-            flags: 0)
-      ],
-      relations: <ModelRelation>[],
-      backlinks: <ModelBacklink>[]),
-  ModelEntity(
-      id: const IdUid(10, 2024015112470640080),
-      name: 'ChatHandleJoin',
-      lastPropertyId: const IdUid(3, 2047178923387944561),
-      flags: 0,
-      properties: <ModelProperty>[
-        ModelProperty(
-            id: const IdUid(1, 3505064794548364728),
-            name: 'id',
-            type: 6,
-            flags: 1),
-        ModelProperty(
-            id: const IdUid(2, 6470650482714001312),
-            name: 'chatId',
-            type: 6,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(3, 2047178923387944561),
-            name: 'handleId',
-            type: 6,
-            flags: 0)
-      ],
-      relations: <ModelRelation>[],
-      backlinks: <ModelBacklink>[]),
-  ModelEntity(
-      id: const IdUid(11, 3309653850879548047),
-      name: 'ChatMessageJoin',
-      lastPropertyId: const IdUid(3, 774682362860934880),
-      flags: 0,
-      properties: <ModelProperty>[
-        ModelProperty(
-            id: const IdUid(1, 522928070339154591),
-            name: 'id',
-            type: 6,
-            flags: 1),
-        ModelProperty(
-            id: const IdUid(2, 1664142881686886045),
-            name: 'chatId',
-            type: 6,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(3, 774682362860934880),
-            name: 'messageId',
-            type: 6,
-            flags: 0)
-      ],
-      relations: <ModelRelation>[],
-      backlinks: <ModelBacklink>[]),
-  ModelEntity(
-      id: const IdUid(12, 728205196772171913),
+      id: const IdUid(12, 3483028772414651169),
       name: 'ThemeValueJoin',
-      lastPropertyId: const IdUid(3, 2366701955689855838),
+      lastPropertyId: const IdUid(3, 1439376349402210172),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
-            id: const IdUid(1, 8597520343978579088),
+            id: const IdUid(1, 5203631054946486128),
             name: 'id',
             type: 6,
             flags: 1),
         ModelProperty(
-            id: const IdUid(2, 7823578036522406351),
+            id: const IdUid(2, 2649653758394363860),
             name: 'themeId',
             type: 6,
             flags: 0),
         ModelProperty(
-            id: const IdUid(3, 2366701955689855838),
+            id: const IdUid(3, 1439376349402210172),
             name: 'themeValueId',
             type: 6,
             flags: 0)
@@ -732,24 +732,12 @@ Future<Store> openStore(
 ModelDefinition getObjectBoxModel() {
   final model = ModelInfo(
       entities: _entities,
-      lastEntityId: const IdUid(12, 728205196772171913),
-      lastIndexId: const IdUid(16, 1397796027232769352),
+      lastEntityId: const IdUid(12, 3483028772414651169),
+      lastIndexId: const IdUid(5, 9084358340755218005),
       lastRelationId: const IdUid(0, 0),
       lastSequenceId: const IdUid(0, 0),
       retiredEntityUids: const [],
-      retiredIndexUids: const [
-        6178621782339867599,
-        1524781639313223952,
-        72464332395755262,
-        6501593594565047229,
-        5723224251525092179,
-        7519480210398590301,
-        381471371504606275,
-        5061151663060002291,
-        5624391444535392849,
-        1735903661491959140,
-        1140861954766729493
-      ],
+      retiredIndexUids: const [],
       retiredPropertyUids: const [],
       retiredRelationUids: const [],
       modelVersion: 5,
@@ -842,8 +830,38 @@ ModelDefinition getObjectBoxModel() {
 
           return object;
         }),
-    Chat: EntityDefinition<Chat>(
+    AttachmentMessageJoin: EntityDefinition<AttachmentMessageJoin>(
         model: _entities[1],
+        toOneRelations: (AttachmentMessageJoin object) => [],
+        toManyRelations: (AttachmentMessageJoin object) => {},
+        getId: (AttachmentMessageJoin object) => object.id,
+        setId: (AttachmentMessageJoin object, int id) {
+          object.id = id;
+        },
+        objectToFB: (AttachmentMessageJoin object, fb.Builder fbb) {
+          fbb.startTable(4);
+          fbb.addInt64(0, object.id ?? 0);
+          fbb.addInt64(1, object.attachmentId);
+          fbb.addInt64(2, object.messageId);
+          fbb.finish(fbb.endTable());
+          return object.id ?? 0;
+        },
+        objectFromFB: (Store store, ByteData fbData) {
+          final buffer = fb.BufferContext(fbData);
+          final rootOffset = buffer.derefObject(0);
+
+          final object = AttachmentMessageJoin(
+              attachmentId:
+                  const fb.Int64Reader().vTableGet(buffer, rootOffset, 6, 0),
+              messageId:
+                  const fb.Int64Reader().vTableGet(buffer, rootOffset, 8, 0))
+            ..id =
+                const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 4);
+
+          return object;
+        }),
+    Chat: EntityDefinition<Chat>(
+        model: _entities[2],
         toOneRelations: (Chat object) => [],
         toManyRelations: (Chat object) => {},
         getId: (Chat object) => object.id,
@@ -945,8 +963,68 @@ ModelDefinition getObjectBoxModel() {
 
           return object;
         }),
+    ChatHandleJoin: EntityDefinition<ChatHandleJoin>(
+        model: _entities[3],
+        toOneRelations: (ChatHandleJoin object) => [],
+        toManyRelations: (ChatHandleJoin object) => {},
+        getId: (ChatHandleJoin object) => object.id,
+        setId: (ChatHandleJoin object, int id) {
+          object.id = id;
+        },
+        objectToFB: (ChatHandleJoin object, fb.Builder fbb) {
+          fbb.startTable(4);
+          fbb.addInt64(0, object.id ?? 0);
+          fbb.addInt64(1, object.chatId);
+          fbb.addInt64(2, object.handleId);
+          fbb.finish(fbb.endTable());
+          return object.id ?? 0;
+        },
+        objectFromFB: (Store store, ByteData fbData) {
+          final buffer = fb.BufferContext(fbData);
+          final rootOffset = buffer.derefObject(0);
+
+          final object = ChatHandleJoin(
+              chatId:
+                  const fb.Int64Reader().vTableGet(buffer, rootOffset, 6, 0),
+              handleId:
+                  const fb.Int64Reader().vTableGet(buffer, rootOffset, 8, 0))
+            ..id =
+                const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 4);
+
+          return object;
+        }),
+    ChatMessageJoin: EntityDefinition<ChatMessageJoin>(
+        model: _entities[4],
+        toOneRelations: (ChatMessageJoin object) => [],
+        toManyRelations: (ChatMessageJoin object) => {},
+        getId: (ChatMessageJoin object) => object.id,
+        setId: (ChatMessageJoin object, int id) {
+          object.id = id;
+        },
+        objectToFB: (ChatMessageJoin object, fb.Builder fbb) {
+          fbb.startTable(4);
+          fbb.addInt64(0, object.id ?? 0);
+          fbb.addInt64(1, object.chatId);
+          fbb.addInt64(2, object.messageId);
+          fbb.finish(fbb.endTable());
+          return object.id ?? 0;
+        },
+        objectFromFB: (Store store, ByteData fbData) {
+          final buffer = fb.BufferContext(fbData);
+          final rootOffset = buffer.derefObject(0);
+
+          final object = ChatMessageJoin(
+              chatId:
+                  const fb.Int64Reader().vTableGet(buffer, rootOffset, 6, 0),
+              messageId:
+                  const fb.Int64Reader().vTableGet(buffer, rootOffset, 8, 0))
+            ..id =
+                const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 4);
+
+          return object;
+        }),
     FCMData: EntityDefinition<FCMData>(
-        model: _entities[2],
+        model: _entities[5],
         toOneRelations: (FCMData object) => [],
         toManyRelations: (FCMData object) => {},
         getId: (FCMData object) => object.id,
@@ -1005,7 +1083,7 @@ ModelDefinition getObjectBoxModel() {
           return object;
         }),
     Handle: EntityDefinition<Handle>(
-        model: _entities[3],
+        model: _entities[6],
         toOneRelations: (Handle object) => [],
         toManyRelations: (Handle object) => {},
         getId: (Handle object) => object.id,
@@ -1058,7 +1136,7 @@ ModelDefinition getObjectBoxModel() {
           return object;
         }),
     Message: EntityDefinition<Message>(
-        model: _entities[4],
+        model: _entities[7],
         toOneRelations: (Message object) => [],
         toManyRelations: (Message object) => {},
         getId: (Message object) => object.id,
@@ -1208,7 +1286,7 @@ ModelDefinition getObjectBoxModel() {
           return object;
         }),
     ScheduledMessage: EntityDefinition<ScheduledMessage>(
-        model: _entities[5],
+        model: _entities[8],
         toOneRelations: (ScheduledMessage object) => [],
         toManyRelations: (ScheduledMessage object) => {},
         getId: (ScheduledMessage object) => object.id,
@@ -1249,7 +1327,7 @@ ModelDefinition getObjectBoxModel() {
           return object;
         }),
     ThemeEntry: EntityDefinition<ThemeEntry>(
-        model: _entities[6],
+        model: _entities[9],
         toOneRelations: (ThemeEntry object) => [],
         toManyRelations: (ThemeEntry object) => {},
         getId: (ThemeEntry object) => object.id,
@@ -1292,7 +1370,7 @@ ModelDefinition getObjectBoxModel() {
           return object;
         }),
     ThemeObject: EntityDefinition<ThemeObject>(
-        model: _entities[7],
+        model: _entities[10],
         toOneRelations: (ThemeObject object) => [],
         toManyRelations: (ThemeObject object) => {},
         getId: (ThemeObject object) => object.id,
@@ -1332,96 +1410,6 @@ ModelDefinition getObjectBoxModel() {
                   .vTableGet(buffer, rootOffset, 14, false),
               previousDarkTheme: const fb.BoolReader()
                   .vTableGet(buffer, rootOffset, 16, false));
-
-          return object;
-        }),
-    AttachmentMessageJoin: EntityDefinition<AttachmentMessageJoin>(
-        model: _entities[8],
-        toOneRelations: (AttachmentMessageJoin object) => [],
-        toManyRelations: (AttachmentMessageJoin object) => {},
-        getId: (AttachmentMessageJoin object) => object.id,
-        setId: (AttachmentMessageJoin object, int id) {
-          object.id = id;
-        },
-        objectToFB: (AttachmentMessageJoin object, fb.Builder fbb) {
-          fbb.startTable(4);
-          fbb.addInt64(0, object.id ?? 0);
-          fbb.addInt64(1, object.attachmentId);
-          fbb.addInt64(2, object.messageId);
-          fbb.finish(fbb.endTable());
-          return object.id ?? 0;
-        },
-        objectFromFB: (Store store, ByteData fbData) {
-          final buffer = fb.BufferContext(fbData);
-          final rootOffset = buffer.derefObject(0);
-
-          final object = AttachmentMessageJoin(
-              attachmentId:
-                  const fb.Int64Reader().vTableGet(buffer, rootOffset, 6, 0),
-              messageId:
-                  const fb.Int64Reader().vTableGet(buffer, rootOffset, 8, 0))
-            ..id =
-                const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 4);
-
-          return object;
-        }),
-    ChatHandleJoin: EntityDefinition<ChatHandleJoin>(
-        model: _entities[9],
-        toOneRelations: (ChatHandleJoin object) => [],
-        toManyRelations: (ChatHandleJoin object) => {},
-        getId: (ChatHandleJoin object) => object.id,
-        setId: (ChatHandleJoin object, int id) {
-          object.id = id;
-        },
-        objectToFB: (ChatHandleJoin object, fb.Builder fbb) {
-          fbb.startTable(4);
-          fbb.addInt64(0, object.id ?? 0);
-          fbb.addInt64(1, object.chatId);
-          fbb.addInt64(2, object.handleId);
-          fbb.finish(fbb.endTable());
-          return object.id ?? 0;
-        },
-        objectFromFB: (Store store, ByteData fbData) {
-          final buffer = fb.BufferContext(fbData);
-          final rootOffset = buffer.derefObject(0);
-
-          final object = ChatHandleJoin(
-              chatId:
-                  const fb.Int64Reader().vTableGet(buffer, rootOffset, 6, 0),
-              handleId:
-                  const fb.Int64Reader().vTableGet(buffer, rootOffset, 8, 0))
-            ..id =
-                const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 4);
-
-          return object;
-        }),
-    ChatMessageJoin: EntityDefinition<ChatMessageJoin>(
-        model: _entities[10],
-        toOneRelations: (ChatMessageJoin object) => [],
-        toManyRelations: (ChatMessageJoin object) => {},
-        getId: (ChatMessageJoin object) => object.id,
-        setId: (ChatMessageJoin object, int id) {
-          object.id = id;
-        },
-        objectToFB: (ChatMessageJoin object, fb.Builder fbb) {
-          fbb.startTable(4);
-          fbb.addInt64(0, object.id ?? 0);
-          fbb.addInt64(1, object.chatId);
-          fbb.addInt64(2, object.messageId);
-          fbb.finish(fbb.endTable());
-          return object.id ?? 0;
-        },
-        objectFromFB: (Store store, ByteData fbData) {
-          final buffer = fb.BufferContext(fbData);
-          final rootOffset = buffer.derefObject(0);
-
-          final object = ChatMessageJoin(
-              chatId:
-                  const fb.Int64Reader().vTableGet(buffer, rootOffset, 6, 0),
-              messageId:
-                  const fb.Int64Reader().vTableGet(buffer, rootOffset, 8, 0))
-            ..id =
-                const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 4);
 
           return object;
         }),
@@ -1527,406 +1515,406 @@ class Attachment_ {
       QueryStringProperty<Attachment>(_entities[0].properties[15]);
 }
 
-/// [Chat] entity fields to define ObjectBox queries.
-class Chat_ {
-  /// see [Chat.id]
-  static final id = QueryIntegerProperty<Chat>(_entities[1].properties[0]);
-
-  /// see [Chat.originalROWID]
-  static final originalROWID =
-      QueryIntegerProperty<Chat>(_entities[1].properties[1]);
-
-  /// see [Chat.guid]
-  static final guid = QueryStringProperty<Chat>(_entities[1].properties[2]);
-
-  /// see [Chat.style]
-  static final style = QueryIntegerProperty<Chat>(_entities[1].properties[3]);
-
-  /// see [Chat.chatIdentifier]
-  static final chatIdentifier =
-      QueryStringProperty<Chat>(_entities[1].properties[4]);
-
-  /// see [Chat.isArchived]
-  static final isArchived =
-      QueryBooleanProperty<Chat>(_entities[1].properties[5]);
-
-  /// see [Chat.isFiltered]
-  static final isFiltered =
-      QueryBooleanProperty<Chat>(_entities[1].properties[6]);
-
-  /// see [Chat.muteType]
-  static final muteType = QueryStringProperty<Chat>(_entities[1].properties[7]);
-
-  /// see [Chat.muteArgs]
-  static final muteArgs = QueryStringProperty<Chat>(_entities[1].properties[8]);
-
-  /// see [Chat.isPinned]
-  static final isPinned =
-      QueryBooleanProperty<Chat>(_entities[1].properties[9]);
-
-  /// see [Chat.hasUnreadMessage]
-  static final hasUnreadMessage =
-      QueryBooleanProperty<Chat>(_entities[1].properties[10]);
-
-  /// see [Chat.latestMessageDate]
-  static final latestMessageDate =
-      QueryIntegerProperty<Chat>(_entities[1].properties[11]);
-
-  /// see [Chat.latestMessageText]
-  static final latestMessageText =
-      QueryStringProperty<Chat>(_entities[1].properties[12]);
-
-  /// see [Chat.fakeLatestMessageText]
-  static final fakeLatestMessageText =
-      QueryStringProperty<Chat>(_entities[1].properties[13]);
-
-  /// see [Chat.title]
-  static final title = QueryStringProperty<Chat>(_entities[1].properties[14]);
-
-  /// see [Chat.displayName]
-  static final displayName =
-      QueryStringProperty<Chat>(_entities[1].properties[15]);
-
-  /// see [Chat.fakeParticipants]
-  static final fakeParticipants =
-      QueryStringVectorProperty<Chat>(_entities[1].properties[16]);
-
-  /// see [Chat.customAvatarPath]
-  static final customAvatarPath =
-      QueryStringProperty<Chat>(_entities[1].properties[17]);
-
-  /// see [Chat.pinIndex]
-  static final pinIndex =
-      QueryIntegerProperty<Chat>(_entities[1].properties[18]);
-}
-
-/// [FCMData] entity fields to define ObjectBox queries.
-class FCMData_ {
-  /// see [FCMData.id]
-  static final id = QueryIntegerProperty<FCMData>(_entities[2].properties[0]);
-
-  /// see [FCMData.projectID]
-  static final projectID =
-      QueryStringProperty<FCMData>(_entities[2].properties[1]);
-
-  /// see [FCMData.storageBucket]
-  static final storageBucket =
-      QueryStringProperty<FCMData>(_entities[2].properties[2]);
-
-  /// see [FCMData.apiKey]
-  static final apiKey =
-      QueryStringProperty<FCMData>(_entities[2].properties[3]);
-
-  /// see [FCMData.firebaseURL]
-  static final firebaseURL =
-      QueryStringProperty<FCMData>(_entities[2].properties[4]);
-
-  /// see [FCMData.clientID]
-  static final clientID =
-      QueryStringProperty<FCMData>(_entities[2].properties[5]);
-
-  /// see [FCMData.applicationID]
-  static final applicationID =
-      QueryStringProperty<FCMData>(_entities[2].properties[6]);
-}
-
-/// [Handle] entity fields to define ObjectBox queries.
-class Handle_ {
-  /// see [Handle.id]
-  static final id = QueryIntegerProperty<Handle>(_entities[3].properties[0]);
-
-  /// see [Handle.originalROWID]
-  static final originalROWID =
-      QueryIntegerProperty<Handle>(_entities[3].properties[1]);
-
-  /// see [Handle.address]
-  static final address =
-      QueryStringProperty<Handle>(_entities[3].properties[2]);
-
-  /// see [Handle.country]
-  static final country =
-      QueryStringProperty<Handle>(_entities[3].properties[3]);
-
-  /// see [Handle.color]
-  static final color = QueryStringProperty<Handle>(_entities[3].properties[4]);
-
-  /// see [Handle.defaultPhone]
-  static final defaultPhone =
-      QueryStringProperty<Handle>(_entities[3].properties[5]);
-
-  /// see [Handle.uncanonicalizedId]
-  static final uncanonicalizedId =
-      QueryStringProperty<Handle>(_entities[3].properties[6]);
-}
-
-/// [Message] entity fields to define ObjectBox queries.
-class Message_ {
-  /// see [Message.id]
-  static final id = QueryIntegerProperty<Message>(_entities[4].properties[0]);
-
-  /// see [Message.originalROWID]
-  static final originalROWID =
-      QueryIntegerProperty<Message>(_entities[4].properties[1]);
-
-  /// see [Message.guid]
-  static final guid = QueryStringProperty<Message>(_entities[4].properties[2]);
-
-  /// see [Message.handleId]
-  static final handleId =
-      QueryIntegerProperty<Message>(_entities[4].properties[3]);
-
-  /// see [Message.otherHandle]
-  static final otherHandle =
-      QueryIntegerProperty<Message>(_entities[4].properties[4]);
-
-  /// see [Message.text]
-  static final text = QueryStringProperty<Message>(_entities[4].properties[5]);
-
-  /// see [Message.subject]
-  static final subject =
-      QueryStringProperty<Message>(_entities[4].properties[6]);
-
-  /// see [Message.country]
-  static final country =
-      QueryStringProperty<Message>(_entities[4].properties[7]);
-
-  /// see [Message.dateCreated]
-  static final dateCreated =
-      QueryIntegerProperty<Message>(_entities[4].properties[8]);
-
-  /// see [Message.dateRead]
-  static final dateRead =
-      QueryIntegerProperty<Message>(_entities[4].properties[9]);
-
-  /// see [Message.dateDelivered]
-  static final dateDelivered =
-      QueryIntegerProperty<Message>(_entities[4].properties[10]);
-
-  /// see [Message.isFromMe]
-  static final isFromMe =
-      QueryBooleanProperty<Message>(_entities[4].properties[11]);
-
-  /// see [Message.isDelayed]
-  static final isDelayed =
-      QueryBooleanProperty<Message>(_entities[4].properties[12]);
-
-  /// see [Message.isAutoReply]
-  static final isAutoReply =
-      QueryBooleanProperty<Message>(_entities[4].properties[13]);
-
-  /// see [Message.isSystemMessage]
-  static final isSystemMessage =
-      QueryBooleanProperty<Message>(_entities[4].properties[14]);
-
-  /// see [Message.isServiceMessage]
-  static final isServiceMessage =
-      QueryBooleanProperty<Message>(_entities[4].properties[15]);
-
-  /// see [Message.isForward]
-  static final isForward =
-      QueryBooleanProperty<Message>(_entities[4].properties[16]);
-
-  /// see [Message.isArchived]
-  static final isArchived =
-      QueryBooleanProperty<Message>(_entities[4].properties[17]);
-
-  /// see [Message.hasDdResults]
-  static final hasDdResults =
-      QueryBooleanProperty<Message>(_entities[4].properties[18]);
-
-  /// see [Message.cacheRoomnames]
-  static final cacheRoomnames =
-      QueryStringProperty<Message>(_entities[4].properties[19]);
-
-  /// see [Message.isAudioMessage]
-  static final isAudioMessage =
-      QueryBooleanProperty<Message>(_entities[4].properties[20]);
-
-  /// see [Message.datePlayed]
-  static final datePlayed =
-      QueryIntegerProperty<Message>(_entities[4].properties[21]);
-
-  /// see [Message.itemType]
-  static final itemType =
-      QueryIntegerProperty<Message>(_entities[4].properties[22]);
-
-  /// see [Message.groupTitle]
-  static final groupTitle =
-      QueryStringProperty<Message>(_entities[4].properties[23]);
-
-  /// see [Message.groupActionType]
-  static final groupActionType =
-      QueryIntegerProperty<Message>(_entities[4].properties[24]);
-
-  /// see [Message.isExpired]
-  static final isExpired =
-      QueryBooleanProperty<Message>(_entities[4].properties[25]);
-
-  /// see [Message.balloonBundleId]
-  static final balloonBundleId =
-      QueryStringProperty<Message>(_entities[4].properties[26]);
-
-  /// see [Message.associatedMessageGuid]
-  static final associatedMessageGuid =
-      QueryStringProperty<Message>(_entities[4].properties[27]);
-
-  /// see [Message.associatedMessageType]
-  static final associatedMessageType =
-      QueryStringProperty<Message>(_entities[4].properties[28]);
-
-  /// see [Message.expressiveSendStyleId]
-  static final expressiveSendStyleId =
-      QueryStringProperty<Message>(_entities[4].properties[29]);
-
-  /// see [Message.timeExpressiveSendStyleId]
-  static final timeExpressiveSendStyleId =
-      QueryIntegerProperty<Message>(_entities[4].properties[30]);
-
-  /// see [Message.hasAttachments]
-  static final hasAttachments =
-      QueryBooleanProperty<Message>(_entities[4].properties[31]);
-
-  /// see [Message.hasReactions]
-  static final hasReactions =
-      QueryBooleanProperty<Message>(_entities[4].properties[32]);
-
-  /// see [Message.dateDeleted]
-  static final dateDeleted =
-      QueryIntegerProperty<Message>(_entities[4].properties[33]);
-
-  /// see [Message.bigEmoji]
-  static final bigEmoji =
-      QueryBooleanProperty<Message>(_entities[4].properties[34]);
-
-  /// see [Message.error]
-  static final error =
-      QueryIntegerProperty<Message>(_entities[4].properties[35]);
-}
-
-/// [ScheduledMessage] entity fields to define ObjectBox queries.
-class ScheduledMessage_ {
-  /// see [ScheduledMessage.id]
-  static final id =
-      QueryIntegerProperty<ScheduledMessage>(_entities[5].properties[0]);
-
-  /// see [ScheduledMessage.chatGuid]
-  static final chatGuid =
-      QueryStringProperty<ScheduledMessage>(_entities[5].properties[1]);
-
-  /// see [ScheduledMessage.message]
-  static final message =
-      QueryStringProperty<ScheduledMessage>(_entities[5].properties[2]);
-
-  /// see [ScheduledMessage.epochTime]
-  static final epochTime =
-      QueryIntegerProperty<ScheduledMessage>(_entities[5].properties[3]);
-
-  /// see [ScheduledMessage.completed]
-  static final completed =
-      QueryBooleanProperty<ScheduledMessage>(_entities[5].properties[4]);
-}
-
-/// [ThemeEntry] entity fields to define ObjectBox queries.
-class ThemeEntry_ {
-  /// see [ThemeEntry.id]
-  static final id =
-      QueryIntegerProperty<ThemeEntry>(_entities[6].properties[0]);
-
-  /// see [ThemeEntry.themeId]
-  static final themeId =
-      QueryIntegerProperty<ThemeEntry>(_entities[6].properties[1]);
-
-  /// see [ThemeEntry.name]
-  static final name =
-      QueryStringProperty<ThemeEntry>(_entities[6].properties[2]);
-
-  /// see [ThemeEntry.isFont]
-  static final isFont =
-      QueryBooleanProperty<ThemeEntry>(_entities[6].properties[3]);
-
-  /// see [ThemeEntry.fontSize]
-  static final fontSize =
-      QueryIntegerProperty<ThemeEntry>(_entities[6].properties[4]);
-
-  /// see [ThemeEntry.dbColor]
-  static final dbColor =
-      QueryStringProperty<ThemeEntry>(_entities[6].properties[5]);
-}
-
-/// [ThemeObject] entity fields to define ObjectBox queries.
-class ThemeObject_ {
-  /// see [ThemeObject.id]
-  static final id =
-      QueryIntegerProperty<ThemeObject>(_entities[7].properties[0]);
-
-  /// see [ThemeObject.name]
-  static final name =
-      QueryStringProperty<ThemeObject>(_entities[7].properties[1]);
-
-  /// see [ThemeObject.selectedLightTheme]
-  static final selectedLightTheme =
-      QueryBooleanProperty<ThemeObject>(_entities[7].properties[2]);
-
-  /// see [ThemeObject.selectedDarkTheme]
-  static final selectedDarkTheme =
-      QueryBooleanProperty<ThemeObject>(_entities[7].properties[3]);
-
-  /// see [ThemeObject.gradientBg]
-  static final gradientBg =
-      QueryBooleanProperty<ThemeObject>(_entities[7].properties[4]);
-
-  /// see [ThemeObject.previousLightTheme]
-  static final previousLightTheme =
-      QueryBooleanProperty<ThemeObject>(_entities[7].properties[5]);
-
-  /// see [ThemeObject.previousDarkTheme]
-  static final previousDarkTheme =
-      QueryBooleanProperty<ThemeObject>(_entities[7].properties[6]);
-}
-
 /// [AttachmentMessageJoin] entity fields to define ObjectBox queries.
 class AttachmentMessageJoin_ {
   /// see [AttachmentMessageJoin.id]
   static final id =
-      QueryIntegerProperty<AttachmentMessageJoin>(_entities[8].properties[0]);
+      QueryIntegerProperty<AttachmentMessageJoin>(_entities[1].properties[0]);
 
   /// see [AttachmentMessageJoin.attachmentId]
   static final attachmentId =
-      QueryIntegerProperty<AttachmentMessageJoin>(_entities[8].properties[1]);
+      QueryIntegerProperty<AttachmentMessageJoin>(_entities[1].properties[1]);
 
   /// see [AttachmentMessageJoin.messageId]
   static final messageId =
-      QueryIntegerProperty<AttachmentMessageJoin>(_entities[8].properties[2]);
+      QueryIntegerProperty<AttachmentMessageJoin>(_entities[1].properties[2]);
+}
+
+/// [Chat] entity fields to define ObjectBox queries.
+class Chat_ {
+  /// see [Chat.id]
+  static final id = QueryIntegerProperty<Chat>(_entities[2].properties[0]);
+
+  /// see [Chat.originalROWID]
+  static final originalROWID =
+      QueryIntegerProperty<Chat>(_entities[2].properties[1]);
+
+  /// see [Chat.guid]
+  static final guid = QueryStringProperty<Chat>(_entities[2].properties[2]);
+
+  /// see [Chat.style]
+  static final style = QueryIntegerProperty<Chat>(_entities[2].properties[3]);
+
+  /// see [Chat.chatIdentifier]
+  static final chatIdentifier =
+      QueryStringProperty<Chat>(_entities[2].properties[4]);
+
+  /// see [Chat.isArchived]
+  static final isArchived =
+      QueryBooleanProperty<Chat>(_entities[2].properties[5]);
+
+  /// see [Chat.isFiltered]
+  static final isFiltered =
+      QueryBooleanProperty<Chat>(_entities[2].properties[6]);
+
+  /// see [Chat.muteType]
+  static final muteType = QueryStringProperty<Chat>(_entities[2].properties[7]);
+
+  /// see [Chat.muteArgs]
+  static final muteArgs = QueryStringProperty<Chat>(_entities[2].properties[8]);
+
+  /// see [Chat.isPinned]
+  static final isPinned =
+      QueryBooleanProperty<Chat>(_entities[2].properties[9]);
+
+  /// see [Chat.hasUnreadMessage]
+  static final hasUnreadMessage =
+      QueryBooleanProperty<Chat>(_entities[2].properties[10]);
+
+  /// see [Chat.latestMessageDate]
+  static final latestMessageDate =
+      QueryIntegerProperty<Chat>(_entities[2].properties[11]);
+
+  /// see [Chat.latestMessageText]
+  static final latestMessageText =
+      QueryStringProperty<Chat>(_entities[2].properties[12]);
+
+  /// see [Chat.fakeLatestMessageText]
+  static final fakeLatestMessageText =
+      QueryStringProperty<Chat>(_entities[2].properties[13]);
+
+  /// see [Chat.title]
+  static final title = QueryStringProperty<Chat>(_entities[2].properties[14]);
+
+  /// see [Chat.displayName]
+  static final displayName =
+      QueryStringProperty<Chat>(_entities[2].properties[15]);
+
+  /// see [Chat.fakeParticipants]
+  static final fakeParticipants =
+      QueryStringVectorProperty<Chat>(_entities[2].properties[16]);
+
+  /// see [Chat.customAvatarPath]
+  static final customAvatarPath =
+      QueryStringProperty<Chat>(_entities[2].properties[17]);
+
+  /// see [Chat.pinIndex]
+  static final pinIndex =
+      QueryIntegerProperty<Chat>(_entities[2].properties[18]);
 }
 
 /// [ChatHandleJoin] entity fields to define ObjectBox queries.
 class ChatHandleJoin_ {
   /// see [ChatHandleJoin.id]
   static final id =
-      QueryIntegerProperty<ChatHandleJoin>(_entities[9].properties[0]);
+      QueryIntegerProperty<ChatHandleJoin>(_entities[3].properties[0]);
 
   /// see [ChatHandleJoin.chatId]
   static final chatId =
-      QueryIntegerProperty<ChatHandleJoin>(_entities[9].properties[1]);
+      QueryIntegerProperty<ChatHandleJoin>(_entities[3].properties[1]);
 
   /// see [ChatHandleJoin.handleId]
   static final handleId =
-      QueryIntegerProperty<ChatHandleJoin>(_entities[9].properties[2]);
+      QueryIntegerProperty<ChatHandleJoin>(_entities[3].properties[2]);
 }
 
 /// [ChatMessageJoin] entity fields to define ObjectBox queries.
 class ChatMessageJoin_ {
   /// see [ChatMessageJoin.id]
   static final id =
-      QueryIntegerProperty<ChatMessageJoin>(_entities[10].properties[0]);
+      QueryIntegerProperty<ChatMessageJoin>(_entities[4].properties[0]);
 
   /// see [ChatMessageJoin.chatId]
   static final chatId =
-      QueryIntegerProperty<ChatMessageJoin>(_entities[10].properties[1]);
+      QueryIntegerProperty<ChatMessageJoin>(_entities[4].properties[1]);
 
   /// see [ChatMessageJoin.messageId]
   static final messageId =
-      QueryIntegerProperty<ChatMessageJoin>(_entities[10].properties[2]);
+      QueryIntegerProperty<ChatMessageJoin>(_entities[4].properties[2]);
+}
+
+/// [FCMData] entity fields to define ObjectBox queries.
+class FCMData_ {
+  /// see [FCMData.id]
+  static final id = QueryIntegerProperty<FCMData>(_entities[5].properties[0]);
+
+  /// see [FCMData.projectID]
+  static final projectID =
+      QueryStringProperty<FCMData>(_entities[5].properties[1]);
+
+  /// see [FCMData.storageBucket]
+  static final storageBucket =
+      QueryStringProperty<FCMData>(_entities[5].properties[2]);
+
+  /// see [FCMData.apiKey]
+  static final apiKey =
+      QueryStringProperty<FCMData>(_entities[5].properties[3]);
+
+  /// see [FCMData.firebaseURL]
+  static final firebaseURL =
+      QueryStringProperty<FCMData>(_entities[5].properties[4]);
+
+  /// see [FCMData.clientID]
+  static final clientID =
+      QueryStringProperty<FCMData>(_entities[5].properties[5]);
+
+  /// see [FCMData.applicationID]
+  static final applicationID =
+      QueryStringProperty<FCMData>(_entities[5].properties[6]);
+}
+
+/// [Handle] entity fields to define ObjectBox queries.
+class Handle_ {
+  /// see [Handle.id]
+  static final id = QueryIntegerProperty<Handle>(_entities[6].properties[0]);
+
+  /// see [Handle.originalROWID]
+  static final originalROWID =
+      QueryIntegerProperty<Handle>(_entities[6].properties[1]);
+
+  /// see [Handle.address]
+  static final address =
+      QueryStringProperty<Handle>(_entities[6].properties[2]);
+
+  /// see [Handle.country]
+  static final country =
+      QueryStringProperty<Handle>(_entities[6].properties[3]);
+
+  /// see [Handle.color]
+  static final color = QueryStringProperty<Handle>(_entities[6].properties[4]);
+
+  /// see [Handle.defaultPhone]
+  static final defaultPhone =
+      QueryStringProperty<Handle>(_entities[6].properties[5]);
+
+  /// see [Handle.uncanonicalizedId]
+  static final uncanonicalizedId =
+      QueryStringProperty<Handle>(_entities[6].properties[6]);
+}
+
+/// [Message] entity fields to define ObjectBox queries.
+class Message_ {
+  /// see [Message.id]
+  static final id = QueryIntegerProperty<Message>(_entities[7].properties[0]);
+
+  /// see [Message.originalROWID]
+  static final originalROWID =
+      QueryIntegerProperty<Message>(_entities[7].properties[1]);
+
+  /// see [Message.guid]
+  static final guid = QueryStringProperty<Message>(_entities[7].properties[2]);
+
+  /// see [Message.handleId]
+  static final handleId =
+      QueryIntegerProperty<Message>(_entities[7].properties[3]);
+
+  /// see [Message.otherHandle]
+  static final otherHandle =
+      QueryIntegerProperty<Message>(_entities[7].properties[4]);
+
+  /// see [Message.text]
+  static final text = QueryStringProperty<Message>(_entities[7].properties[5]);
+
+  /// see [Message.subject]
+  static final subject =
+      QueryStringProperty<Message>(_entities[7].properties[6]);
+
+  /// see [Message.country]
+  static final country =
+      QueryStringProperty<Message>(_entities[7].properties[7]);
+
+  /// see [Message.dateCreated]
+  static final dateCreated =
+      QueryIntegerProperty<Message>(_entities[7].properties[8]);
+
+  /// see [Message.dateRead]
+  static final dateRead =
+      QueryIntegerProperty<Message>(_entities[7].properties[9]);
+
+  /// see [Message.dateDelivered]
+  static final dateDelivered =
+      QueryIntegerProperty<Message>(_entities[7].properties[10]);
+
+  /// see [Message.isFromMe]
+  static final isFromMe =
+      QueryBooleanProperty<Message>(_entities[7].properties[11]);
+
+  /// see [Message.isDelayed]
+  static final isDelayed =
+      QueryBooleanProperty<Message>(_entities[7].properties[12]);
+
+  /// see [Message.isAutoReply]
+  static final isAutoReply =
+      QueryBooleanProperty<Message>(_entities[7].properties[13]);
+
+  /// see [Message.isSystemMessage]
+  static final isSystemMessage =
+      QueryBooleanProperty<Message>(_entities[7].properties[14]);
+
+  /// see [Message.isServiceMessage]
+  static final isServiceMessage =
+      QueryBooleanProperty<Message>(_entities[7].properties[15]);
+
+  /// see [Message.isForward]
+  static final isForward =
+      QueryBooleanProperty<Message>(_entities[7].properties[16]);
+
+  /// see [Message.isArchived]
+  static final isArchived =
+      QueryBooleanProperty<Message>(_entities[7].properties[17]);
+
+  /// see [Message.hasDdResults]
+  static final hasDdResults =
+      QueryBooleanProperty<Message>(_entities[7].properties[18]);
+
+  /// see [Message.cacheRoomnames]
+  static final cacheRoomnames =
+      QueryStringProperty<Message>(_entities[7].properties[19]);
+
+  /// see [Message.isAudioMessage]
+  static final isAudioMessage =
+      QueryBooleanProperty<Message>(_entities[7].properties[20]);
+
+  /// see [Message.datePlayed]
+  static final datePlayed =
+      QueryIntegerProperty<Message>(_entities[7].properties[21]);
+
+  /// see [Message.itemType]
+  static final itemType =
+      QueryIntegerProperty<Message>(_entities[7].properties[22]);
+
+  /// see [Message.groupTitle]
+  static final groupTitle =
+      QueryStringProperty<Message>(_entities[7].properties[23]);
+
+  /// see [Message.groupActionType]
+  static final groupActionType =
+      QueryIntegerProperty<Message>(_entities[7].properties[24]);
+
+  /// see [Message.isExpired]
+  static final isExpired =
+      QueryBooleanProperty<Message>(_entities[7].properties[25]);
+
+  /// see [Message.balloonBundleId]
+  static final balloonBundleId =
+      QueryStringProperty<Message>(_entities[7].properties[26]);
+
+  /// see [Message.associatedMessageGuid]
+  static final associatedMessageGuid =
+      QueryStringProperty<Message>(_entities[7].properties[27]);
+
+  /// see [Message.associatedMessageType]
+  static final associatedMessageType =
+      QueryStringProperty<Message>(_entities[7].properties[28]);
+
+  /// see [Message.expressiveSendStyleId]
+  static final expressiveSendStyleId =
+      QueryStringProperty<Message>(_entities[7].properties[29]);
+
+  /// see [Message.timeExpressiveSendStyleId]
+  static final timeExpressiveSendStyleId =
+      QueryIntegerProperty<Message>(_entities[7].properties[30]);
+
+  /// see [Message.hasAttachments]
+  static final hasAttachments =
+      QueryBooleanProperty<Message>(_entities[7].properties[31]);
+
+  /// see [Message.hasReactions]
+  static final hasReactions =
+      QueryBooleanProperty<Message>(_entities[7].properties[32]);
+
+  /// see [Message.dateDeleted]
+  static final dateDeleted =
+      QueryIntegerProperty<Message>(_entities[7].properties[33]);
+
+  /// see [Message.bigEmoji]
+  static final bigEmoji =
+      QueryBooleanProperty<Message>(_entities[7].properties[34]);
+
+  /// see [Message.error]
+  static final error =
+      QueryIntegerProperty<Message>(_entities[7].properties[35]);
+}
+
+/// [ScheduledMessage] entity fields to define ObjectBox queries.
+class ScheduledMessage_ {
+  /// see [ScheduledMessage.id]
+  static final id =
+      QueryIntegerProperty<ScheduledMessage>(_entities[8].properties[0]);
+
+  /// see [ScheduledMessage.chatGuid]
+  static final chatGuid =
+      QueryStringProperty<ScheduledMessage>(_entities[8].properties[1]);
+
+  /// see [ScheduledMessage.message]
+  static final message =
+      QueryStringProperty<ScheduledMessage>(_entities[8].properties[2]);
+
+  /// see [ScheduledMessage.epochTime]
+  static final epochTime =
+      QueryIntegerProperty<ScheduledMessage>(_entities[8].properties[3]);
+
+  /// see [ScheduledMessage.completed]
+  static final completed =
+      QueryBooleanProperty<ScheduledMessage>(_entities[8].properties[4]);
+}
+
+/// [ThemeEntry] entity fields to define ObjectBox queries.
+class ThemeEntry_ {
+  /// see [ThemeEntry.id]
+  static final id =
+      QueryIntegerProperty<ThemeEntry>(_entities[9].properties[0]);
+
+  /// see [ThemeEntry.themeId]
+  static final themeId =
+      QueryIntegerProperty<ThemeEntry>(_entities[9].properties[1]);
+
+  /// see [ThemeEntry.name]
+  static final name =
+      QueryStringProperty<ThemeEntry>(_entities[9].properties[2]);
+
+  /// see [ThemeEntry.isFont]
+  static final isFont =
+      QueryBooleanProperty<ThemeEntry>(_entities[9].properties[3]);
+
+  /// see [ThemeEntry.fontSize]
+  static final fontSize =
+      QueryIntegerProperty<ThemeEntry>(_entities[9].properties[4]);
+
+  /// see [ThemeEntry.dbColor]
+  static final dbColor =
+      QueryStringProperty<ThemeEntry>(_entities[9].properties[5]);
+}
+
+/// [ThemeObject] entity fields to define ObjectBox queries.
+class ThemeObject_ {
+  /// see [ThemeObject.id]
+  static final id =
+      QueryIntegerProperty<ThemeObject>(_entities[10].properties[0]);
+
+  /// see [ThemeObject.name]
+  static final name =
+      QueryStringProperty<ThemeObject>(_entities[10].properties[1]);
+
+  /// see [ThemeObject.selectedLightTheme]
+  static final selectedLightTheme =
+      QueryBooleanProperty<ThemeObject>(_entities[10].properties[2]);
+
+  /// see [ThemeObject.selectedDarkTheme]
+  static final selectedDarkTheme =
+      QueryBooleanProperty<ThemeObject>(_entities[10].properties[3]);
+
+  /// see [ThemeObject.gradientBg]
+  static final gradientBg =
+      QueryBooleanProperty<ThemeObject>(_entities[10].properties[4]);
+
+  /// see [ThemeObject.previousLightTheme]
+  static final previousLightTheme =
+      QueryBooleanProperty<ThemeObject>(_entities[10].properties[5]);
+
+  /// see [ThemeObject.previousDarkTheme]
+  static final previousDarkTheme =
+      QueryBooleanProperty<ThemeObject>(_entities[10].properties[6]);
 }
 
 /// [ThemeValueJoin] entity fields to define ObjectBox queries.

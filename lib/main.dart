@@ -1,14 +1,6 @@
 import 'dart:async';
 import 'package:bluebubbles/layouts/setup/upgrading_db.dart';
-import 'package:bluebubbles/objectbox.g.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/fcm_data.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
-import 'package:bluebubbles/repository/models/join_tables.dart';
-import 'package:bluebubbles/repository/models/message.dart';
-import 'package:bluebubbles/repository/models/scheduled.dart';
-import 'package:bluebubbles/repository/models/theme_entry.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
@@ -40,7 +32,6 @@ import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
-import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -60,6 +51,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:window_size/window_size.dart';
+import 'repository/models/objectbox.dart';
 
 // final SentryClient _sentry = SentryClient(
 //     dsn:
@@ -135,14 +127,13 @@ Future<Null> main() async {
   try {
     prefs = await SharedPreferences.getInstance();
     if (!kIsWeb) {
-      var documentsDirectory = await getApplicationDocumentsDirectory();
-      final objectBoxDirectory = Directory(documentsDirectory.path + '/objectbox/');
       //ignore: unnecessary_cast, we need this as a workaround
-      if (kIsDesktop) documentsDirectory = (await getApplicationSupportDirectory()) as Directory;
+      var documentsDirectory = (kIsDesktop ? await getApplicationSupportDirectory() : await getApplicationDocumentsDirectory()) as Directory;
+      final objectBoxDirectory = Directory(documentsDirectory.path + '/objectbox/');
       final sqlitePath = join(documentsDirectory.path, "chat.db");
 
       Future<void> Function() initStore = () async {
-        store = await openStore();
+        store = await openStore(directory: (await getApplicationDocumentsDirectory()).path + '/objectbox');
         attachmentBox = store.box<Attachment>();
         chatBox = store.box<Chat>();
         fcmDataBox = store.box<FCMData>();

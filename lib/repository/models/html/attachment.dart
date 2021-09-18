@@ -1,22 +1,13 @@
 import 'dart:convert';
 import 'dart:typed_data';
-import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/objectbox.g.dart';
-import 'package:bluebubbles/repository/models/join_tables.dart';
-import 'package:flutter/foundation.dart';
-import 'package:objectbox/objectbox.dart';
-import 'package:universal_io/io.dart';
-import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/html/message.dart';
 import 'package:mime_type/mime_type.dart';
 
-@Entity()
 class Attachment {
   int? id;
   int? originalROWID;
-  @Unique()
   String? guid;
   String? uti;
   String? mimeType;
@@ -54,9 +45,7 @@ class Attachment {
   });
 
   bool get existsOnDisk {
-    if (kIsWeb) return false;
-    File attachment = new File(AttachmentHelper.getAttachmentPath(this));
-    return attachment.existsSync();
+    return false;
   }
 
   String get orientation {
@@ -126,70 +115,21 @@ class Attachment {
   /// [message] is used to create a link between the attachment and message,
   /// when provided
   Attachment save(Message? message) {
-    if (kIsWeb) return this;
-    Attachment? existing = Attachment.findOne(this.guid!);
-    if (existing != null) {
-      this.id = existing.id;
-    }
-    try {
-      attachmentBox.put(this);
-      if (this.id != null && message?.id != null)
-        amJoinBox.put(AttachmentMessageJoin(attachmentId: this.id!, messageId: message!.id!));
-    } on UniqueViolationException catch (_) {}
-
     return this;
   }
 
   /// replaces a temporary attachment with the new one from the server
   static Attachment replaceAttachment(String? oldGuid, Attachment newAttachment) {
-    if (kIsWeb) return newAttachment;
-    Attachment? existing = Attachment.findOne(oldGuid!);
-    if (existing == null) {
-      throw ("Old GUID does not exist!");
-    }
-    // update values and save
-    existing.guid = newAttachment.guid;
-    existing.originalROWID = newAttachment.originalROWID;
-    existing.uti = newAttachment.uti;
-    existing.mimeType = newAttachment.mimeType ?? existing.mimeType;
-    existing.transferState = newAttachment.transferState;
-    existing.isOutgoing = newAttachment.isOutgoing;
-    existing.transferName = newAttachment.transferName;
-    existing.totalBytes = newAttachment.totalBytes;
-    existing.isSticker = newAttachment.isSticker;
-    existing.hideAttachment = newAttachment.hideAttachment;
-    existing.blurhash = newAttachment.blurhash;
-    existing.bytes = newAttachment.bytes;
-    existing.webUrl = newAttachment.webUrl;
-    attachmentBox.put(existing);
-    // change the directory path
-    String appDocPath = SettingsManager().appDocDir.path;
-    String pathName = "$appDocPath/attachments/$oldGuid";
-    Directory directory = Directory(pathName);
-    directory.renameSync("$appDocPath/attachments/${newAttachment.guid}");
-    // grab values from existing
-    newAttachment.id = existing.id;
-    newAttachment.width = existing.width;
-    newAttachment.height = existing.height;
-    newAttachment.metadata = existing.metadata;
     return newAttachment;
   }
 
   /// find an attachment by its guid
   static Attachment? findOne(String guid) {
-    if (kIsWeb) return null;
-    final query = attachmentBox.query(Attachment_.guid.equals(guid)).build();
-    query..limit = 1;
-    final result = query.findFirst();
-    query.close();
-    return result;
+    return null;
   }
 
   /// clear the attachment DB
-  static void flush() {
-    if (!kIsWeb)
-      attachmentBox.removeAll();
-  }
+  static void flush() {}
 
   String getFriendlySize({decimals: 2}) {
     double size = (this.totalBytes! / 1024000.0);

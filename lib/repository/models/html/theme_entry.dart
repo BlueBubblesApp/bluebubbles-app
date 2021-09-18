@@ -1,14 +1,7 @@
 import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/objectbox.g.dart';
-import 'package:bluebubbles/repository/models/join_tables.dart';
-import 'package:bluebubbles/repository/models/theme_object.dart';
-import 'package:flutter/foundation.dart';
+import 'package:bluebubbles/repository/models/html/theme_object.dart';
 import 'package:flutter/material.dart';
-import 'package:objectbox/objectbox.dart';
 
-
-@Entity()
 class ThemeEntry {
   int? id;
   int? themeId;
@@ -57,27 +50,11 @@ class ThemeEntry {
       : color;
 
   ThemeEntry save(ThemeObject theme) {
-    if (kIsWeb) return this;
-    assert(theme.id != null);
-    this.themeId = theme.id;
-    ThemeEntry? existing = ThemeEntry.findOne(this.name!, this.themeId!);
-    if (existing != null) {
-      this.id = existing.id;
-    }
-    themeEntryBox.put(this);
-    if (this.id != null && theme.id != null && existing == null)
-      tvJoinBox.put(ThemeValueJoin(themeValueId: this.id!, themeId: theme.id!));
-
     return this;
   }
 
   static ThemeEntry? findOne(String name, int themeId) {
-    if (kIsWeb) return null;
-    final query = themeEntryBox.query(ThemeEntry_.name.equals(name).and(ThemeEntry_.themeId.equals(themeId))).build();
-    query..limit = 1;
-    final result = query.findFirst();
-    query.close();
-    return result;
+    return null;
   }
 
   Map<String, dynamic> toMap() => {

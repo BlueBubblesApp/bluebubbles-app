@@ -1,4 +1,4 @@
-import 'package:objectbox/objectbox.dart';
+import 'package:bluebubbles/objectbox.g.dart';
 
 @Entity()
 class AttachmentMessageJoin {

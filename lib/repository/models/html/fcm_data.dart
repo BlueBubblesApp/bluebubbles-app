@@ -3,11 +3,7 @@ import 'dart:async';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/repository/models/config_entry.dart';
 import 'package:firebase_dart/firebase_dart.dart';
-import 'package:flutter/foundation.dart';
-import 'package:objectbox/objectbox.dart';
 
-
-@Entity()
 class FCMData {
   int? id;
   String? projectID;
@@ -62,8 +58,6 @@ class FCMData {
   }
 
   FCMData save() {
-    if (kIsWeb) return this;
-    fcmDataBox.put(this);
     return this;
   }
 
@@ -89,18 +83,7 @@ class FCMData {
   }
 
   static FCMData getFCM() {
-    if (kIsWeb) {
-      return new FCMData(
-        projectID: prefs.getString('projectID'),
-        storageBucket: prefs.getString('storageBucket'),
-        apiKey: prefs.getString('apiKey'),
-        firebaseURL: prefs.getString('firebaseURL'),
-        clientID: prefs.getString('clientID'),
-        applicationID: prefs.getString('applicationID'),
-      );
-    }
-    final result = fcmDataBox.getAll();
-    if (result.isEmpty) return new FCMData(
+    return new FCMData(
       projectID: prefs.getString('projectID'),
       storageBucket: prefs.getString('storageBucket'),
       apiKey: prefs.getString('apiKey'),
@@ -108,7 +91,6 @@ class FCMData {
       clientID: prefs.getString('clientID'),
       applicationID: prefs.getString('applicationID'),
     );
-    return result.first;
   }
 
   Map<String, dynamic> toMap() => {

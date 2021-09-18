@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:bluebubbles/blocs/message_bloc.dart';
-import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/objectbox.g.dart';
+import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/repository/models/html/attachment.dart';
+import 'package:bluebubbles/repository/models/html/chat.dart';
+import 'package:bluebubbles/repository/models/html/handle.dart';
 import 'package:collection/src/iterable_extensions.dart';
 import 'package:crypto/crypto.dart' as crypto;
 import 'package:bluebubbles/helpers/message_helper.dart';
@@ -10,20 +12,12 @@ import 'package:bluebubbles/helpers/darty.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
-import 'package:objectbox/objectbox.dart';
-import '../../helpers/utils.dart';
-import 'chat.dart';
-import 'handle.dart';
 
-@Entity()
 class Message {
   int? id;
   int? originalROWID;
-  @Unique()
   String? guid;
   int? handleId;
   int? otherHandle;
@@ -207,34 +201,6 @@ class Message {
   }
 
   Message save() {
-   if (kIsWeb) return this;
-    Message? existing = Message.findOne(guid: this.guid);
-    if (existing != null) {
-      this.id = existing.id;
-    }
-
-    // Save the participant & set the handle ID to the new participant
-    if (this.handle != null) {
-      this.handle!.save();
-      this.handleId = this.handle!.id;
-    }
-    if (this.associatedMessageType != null && this.associatedMessageGuid != null) {
-      Message? associatedMessage = Message.findOne(guid: this.associatedMessageGuid);
-      if (associatedMessage != null) {
-        associatedMessage.hasReactions = true;
-        associatedMessage.save();
-      }
-    } else if (!this.hasReactions) {
-      Message? reaction = Message.findOne(associatedMessageGuid: this.guid);
-      if (reaction != null) {
-        this.hasReactions = true;
-      }
-    }
-
-    try {
-      messageBox.put(this);
-    } on UniqueViolationException catch (_) {}
-
     return this;
   }
 
@@ -249,6 +215,7 @@ class Message {
       } else {
         if (chat != null) {
           await chat.addMessage(newMessage!);
+          // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
           NewMessageManager().addMessage(chat, newMessage, outgoing: false);
           return newMessage;
         }
@@ -258,40 +225,20 @@ class Message {
     }
 
     newMessage!.id = existing.id;
-    messageBox.put(newMessage);
 
     return newMessage;
   }
 
   Message updateMetadata(Metadata? metadata) {
-    if (kIsWeb || this.id == null) return this;
-    this.metadata = metadata!.toJson();
-    this.save();
     return this;
   }
 
   List<Attachment?>? fetchAttachments({CurrentChat? currentChat}) {
-    if (kIsWeb || (this.hasAttachments && this.attachments != null && this.attachments!.length != 0)) {
-      return this.attachments;
-    }
-
-    if (currentChat != null) {
-      this.attachments = currentChat.getAttachmentsForMessage(this);
-      if (this.attachments == null) this.attachments = [];
-      if (this.attachments!.length != 0) return this.attachments;
-    }
-
-    if (this.id == null) return [];
-    final attachmentIds = amJoinBox.getAll().where((element) => element.messageId == this.id!).map((e) => e.attachmentId).toList();
-    final attachments = attachmentBox.getMany(attachmentIds, growableResult: true);
-    this.attachments = attachments;
-    return attachments;
+    return this.attachments;
   }
 
   static Chat? getChat(Message message) {
-    if (kIsWeb) return null;
-    final chatId = cmJoinBox.getAll().firstWhere((element) => element.messageId == message.id).chatId;
-    return chatBox.get(chatId);
+    return null;
   }
 
   Message fetchAssociatedMessages({MessageBloc? bloc}) {
@@ -300,76 +247,37 @@ class Message {
         this.associatedMessages[0].guid == this.guid) {
       return this;
     }
-    if (kIsWeb) {
-      associatedMessages = bloc?.reactionMessages.values.where((element) => element.associatedMessageGuid == guid).toList() ?? [];
-    } else {
-      associatedMessages = Message.find().where((element) => element.associatedMessageGuid == this.guid).toList();
-    }
+    associatedMessages = (bloc?.reactionMessages.values.where((element) => element.associatedMessageGuid == guid).toList() ?? []).cast<Message>();
     associatedMessages.sort((a, b) => a.originalROWID!.compareTo(b.originalROWID!));
-    if (!kIsWeb) associatedMessages = MessageHelper.normalizedAssociatedMessages(associatedMessages);
     return this;
   }
 
   Handle? getHandle() {
-    if (kIsWeb) return null;
-    this.handle = handleBox.get(this.handleId!);
-    return handleBox.get(this.handleId!);
+    return null;
   }
 
   static Message? findOne({String? guid, String? associatedMessageGuid}) {
-    if (kIsWeb) return null;
-    if (guid != null) {
-      final query = messageBox.query(Message_.guid.equals(guid)).build();
-      query..limit = 1;
-      final result = query.findFirst();
-      query.close();
-      return result;
-    } else if (associatedMessageGuid != null) {
-      final query = messageBox.query(Message_.associatedMessageGuid.equals(associatedMessageGuid)).build();
-      query..limit = 1;
-      final result = query.findFirst();
-      query.close();
-      return result;
-    }
     return null;
   }
 
   static DateTime? lastMessageDate() {
-    if (kIsWeb) return null;
-    final query = (messageBox.query()..order(Message_.dateCreated, flags: Order.descending)).build();
-    query..limit = 1;
-    final messages = query.find();
-    query.close();
-    return messages.isEmpty ? null : messages.first.dateCreated;
+    return null;
   }
 
   static List<Message> find() {
-    return messageBox.getAll();
+    return [];
   }
 
   static void delete(String guid) {
-    if (kIsWeb) return;
-    final query = messageBox.query(Message_.guid.equals(guid)).build();
-    final results = query.find();
-    final ids = results.map((e) => e.id!).toList();
-    query.close();
-    final query2 = cmJoinBox.query(ChatMessageJoin_.messageId.oneOf(ids)).build();
-    final results2 = query2.find();
-    query2.close();
-    cmJoinBox.removeMany(results2.map((e) => e.id!).toList());
-    messageBox.removeMany(ids);
+    return;
   }
 
   static void softDelete(String guid) {
-    if (kIsWeb) return null;
-    Message? toDelete = Message.findOne(guid: guid);
-    toDelete?.dateDeleted = DateTime.now().toUtc();
-    toDelete?.save();
+    return null;
   }
 
   static void flush() {
-    if (kIsWeb) return;
-    messageBox.removeAll();
+    return;
   }
 
   bool isUrlPreview() {
@@ -438,8 +346,7 @@ class Message {
   }
 
   static int? countForChat(Chat? chat) {
-    if (kIsWeb || chat == null || chat.id == null) return 0;
-    return cmJoinBox.getAll().where((element) => element.chatId == chat.id).length;
+    return 0;
   }
 
   void merge(Message otherMessage) {

@@ -2,21 +2,13 @@ import 'dart:ui';
 
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/setup/upgrading_db.dart';
-import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/fcm_data.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
-import 'package:bluebubbles/repository/models/join_tables.dart';
-import 'package:bluebubbles/repository/models/message.dart';
-import 'package:bluebubbles/repository/models/scheduled.dart';
-import 'package:bluebubbles/repository/models/theme_entry.dart';
-import 'package:bluebubbles/repository/models/theme_object.dart';
+import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/repository/models/objectbox.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -42,14 +34,13 @@ callbackHandler() async {
   WidgetsFlutterBinding.ensureInitialized();
   prefs = await SharedPreferences.getInstance();
   if (!kIsWeb) {
-    var documentsDirectory = await getApplicationDocumentsDirectory();
-    final objectBoxDirectory = Directory(documentsDirectory.path + '/objectbox/');
     //ignore: unnecessary_cast, we need this as a workaround
-    if (kIsDesktop) documentsDirectory = (await getApplicationSupportDirectory()) as Directory;
+    var documentsDirectory = (kIsDesktop ? await getApplicationSupportDirectory() : await getApplicationDocumentsDirectory()) as Directory;
+    final objectBoxDirectory = Directory(documentsDirectory.path + '/objectbox/');
     final sqlitePath = join(documentsDirectory.path, "chat.db");
 
     Future<void> Function() initStore = () async {
-      store = await openStore();
+      store = await openStore(directory: (await getApplicationDocumentsDirectory()).path + '/objectbox');
       attachmentBox = store.box<Attachment>();
       chatBox = store.box<Chat>();
       fcmDataBox = store.box<FCMData>();
