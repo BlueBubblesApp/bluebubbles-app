@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/logger.dart';
@@ -6,6 +7,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
 import 'package:fast_contacts/fast_contacts.dart' hide Contact;
 import 'package:flutter/foundation.dart';
@@ -122,12 +124,17 @@ class ContactManager {
       )).toList();
     } else {
       contacts.clear();
-      /*var vcfs = await SocketManager().sendMessage("get-vcf", {}, (_) {});
-      if (vcfs['data'] != null) {
-        for (var c in jsonDecode(vcfs['data'])) {
-          contacts.add(Contact.fromMap(c));
+      try {
+        var vcfs = await SocketManager().sendMessage("get-vcf", {}, (_) {});
+        if (vcfs['data'] != null) {
+          if (vcfs['data'] is String) {
+            vcfs['data'] = jsonDecode(vcfs['data']);
+          }
+          for (var c in vcfs['data']) {
+            contacts.add(Contact.fromMap(c));
+          }
         }
-      }*/
+      } catch (_) {}
     }
     hasFetchedContacts = true;
 

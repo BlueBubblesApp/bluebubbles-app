@@ -4,6 +4,7 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:path/path.dart' show join;
 import 'package:path_provider/path_provider.dart';
@@ -169,7 +170,7 @@ Future<Null> main() async {
           await initStore();
         }
       }
-    };
+    }
     FirebaseDart.setup(
       platform: fdu.Platform.web(
         currentUrl: Uri.base.toString(),
@@ -199,6 +200,7 @@ Future<Null> main() async {
       if (!await GoogleMlKit.nlp.entityModelManager().isModelDownloaded(EntityExtractorOptions.ENGLISH)) {
         GoogleMlKit.nlp.entityModelManager().downloadModel(EntityExtractorOptions.ENGLISH, isWifiRequired: false);
       }
+      await FlutterLibphonenumber().init();
     }
     if (kIsDesktop) {
       setWindowTitle('BlueBubbles (Beta)');

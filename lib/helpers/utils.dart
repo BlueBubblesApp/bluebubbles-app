@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:universal_io/io.dart';
 import 'dart:math';
 import 'dart:typed_data';
@@ -166,7 +167,11 @@ String getInitials(Contact contact) {
 
 Future<String?> parsePhoneNumber(String number, String region) async {
   try {
-    return await PhoneNumberUtil.normalizePhoneNumber(number, region);
+    if (kIsWeb) {
+      return await PhoneNumberUtil.normalizePhoneNumber(number, region);
+    } else {
+      return FlutterLibphonenumber().formatNumberSync(number);
+    }
   } catch (ex) {
     return null;
   }
