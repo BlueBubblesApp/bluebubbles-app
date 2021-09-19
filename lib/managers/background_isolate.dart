@@ -40,7 +40,7 @@ callbackHandler() async {
     final sqlitePath = join(documentsDirectory.path, "chat.db");
 
     Future<void> Function() initStore = () async {
-      store = await openStore(directory: (await getApplicationDocumentsDirectory()).path + '/objectbox');
+      store = await openStore(directory: documentsDirectory.path + '/objectbox');
       attachmentBox = store.box<Attachment>();
       chatBox = store.box<Chat>();
       fcmDataBox = store.box<FCMData>();

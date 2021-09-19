@@ -1,15 +1,4 @@
 import 'dart:async';
-import 'package:bluebubbles/layouts/setup/upgrading_db.dart';
-import 'package:bluebubbles/repository/models/models.dart';
-import 'package:collection/collection.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
-import 'package:google_ml_kit/google_ml_kit.dart';
-import 'package:path/path.dart' show join;
-import 'package:path_provider/path_provider.dart';
-import 'package:universal_io/io.dart';
-import 'package:universal_html/html.dart' as html;
 import 'dart:isolate';
 import 'dart:ui';
 
@@ -23,6 +12,7 @@ import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/setup/failure_to_start.dart';
 import 'package:bluebubbles/layouts/setup/setup_view.dart';
+import 'package:bluebubbles/layouts/setup/upgrading_db.dart';
 import 'package:bluebubbles/layouts/testing_mode.dart';
 import 'package:bluebubbles/managers/background_isolate.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
@@ -33,26 +23,36 @@ import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
+import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/repository/models/objectbox.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:collection/collection.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:firebase_dart/firebase_dart.dart';
+import 'package:firebase_dart/src/auth/utils.dart' as fdu;
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' hide Priority;
 import 'package:flutter/services.dart';
+import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart' hide Message;
 import 'package:flutter_native_timezone/flutter_native_timezone.dart';
-import 'package:firebase_dart/firebase_dart.dart';
-import 'package:firebase_dart/src/auth/utils.dart' as fdu;
 import 'package:get/get.dart';
+import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:path/path.dart' show join;
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:secure_application/secure_application.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:universal_html/html.dart' as html;
+import 'package:universal_io/io.dart';
 import 'package:window_size/window_size.dart';
-import 'package:bluebubbles/repository/models/objectbox.dart';
 
 // final SentryClient _sentry = SentryClient(
 //     dsn:
@@ -134,7 +134,7 @@ Future<Null> main() async {
       final sqlitePath = join(documentsDirectory.path, "chat.db");
 
       Future<void> Function() initStore = () async {
-        store = await openStore(directory: (await getApplicationDocumentsDirectory()).path + '/objectbox');
+        store = await openStore(directory: documentsDirectory.path + '/objectbox');
         attachmentBox = store.box<Attachment>();
         chatBox = store.box<Chat>();
         fcmDataBox = store.box<FCMData>();

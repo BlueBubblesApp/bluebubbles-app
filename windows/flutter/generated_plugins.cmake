@@ -5,6 +5,7 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   connectivity_plus_windows
   maps_launcher
+  objectbox_flutter_libs
   quick_notify
   secure_application
   url_launcher_windows

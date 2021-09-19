@@ -4,6 +4,7 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   maps_launcher
+  objectbox_flutter_libs
   quick_notify
   url_launcher_linux
   window_size

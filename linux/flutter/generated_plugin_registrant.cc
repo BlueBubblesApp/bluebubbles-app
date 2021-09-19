@@ -7,6 +7,7 @@
 #include "generated_plugin_registrant.h"
 
 #include <maps_launcher/maps_launcher_plugin.h>
+#include <objectbox_flutter_libs/objectbox_flutter_libs_plugin.h>
 #include <quick_notify/quick_notify_plugin.h>
 #include <url_launcher_linux/url_launcher_plugin.h>
 #include <window_size/window_size_plugin.h>
@@ -15,6 +16,9 @@ void fl_register_plugins(FlPluginRegistry* registry) {
   g_autoptr(FlPluginRegistrar) maps_launcher_registrar =
       fl_plugin_registry_get_registrar_for_plugin(registry, "MapsLauncherPlugin");
   maps_launcher_plugin_register_with_registrar(maps_launcher_registrar);
+  g_autoptr(FlPluginRegistrar) objectbox_flutter_libs_registrar =
+      fl_plugin_registry_get_registrar_for_plugin(registry, "ObjectboxFlutterLibsPlugin");
+  objectbox_flutter_libs_plugin_register_with_registrar(objectbox_flutter_libs_registrar);
   g_autoptr(FlPluginRegistrar) quick_notify_registrar =
       fl_plugin_registry_get_registrar_for_plugin(registry, "QuickNotifyPlugin");
   quick_notify_plugin_register_with_registrar(quick_notify_registrar);
