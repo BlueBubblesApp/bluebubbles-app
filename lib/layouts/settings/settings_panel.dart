@@ -737,12 +737,11 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         backgroundColor: tileColor,
                         onTap: () async {
                           String json = "[";
-                          ContactManager().handleToContact.values.forEachIndexed((index, c) {
-                            if (c == null) return;
-                            var map = c.toMap();
+                          ContactManager().handleToContact.values.where((element) => element != null).forEachIndexed((index, c) {
+                            var map = c!.toMap();
                             map.remove("avatar");
                             json = json + "${jsonEncode(map)}";
-                            if (index != ContactManager().handleToContact.values.length - 1) {
+                            if (index != ContactManager().handleToContact.values.where((element) => element != null).length - 1) {
                               json = json + ",";
                             } else {
                               json = json + "]";
