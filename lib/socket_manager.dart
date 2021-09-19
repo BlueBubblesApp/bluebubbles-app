@@ -9,7 +9,6 @@ import 'package:bluebubbles/helpers/crypto.dart';
 import 'package:bluebubbles/helpers/darty.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/attachment_info_bloc.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
@@ -18,18 +17,15 @@ import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/fcm_data.dart';
-import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:firebase_dart/firebase_dart.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:socket_io_client/socket_io_client.dart';
 import 'dart:io';
+import 'package:bluebubbles/repository/models/models.dart';
 
 export 'package:bluebubbles/api_manager.dart';
 
@@ -51,8 +47,8 @@ class SocketManager {
 
   SocketManager._internal();
 
-  Future<void> removeChatNotification(Chat chat) async {
-    await chat.toggleHasUnread(false);
+  void removeChatNotification(Chat chat) {
+    chat.toggleHasUnread(false);
     ChatBloc().updateChat(chat);
   }
 
@@ -201,18 +197,18 @@ class SocketManager {
     }
   }
 
-  Future<String> handleNewMessage(_data) async {
+  String handleNewMessage(_data) {
     Map<String, dynamic>? data = _data;
     IncomingQueue().add(new QueueItem(event: "handle-message", item: {"data": data}));
-    return new Future.value("");
+    return "";
   }
 
-  Future<String> handleChatStatusChange(_data) async {
-    if (!SettingsManager().settings.enablePrivateAPI.value) return new Future.value("");
+  String handleChatStatusChange(_data) {
+    if (!SettingsManager().settings.enablePrivateAPI.value) return "";
 
     Map<String, dynamic>? data = _data;
     IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_CHAT_STATUS_CHANGE, item: {"data": data}));
-    return new Future.value("");
+    return "";
   }
 
   void startSocketIO({bool forceNewConnection = false, bool catchException = true}) {
@@ -336,10 +332,10 @@ class SocketManager {
         }
 
         // Lastly, find the message
-        Message msg = (await Message.findOne({'guid': message.guid}))!;
+        Message msg = Message.findOne(guid: message.guid)!;
 
         // Check if we already have an error, and save if we don't
-        if (msg.error.value == 0) {
+        if (msg.error == 0) {
           // TODO: ADD NOTIFICATION TO USER IF FAILURE
           await message.save();
         }
@@ -356,9 +352,9 @@ class SocketManager {
         Logger.info("Client received message timeout", tag: tag);
         Map<String, dynamic> data = _data;
 
-        Message? message = await Message.findOne({"guid": data["tempGuid"]});
+        Message? message = Message.findOne(guid: data['tempGuid']);
         if (message == null) return new Future.value("");
-        message.error.value = 1003;
+        message.error = 1003;
         message.guid = message.guid!.replaceAll("temp", "error-Message Timeout");
         await Message.replaceMessage(data["tempGuid"], message);
         return new Future.value("");

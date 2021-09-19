@@ -9,7 +9,7 @@ import 'package:universal_io/io.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
 import 'package:get/get.dart';
@@ -122,7 +122,7 @@ class AttachmentDownloadController extends GetxController {
 
       int? numBytes = attachmentResponse["byteLength"];
 
-      if (numBytes == chunkSize && (progress.value ?? 0) < 1) {
+      if (numBytes == chunkSize) {
         // Calculate some stats
         double progress = ((index + 1) / total).clamp(0, 1).toDouble();
         Logger.info("Progress: ${(progress * 100).round()}% of the attachment");
@@ -141,7 +141,7 @@ class AttachmentDownloadController extends GetxController {
           // Compress the attachment
           if (!kIsWeb) {
             await AttachmentHelper.compressAttachment(attachment, attachment.getPath());
-            await attachment.update();
+            await attachment.save(null);
           } else if (CurrentChat.activeChat?.chatAttachments.firstWhereOrNull((e) => e.guid == attachment.guid) ==
               null) {
             CurrentChat.activeChat?.chatAttachments.add(attachment);

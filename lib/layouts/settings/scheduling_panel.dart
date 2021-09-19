@@ -5,8 +5,7 @@ import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/scheduler_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/scheduled.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -26,13 +25,7 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
   void initState() {
     super.initState();
 
-    ScheduledMessage.find().then((List<ScheduledMessage> messages) {
-      if (this.mounted) {
-        setState(() {
-          scheduled = messages;
-        });
-      }
-    });
+    scheduled = ScheduledMessage.find();
   }
 
   List<TableRow> _buildRows(Iterable<ScheduledMessage> messages) {

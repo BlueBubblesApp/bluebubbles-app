@@ -8,8 +8,7 @@ import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/scheduled.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -233,7 +232,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
               ScheduledMessage scheduled = new ScheduledMessage(
                   chatGuid: _chat!.guid, message: messageController.text, epochTime: occurs.millisecondsSinceEpoch);
 
-              await scheduled.save();
+              scheduled.save();
               Navigator.of(context).pop();
             }
           },

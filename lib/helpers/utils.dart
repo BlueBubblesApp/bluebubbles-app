@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:universal_io/io.dart';
 import 'dart:math';
 import 'dart:typed_data';
@@ -15,13 +16,9 @@ import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.da
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/fcm_data.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
-import 'package:contacts_service/contacts_service.dart';
 import 'package:convert/convert.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/cupertino.dart';
@@ -142,12 +139,12 @@ bool sameAddress(List<String?> options, String? compared) {
 
 String getInitials(Contact contact) {
   // Set default initials
-  String initials = (contact.givenName!.isNotEmpty == true ? contact.givenName![0] : "") +
-      (contact.familyName!.isNotEmpty == true ? contact.familyName![0] : "");
+  String initials = (contact.structuredName?.givenName.isNotEmpty == true ? contact.structuredName!.givenName[0] : "") +
+      (contact.structuredName?.familyName.isNotEmpty == true ? contact.structuredName!.familyName[0] : "");
 
   // If the initials are empty, get them from the display name
   if (initials.trim().isEmpty) {
-    initials = contact.displayName != null ? contact.displayName![0] : "";
+    initials = contact.displayName[0];
   }
 
   return initials.toUpperCase();
@@ -170,7 +167,11 @@ String getInitials(Contact contact) {
 
 Future<String?> parsePhoneNumber(String number, String region) async {
   try {
-    return await PhoneNumberUtil.normalizePhoneNumber(number, region);
+    if (kIsWeb) {
+      return await PhoneNumberUtil.normalizePhoneNumber(number, region);
+    } else {
+      return FlutterLibphonenumber().formatNumberSync(number);
+    }
   } catch (ex) {
     return null;
   }
@@ -321,7 +322,7 @@ Future<String> getGroupEventText(Message message) async {
 
   String? other = "someone";
   if (message.otherHandle != null && [1, 2].contains(message.itemType)) {
-    Handle? item = await Handle.findOne({"originalROWID": message.otherHandle});
+    Handle? item = Handle.findOne(originalROWID: message.otherHandle);
     if (item != null) {
       other = await ContactManager().getContactTitle(item);
     }

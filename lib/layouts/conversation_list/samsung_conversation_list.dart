@@ -18,7 +18,7 @@ import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -353,8 +353,8 @@ class _SamsungState extends State<SamsungConversationList> {
                         if (selected.length <= 1)
                           GestureDetector(
                             onTap: () {
-                              selected.forEach((element) async {
-                                await element.toggleMute(element.muteType != "mute");
+                              selected.forEach((element) {
+                                element.toggleMute(element.muteType != "mute");
                               });
 
                               selected = [];
@@ -390,8 +390,8 @@ class _SamsungState extends State<SamsungConversationList> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            selected.forEach((element) async {
-                              await element.togglePin(!element.isPinned!);
+                            selected.forEach((element) {
+                              element.togglePin(!element.isPinned!);
                             });
 
                             selected = [];
@@ -485,11 +485,11 @@ class _SamsungState extends State<SamsungConversationList> {
                                 key: UniqueKey(),
                                 // Provide a function that tells the app
                                 // what to do after an item has been swiped away.
-                                onDismissed: (direction) async {
+                                onDismissed: (direction) {
                                   if (direction == DismissDirection.endToStart) {
                                     if (SettingsManager().settings.materialLeftAction.value ==
                                         MaterialSwipeAction.pin) {
-                                      await ChatBloc()
+                                      ChatBloc()
                                           .chats
                                           .archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]
                                           .togglePin(!ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isPinned!);
@@ -497,7 +497,7 @@ class _SamsungState extends State<SamsungConversationList> {
                                       if (this.mounted) setState(() {});
                                     } else if (SettingsManager().settings.materialLeftAction.value ==
                                         MaterialSwipeAction.alerts) {
-                                      await ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].toggleMute(
+                                      ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].toggleMute(
                                           ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].muteType != "mute");
                                       if (this.mounted) setState(() {});
                                     } else if (SettingsManager().settings.materialLeftAction.value ==
@@ -520,7 +520,7 @@ class _SamsungState extends State<SamsungConversationList> {
                                   } else {
                                     if (SettingsManager().settings.materialRightAction.value ==
                                         MaterialSwipeAction.pin) {
-                                      await ChatBloc()
+                                      ChatBloc()
                                           .chats
                                           .archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]
                                           .togglePin(!ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isPinned!);
@@ -528,7 +528,7 @@ class _SamsungState extends State<SamsungConversationList> {
                                       if (this.mounted) setState(() {});
                                     } else if (SettingsManager().settings.materialRightAction.value ==
                                         MaterialSwipeAction.alerts) {
-                                      await ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].toggleMute(
+                                      ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].toggleMute(
                                           ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].muteType != "mute");
                                       if (this.mounted) setState(() {});
                                     } else if (SettingsManager().settings.materialRightAction.value ==
@@ -644,11 +644,11 @@ class _SamsungState extends State<SamsungConversationList> {
                                 key: UniqueKey(),
                                 // Provide a function that tells the app
                                 // what to do after an item has been swiped away.
-                                onDismissed: (direction) async {
+                                onDismissed: (direction) {
                                   if (direction == DismissDirection.endToStart) {
                                     if (SettingsManager().settings.materialLeftAction.value ==
                                         MaterialSwipeAction.pin) {
-                                      await ChatBloc()
+                                      ChatBloc()
                                           .chats
                                           .archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]
                                           .togglePin(!ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isPinned!);
@@ -656,7 +656,7 @@ class _SamsungState extends State<SamsungConversationList> {
                                       if (this.mounted) setState(() {});
                                     } else if (SettingsManager().settings.materialLeftAction.value ==
                                         MaterialSwipeAction.alerts) {
-                                      await ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].toggleMute(
+                                      ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].toggleMute(
                                           ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].muteType != "mute");
                                       if (this.mounted) setState(() {});
                                     } else if (SettingsManager().settings.materialLeftAction.value ==
@@ -679,7 +679,7 @@ class _SamsungState extends State<SamsungConversationList> {
                                   } else {
                                     if (SettingsManager().settings.materialRightAction.value ==
                                         MaterialSwipeAction.pin) {
-                                      await ChatBloc()
+                                      ChatBloc()
                                           .chats
                                           .archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]
                                           .togglePin(!ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isPinned!);
@@ -687,7 +687,7 @@ class _SamsungState extends State<SamsungConversationList> {
                                       if (this.mounted) setState(() {});
                                     } else if (SettingsManager().settings.materialRightAction.value ==
                                         MaterialSwipeAction.alerts) {
-                                      await ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].toggleMute(
+                                      ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].toggleMute(
                                           ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].muteType != "mute");
                                       if (this.mounted) setState(() {});
                                     } else if (SettingsManager().settings.materialRightAction.value ==

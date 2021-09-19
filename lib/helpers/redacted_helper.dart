@@ -1,6 +1,6 @@
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/widgets.dart';
 
 String getContactName(BuildContext context, String? contactTitle, String? contactAddress, {Chat? currentChat}) {

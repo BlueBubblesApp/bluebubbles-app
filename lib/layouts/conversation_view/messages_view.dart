@@ -17,8 +17,7 @@ import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -45,7 +44,7 @@ class MessagesView extends StatefulWidget {
   MessagesViewState createState() => MessagesViewState();
 }
 
-class MessagesViewState extends State<MessagesView> with TickerProviderStateMixin {
+class MessagesViewState extends State<MessagesView> with TickerProviderStateMixin, WidgetsBindingObserver {
   Completer<LoadMessageResult>? loader;
   bool noMoreMessages = false;
   bool noMoreLocalMessages = false;
@@ -74,6 +73,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
   bool get showSmartReplies =>
       SettingsManager().settings.smartReply.value && !kIsWeb && !kIsDesktop &&
       (!SettingsManager().settings.redactedMode.value || !SettingsManager().settings.hideMessageContent.value);
+  bool widgetsBuilt = false;
 
   @override
   void initState() {
@@ -109,11 +109,10 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
             loadedPages = [];
 
             // Reload the state after refreshing
-            widget.messageBloc!.refresh().then((_) {
-              if (this.mounted) {
-                setState(() {});
-              }
-            });
+            widget.messageBloc!.refresh();
+            if (this.mounted) {
+              setState(() {});
+            }
           }
         }
       } else if (event["type"] == "add-custom-smartreply") {
@@ -126,6 +125,12 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
           setState(() {});
         }
       }
+    });
+
+    WidgetsBinding.instance!.addObserver(this);
+
+    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      widgetsBuilt = true;
     });
 
     if (widget.initComplete != null) widget.initComplete!();
@@ -254,7 +259,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
       currentChat!.getAttachmentsForMessage(event.message);
 
       if (event.message!.hasAttachments) {
-        await currentChat!.updateChatAttachments();
+        currentChat!.updateChatAttachments();
         if (this.mounted) setState(() {});
       }
 
@@ -273,7 +278,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
       _messages = event.messages;
       _messages.forEach((message) {
         currentChat?.getAttachmentsForMessage(message);
-        currentChat?.messageMarkers.updateMessageMarkers(message);
+        if (widgetsBuilt) currentChat?.messageMarkers.updateMessageMarkers(message);
       });
 
       // This needs to be in reverse so that the oldest message gets added first

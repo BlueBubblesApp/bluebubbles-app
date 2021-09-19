@@ -12,6 +12,7 @@ import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:get/get.dart';
 import 'package:sqflite/sqflite.dart';
 
+
 class Settings {
   final RxString guidAuthKey = "".obs;
   final RxString serverAddress = "".obs;

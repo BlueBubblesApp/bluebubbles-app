@@ -1,0 +1,711 @@
+{
+  "_note1": "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
+  "_note2": "ObjectBox manages crucial IDs for your object model. See docs for details.",
+  "_note3": "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs.",
+  "entities": [
+    {
+      "id": "1:2065429213543838585",
+      "lastPropertyId": "16:396659320299238462",
+      "name": "Attachment",
+      "properties": [
+        {
+          "id": "1:1511554263230297197",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:2178477183992316459",
+          "name": "originalROWID",
+          "type": 6
+        },
+        {
+          "id": "3:895699641082029197",
+          "name": "guid",
+          "type": 9,
+          "flags": 2080,
+          "indexId": "1:1274831956298930522"
+        },
+        {
+          "id": "4:6047065591027683672",
+          "name": "uti",
+          "type": 9
+        },
+        {
+          "id": "5:8856072667843358452",
+          "name": "mimeType",
+          "type": 9
+        },
+        {
+          "id": "6:2957720185959973011",
+          "name": "transferState",
+          "type": 9
+        },
+        {
+          "id": "7:2217746424870068461",
+          "name": "isOutgoing",
+          "type": 1
+        },
+        {
+          "id": "8:5943814485048944977",
+          "name": "transferName",
+          "type": 9
+        },
+        {
+          "id": "9:2227654525168892418",
+          "name": "totalBytes",
+          "type": 6
+        },
+        {
+          "id": "10:226618350909080419",
+          "name": "isSticker",
+          "type": 1
+        },
+        {
+          "id": "11:7216531465575414151",
+          "name": "hideAttachment",
+          "type": 1
+        },
+        {
+          "id": "12:8776591297555015451",
+          "name": "blurhash",
+          "type": 9
+        },
+        {
+          "id": "13:171869175523313868",
+          "name": "height",
+          "type": 6
+        },
+        {
+          "id": "14:2450795986531805384",
+          "name": "width",
+          "type": 6
+        },
+        {
+          "id": "15:5516087858141459065",
+          "name": "bytes",
+          "type": 23
+        },
+        {
+          "id": "16:396659320299238462",
+          "name": "webUrl",
+          "type": 9
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "2:1619417403499629985",
+      "lastPropertyId": "3:6032584536718919119",
+      "name": "AttachmentMessageJoin",
+      "properties": [
+        {
+          "id": "1:977456607049558352",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:2275379924137725049",
+          "name": "attachmentId",
+          "type": 6
+        },
+        {
+          "id": "3:6032584536718919119",
+          "name": "messageId",
+          "type": 6
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "3:9017250848141753702",
+      "lastPropertyId": "19:4234470006262207812",
+      "name": "Chat",
+      "properties": [
+        {
+          "id": "1:297833828287439140",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:8252364803444354563",
+          "name": "originalROWID",
+          "type": 6
+        },
+        {
+          "id": "3:318412581013308394",
+          "name": "guid",
+          "type": 9,
+          "flags": 2080,
+          "indexId": "2:4712841847590882583"
+        },
+        {
+          "id": "4:4143511131199296878",
+          "name": "style",
+          "type": 6
+        },
+        {
+          "id": "5:9099706644901956287",
+          "name": "chatIdentifier",
+          "type": 9
+        },
+        {
+          "id": "6:9117376896883192460",
+          "name": "isArchived",
+          "type": 1
+        },
+        {
+          "id": "7:172817608355620424",
+          "name": "isFiltered",
+          "type": 1
+        },
+        {
+          "id": "8:2937507201037513710",
+          "name": "muteType",
+          "type": 9
+        },
+        {
+          "id": "9:3354772670242853270",
+          "name": "muteArgs",
+          "type": 9
+        },
+        {
+          "id": "10:3734639758158862923",
+          "name": "isPinned",
+          "type": 1
+        },
+        {
+          "id": "11:2937716363156975856",
+          "name": "hasUnreadMessage",
+          "type": 1
+        },
+        {
+          "id": "12:526293286661780207",
+          "name": "latestMessageDate",
+          "type": 10
+        },
+        {
+          "id": "13:4983193271800913860",
+          "name": "latestMessageText",
+          "type": 9
+        },
+        {
+          "id": "14:130925169208448361",
+          "name": "fakeLatestMessageText",
+          "type": 9
+        },
+        {
+          "id": "15:4266631519717388837",
+          "name": "title",
+          "type": 9
+        },
+        {
+          "id": "16:1181486482872028222",
+          "name": "displayName",
+          "type": 9
+        },
+        {
+          "id": "17:8308083337629235136",
+          "name": "fakeParticipants",
+          "type": 30
+        },
+        {
+          "id": "18:3666111733726849006",
+          "name": "customAvatarPath",
+          "type": 9
+        },
+        {
+          "id": "19:4234470006262207812",
+          "name": "pinIndex",
+          "type": 6
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "4:4450451951397945314",
+      "lastPropertyId": "3:8224006478743498888",
+      "name": "ChatHandleJoin",
+      "properties": [
+        {
+          "id": "1:7725198227526963956",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:4236934751716676271",
+          "name": "chatId",
+          "type": 6
+        },
+        {
+          "id": "3:8224006478743498888",
+          "name": "handleId",
+          "type": 6
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "5:1700370751061310153",
+      "lastPropertyId": "3:4510870919779209192",
+      "name": "ChatMessageJoin",
+      "properties": [
+        {
+          "id": "1:7392117204304535224",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:5590979280237537790",
+          "name": "chatId",
+          "type": 6
+        },
+        {
+          "id": "3:4510870919779209192",
+          "name": "messageId",
+          "type": 6
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "6:5390756932993878582",
+      "lastPropertyId": "7:4724783625435560776",
+      "name": "FCMData",
+      "properties": [
+        {
+          "id": "1:843767696595301490",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:4393840145875077709",
+          "name": "projectID",
+          "type": 9
+        },
+        {
+          "id": "3:7264245173656870052",
+          "name": "storageBucket",
+          "type": 9
+        },
+        {
+          "id": "4:3998672972942379984",
+          "name": "apiKey",
+          "type": 9
+        },
+        {
+          "id": "5:3295687739104688136",
+          "name": "firebaseURL",
+          "type": 9
+        },
+        {
+          "id": "6:8856592728926530171",
+          "name": "clientID",
+          "type": 9
+        },
+        {
+          "id": "7:4724783625435560776",
+          "name": "applicationID",
+          "type": 9
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "7:1716592500251888002",
+      "lastPropertyId": "7:549408491521049277",
+      "name": "Handle",
+      "properties": [
+        {
+          "id": "1:683096758365457558",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:191994702917313644",
+          "name": "originalROWID",
+          "type": 6
+        },
+        {
+          "id": "3:2544513926695389102",
+          "name": "address",
+          "type": 9,
+          "flags": 2080,
+          "indexId": "3:9132680703832217528"
+        },
+        {
+          "id": "4:8884526609844353946",
+          "name": "country",
+          "type": 9
+        },
+        {
+          "id": "5:3522974353771163433",
+          "name": "color",
+          "type": 9
+        },
+        {
+          "id": "6:57094839621772204",
+          "name": "defaultPhone",
+          "type": 9
+        },
+        {
+          "id": "7:549408491521049277",
+          "name": "uncanonicalizedId",
+          "type": 9
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "8:7018417362319461469",
+      "lastPropertyId": "36:861137718943970360",
+      "name": "Message",
+      "properties": [
+        {
+          "id": "1:8075530627827069587",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:614139107975861462",
+          "name": "originalROWID",
+          "type": 6
+        },
+        {
+          "id": "3:4854433937459051257",
+          "name": "guid",
+          "type": 9,
+          "flags": 2080,
+          "indexId": "4:1267669174868830776"
+        },
+        {
+          "id": "4:5895852794473158582",
+          "name": "handleId",
+          "type": 6
+        },
+        {
+          "id": "5:3012867958425492030",
+          "name": "otherHandle",
+          "type": 6
+        },
+        {
+          "id": "6:7948534483488402365",
+          "name": "text",
+          "type": 9
+        },
+        {
+          "id": "7:7283017531024613481",
+          "name": "subject",
+          "type": 9
+        },
+        {
+          "id": "8:6884032144126638879",
+          "name": "country",
+          "type": 9
+        },
+        {
+          "id": "9:6176853844548763600",
+          "name": "dateCreated",
+          "type": 10
+        },
+        {
+          "id": "10:9009878668681532753",
+          "name": "dateRead",
+          "type": 10
+        },
+        {
+          "id": "11:7709208038424465489",
+          "name": "dateDelivered",
+          "type": 10
+        },
+        {
+          "id": "12:3701890428713468427",
+          "name": "isFromMe",
+          "type": 1
+        },
+        {
+          "id": "13:735091670169932122",
+          "name": "isDelayed",
+          "type": 1
+        },
+        {
+          "id": "14:3235490937430157681",
+          "name": "isAutoReply",
+          "type": 1
+        },
+        {
+          "id": "15:8126854405033462697",
+          "name": "isSystemMessage",
+          "type": 1
+        },
+        {
+          "id": "16:82657294837234349",
+          "name": "isServiceMessage",
+          "type": 1
+        },
+        {
+          "id": "17:8117526523647192200",
+          "name": "isForward",
+          "type": 1
+        },
+        {
+          "id": "18:8413228078295213488",
+          "name": "isArchived",
+          "type": 1
+        },
+        {
+          "id": "19:6626097234365517692",
+          "name": "hasDdResults",
+          "type": 1
+        },
+        {
+          "id": "20:939052079357746566",
+          "name": "cacheRoomnames",
+          "type": 9
+        },
+        {
+          "id": "21:3171806281750931518",
+          "name": "isAudioMessage",
+          "type": 1
+        },
+        {
+          "id": "22:4464802064429422611",
+          "name": "datePlayed",
+          "type": 10
+        },
+        {
+          "id": "23:5542585324402061600",
+          "name": "itemType",
+          "type": 6
+        },
+        {
+          "id": "24:572939669859263693",
+          "name": "groupTitle",
+          "type": 9
+        },
+        {
+          "id": "25:3185617998247778963",
+          "name": "groupActionType",
+          "type": 6
+        },
+        {
+          "id": "26:769751664576031863",
+          "name": "isExpired",
+          "type": 1
+        },
+        {
+          "id": "27:4077882089992206144",
+          "name": "balloonBundleId",
+          "type": 9
+        },
+        {
+          "id": "28:7238968990385881383",
+          "name": "associatedMessageGuid",
+          "type": 9
+        },
+        {
+          "id": "29:2316337434845256835",
+          "name": "associatedMessageType",
+          "type": 9
+        },
+        {
+          "id": "30:3331740086129339824",
+          "name": "expressiveSendStyleId",
+          "type": 9
+        },
+        {
+          "id": "31:4741144250901643688",
+          "name": "timeExpressiveSendStyleId",
+          "type": 10
+        },
+        {
+          "id": "32:1646799728535719055",
+          "name": "hasAttachments",
+          "type": 1
+        },
+        {
+          "id": "33:2482744653836740926",
+          "name": "hasReactions",
+          "type": 1
+        },
+        {
+          "id": "34:3558704390717166171",
+          "name": "dateDeleted",
+          "type": 10
+        },
+        {
+          "id": "35:6156393125011218685",
+          "name": "bigEmoji",
+          "type": 1
+        },
+        {
+          "id": "36:861137718943970360",
+          "name": "error",
+          "type": 6
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "9:2687525031757751054",
+      "lastPropertyId": "5:7323923293952799044",
+      "name": "ScheduledMessage",
+      "properties": [
+        {
+          "id": "1:4613854641642738901",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:5956431335972854454",
+          "name": "chatGuid",
+          "type": 9
+        },
+        {
+          "id": "3:8252934173466443273",
+          "name": "message",
+          "type": 9
+        },
+        {
+          "id": "4:7658149783933949012",
+          "name": "epochTime",
+          "type": 6
+        },
+        {
+          "id": "5:7323923293952799044",
+          "name": "completed",
+          "type": 1
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "10:7380334062783734091",
+      "lastPropertyId": "6:205399809771216750",
+      "name": "ThemeEntry",
+      "properties": [
+        {
+          "id": "1:3364349183457626105",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:378260260370164099",
+          "name": "themeId",
+          "type": 6
+        },
+        {
+          "id": "3:1711484628702995090",
+          "name": "name",
+          "type": 9
+        },
+        {
+          "id": "4:5820153989252425651",
+          "name": "isFont",
+          "type": 1
+        },
+        {
+          "id": "5:357044983311472123",
+          "name": "fontSize",
+          "type": 6
+        },
+        {
+          "id": "6:205399809771216750",
+          "name": "dbColor",
+          "type": 9
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "11:1550674322389882817",
+      "lastPropertyId": "7:63810393639568631",
+      "name": "ThemeObject",
+      "properties": [
+        {
+          "id": "1:115725376021487478",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:8802290647274083834",
+          "name": "name",
+          "type": 9,
+          "flags": 2080,
+          "indexId": "5:9084358340755218005"
+        },
+        {
+          "id": "3:5487740941825196608",
+          "name": "selectedLightTheme",
+          "type": 1
+        },
+        {
+          "id": "4:2406258303326474883",
+          "name": "selectedDarkTheme",
+          "type": 1
+        },
+        {
+          "id": "5:245348312617052981",
+          "name": "gradientBg",
+          "type": 1
+        },
+        {
+          "id": "6:3858153704624052397",
+          "name": "previousLightTheme",
+          "type": 1
+        },
+        {
+          "id": "7:63810393639568631",
+          "name": "previousDarkTheme",
+          "type": 1
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "12:3483028772414651169",
+      "lastPropertyId": "3:1439376349402210172",
+      "name": "ThemeValueJoin",
+      "properties": [
+        {
+          "id": "1:5203631054946486128",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:2649653758394363860",
+          "name": "themeId",
+          "type": 6
+        },
+        {
+          "id": "3:1439376349402210172",
+          "name": "themeValueId",
+          "type": 6
+        }
+      ],
+      "relations": []
+    }
+  ],
+  "lastEntityId": "12:3483028772414651169",
+  "lastIndexId": "5:9084358340755218005",
+  "lastRelationId": "0:0",
+  "lastSequenceId": "0:0",
+  "modelVersion": 5,
+  "modelVersionParserMinimum": 5,
+  "retiredEntityUids": [],
+  "retiredIndexUids": [],
+  "retiredPropertyUids": [],
+  "retiredRelationUids": [],
+  "version": 1
+}

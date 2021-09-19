@@ -4,7 +4,6 @@ import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/helpers/themes.dart';
@@ -18,7 +17,7 @@ import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
-import 'package:bluebubbles/repository/models/theme_object.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -240,26 +239,26 @@ class ThemePanel extends GetView<ThemePanelController> {
                             try {
                               await MethodChannelInterface().invokeMethod("start-notif-listener");
                               if (val) {
-                                var allThemes = await ThemeObject.getThemes();
-                                var currentLight = await ThemeObject.getLightTheme();
-                                var currentDark = await ThemeObject.getDarkTheme();
+                                var allThemes = ThemeObject.getThemes();
+                                var currentLight = ThemeObject.getLightTheme();
+                                var currentDark = ThemeObject.getDarkTheme();
                                 currentLight.previousLightTheme = true;
                                 currentDark.previousDarkTheme = true;
-                                await currentLight.save();
-                                await currentDark.save();
+                                currentLight.save();
+                                currentDark.save();
                                 SettingsManager().saveSelectedTheme(context,
                                     selectedLightTheme:
                                         allThemes.firstWhere((element) => element.name == "Music Theme (Light)"),
                                     selectedDarkTheme:
                                         allThemes.firstWhere((element) => element.name == "Music Theme (Dark)"));
                               } else {
-                                var allThemes = await ThemeObject.getThemes();
+                                var allThemes = ThemeObject.getThemes();
                                 var previousLight = allThemes.firstWhere((e) => e.previousLightTheme);
                                 var previousDark = allThemes.firstWhere((e) => e.previousDarkTheme);
                                 previousLight.previousLightTheme = false;
                                 previousDark.previousDarkTheme = false;
-                                await previousLight.save();
-                                await previousDark.save();
+                                previousLight.save();
+                                previousDark.save();
                                 SettingsManager().saveSelectedTheme(context,
                                     selectedLightTheme: previousLight, selectedDarkTheme: previousDark);
                               }

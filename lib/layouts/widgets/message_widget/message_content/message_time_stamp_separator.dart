@@ -1,5 +1,5 @@
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
 
 class MessageTimeStampSeparator extends StatelessWidget {

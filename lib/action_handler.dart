@@ -19,17 +19,13 @@ import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/outgoing_queue.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/database.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
-import 'package:sqflite/sqflite.dart';
+
 
 /// This helper class allows us to section off all socket "actions"
 /// These actions allow us to interact with the server, whether it
@@ -103,11 +99,7 @@ class ActionHandler {
 
       // Make sure to save the chat
       // If we already have the ID, we don't have to wait to resave it
-      if (chat.id == null) {
-        await chat.save();
-      } else {
-        chat.save();
-      }
+      chat.save();
 
       // Send all the messages
       messages.forEachIndexed((index, message) async {
@@ -134,11 +126,7 @@ class ActionHandler {
 
       // Make sure to save the chat
       // If we already have the ID, we don't have to wait to resave it
-      if (chat.id == null) {
-        await chat.save();
-      } else {
-        chat.save();
-      }
+      chat.save();
 
       // Add the message to the UI and DB
       NewMessageManager().addMessage(chat, message, outgoing: true);
@@ -166,7 +154,7 @@ class ActionHandler {
         // If there is an error, replace the temp value with an error
         if (response['status'] != 200) {
           message.guid = message.guid!.replaceAll("temp", "error-${response['error']['message']}");
-          message.error.value =
+          message.error =
               response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
 
           await Message.replaceMessage(tempGuid, message);
@@ -191,7 +179,7 @@ class ActionHandler {
         String? tempGuid = message.guid;
         message.guid = message.guid!
             .replaceAll("temp", "error-Connection timeout, please check your internet connection and try again");
-        message.error.value = MessageError.BAD_REQUEST.code;
+        message.error = MessageError.BAD_REQUEST.code;
         CurrentChat? currChat = CurrentChat.activeChat;
         if (!LifeCycleManager().isAlive || currChat?.chat.guid != chat.guid) {
           NotificationManager().createFailedToSendMessage();
@@ -274,13 +262,13 @@ class ActionHandler {
   /// ```
   static Future<void> retryMessage(Message message) async {
     // Don't allow us to retry an un-errored message
-    if (message.error.value == 0) return;
+    if (message.error == 0) return;
 
     // Get message's chat
-    Chat? chat = await Message.getChat(message);
+    Chat? chat = Message.getChat(message);
     if (chat == null) throw ("Could not find chat!");
 
-    await message.fetchAttachments();
+    message.fetchAttachments();
     for (int i = 0; i < message.attachments!.length; i++) {
       String appDocPath = SettingsManager().appDocDir.path;
       String pathName =
@@ -327,13 +315,12 @@ class ActionHandler {
 
     // Reset error, guid, and send date
     message.id = null;
-    message.error.value = 0;
+    message.error = 0;
     message.guid = tempGuid;
     message.dateCreated = DateTime.now();
 
     // Delete the old message
-    Map<String, dynamic> msgOpts = {'guid': oldGuid};
-    await Message.delete(msgOpts);
+    Message.delete(oldGuid);
     NewMessageManager().removeMessage(chat, oldGuid);
 
     // Add the new message
@@ -345,69 +332,11 @@ class ActionHandler {
       if (response['status'] != 200) {
         NewMessageManager().removeMessage(chat, message.guid);
         message.guid = message.guid!.replaceAll("temp", "error-${response['error']['message']}");
-        message.error.value = response['status'] == 400 ? 1001 : 1002;
+        message.error = response['status'] == 400 ? 1001 : 1002;
         await Message.replaceMessage(tempGuid, message);
         NewMessageManager().addMessage(chat, message);
       }
     });
-  }
-
-  /// Resyncs a [chat] by removing all currently saved messages
-  /// for the given [chat], then redownloads its' messages from the server
-  ///
-  /// ```dart
-  /// resyncChat(chatObj)
-  /// ```
-  static Future<void> resyncChat(Chat chat, MessageBloc messageBloc) async {
-    final Database? db = await DBProvider.db.database;
-    if (db == null) return;
-    await chat.save();
-
-    // Fetch messages associated with the chat
-    var items = await db.rawQuery(
-        "SELECT"
-        " ROWID,"
-        " chatId,"
-        " messageId"
-        " FROM chat_message_join"
-        " WHERE chatId = ?",
-        [chat.id]);
-
-    // If there are no messages, return
-    Logger.info("Deleting ${items.length} messages");
-    if (isNullOrEmpty(items)!) return;
-
-    Batch batch = db.batch();
-    for (Map<String, dynamic> message in items) {
-      // Find all attachments associated with a message
-      var attachments = await db.rawQuery(
-          "SELECT"
-          " ROWID,"
-          " attachmentId,"
-          " messageId"
-          " FROM attachment_message_join"
-          " WHERE messageId = ?",
-          [message["messageId"]]);
-
-      // 1 -> Delete all attachments associated with a message
-      for (Map<String, dynamic> attachment in attachments) {
-        batch.delete("attachment", where: "ROWID = ?", whereArgs: [attachment["attachmentId"]]);
-
-        batch.delete("attachment_message_join", where: "ROWID = ?", whereArgs: [attachment["ROWID"]]);
-      }
-
-      // 2 -> Delete all messages associated with a chat
-      batch.delete("message", where: "ROWID = ?", whereArgs: [message["messageId"]]);
-      // 3 -> Delete all chat_message_join entries associated with a chat
-      batch.delete("chat_message_join", where: "ROWID = ?", whereArgs: [message["ROWID"]]);
-    }
-
-    // Commit the deletes
-    await batch.commit(noResult: true, continueOnError: true);
-
-    // Now, let's re-fetch the messages for the chat
-    await messageBloc.loadMessageChunk(0, includeReactions: false);
-    ChatBloc().refreshChats();
   }
 
   /// Handles the ingestion of a 'updated-message' event. It takes the
@@ -429,7 +358,7 @@ class ActionHandler {
 
     Chat? chat;
     if (data["chats"] == null && updatedMessage.id != null) {
-      chat = await Message.getChat(updatedMessage);
+      chat = Message.getChat(updatedMessage);
     } else if (data["chats"] != null) {
       chat = Chat.fromMap(data["chats"][0]);
     }
@@ -445,10 +374,15 @@ class ActionHandler {
   static Future<void> handleChatStatusChange(String? chatGuid, bool? status) async {
     if (chatGuid == null) return;
 
-    Chat? chat = await Chat.findOne({"guid": chatGuid});
+    Chat? chat;
+    if (kIsWeb) {
+      chat = await Chat.findOneWeb(guid: chatGuid);
+    } else {
+      chat = Chat.findOne(guid: chatGuid);
+    }
     if (chat == null) return;
 
-    await chat.toggleHasUnread(status!);
+    chat.toggleHasUnread(status!);
     ChatBloc().updateChat(chat);
   }
 
@@ -471,13 +405,17 @@ class ActionHandler {
 
     // If we are told to check if the chat exists, do it
     if (checkIfExists) {
-      currentChat = await Chat.findOne({"guid": newChat.guid});
+      if (kIsWeb) {
+        currentChat = await Chat.findOneWeb(guid: newChat.guid);
+      } else {
+        currentChat = Chat.findOne(guid: newChat.guid);
+      }
     }
 
     // Save the new chat only if current chat isn't found
     if (currentChat == null) {
       Logger.info("Chat did not exist. Saving.", tag: "Actions-HandleChat");
-      await newChat.save();
+      newChat.save();
     }
 
     // If we already have a chat, don't fetch the participants
@@ -510,14 +448,14 @@ class ActionHandler {
     // Handle message differently depending on if there is a temp GUID match
     if (data.containsKey("tempGuid")) {
       // Check if the GUID exists
-      Message? existing = await Message.findOne({'guid': data['guid']});
+      Message? existing = Message.findOne(guid: data['guid']);
 
       // If the GUID exists already, delete the temporary entry
       // Otherwise, replace the temp message
       if (existing != null) {
         Logger.info("Deleting message: [${data["text"]}] - ${data["guid"]} - ${data["tempGuid"]}",
             tag: "MessageStatus");
-        await Message.delete({'guid': data['tempGuid']});
+        Message.delete(data['tempGuid']);
         NewMessageManager().removeMessage(chats.first, data['tempGuid']);
       } else {
         await Message.replaceMessage(data["tempGuid"], message, chat: chats.first);
@@ -527,7 +465,7 @@ class ActionHandler {
           Attachment file = Attachment.fromMap(attachmentItem);
 
           try {
-            await Attachment.replaceAttachment(data["tempGuid"], file);
+            Attachment.replaceAttachment(data["tempGuid"], file);
           } catch (ex) {
             Logger.warn("Attachment's Old GUID doesn't exist. Skipping");
           }
@@ -556,7 +494,7 @@ class ActionHandler {
           message.handle?.defaultPhone = handle.defaultPhone;
         }
 
-        await chat.getParticipants();
+        chat.getParticipants();
         // Handle the notification based on the message and chat
         await MessageHelper.handleNotification(message, chat);
 
@@ -564,7 +502,7 @@ class ActionHandler {
         await chat.addMessage(message);
 
         if (message.itemType == 2 && message.groupTitle != null) {
-          chat = await chat.changeName(message.groupTitle);
+          chat = chat.changeName(message.groupTitle);
           ChatBloc().updateChat(chat);
         }
 
@@ -589,7 +527,7 @@ class ActionHandler {
         if (!isHeadless) NewMessageManager().addMessage(element, message);
       });
     } else if (NotificationManager().hasProcessed(data["guid"])) {
-      Message? existing = await Message.findOne({'guid': data['guid']});
+      Message? existing = Message.findOne(guid: data['guid']);
       if (existing != null) {
         handleUpdatedMessage(data, headless: isHeadless);
       }

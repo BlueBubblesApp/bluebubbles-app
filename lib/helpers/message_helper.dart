@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:universal_html/html.dart' as html;
 
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -12,10 +11,7 @@ import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/message.dart';
-import 'package:contacts_service/contacts_service.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'emoji_regex.dart';
@@ -47,7 +43,7 @@ class MessageHelper {
     if (chat?.guid != null) {
       chats[chat!.guid!] = chat;
       if (chat.id == null) {
-        await chat.save();
+        chat.save();
       }
     }
 
@@ -68,7 +64,7 @@ class MessageHelper {
         if (msgChat != null && chats.containsKey(msgChat.guid)) {
           msgChat = chats[msgChat.guid];
         } else if (msgChat?.guid != null) {
-          await msgChat!.save();
+          msgChat!.save();
           chats[msgChat.guid!] = msgChat;
         }
       }
@@ -77,7 +73,7 @@ class MessageHelper {
       if (msgChat == null) continue;
 
       Message message = Message.fromMap(item);
-      Message? existing = await Message.findOne({"guid": message.guid});
+      Message? existing = Message.findOne(guid: message.guid);
       await msgChat.addMessage(
         message,
         changeUnreadStatus: notifyForNewMessage,
@@ -143,7 +139,7 @@ class MessageHelper {
     if (chat?.guid != null) {
       chats[chat!.guid!] = chat;
       if (chat.id == null) {
-        await chat.save();
+        chat.save();
       }
     }
 
@@ -159,7 +155,7 @@ class MessageHelper {
         if (msgChat != null && chats.containsKey(msgChat.guid)) {
           msgChat = chats[msgChat.guid];
         } else if (msgChat?.guid != null) {
-          await msgChat!.save();
+          msgChat!.save();
           chats[msgChat.guid!] = msgChat;
         }
       }
@@ -209,7 +205,7 @@ class MessageHelper {
       {bool force = false, int visibility = NotificationVisibility.PUBLIC}) async {
     // See if there is an existing message for the given GUID
     Message? existingMessage;
-    if (!force) existingMessage = await Message.findOne({"guid": message.guid});
+    if (!force) existingMessage = Message.findOne(guid: message.guid);
     // If we've already processed the GUID, skip it
     if (NotificationManager().hasProcessed(message.guid!)) return;
     // Add the message to the "processed" list
@@ -217,7 +213,7 @@ class MessageHelper {
     // Handle all the cases that would mean we don't show the notification
     if (!SettingsManager().settings.finishedSetup.value) return; // Don't notify if not fully setup
     if (existingMessage != null) return;
-    if (await chat.shouldMuteNotification(message)) return; // Don''t notify if the chat is muted
+    if (chat.shouldMuteNotification(message)) return; // Don''t notify if the chat is muted
     if (message.isFromMe! || message.handle == null) return; // Don't notify if the text is from me
 
     CurrentChat? currChat = CurrentChat.activeChat;
@@ -354,7 +350,7 @@ class MessageHelper {
       if (!message.isFromMe! && message.handle != null) {
         Contact? contact = await ContactManager().getCachedContact(message.handle);
         if (contact != null) {
-          sender = contact.givenName ?? contact.displayName;
+          sender = contact.structuredName?.givenName ?? contact.displayName;
         }
       }
 

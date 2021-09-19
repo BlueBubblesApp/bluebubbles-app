@@ -1,6 +1,5 @@
 import 'dart:async';
-import 'package:bluebubbles/repository/database.dart';
-import 'package:bluebubbles/repository/models/fcm_data.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
@@ -133,9 +132,9 @@ class ConversationListState extends State<ConversationList> {
 
   void sortChats() {
     ChatBloc().chats.sort((a, b) {
-      if (a.pinIndex.value != null && b.pinIndex.value != null) return a.pinIndex.value!.compareTo(b.pinIndex.value!);
-      if (b.pinIndex.value != null) return 1;
-      if (a.pinIndex.value != null) return -1;
+      if (a.pinIndex != null && b.pinIndex != null) return a.pinIndex!.compareTo(b.pinIndex!);
+      if (b.pinIndex != null) return 1;
+      if (a.pinIndex != null) return -1;
       if (!a.isPinned! && b.isPinned!) return 1;
       if (a.isPinned! && !b.isPinned!) return -1;
       if (a.latestMessageDate == null && b.latestMessageDate == null) return 0;
@@ -190,7 +189,6 @@ class ConversationListState extends State<ConversationList> {
                       TextButton(
                         child: Text("Yes"),
                         onPressed: () async {
-                          await DBProvider.deleteDB();
                           await SettingsManager().resetConnection();
                           SettingsManager().settings.finishedSetup.value = false;
                           SocketManager().finishedSetup.sink.add(false);

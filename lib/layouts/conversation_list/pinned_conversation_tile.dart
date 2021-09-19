@@ -16,9 +16,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/typing_indicator.dart
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -95,7 +93,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
   void setNewChatData({forceUpdate: false}) async {
     // Save the current participant list and get the latest
     List<Handle> ogParticipants = widget.chat.participants;
-    await widget.chat.getParticipants();
+    widget.chat.getParticipants();
 
     // Save the current title and generate the new one
     String? ogTitle = widget.chat.title;
@@ -107,19 +105,11 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
     }
   }
 
-  Future<void> fetchParticipants() async {
-    if (isFetching) return;
-    isFetching = true;
-
+  void fetchParticipants() {
     // If our chat does not have any participants, get them
     if (isNullOrEmpty(widget.chat.participants)!) {
-      await widget.chat.getParticipants();
-      if (!isNullOrEmpty(widget.chat.participants)! && this.mounted) {
-        setState(() {});
-      }
+      widget.chat.getParticipants();
     }
-
-    isFetching = false;
   }
 
   void onTapUp(details) {
@@ -371,13 +361,11 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
                           });
                         },
                       ),
-                      FutureBuilder<Message>(
-                        future: widget.chat.latestMessageFuture,
-                        builder: (BuildContext context, AsyncSnapshot snapshot) {
+                      Builder(
+                        builder: (BuildContext context) {
                           if (!(widget.chat.hasUnreadMessage ?? false)) return Container();
                           if (showTypingIndicator.value) return Container();
-                          if (!snapshot.hasData) return Container();
-                          Message message = snapshot.data;
+                          Message message = widget.chat.latestMessageGetter;
                           if ([null, ""].contains(message.associatedMessageGuid) || (message.isFromMe ?? false)) {
                             return Container();
                           }

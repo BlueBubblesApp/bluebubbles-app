@@ -6,8 +6,8 @@ import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
-import 'package:contacts_service/contacts_service.dart';
+import 'package:bluebubbles/repository/models/models.dart';
+import 'package:fast_contacts/fast_contacts.dart' hide Contact;
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -106,17 +106,17 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
       List<Contact> contacts = ContactManager().contacts;
       if (widget.handle!.address.isEmail) {
         contactRes =
-            contacts.where((element) => element.emails!.any((e) => e.value == widget.handle!.address)).toList();
+            contacts.where((element) => element.emails.any((e) => e == widget.handle!.address)).toList();
       } else {
         contactRes =
-            contacts.where((element) => element.phones!.any((e) => e.value == widget.handle!.address)).toList();
+            contacts.where((element) => element.phones.any((e) => e == widget.handle!.address)).toList();
       }
 
       if (contactRes.length > 0) {
         contact = contactRes.first;
         if (isNullOrEmpty(contact.avatar)! && !kIsWeb && !kIsDesktop) {
           contact.avatar =
-              await ContactsService.getAvatar(contact, photoHighRes: !SettingsManager().settings.lowMemoryMode.value);
+              await FastContacts.getContactImage(contact.id);
         }
       }
     }
@@ -175,7 +175,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
                     didReset = true;
                     Navigator.of(context).pop();
                     widget.handle!.color = null;
-                    await widget.handle!.update();
+                    widget.handle!.save();
                     ContactManager().colorStreamObject.sink.add({widget.handle!.address: null});
                   },
                   child: Text("RESET"),
@@ -216,7 +216,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
       widget.handle!.color = color.value.toRadixString(16);
     }
 
-    await widget.handle!.updateColor(widget.handle!.color);
+    widget.handle!.updateColor(widget.handle!.color);
 
     ContactManager()
         .colorStreamObject

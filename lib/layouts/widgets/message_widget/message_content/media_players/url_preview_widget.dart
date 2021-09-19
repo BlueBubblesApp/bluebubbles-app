@@ -10,10 +10,8 @@ import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/metadata_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
@@ -94,7 +92,7 @@ class UrlPreviewController extends GetxController with SingleGetTickerProviderMi
 
     // Save the metadata
     if (data.value != null) {
-      CurrentChat.of(context)!.urlPreviews[message.text!] = data.value!;
+      CurrentChat.activeChat?.urlPreviews[message.text!] = data.value!;
     }
   }
 }

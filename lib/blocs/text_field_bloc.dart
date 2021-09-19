@@ -1,8 +1,4 @@
-import 'dart:typed_data';
-
 import 'package:file_picker/file_picker.dart';
-import 'package:universal_io/io.dart';
-
 import 'package:flutter/cupertino.dart';
 
 /// [TextFieldBloc] holds in memory all of the data for all of the textfields.

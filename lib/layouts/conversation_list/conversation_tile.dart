@@ -21,9 +21,7 @@ import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -114,7 +112,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
   void setNewChatData({forceUpdate: false}) async {
     // Save the current participant list and get the latest
     List<Handle> ogParticipants = widget.chat.participants;
-    await widget.chat.getParticipants();
+    widget.chat.getParticipants();
 
     // Save the current title and generate the new one
     String? ogTitle = widget.chat.title;
@@ -126,19 +124,11 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
     }
   }
 
-  Future<void> fetchParticipants() async {
-    if (isFetching) return;
-    isFetching = true;
-
+  void fetchParticipants() {
     // If our chat does not have any participants, get them
     if (isNullOrEmpty(widget.chat.participants)!) {
-      await widget.chat.getParticipants();
-      if (!isNullOrEmpty(widget.chat.participants)! && this.mounted) {
-        setState(() {});
-      }
+      widget.chat.getParticipants();
     }
-
-    isFetching = false;
   }
 
   void onTapUp(details) {
@@ -173,8 +163,8 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
                 color: Colors.yellow[800],
                 foregroundColor: Colors.white,
                 icon: widget.chat.isPinned! ? CupertinoIcons.pin_slash : CupertinoIcons.pin,
-                onTap: () async {
-                  await widget.chat.togglePin(!widget.chat.isPinned!);
+                onTap: () {
+                  widget.chat.togglePin(!widget.chat.isPinned!);
                   EventDispatcher().emit("refresh", null);
                   if (this.mounted) setState(() {});
                 },
@@ -186,8 +176,8 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
                 caption: widget.chat.muteType == "mute" ? 'Show Alerts' : 'Hide Alerts',
                 color: Colors.purple[700],
                 icon: widget.chat.muteType == "mute" ? CupertinoIcons.bell : CupertinoIcons.bell_slash,
-                onTap: () async {
-                  await widget.chat.toggleMute(widget.chat.muteType != "mute");
+                onTap: () {
+                  widget.chat.toggleMute(widget.chat.muteType != "mute");
                   if (this.mounted) setState(() {});
                 },
               ),
@@ -250,7 +240,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
       initialData: widget.chat.latestMessageText,
       future: widget.chat.latestMessage != null
           ? MessageHelper.getNotificationText(widget.chat.latestMessage!)
-          : Future.value(widget.chat.latestMessageText),
+          : Future.value(widget.chat.latestMessageText ?? ""),
       builder: (BuildContext context, AsyncSnapshot snapshot) {
         String latestText = snapshot.data ?? "";
         return Obx(
@@ -347,45 +337,30 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
           overflow: TextOverflow.clip)
       : ConstrainedBox(
           constraints: BoxConstraints(maxWidth: 100.0),
-          child: FutureBuilder<Message>(
-            initialData: widget.chat.latestMessage,
-            future: widget.chat.latestMessageFuture,
-            builder: (BuildContext builder, AsyncSnapshot snapshot) {
-              return Obx(
-                () {
-                  Message? message = snapshot.data;
-                  MessageMarkers? markers =
-                      CurrentChat.getCurrentChat(widget.chat)?.messageMarkers.markers.value ?? null.obs.value;
-                  Indicator show = shouldShow(
-                      message, markers?.myLastMessage, markers?.lastReadMessage, markers?.lastDeliveredMessage);
-                  if (message != null) {
-                    return Text(
-                        message.error.value > 0
-                            ? "Error"
-                            : ((show == Indicator.READ
-                                    ? "Read\n"
-                                    : show == Indicator.DELIVERED
-                                        ? "Delivered\n"
-                                        : show == Indicator.SENT
-                                            ? "Sent\n"
-                                            : "") +
-                                buildDate(widget.chat.latestMessageDate)),
-                        textAlign: TextAlign.right,
-                        style: Theme.of(context).textTheme.subtitle2!.copyWith(
-                              color: message.error.value > 0
-                                  ? Colors.red
-                                  : Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
-                            ),
-                        overflow: TextOverflow.clip);
-                  }
-                  return Text(buildDate(widget.chat.latestMessageDate),
-                      textAlign: TextAlign.right,
-                      style: Theme.of(context).textTheme.subtitle2!.copyWith(
-                            color: Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
-                          ),
-                      overflow: TextOverflow.clip);
-                },
-              );
+          child: Obx(() {
+              Message message = widget.chat.latestMessageGetter;
+              MessageMarkers? markers =
+                  CurrentChat.getCurrentChat(widget.chat)?.messageMarkers.markers.value ?? null.obs.value;
+              Indicator show = shouldShow(
+                  message, markers?.myLastMessage, markers?.lastReadMessage, markers?.lastDeliveredMessage);
+              return Text(
+                  message.error > 0
+                      ? "Error"
+                      : ((show == Indicator.READ
+                      ? "Read\n"
+                      : show == Indicator.DELIVERED
+                      ? "Delivered\n"
+                      : show == Indicator.SENT
+                      ? "Sent\n"
+                      : "") +
+                      buildDate(widget.chat.latestMessageDate)),
+                  textAlign: TextAlign.right,
+                  style: Theme.of(context).textTheme.subtitle2!.copyWith(
+                    color: message.error > 0
+                        ? Colors.red
+                        : Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
+                  ),
+                  overflow: TextOverflow.clip);
             },
           ),
         );
@@ -487,9 +462,9 @@ class __CupertinoState extends State<_Cupertino> {
               context.textTheme,
             );
           },
-          onLongPress: () async {
+          onLongPress: () {
             HapticFeedback.mediumImpact();
-            await ChatBloc().toggleChatUnread(widget.parent.widget.chat, !widget.parent.widget.chat.hasUnreadMessage!);
+            ChatBloc().toggleChatUnread(widget.parent.widget.chat, !widget.parent.widget.chat.hasUnreadMessage!);
             if (this.mounted) setState(() {});
           },
           child: Stack(

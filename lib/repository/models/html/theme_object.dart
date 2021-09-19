@@ -1,14 +1,10 @@
-import 'dart:async';
 import 'dart:core';
-
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/themes.dart';
-import 'package:bluebubbles/repository/database.dart';
-import 'package:bluebubbles/repository/models/theme_entry.dart';
+import 'package:bluebubbles/repository/models/html/theme_entry.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:sqflite/sqflite.dart';
 
 class ThemeObject {
   int? id;
@@ -31,6 +27,7 @@ class ThemeObject {
     this.previousDarkTheme = false,
     this.data,
   });
+
   factory ThemeObject.fromData(ThemeData data, String name, {bool gradientBg = false}) {
     ThemeObject object = new ThemeObject(
       data: data.copyWith(),
@@ -69,139 +66,55 @@ class ThemeObject {
         ThemeEntry(name: ThemeColors.PrimaryColor, color: data!.primaryColor, isFont: false),
       ];
 
-  Future<ThemeObject> save({bool updateIfAbsent = true}) async {
-    assert(this.data != null);
-    final Database? db = await DBProvider.db.database;
-
+  ThemeObject save({bool updateIfNotAbsent = true}) {
     if (entries.isEmpty) {
       entries = this.toEntries();
     }
-
-    ThemeObject? existing = await ThemeObject.findOne({"name": this.name});
-    if (existing != null) {
-      this.id = existing.id;
-    }
-
-    // If it already exists, update it
-    if (existing == null) {
-      // Remove the ID from the map for inserting
-      var map = this.toMap();
-      if (map.containsKey("ROWID")) {
-        map.remove("ROWID");
-      }
-
-      this.id = (await db?.insert("themes", map)) ?? id;
-    } else if (updateIfAbsent) {
-      await this.update();
-    }
-
-    if (this.isPreset && !this.name!.contains("Music")) return this;
-    for (ThemeEntry entry in this.entries) {
-      await entry.save(this);
-    }
-
     return this;
   }
 
-  Future<void> delete() async {
-    if (this.isPreset) return;
-    final Database? db = await DBProvider.db.database;
-
-    if (this.id == null) await this.save(updateIfAbsent: false);
-    await this.fetchData();
-    for (ThemeEntry entry in this.entries) {
-      await db?.delete("theme_values", where: "ROWID = ?", whereArgs: [entry.id]);
-    }
-    await db?.delete("theme_value_join", where: "themeId = ?", whereArgs: [this.id]);
-    await db?.delete("themes", where: "ROWID = ?", whereArgs: [this.id]);
+  void delete() {
+    return;
   }
 
-  Future<ThemeObject> update() async {
-    final Database? db = await DBProvider.db.database;
-
-    // If it already exists, update it
-    if (this.id != null) {
-      await db?.update(
-          "themes",
-          {
-            "name": this.name,
-            "selectedLightTheme": this.selectedLightTheme ? 1 : 0,
-            "selectedDarkTheme": this.selectedDarkTheme ? 1 : 0,
-            "gradientBg": this.gradientBg ? 1 : 0,
-            "previousLightTheme": this.previousLightTheme ? 1 : 0,
-            "previousDarkTheme": this.previousDarkTheme ? 1 : 0,
-          },
-          where: "ROWID = ?",
-          whereArgs: [this.id]);
-    } else {
-      await this.save(updateIfAbsent: false);
-    }
-
-    return this;
-  }
-
-  static Future<ThemeObject> getLightTheme() async {
-    List<ThemeObject> res = await ThemeObject.getThemes();
+  static ThemeObject getLightTheme() {
+    List<ThemeObject> res = ThemeObject.getThemes();
     List<ThemeObject> themes = res.where((element) => element.selectedLightTheme).toList();
     if (themes.isEmpty) {
+      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       return Themes.themes[1];
     }
     ThemeObject theme = themes.first;
-    await theme.fetchData();
+    theme.fetchData();
     return theme;
   }
 
-  static Future<ThemeObject> getDarkTheme() async {
-    List<ThemeObject> res = await ThemeObject.getThemes();
+  static ThemeObject getDarkTheme() {
+    List<ThemeObject> res = ThemeObject.getThemes();
     List<ThemeObject> themes = res.where((element) => element.selectedDarkTheme).toList();
     if (themes.isEmpty) {
+      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       return Themes.themes[0];
     }
     ThemeObject theme = themes.first;
-    await theme.fetchData();
+    theme.fetchData();
     return theme;
   }
 
-  static Future<void> setSelectedTheme({int? light, int? dark}) async {
-    final Database? db = await DBProvider.db.database;
-    if (light != null) {
-      await db?.update("themes", {"selectedLightTheme": 0});
-      await db?.update("themes", {"selectedLightTheme": 1}, where: "ROWID = ?", whereArgs: [light]);
-    }
-    if (dark != null) {
-      await db?.update("themes", {"selectedDarkTheme": 0});
-      await db?.update("themes", {"selectedDarkTheme": 1}, where: "ROWID = ?", whereArgs: [dark]);
-    }
+  static void setSelectedTheme({int? light, int? dark}) {
+    return;
   }
 
-  static Future<ThemeObject?> findOne(
-    Map<String, dynamic> filters,
-  ) async {
-    final Database? db = await DBProvider.db.database;
-    if (db == null) return null;
-    List<String> whereParams = [];
-    filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
-    List<dynamic> whereArgs = [];
-    filters.values.forEach((filter) => whereArgs.add(filter));
-    var res = await db.query("themes", where: whereParams.join(" AND "), whereArgs: whereArgs, limit: 1);
-
-    if (res.isEmpty) {
-      return null;
-    }
-
-    return ThemeObject.fromMap(res.elementAt(0));
+  static ThemeObject? findOne(String name) {
+    return null;
   }
 
-  static Future<List<ThemeObject>> getThemes() async {
-    final Database? db = await DBProvider.db.database;
-    if (db == null) return Themes.themes;
-    var res = await db.query("themes");
-    if (res.isEmpty) return Themes.themes;
-
-    return (res.isNotEmpty) ? res.map((c) => ThemeObject.fromMap(c)..fetchData()).toList() : Themes.themes;
+  static List<ThemeObject> getThemes() {
+    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
+    return Themes.themes;
   }
 
-  Future<List<ThemeEntry>> fetchData() async {
+  List<ThemeEntry> fetchData() {
     if (isPreset && !name!.contains("Music")) {
       if (name == "OLED Dark") {
         this.data = oledDarkTheme;
@@ -212,34 +125,6 @@ class ThemeObject {
       }
 
       this.entries = this.toEntries();
-      return this.entries;
-    }
-    final Database? db = await DBProvider.db.database;
-    if (db == null) return this.entries;
-    var res = await db.rawQuery(
-        "SELECT"
-        " theme_values.ROWID as ROWID,"
-        " theme_values.name as name,"
-        " theme_values.color as color,"
-        " theme_values.isFont as isFont,"
-        " theme_values.fontSize as fontSize"
-        " FROM themes"
-        " JOIN theme_value_join AS tvj ON themes.ROWID = tvj.themeId"
-        " JOIN theme_values ON theme_values.ROWID = tvj.themeValueId"
-        " WHERE themes.ROWID = ?;",
-        [this.id]);
-    if (name == "Music Theme (Light)" && res.isEmpty) {
-      data = whiteLightTheme;
-      entries = this.toEntries();
-    } else if (name == "Music Theme (Dark)" && res.isEmpty) {
-      data = oledDarkTheme;
-      entries = this.toEntries();
-    } else if (res.isNotEmpty) {
-      this.entries = res.map((t) => ThemeEntry.fromMap(t)).toList();
-      this.data = themeData;
-    } else {
-      this.entries = [];
-      this.data = themeData;
     }
     return this.entries;
   }

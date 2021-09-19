@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
-import 'package:universal_io/io.dart';
 import 'dart:math';
 import 'dart:ui';
 import 'package:bluebubbles/helpers/logger.dart';
@@ -9,7 +8,6 @@ import 'package:bluebubbles/helpers/metadata_helper.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:collection/collection.dart';
 
 import 'package:bluebubbles/action_handler.dart';
@@ -30,11 +28,8 @@ import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/helpers/darty.dart';
-import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart' as cupertino;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -69,7 +64,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   bool showTools = false;
   String? selfReaction;
   String? currentlySelectedReaction;
-  Completer? fetchRequest;
   CurrentChat? currentChat;
   Chat? dmChat;
 
@@ -104,7 +98,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    fetchReactions();
     SchedulerBinding.instance!.addPostFrameCallback((_) {
       if (this.mounted) {
         setState(() {
@@ -120,26 +113,15 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
     });
   }
 
-  Future<void> fetchReactions() async {
-    if (fetchRequest != null && !fetchRequest!.isCompleted) {
-      return fetchRequest!.future;
-    }
-
-    // Create a new fetch request
-    fetchRequest = new Completer();
-
+  void fetchReactions() {
     // If there are no associated messages, return now
     List<Message> reactions = widget.message.getReactions();
-    if (reactions.isEmpty) {
-      return fetchRequest!.complete();
-    }
-
     // Filter down the messages to the unique ones (one per user, newest)
     List<Message> reactionMessages = Reaction.getUniqueReactionMessages(reactions);
 
     reactionWidgets = [];
     for (Message reaction in reactionMessages) {
-      await reaction.getHandle();
+      reaction.getHandle();
       if (reaction.isFromMe!) {
         selfReaction = reaction.associatedMessageType;
         currentlySelectedReaction = selfReaction;
@@ -151,13 +133,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
         ),
       );
     }
-
-    // If we aren't mounted, get out
-    if (!this.mounted) return fetchRequest!.complete();
-
-    // Tell the component to re-render
-    this.setState(() {});
-    return fetchRequest!.complete();
   }
 
   void sendReaction(String type) {
@@ -447,7 +422,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
               if (contact == null) {
                 uniqueContact = UniqueContact(address: address, displayName: (await formatPhoneNumber(handle)));
               } else {
-                uniqueContact = UniqueContact(address: address, displayName: contact.displayName ?? address);
+                uniqueContact = UniqueContact(address: address, displayName: contact.displayName);
               }
               Navigator.pushReplacement(
                 context,
@@ -521,7 +496,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
         child: InkWell(
           onTap: () async {
             NewMessageManager().removeMessage(widget.currentChat!.chat, widget.message.guid);
-            await Message.softDelete({"guid": widget.message.guid});
+            Message.softDelete(widget.message.guid!);
             Navigator.of(context).pop();
           },
           child: ListTile(

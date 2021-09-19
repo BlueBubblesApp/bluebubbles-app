@@ -11,13 +11,10 @@ import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:get/get.dart';
 import 'package:mime_type/mime_type.dart';
-import 'package:path/path.dart';
 import 'package:tuple/tuple.dart';
 
 class AttachmentSender {
@@ -94,7 +91,7 @@ class AttachmentSender {
 
         String? tempGuid = sentMessage!.guid;
         sentMessage!.guid = sentMessage!.guid!.replaceAll("temp", "error-${response['error']['message']}");
-        sentMessage!.error.value =
+        sentMessage!.error =
             response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
 
         await Message.replaceMessage(tempGuid, sentMessage);
@@ -102,7 +99,7 @@ class AttachmentSender {
         if (messageWithText != null) {
           tempGuid = messageWithText!.guid;
           messageWithText!.guid = messageWithText!.guid!.replaceAll("temp", "error-${response['error']['message']}");
-          messageWithText!.error.value =
+          messageWithText!.error =
               response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
 
           await Message.replaceMessage(tempGuid, messageWithText);

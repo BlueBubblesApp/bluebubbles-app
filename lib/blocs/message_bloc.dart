@@ -6,8 +6,7 @@ import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:get/get.dart';
 
 import '../socket_manager.dart';
@@ -192,13 +191,13 @@ class MessageBloc {
     event.value = mbEvent;
   }
 
-  Future<LinkedHashMap<String, Message>> getMessages() async {
+  LinkedHashMap<String, Message> getMessages() {
     // If we are already fetching, return empty
     if (_isGettingMore || !this._canLoadMore) return new LinkedHashMap();
     _isGettingMore = true;
 
     // Fetch messages
-    List<Message> messages = await Chat.getMessagesSingleton(_currentChat);
+    List<Message> messages = Chat.getMessages(_currentChat!);
 
     if (isNullOrEmpty(messages)!) {
       _allMessages = new LinkedHashMap();
@@ -276,7 +275,7 @@ class MessageBloc {
       int count = 0;
 
       // Should we check locally first?
-      if (checkLocal) messages = await Chat.getMessages(currChat, offset: offset + reactionCnt);
+      if (checkLocal) messages = Chat.getMessages(currChat, offset: offset + reactionCnt);
 
       // Fetch messages from the socket
       count = messages.length;
@@ -299,7 +298,7 @@ class MessageBloc {
             // If the handle is empty, load it
             for (Message msg in messages) {
               if (msg.isFromMe! || msg.handle != null) continue;
-              await msg.getHandle();
+              msg.getHandle();
             }
           }
         } catch (ex) {
@@ -322,7 +321,7 @@ class MessageBloc {
 
       if (currentChat != null) {
         List<Message> messagesWithAttachment = messages.where((element) => element.hasAttachments).toList();
-        await currentChat.preloadMessageAttachments(specificMessages: messagesWithAttachment);
+        currentChat.preloadMessageAttachments(specificMessages: messagesWithAttachment);
       }
 
       this.emitLoaded();
@@ -341,12 +340,12 @@ class MessageBloc {
     return completer.future;
   }
 
-  Future<void> refresh() async {
+  void refresh() {
     _allMessages = new LinkedHashMap();
     _reactionMessages.clear();
     _reactions = 0;
 
-    await this.getMessages();
+    this.getMessages();
   }
 
   void dispose() {

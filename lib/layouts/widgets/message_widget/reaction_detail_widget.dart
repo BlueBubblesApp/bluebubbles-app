@@ -2,8 +2,7 @@ import 'package:bluebubbles/helpers/redacted_helper.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -28,13 +27,7 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
     super.initState();
 
     contactTitle = widget.message.isFromMe! ? "You" : widget.handle!.address;
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
     if (widget.message.isFromMe! || widget.handle == null) return;
-
     ContactManager().getContactTitle(widget.handle).then((String? title) {
       if (title != contactTitle) {
         contactTitle = title;

@@ -1,7 +1,6 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
-import 'package:universal_io/io.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:math';
 import 'dart:ui';
 
@@ -30,9 +29,7 @@ import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/outgoing_queue.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/message.dart';
-import 'package:bluebubbles/repository/models/theme_object.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
@@ -96,6 +93,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   double offset = 0;
   CustomAnimationControl controller = CustomAnimationControl.stop;
   bool wasCreator = false;
+  bool widgetsBuilt = false;
   GlobalKey key = GlobalKey();
   Worker? worker;
   final RxBool adjustBackground = RxBool(false);
@@ -140,7 +138,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       if (currentChat != null) {
         Chat? _chat = chats.firstWhereOrNull((e) => e.guid == widget.chat?.guid);
         if (_chat != null) {
-          await _chat.getParticipants();
+          _chat.getParticipants();
           currentChat!.chat = _chat;
           if (this.mounted) setState(() {});
         }
@@ -177,9 +175,9 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     WidgetsBinding.instance!.addObserver(this);
   }
 
-  void getAdjustBackground() async {
-    var lightTheme = await ThemeObject.getLightTheme();
-    var darkTheme = await ThemeObject.getDarkTheme();
+  void getAdjustBackground() {
+    var lightTheme = ThemeObject.getLightTheme();
+    var darkTheme = ThemeObject.getDarkTheme();
     if ((lightTheme.gradientBg && !ThemeObject.inDarkMode(Get.context!))
         || (darkTheme.gradientBg && ThemeObject.inDarkMode(Get.context!))) {
       adjustBackground.value = true;
@@ -236,7 +234,6 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   @override
   void didChangeDependencies() async {
     super.didChangeDependencies();
-    didChangeDependenciesConversationView();
     getAdjustBackground();
   }
 
@@ -247,6 +244,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       Logger.info("Removing CurrentChat imageData");
       CurrentChat.of(context)?.imageData.clear();
     }
+    if (widgetsBuilt) didChangeDependenciesConversationView();
   }
 
   @override
@@ -267,7 +265,11 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     if (isCreator!) {
       if (chat == null && selected.length == 1) {
         try {
-          chat = await Chat.findOne({"chatIdentifier": slugify(selected[0].address!, delimiter: '')});
+          if (kIsWeb) {
+            chat = await Chat.findOneWeb(chatIdentifier: slugify(selected[0].address!, delimiter: ''));
+          } else {
+            chat = Chat.findOne(chatIdentifier: slugify(selected[0].address!, delimiter: ''));
+          }
         } catch (ex) {}
       }
 
@@ -413,10 +415,13 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
   @override
   Widget build(BuildContext context) {
+    Future.delayed(Duration.zero, () {
+      widgetsBuilt = true;
+    });
     loadBrightness();
     currentChat?.isAlive = true;
 
-    if (messageBloc == null) {
+    if (messageBloc == null && !widget.isCreator) {
       messageBloc = initMessageBloc();
       messageBloc!.getMessages();
     }

@@ -17,9 +17,8 @@ import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
-import 'package:contacts_service/contacts_service.dart';
 import 'package:dio_http/dio_http.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
@@ -525,7 +524,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           }
         } else if (!isNullOrEmpty(CurrentChat.of(context)?.chat.participants)!) {
           if (generateNames) {
-            placeholder = CurrentChat.of(context)!.chat.fakeParticipants[0] ?? "BlueBubbles";
+            placeholder = CurrentChat.of(context)!.chat.fakeParticipants[0];
           } else if (hideInfo) {
             placeholder = "BlueBubbles";
           } else {
@@ -535,7 +534,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             if (contact == null) {
               placeholder = await formatPhoneNumber(handle);
             } else {
-              placeholder = contact.displayName ?? "BlueBubbles";
+              placeholder = contact.displayName;
             }
           }
         }

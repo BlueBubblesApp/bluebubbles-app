@@ -24,8 +24,7 @@ import 'package:bluebubbles/managers/navigator_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/theme_object.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -78,9 +77,9 @@ class MethodChannelInterface {
   ///
   /// @param [method] is the tag to be recognized in native code
   /// @param [arguments] is an optional parameter which can be used to send other data along with the method call
-  Future invokeMethod(String method, [dynamic arguments]) async {
+  Future<dynamic> invokeMethod(String method, [dynamic arguments]) async {
     if (kIsWeb || kIsDesktop) return;
-    return platform.invokeMethod(method, arguments);
+    return await platform.invokeMethod(method, arguments);
   }
 
   /// The handler used to handle all methods sent from native code to the dart vm
@@ -154,7 +153,7 @@ class MethodChannelInterface {
           return new Future.value("");
         }
         // Find the chat to reply to
-        Chat? chat = await Chat.findOne({"guid": call.arguments["chat"]});
+        Chat? chat = Chat.findOne(guid: call.arguments["chat"]);
 
         // If no chat is found, then we can't do anything
         if (chat == null) {
@@ -165,12 +164,14 @@ class MethodChannelInterface {
         }
 
         // Send the message to that chat
-        ActionHandler.sendMessage(chat, call.arguments["text"]);
+        await ActionHandler.sendMessage(chat, call.arguments["text"]);
+
+        closeThread();
 
         return new Future.value("");
       case "markAsRead":
         // Find the chat to mark as read
-        Chat? chat = await Chat.findOne({"guid": call.arguments["chat"]});
+        Chat? chat = Chat.findOne(guid: call.arguments["chat"]);
 
         // If no chat is found, then we can't do anything
         if (chat == null) {
@@ -181,10 +182,10 @@ class MethodChannelInterface {
         }
 
         // Remove the notificaiton from that chat
-        await SocketManager().removeChatNotification(chat);
+        SocketManager().removeChatNotification(chat);
 
         if (SettingsManager().settings.privateMarkChatAsRead.value) {
-          SocketManager().sendMessage("mark-chat-read", {"chatGuid": chat.guid}, (data) {});
+          await SocketManager().sendMessage("mark-chat-read", {"chatGuid": chat.guid}, (data) {});
         }
 
         // In case this method is called when the app is in a background isolate
@@ -337,7 +338,7 @@ class MethodChannelInterface {
                 ..add("color2", Tween<double>(begin: 0.8, end: 1.0));
             }
           }
-          await SettingsManager().saveSelectedTheme(Get.context!, selectedLightTheme: lightTheme, selectedDarkTheme: darkTheme);
+          SettingsManager().saveSelectedTheme(Get.context!, selectedLightTheme: lightTheme, selectedDarkTheme: darkTheme);
           isRunning = false;
         }
         return Future.value("");
@@ -382,12 +383,12 @@ class MethodChannelInterface {
       return;
     }
     // Try to find the specified chat to open
-    Chat? openedChat = await Chat.findOne({"GUID": id});
+    Chat? openedChat = Chat.findOne(guid: id);
 
     // If we did find one, then we can move on
     if (openedChat != null) {
       // Get all of the participants of the chat so that it looks right when it is opened
-      await openedChat.getParticipants();
+      openedChat.getParticipants();
 
       // Make sure that the title is set
       await openedChat.getTitle();

@@ -6,9 +6,8 @@ import 'package:universal_io/io.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/repository/database.dart';
-import 'package:bluebubbles/repository/models/fcm_data.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
-import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -68,18 +67,20 @@ class SettingsManager {
   /// @param [context] is an optional parameter to be used for setting the adaptive theme based on the settings.
   /// Setting to null will prevent the theme from being set and will be set to null in the background isolate
   Future<void> getSavedSettings({bool headless = false, BuildContext? context}) async {
-    await DBProvider.setupConfigRows();
+    for (ThemeObject theme in Themes.themes) {
+      theme.save(updateIfNotAbsent: false);
+    }
     settings = Settings.getSettings();
 
-    fcmData = await FCMData.getFCM();
-    // await DBProvider.setupDefaultPresetThemes(await DBProvider.db.database);
-    themes = await ThemeObject.getThemes();
+    fcmData = FCMData.getFCM();
+    if (headless) return;
+    themes = ThemeObject.getThemes();
     for (ThemeObject theme in themes) {
-      await theme.fetchData();
+      theme.fetchData();
     }
 
     // // If [context] is null, then we can't set the theme, and we shouldn't anyway
-    await loadTheme(context);
+    loadTheme(context);
 
     try {
       // Set the [displayMode] to that saved in settings
@@ -90,7 +91,7 @@ class SettingsManager {
 
     // Change the [finishedSetup] status to that of the settings
     if (!settings.finishedSetup.value) {
-      await DBProvider.deleteDB();
+      DBProvider.deleteDB();
     }
     SocketManager().finishedSetup.sink.add(settings.finishedSetup.value);
 
@@ -125,17 +126,17 @@ class SettingsManager {
   /// @param [selectedDarkTheme] is the [ThemeObject] of the dark theme to save and set as dark theme in the db
   ///
   /// @param [context] is the [BuildContext] used to set the theme of the new settings
-  Future<void> saveSelectedTheme(
+  void saveSelectedTheme(
     BuildContext context, {
     ThemeObject? selectedLightTheme,
     ThemeObject? selectedDarkTheme,
-  }) async {
-    await selectedLightTheme?.save();
-    await selectedDarkTheme?.save();
-    await ThemeObject.setSelectedTheme(light: selectedLightTheme?.id ?? null, dark: selectedDarkTheme?.id ?? null);
+  }) {
+    selectedLightTheme?.save();
+    selectedDarkTheme?.save();
+    ThemeObject.setSelectedTheme(light: selectedLightTheme?.id ?? null, dark: selectedDarkTheme?.id ?? null);
 
-    ThemeData lightTheme = (await ThemeObject.getLightTheme()).themeData;
-    ThemeData darkTheme = (await ThemeObject.getDarkTheme()).themeData;
+    ThemeData lightTheme = ThemeObject.getLightTheme().themeData;
+    ThemeData darkTheme = ThemeObject.getDarkTheme().themeData;
     AdaptiveTheme.of(context).setTheme(
       light: lightTheme,
       dark: darkTheme,
@@ -146,9 +147,9 @@ class SettingsManager {
   /// Updates FCM data and saves to disk. It will also run [authFCM] automatically
   ///
   /// @param [data] is the [FCMData] to save
-  Future<void> saveFCMData(FCMData data) async {
+  void saveFCMData(FCMData data) {
     fcmData = data;
-    await fcmData!.save();
+    fcmData!.save();
     SocketManager().authFCM();
   }
 

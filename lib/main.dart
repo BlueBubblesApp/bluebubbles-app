@@ -1,8 +1,13 @@
 import 'dart:async';
+import 'package:bluebubbles/layouts/setup/upgrading_db.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
+import 'package:path/path.dart' show join;
+import 'package:path_provider/path_provider.dart';
 import 'package:universal_io/io.dart';
 import 'package:universal_html/html.dart' as html;
 import 'dart:isolate';
@@ -28,13 +33,12 @@ import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
-import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' hide Priority;
 import 'package:flutter/services.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart' hide Message;
 import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 import 'package:firebase_dart/firebase_dart.dart';
 import 'package:firebase_dart/src/auth/utils.dart' as fdu;
@@ -48,6 +52,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:window_size/window_size.dart';
+import 'package:bluebubbles/repository/models/objectbox.dart';
 
 // final SentryClient _sentry = SentryClient(
 //     dsn:
@@ -68,6 +73,19 @@ bool get isInDebugMode {
 FlutterLocalNotificationsPlugin? flutterLocalNotificationsPlugin;
 late SharedPreferences prefs;
 late FirebaseApp app;
+late final Store store;
+late final Box<Attachment> attachmentBox;
+late final Box<Chat> chatBox;
+late final Box<FCMData> fcmDataBox;
+late final Box<Handle> handleBox;
+late final Box<Message> messageBox;
+late final Box<ScheduledMessage> scheduledBox;
+late final Box<ThemeEntry> themeEntryBox;
+late final Box<ThemeObject> themeObjectBox;
+late final Box<AttachmentMessageJoin> amJoinBox;
+late final Box<ChatHandleJoin> chJoinBox;
+late final Box<ChatMessageJoin> cmJoinBox;
+late final Box<ThemeValueJoin> tvJoinBox;
 
 Future<Null> _reportError(dynamic error, dynamic stackTrace) async {
   // Print the exception to the console.
@@ -109,7 +127,50 @@ Future<Null> main() async {
   dynamic exception;
   try {
     prefs = await SharedPreferences.getInstance();
-    if (!kIsWeb) await DBProvider.db.initDB();
+    if (!kIsWeb) {
+      //ignore: unnecessary_cast, we need this as a workaround
+      var documentsDirectory = (kIsDesktop ? await getApplicationSupportDirectory() : await getApplicationDocumentsDirectory()) as Directory;
+      final objectBoxDirectory = Directory(documentsDirectory.path + '/objectbox/');
+      final sqlitePath = join(documentsDirectory.path, "chat.db");
+
+      Future<void> Function() initStore = () async {
+        store = await openStore(directory: (await getApplicationDocumentsDirectory()).path + '/objectbox');
+        attachmentBox = store.box<Attachment>();
+        chatBox = store.box<Chat>();
+        fcmDataBox = store.box<FCMData>();
+        handleBox = store.box<Handle>();
+        messageBox = store.box<Message>();
+        scheduledBox = store.box<ScheduledMessage>();
+        themeEntryBox = store.box<ThemeEntry>();
+        themeObjectBox = store.box<ThemeObject>();
+        amJoinBox = store.box<AttachmentMessageJoin>();
+        chJoinBox = store.box<ChatHandleJoin>();
+        cmJoinBox = store.box<ChatMessageJoin>();
+        tvJoinBox = store.box<ThemeValueJoin>();
+      };
+
+      if (!objectBoxDirectory.existsSync() && File(sqlitePath).existsSync()) {
+        runApp(UpgradingDB());
+        print("Converting sqflite to ObjectBox...");
+        Stopwatch s = Stopwatch();
+        s.start();
+        await DBProvider.db.initDB(initStore: initStore);
+        s.stop();
+        Logger.info("Migrated in ${s.elapsedMilliseconds} ms");
+      } else {
+        if (File(sqlitePath).existsSync() && prefs.getBool('objectbox-migration') != true) {
+          runApp(UpgradingDB());
+          print("Converting sqflite to ObjectBox...");
+          Stopwatch s = Stopwatch();
+          s.start();
+          await DBProvider.db.initDB(initStore: initStore);
+          s.stop();
+          print("Migrated in ${s.elapsedMilliseconds} ms");
+        } else {
+          await initStore();
+        }
+      }
+    }
     FirebaseDart.setup(
       platform: fdu.Platform.web(
         currentUrl: Uri.base.toString(),
@@ -139,6 +200,7 @@ Future<Null> main() async {
       if (!await GoogleMlKit.nlp.entityModelManager().isModelDownloaded(EntityExtractorOptions.ENGLISH)) {
         GoogleMlKit.nlp.entityModelManager().downloadModel(EntityExtractorOptions.ENGLISH, isWifiRequired: false);
       }
+      await FlutterLibphonenumber().init();
     }
     if (kIsDesktop) {
       setWindowTitle('BlueBubbles (Beta)');
@@ -148,9 +210,9 @@ Future<Null> main() async {
   }
 
   if (exception == null) {
-    runZonedGuarded<Future<Null>>(() async {
-      ThemeObject light = await ThemeObject.getLightTheme();
-      ThemeObject dark = await ThemeObject.getDarkTheme();
+    runZonedGuarded<Null>(() {
+      ThemeObject light = ThemeObject.getLightTheme();
+      ThemeObject dark = ThemeObject.getDarkTheme();
 
       runApp(Main(
         lightTheme: light.themeData,

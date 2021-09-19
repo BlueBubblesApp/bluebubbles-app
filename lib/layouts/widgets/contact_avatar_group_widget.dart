@@ -7,8 +7,7 @@ import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -53,8 +52,8 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
 
     return Obx(
       () {
-        if (widget.chat.customAvatarPath.value != null) {
-          dynamic file = File(widget.chat.customAvatarPath.value!);
+        if (widget.chat.customAvatarPath != null) {
+          dynamic file = File(widget.chat.customAvatarPath!);
           return Stack(
             children: [
               Container(

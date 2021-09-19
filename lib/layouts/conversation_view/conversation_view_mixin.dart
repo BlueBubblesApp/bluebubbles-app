@@ -23,12 +23,10 @@ import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
-import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart' as Cupertino;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -73,6 +71,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         ..add("color1", Tween<double>(begin: 0, end: 0.2))
         ..add("color2", Tween<double>(begin: 0.8, end: 1))
   );
+  Timer? _debounce;
 
   /// Conversation view methods
   ///
@@ -136,7 +135,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   void setNewChatData({forceUpdate: false}) async {
     // Save the current participant list and get the latest
     List<Handle> ogParticipants = widget.chat!.participants;
-    await widget.chat!.getParticipants();
+    widget.chat!.getParticipants();
 
     // Save the current title and generate the new one
     String? ogTitle = widget.chat!.title;
@@ -156,10 +155,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   void initCurrentChat(Chat chat) {
     currentChat = CurrentChat.getCurrentChat(chat);
     currentChat!.init();
-    currentChat!.updateChatAttachments().then((value) {
-      if (this.mounted) setState(() {});
-    });
-
+    currentChat!.updateChatAttachments();
+    if (this.mounted) setState(() {});
     currentChat!.stream.listen((event) {
       if (this.mounted) setState(() {});
     });
@@ -171,6 +168,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   }
 
   void dispose() {
+    _debounce?.cancel();
     messageBloc?.dispose();
     _contactStreamController.close();
     // NotificationManager().leaveChat();
@@ -186,7 +184,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
     // If we don't have participants, get them
     if (chat!.participants.isEmpty) {
-      await chat!.getParticipants();
+      chat!.getParticipants();
 
       // If we have participants, refresh the state
       if (chat!.participants.isNotEmpty) {
@@ -201,7 +199,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         Chat? data = await fetchChatSingleton(chat!.guid!);
         // If we got data back, fetch the participants and update the state
         if (data != null) {
-          await chat!.getParticipants();
+          chat!.getParticipants();
           if (chat!.participants.isNotEmpty) {
             Logger.info("Got new chat participants. Updating state.", tag: "ConversationView");
             if (this.mounted) setState(() {});
@@ -218,8 +216,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     processingParticipants = false;
   }
 
-  Future<void> openDetails() async {
-    Chat _chat = await chat!.getParticipants();
+  void openDetails() {
+    Chat _chat = chat!.getParticipants();
     Navigator.of(context).push(
       ThemeSwitcher.buildPageRoute(
         builder: (context) => ConversationDetails(
@@ -635,30 +633,33 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
     // Add listener to filter the contacts on text change
     chatSelectorController.addListener(() {
-      if (chatSelectorController.text.length == 0) {
-        if (selected.length > 0 && !currentlyProcessingDeleteKey) {
-          currentlyProcessingDeleteKey = true;
-          selected.removeLast();
-          resetCursor();
-          fetchCurrentChat();
+      if (_debounce?.isActive ?? false) _debounce?.cancel();
+      _debounce = Timer(const Duration(milliseconds: 500), () {
+        if (chatSelectorController.text.length == 0) {
+          if (selected.length > 0 && !currentlyProcessingDeleteKey) {
+            currentlyProcessingDeleteKey = true;
+            selected.removeLast();
+            resetCursor();
+            fetchCurrentChat();
+            setState(() {});
+            // Prevent deletes from occuring multiple times
+            Future.delayed(Duration(milliseconds: 100), () {
+              currentlyProcessingDeleteKey = false;
+            });
+          } else {
+            resetCursor();
+          }
+        } else if (chatSelectorController.text[0] != " ") {
+          chatSelectorController.text =
+              " " + chatSelectorController.text.substring(0, chatSelectorController.text.length - 1);
+          chatSelectorController.selection = TextSelection.fromPosition(
+            TextPosition(offset: chatSelectorController.text.length),
+          );
           setState(() {});
-          // Prevent deletes from occuring multiple times
-          Future.delayed(Duration(milliseconds: 100), () {
-            currentlyProcessingDeleteKey = false;
-          });
-        } else {
-          resetCursor();
         }
-      } else if (chatSelectorController.text[0] != " ") {
-        chatSelectorController.text =
-            " " + chatSelectorController.text.substring(0, chatSelectorController.text.length - 1);
-        chatSelectorController.selection = TextSelection.fromPosition(
-          TextPosition(offset: chatSelectorController.text.length),
-        );
-        setState(() {});
-      }
-      searchQuery = chatSelectorController.text.substring(1);
-      filterContacts();
+        searchQuery = chatSelectorController.text.substring(1);
+        filterContacts();
+      });
     });
   }
 
@@ -693,7 +694,12 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     // If it's just one recipient, try manual lookup
     if (selected.length == 1) {
       try {
-        Chat? existingChat = await Chat.findOne({"chatIdentifier": slugify(selected[0].address!, delimiter: '')});
+        Chat? existingChat;
+        if (kIsWeb) {
+          existingChat = await Chat.findOneWeb(chatIdentifier: slugify(selected[0].address!, delimiter: ''));
+        } else {
+          existingChat = Chat.findOne(chatIdentifier: slugify(selected[0].address!, delimiter: ''));
+        }
         if (existingChat != null) {
           matchingChats.add(existingChat);
         }
@@ -746,7 +752,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     messageBloc = initMessageBloc();
 
     // Tell the notification manager that we are looking at a specific chat
-    await NotificationManager().switchChat(chat);
+    NotificationManager().switchChat(chat);
     if (this.mounted) setState(() {});
   }
 
@@ -762,7 +768,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       conversations = newChats;
       for (int i = 0; i < conversations.length; i++) {
         if (isNullOrEmpty(conversations[i].participants)!) {
-          await conversations[i].getParticipants();
+          conversations[i].getParticipants();
         }
       }
 
@@ -814,35 +820,31 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     List<UniqueContact> _contacts = [];
     List<String> cache = [];
     Function addContactEntries = (Contact contact, {conditionally = false}) {
-      for (Item phone in (contact.phones ?? [])) {
-        if (phone.value == null) continue;
-        String cleansed = slugText(phone.value!);
+      for (String phone in contact.phones) {
+        String cleansed = slugText(phone);
         if (conditionally && !cleansed.contains(searchQuery)) continue;
 
         if (!cache.contains(cleansed)) {
           cache.add(cleansed);
           _contacts.add(
             new UniqueContact(
-              address: phone.value,
+              address: phone,
               displayName: contact.displayName,
-              label: phone.label,
             ),
           );
         }
       }
 
-      for (Item email in (contact.emails ?? [])) {
-        if (email.value == null) continue;
-        String emailVal = slugText.call(email.value!);
+      for (String email in contact.emails) {
+        String emailVal = slugText.call(email);
         if (conditionally && !emailVal.contains(searchQuery)) continue;
 
         if (!cache.contains(emailVal)) {
           cache.add(emailVal);
           _contacts.add(
             new UniqueContact(
-              address: email.value,
+              address: email,
               displayName: contact.displayName,
-              label: email.label,
             ),
           );
         }
@@ -851,8 +853,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
     if (widget.type != ChatSelectorTypes.ONLY_EXISTING) {
       for (Contact contact in ContactManager().contacts) {
-        if (contact.displayName == null) continue;
-        String name = slugText(contact.displayName!);
+        String name = slugText(contact.displayName);
         if (name.contains(searchQuery)) {
           addContactEntries(contact);
         } else {
@@ -931,7 +932,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     Logger.info("Starting chat with participants: ${participants.join(", ")}");
 
     Function returnChat = (Chat newChat) async {
-      await newChat.save();
+      newChat.save();
       await ChatBloc().updateChatPosition(newChat);
       completer.complete(newChat);
       Navigator.of(context).pop();
@@ -940,7 +941,11 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     // If there is only 1 participant, try to find the chat
     Chat? existingChat;
     if (participants.length == 1) {
-      existingChat = await Chat.findOne({"chatIdentifier": slugify(participants[0], delimiter: '')});
+      if (kIsWeb) {
+        existingChat = await Chat.findOneWeb(chatIdentifier: slugify(participants[0], delimiter: ''));
+      } else {
+        existingChat = Chat.findOne(chatIdentifier: slugify(participants[0], delimiter: ''));
+      }
     }
 
     if (existingChat == null) {

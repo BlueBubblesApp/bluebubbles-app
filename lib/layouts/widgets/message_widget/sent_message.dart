@@ -19,8 +19,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/helpers/darty.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -183,8 +182,8 @@ class SentMessageHelper {
   }
 
   static Widget getErrorWidget(BuildContext context, Message? message, Chat? chat, {double rightPadding = 8.0}) {
-    if (message != null && message.error.value > 0) {
-      int errorCode = message.error.value;
+    if (message != null && message.error > 0) {
+      int errorCode = message.error;
       String errorText = "Server Error. Contact Support.";
       if (errorCode == 22) {
         errorText = "The recipient is not registered with iMessage!";
@@ -210,7 +209,7 @@ class SentMessageHelper {
                           // Remove the OG alert dialog
                           Navigator.of(context).pop();
                           NewMessageManager().removeMessage(chat, message.guid);
-                          await Message.softDelete({'guid': message.guid});
+                          Message.softDelete(message.guid!);
                           NotificationManager().clearFailedToSend();
                           ActionHandler.retryMessage(message);
                         },
@@ -221,13 +220,13 @@ class SentMessageHelper {
                         onPressed: () async {
                           Navigator.of(context).pop();
                           // Delete the message from the DB
-                          await Message.softDelete({'guid': message.guid});
+                          Message.softDelete(message.guid!);
 
                           // Remove the message from the Bloc
                           NewMessageManager().removeMessage(chat, message.guid);
                           NotificationManager().clearFailedToSend();
                           // Get the "new" latest info
-                          List<Message> latest = await Chat.getMessages(chat, limit: 1);
+                          List<Message> latest = Chat.getMessages(chat, limit: 1);
                           chat.latestMessage = latest.first;
                           chat.latestMessageDate = latest.first.dateCreated;
                           chat.latestMessageText = await MessageHelper.getNotificationText(latest.first);
@@ -398,7 +397,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
                     ? 0.0
                     : 10,
             bottom: (skin.value == Skins.iOS && widget.showTail && !isEmptyString(widget.message.fullText)) ? 5.0 : 0,
-            right: isEmptyString(widget.message.fullText) && widget.message.error.value == 0 ? 10.0 : 0.0),
+            right: isEmptyString(widget.message.fullText) && widget.message.error == 0 ? 10.0 : 0.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,
