@@ -282,7 +282,7 @@ class ChatBloc {
   }
 
   Future<void> getChatBatches({int batchSize = 15}) async {
-    int count = (await Chat.count()) ?? (await Dio().get("${SettingsManager().settings.serverAddress.value}/api/v1/chat/count?guid=${SettingsManager().settings.guidAuthKey}")).data['data']['total'];
+    int count = (await Chat.count()) ?? (await api.chatCount()).data['data']['total'];
     if (count == 0 && !kIsWeb) {
       hasChats.value = false;
     } else {

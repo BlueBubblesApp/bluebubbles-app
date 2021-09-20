@@ -136,7 +136,7 @@ class ContactManager {
       if (contacts.isEmpty) {
         try {
           if (contacts.isEmpty) {
-            var response = await Dio().get("${SettingsManager().settings.serverAddress.value}/api/v1/contact?guid=${SettingsManager().settings.guidAuthKey}");
+            var response = await api.contacts();
             for (Map<String, dynamic> map in response.data['data']){
               ContactManager().contacts.add(Contact(
                 displayName: map['firstName'] + " " + map['lastName'],

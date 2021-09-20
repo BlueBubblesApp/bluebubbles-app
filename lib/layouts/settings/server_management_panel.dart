@@ -81,10 +81,10 @@ class ServerManagementPanelController extends GetxController {
         helperBundleStatus.value = res['data']['helper_connected'] ?? false;
         proxyService.value = res['data']['proxy_service'];
       });
-      Dio().get("${SettingsManager().settings.serverAddress.value}/api/v1/server/statistics/totals?guid=${SettingsManager().settings.guidAuthKey}").then((response) {
+      api.serverStatTotals().then((response) {
         if (response.data['status'] == 200) {
           stats.addAll(response.data['data'] ?? {});
-          Dio().get("${SettingsManager().settings.serverAddress.value}/api/v1/server/statistics/media?guid=${SettingsManager().settings.guidAuthKey}").then((response) {
+          api.serverStatMedia().then((response) {
             if (response.data['status'] == 200) {
               stats.addAll(response.data['data'] ?? {});
             }
