@@ -10,6 +10,7 @@ import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
 import 'package:contacts_service/contacts_service.dart';
+import 'package:dio_http/dio_http.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:faker/faker.dart';
@@ -117,11 +118,36 @@ class ContactManager {
     if (!kIsWeb && !kIsDesktop) {
       contacts = (await ContactsService.getContacts(withThumbnails: false)).toList();
     } else {
-      contacts.clear();
-      var vcfs = await SocketManager().sendMessage("get-vcf", {}, (_) {});
-      if (vcfs['data'] != null) {
-        for (var c in jsonDecode(vcfs['data'])) {
-          contacts.add(Contact.fromMap(c));
+      try {
+        contacts.clear();
+        var vcfs = await SocketManager().sendMessage("get-vcf", {}, (_) {});
+        if (vcfs['data'] != null) {
+          if (vcfs['data'] is String) {
+            vcfs['data'] = jsonDecode(vcfs['data']);
+          }
+          for (var c in vcfs['data']) {
+            contacts.add(Contact.fromMap(c));
+          }
+        }
+      } catch (e, s) {
+        print(e);
+        print(s);
+      }
+      if (contacts.isEmpty) {
+        try {
+          if (contacts.isEmpty) {
+            var response = await api.contacts();
+            for (Map<String, dynamic> map in response.data['data']){
+              ContactManager().contacts.add(Contact(
+                displayName: map['firstName'] + " " + map['lastName'],
+                emails: (map['emails'] as List<dynamic>? ?? []).map((e) => Item(label: e['label']?.toString().replaceAll(new RegExp(r'(?:_|[^\w\s])+'), ''), value: e['address'])),
+                phones: (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => Item(label: e['label']?.toString().replaceAll(new RegExp(r'(?:_|[^\w\s])+'), ''), value: e['address'])),
+              ));
+            }
+          }
+        } catch (e, s) {
+          print(e);
+          print(s);
         }
       }
     }
