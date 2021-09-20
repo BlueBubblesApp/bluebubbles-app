@@ -482,7 +482,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 child: InkWell(
                   onTap: toggleShareMenu,
                   child: Padding(
-                    padding: EdgeInsets.only(right: SettingsManager().settings.skin.value == Skins.iOS ? 0 : 1),
+                    padding: EdgeInsets.only(right: SettingsManager().settings.skin.value == Skins.iOS ? 0 : 1, left: SettingsManager().settings.skin.value == Skins.iOS ? 1 : 0),
                     child: fileDragged
                         ? Center(child: Text("Drop file here"))
                         : Icon(
