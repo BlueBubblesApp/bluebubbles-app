@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:bluebubbles/layouts/setup/qr_scan/text_input_url.dart';
+import 'package:dio_http/dio_http.dart';
 import 'package:universal_io/io.dart';
 import 'package:universal_html/html.dart' as html;
 import 'dart:ui';
@@ -46,6 +47,7 @@ class ServerManagementPanelController extends GetxController {
   final RxBool privateAPIStatus = RxBool(false);
   final RxBool helperBundleStatus = RxBool(false);
   final RxnString proxyService = RxnString();
+  final RxMap<String, dynamic> stats = RxMap({});
 
   // Restart trackers
   int? lastRestart;
@@ -78,6 +80,16 @@ class ServerManagementPanelController extends GetxController {
         privateAPIStatus.value = res['data']['private_api'] ?? false;
         helperBundleStatus.value = res['data']['helper_connected'] ?? false;
         proxyService.value = res['data']['proxy_service'];
+      });
+      Dio().get("${SettingsManager().settings.serverAddress.value}/api/v1/server/statistics/totals?guid=${SettingsManager().settings.guidAuthKey}").then((response) {
+        if (response.data['status'] == 200) {
+          stats.addAll(response.data['data'] ?? {});
+          Dio().get("${SettingsManager().settings.serverAddress.value}/api/v1/server/statistics/media?guid=${SettingsManager().settings.guidAuthKey}").then((response) {
+            if (response.data['status'] == 200) {
+              stats.addAll(response.data['data'] ?? {});
+            }
+          });
+        }
       });
     }
     super.onInit();
@@ -226,13 +238,19 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                         )
                     );
                   }),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
-                    ),
-                  ),
+                  Obx(() => (controller.serverVersionCode.value ?? 0) >= 42  && controller.stats.isNotEmpty
+                      ? SettingsDivider(thickness: 0.3) : SizedBox.shrink()),
+                  Obx(() => (controller.serverVersionCode.value ?? 0) >= 42  && controller.stats.isNotEmpty ? Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
+                        child: SelectableText.rich(
+                          TextSpan(
+                              children: controller.stats.entries.map((e) => TextSpan(text: "${e.key.capitalizeFirst!.replaceAll("Handles", "iMessage Numbers")}: ${e.value}${controller.stats.keys.last != e.key ? "\n\n" : ""}")).toList()
+                          ),
+                        ),
+                      )
+                  ) : SizedBox.shrink()),
                   SettingsTile(
                     title: "Show QR Code",
                     subtitle: "Generate QR Code to screenshot or sync other devices",
@@ -242,12 +260,6 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                       materialIcon: Icons.qr_code,
                     ),
                     onTap: () {
-                      /*projectID: result[2],
-                      storageBucket: result[3],
-                      apiKey: result[4],
-                      firebaseURL: result[5],
-                      clientID: result[6],
-                      applicationID: result[7],*/
                       List<dynamic> json = [
                         SettingsManager().settings.guidAuthKey.value,
                         SettingsManager().settings.serverAddress.value,
@@ -700,6 +712,53 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                                 strokeWidth: 3,
                                 valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
                               )))),
+
+                  Obx(() => (controller.serverVersionCode.value ?? 0) >= 42 ? Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
+                    ),
+                  ) : SizedBox.shrink()),
+                  Obx(() => (controller.serverVersionCode.value ?? 0) >= 42 ? SettingsTile(
+                      title: "Check for Server Updates",
+                      subtitle: "Check for new BlueBubbles Server updates",
+                      backgroundColor: tileColor,
+                      leading: SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.desktopcomputer,
+                        materialIcon: Icons.dvr,
+                      ),
+                      onTap: () async {
+                        var data = await SocketManager().sendMessage("check-for-server-update", {}, (_) {});
+                        if (data['status'] == 200) {
+                          bool available = data['data']['available'] ?? false;
+                          Map<String, dynamic> metadata = data['data']['metadata'] ?? {};
+                          Get.defaultDialog(
+                            title: "Update Check",
+                            titleStyle: Theme.of(context).textTheme.headline1,
+                            confirm: Container(height: 0, width: 0),
+                            cancel: Container(height: 0, width: 0),
+                            content: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: <Widget>[
+                                  SizedBox(
+                                    height: 15.0,
+                                  ),
+                                  Text(available ? "Updates available:" : "Your server is up-to-date!", style: context.theme.textTheme.bodyText1),
+                                  SizedBox(
+                                    height: 15.0,
+                                  ),
+                                  if (metadata.isNotEmpty)
+                                    Text("Version: ${metadata['version'] ?? "Unknown"}\nRelease Date: ${metadata['release_date'] ?? "Unknown"}\nRelease Name: ${metadata['release_name'] ?? "Unknown"}")
+                                ]
+                            ),
+                            backgroundColor: Theme.of(context).backgroundColor,
+                          );
+                        } else {
+                          showSnackbar("Error", "Failed to check for updates!");
+                        }
+                      },
+                  ) : SizedBox.shrink()),
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
                   Container(
                     height: 30,

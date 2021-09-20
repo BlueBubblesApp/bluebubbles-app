@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/repository/models/fcm_data.dart';
+import 'package:dio_http/dio_http.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
@@ -499,6 +500,182 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           cancel: Container(height: 0, width: 0),
                           content: Column(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
                             SizedBox(
+                            height: 15.0,
+                            ),
+                            Text("Load From / Save To Server", style: Theme.of(context).textTheme.subtitle1),
+                            Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                              child: Container(color: Colors.grey, height: 0.5),
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    primary: Theme.of(context).primaryColor,
+                                  ),
+                                  onPressed: () async {
+                                    DateTime now = DateTime.now().toLocal();
+                                    String name = "${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}";
+                                    Map<String, dynamic> json = SettingsManager().settings.toMap();
+                                    var response = await Dio().post("${SettingsManager().settings.serverAddress.value}/api/v1/backup/settings?guid=${SettingsManager().settings.guidAuthKey}",
+                                    data: {"name": name, "data": json});
+                                    if (response.statusCode != 200) {
+                                      Get.back();
+                                      showSnackbar(
+                                        "Error",
+                                        "Somthing went wrong",
+                                      );
+                                    } else {
+                                      Get.back();
+                                      showSnackbar(
+                                        "Success",
+                                        "Settings exported successfully to server",
+                                      );
+                                    }
+                                  },
+                                  child: Text(
+                                    "Save Settings",
+                                    style: TextStyle(
+                                      color: Theme.of(context).textTheme.bodyText1!.color,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 10),
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        side: BorderSide(color: Theme.of(context).primaryColor)),
+                                    primary: Theme.of(context).backgroundColor,
+                                  ),
+                                  onPressed: () async {
+                                    var response = await Dio().get("${SettingsManager().settings.serverAddress.value}/api/v1/backup/settings?guid=${SettingsManager().settings.guidAuthKey}");
+                                    if (response.statusCode == 200 && response.data.isNotEmpty) {
+                                      try {
+                                        Map<String, dynamic> json = response.data;
+                                        Settings.updateFromMap(json);
+                                        Get.back();
+                                        showSnackbar("Success", "Settings restored successfully");
+                                      } catch (e, s) {
+                                        Get.back();
+                                        showSnackbar("Error", "Something went wrong");
+                                      }
+                                    } else {
+                                      Get.back();
+                                      showSnackbar("Error", "Something went wrong");
+                                    }
+                                  },
+                                  child: Text(
+                                    "Load Settings",
+                                    style: TextStyle(
+                                      color: Theme.of(context).textTheme.bodyText1!.color,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    primary: Theme.of(context).primaryColor,
+                                  ),
+                                  onPressed: () async {
+                                    List<ThemeObject> allThemes = await ThemeObject.getThemes();
+                                    List<dynamic> json = [];
+                                    allThemes.forEachIndexed((index, e) async {
+                                      List<dynamic> entryJson = [];
+                                      await e.fetchData();
+                                      e.entries.forEachIndexed((index, e2) {
+                                        entryJson.add(e2.toMap());
+                                      });
+                                      Map<String, dynamic> map = e.toMap();
+                                      map['entries'] = entryJson;
+                                      json.add(map);
+                                    });
+                                    DateTime now = DateTime.now().toLocal();
+                                    String name = "theming_${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}";
+                                    var response = await Dio().post("${SettingsManager().settings.serverAddress.value}/api/v1/backup/theme?guid=${SettingsManager().settings.guidAuthKey}",
+                                        data: {"name": name, "data": json});
+                                    if (response.statusCode != 200) {
+                                      Get.back();
+                                      showSnackbar(
+                                        "Error",
+                                        "Somthing went wrong",
+                                      );
+                                    } else {
+                                      Get.back();
+                                      showSnackbar(
+                                        "Success",
+                                        "Theming exported successfully to server",
+                                      );
+                                    }
+                                  },
+                                  child: Text(
+                                    "Save Theming",
+                                    style: TextStyle(
+                                      color: Theme.of(context).textTheme.bodyText1!.color,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 10),
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        side: BorderSide(color: Theme.of(context).primaryColor)),
+                                    primary: Theme.of(context).backgroundColor,
+                                  ),
+                                  onPressed: () async {
+                                    var response = await Dio().get("${SettingsManager().settings.serverAddress.value}/api/v1/backup/settings?guid=${SettingsManager().settings.guidAuthKey}");
+                                    if (response.statusCode == 200 && response.data.isNotEmpty) {
+                                      try {
+                                        List<dynamic> json = response.data;
+                                        for (var e in json) {
+                                          ThemeObject object = ThemeObject.fromMap(e);
+                                          List<dynamic> entriesJson = e['entries'];
+                                          List<ThemeEntry> entries = [];
+                                          for (var e2 in entriesJson) {
+                                            entries.add(ThemeEntry.fromMap(e2));
+                                          }
+                                          object.entries = entries;
+                                          object.data = object.themeData;
+                                          await object.save();
+                                        }
+                                        await SettingsManager().saveSelectedTheme(context);
+                                        Get.back();
+                                        showSnackbar("Success", "Theming restored successfully");
+                                      } catch (_) {
+                                        Get.back();
+                                        showSnackbar("Error", "Something went wrong");
+                                      }
+                                    } else {
+                                      Get.back();
+                                      showSnackbar("Error", "Something went wrong");
+                                    }
+                                  },
+                                  child: Text(
+                                    "Load Theming",
+                                    style: TextStyle(
+                                      color: Theme.of(context).textTheme.bodyText1!.color,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                              ]
+                            ),
+                            SizedBox(
                               height: 15.0,
                             ),
                             Text("Load / Save Locally", style: Theme.of(context).textTheme.subtitle1),
@@ -579,9 +756,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                       Settings.updateFromMap(json);
                                       Get.back();
                                       showSnackbar("Success", "Settings restored successfully");
-                                    } catch (e, s) {
-                                      print(e);
-                                      print(s);
+                                    } catch (_) {
                                       Get.back();
                                       showSnackbar("Error", "Something went wrong");
                                     }
@@ -740,12 +915,11 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         backgroundColor: tileColor,
                         onTap: () async {
                           String json = "[";
-                          ContactManager().handleToContact.values.forEachIndexed((index, c) {
-                            if (c == null) return;
-                            var map = c.toMap();
+                          ContactManager().handleToContact.values.where((element) => element != null).forEachIndexed((index, c) {
+                            var map = c!.toMap();
                             map.remove("avatar");
                             json = json + "${jsonEncode(map)}";
-                            if (index != ContactManager().handleToContact.values.length - 1) {
+                            if (index != ContactManager().handleToContact.values.where((element) => element != null).length - 1) {
                               json = json + ",";
                             } else {
                               json = json + "]";
