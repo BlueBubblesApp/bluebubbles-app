@@ -390,7 +390,8 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                   if (!kIsWeb && !kIsDesktop)
                     SettingsTile(
                       title: "Re-configure with BlueBubbles Server",
-                      subtitle: "Tap to scan QR code   |   Long press for manual entry",
+                      subtitle: "Tap to scan QR code\nLong press for manual entry",
+                      isThreeLine: true,
                       leading: SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.gear,
                         materialIcon: Icons.room_preferences,
