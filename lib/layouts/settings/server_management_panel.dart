@@ -296,7 +296,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                       materialSubtitle: materialSubtitle,
                       text: "Connection & Sync"
                   ),
-                  Obx(() {
+                  /*Obx(() {
                     if (controller.proxyService.value != null && SettingsManager().settings.skin.value == Skins.iOS)
                       return Container(
                         decoration: BoxDecoration(
@@ -384,7 +384,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                       padding: const EdgeInsets.only(left: 65.0),
                       child: SettingsDivider(color: headerColor),
                     ),
-                  ) : SizedBox.shrink()),
+                  ) : SizedBox.shrink()),*/
                   if (!kIsWeb && !kIsDesktop)
                     SettingsTile(
                       title: "Re-configure with BlueBubbles Server",
