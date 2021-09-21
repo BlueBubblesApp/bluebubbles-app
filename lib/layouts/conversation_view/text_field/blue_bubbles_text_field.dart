@@ -597,6 +597,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       if (data.keyCode == 13 && !event.isShiftPressed) {
                         sendMessage();
                         focusNode!.requestFocus();
+                        return KeyEventResult.handled;
                       }
                       if (data.keyCode == 8 && event.isControlPressed) {
                         // Delete bad character (code 127)
@@ -634,8 +635,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         controller!.text = text; // Set the text
                         controller!.selection =
                             TextSelection.fromPosition(TextPosition(offset: start)); // Set the position
+                        return KeyEventResult.handled;
                       }
-                      return KeyEventResult.handled;
+                      return KeyEventResult.ignored;
                     }
                     // TODO figure out the Linux keycode
                     if (event.data is RawKeyEventDataLinux) {
@@ -643,6 +645,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       if (data.keyCode == 13 && !event.isShiftPressed) {
                         sendMessage();
                         focusNode!.requestFocus();
+                        return KeyEventResult.handled;
                       }
                       if (data.keyCode == 8 && event.isControlPressed) {
                         // Delete bad character (code 127)
@@ -679,8 +682,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                           // Set the position
                           controller!.selection = TextSelection.fromPosition(TextPosition(offset: start));
                         }
+                        return KeyEventResult.handled;
                       }
-                      return KeyEventResult.handled;
+                      return KeyEventResult.ignored;
                     }
                     // TODO figure out the MacOs keycode
                     if (event.data is RawKeyEventDataMacOs) {
@@ -688,6 +692,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       if (data.keyCode == 13 && !event.isShiftPressed) {
                         sendMessage();
                         focusNode!.requestFocus();
+                        return KeyEventResult.handled;
                       }
                       if (data.keyCode == 8 && event.isControlPressed) {
                         // Delete bad character (code 127)
@@ -724,8 +729,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                           // Set the position
                           controller!.selection = TextSelection.fromPosition(TextPosition(offset: start));
                         }
+                        return KeyEventResult.handled;
                       }
-                      return KeyEventResult.handled;
+                      return KeyEventResult.ignored;
                     }
                     if (event.data is RawKeyEventDataWeb) {
                       var data = event.data as RawKeyEventDataWeb;
@@ -754,6 +760,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         !isNullOrEmpty(controller!.text)!) {
                       sendMessage();
                       focusNode!.requestFocus();
+                      return KeyEventResult.handled;
                     }
                     return KeyEventResult.ignored;
                   },
