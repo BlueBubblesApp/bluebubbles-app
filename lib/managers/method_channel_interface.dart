@@ -167,6 +167,8 @@ class MethodChannelInterface {
         // Send the message to that chat
         ActionHandler.sendMessage(chat, call.arguments["text"]);
 
+        closeThread();
+
         return new Future.value("");
       case "markAsRead":
         // Find the chat to mark as read

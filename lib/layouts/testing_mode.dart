@@ -64,7 +64,6 @@ class TestingMode extends GetView<TestingModeController> {
                           "Testing #${Random().nextInt(9998)}",
                           DateTime.now(),
                           false,
-                          NotificationVisibility.PUBLIC,
                           Random().nextInt(9998) + 1
                       );
                     },
