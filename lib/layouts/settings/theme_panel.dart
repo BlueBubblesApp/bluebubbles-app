@@ -202,7 +202,7 @@ class ThemePanel extends GetView<ThemePanelController> {
                             saveSettings();
                             controller.update();
                           },
-                          options: Skins.values.toList(),
+                          options: Skins.values.where((item) => item != Skins.Samsung).toList(),
                           textProcessing: (val) => val.toString().split(".").last,
                           capitalize: false,
                           title: "App Skin",
