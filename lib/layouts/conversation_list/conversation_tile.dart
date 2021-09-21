@@ -250,7 +250,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
       initialData: widget.chat.latestMessageText,
       future: widget.chat.latestMessage != null
           ? MessageHelper.getNotificationText(widget.chat.latestMessage!)
-          : Future.value(widget.chat.latestMessageText),
+          : Future.value(widget.chat.latestMessageText ?? ""),
       builder: (BuildContext context, AsyncSnapshot snapshot) {
         String latestText = snapshot.data ?? "";
         return Obx(
