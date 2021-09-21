@@ -116,33 +116,36 @@ class ContactSelectorOption extends StatelessWidget {
       );
     }
 
-    return ListTile(
-      key: new Key("chat-${item.displayName}"),
-      onTap: () => onSelected(item),
-      title: Text(
-        title,
-        style: Theme.of(context).textTheme.bodyText1,
-        overflow: TextOverflow.ellipsis,
+    return Container(
+      color: SettingsManager().settings.skin.value == Skins.Samsung ? Theme.of(context).accentColor : null,
+      child: ListTile(
+        key: new Key("chat-${item.displayName}"),
+        onTap: () => onSelected(item),
+        title: Text(
+          title,
+          style: Theme.of(context).textTheme.bodyText1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        tileColor: SettingsManager().settings.skin.value == Skins.Samsung ? null : Theme.of(context).backgroundColor,
+        subtitle: subtitle,
+        leading: !item.isChat
+            ? ContactAvatarWidget(
+                key: Key("${item.address}-contact-selector-option"),
+                handle: Handle(address: item.address!),
+                borderThickness: 0.1,
+                editable: false,
+              )
+            : ContactAvatarGroupWidget(
+                chat: item.chat!,
+                editable: false,
+              ),
+        trailing: item.isChat
+            ? Icon(
+                SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.forward : Icons.arrow_forward,
+                color: Theme.of(context).primaryColor,
+              )
+            : null,
       ),
-      tileColor: Theme.of(context).backgroundColor,
-      subtitle: subtitle,
-      leading: !item.isChat
-          ? ContactAvatarWidget(
-              key: Key("${item.address}-contact-selector-option"),
-              handle: Handle(address: item.address!),
-              borderThickness: 0.1,
-              editable: false,
-            )
-          : ContactAvatarGroupWidget(
-              chat: item.chat!,
-              editable: false,
-            ),
-      trailing: item.isChat
-          ? Icon(
-              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.forward : Icons.arrow_forward,
-              color: Theme.of(context).primaryColor,
-            )
-          : null,
     );
   }
 }

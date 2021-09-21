@@ -236,7 +236,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
         height: widget.size ?? 40,
         padding: EdgeInsets.all(widget.borderThickness),
         decoration: new BoxDecoration(
-          color: context.theme.backgroundColor, // border color
+          color: SettingsManager().settings.skin.value == Skins.Samsung ? context.theme.accentColor : context.theme.backgroundColor, // border color
           shape: BoxShape.circle,
         ),
         child: Obx(

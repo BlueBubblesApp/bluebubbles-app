@@ -723,7 +723,6 @@ class _Samsung extends StatelessWidget {
           );
         },
         child: InkWell(
-          hoverColor: Colors.red,
           onTap: () {
             if (parent.selected) {
               parent.onSelect();
