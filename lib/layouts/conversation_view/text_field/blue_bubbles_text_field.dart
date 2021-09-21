@@ -21,7 +21,9 @@ import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:dio_http/dio_http.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
+import 'package:file_picker/file_picker.dart' hide PlatformFile;
+import 'package:file_picker/file_picker.dart' as pf;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -251,9 +253,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     CurrentChat.of(context)?.audioPlayers[file.path]?.item1.dispose();
     CurrentChat.of(context)?.audioPlayers[file.path]?.item2.pause();
     CurrentChat.of(context)?.audioPlayers.removeWhere((key, _) => key == file.path);
-
-    // Delete the file
-    File(file.path).delete();
+    if (file.path != null) {
+      // Delete the file
+      File(file.path!).delete();
+    }
   }
 
   void onContentCommit(CommittedContent content) async {
@@ -350,8 +353,13 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               final res = await FilePicker.platform.pickFiles(withData: true, allowMultiple: true);
               if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
 
-              for (var e in res.files) {
-                addAttachment(e);
+              for (pf.PlatformFile e in res.files) {
+                addAttachment(PlatformFile(
+                  path: e.path,
+                  name: e.name,
+                  size: e.size,
+                  bytes: e.bytes,
+                ));
               }
               Get.back();
             },

@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:file_picker/file_picker.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 import 'package:universal_html/html.dart' as html;
@@ -49,12 +49,12 @@ class _VideoViewerState extends State<VideoViewer> {
   }
 
   void initControllers() async {
-    if (kIsWeb) {
+    if (kIsWeb || widget.file.path == null) {
       final blob = html.Blob([widget.file.bytes]);
       final url = html.Url.createObjectUrlFromBlob(blob);
       controller = VideoPlayerController.network(url);
     } else {
-      dynamic file = File(widget.file.path);
+      dynamic file = File(widget.file.path!);
       controller = new VideoPlayerController.file(file);
     }
     controller.setVolume(SettingsManager().settings.startVideosMutedFullscreen.value ? 0 : 1);
@@ -219,12 +219,12 @@ class _VideoViewerState extends State<VideoViewer> {
                       AttachmentHelper.redownloadAttachment(widget.attachment, onComplete: () async {
                         controller.dispose();
                         chewieController?.dispose();
-                        if (kIsWeb) {
+                        if (kIsWeb || widget.file.path == null) {
                           final blob = html.Blob([widget.file.bytes]);
                           final url = html.Url.createObjectUrlFromBlob(blob);
                           controller = VideoPlayerController.network(url);
                         } else {
-                          dynamic file = File(widget.file.path);
+                          dynamic file = File(widget.file.path!);
                           controller = new VideoPlayerController.file(file);
                         }
                         await controller.initialize();
@@ -279,9 +279,10 @@ class _VideoViewerState extends State<VideoViewer> {
                   child: CupertinoButton(
                     padding: EdgeInsets.symmetric(horizontal: 5),
                     onPressed: () async {
+                      if (widget.file.path == null) return;
                       Share.file(
                         "Shared ${widget.attachment.mimeType!.split("/")[0]} from BlueBubbles: ${widget.attachment.transferName}",
-                        widget.file.path,
+                        widget.file.path!,
                       );
                     },
                     child: Icon(

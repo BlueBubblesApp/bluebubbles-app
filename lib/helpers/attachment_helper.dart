@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:file_picker/file_picker.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:universal_io/io.dart';
@@ -174,6 +174,7 @@ class AttachmentHelper {
           href: "data:application/octet-stream;charset=utf-16le;base64,$content")
         ..setAttribute("download", file.name)
         ..click();
+      return;
     }
     if (kIsDesktop) {
       String downloadsPath = (await getDownloadsDirectory())!.path;
@@ -199,7 +200,11 @@ class AttachmentHelper {
       return showDeniedSnackbar("BlueBubbles does not have the required permissions!");
     }
 
-    await ImageGallerySaver.saveFile(file.path);
+    if (file.path == null) {
+      return showDeniedSnackbar();
+    }
+
+    await ImageGallerySaver.saveFile(file.path!);
     showSnackbar('Success', 'Saved attachment!');
   }
 

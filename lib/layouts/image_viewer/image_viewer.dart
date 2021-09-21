@@ -1,4 +1,4 @@
-import 'package:file_picker/file_picker.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 import 'dart:typed_data';
@@ -54,13 +54,13 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
   }
 
   Future<void> initBytes() async {
-    if (kIsWeb) {
+    if (kIsWeb || widget.file.path == null) {
       bytes = widget.file.bytes;
     } else if (widget.attachment.mimeType == "image/heic") {
       bytes =
-          await AttachmentHelper.compressAttachment(widget.attachment, widget.file.path, qualityOverride: 100);
+          await AttachmentHelper.compressAttachment(widget.attachment, widget.file.path!, qualityOverride: 100);
     } else {
-      bytes = await File(widget.file.path).readAsBytes();
+      bytes = await File(widget.file.path!).readAsBytes();
     }
     if (this.mounted) setState(() {});
   }
@@ -209,9 +209,10 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                   child: CupertinoButton(
                     padding: EdgeInsets.symmetric(horizontal: 5),
                     onPressed: () async {
+                      if (widget.file.path == null) return;
                       Share.file(
                         "Shared ${widget.attachment.mimeType!.split("/")[0]} from BlueBubbles: ${widget.attachment.transferName}",
-                        widget.file.path,
+                        widget.file.path!,
                       );
                     },
                     child: Icon(

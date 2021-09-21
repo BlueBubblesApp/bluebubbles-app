@@ -1,4 +1,4 @@
-import 'package:file_picker/file_picker.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 import 'package:universal_html/html.dart' as html;
@@ -56,12 +56,12 @@ class VideoWidgetController extends GetxController with SingleGetTickerProviderM
 
   void initializeController() async {
     PlatformFile file2 = file;
-    if (kIsWeb) {
+    if (kIsWeb || file2.path == null) {
       final blob = html.Blob([file2.bytes]);
       final url = html.Url.createObjectUrlFromBlob(blob);
       controller = VideoPlayerController.network(url);
     } else {
-      dynamic file = File(file2.path);
+      dynamic file = File(file2.path!);
       controller = new VideoPlayerController.file(file);
     }
     await controller.initialize();
