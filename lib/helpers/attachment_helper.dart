@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:universal_io/io.dart';
 import 'package:universal_html/html.dart' as html;
@@ -176,7 +177,7 @@ class AttachmentHelper {
     }
     if (kIsDesktop) {
       String downloadsPath = (await getDownloadsDirectory())!.path;
-      File("$downloadsPath\\${file.name}")..writeAsBytes(file.bytes!);
+      File(join(downloadsPath, file.name))..writeAsBytes(file.bytes!);
       return showSnackbar('Success', 'Saved attachment to $downloadsPath!');
     }
     Function showDeniedSnackbar = (String? err) {

@@ -50,7 +50,7 @@ class _PinnedTileTextBubbleState extends State<PinnedTileTextBubble> with Automa
     bool showTail = !widget.chat.isGroup();
 
     return FutureBuilder<Message>(
-      future: widget.chat.latestMessage,
+      future: widget.chat.latestMessageFuture,
       builder: (BuildContext context, AsyncSnapshot snapshot) {
         if (!snapshot.hasData) return Container();
         if (!(widget.chat.hasUnreadMessage ?? false)) return Container();

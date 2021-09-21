@@ -12,16 +12,16 @@ class ThemeSwitcher extends StatefulWidget {
   final Widget materialSkin;
   final Widget samsungSkin;
 
-  static PageRoute buildPageRoute({required Function(BuildContext context) builder}) {
+  static PageRoute buildPageRoute({required Widget Function(BuildContext context) builder}) {
     switch (SettingsManager().settings.skin.value) {
       case Skins.iOS:
-        return CupertinoPageRoute(builder: builder as Widget Function(BuildContext));
+        return CupertinoPageRoute(builder: builder);
       case Skins.Material:
-        return MaterialPageRoute(builder: builder as Widget Function(BuildContext));
+        return MaterialPageRoute(builder: builder);
       case Skins.Samsung:
-        return MaterialPageRoute(builder: builder as Widget Function(BuildContext));
+        return MaterialPageRoute(builder: builder);
       default:
-        return CupertinoPageRoute(builder: builder as Widget Function(BuildContext));
+        return CupertinoPageRoute(builder: builder);
     }
   }
 

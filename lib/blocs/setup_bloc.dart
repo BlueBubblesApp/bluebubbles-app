@@ -69,7 +69,7 @@ class SetupBloc {
     await SettingsManager().saveSettings(settingsCopy);
     await SettingsManager().saveFCMData(data);
     await SocketManager().authFCM(catchException: false, force: true);
-    await SocketManager().startSocketIO(forceNewConnection: true, catchException: false);
+    SocketManager().startSocketIO(forceNewConnection: true, catchException: false);
     connectionSubscription = ever<SocketState>(SocketManager().state, (event) {
       connectionStatus.value = event;
 

@@ -14,6 +14,7 @@ import 'package:bluebubbles/layouts/settings/custom_avatar_panel.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
@@ -139,7 +140,7 @@ class ThemePanel extends GetView<ThemePanelController> {
                               ),
                         child: Padding(
                           padding: const EdgeInsets.only(bottom: 8.0, left: 15),
-                          child: Text("Theme".psCapitalize,
+                          child: Text("Appearance".psCapitalize,
                               style:
                                   SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
                         )),
@@ -149,6 +150,7 @@ class ThemePanel extends GetView<ThemePanelController> {
                         if (val == null) return;
                         AdaptiveTheme.of(context).setThemeMode(val);
                         controller.update();
+                        EventDispatcher().emit('theme-update', null);
                       },
                       options: AdaptiveThemeMode.values,
                       textProcessing: (val) => val.toString().split(".").last,
@@ -183,7 +185,7 @@ class ThemePanel extends GetView<ThemePanelController> {
                         tileColor: tileColor,
                         iosSubtitle: iosSubtitle,
                         materialSubtitle: materialSubtitle,
-                        text: "Skin"),
+                        text: "Skin and Layout"),
                     Obx(() => SettingsOptions<Skins>(
                           initial: controller._settingsCopy.skin.value,
                           onChanged: (val) {
@@ -200,13 +202,30 @@ class ThemePanel extends GetView<ThemePanelController> {
                             saveSettings();
                             controller.update();
                           },
-                          options: Skins.values.where((item) => item != Skins.Samsung).toList(),
+                          options: Skins.values.toList(),
                           textProcessing: (val) => val.toString().split(".").last,
                           capitalize: false,
                           title: "App Skin",
                           backgroundColor: tileColor,
                           secondaryColor: headerColor,
                         )),
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
+                    ),
+                    Obx(() => SettingsSwitch(
+                      onChanged: (bool val) {
+                        controller._settingsCopy.tabletMode.value = val;
+                        saveSettings();
+                      },
+                      initialVal: controller._settingsCopy.tabletMode.value,
+                      title: "Tablet Mode",
+                      backgroundColor: tileColor,
+                      subtitle: "Enables tablet mode (split view) depending on screen width",
+                    )),
                     SettingsHeader(
                         headerColor: headerColor,
                         tileColor: tileColor,
