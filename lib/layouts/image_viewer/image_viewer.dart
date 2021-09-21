@@ -204,23 +204,24 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                     ),
                   ),
                 ),
-                Padding(
-                  padding: EdgeInsets.only(top: 40.0),
-                  child: CupertinoButton(
-                    padding: EdgeInsets.symmetric(horizontal: 5),
-                    onPressed: () async {
-                      if (widget.file.path == null) return;
-                      Share.file(
-                        "Shared ${widget.attachment.mimeType!.split("/")[0]} from BlueBubbles: ${widget.attachment.transferName}",
-                        widget.file.path!,
-                      );
-                    },
-                    child: Icon(
-                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.share : Icons.share,
-                      color: Colors.white,
+                if (!kIsWeb && !kIsDesktop)
+                  Padding(
+                    padding: EdgeInsets.only(top: 40.0),
+                    child: CupertinoButton(
+                      padding: EdgeInsets.symmetric(horizontal: 5),
+                      onPressed: () async {
+                        if (widget.file.path == null) return;
+                        Share.file(
+                          "Shared ${widget.attachment.mimeType!.split("/")[0]} from BlueBubbles: ${widget.attachment.transferName}",
+                          widget.file.path!,
+                        );
+                      },
+                      child: Icon(
+                        SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.share : Icons.share,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
           ])),
