@@ -242,7 +242,7 @@ class AttachmentHelper {
       return Get.find<AttachmentDownloadController>(tag: attachment.guid);
     } else if (!kIsWeb && (FileSystemEntity.typeSync(pathName) != FileSystemEntityType.notFound ||
         attachment.guid == "redacted-mode-demo-attachment" ||
-        attachment.guid!.contains("theme-selector"))) {
+        (attachment.guid != null && attachment.guid!.contains("theme-selector")))) {
       return PlatformFile(
         name: attachment.transferName!,
         path: pathName,
