@@ -115,12 +115,8 @@ public class HelperUtils {
 
         Log.d(HelperUtils.TAG, "Final notification Count: " + notifications.size());
 
-        // If there are no notifications... might as well cancel all, just in case.
         // If there is one notification and that one notification's ID is -1, cancel it
-        if (notifications.size() == 0) {
-            Log.d(HelperUtils.TAG, "No more notifications. Cancelling all for good measure");
-            manager.cancelAll();
-        } else if (notifications.size() == 1 && notifications.get(0).getId() == -1) {
+        if (notifications.size() == 1 && notifications.get(0).getId() == -1) {
             Log.d(HelperUtils.TAG, "Cancelling summary notification");
             manager.cancel(-1);
         } else if (notifications.size() == 1 && existingId != null && existingId.equals(notifications.get(0).getId())) {
