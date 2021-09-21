@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:bluebubbles/layouts/setup/qr_scan/text_input_url.dart';
 import 'package:dio_http/dio_http.dart';
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:universal_io/io.dart';
 import 'package:universal_html/html.dart' as html;
 import 'dart:ui';
@@ -296,7 +298,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                       materialSubtitle: materialSubtitle,
                       text: "Connection & Sync"
                   ),
-                  Obx(() {
+                  /*Obx(() {
                     if (controller.proxyService.value != null && SettingsManager().settings.skin.value == Skins.iOS)
                       return Container(
                         decoration: BoxDecoration(
@@ -384,7 +386,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                       padding: const EdgeInsets.only(left: 65.0),
                       child: SettingsDivider(color: headerColor),
                     ),
-                  ) : SizedBox.shrink()),
+                  ) : SizedBox.shrink()),*/
                   if (!kIsWeb && !kIsDesktop)
                     SettingsTile(
                       title: "Re-configure with BlueBubbles Server",
@@ -486,7 +488,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                       text: "Server Actions"
                   ),
                   Obx(() => SettingsTile(
-                    title: "Fetch & Share Server Logs",
+                    title: "Fetch${kIsWeb || kIsDesktop ? "" : " & Share"} Server Logs",
                     subtitle: controller.fetchStatus.value
                         ?? (SocketManager().state.value == SocketState.CONNECTED ? "Tap to fetch logs" : "Disconnected, cannot fetch logs"),
                     backgroundColor: tileColor,
@@ -499,11 +501,17 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
 
                       controller.fetchStatus.value = "Fetching logs, please wait...";
 
-                      SocketManager().sendMessage("get-logs", {"count": 500}, (Map<String, dynamic> res) {
+                      SocketManager().sendMessage("get-logs", {"count": 500}, (Map<String, dynamic> res) async {
                         if (res['status'] != 200) {
                           controller.fetchStatus.value = "Failed to fetch logs!";
 
                           return;
+                        }
+
+                        if (kIsDesktop) {
+                          String downloadsPath = (await getDownloadsDirectory())!.path;
+                          File(join(downloadsPath, "main.log"))..writeAsStringSync(res['data']);
+                          return showSnackbar('Success', 'Saved logs to $downloadsPath!');
                         }
 
                         if (kIsWeb) {

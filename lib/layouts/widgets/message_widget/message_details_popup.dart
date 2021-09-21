@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:file_picker/file_picker.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 import 'dart:math';
@@ -670,12 +670,12 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             ),
           ),
         ),
-      if ((widget.message.hasAttachments && !kIsWeb) || widget.message.text!.length > 0)
+      if ((widget.message.hasAttachments && !kIsWeb && !kIsDesktop) || widget.message.text!.length > 0)
         Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: () {
-              if (widget.message.hasAttachments && !widget.message.isUrlPreview() && !kIsWeb) {
+              if (widget.message.hasAttachments && !widget.message.isUrlPreview() && !kIsWeb && !kIsDesktop) {
                 for (Attachment? element in widget.message.attachments!) {
                   Share.file(
                     "${element!.mimeType!.split("/")[0].capitalizeFirst} shared from BlueBubbles: ${element.transferName}",
