@@ -340,7 +340,22 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   }
 
   Future<void> toggleShareMenu() async {
-    if (kIsWeb || kIsDesktop) {
+    if (kIsDesktop) {
+      final res = await FilePicker.platform.pickFiles(withData: true, allowMultiple: true);
+      if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
+
+      for (pf.PlatformFile e in res.files) {
+        addAttachment(PlatformFile(
+          path: e.path,
+          name: e.name,
+          size: e.size,
+          bytes: e.bytes,
+        ));
+      }
+      Get.back();
+      return;
+    }
+    if (kIsWeb) {
       Get.defaultDialog(
         title: "What would you like to do?",
         titleStyle: Theme.of(context).textTheme.headline1,
