@@ -52,7 +52,7 @@ class ActionHandler {
       // Check for URLs
       RegExpMatch? linkMatch;
       String? linkMsg;
-      List<RegExpMatch> matches = parseLinks(text);
+      List<RegExpMatch> matches = parseLinks(text.replaceAll("\n", " "));
 
       // Get the first match (if it exists)
       if (matches.length > 0) {
