@@ -47,7 +47,7 @@ import 'package:secure_application/secure_application.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-import 'package:window_size/window_size.dart';
+import 'package:window_manager/window_manager.dart';
 
 // final SentryClient _sentry = SentryClient(
 //     dsn:
@@ -141,7 +141,8 @@ Future<Null> main() async {
       }
     }
     if (kIsDesktop) {
-      setWindowTitle('BlueBubbles (Beta)');
+      await WindowManager.instance.setTitle('BlueBubbles (Beta)');
+      WindowManager.instance.addListener(DesktopWindowListener());
     }
   } catch (e) {
     exception = e;
@@ -164,6 +165,18 @@ Future<Null> main() async {
   } else {
     runApp(FailureToStart(e: exception));
     throw Exception(exception);
+  }
+}
+
+class DesktopWindowListener extends WindowListener {
+  @override
+  void onWindowFocus() {
+    LifeCycleManager().opened();
+  }
+
+  @override
+  void onWindowBlur() {
+    LifeCycleManager().close();
   }
 }
 

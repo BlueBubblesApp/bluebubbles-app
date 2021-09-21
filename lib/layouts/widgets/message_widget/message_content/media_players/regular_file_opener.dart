@@ -81,7 +81,12 @@ class _RegularFileOpenerState extends State<RegularFileOpener> {
                   color: Theme.of(context).textTheme.bodyText2!.color,
                 ),
               ),
-              Text(widget.attachment.mimeType!, style: Theme.of(context).textTheme.bodyText2),
+              Text(
+                widget.attachment.mimeType!,
+                style: Theme.of(context).textTheme.bodyText2,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
             ],
           ),
         ),
