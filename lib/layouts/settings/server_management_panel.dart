@@ -1,16 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/layouts/setup/qr_scan/text_input_url.dart';
-import 'package:dio_http/dio_http.dart';
 import 'package:universal_io/io.dart';
 import 'package:universal_html/html.dart' as html;
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/setup/qr_code_scanner.dart';
 import 'package:bluebubbles/repository/models/fcm_data.dart';
@@ -20,15 +18,12 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/share.dart';
-import 'package:bluebubbles/layouts/settings/settings_panel.dart';
-import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 class ServerManagementPanelBinding extends Bindings {
@@ -114,8 +109,8 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
     final materialSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
     Color headerColor;
     Color tileColor;
-    if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance()
-        || SettingsManager().settings.skin.value != Skins.iOS) {
+    if ((Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+        SettingsManager().settings.skin.value == Skins.Material) && (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
       headerColor = Theme.of(context).accentColor;
       tileColor = Theme.of(context).backgroundColor;
     } else {
@@ -126,56 +121,20 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
       tileColor = headerColor;
     }
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle(
-        systemNavigationBarColor: headerColor, // navigation bar color
-        systemNavigationBarIconBrightness:
-        headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
-        statusBarColor: Colors.transparent, // status bar color
-      ),
-      child: Scaffold(
-        backgroundColor: SettingsManager().settings.skin.value != Skins.iOS ? tileColor : headerColor,
-        appBar: PreferredSize(
-          preferredSize: Size(CustomNavigator.width(context), 80),
-          child: ClipRRect(
-            child: BackdropFilter(
-              child: AppBar(
-                brightness: ThemeData.estimateBrightnessForColor(headerColor),
-                toolbarHeight: 100.0,
-                elevation: 0,
-                leading: buildBackButton(context),
-                backgroundColor: headerColor.withOpacity(0.5),
-                title: Text(
-                  "Connection & Server Management",
-                  style: Theme.of(context).textTheme.headline1,
-                ),
-              ),
-              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-            ),
-          ),
-        ),
-        body: CustomScrollView(
-          physics: ThemeSwitcher.getScrollPhysics(),
-          slivers: <Widget>[
-            SliverList(
-              delegate: SliverChildListDelegate(
-                <Widget>[
-                  Container(
-                      height: SettingsManager().settings.skin.value == Skins.iOS ? 30 : 40,
-                      alignment: Alignment.bottomLeft,
-                      decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
-                        color: headerColor,
-                        border: Border(
-                            bottom: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
-                        ),
-                      ) : BoxDecoration(
-                        color: tileColor,
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0, left: 15),
-                        child: Text("Connection & Server Details".psCapitalize, style: SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
-                      )
-                  ),
+    return SettingsScaffold(
+      title: "Connection & Server Management",
+      initialHeader: "Connection & Server Details",
+      iosSubtitle: iosSubtitle,
+      materialSubtitle: materialSubtitle,
+      tileColor: tileColor,
+      headerColor: headerColor,
+      bodySlivers: [
+        SliverList(
+          delegate: SliverChildListDelegate(
+            <Widget>[
+              SettingsSection(
+                backgroundColor: tileColor,
+                children: [
                   Obx(() {
                     bool redact = SettingsManager().settings.redactedMode.value;
                     return Container(
@@ -289,13 +248,18 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                       );
                     },
                   ),
-                  SettingsHeader(
-                      headerColor: headerColor,
-                      tileColor: tileColor,
-                      iosSubtitle: iosSubtitle,
-                      materialSubtitle: materialSubtitle,
-                      text: "Connection & Sync"
-                  ),
+                ],
+              ),
+              SettingsHeader(
+                  headerColor: headerColor,
+                  tileColor: tileColor,
+                  iosSubtitle: iosSubtitle,
+                  materialSubtitle: materialSubtitle,
+                  text: "Connection & Sync"
+              ),
+              SettingsSection(
+                backgroundColor: tileColor,
+                children: [
                   Obx(() {
                     if (controller.proxyService.value != null && SettingsManager().settings.skin.value == Skins.iOS)
                       return Container(
@@ -318,41 +282,41 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                       if (val == "Dynamic DNS") {
                         TextEditingController controller = TextEditingController();
                         await showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            actions: [
-                              TextButton(
-                                child: Text("OK"),
-                                onPressed: () async {
-                                  if (!controller.text.isURL) {
-                                    showSnackbar("Error", "Please enter a valid URL");
-                                    return;
-                                  }
-                                  url = controller.text;
-                                  Get.back();
-                                },
-                              ),
-                              TextButton(
-                                child: Text("Cancel"),
-                                onPressed: () {
-                                  Get.back();
-                                },
-                              )
-                            ],
-                            content: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                TextField(
-                                  controller: controller,
-                                  decoration: InputDecoration(
-                                    labelText: "Server Address",
-                                    border: OutlineInputBorder(),
-                                  ),
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              actions: [
+                                TextButton(
+                                  child: Text("OK"),
+                                  onPressed: () async {
+                                    if (!controller.text.isURL) {
+                                      showSnackbar("Error", "Please enter a valid URL");
+                                      return;
+                                    }
+                                    url = controller.text;
+                                    Get.back();
+                                  },
                                 ),
+                                TextButton(
+                                  child: Text("Cancel"),
+                                  onPressed: () {
+                                    Get.back();
+                                  },
+                                )
                               ],
-                            ),
-                            title: Text("Enter Server Address"),
-                          )
+                              content: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  TextField(
+                                    controller: controller,
+                                    decoration: InputDecoration(
+                                      labelText: "Server Address",
+                                      border: OutlineInputBorder(),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              title: Text("Enter Server Address"),
+                            )
                         );
                         if (url == null) return;
                       }
@@ -478,13 +442,18 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                             );
                           });
                     }),
-                  SettingsHeader(
-                      headerColor: headerColor,
-                      tileColor: tileColor,
-                      iosSubtitle: iosSubtitle,
-                      materialSubtitle: materialSubtitle,
-                      text: "Server Actions"
-                  ),
+                ]
+              ),
+              SettingsHeader(
+                  headerColor: headerColor,
+                  tileColor: tileColor,
+                  iosSubtitle: iosSubtitle,
+                  materialSubtitle: materialSubtitle,
+                  text: "Server Actions"
+              ),
+              SettingsSection(
+                backgroundColor: tileColor,
+                children: [
                   Obx(() => SettingsTile(
                     title: "Fetch & Share Server Logs",
                     subtitle: controller.fetchStatus.value
@@ -704,14 +673,14 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                       trailing: (!controller.isRestarting.value)
                           ? Icon(Icons.refresh, color: Colors.grey)
                           : Container(
-                              constraints: BoxConstraints(
-                                maxHeight: 20,
-                                maxWidth: 20,
-                              ),
-                              child: CircularProgressIndicator(
-                                strokeWidth: 3,
-                                valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
-                              )))),
+                          constraints: BoxConstraints(
+                            maxHeight: 20,
+                            maxWidth: 20,
+                          ),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 3,
+                            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                          )))),
 
                   Obx(() => (controller.serverVersionCode.value ?? 0) >= 42 ? Container(
                     color: tileColor,
@@ -721,65 +690,50 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                     ),
                   ) : SizedBox.shrink()),
                   Obx(() => (controller.serverVersionCode.value ?? 0) >= 42 ? SettingsTile(
-                      title: "Check for Server Updates",
-                      subtitle: "Check for new BlueBubbles Server updates",
-                      backgroundColor: tileColor,
-                      leading: SettingsLeadingIcon(
-                        iosIcon: CupertinoIcons.desktopcomputer,
-                        materialIcon: Icons.dvr,
-                      ),
-                      onTap: () async {
-                        var data = await SocketManager().sendMessage("check-for-server-update", {}, (_) {});
-                        if (data['status'] == 200) {
-                          bool available = data['data']['available'] ?? false;
-                          Map<String, dynamic> metadata = data['data']['metadata'] ?? {};
-                          Get.defaultDialog(
-                            title: "Update Check",
-                            titleStyle: Theme.of(context).textTheme.headline1,
-                            confirm: Container(height: 0, width: 0),
-                            cancel: Container(height: 0, width: 0),
-                            content: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: <Widget>[
-                                  SizedBox(
-                                    height: 15.0,
-                                  ),
-                                  Text(available ? "Updates available:" : "Your server is up-to-date!", style: context.theme.textTheme.bodyText1),
-                                  SizedBox(
-                                    height: 15.0,
-                                  ),
-                                  if (metadata.isNotEmpty)
-                                    Text("Version: ${metadata['version'] ?? "Unknown"}\nRelease Date: ${metadata['release_date'] ?? "Unknown"}\nRelease Name: ${metadata['release_name'] ?? "Unknown"}")
-                                ]
-                            ),
-                            backgroundColor: Theme.of(context).backgroundColor,
-                          );
-                        } else {
-                          showSnackbar("Error", "Failed to check for updates!");
-                        }
-                      },
+                    title: "Check for Server Updates",
+                    subtitle: "Check for new BlueBubbles Server updates",
+                    backgroundColor: tileColor,
+                    leading: SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.desktopcomputer,
+                      materialIcon: Icons.dvr,
+                    ),
+                    onTap: () async {
+                      var data = await SocketManager().sendMessage("check-for-server-update", {}, (_) {});
+                      if (data['status'] == 200) {
+                        bool available = data['data']['available'] ?? false;
+                        Map<String, dynamic> metadata = data['data']['metadata'] ?? {};
+                        Get.defaultDialog(
+                          title: "Update Check",
+                          titleStyle: Theme.of(context).textTheme.headline1,
+                          confirm: Container(height: 0, width: 0),
+                          cancel: Container(height: 0, width: 0),
+                          content: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: <Widget>[
+                                SizedBox(
+                                  height: 15.0,
+                                ),
+                                Text(available ? "Updates available:" : "Your server is up-to-date!", style: context.theme.textTheme.bodyText1),
+                                SizedBox(
+                                  height: 15.0,
+                                ),
+                                if (metadata.isNotEmpty)
+                                  Text("Version: ${metadata['version'] ?? "Unknown"}\nRelease Date: ${metadata['release_date'] ?? "Unknown"}\nRelease Name: ${metadata['release_name'] ?? "Unknown"}")
+                              ]
+                          ),
+                          backgroundColor: Theme.of(context).backgroundColor,
+                        );
+                      } else {
+                        showSnackbar("Error", "Failed to check for updates!");
+                      }
+                    },
                   ) : SizedBox.shrink()),
-                  Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
-                  Container(
-                    height: 30,
-                    decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
-                      color: headerColor,
-                      border: Border(
-                          top: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
-                      ),
-                    ) : null,
-                  ),
                 ],
               ),
-            ),
-            SliverList(
-              delegate: SliverChildListDelegate(
-                <Widget>[],
-              ),
-            )
-          ],
+            ],
+          ),
         ),
-      ),
+      ]
     );
   }
 }

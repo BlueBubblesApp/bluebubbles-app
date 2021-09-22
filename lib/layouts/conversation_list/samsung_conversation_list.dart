@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -431,14 +432,30 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(25),
                                 child: Obx(() {
-                                    return ListView.builder(
-                                      shrinkWrap: true,
-                                      physics: NeverScrollableScrollPhysics(),
-                                      itemBuilder: (context, index) {
-                                        final chat = ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).bigPinHelper(true)[index];
-                                        return buildChatItem(chat);
-                                      },
-                                      itemCount: ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).bigPinHelper(true).length,
+                                  Color headerColor;
+                                  Color tileColor;
+                                  if ((Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+                                      SettingsManager().settings.skin.value == Skins.Material) && (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
+                                    headerColor = Theme.of(context).accentColor;
+                                    tileColor = Theme.of(context).backgroundColor;
+                                  } else {
+                                    headerColor = Theme.of(context).backgroundColor;
+                                    tileColor = Theme.of(context).accentColor;
+                                  }
+                                  if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
+                                    tileColor = headerColor;
+                                  }
+                                    return Container(
+                                      color: tileColor,
+                                      child: ListView.builder(
+                                        shrinkWrap: true,
+                                        physics: NeverScrollableScrollPhysics(),
+                                        itemBuilder: (context, index) {
+                                          final chat = ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).bigPinHelper(true)[index];
+                                          return buildChatItem(chat);
+                                        },
+                                        itemCount: ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).bigPinHelper(true).length,
+                                      ),
                                     );
                                   },
                                 ),
@@ -454,6 +471,19 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
                               borderRadius: BorderRadius.circular(25),
                               child: Obx(
                                     () {
+                                  Color headerColor;
+                                  Color tileColor;
+                                  if ((Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+                                      SettingsManager().settings.skin.value == Skins.Material) && (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
+                                    headerColor = Theme.of(context).accentColor;
+                                    tileColor = Theme.of(context).backgroundColor;
+                                  } else {
+                                    headerColor = Theme.of(context).backgroundColor;
+                                    tileColor = Theme.of(context).accentColor;
+                                  }
+                                  if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
+                                    tileColor = headerColor;
+                                  }
                                   if (!ChatBloc().loadedChatBatch.value) {
                                     return Center(
                                       child: Container(
@@ -484,14 +514,17 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
                                       ),
                                     );
                                   }
-                                  return ListView.builder(
-                                    shrinkWrap: true,
-                                    physics: NeverScrollableScrollPhysics(),
-                                    itemBuilder: (context, index) {
-                                      final chat = ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).bigPinHelper(false)[index];
-                                      return buildChatItem(chat);
-                                    },
-                                    itemCount: ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).bigPinHelper(false).length,
+                                  return Container(
+                                    color: tileColor,
+                                    child: ListView.builder(
+                                      shrinkWrap: true,
+                                      physics: NeverScrollableScrollPhysics(),
+                                      itemBuilder: (context, index) {
+                                        final chat = ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).bigPinHelper(false)[index];
+                                        return buildChatItem(chat);
+                                      },
+                                      itemCount: ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).bigPinHelper(false).length,
+                                    ),
                                   );
                                 },
                               ),

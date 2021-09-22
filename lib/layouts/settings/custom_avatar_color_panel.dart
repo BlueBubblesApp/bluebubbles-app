@@ -1,20 +1,18 @@
 import 'dart:async';
 import 'dart:ui';
 
-import 'package:bluebubbles/helpers/navigator.dart';
-import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/themes.dart';
+import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
-import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 class CustomAvatarColorPanelBinding implements Bindings {
   @override
@@ -68,63 +66,45 @@ class CustomAvatarColorPanelController extends GetxController {
 class CustomAvatarColorPanel extends GetView<CustomAvatarColorPanelController> {
   @override
   Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness:
-            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
-        statusBarColor: Colors.transparent, // status bar color
-      ),
-      child: Scaffold(
-        backgroundColor: Theme.of(context).backgroundColor,
-        appBar: PreferredSize(
-          preferredSize: Size(CustomNavigator.width(context), 80),
-          child: ClipRRect(
-            child: BackdropFilter(
-              child: AppBar(
-                brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
-                toolbarHeight: 100.0,
-                elevation: 0,
-                leading: buildBackButton(context),
-                backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
-                title: Text(
-                  "Custom Avatar Colors",
-                  style: Theme.of(context).textTheme.headline1,
-                ),
-              ),
-              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-            ),
+    Color headerColor;
+    Color tileColor;
+    if ((Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+        SettingsManager().settings.skin.value == Skins.Material) && (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
+      headerColor = Theme.of(context).accentColor;
+      tileColor = Theme.of(context).backgroundColor;
+    } else {
+      headerColor = Theme.of(context).backgroundColor;
+      tileColor = Theme.of(context).accentColor;
+    }
+    if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
+      tileColor = headerColor;
+    }
+
+    return SettingsScaffold(
+      title: "Custom Avatar Colors",
+      initialHeader: null,
+      iosSubtitle: null,
+      materialSubtitle: null,
+      tileColor: tileColor,
+      headerColor: headerColor,
+      bodySlivers: [
+        Obx(() => SliverList(
+          delegate: SliverChildListDelegate(
+            <Widget>[
+              Container(padding: EdgeInsets.only(top: 5.0)),
+              if (controller.handleWidgets.length == 0)
+                Container(
+                    padding: EdgeInsets.all(30),
+                    child: Text(
+                      "No avatars have been customized! To get started, turn on colorful avatars and tap an avatar in the conversation details page.",
+                      style: Theme.of(context).textTheme.subtitle1?.copyWith(height: 1.5),
+                      textAlign: TextAlign.center,
+                    )),
+              for (Widget handleWidget in controller.handleWidgets) handleWidget
+            ],
           ),
-        ),
-        body: CustomScrollView(
-          physics: AlwaysScrollableScrollPhysics(
-            parent: CustomBouncingScrollPhysics(),
-          ),
-          slivers: <Widget>[
-            Obx(() => SliverList(
-                  delegate: SliverChildListDelegate(
-                    <Widget>[
-                      Container(padding: EdgeInsets.only(top: 5.0)),
-                      if (controller.handleWidgets.length == 0)
-                        Container(
-                            padding: EdgeInsets.all(30),
-                            child: Text(
-                              "No avatars have been customized! To get started, turn on colorful avatars and tap an avatar in the conversation details page.",
-                              style: Theme.of(context).textTheme.subtitle1?.copyWith(height: 1.5),
-                              textAlign: TextAlign.center,
-                            )),
-                      for (Widget handleWidget in controller.handleWidgets) handleWidget
-                    ],
-                  ),
-                )),
-            SliverList(
-              delegate: SliverChildListDelegate(
-                <Widget>[],
-              ),
-            )
-          ],
-        ),
-      ),
+        )),
+      ]
     );
   }
 }
