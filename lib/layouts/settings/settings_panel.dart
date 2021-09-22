@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/repository/models/fcm_data.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
@@ -25,9 +25,6 @@ import 'package:bluebubbles/layouts/settings/server_management_panel.dart';
 import 'package:bluebubbles/layouts/settings/theme_panel.dart';
 import 'package:bluebubbles/layouts/settings/troubleshoot_panel.dart';
 import 'package:bluebubbles/layouts/widgets/vertical_split_view.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
-import 'package:bluebubbles/repository/models/theme_entry.dart';
-import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:collection/collection.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';
@@ -738,7 +735,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                                                       object.entries = entries;
                                                                       object.data = object.themeData;
                                                                       await object.save();
-                                                                      await SettingsManager().saveSelectedTheme(context);
+                                                                      SettingsManager().saveSelectedTheme(context);
                                                                       Get.back();
                                                                       showSnackbar("Success", "Theming restored successfully");
                                                                     },
@@ -972,7 +969,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                           object.data = object.themeData;
                                           await object.save();
                                         }
-                                        await SettingsManager().saveSelectedTheme(context);
+                                        SettingsManager().saveSelectedTheme(context);
                                         Get.back();
                                         showSnackbar("Success", "Theming restored successfully");
                                       } catch (_) {

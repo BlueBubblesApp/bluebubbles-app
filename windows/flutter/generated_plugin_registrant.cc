@@ -12,6 +12,7 @@
 #include <quick_notify/quick_notify_plugin.h>
 #include <secure_application/secure_application_plugin.h>
 #include <url_launcher_windows/url_launcher_windows.h>
+#include <window_manager/window_manager_plugin.h>
 #include <window_size/window_size_plugin.h>
 
 void RegisterPlugins(flutter::PluginRegistry* registry) {
@@ -27,6 +28,8 @@ void RegisterPlugins(flutter::PluginRegistry* registry) {
       registry->GetRegistrarForPlugin("SecureApplicationPlugin"));
   UrlLauncherWindowsRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("UrlLauncherWindows"));
+  WindowManagerPluginRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("WindowManagerPlugin"));
   WindowSizePluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("WindowSizePlugin"));
 }

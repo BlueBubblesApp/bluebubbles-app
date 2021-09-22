@@ -15,7 +15,7 @@ import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import "package:flutter/material.dart";
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -57,13 +57,13 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
     }
   }
 
-  Future<void> init() async {
+  void init() {
     getStartingIndex();
 
     // If the allAttachments is not updated
     if (startingIndex == null) {
       // Then fetch all of them and try again
-      await widget.currentChat?.updateChatAttachments();
+      widget.currentChat?.updateChatAttachments();
       getStartingIndex();
     }
 
@@ -78,7 +78,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
         List<Attachment> older = widget.currentChat!.chatAttachments.sublist(0);
 
         // Update all of the attachments
-        await widget.currentChat!.updateChatAttachments();
+        widget.currentChat!.updateChatAttachments();
         List<Attachment> newer = widget.currentChat!.chatAttachments.sublist(0);
         if (newer.length > older.length) {
           Logger.info("Increasing currentIndex from " +

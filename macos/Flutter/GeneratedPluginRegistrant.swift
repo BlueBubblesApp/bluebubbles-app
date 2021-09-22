@@ -21,6 +21,7 @@ import shared_preferences_macos
 import sqflite
 import url_launcher_macos
 import wakelock_macos
+import window_manager
 import window_size
 
 func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
@@ -40,5 +41,6 @@ func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   SqflitePlugin.register(with: registry.registrar(forPlugin: "SqflitePlugin"))
   UrlLauncherPlugin.register(with: registry.registrar(forPlugin: "UrlLauncherPlugin"))
   WakelockMacosPlugin.register(with: registry.registrar(forPlugin: "WakelockMacosPlugin"))
+  WindowManagerPlugin.register(with: registry.registrar(forPlugin: "WindowManagerPlugin"))
   WindowSizePlugin.register(with: registry.registrar(forPlugin: "WindowSizePlugin"))
 }
