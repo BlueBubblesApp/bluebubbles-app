@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:file_picker/file_picker.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 import 'package:universal_html/html.dart' as html;
@@ -38,10 +38,10 @@ class _ContactWidgetState extends State<ContactWidget> {
 
     String appleContact;
 
-    if (kIsWeb) {
+    if (kIsWeb || widget.file.path == null) {
       appleContact = utf8.decode(widget.file.bytes!);
     } else {
-      appleContact = File(widget.file.path).readAsStringSync();
+      appleContact = File(widget.file.path!).readAsStringSync();
     }
 
     try {
@@ -64,7 +64,7 @@ class _ContactWidgetState extends State<ContactWidget> {
           color: Theme.of(context).accentColor,
           child: InkWell(
             onTap: () async {
-              if (kIsWeb) {
+              if (kIsWeb || widget.file.path == null) {
                 final content = base64.encode(widget.file.bytes!);
                 html.AnchorElement(
                     href: "data:application/octet-stream;charset=utf-16le;base64,$content")
@@ -77,7 +77,7 @@ class _ContactWidgetState extends State<ContactWidget> {
                     "path": "/attachments/" +
                         widget.attachment.guid! +
                         "/" +
-                        basename(widget.file.path),
+                        basename(widget.file.path!),
                     "mimeType": "text/x-vcard",
                   },
                 );

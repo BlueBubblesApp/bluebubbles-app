@@ -1,6 +1,5 @@
 import 'dart:async';
-import 'package:file_picker/file_picker.dart';
-import 'package:flutter/foundation.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'dart:math';
 import 'dart:ui';
 
@@ -29,7 +28,9 @@ import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/outgoing_queue.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';

@@ -31,6 +31,8 @@ class ApiService extends GetxService {
   void onInit() {
     dio = new Dio(BaseOptions(connectTimeout: 30000, receiveTimeout: 30000, sendTimeout: 30000));
     dio.interceptors.add(ApiInterceptor());
+    // Uncomment to run tests on most API requests
+    // testAPI();
     super.onInit();
   }
 
@@ -47,6 +49,24 @@ class ApiService extends GetxService {
   Future<Response> serverInfo({CancelToken? cancelToken}) async {
     return await dio.get(
         "$origin/server/info",
+        queryParameters: buildQueryParams(),
+        cancelToken: cancelToken
+    );
+  }
+
+  /// Get server totals (number of handles, messages, chats, and attachments)
+  Future<Response> serverStatTotals({CancelToken? cancelToken}) async {
+    return await dio.get(
+        "$origin/server/statistics/totals",
+        queryParameters: buildQueryParams(),
+        cancelToken: cancelToken
+    );
+  }
+
+  /// Get server media totals (number of images, videos, and locations)
+  Future<Response> serverStatMedia({CancelToken? cancelToken}) async {
+    return await dio.get(
+        "$origin/server/statistics/media",
         queryParameters: buildQueryParams(),
         cancelToken: cancelToken
     );
@@ -134,6 +154,15 @@ class ApiService extends GetxService {
     );
   }
 
+  /// Get the number of chats in the server iMessage DB
+  Future<Response> chatCount({CancelToken? cancelToken}) async {
+    return await dio.get(
+        "$origin/chat/count",
+        queryParameters: buildQueryParams(),
+        cancelToken: cancelToken
+    );
+  }
+
   /// Get a single chat by its [guid]. Use [withQuery] to specify what you would
   /// like in the response or how to query the DB.
   ///
@@ -211,6 +240,64 @@ class ApiService extends GetxService {
     );
   }
 
+  /// Get all icloud contacts
+  Future<Response> contacts({CancelToken? cancelToken}) async {
+    return await dio.get(
+        "$origin/contact",
+        queryParameters: buildQueryParams(),
+        cancelToken: cancelToken
+    );
+  }
+
+  /// Get specific icloud contacts with a list of [addresses], either phone
+  /// numbers or emails
+  Future<Response> contactByAddresses(List<String> addresses, {CancelToken? cancelToken}) async {
+    return await dio.post(
+        "$origin/contact/query",
+        queryParameters: buildQueryParams(),
+        data: {"addresses": addresses},
+        cancelToken: cancelToken
+    );
+  }
+
+  /// Get backup theme JSON, if any
+  Future<Response> getTheme({CancelToken? cancelToken}) async {
+    return await dio.get(
+        "$origin/backup/theme",
+        queryParameters: buildQueryParams(),
+        cancelToken: cancelToken
+    );
+  }
+
+  /// Set theme backup with the provided [json]
+  Future<Response> setTheme(String name, Map<String, dynamic> json, {CancelToken? cancelToken}) async {
+    return await dio.post(
+        "$origin/backup/theme",
+        data: {"name": name, "data": json},
+        queryParameters: buildQueryParams(),
+        cancelToken: cancelToken
+    );
+  }
+
+  /// Get settings backup, if any
+  Future<Response> getSettings({CancelToken? cancelToken}) async {
+    return await dio.get(
+        "$origin/backup/settings",
+        queryParameters: buildQueryParams(),
+        cancelToken: cancelToken
+    );
+  }
+
+  /// Set settings backup with the provided [json]
+  Future<Response> setSettings(String name, Map<String, dynamic> json, {CancelToken? cancelToken}) async {
+    return await dio.post(
+        "$origin/backup/settings",
+        data: {"name": name, "data": json},
+        queryParameters: buildQueryParams(),
+        cancelToken: cancelToken
+    );
+  }
+
   /// Get the basic landing page for the server URL
   Future<Response> landingPage({CancelToken? cancelToken}) async {
     return await dio.get(
@@ -234,6 +321,20 @@ class ApiService extends GetxService {
       test("Server Info", () async {
         s.start();
         var res = await serverInfo();
+        expect(res.data['status'], 200);
+        s.stop();
+        Logger.info("Request took ${s.elapsedMilliseconds} ms");
+      });
+      test("Server Stat Totals", () async {
+        s.start();
+        var res = await serverStatTotals();
+        expect(res.data['status'], 200);
+        s.stop();
+        Logger.info("Request took ${s.elapsedMilliseconds} ms");
+      });
+      test("Server Stat Media", () async {
+        s.start();
+        var res = await serverStatMedia();
         expect(res.data['status'], 200);
         s.stop();
         Logger.info("Request took ${s.elapsedMilliseconds} ms");
@@ -266,6 +367,13 @@ class ApiService extends GetxService {
         s.stop();
         Logger.info("Request took ${s.elapsedMilliseconds} ms");
       });
+      test("Chat Count", () async {
+        s.start();
+        var res = await chatCount();
+        expect(res.data['status'], 200);
+        s.stop();
+        Logger.info("Request took ${s.elapsedMilliseconds} ms");
+      });
       test("Message Count", () async {
         s.start();
         var res = await messageCount();
@@ -290,6 +398,27 @@ class ApiService extends GetxService {
       test("Handle Count", () async {
         s.start();
         var res = await handleCount();
+        expect(res.data['status'], 200);
+        s.stop();
+        Logger.info("Request took ${s.elapsedMilliseconds} ms");
+      });
+      test("iCloud Contacts", () async {
+        s.start();
+        var res = await contacts();
+        expect(res.data['status'], 200);
+        s.stop();
+        Logger.info("Request took ${s.elapsedMilliseconds} ms");
+      });
+      test("Theme Backup", () async {
+        s.start();
+        var res = await getTheme();
+        expect(res.data['status'], 200);
+        s.stop();
+        Logger.info("Request took ${s.elapsedMilliseconds} ms");
+      });
+      test("Settings Backup", () async {
+        s.start();
+        var res = await getSettings();
         expect(res.data['status'], 200);
         s.stop();
         Logger.info("Request took ${s.elapsedMilliseconds} ms");
@@ -323,6 +452,8 @@ class ApiInterceptor extends Interceptor {
   @override
   void onError(DioError err, ErrorInterceptorHandler handler) {
     Logger.error("PATH: ${err.requestOptions.path}", tag: "ERROR[${err.response?.statusCode}]");
+    print(err.error);
+    print(err.requestOptions.contentType);
     return super.onError(err, handler);
   }
 }

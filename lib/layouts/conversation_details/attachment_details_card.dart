@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:file_picker/file_picker.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 import 'dart:typed_data';
@@ -89,9 +89,9 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
             style: Theme.of(context).textTheme.bodyText1,
           ),
           Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.cloud_download : Icons.cloud_download, size: 28.0),
-          (widget.attachment.mimeType != null)
+          (widget.attachment.mimeType != null && this.attachmentFile.path != null)
               ? Text(
-                  basename(this.attachmentFile.path),
+                  basename(this.attachmentFile.path!),
                   style: Theme.of(context).textTheme.bodyText1,
                 )
               : Container()
@@ -143,7 +143,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
                 ? buildReadyToDownload(context)
                 : Builder(
                     builder: (context) {
-                      bool attachmentExists = kIsWeb ? false : File(this.attachmentFile.path).existsSync();
+                      bool attachmentExists = kIsWeb ? false : File(this.attachmentFile.path ?? "").existsSync();
 
                       // If the attachment exists, build the preview
                       if (attachmentExists) return buildPreview(context);
@@ -177,8 +177,8 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
   }
 
   Future<void> getVideoPreview(PlatformFile file) async {
-    if (previewImage != null || kIsWeb) return;
-    previewImage = await AttachmentHelper.getVideoThumbnail(file.path);
+    if (previewImage != null || kIsWeb || file.path == null) return;
+    previewImage = await AttachmentHelper.getVideoThumbnail(file.path!);
     Size size = await AttachmentHelper.getImageSizing("${file.path}.thumbnail");
     widget.attachment.width = size.width.toInt();
     widget.attachment.height = size.height.toInt();

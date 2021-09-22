@@ -19,6 +19,10 @@ import android.util.Log;
 
 import java.sql.Timestamp;
 import java.util.Map;
+import java.util.Arrays;
+import java.util.ArrayList;
+
+import com.bluebubbles.messaging.method_call_handler.handlers.NewMessageNotification;
 
 public class HelperUtils {
     public static String TAG = "HelperUtils";
@@ -73,19 +77,52 @@ public class HelperUtils {
         return output;
     }
 
-    public static void tryCancelNotificationSummary(Context context) {
-        Log.d(HelperUtils.TAG, "Attempting to cancel notification summary...");
+    public static void tryCancelNotifications(Context context, Integer existingId, String existingGuid) {
+        Log.d(HelperUtils.TAG, "Attempting to cancel notifications...");
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
         NotificationManager manager = (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
-        StatusBarNotification[] notifications = manager.getActiveNotifications();
+        ArrayList<StatusBarNotification> notifications = new ArrayList<StatusBarNotification>(Arrays.asList(manager.getActiveNotifications()));
 
-        // If there are no more notifications (only the group is left). Clear the group
-        Log.d(HelperUtils.TAG, "Notification Count: " + notifications.length);
-        if (notifications.length <= 0 || (notifications.length == 1 && notifications[0].getId() == -1)) {
-            Log.d(HelperUtils.TAG, "Cancelling the notification summary...");
+        // We need to keep track of the count manually so that we can accurately clear the summary
+        Log.d(HelperUtils.TAG, "Notification Count: " + notifications.size());
 
-            // Using cancel all because it seems cancelling it by ID sometimes doesn't work
-            notificationManager.cancelAll();
+        // Only try to clear a notification if one is provided
+        for (int i = 0; i < notifications.size(); i++) {
+            StatusBarNotification sbNotification = notifications.get(i);
+            Integer nId = sbNotification.getId();
+            Boolean cancelled = false;
+
+            // If we are passed an existing Id,
+            // clear the notification with that ID
+            if (existingId != null && nId.equals(existingId)) {
+                Log.d(HelperUtils.TAG, "Cancelling notification by ID: " + nId.toString());
+                manager.cancel(NewMessageNotification.notificationTag, nId);
+                notifications.remove(i);
+                cancelled = true;
+            }
+
+            // If we were passed an existing chat guid,
+            // clear the notification if it's from the same chat
+            if (!cancelled && existingGuid != null) {
+                String chatGuid = sbNotification.getNotification().extras.getString("chatGuid");
+                if (chatGuid != null && chatGuid.equals(existingGuid)) {
+                    Log.d(HelperUtils.TAG, "Cancelling notification by Chat GUID: " + chatGuid);
+                    manager.cancel(sbNotification.getTag(), nId);
+                    notifications.remove(i);
+                }
+            }
+        }
+
+        Log.d(HelperUtils.TAG, "Final notification Count: " + notifications.size());
+
+        // If there is one notification and that one notification's ID is -1, cancel it
+        if (notifications.size() == 1 && notifications.get(0).getId() == -1) {
+            Log.d(HelperUtils.TAG, "Cancelling summary notification");
+            manager.cancel(-1);
+        } else if (notifications.size() == 1 && existingId != null && existingId.equals(notifications.get(0).getId())) {
+            int failedId = notifications.get(0).getId();
+            Log.d(HelperUtils.TAG, "Failed to cancel notification ID: " + failedId + ". Re-cancelling...");
+            manager.cancel(NewMessageNotification.notificationTag, failedId);
         }
     }
 }

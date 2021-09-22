@@ -20,15 +20,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart' as fln;
 import 'package:timezone/timezone.dart' as tz;
 
-class NotificationVisibility {
-  // ignore: non_constant_identifier_names
-  static const SECRET = -1;
-  // ignore: non_constant_identifier_names
-  static const PRIVATE = 0;
-  // ignore: non_constant_identifier_names
-  static const PUBLIC = 1;
-}
-
 /// [NotificationManager] holds data relating to the current chat, and manages things such as
 class NotificationManager {
   factory NotificationManager() {
@@ -163,7 +154,7 @@ class NotificationManager {
   /// @param [handle] optional parameter of the handle of the message
   ///
   /// @param [contact] optional parameter of the contact of the message
-  Future<void> createNotificationFromMessage(Chat chat, Message message, int visibility) async {
+  Future<void> createNotificationFromMessage(Chat chat, Message message) async {
     // sanity check to make sure we don't notify if the chat is muted
     if (chat.shouldMuteNotification(message)) return;
     Uint8List? contactIcon;
@@ -231,7 +222,6 @@ class NotificationManager {
         messageText,
         message.dateCreated ?? DateTime.now(),
         message.isFromMe ?? false,
-        visibility,
         chat.id ?? Random().nextInt(9998) + 1);
   }
 
@@ -245,7 +235,6 @@ class NotificationManager {
       String messageText,
       DateTime messageDate,
       bool messageIsFromMe,
-      int visibility,
       int summaryId) async {
     if (kIsWeb && uh.Notification.permission == "granted") {
       var notif = uh.Notification(chatTitle, body: messageText, icon: "/splash/img/dark-4x.png");
@@ -276,7 +265,6 @@ class NotificationManager {
       "messageText": messageText,
       "messageDate": messageDate.millisecondsSinceEpoch,
       "messageIsFromMe": messageIsFromMe,
-      "visibility": visibility,
       "sound": SettingsManager().settings.notificationSound.value,
     });
   }

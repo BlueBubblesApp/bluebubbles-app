@@ -202,7 +202,7 @@ class MessageHelper {
   }
 
   static Future<void> handleNotification(Message message, Chat chat,
-      {bool force = false, int visibility = NotificationVisibility.PUBLIC}) async {
+      {bool force = false}) async {
     // See if there is an existing message for the given GUID
     Message? existingMessage;
     if (!force) existingMessage = Message.findOne(guid: message.guid);
@@ -225,7 +225,7 @@ class MessageHelper {
       // Don't notify if the the chat is the active chat
       return;
     }
-    await NotificationManager().createNotificationFromMessage(chat, message, visibility);
+    await NotificationManager().createNotificationFromMessage(chat, message);
   }
 
   /// A synchronous notification text method for big pins to display new attachments

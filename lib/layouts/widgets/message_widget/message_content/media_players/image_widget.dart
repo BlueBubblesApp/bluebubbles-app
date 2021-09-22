@@ -1,4 +1,4 @@
-import 'package:file_picker/file_picker.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 import 'dart:typed_data';
@@ -43,7 +43,7 @@ class ImageWidgetController extends GetxController {
     Uint8List? tmpData = CurrentChat.of(context)?.getImageData(attachment);
     if (tmpData == null) {
       // If it's an image, compress the image when loading it
-      if (kIsWeb) {
+      if (kIsWeb || file.path == null) {
         if (attachment.guid != "redacted-mode-demo-attachment") {
           data.value = file.bytes;
         } else {
@@ -52,14 +52,14 @@ class ImageWidgetController extends GetxController {
       } else if (AttachmentHelper.canCompress(attachment) &&
           attachment.guid != "redacted-mode-demo-attachment" &&
           !attachment.guid!.contains("theme-selector")) {
-        data.value = await AttachmentHelper.compressAttachment(attachment, file.path);
+        data.value = await AttachmentHelper.compressAttachment(attachment, file.path!);
         // All other attachments can be held in memory as bytes
       } else {
         if (attachment.guid == "redacted-mode-demo-attachment" || attachment.guid!.contains("theme-selector")) {
-          data.value = (await rootBundle.load(file.path)).buffer.asUint8List();
+          data.value = (await rootBundle.load(file.path!)).buffer.asUint8List();
           return;
         }
-        data.value = await File(file.path).readAsBytes();
+        data.value = await File(file.path!).readAsBytes();
       }
 
       if (data.value == null || CurrentChat.of(context) == null) return;

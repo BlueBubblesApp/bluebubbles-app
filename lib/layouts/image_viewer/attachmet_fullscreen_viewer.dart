@@ -1,6 +1,5 @@
 import 'dart:async';
-import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:math';
 
@@ -16,7 +15,7 @@ import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/repository/models/attachment.dart';
 import "package:flutter/material.dart";
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -58,13 +57,13 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
     }
   }
 
-  void init() {
+  Future<void> init() async {
     getStartingIndex();
 
     // If the allAttachments is not updated
     if (startingIndex == null) {
       // Then fetch all of them and try again
-      widget.currentChat?.updateChatAttachments();
+      await widget.currentChat?.updateChatAttachments();
       getStartingIndex();
     }
 
@@ -79,7 +78,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
         List<Attachment> older = widget.currentChat!.chatAttachments.sublist(0);
 
         // Update all of the attachments
-        widget.currentChat!.updateChatAttachments();
+        await widget.currentChat!.updateChatAttachments();
         List<Attachment> newer = widget.currentChat!.chatAttachments.sublist(0);
         if (newer.length > older.length) {
           Logger.info("Increasing currentIndex from " +
@@ -92,6 +91,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
       });
 
     controller = new PageController(initialPage: kIsWeb ? 0 : startingIndex ?? 0);
+    if (this.mounted) setState(() {});
   }
 
   void getStartingIndex() {
@@ -174,11 +174,6 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                             file: content,
                             attachment: attachment,
                             showInteractions: widget.showInteractions,
-                          );
-                        } else {
-                          return RegularFileOpener(
-                            attachment: attachment,
-                            file: content,
                           );
                         }
                       } else if (content is Attachment) {
@@ -269,6 +264,8 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                           ],
                         );
                       }
+
+                      return Container();
                     }),
                   );
                 },

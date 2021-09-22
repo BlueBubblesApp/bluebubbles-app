@@ -3,10 +3,13 @@ import 'dart:ui';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
+import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
@@ -239,6 +242,87 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                           title: "Show Manually Mark Chat as Read Button",
                           backgroundColor: tileColor,
                         ),
+                      Container(
+                        color: tileColor,
+                        child: SwitchListTile(
+                          title: Text(
+                            "Double-${kIsWeb || kIsDesktop ? "Click" : "Tap"} Message for Quick Tapback",
+                            style: Theme.of(context).textTheme.bodyText1,
+                          ),
+                          value: SettingsManager().settings.enableQuickTapback.value,
+                          activeColor: Theme.of(context).primaryColor,
+                          activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
+                          inactiveTrackColor: tileColor == Theme.of(context).accentColor
+                              ? Theme.of(context).backgroundColor.withOpacity(0.6)
+                              : Theme.of(context).accentColor.withOpacity(0.6),
+                          inactiveThumbColor: tileColor == Theme.of(context).accentColor
+                              ? Theme.of(context).backgroundColor
+                              : Theme.of(context).accentColor,
+                          onChanged: (bool val) {
+                            SettingsManager().settings.enableQuickTapback.value = val;
+                            if (val && SettingsManager().settings.doubleTapForDetails.value) {
+                              SettingsManager().settings.doubleTapForDetails.value = false;
+                            }
+                            saveSettings();
+                          },
+                          subtitle: Text(
+                              "Send a tapback of your choosing when double ${kIsWeb || kIsDesktop ? "click" : "tapp"}ing a message",
+                              style: Theme.of(context).textTheme.subtitle1),
+                          tileColor: tileColor,
+                        ),
+                      ),
+                      Obx(() => SettingsManager().settings.enableQuickTapback.value ? Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 65.0),
+                          child: SettingsDivider(color: headerColor),
+                        ),
+                      ) : SizedBox.shrink()),
+                      Obx(() {
+                        if (SettingsManager().settings.enableQuickTapback.value &&
+                            SettingsManager().settings.skin.value == Skins.iOS)
+                          return Container(
+                            decoration: BoxDecoration(
+                              color: tileColor,
+                            ),
+                            padding: EdgeInsets.only(left: 15),
+                            child: Text("Select Quick Tapback"),
+                          );
+                        else
+                          return SizedBox.shrink();
+                      }),
+                      Obx(() {
+                        if (SettingsManager().settings.enableQuickTapback.value)
+                          return SettingsOptions<String>(
+                            title: "Quick Tapback",
+                            options: ReactionTypes.toList(),
+                            cupertinoCustomWidgets: [
+                              Reaction(reactionType: ReactionTypes.LOVE)
+                                  .getSmallWidget(context, message: Message(isFromMe: true), isReactionPicker: true)!,
+                              Reaction(reactionType: ReactionTypes.LIKE)
+                                  .getSmallWidget(context, message: Message(isFromMe: true), isReactionPicker: true)!,
+                              Reaction(reactionType: ReactionTypes.DISLIKE)
+                                  .getSmallWidget(context, message: Message(isFromMe: true), isReactionPicker: true)!,
+                              Reaction(reactionType: ReactionTypes.LAUGH)
+                                  .getSmallWidget(context, message: Message(isFromMe: true), isReactionPicker: true)!,
+                              Reaction(reactionType: ReactionTypes.EMPHASIZE)
+                                  .getSmallWidget(context, message: Message(isFromMe: true), isReactionPicker: true)!,
+                              Reaction(reactionType: ReactionTypes.QUESTION)
+                                  .getSmallWidget(context, message: Message(isFromMe: true), isReactionPicker: true)!,
+                            ],
+                            initial: SettingsManager().settings.quickTapbackType.value,
+                            textProcessing: (val) => val,
+                            onChanged: (val) {
+                              if (val == null) return;
+                              SettingsManager().settings.quickTapbackType.value = val;
+                              saveSettings();
+                            },
+                            backgroundColor: tileColor,
+                            secondaryColor: headerColor,
+                          );
+                        else
+                          return SizedBox.shrink();
+                      }),
                     ],
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
                   Container(

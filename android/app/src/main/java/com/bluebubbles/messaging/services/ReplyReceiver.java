@@ -75,19 +75,9 @@ public class ReplyReceiver extends BroadcastReceiver {
         } else if (intent.getType().equals("markAsRead")) {
             existingId = intent.getExtras().getInt("id");
             chatGuid = intent.getExtras().getString("chatGuid");
-            Log.d(TAG, "Marking chat notification as read: " + intent.getExtras().getString("chatGuid"));
-            Log.d(TAG, "Finding notifications with ID: " + existingId);
+            Log.d(TAG, "Marking chat notification as read: " + chatGuid);
 
-            // Clear the chat notification by finding the notification by Tag/ID and cancelling it
-            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
-            NotificationManager manager = (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
-            for (StatusBarNotification statusBarNotification : manager.getActiveNotifications()) {
-                if (NewMessageNotification.notificationTag.equals(statusBarNotification.getTag()) && statusBarNotification.getId() == existingId) {
-                    notificationManager.cancel(NewMessageNotification.notificationTag, existingId);
-                }
-            }
-
-            HelperUtils.tryCancelNotificationSummary(context);
+            HelperUtils.tryCancelNotifications(context, existingId, null);
 
             // Build params to send to Dart for it to handle whatever it needs
             Map<String, Object> params = new HashMap<>();
@@ -111,17 +101,7 @@ public class ReplyReceiver extends BroadcastReceiver {
             }
         } else if (intent.getType().equals("swipeAway")) {
             existingId = intent.getExtras().getInt("id");
-
-            // Clear the chat notification by finding the notification by Tag/ID and cancelling it
-            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
-            NotificationManager manager = (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
-            for (StatusBarNotification statusBarNotification : manager.getActiveNotifications()) {
-                if (NewMessageNotification.notificationTag.equals(statusBarNotification.getTag()) && statusBarNotification.getId() == existingId) {
-                    notificationManager.cancel(NewMessageNotification.notificationTag, existingId);
-                }
-            }
-
-            HelperUtils.tryCancelNotificationSummary(context);
+            HelperUtils.tryCancelNotifications(context, existingId, null);
         }
     }
 }

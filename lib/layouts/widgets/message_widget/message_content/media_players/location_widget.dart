@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:file_picker/file_picker.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 
@@ -41,10 +41,10 @@ class _LocationWidgetState extends State<LocationWidget> with AutomaticKeepAlive
     if (location != null) return;
     String _location;
 
-    if (kIsWeb) {
+    if (kIsWeb || widget.file.path == null) {
       _location = utf8.decode(widget.file.bytes!);
     } else {
-      _location = File(widget.file.path).readAsStringSync();
+      _location = File(widget.file.path!).readAsStringSync();
     }
     location = AttachmentHelper.parseAppleLocation(_location);
 

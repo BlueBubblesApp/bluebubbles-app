@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/constants.dart';
@@ -12,12 +11,18 @@ import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
+import 'package:contacts_service/contacts_service.dart';
+import 'package:dio_http/dio_http.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
+import '../repository/models/chat.dart';
+import '../repository/models/handle.dart';
 
 class ChatBloc {
   static StreamSubscription<NewMessageEvent>? _messageSubscription;
@@ -171,7 +176,7 @@ class ChatBloc {
 
     for (int i = 0; i < _chats.length; i++) {
       if (isNullOrEmpty(_chats[i].participants)!) {
-        _chats[i].getParticipants();
+        await _chats[i].getParticipants();
       }
     }
 
@@ -179,13 +184,13 @@ class ChatBloc {
     _chats.sort(Chat.sort);
   }
 
-  void markAllAsRead() {
+  Future<void> markAllAsRead() async {
     // Enumerate the unread chats
     List<Chat> unread = this.chats.where((element) => element.hasUnreadMessage!).toList();
 
     // Mark them as unread
     for (Chat chat in unread) {
-      chat.toggleHasUnread(false);
+      await chat.toggleHasUnread(false);
 
       // Remove from notification shade
       MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
@@ -197,8 +202,8 @@ class ChatBloc {
     }
   }
 
-  void toggleChatUnread(Chat chat, bool isUnread) {
-    chat.toggleHasUnread(isUnread);
+  Future<void> toggleChatUnread(Chat chat, bool isUnread) async {
+    await chat.toggleHasUnread(isUnread);
 
     // Remove from notification shade
     MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
@@ -277,7 +282,7 @@ class ChatBloc {
   }
 
   Future<void> getChatBatches({int batchSize = 15}) async {
-    int count = Chat.count() ?? 0;
+    int count = (await Chat.count()) ?? (await api.chatCount()).data['data']['total'];
     if (count == 0 && !kIsWeb) {
       hasChats.value = false;
     } else {
@@ -291,9 +296,9 @@ class ChatBloc {
     for (int i = 0; i < batches; i++) {
       List<Chat> chats = [];
       if (kIsWeb) {
-        chats = await SocketManager().getChats({"withLastMessage": kIsWeb});
+        chats = await SocketManager().getChats({"withLastMessage": true, "limit": batchSize, "offset": i * batchSize});
       } else {
-        chats = Chat.getChats(limit: batchSize, offset: i * batchSize);
+        chats = await Chat.getChats(limit: batchSize, offset: i * batchSize);
       }
       if (chats.length == 0) break;
 
@@ -301,7 +306,7 @@ class ChatBloc {
         newChats.add(chat);
         await initTileValsForChat(chat);
         if (isNullOrEmpty(chat.participants)!) {
-          chat.getParticipants();
+          await chat.getParticipants();
         }
         if (kIsWeb) {
           chat.participants.forEach((element) {
@@ -343,7 +348,7 @@ class ChatBloc {
     if (messages.isNotEmpty) {
       Message message = Message.fromMap(messages.first);
       if (message.hasAttachments) {
-        message.fetchAttachments();
+        await message.fetchAttachments();
       }
       chat.latestMessageText = await MessageHelper.getNotificationText(message);
       chat.fakeLatestMessageText = faker.lorem.words((chat.latestMessageText ?? "").split(" ").length).join(" ");
@@ -360,48 +365,48 @@ class ChatBloc {
     AttachmentInfoBloc().initChat(chat);
   }
 
-  void archiveChat(Chat chat) {
+  void archiveChat(Chat chat) async {
     _chats.firstWhere((element) => element.guid == chat.guid).isArchived = true;
-    chat.toggleArchived(true);
+    await chat.toggleArchived(true);
     initTileValsForChat(chat);
   }
 
-  void unArchiveChat(Chat chat) {
+  void unArchiveChat(Chat chat) async {
     _chats.firstWhere((element) => element.guid == chat.guid).isArchived = false;
-    chat.toggleArchived(false);
+    await chat.toggleArchived(false);
     initTileValsForChat(chat);
   }
 
-  void removePinIndices() {
+  void removePinIndices() async {
     _chats.bigPinHelper(true).forEach((element) {
-      element.pinIndex = null;
+      element.pinIndex.value = null;
       element.save();
     });
     _chats.sort(Chat.sort);
   }
 
-  void updateChatPinIndex(int oldIndex, int newIndex) {
+  void updateChatPinIndex(int oldIndex, int newIndex) async {
     final item = _chats.bigPinHelper(true)[oldIndex];
     if (newIndex > oldIndex) {
       newIndex = newIndex - 1;
       _chats
           .bigPinHelper(true)
-          .where((p0) => p0.pinIndex != null && p0.pinIndex! <= newIndex)
+          .where((p0) => p0.pinIndex.value != null && p0.pinIndex.value! <= newIndex)
           .forEach((element) {
-        element.pinIndex = element.pinIndex! - 1;
+        element.pinIndex.value = element.pinIndex.value! - 1;
       });
-      item.pinIndex = newIndex;
+      item.pinIndex.value = newIndex;
     } else {
       _chats
           .bigPinHelper(true)
-          .where((p0) => p0.pinIndex != null && p0.pinIndex! >= newIndex)
+          .where((p0) => p0.pinIndex.value != null && p0.pinIndex.value! >= newIndex)
           .forEach((element) {
-        element.pinIndex = element.pinIndex! + 1;
+        element.pinIndex.value = element.pinIndex.value! + 1;
       });
-      item.pinIndex = newIndex;
+      item.pinIndex.value = newIndex;
     }
     _chats.sort(Chat.sort);
-    item.save();
+    await item.save();
   }
 
   void deleteChat(Chat chat) async {
@@ -429,27 +434,27 @@ class ChatBloc {
     }
     for (int i = 0; i < _chats.length; i++) {
       if (isNullOrEmpty(_chats[i].participants)!) {
-        _chats[i].getParticipants();
+        await _chats[i].getParticipants();
       }
     }
     _chats.sort(Chat.sort);
   }
 
-  addChat(Chat chat) {
+  addChat(Chat chat) async {
     // Create the chat in the database
-    chat.save();
+    await chat.save();
     refreshChats();
   }
 
-  addParticipant(Chat chat, Handle participant) {
+  addParticipant(Chat chat, Handle participant) async {
     // Add the participant to the chat
-    chat.addParticipant(participant);
+    await chat.addParticipant(participant);
     refreshChats();
   }
 
-  removeParticipant(Chat chat, Handle participant) {
+  removeParticipant(Chat chat, Handle participant) async {
     // Add the participant to the chat
-    chat.removeParticipant(participant);
+    await chat.removeParticipant(participant);
     chat.participants.remove(participant);
     refreshChats();
   }

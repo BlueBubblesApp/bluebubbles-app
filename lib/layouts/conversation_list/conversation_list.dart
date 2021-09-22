@@ -1,7 +1,8 @@
 import 'dart:async';
-import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/repository/database.dart';
+import 'package:bluebubbles/repository/models/fcm_data.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:universal_io/io.dart';
@@ -189,6 +190,7 @@ class ConversationListState extends State<ConversationList> {
                       TextButton(
                         child: Text("Yes"),
                         onPressed: () async {
+                          await DBProvider.deleteDB();
                           await SettingsManager().resetConnection();
                           SettingsManager().settings.finishedSetup.value = false;
                           SocketManager().finishedSetup.sink.add(false);
