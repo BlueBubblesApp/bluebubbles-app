@@ -10,7 +10,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   secure_application
   url_launcher_windows
   window_manager
-  window_size
 )
 
 set(PLUGIN_BUNDLED_LIBRARIES)

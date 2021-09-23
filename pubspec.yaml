@@ -103,11 +103,6 @@ dependencies:
   quick_notify: ^0.1.0+2
   qr_flutter: ^4.0.0
   window_manager: ^0.0.4
-  window_size:
-    git:
-      url: git://github.com/google/flutter-desktop-embedding.git
-      path: plugins/window_size
-      ref: fd519be1e8398c6b6c2062c2447bac960a71bc02
   objectbox: ^1.2.0
   objectbox_flutter_libs: any
 
