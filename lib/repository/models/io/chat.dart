@@ -486,7 +486,7 @@ class Chat {
     for (int i = 0; i < messages.length; i++) {
       Message message = messages[i];
       if (handles.isNotEmpty && message.handleId != 0) {
-        Handle? handle = handles.firstWhere((e) => e?.id == message.handleId, orElse: () => null);
+        Handle? handle = handles.firstWhereOrNull((e) => e?.id == message.handleId);
         if (handle == null) {
           messages.remove(message);
           i--;

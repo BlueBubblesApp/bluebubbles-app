@@ -9,11 +9,11 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
+import 'package:faker/faker.dart';
 import 'package:fast_contacts/fast_contacts.dart' hide Contact;
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
-import 'package:faker/faker.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class ContactManager {
@@ -115,13 +115,16 @@ class ContactManager {
     // Fetch the current list of contacts
     Logger.info("Fetching contacts", tag: tag);
     if (!kIsWeb && !kIsDesktop) {
-      contacts = (await FastContacts.allContacts).map((e) => Contact(
-        displayName: e.displayName,
-        emails: e.emails,
-        phones: e.phones,
-        structuredName: e.structuredName,
-        id: e.id,
-      )).toList();
+      contacts = (await FastContacts.allContacts)
+          .map((e) => Contact(
+                displayName: e.displayName,
+                emails: e.emails,
+                phones: e.phones,
+                structuredName: e.structuredName,
+                id: e.id,
+              ))
+          .toList();
+      hasFetchedContacts = true;
     } else {
       contacts.clear();
       try {
@@ -133,18 +136,26 @@ class ContactManager {
           for (var c in vcfs['data']) {
             contacts.add(Contact.fromMap(c));
           }
+          hasFetchedContacts = true;
         }
-      } catch (_) {}
+      } catch (_) {
+        Logger.info("Failed to fetch contacts from server!", tag: tag);
+      }
     }
-    hasFetchedContacts = true;
+    if (hasFetchedContacts) {
+      Logger.info("Finished fetching contacts (${handleToContact.length})", tag: tag);
+    } else {
+      Logger.info("Failed to fetch contacts", tag: tag);
+    }
 
-    // Match handles in the database with contacts
-    await this.matchHandles();
-
-    Logger.info("Finished fetching contacts (${handleToContact.length})", tag: tag);
     if (getContactsFuture != null && !getContactsFuture!.isCompleted) {
       getContactsFuture!.complete(true);
     }
+
+    if (!hasFetchedContacts) return false;
+
+    // Match handles in the database with contacts
+    await this.matchHandles();
 
     // Lazy load thumbnails after rendering initial contacts.
     getAvatars();
@@ -257,8 +268,7 @@ class ContactManager {
     }
 
     if (fetchAvatar && !kIsDesktop && !kIsWeb) {
-      Uint8List? avatar =
-          await FastContacts.getContactImage(contact!.id);
+      Uint8List? avatar = await FastContacts.getContactImage(contact!.id);
       contact.avatar = avatar;
     }
 
