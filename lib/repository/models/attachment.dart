@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
+import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -38,6 +40,8 @@ class Attachment {
   int? height;
   int? width;
   Map<String, dynamic>? metadata;
+  Uint8List? bytes;
+  String? webUrl;
 
   Attachment({
     this.id,
@@ -55,9 +59,12 @@ class Attachment {
     this.height,
     this.width,
     this.metadata,
+    this.bytes,
+    this.webUrl,
   });
 
   bool get existsOnDisk {
+    if (kIsWeb) return false;
     File attachment = new File(AttachmentHelper.getAttachmentPath(this));
     return attachment.existsSync();
   }
@@ -126,7 +133,7 @@ class Attachment {
   }
 
   Future<Attachment> save(Message? message) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
 
     // Try to find an existing attachment before saving it
     Attachment? existing = await Attachment.findOne({"guid": this.guid});
@@ -145,10 +152,10 @@ class Attachment {
         map.remove("participants");
       }
 
-      this.id = await db.insert("attachment", map);
+      this.id = (await db?.insert("attachment", map)) ?? id;
 
       if (this.id != null && message!.id != null) {
-        await db.insert("attachment_message_join", {"attachmentId": this.id, "messageId": message.id});
+        await db?.insert("attachment_message_join", {"attachmentId": this.id, "messageId": message.id});
       }
     }
 
@@ -156,7 +163,7 @@ class Attachment {
   }
 
   Future<Attachment> update() async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
 
     Map<String, dynamic> params = {
       "width": this.width,
@@ -170,14 +177,14 @@ class Attachment {
     }
 
     if (this.id != null) {
-      await db.update("attachment", params, where: "ROWID = ?", whereArgs: [this.id]);
+      await db?.update("attachment", params, where: "ROWID = ?", whereArgs: [this.id]);
     }
 
     return this;
   }
 
   static Future<Attachment> replaceAttachment(String? oldGuid, Attachment newAttachment) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
     Attachment? existing = await Attachment.findOne({"guid": oldGuid});
     if (existing == null) {
       throw ("Old GUID does not exist!");
@@ -202,7 +209,7 @@ class Attachment {
       params.remove("mimeType");
     }
 
-    await db.update("attachment", params, where: "ROWID = ?", whereArgs: [existing.id]);
+    await db?.update("attachment", params, where: "ROWID = ?", whereArgs: [existing.id]);
     String appDocPath = SettingsManager().appDocDir.path;
     String pathName = "$appDocPath/attachments/$oldGuid";
     Directory directory = Directory(pathName);
@@ -215,7 +222,8 @@ class Attachment {
   }
 
   static Future<Attachment?> findOne(Map<String, dynamic> filters) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
+    if (db == null) return null;
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];
@@ -230,8 +238,8 @@ class Attachment {
   }
 
   static Future<List<Attachment>> find([Map<String, dynamic> filters = const {}]) async {
-    final Database db = await DBProvider.db.database;
-
+    final Database? db = await DBProvider.db.database;
+    if (db == null) return [];
     List<String> whereParams = [];
     filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
     List<dynamic> whereArgs = [];
@@ -244,8 +252,8 @@ class Attachment {
   }
 
   static flush() async {
-    final Database db = await DBProvider.db.database;
-    await db.delete("attachment");
+    final Database? db = await DBProvider.db.database;
+    await db?.delete("attachment");
   }
 
   getFriendlySize({decimals: 2}) {
@@ -272,7 +280,8 @@ class Attachment {
   }
 
   static Future<int?> countForChat(Chat chat) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
+    if (db == null) return 0;
     if (chat.id == null) return 0;
 
     String query = ("SELECT"

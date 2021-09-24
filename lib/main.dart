@@ -1,5 +1,10 @@
 import 'dart:async';
-import 'dart:io';
+import 'package:collection/collection.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
+import 'package:flutter/foundation.dart';
+import 'package:google_ml_kit/google_ml_kit.dart';
+import 'package:universal_io/io.dart';
+import 'package:universal_html/html.dart' as html;
 import 'dart:isolate';
 import 'dart:ui';
 
@@ -24,16 +29,15 @@ import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/theme_object.dart';
-// import 'package:sentry/sentry.dart';
-
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' hide Priority;
 import 'package:flutter/services.dart';
-import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_native_timezone/flutter_native_timezone.dart';
+import 'package:firebase_dart/firebase_dart.dart';
+import 'package:firebase_dart/src/auth/utils.dart' as fdu;
 import 'package:get/get.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:local_auth/local_auth.dart';
@@ -43,6 +47,7 @@ import 'package:secure_application/secure_application.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:window_manager/window_manager.dart';
 
 // final SentryClient _sentry = SentryClient(
 //     dsn:
@@ -62,6 +67,7 @@ bool get isInDebugMode {
 
 FlutterLocalNotificationsPlugin? flutterLocalNotificationsPlugin;
 late SharedPreferences prefs;
+late FirebaseApp app;
 
 Future<Null> _reportError(dynamic error, dynamic stackTrace) async {
   // Print the exception to the console.
@@ -103,18 +109,41 @@ Future<Null> main() async {
   dynamic exception;
   try {
     prefs = await SharedPreferences.getInstance();
-    await DBProvider.db.initDB();
+    if (!kIsWeb) await DBProvider.db.initDB();
+    FirebaseDart.setup(
+      platform: fdu.Platform.web(
+        currentUrl: Uri.base.toString(),
+        isMobile: false,
+        isOnline: true,
+      ),
+    );
+    var options = FirebaseOptions(
+        appId: 'my_app_id',
+        apiKey: 'apiKey',
+        projectId: 'my_project',
+        messagingSenderId: 'ignore',
+        authDomain: 'my_project.firebaseapp.com');
+    app = await Firebase.initializeApp(options: options);
     await initializeDateFormatting('fr_FR', null);
     await SettingsManager().init();
     await SettingsManager().getSavedSettings(headless: true);
     Get.put(AttachmentDownloadService());
-    flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-    const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('ic_stat_icon');
-    final InitializationSettings initializationSettings =
-        InitializationSettings(android: initializationSettingsAndroid);
-    await flutterLocalNotificationsPlugin!.initialize(initializationSettings);
-    tz.initializeTimeZones();
-    tz.setLocalLocation(tz.getLocation(await FlutterNativeTimezone.getLocalTimezone()));
+    if (!kIsWeb && !kIsDesktop) {
+      flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+      const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('ic_stat_icon');
+      final InitializationSettings initializationSettings =
+      InitializationSettings(android: initializationSettingsAndroid);
+      await flutterLocalNotificationsPlugin!.initialize(initializationSettings);
+      tz.initializeTimeZones();
+      tz.setLocalLocation(tz.getLocation(await FlutterNativeTimezone.getLocalTimezone()));
+      if (!await GoogleMlKit.nlp.entityModelManager().isModelDownloaded(EntityExtractorOptions.ENGLISH)) {
+        GoogleMlKit.nlp.entityModelManager().downloadModel(EntityExtractorOptions.ENGLISH, isWifiRequired: false);
+      }
+    }
+    if (kIsDesktop) {
+      await WindowManager.instance.setTitle('BlueBubbles (Beta)');
+      WindowManager.instance.addListener(DesktopWindowListener());
+    }
   } catch (e) {
     exception = e;
   }
@@ -136,6 +165,18 @@ Future<Null> main() async {
   } else {
     runApp(FailureToStart(e: exception));
     throw Exception(exception);
+  }
+}
+
+class DesktopWindowListener extends WindowListener {
+  @override
+  void onWindowFocus() {
+    LifeCycleManager().opened();
+  }
+
+  @override
+  void onWindowBlur() {
+    LifeCycleManager().close();
   }
 }
 
@@ -166,7 +207,7 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
         /// Hide the debug banner in debug mode
         debugShowCheckedModeBanner: false,
 
-        title: 'BlueBubbles',
+        title: 'BlueBubbles ${kIsWeb ? "(Beta)" : ""}',
 
         /// Set the light theme from the [AdaptiveTheme]
         theme: theme.copyWith(appBarTheme: theme.appBarTheme.copyWith(elevation: 0.0)),
@@ -258,45 +299,54 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> with WidgetsBindingObserver {
   ReceivePort port = ReceivePort();
+  bool serverCompatible = true;
 
   @override
   void initState() {
     super.initState();
 
+    // we want to refresh the page rather than loading a new instance of [Home]
+    // to avoid errors
+    if (LifeCycleManager().isAlive && kIsWeb) {
+      html.window.location.reload();
+    }
+
     // Initalize a bunch of managers
-    SettingsManager().init();
     MethodChannelInterface().init();
 
     // We initialize the [LifeCycleManager] so that it is open, because [initState] occurs when the app is opened
     LifeCycleManager().opened();
 
-    // This initialization sets the function address in the native code to be used later
-    BackgroundIsolateInterface.initialize();
+    if (!kIsWeb && !kIsDesktop) {
+      // This initialization sets the function address in the native code to be used later
+      BackgroundIsolateInterface.initialize();
 
-    // Create the notification in case it hasn't been already. Doing this multiple times won't do anything, so we just do it on every app start
-    NotificationManager().createNotificationChannel(
-      NotificationManager.NEW_MESSAGE_CHANNEL,
-      "New Messages",
-      "For new messages retreived",
-    );
-    NotificationManager().createNotificationChannel(
-      NotificationManager.SOCKET_ERROR_CHANNEL,
-      "Socket Connection Error",
-      "Notifications that will appear when the connection to the server has failed",
-    );
+      // Create the notification in case it hasn't been already. Doing this multiple times won't do anything, so we just do it on every app start
+      NotificationManager().createNotificationChannel(
+        NotificationManager.NEW_MESSAGE_CHANNEL,
+        "New Messages",
+        "For new messages retreived",
+      );
+      NotificationManager().createNotificationChannel(
+        NotificationManager.SOCKET_ERROR_CHANNEL,
+        "Socket Connection Error",
+        "Notifications that will appear when the connection to the server has failed",
+      );
 
-    // create a send port to receive messages from the background isolate when
-    // the UI thread is active
-    IsolateNameServer.registerPortWithName(port.sendPort, 'bg_isolate');
-    port.listen((dynamic data) {
-      if (data['action'] == 'new-message') {
-        // Add it to the queue with the data as the item
-        IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_MESSAGE_EVENT, item: {"data": data}));
-      } else if (data['action'] == 'update-message') {
-        // Add it to the queue with the data as the item
-        IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_UPDATE_MESSAGE, item: {"data": data}));
-      }
-    });
+      // create a send port to receive messages from the background isolate when
+      // the UI thread is active
+      IsolateNameServer.registerPortWithName(port.sendPort, 'bg_isolate');
+      port.listen((dynamic data) {
+        Logger.info("SendPort received action ${data['action']}");
+        if (data['action'] == 'new-message') {
+          // Add it to the queue with the data as the item
+          IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_MESSAGE_EVENT, item: {"data": data}));
+        } else if (data['action'] == 'update-message') {
+          // Add it to the queue with the data as the item
+          IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_UPDATE_MESSAGE, item: {"data": data}));
+        }
+      });
+    }
 
     // Get the saved settings from the settings manager after the first frame
     SchedulerBinding.instance!.addPostFrameCallback((_) async {
@@ -307,61 +357,82 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           await MethodChannelInterface().invokeMethod("start-notif-listener");
         } catch (_) {}
       }
-      // Get sharing media from files shared to the app from cold start
-      // This one only handles files, not text
-      ReceiveSharingIntent.getInitialMedia().then((List<SharedMediaFile> value) async {
-        if (!SettingsManager().settings.finishedSetup.value) return;
-        if (value.isEmpty) return;
 
-        // If we don't have storage permission, we can't do anything
-        if (!await Permission.storage.request().isGranted) return;
+      if (kIsWeb) {
+        String? version = await SettingsManager().getServerVersion();
+        int? sum = version?.split(".").mapIndexed((index, e) {
+          if (index == 0) return int.parse(e) * 100;
+          if (index == 1) return int.parse(e) * 21;
+          return int.parse(e);
+        }).sum;
+        if (version == null || (sum ?? 0) < 42) {
+          setState(() {
+            serverCompatible = false;
+          });
+        }
+      }
 
-        // Add the attached files to a list
-        List<File> attachments = <File>[];
-        value.forEach((element) {
-          attachments.add(File(element.path));
+      if (!kIsWeb && !kIsDesktop) {
+        // Get sharing media from files shared to the app from cold start
+        // This one only handles files, not text
+        ReceiveSharingIntent.getInitialMedia().then((List<SharedMediaFile> value) async {
+          if (!SettingsManager().settings.finishedSetup.value) return;
+          if (value.isEmpty) return;
+
+          // If we don't have storage permission, we can't do anything
+          if (!await Permission.storage.request().isGranted) return;
+
+          // Add the attached files to a list
+          List<PlatformFile> attachments = [];
+          value.forEach((element) {
+            attachments.add(PlatformFile(
+              name: element.path.split("/").last,
+              path: element.path,
+              size: 0,
+            ));
+          });
+
+          if (attachments.length == 0) return;
+
+          // Go to the new chat creator, with all of our attachments
+          CustomNavigator.pushAndRemoveUntil(
+            context,
+            ConversationView(
+              existingAttachments: attachments,
+              isCreator: true,
+            ),
+                (route) => route.isFirst,
+          );
         });
 
-        if (attachments.length == 0) return;
+        // Same thing as [getInitialMedia] except for text
+        ReceiveSharingIntent.getInitialText().then((String? text) {
+          if (!SettingsManager().settings.finishedSetup.value) return;
+          if (text == null) return;
 
-        // Go to the new chat creator, with all of our attachments
-        CustomNavigator.pushAndRemoveUntil(
-          context,
-          ConversationView(
-            existingAttachments: attachments,
-            isCreator: true,
-          ),
-          (route) => route.isFirst,
-        );
-      });
+          // Go to the new chat creator, with all of our text
+          CustomNavigator.pushAndRemoveUntil(
+            context,
+            ConversationView(
+              existingText: text,
+              isCreator: true,
+            ),
+                (route) => route.isFirst,
+          );
+        });
 
-      // Same thing as [getInitialMedia] except for text
-      ReceiveSharingIntent.getInitialText().then((String? text) {
-        if (!SettingsManager().settings.finishedSetup.value) return;
-        if (text == null) return;
-
-        // Go to the new chat creator, with all of our text
-        CustomNavigator.pushAndRemoveUntil(
-          context,
-          ConversationView(
-            existingText: text,
-            isCreator: true,
-          ),
-          (route) => route.isFirst,
-        );
-      });
-
-      // Request native code to retreive what the starting intent was
-      //
-      // The starting intent will be set when you click on a notification
-      // This is only really necessary when opening a notification and the app is fully closed
-      MethodChannelInterface().invokeMethod("get-starting-intent").then((value) {
-        if (!SettingsManager().settings.finishedSetup.value) return;
-        if (value != null) {
-          // Open that chat
-          MethodChannelInterface().openChat(value.toString());
-        }
-      });
+        // Request native code to retreive what the starting intent was
+        //
+        // The starting intent will be set when you click on a notification
+        // This is only really necessary when opening a notification and the app is fully closed
+        MethodChannelInterface().invokeMethod("get-starting-intent").then((value) {
+          if (!SettingsManager().settings.finishedSetup.value) return;
+          if (value != null) {
+            // Open that chat
+            MethodChannelInterface().openChat(value.toString());
+          }
+        });
+      }
     });
 
     // Bind the lifecycle events
@@ -372,7 +443,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   void didChangeDependencies() async {
     Locale myLocale = Localizations.localeOf(context);
     SettingsManager().countryCode = myLocale.countryCode;
-    await FlutterLibphonenumber().init();
     super.didChangeDependencies();
   }
 
@@ -427,6 +497,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                   DeviceOrientation.portraitUp,
                   DeviceOrientation.portraitDown,
                 ]);
+                if (!serverCompatible && kIsWeb) {
+                  return FailureToStart(otherTitle: "Server version too low, please upgrade!", e: "Required Server Version: v0.2.0",);
+                }
                 return ConversationList(
                   showArchivedChats: false,
                   showUnknownSenders: false,

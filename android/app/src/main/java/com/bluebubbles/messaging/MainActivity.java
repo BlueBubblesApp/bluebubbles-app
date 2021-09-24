@@ -88,7 +88,7 @@ public class MainActivity extends FlutterFragmentActivity {
             } else {
                 handleShareFile(intent);
             }
-        } else if (Intent.ACTION_SEND_MULTIPLE.equals(action) && type != null) {
+        } else if (Intent.ACTION_SEND_MULTIPLE.equals(action)) {
             handleSendMultipleImages(intent);
         } else {
             if (type.equals("NotificationOpen") || type.equals("DirectShare")) {
@@ -132,6 +132,7 @@ public class MainActivity extends FlutterFragmentActivity {
         } else if (requestCode == NOTIFICATION_SETTINGS) {
             result.success(null);
         }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     List<String> readPathsFromIntent(Intent intent) {
@@ -177,7 +178,6 @@ public class MainActivity extends FlutterFragmentActivity {
         return images;
     }
 
-
     void handleSendText(Intent intent) {
         String sharedText = intent.getStringExtra(Intent.EXTRA_TEXT);
         if (sharedText != null) {
@@ -188,6 +188,8 @@ public class MainActivity extends FlutterFragmentActivity {
                 id = intent.getStringExtra(Intent.EXTRA_SHORTCUT_ID);
             input.put("id", id);
             new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("shareText", input);
+        } else {
+            handleShareFile(intent);
         }
     }
 

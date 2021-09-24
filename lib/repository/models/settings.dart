@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/config_entry.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:get/get.dart';
@@ -27,7 +29,7 @@ class Settings {
   final RxBool colorfulBubbles = false.obs;
   final RxBool hideDividers = false.obs;
   final RxDouble scrollVelocity = 1.00.obs;
-  final RxBool sendWithReturn = false.obs;
+  final RxBool sendWithReturn = (kIsWeb || kIsDesktop).obs;
   final RxBool doubleTapForDetails = false.obs;
   final RxBool denseChatTiles = false.obs;
   final RxBool smartReply = false.obs;
@@ -58,6 +60,7 @@ class Settings {
   final RxBool colorsFromMedia = false.obs;
   final RxString globalTextDetection = "".obs;
   final RxBool filterUnknownSenders = false.obs;
+  final RxBool tabletMode = true.obs;
 
   // final RxString emojiFontFamily;
 
@@ -273,6 +276,8 @@ class Settings {
         settings.globalTextDetection.value = entry.value;
       } else if (entry.name == "filterUnknownSenders") {
         settings.filterUnknownSenders.value = entry.value;
+      } else if (entry.name == "tabletMode") {
+        settings.tabletMode.value = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -314,7 +319,6 @@ class Settings {
 
   static Settings getSettings() {
     Set<String> keys = prefs.getKeys();
-    print(keys);
 
     Map<String, dynamic> items = {};
     for (String s in keys) {
@@ -382,6 +386,7 @@ class Settings {
       'notificationSound': this.notificationSound.value,
       'globalTextDetection': this.globalTextDetection.value,
       'filterUnknownSenders': this.filterUnknownSenders.value,
+      'tabletMode': this.tabletMode.value,
       'enablePrivateAPI': this.enablePrivateAPI.value,
       'privateSendTypingIndicators': this.privateSendTypingIndicators.value,
       'privateMarkChatAsRead': this.privateMarkChatAsRead.value,
@@ -442,8 +447,8 @@ class Settings {
     SettingsManager().settings.colorfulAvatars.value = map['colorfulAvatars'] ?? false;
     SettingsManager().settings.colorfulBubbles.value = map['colorfulBubbles'] ?? false;
     SettingsManager().settings.hideDividers.value = map['hideDividers'] ?? false;
-    SettingsManager().settings.scrollVelocity.value = map['scrollVelocity'] ?? 1;
-    SettingsManager().settings.sendWithReturn.value = map['sendWithReturn'] ?? false;
+    SettingsManager().settings.scrollVelocity.value = map['scrollVelocity'] is int? ? (map['scrollVelocity'] as int? ?? 1).toDouble() : map['scrollVelocity'] as double? ?? 1.0;
+    SettingsManager().settings.sendWithReturn.value = map['sendWithReturn'] ?? (kIsWeb || kIsDesktop);
     SettingsManager().settings.doubleTapForDetails.value = map['doubleTapForDetails'] ?? false;
     SettingsManager().settings.denseChatTiles.value = map['denseChatTiles'] ?? false;
     SettingsManager().settings.smartReply.value = map['smartReply'] ?? false;
@@ -473,6 +478,7 @@ class Settings {
     SettingsManager().settings.notificationSound.value = map['notificationSound'] ?? "default";
     SettingsManager().settings.globalTextDetection.value = map['globalTextDetection'] ?? "";
     SettingsManager().settings.filterUnknownSenders.value = map['filterUnknownSenders'] ?? false;
+    SettingsManager().settings.tabletMode.value = map['tabletMode'] ?? true;
     SettingsManager().settings.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     SettingsManager().settings.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
     SettingsManager().settings.privateMarkChatAsRead.value = map['privateMarkChatAsRead'] ?? false;
@@ -529,7 +535,7 @@ class Settings {
     s.colorfulBubbles.value = map['colorfulBubbles'] ?? false;
     s.hideDividers.value = map['hideDividers'] ?? false;
     s.scrollVelocity.value = map['scrollVelocity'] ?? 1;
-    s.sendWithReturn.value = map['sendWithReturn'] ?? false;
+    s.sendWithReturn.value = map['sendWithReturn'] ?? (kIsWeb || kIsDesktop);
     s.doubleTapForDetails.value = map['doubleTapForDetails'] ?? false;
     s.denseChatTiles.value = map['denseChatTiles'] ?? false;
     s.smartReply.value = map['smartReply'] ?? false;
@@ -560,6 +566,7 @@ class Settings {
     s.colorsFromMedia.value = map['colorsFromMedia'] ?? false;
     s.globalTextDetection.value = map['globalTextDetection'] ?? "";
     s.filterUnknownSenders.value = map['filterUnknownSenders'] ?? false;
+    s.tabletMode.value = map['tabletMode'] ?? true;
     s.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     s.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
     s.privateMarkChatAsRead.value = map['privateMarkChatAsRead'] ?? false;

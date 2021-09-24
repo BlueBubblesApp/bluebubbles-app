@@ -19,6 +19,7 @@ import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
@@ -60,6 +61,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
 
   List<Message> currentMessages = [];
   List<String> replies = [];
+  Map<String, Widget> internalSmartReplies = {};
 
   late StreamController<List<String>> smartReplyController;
 
@@ -70,7 +72,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
   }
 
   bool get showSmartReplies =>
-      SettingsManager().settings.smartReply.value &&
+      SettingsManager().settings.smartReply.value && !kIsWeb && !kIsDesktop &&
       (!SettingsManager().settings.redactedMode.value || !SettingsManager().settings.hideMessageContent.value);
 
   @override
@@ -114,6 +116,15 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
             });
           }
         }
+      } else if (event["type"] == "add-custom-smartreply") {
+        if (event["data"]["path"] != null) {
+          internalSmartReplies.addEntries([_buildReply("Attach recent photo", onTap: () {
+            EventDispatcher().emit('add-attachment', event['data']);
+            internalSmartReplies.remove('Attach recent photo');
+            setState(() {});
+          })]);
+          setState(() {});
+        }
       }
     });
 
@@ -123,6 +134,8 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
   void resetReplies() {
     if (replies.length == 0) return;
     replies = [];
+    internalSmartReplies.clear();
+    setState(() {});
     return smartReplyController.sink.add(replies);
   }
 
@@ -130,6 +143,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     // If there are no messages or the latest message is from me, reset the replies
     if (isNullOrEmpty(_messages)!) return resetReplies();
     if (_messages.first.isFromMe!) return resetReplies();
+    if (kIsWeb || kIsDesktop) return resetReplies();
 
     Logger.info("Getting smart replies...");
     Map<String, dynamic> results = await smartReply.suggestReplies();
@@ -267,7 +281,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
       List<Message> reversed = _messages.reversed.toList();
       int sampleSize = (_messages.length > 5) ? 5 : _messages.length;
       reversed.sublist(reversed.length - sampleSize).forEach((message) {
-        if (!isEmptyString(message.fullText, stripWhitespace: true)) {
+        if (!isEmptyString(message.fullText, stripWhitespace: true) && !kIsWeb && !kIsDesktop) {
           if (message.isFromMe ?? false) {
             smartReply.addConversationForLocalUser(message.fullText);
           } else {
@@ -332,7 +346,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     return message;
   }
 
-  Widget _buildReply(String text) => Container(
+  MapEntry<String, Widget> _buildReply(String text, {Function()? onTap}) => MapEntry(text, Container(
         margin: EdgeInsets.all(5),
         decoration: BoxDecoration(
           border: Border.all(
@@ -346,7 +360,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
           customBorder: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(19),
           ),
-          onTap: () {
+          onTap: onTap ?? () {
             ActionHandler.sendMessage(currentChat!.chat, text);
           },
           child: Padding(
@@ -357,7 +371,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
             ),
           ),
         ),
-      );
+      ));
 
   @override
   Widget build(BuildContext context) {
@@ -389,15 +403,16 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                       child: AnimatedSize(
                         duration: Duration(milliseconds: 400),
                         vsync: this,
-                        child: replies.isEmpty
+                        child: internalSmartReplies.isEmpty
                             ? Container()
-                            : Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: replies
-                                    .map(
-                                      (e) => _buildReply(e),
-                                    )
-                                    .toList()),
+                            : Container(
+                              height: Theme.of(context).textTheme.bodyText1!.fontSize! + 30,
+                              child: ListView(
+                                reverse: true,
+                                scrollDirection: Axis.horizontal,
+                                children: (internalSmartReplies..addEntries(replies
+                                    .map((e) => _buildReply(e)))).values.toList().reversed.toList()),
+                            ),
                       ),
                     ),
                   );
@@ -452,6 +467,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                               isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages[index].guid,
                               showHero: false,
                               onUpdate: (event) => onUpdateMessage(event),
+                              bloc: widget.messageBloc!,
                             ));
                       },
                       childCount: _messages.length,
@@ -499,6 +515,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                                 isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages[index].guid,
                                 showHero: fullAnimation,
                                 onUpdate: (event) => onUpdateMessage(event),
+                                bloc: widget.messageBloc!,
                               ));
 
                           if (fullAnimation) {

@@ -1,11 +1,12 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:math';
 
-import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/helpers/indicator.dart';
 import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/helpers/message_marker.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/socket_singletons.dart';
+import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/pinned_tile_text_bubble.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
@@ -18,16 +19,19 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:universal_html/html.dart' as html;
 
 class PinnedConversationTile extends StatefulWidget {
   final Chat chat;
-  final List<File> existingAttachments;
+  final List<PlatformFile> existingAttachments;
   final String? existingText;
 
   PinnedConversationTile({
@@ -180,161 +184,24 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
       },
       onTap: onTapUpBypass,
       onLongPress: () {
-        HapticFeedback.mediumImpact();
-        showMenu(
-          color: Get.theme.accentColor,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          context: context,
-          position: RelativeRect.fromLTRB(
-            _tapPosition.dx,
-            _tapPosition.dy,
-            _tapPosition.dx,
-            _tapPosition.dy,
-          ),
-          items: <PopupMenuEntry>[
-            PopupMenuItem(
-              padding: EdgeInsets.zero,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () async {
-                  await widget.chat.togglePin(!widget.chat.isPinned!);
-                  if (this.mounted) setState(() {});
-                  Navigator.pop(context);
-                },
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 12.0),
-                  child: Row(
-                    children: <Widget>[
-                      Padding(
-                        padding: EdgeInsets.only(right: 10),
-                        child: Icon(
-                          widget.chat.isPinned! ? CupertinoIcons.pin_slash : CupertinoIcons.pin,
-                          color: context.textTheme.bodyText1!.color,
-                        ),
-                      ),
-                      Text(
-                        widget.chat.isPinned! ? "Unpin" : "Pin",
-                        style: context.textTheme.bodyText1!,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            PopupMenuItem(
-              padding: EdgeInsets.zero,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () async {
-                  await widget.chat.toggleMute(widget.chat.muteType != "mute");
-                  if (this.mounted) setState(() {});
-                  Navigator.pop(context);
-                },
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 12.0),
-                  child: Row(
-                    children: <Widget>[
-                      Padding(
-                        padding: EdgeInsets.only(right: 10),
-                        child: Icon(
-                          widget.chat.muteType == "mute" ? CupertinoIcons.bell : CupertinoIcons.bell_slash,
-                          color: context.textTheme.bodyText1!.color,
-                        ),
-                      ),
-                      Text(widget.chat.muteType == "mute" ? 'Show Alerts' : 'Hide Alerts',
-                          style: context.textTheme.bodyText1!),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            PopupMenuItem(
-              padding: EdgeInsets.zero,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () {
-                  widget.chat.toggleHasUnread(!widget.chat.hasUnreadMessage!);
-                  if (this.mounted) setState(() {});
-                  Navigator.pop(context);
-                },
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 12.0),
-                  child: Row(
-                    children: <Widget>[
-                      Padding(
-                        padding: EdgeInsets.only(right: 10),
-                        child: Icon(
-                          widget.chat.hasUnreadMessage!
-                              ? CupertinoIcons.person_crop_circle_badge_xmark
-                              : CupertinoIcons.person_crop_circle_badge_checkmark,
-                          color: context.textTheme.bodyText1!.color,
-                        ),
-                      ),
-                      Text(widget.chat.hasUnreadMessage! ? 'Mark Read' : 'Mark Unread',
-                          style: context.textTheme.bodyText1!),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            PopupMenuItem(
-              padding: EdgeInsets.zero,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () {
-                  if (widget.chat.isArchived!) {
-                    ChatBloc().unArchiveChat(widget.chat);
-                  } else {
-                    ChatBloc().archiveChat(widget.chat);
-                  }
-                  if (this.mounted) setState(() {});
-                  Navigator.pop(context);
-                },
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 12.0),
-                  child: Row(
-                    children: <Widget>[
-                      Padding(
-                        padding: EdgeInsets.only(right: 10),
-                        child: Icon(
-                          widget.chat.isArchived! ? CupertinoIcons.tray_arrow_up : CupertinoIcons.tray_arrow_down,
-                          color: context.textTheme.bodyText1!.color,
-                        ),
-                      ),
-                      Text(widget.chat.isArchived! ? 'Unarchive' : 'Archive', style: context.textTheme.bodyText1!),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            PopupMenuItem(
-              padding: EdgeInsets.zero,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () async {
-                  ChatBloc().deleteChat(widget.chat);
-                  Chat.deleteChat(widget.chat);
-                  if (this.mounted) setState(() {});
-                  Navigator.pop(context);
-                },
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 12.0),
-                  child: Row(
-                    children: <Widget>[
-                      Padding(
-                        padding: EdgeInsets.only(right: 10),
-                        child: Icon(
-                          Icons.delete_forever,
-                          color: context.textTheme.bodyText1!.color,
-                        ),
-                      ),
-                      Text('Delete', style: context.textTheme.bodyText1!),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
+        showConversationTileMenu(
+          context,
+          this,
+          widget.chat,
+          _tapPosition,
+          context.textTheme,
+        );
+      },
+      onSecondaryTapUp: (details) async {
+        if (kIsWeb) {
+          (await html.document.onContextMenu.first).preventDefault();
+        }
+        showConversationTileMenu(
+          context,
+          this,
+          widget.chat,
+          details.globalPosition,
+          context.textTheme,
         );
       },
       child: Padding(
@@ -439,25 +306,73 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
                               snapshot.data["type"] == CurrentChatEvent.TypingStatus) {
                             showTypingIndicator.value = snapshot.data["data"];
                           }
-                          if (showTypingIndicator.value) {
-                            return Positioned(
-                              top: -sqrt(maxWidth / 2),
-                              right: -sqrt(maxWidth / 2) - maxWidth * 0.25,
-                              child: ConstrainedBox(
-                                constraints: BoxConstraints(maxHeight: 32),
-                                child: FittedBox(
-                                  child: TypingIndicator(
-                                    visible: true,
+                          return Obx(() {
+                            MessageMarkers? markers =
+                                CurrentChat.getCurrentChat(widget.chat)?.messageMarkers.markers.value ?? null.obs.value;
+                            if (showTypingIndicator.value) {
+                              return Positioned(
+                                top: -sqrt(maxWidth / 2),
+                                right: -sqrt(maxWidth / 2) - maxWidth * 0.25,
+                                child: ConstrainedBox(
+                                  constraints: BoxConstraints(maxHeight: 32),
+                                  child: FittedBox(
+                                    child: TypingIndicator(
+                                      visible: true,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            );
-                          }
-                          return Container();
+                              );
+                            }
+                            if (shouldShow(widget.chat.latestMessage, markers?.myLastMessage, markers?.lastReadMessage,
+                                    markers?.lastDeliveredMessage) !=
+                                Indicator.NONE) {
+                              return Positioned(
+                                left: sqrt(maxWidth) - maxWidth * 0.05 * sqrt(2),
+                                top: maxWidth - maxWidth * 0.13 * 2,
+                                child: Stack(
+                                  alignment: Alignment.center,
+                                  children: <Widget>[
+                                    Container(
+                                      width: maxWidth * 0.27,
+                                      height: maxWidth * 0.27,
+                                      decoration: BoxDecoration(
+                                        border: Border.all(color: Theme.of(context).backgroundColor, width: 1),
+                                        borderRadius: BorderRadius.circular(30),
+                                        color: (widget.chat.hasUnreadMessage ?? false)
+                                            ? alphaWithoutAlpha
+                                            : context.textTheme.subtitle1!.color,
+                                      ),
+                                    ),
+                                    Transform.rotate(
+                                      angle: shouldShow(widget.chat.latestMessage, markers?.myLastMessage,
+                                                  markers?.lastReadMessage, markers?.lastDeliveredMessage) !=
+                                              Indicator.SENT
+                                          ? pi / 2
+                                          : 0,
+                                      child: Icon(
+                                        shouldShow(widget.chat.latestMessage, markers?.myLastMessage,
+                                                    markers?.lastReadMessage, markers?.lastDeliveredMessage) ==
+                                                Indicator.DELIVERED
+                                            ? CupertinoIcons.location_north_fill
+                                            : shouldShow(widget.chat.latestMessage, markers?.myLastMessage,
+                                                        markers?.lastReadMessage, markers?.lastDeliveredMessage) ==
+                                                    Indicator.READ
+                                                ? CupertinoIcons.location_north
+                                                : CupertinoIcons.location_fill,
+                                        color: Colors.white,
+                                        size: maxWidth * 0.14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+                            return Container();
+                          });
                         },
                       ),
                       FutureBuilder<Message>(
-                        future: widget.chat.latestMessage,
+                        future: widget.chat.latestMessageFuture,
                         builder: (BuildContext context, AsyncSnapshot snapshot) {
                           if (!(widget.chat.hasUnreadMessage ?? false)) return Container();
                           if (showTypingIndicator.value) return Container();

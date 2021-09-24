@@ -1,4 +1,7 @@
-import 'dart:io';
+import 'package:bluebubbles/repository/models/platform_file.dart';
+import 'package:flutter/foundation.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:universal_io/io.dart';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -172,6 +175,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
     if (ChatBloc().chatRequest != null
         && prefs.getString('lastOpenedChat') != null
         && (!context.isPhone || context.isLandscape)
+        && SettingsManager().settings.tabletMode.value
         && CurrentChat.activeChat?.chat.guid != prefs.getString('lastOpenedChat')) {
       await ChatBloc().chatRequest!.future;
       CustomNavigator.pushAndRemoveUntil(
@@ -198,7 +202,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
         context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
-      child: buildForDevice(),
+      child: Obx(() => buildForDevice()),
     );
   }
 
@@ -283,6 +287,18 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                       && !showArchived && !showUnknown)
                       ? GestureDetector(
                     onTap: () async {
+                      bool camera = await Permission.camera.isGranted;
+                      if (!camera) {
+                        bool granted = (await Permission.camera.request()) == PermissionStatus.granted;
+                        if (!granted) {
+                          showSnackbar(
+                              "Error",
+                              "Camera was denied"
+                          );
+                          return;
+                        }
+                      }
+
                       String appDocPath = SettingsManager().appDocDir.path;
                       String ext = ".png";
                       File file = new File("$appDocPath/attachments/" + randomString(16) + ext);
@@ -298,7 +314,12 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                         return;
                       }
 
-                      widget.parent.openNewChatCreator(existing: [file]);
+                      widget.parent.openNewChatCreator(existing: [PlatformFile(
+                        name: file.path.split("/").last,
+                        path: file.path,
+                        bytes: file.readAsBytesSync(),
+                        size: file.lengthSync(),
+                      )]);
                     },
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
@@ -435,7 +456,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
           backgroundColor: context.theme.backgroundColor,
           body: Obx(
                 () {
-              if (!ChatBloc().hasChats.value) {
+              if (!ChatBloc().loadedChatBatch.value) {
                 return Center(
                   child: Container(
                     padding: EdgeInsets.only(top: 50.0),
@@ -454,7 +475,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                   ),
                 );
               }
-              if (ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).isEmpty) {
+              if (ChatBloc().loadedChatBatch.value && ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).isEmpty) {
                 return Center(
                   child: Container(
                     padding: EdgeInsets.only(top: 50.0),
@@ -472,9 +493,9 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                     if (SettingsManager().settings.swipableConversationTiles.value) {
                       return Dismissible(
                           background:
-                          Obx(() => slideRightBackground(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index])),
+                          (kIsDesktop || kIsWeb) ? null : Obx(() => slideRightBackground(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index])),
                           secondaryBackground:
-                          Obx(() => slideLeftBackground(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index])),
+                          (kIsDesktop || kIsWeb) ? null : Obx(() => slideLeftBackground(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index])),
                           // Each Dismissible must contain a Key. Keys allow Flutter to
                           // uniquely identify widgets.
                           key: UniqueKey(),
@@ -647,7 +668,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
   }
 
   Widget buildForDevice() {
-    bool showAltLayout = !context.isPhone || context.isLandscape;
+    bool showAltLayout = SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape);
     Widget chatList = buildChatList();
     if (showAltLayout && !widget.parent.widget.showUnknownSenders && !widget.parent.widget.showArchivedChats) {
       return buildForLandscape(context, chatList);

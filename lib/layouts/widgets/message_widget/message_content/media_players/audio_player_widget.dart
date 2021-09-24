@@ -1,4 +1,8 @@
-import 'dart:io';
+import 'package:universal_html/html.dart' as html;
+
+import 'package:bluebubbles/repository/models/platform_file.dart';
+import 'package:flutter/foundation.dart';
+import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
@@ -18,7 +22,7 @@ class AudioPlayerWiget extends StatefulWidget {
     this.width,
   }) : super(key: key);
 
-  final File file;
+  final PlatformFile file;
   final BuildContext context;
   final double? width;
   final bool isFromMe;
@@ -39,13 +43,18 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> with AutomaticKeepA
     super.initState();
 
     CurrentChat? thisChat = CurrentChat.of(widget.context);
-    if (thisChat != null && thisChat.audioPlayers.containsKey(widget.file.path)) {
+    if (!kIsWeb && thisChat != null && thisChat.audioPlayers.containsKey(widget.file.path)) {
       audioController = thisChat.audioPlayers[widget.file.path]!.item2;
       controller = thisChat.audioPlayers[widget.file.path]!.item1;
     } else {
-      audioController = VideoPlayerController.file(
-        widget.file,
-      );
+      if (kIsWeb || widget.file.path == null) {
+        final blob = html.Blob([widget.file.bytes]);
+        final url = html.Url.createObjectUrlFromBlob(blob);
+        audioController = VideoPlayerController.network(url);
+      } else {
+        dynamic file = File(widget.file.path!);
+        audioController = new VideoPlayerController.file(file);
+      }
       controller = ChewieAudioController(
         videoPlayerController: audioController,
         autoPlay: false,
@@ -69,8 +78,8 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> with AutomaticKeepA
       );
 
       thisChat = CurrentChat.of(widget.context);
-      if (thisChat != null) {
-        CurrentChat.of(widget.context)!.audioPlayers[widget.file.path] = Tuple2(controller, audioController);
+      if (!kIsWeb && thisChat != null && widget.file.path != null) {
+        CurrentChat.of(widget.context)!.audioPlayers[widget.file.path!] = Tuple2(controller, audioController);
       }
     }
   }

@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
+import 'package:universal_html/html.dart' as html;
 
+import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -110,6 +113,8 @@ class MessageHelper {
       }
     }
 
+    //ChatBloc().chats.add(chat!);
+
     if (notifyForNewMessage || notifyMessageManager) {
       notificationMessages.forEach((message, value) async {
         //this should always be non-null
@@ -201,7 +206,7 @@ class MessageHelper {
   }
 
   static Future<void> handleNotification(Message message, Chat chat,
-      {bool force = false, int visibility = NotificationVisibility.PUBLIC}) async {
+      {bool force = false}) async {
     // See if there is an existing message for the given GUID
     Message? existingMessage;
     if (!force) existingMessage = await Message.findOne({"guid": message.guid});
@@ -216,7 +221,7 @@ class MessageHelper {
     if (message.isFromMe! || message.handle == null) return; // Don't notify if the text is from me
 
     CurrentChat? currChat = CurrentChat.activeChat;
-    if (LifeCycleManager().isAlive &&
+    if (((LifeCycleManager().isAlive && !kIsWeb) || (kIsWeb && !(html.window.document.hidden ?? false))) &&
         ((!SettingsManager().settings.notifyOnChatList.value &&
                 currChat == null &&
                 !Get.currentRoute.contains("settings")) ||
@@ -224,7 +229,7 @@ class MessageHelper {
       // Don't notify if the the chat is the active chat
       return;
     }
-    await NotificationManager().createNotificationFromMessage(chat, message, visibility);
+    await NotificationManager().createNotificationFromMessage(chat, message);
   }
 
   /// A synchronous notification text method for big pins to display new attachments
@@ -267,6 +272,8 @@ class MessageHelper {
           key = "movie";
         } else if (mime.contains("image/gif")) {
           key = "GIF";
+        } else if (mime.contains("application/pdf")) {
+          key = "PDF";
         } else {
           key = mime.split("/").first;
         }
@@ -325,6 +332,8 @@ class MessageHelper {
           key = "movie";
         } else if (mime.contains("image/gif")) {
           key = "GIF";
+        } else if (mime.contains("application/pdf")) {
+          key = "PDF";
         } else {
           key = mime.split("/").first;
         }

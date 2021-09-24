@@ -1,0 +1,23 @@
+{
+  "name": "BlueBubbles",
+  "short_name": "BlueBubbles",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#4990de",
+  "theme_color": "#4990de",
+  "description": "Send iMessages on Web using BlueBubbles!",
+  "orientation": "portrait-primary",
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "icons/Icon-128.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/Icon-256.png",
+      "sizes": "256x256",
+      "type": "image/png"
+    }
+  ]
+}

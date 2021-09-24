@@ -1,4 +1,9 @@
-import 'dart:io';
+import 'dart:convert';
+import 'package:path_provider/path_provider.dart';
+import 'package:universal_html/html.dart' as html;
+
+import 'package:flutter/foundation.dart';
+import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -47,7 +52,21 @@ class BaseLogger extends GetxService {
 
   Future<void> writeLogToFile() async {
     // Create the log file and write to it
+    if (kIsWeb) {
+      final bytes = utf8.encode(logs.join('\n'));
+      final content = base64.encode(bytes);
+      html.AnchorElement(
+          href: "data:application/octet-stream;charset=utf-16le;base64,$content")
+        ..setAttribute("download", logPath.split("/").last)
+        ..click();
+      return;
+    }
     String filePath = this.logPath;
+    if (kIsDesktop) {
+      filePath = (await getDownloadsDirectory())!.path;
+      DateTime now = DateTime.now().toLocal();
+      filePath += "${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}" + ".txt";
+    }
     File file = File(filePath);
     await file.create(recursive: true);
     await file.writeAsString(logs.join('\n'));

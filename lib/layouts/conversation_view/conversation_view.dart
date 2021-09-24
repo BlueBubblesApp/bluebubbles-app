@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:io';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'dart:math';
 import 'dart:ui';
 
@@ -49,7 +49,7 @@ abstract class ChatSelectorTypes {
 }
 
 class ConversationView extends StatefulWidget {
-  final List<File> existingAttachments;
+  final List<PlatformFile> existingAttachments;
   final String? existingText;
   final List<UniqueContact> selected;
 
@@ -84,7 +84,7 @@ class ConversationView extends StatefulWidget {
 }
 
 class ConversationViewState extends State<ConversationView> with ConversationViewMixin, WidgetsBindingObserver {
-  List<File> existingAttachments = [];
+  List<PlatformFile> existingAttachments = [];
   String? existingText;
   Brightness? brightness;
   Color? previousBackgroundColor;
@@ -259,7 +259,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     super.dispose();
   }
 
-  Future<bool> send(List<File> attachments, String text) async {
+  Future<bool> send(List<PlatformFile> attachments, String text) async {
     bool isDifferentChat = currentChat == null || currentChat?.chat.guid != chat?.guid;
 
     if (isCreator!) {
@@ -552,8 +552,8 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                             : buildChatSelectorBody(),
                       ),
                     ),
-                    Obx(() {
-                      if (widget.onSelect == null) {
+                    if (widget.onSelect == null)
+                      Obx(() {
                         if (SettingsManager().settings.swipeToCloseKeyboard.value ||
                             SettingsManager().settings.swipeToOpenKeyboard.value) {
                           return GestureDetector(
@@ -571,9 +571,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                               child: textField);
                         }
                         return textField;
-                      }
-                      return Container();
-                    }),
+                      }),
                   ]),
                   AnimatedPositioned(
                     duration: Duration(milliseconds: 300),
@@ -604,6 +602,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                               true,
                               false,
                               message?.isBigEmoji() ?? false,
+                              MessageWidgetMixin.buildMessageSpansAsync(context, message),
                               currentChat: currentChat,
                               customWidth:
                               (message?.hasAttachments ?? false) && (message?.text?.isEmpty ?? true) ? null : value,
@@ -627,10 +626,8 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
             ],
           ),
         )),
-        floatingActionButton: currentChat != null
-            ? AnimatedOpacity(
-                duration: Duration(milliseconds: 250), opacity: 1, curve: Curves.easeInOut, child: buildFAB())
-            : null,
+        floatingActionButton: AnimatedOpacity(
+            duration: Duration(milliseconds: 250), opacity: 1, curve: Curves.easeInOut, child: buildFAB()),
       ),
     );
   }

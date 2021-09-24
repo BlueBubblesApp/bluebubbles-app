@@ -1,5 +1,7 @@
 import 'dart:async';
-import 'dart:io';
+import 'package:bluebubbles/repository/models/platform_file.dart';
+import 'package:flutter/foundation.dart';
+import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
@@ -50,7 +52,7 @@ class ActionHandler {
       // Check for URLs
       RegExpMatch? linkMatch;
       String? linkMsg;
-      List<RegExpMatch> matches = parseLinks(text);
+      List<RegExpMatch> matches = parseLinks(text.replaceAll("\n", " "));
 
       // Get the first match (if it exists)
       if (matches.length > 0) {
@@ -175,7 +177,10 @@ class ActionHandler {
       });
     };
 
-    bool isConnected = await InternetConnectionChecker().hasConnection;
+    bool isConnected = kIsWeb;
+    if (!isConnected) {
+      isConnected = await InternetConnectionChecker().hasConnection;
+    }
     if (!isConnected) {
       InternetConnectionChecker().checkInterval = Duration(seconds: 1);
       StreamSubscription? sub;
@@ -286,7 +291,12 @@ class ActionHandler {
         new QueueItem(
           event: "send-attachment",
           item: new AttachmentSender(
-            file,
+            PlatformFile(
+              path: file.path,
+              name: file.path.split("/").last,
+              size: file.lengthSync(),
+              bytes: file.readAsBytesSync(),
+            ),
             chat,
             i == message.attachments!.length - 1 ? message.text ?? "" : "",
           ),
@@ -349,7 +359,8 @@ class ActionHandler {
   /// resyncChat(chatObj)
   /// ```
   static Future<void> resyncChat(Chat chat, MessageBloc messageBloc) async {
-    final Database db = await DBProvider.db.database;
+    final Database? db = await DBProvider.db.database;
+    if (db == null) return;
     await chat.save();
 
     // Fetch messages associated with the chat

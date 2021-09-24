@@ -1,4 +1,7 @@
-import 'dart:io';
+import 'package:bluebubbles/repository/models/platform_file.dart';
+import 'package:flutter/foundation.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:universal_io/io.dart';
 import 'dart:math';
 import 'dart:ui';
 
@@ -39,16 +42,15 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
   bool openedChatAlready = false;
 
   Future<void> openLastChat(BuildContext context) async {
-    if (ChatBloc().chatRequest != null
-        && prefs.getString('lastOpenedChat') != null
-        && (!context.isPhone || context.isLandscape)
-        && CurrentChat.activeChat?.chat.guid != prefs.getString('lastOpenedChat')) {
+    if (ChatBloc().chatRequest != null &&
+        prefs.getString('lastOpenedChat') != null &&
+        (!context.isPhone || context.isLandscape) &&
+        SettingsManager().settings.tabletMode.value &&
+        CurrentChat.activeChat?.chat.guid != prefs.getString('lastOpenedChat')) {
       await ChatBloc().chatRequest!.future;
       CustomNavigator.pushAndRemoveUntil(
         context,
-        ConversationView(
-          chat: ChatBloc().chats.firstWhere((e) => e.guid == prefs.getString('lastOpenedChat'))
-        ),
+        ConversationView(chat: ChatBloc().chats.firstWhere((e) => e.guid == prefs.getString('lastOpenedChat'))),
         (route) => route.isFirst,
       );
     }
@@ -67,7 +69,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
             context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
-      child: buildForDevice(context),
+      child: Obx(() => buildForDevice(context)),
     );
   }
 
@@ -77,58 +79,60 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
     Brightness brightness = ThemeData.estimateBrightnessForColor(context.theme.backgroundColor);
     return Obx(
       () => Scaffold(
-        appBar: PreferredSize(
-          preferredSize: Size(
-            (showAltLayout) ? CustomNavigator.width(context) * 0.33 : CustomNavigator.width(context),
-            context.orientation == Orientation.landscape
-                ? 0
-                : SettingsManager().settings.reducedForehead.value
-                    ? 10
-                    : 40,
-          ),
-          child: ClipRRect(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-              child: StreamBuilder<Color?>(
-                stream: widget.parent.headerColorStream.stream,
-                builder: (context, snapshot) {
-                  return AnimatedCrossFade(
-                    crossFadeState: widget.parent.theme == Colors.transparent
-                        ? CrossFadeState.showFirst
-                        : CrossFadeState.showSecond,
-                    duration: Duration(milliseconds: 250),
-                    secondChild: AppBar(
-                      iconTheme: IconThemeData(color: context.theme.primaryColor),
-                      elevation: 0,
-                      backgroundColor: widget.parent.theme,
-                      centerTitle: true,
-                      brightness: brightness,
-                      title: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: <Widget>[
-                          Text(
-                            showArchived
-                                ? "Archive"
-                                : showUnknown
-                                    ? "Unknown Senders"
-                                    : "Messages",
-                            style: context.textTheme.bodyText1,
+        appBar: kIsWeb || kIsDesktop
+            ? null
+            : PreferredSize(
+                preferredSize: Size(
+                  (showAltLayout) ? CustomNavigator.width(context) * 0.33 : CustomNavigator.width(context),
+                  context.orientation == Orientation.landscape
+                      ? 0
+                      : SettingsManager().settings.reducedForehead.value
+                          ? 10
+                          : 40,
+                ),
+                child: ClipRRect(
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                    child: StreamBuilder<Color?>(
+                      stream: widget.parent.headerColorStream.stream,
+                      builder: (context, snapshot) {
+                        return AnimatedCrossFade(
+                          crossFadeState: widget.parent.theme == Colors.transparent
+                              ? CrossFadeState.showFirst
+                              : CrossFadeState.showSecond,
+                          duration: Duration(milliseconds: 250),
+                          secondChild: AppBar(
+                            iconTheme: IconThemeData(color: context.theme.primaryColor),
+                            elevation: 0,
+                            backgroundColor: widget.parent.theme,
+                            centerTitle: true,
+                            brightness: brightness,
+                            title: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: <Widget>[
+                                Text(
+                                  showArchived
+                                      ? "Archive"
+                                      : showUnknown
+                                          ? "Unknown Senders"
+                                          : "Messages",
+                                  style: context.textTheme.bodyText1,
+                                ),
+                              ],
+                            ),
                           ),
-                        ],
-                      ),
+                          firstChild: AppBar(
+                            leading: new Container(),
+                            elevation: 0,
+                            brightness: brightness,
+                            backgroundColor: context.theme.backgroundColor,
+                          ),
+                        );
+                      },
                     ),
-                    firstChild: AppBar(
-                      leading: new Container(),
-                      elevation: 0,
-                      brightness: brightness,
-                      backgroundColor: context.theme.backgroundColor,
-                    ),
-                  );
-                },
+                  ),
+                ),
               ),
-            ),
-          ),
-        ),
         backgroundColor: context.theme.backgroundColor,
         extendBodyBehindAppBar: true,
         body: CustomScrollView(
@@ -156,7 +160,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                 title: Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: <Widget>[
-                    Container(height: 20),
+                    if (!kIsWeb && !kIsDesktop) Container(height: 20),
                     Container(
                       margin: EdgeInsets.only(right: 10),
                       child: Row(
@@ -223,6 +227,18 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                                     child: Icon(CupertinoIcons.camera, color: context.theme.primaryColor, size: 12),
                                   ),
                                   onTap: () async {
+                                    bool camera = await Permission.camera.isGranted;
+                                    if (!camera) {
+                                      bool granted = (await Permission.camera.request()) == PermissionStatus.granted;
+                                      if (!granted) {
+                                        showSnackbar(
+                                            "Error",
+                                            "Camera was denied"
+                                        );
+                                        return;
+                                      }
+                                    }
+
                                     String appDocPath = SettingsManager().appDocDir.path;
                                     String ext = ".png";
                                     File file = new File("$appDocPath/attachments/" + randomString(16) + ext);
@@ -239,7 +255,14 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                                       return;
                                     }
 
-                                    widget.parent.openNewChatCreator(existing: [file]);
+                                    widget.parent.openNewChatCreator(existing: [
+                                      PlatformFile(
+                                        name: file.path.split("/").last,
+                                        path: file.path,
+                                        bytes: file.readAsBytesSync(),
+                                        size: file.lengthSync(),
+                                      )
+                                    ]);
                                   },
                                 ),
                               ),
@@ -380,7 +403,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
             }),
             Obx(() {
               ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).sort(Chat.sort);
-              if (!ChatBloc().hasChats.value) {
+              if (!ChatBloc().loadedChatBatch.value) {
                 return SliverToBoxAdapter(
                   child: Center(
                     child: Container(
@@ -401,7 +424,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                   ),
                 );
               }
-              if (!ChatBloc().hasChats.value) {
+              if (ChatBloc().loadedChatBatch.value && !ChatBloc().hasChats.value) {
                 return SliverToBoxAdapter(
                   child: Center(
                     child: Container(
@@ -457,60 +480,63 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
 
   Widget buildForLandscape(BuildContext context, Widget chatList) {
     return VerticalSplitView(
-        dividerWidth: 10.0,
-        initialRatio: 0.4,
-        minRatio: 0.33,
-        maxRatio: 0.5,
-        allowResize: true,
-        left: LayoutBuilder(
-          builder: (context, constraints) {
-            CustomNavigator.maxWidthLeft = constraints.maxWidth;
-            return WillPopScope(
-              onWillPop: () async {
-                Get.back(id: 1);
+      dividerWidth: 10.0,
+      initialRatio: 0.4,
+      minRatio: 0.33,
+      maxRatio: 0.5,
+      allowResize: true,
+      left: LayoutBuilder(builder: (context, constraints) {
+        CustomNavigator.maxWidthLeft = constraints.maxWidth;
+        return WillPopScope(
+          onWillPop: () async {
+            Get.back(id: 1);
+            return false;
+          },
+          child: Navigator(
+            key: Get.nestedKey(1),
+            onPopPage: (route, _) {
+              return false;
+            },
+            pages: [CupertinoPage(name: "initial", child: chatList)],
+          ),
+        );
+      }),
+      right: LayoutBuilder(
+        builder: (context, constraints) {
+          CustomNavigator.maxWidthRight = constraints.maxWidth;
+          return WillPopScope(
+            onWillPop: () async {
+              Get.back(id: 2);
+              return false;
+            },
+            child: Navigator(
+              key: Get.nestedKey(2),
+              onPopPage: (route, _) {
                 return false;
               },
-              child: Navigator(
-                key: Get.nestedKey(1),
-                onPopPage: (route, _) {
-                  return false;
-                },
-                pages: [CupertinoPage(name: "initial", child: chatList)],
-              ),
-            );
-          }
-        ),
-        right: LayoutBuilder(
-          builder: (context, constraints) {
-            CustomNavigator.maxWidthRight = constraints.maxWidth;
-            return WillPopScope(
-              onWillPop: () async {
-                Get.back(id: 2);
-                return false;
-              },
-              child: Navigator(
-                key: Get.nestedKey(2),
-                onPopPage: (route, _) {
-                  return false;
-                },
-                pages: [CupertinoPage(name: "initial", child: Scaffold(
-                  backgroundColor: context.theme.backgroundColor,
-                  extendBodyBehindAppBar: true,
-                  body: Center(
-                    child: Container(
-                        child: Text("Select a chat from the list", style: Theme.of(Get.context!).textTheme.subtitle1!.copyWith(fontSize: 18))
+              pages: [
+                CupertinoPage(
+                  name: "initial",
+                  child: Scaffold(
+                    backgroundColor: context.theme.backgroundColor,
+                    extendBodyBehindAppBar: true,
+                    body: Center(
+                      child: Container(
+                          child: Text("Select a chat from the list",
+                              style: Theme.of(Get.context!).textTheme.subtitle1!.copyWith(fontSize: 18))),
                     ),
                   ),
-                ))],
-              ),
-            );
-          }
-        ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
   Widget buildForDevice(BuildContext context) {
-    bool showAltLayout = !context.isPhone || context.isLandscape;
+    bool showAltLayout = SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape);
     Widget chatList = buildChatList(context, showAltLayout);
     if (showAltLayout && !widget.parent.widget.showUnknownSenders && !widget.parent.widget.showArchivedChats) {
       return buildForLandscape(context, chatList);

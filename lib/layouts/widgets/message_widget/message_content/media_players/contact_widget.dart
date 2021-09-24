@@ -1,4 +1,9 @@
-import 'dart:io';
+import 'dart:convert';
+
+import 'package:bluebubbles/repository/models/platform_file.dart';
+import 'package:flutter/foundation.dart';
+import 'package:universal_io/io.dart';
+import 'package:universal_html/html.dart' as html;
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
@@ -18,7 +23,7 @@ class ContactWidget extends StatefulWidget {
     required this.file,
     required this.attachment,
   }) : super(key: key);
-  final File file;
+  final PlatformFile file;
   final Attachment attachment;
 
   @override
@@ -32,7 +37,13 @@ class _ContactWidgetState extends State<ContactWidget> {
   void initState() {
     super.initState();
 
-    String appleContact = widget.file.readAsStringSync();
+    String appleContact;
+
+    if (kIsWeb || widget.file.path == null) {
+      appleContact = utf8.decode(widget.file.bytes!);
+    } else {
+      appleContact = File(widget.file.path!).readAsStringSync();
+    }
 
     try {
       contact = AttachmentHelper.parseAppleContact(appleContact);
@@ -54,13 +65,24 @@ class _ContactWidgetState extends State<ContactWidget> {
           color: Theme.of(context).accentColor,
           child: InkWell(
             onTap: () async {
-              MethodChannelInterface().invokeMethod(
-                "open_file",
-                {
-                  "path": "/attachments/" + widget.attachment.guid! + "/" + basename(widget.file.path),
-                  "mimeType": "text/x-vcard",
-                },
-              );
+              if (kIsWeb || widget.file.path == null) {
+                final content = base64.encode(widget.file.bytes!);
+                html.AnchorElement(
+                    href: "data:application/octet-stream;charset=utf-16le;base64,$content")
+                  ..setAttribute("download", widget.file.name)
+                  ..click();
+              } else {
+                MethodChannelInterface().invokeMethod(
+                  "open_file",
+                  {
+                    "path": "/attachments/" +
+                        widget.attachment.guid! +
+                        "/" +
+                        basename(widget.file.path!),
+                    "mimeType": "text/x-vcard",
+                  },
+                );
+              }
             },
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 15.0),

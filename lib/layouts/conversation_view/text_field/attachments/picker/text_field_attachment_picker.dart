@@ -1,5 +1,10 @@
 import 'dart:async';
-import 'dart:io';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
+import 'package:file_picker/file_picker.dart' hide PlatformFile;
+import 'package:file_picker/file_picker.dart' as pf;
+import 'package:permission_handler/permission_handler.dart';
+import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/share.dart';
@@ -21,7 +26,7 @@ class TextFieldAttachmentPicker extends StatefulWidget {
     required this.onAddAttachment,
   }) : super(key: key);
   final bool visible;
-  final Function(File?) onAddAttachment;
+  final Function(PlatformFile?) onAddAttachment;
 
   @override
   _TextFieldAttachmentPickerState createState() => _TextFieldAttachmentPickerState();
@@ -38,6 +43,16 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
     LifeCycleManager().stream.listen((event) async {
       if (event && widget.visible) getAttachments();
     });
+
+    EventDispatcher().stream.listen((Map<String, dynamic> event) {
+      if (!this.mounted) return;
+      if (!event.containsKey("type")) return;
+
+      if (event["type"] == "add-attachment") {
+        PlatformFile file = PlatformFile.fromMap(event['data']);
+        widget.onAddAttachment(file);
+      }
+    });
   }
 
   Future<void> getAttachments() async {
@@ -46,12 +61,33 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
     if (list.length > 0) {
       List<AssetEntity> images = await list.first.getAssetListRange(start: 0, end: 60);
       _images = images;
+      if (DateTime.now().toLocal().isWithin(images.first.modifiedDateTime, minutes: 10)) {
+        dynamic file = await images.first.file;
+        EventDispatcher().emit('add-custom-smartreply', {
+          "path": file.path,
+          "name": file.path.split('/').last,
+          "size": file.lengthSync(),
+          "bytes": file.readAsBytesSync(),
+        });
+      }
     }
 
     if (this.mounted) setState(() {});
   }
 
   Future<void> openFullCamera({String type: 'camera'}) async {
+    bool camera = await Permission.camera.isGranted;
+    if (!camera) {
+      bool granted = (await Permission.camera.request()) == PermissionStatus.granted;
+      if (!granted) {
+        showSnackbar(
+            "Error",
+            "Camera was denied"
+        );
+        return;
+      }
+    }
+
     // Create a file that the camera can write to
     String appDocPath = SettingsManager().appDocDir.path;
     String ext = (type == 'video') ? ".mp4" : ".png";
@@ -68,7 +104,12 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
       return;
     }
 
-    widget.onAddAttachment(file);
+    widget.onAddAttachment(PlatformFile(
+      path: file.path,
+      name: file.path.split('/').last,
+      size: file.lengthSync(),
+      bytes: file.readAsBytesSync(),
+    ));
   }
 
   @override
@@ -111,11 +152,16 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
                                         primary: Theme.of(context).accentColor,
                                       ),
                                       onPressed: () async {
-                                        List<dynamic>? res = await MethodChannelInterface().invokeMethod("pick-file");
-                                        if (res == null || res.isEmpty) return;
+                                        final res = await FilePicker.platform.pickFiles(withData: true, allowMultiple: true);
+                                        if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
 
-                                        for (dynamic path in res) {
-                                          widget.onAddAttachment(File(path.toString()));
+                                        for (pf.PlatformFile file in res.files) {
+                                          widget.onAddAttachment(PlatformFile(
+                                            path: file.path,
+                                            name: file.name,
+                                            bytes: file.bytes,
+                                            size: file.size
+                                          ));
                                         }
                                       },
                                       child: Column(
@@ -317,7 +363,13 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
                                 key: Key("attachmentPicked" + _images[index].id),
                                 data: element,
                                 onTap: () async {
-                                  widget.onAddAttachment(await element.file);
+                                  dynamic file = await element.file;
+                                  widget.onAddAttachment(PlatformFile(
+                                    path: file.path,
+                                    name: file.path.split('/').last,
+                                    size: file.lengthSync(),
+                                    bytes: file.readAsBytesSync(),
+                                  ));
                                 },
                               );
                             },

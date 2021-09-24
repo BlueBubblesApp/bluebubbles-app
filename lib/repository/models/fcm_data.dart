@@ -1,16 +1,18 @@
 import 'dart:async';
 
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/config_entry.dart';
+import 'package:firebase_dart/firebase_dart.dart';
 import 'package:sqflite/sqflite.dart';
 
 class FCMData {
-  dynamic projectID;
-  dynamic storageBucket;
-  dynamic apiKey;
-  dynamic firebaseURL;
-  dynamic clientID;
-  dynamic applicationID;
+  String? projectID;
+  String? storageBucket;
+  String? apiKey;
+  String? firebaseURL;
+  String? clientID;
+  String? applicationID;
 
   FCMData({
     this.projectID,
@@ -59,15 +61,44 @@ class FCMData {
     List<ConfigEntry> entries = this.toEntries();
     for (ConfigEntry entry in entries) {
       await entry.save("fcm", database: database);
+      prefs.setString(entry.name!, entry.value);
     }
     return this;
+  }
+
+  static void deleteFcmData() {
+    prefs.remove('projectID');
+    prefs.remove('storageBucket');
+    prefs.remove('apiKey');
+    prefs.remove('firebaseURL');
+    prefs.remove('clientID');
+    prefs.remove('applicationID');
+  }
+
+  static Future<void> initializeFirebase(FCMData data) async {
+    var options = FirebaseOptions(
+        appId: data.applicationID!,
+        apiKey: data.apiKey!,
+        projectId: data.projectID!,
+        storageBucket: data.storageBucket,
+        databaseURL: data.firebaseURL,
+        messagingSenderId: data.clientID,
+    );
+    app = await Firebase.initializeApp(options: options);
   }
 
   static Future<FCMData> getFCM() async {
     Database? db = await DBProvider.db.database;
 
-    List<Map<String, dynamic>> result = await db.query("fcm");
-    if (result.isEmpty) return new FCMData();
+    List<Map<String, dynamic>> result = (await db?.query("fcm")) ?? [];
+    if (result.isEmpty) return new FCMData(
+      projectID: prefs.getString('projectID'),
+      storageBucket: prefs.getString('storageBucket'),
+      apiKey: prefs.getString('apiKey'),
+      firebaseURL: prefs.getString('firebaseURL'),
+      clientID: prefs.getString('clientID'),
+      applicationID: prefs.getString('applicationID'),
+    );
     List<ConfigEntry> entries = [];
     for (Map<String, dynamic> setting in result) {
       entries.add(ConfigEntry.fromMap(setting));

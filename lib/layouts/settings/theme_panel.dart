@@ -14,11 +14,13 @@ import 'package:bluebubbles/layouts/settings/custom_avatar_panel.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
@@ -45,9 +47,11 @@ class ThemePanelController extends GetxController {
 
   @override
   void onReady() async {
-    modes.value = await FlutterDisplayMode.supported;
-    refreshRates.value = modes.map((e) => e.refreshRate.round()).toSet().toList();
-    currentMode.value = (await _settingsCopy.getDisplayMode()).refreshRate.round();
+    if (!kIsWeb && !kIsDesktop) {
+      modes.value = await FlutterDisplayMode.supported;
+      refreshRates.value = modes.map((e) => e.refreshRate.round()).toSet().toList();
+      currentMode.value = (await _settingsCopy.getDisplayMode()).refreshRate.round();
+    }
     super.onReady();
   }
 
@@ -136,7 +140,7 @@ class ThemePanel extends GetView<ThemePanelController> {
                               ),
                         child: Padding(
                           padding: const EdgeInsets.only(bottom: 8.0, left: 15),
-                          child: Text("Theme".psCapitalize,
+                          child: Text("Appearance".psCapitalize,
                               style:
                                   SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
                         )),
@@ -146,6 +150,7 @@ class ThemePanel extends GetView<ThemePanelController> {
                         if (val == null) return;
                         AdaptiveTheme.of(context).setThemeMode(val);
                         controller.update();
+                        EventDispatcher().emit('theme-update', null);
                       },
                       options: AdaptiveThemeMode.values,
                       textProcessing: (val) => val.toString().split(".").last,
@@ -153,32 +158,34 @@ class ThemePanel extends GetView<ThemePanelController> {
                       backgroundColor: tileColor,
                       secondaryColor: headerColor,
                     ),
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
+                    if (!kIsWeb)
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 65.0),
+                          child: SettingsDivider(color: headerColor),
+                        ),
                       ),
-                    ),
-                    SettingsTile(
-                      title: "Theming",
-                      subtitle: "Edit existing themes and create custom themes",
-                      trailing: nextIcon,
-                      onTap: () async {
-                        Navigator.of(context).push(
-                          CupertinoPageRoute(
-                            builder: (context) => ThemingPanel(),
-                          ),
-                        );
-                      },
-                      backgroundColor: tileColor,
-                    ),
+                    if (!kIsWeb)
+                      SettingsTile(
+                        title: "Theming",
+                        subtitle: "Edit existing themes and create custom themes",
+                        trailing: nextIcon,
+                        onTap: () async {
+                          Navigator.of(context).push(
+                            CupertinoPageRoute(
+                              builder: (context) => ThemingPanel(),
+                            ),
+                          );
+                        },
+                        backgroundColor: tileColor,
+                      ),
                     SettingsHeader(
                         headerColor: headerColor,
                         tileColor: tileColor,
                         iosSubtitle: iosSubtitle,
                         materialSubtitle: materialSubtitle,
-                        text: "Skin"),
+                        text: "Skin and Layout"),
                     Obx(() => SettingsOptions<Skins>(
                           initial: controller._settingsCopy.skin.value,
                           onChanged: (val) {
@@ -202,13 +209,32 @@ class ThemePanel extends GetView<ThemePanelController> {
                           backgroundColor: tileColor,
                           secondaryColor: headerColor,
                         )),
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
+                    ),
+                    Obx(() => SettingsSwitch(
+                      onChanged: (bool val) {
+                        controller._settingsCopy.tabletMode.value = val;
+                        saveSettings();
+                      },
+                      initialVal: controller._settingsCopy.tabletMode.value,
+                      title: "Tablet Mode",
+                      backgroundColor: tileColor,
+                      subtitle: "Enables tablet mode (split view) depending on screen width",
+                    )),
                     SettingsHeader(
                         headerColor: headerColor,
                         tileColor: tileColor,
                         iosSubtitle: iosSubtitle,
                         materialSubtitle: materialSubtitle,
                         text: "Colors"),
-                    Obx(() => SettingsSwitch(
+                    if (!kIsWeb && !kIsDesktop)
+                      Obx(
+                        () => SettingsSwitch(
                           onChanged: (bool val) async {
                             await MethodChannelInterface().invokeMethod("request-notif-permission");
                             try {
@@ -227,16 +253,19 @@ class ThemePanel extends GetView<ThemePanelController> {
                                     selectedDarkTheme:
                                         allThemes.firstWhere((element) => element.name == "Music Theme (Dark)"));
                               } else {
-                                ThemeObject previousLight = await revertToPreviousLightTheme();
-                                ThemeObject previousDark = await revertToPreviousDarkTheme();
+                                var allThemes = await ThemeObject.getThemes();
+                                var previousLight = allThemes.firstWhere((e) => e.previousLightTheme);
+                                var previousDark = allThemes.firstWhere((e) => e.previousDarkTheme);
+                                previousLight.previousLightTheme = false;
+                                previousDark.previousDarkTheme = false;
+                                await previousLight.save();
+                                await previousDark.save();
                                 SettingsManager().saveSelectedTheme(context,
                                     selectedLightTheme: previousLight, selectedDarkTheme: previousDark);
                               }
                               controller._settingsCopy.colorsFromMedia.value = val;
                               saveSettings();
-                            } catch (e, trace) {
-                              Logger.error(e.toString());
-                              Logger.error(trace.toString());
+                            } catch (e) {
                               showSnackbar(
                                   "Error", "Something went wrong, please ensure you granted the permission correctly!");
                             }
@@ -246,14 +275,16 @@ class ThemePanel extends GetView<ThemePanelController> {
                           backgroundColor: tileColor,
                           subtitle:
                               "Pull app colors from currently playing media. Note: Requires full notification access & a custom theme to be set",
-                        )),
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
+                        ),
                       ),
-                    ),
+                    if (!kIsWeb && !kIsDesktop)
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 65.0),
+                          child: SettingsDivider(color: headerColor),
+                        ),
+                      ),
                     Obx(() => SettingsSwitch(
                           onChanged: (bool val) {
                             controller._settingsCopy.colorfulAvatars.value = val;
@@ -281,76 +312,82 @@ class ThemePanel extends GetView<ThemePanelController> {
                           backgroundColor: tileColor,
                           subtitle: "Gives received message bubbles a splash of color",
                         )),
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
+                    if (!kIsWeb)
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 65.0),
+                          child: SettingsDivider(color: headerColor),
+                        ),
                       ),
-                    ),
-                    SettingsTile(
-                      title: "Custom Avatar Colors",
-                      trailing: nextIcon,
-                      onTap: () async {
-                        CustomNavigator.pushSettings(
-                          context,
-                          CustomAvatarColorPanel(),
-                          binding: CustomAvatarColorPanelBinding(),
-                        );
-                      },
-                      backgroundColor: tileColor,
-                      subtitle: "Customize the color for different avatars",
-                    ),
-                    Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 65.0),
-                        child: SettingsDivider(color: headerColor),
+                    if (!kIsWeb)
+                      SettingsTile(
+                        title: "Custom Avatar Colors",
+                        trailing: nextIcon,
+                        onTap: () async {
+                          CustomNavigator.pushSettings(
+                            context,
+                            CustomAvatarColorPanel(),
+                            binding: CustomAvatarColorPanelBinding(),
+                          );
+                        },
+                        backgroundColor: tileColor,
+                        subtitle: "Customize the color for different avatars",
                       ),
-                    ),
-                    SettingsTile(
-                      title: "Custom Avatars",
-                      trailing: nextIcon,
-                      onTap: () async {
-                        CustomNavigator.pushSettings(
-                          context,
-                          CustomAvatarPanel(),
-                          binding: CustomAvatarPanelBinding(),
-                        );
-                      },
-                      backgroundColor: tileColor,
-                      subtitle: "Customize the avatar for different chats",
-                    ),
-                    Obx(() {
-                      if (controller.refreshRates.length > 2)
-                        return SettingsHeader(
-                            headerColor: headerColor,
-                            tileColor: tileColor,
-                            iosSubtitle: iosSubtitle,
-                            materialSubtitle: materialSubtitle,
-                            text: "Refresh Rate");
-                      else
-                        return SizedBox.shrink();
-                    }),
-                    Obx(() {
-                      if (controller.refreshRates.length > 2)
-                        return SettingsOptions<int>(
-                          initial: controller.currentMode.value,
-                          onChanged: (val) async {
-                            if (val == null) return;
-                            controller.currentMode.value = val;
-                            controller._settingsCopy.refreshRate.value = controller.currentMode.value;
-                            saveSettings();
-                          },
-                          options: controller.refreshRates,
-                          textProcessing: (val) => val == 0 ? "Auto" : val.toString() + " Hz",
-                          title: "Display",
-                          backgroundColor: tileColor,
-                          secondaryColor: headerColor,
-                        );
-                      else
-                        return SizedBox.shrink();
-                    }),
+                    if (!kIsWeb)
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 65.0),
+                          child: SettingsDivider(color: headerColor),
+                        ),
+                      ),
+                    if (!kIsWeb)
+                      SettingsTile(
+                        title: "Custom Avatars",
+                        trailing: nextIcon,
+                        onTap: () async {
+                          CustomNavigator.pushSettings(
+                            context,
+                            CustomAvatarPanel(),
+                            binding: CustomAvatarPanelBinding(),
+                          );
+                        },
+                        backgroundColor: tileColor,
+                        subtitle: "Customize the avatar for different chats",
+                      ),
+                    if (!kIsWeb && !kIsDesktop)
+                      Obx(() {
+                        if (controller.refreshRates.length > 2)
+                          return SettingsHeader(
+                              headerColor: headerColor,
+                              tileColor: tileColor,
+                              iosSubtitle: iosSubtitle,
+                              materialSubtitle: materialSubtitle,
+                              text: "Refresh Rate");
+                        else
+                          return SizedBox.shrink();
+                      }),
+                    if (!kIsWeb && !kIsDesktop)
+                      Obx(() {
+                        if (controller.refreshRates.length > 2)
+                          return SettingsOptions<int>(
+                            initial: controller.currentMode.value,
+                            onChanged: (val) async {
+                              if (val == null) return;
+                              controller.currentMode.value = val;
+                              controller._settingsCopy.refreshRate.value = controller.currentMode.value;
+                              saveSettings();
+                            },
+                            options: controller.refreshRates,
+                            textProcessing: (val) => val == 0 ? "Auto" : val.toString() + " Hz",
+                            title: "Display",
+                            backgroundColor: tileColor,
+                            secondaryColor: headerColor,
+                          );
+                        else
+                          return SizedBox.shrink();
+                      }),
                     // SettingsOptions<String>(
                     //   initial: controller._settingsCopy.emojiFontFamily == null
                     //       ? "System"

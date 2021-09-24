@@ -47,6 +47,15 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                   textAlign: TextAlign.center,
                 ),
               ),
+              Container(height: 20.0),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20.0),
+                child: Text(
+                  "Note: If you have issues with sync getting stuck at a certain chat, try setting the number of messages to sync to 1",
+                  style: Theme.of(context).textTheme.bodyText1!,
+                  textAlign: TextAlign.center,
+                ),
+              ),
               Container(height: 50.0),
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20.0),

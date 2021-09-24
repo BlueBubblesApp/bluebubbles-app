@@ -1,5 +1,8 @@
 import 'dart:async';
-import 'dart:io';
+import 'package:bluebubbles/repository/models/platform_file.dart';
+import 'package:flutter/foundation.dart';
+import 'package:universal_io/io.dart';
+import 'package:universal_html/html.dart' as html;
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';
@@ -21,7 +24,7 @@ import 'package:video_player/video_player.dart';
 class VideoViewer extends StatefulWidget {
   VideoViewer({Key? key, required this.file, required this.attachment, required this.showInteractions})
       : super(key: key);
-  final File file;
+  final PlatformFile file;
   final Attachment attachment;
   final bool showInteractions;
 
@@ -46,7 +49,14 @@ class _VideoViewerState extends State<VideoViewer> {
   }
 
   void initControllers() async {
-    controller = new VideoPlayerController.file(widget.file);
+    if (kIsWeb || widget.file.path == null) {
+      final blob = html.Blob([widget.file.bytes]);
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      controller = VideoPlayerController.network(url);
+    } else {
+      dynamic file = File(widget.file.path!);
+      controller = new VideoPlayerController.file(file);
+    }
     controller.setVolume(SettingsManager().settings.startVideosMutedFullscreen.value ? 0 : 1);
     await controller.initialize();
     chewieController = ChewieController(
@@ -137,11 +147,11 @@ class _VideoViewerState extends State<VideoViewer> {
                       for (var entry in widget.attachment.metadata?.entries ?? {}.entries) {
                         metaWidgets.add(RichText(
                             text: TextSpan(children: [
-                              TextSpan(
-                                  text: "${entry.key}: ",
-                                  style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2)),
-                              TextSpan(text: entry.value.toString(), style: Theme.of(context).textTheme.bodyText1)
-                            ])));
+                          TextSpan(
+                              text: "${entry.key}: ",
+                              style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2)),
+                          TextSpan(text: entry.value.toString(), style: Theme.of(context).textTheme.bodyText1)
+                        ])));
                       }
 
                       if (metaWidgets.length == 0) {
@@ -182,8 +192,8 @@ class _VideoViewerState extends State<VideoViewer> {
                               child: Text(
                                 "Close",
                                 style: Theme.of(context).textTheme.bodyText1!.copyWith(
-                                  color: Theme.of(context).primaryColor,
-                                ),
+                                      color: Theme.of(context).primaryColor,
+                                    ),
                               ),
                               onPressed: () => Navigator.of(context).pop(),
                             ),
@@ -209,7 +219,14 @@ class _VideoViewerState extends State<VideoViewer> {
                       AttachmentHelper.redownloadAttachment(widget.attachment, onComplete: () async {
                         controller.dispose();
                         chewieController?.dispose();
-                        controller = new VideoPlayerController.file(widget.file);
+                        if (kIsWeb || widget.file.path == null) {
+                          final blob = html.Blob([widget.file.bytes]);
+                          final url = html.Url.createObjectUrlFromBlob(blob);
+                          controller = VideoPlayerController.network(url);
+                        } else {
+                          dynamic file = File(widget.file.path!);
+                          controller = new VideoPlayerController.file(file);
+                        }
                         await controller.initialize();
                         isReloading.value = false;
                         controller.setVolume(SettingsManager().settings.startVideosMutedFullscreen.value ? 0 : 1);
@@ -250,27 +267,31 @@ class _VideoViewerState extends State<VideoViewer> {
                       await AttachmentHelper.saveToGallery(context, widget.file);
                     },
                     child: Icon(
-                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.cloud_download : Icons.file_download,
+                      SettingsManager().settings.skin.value == Skins.iOS
+                          ? CupertinoIcons.cloud_download
+                          : Icons.file_download,
                       color: Colors.white,
                     ),
                   ),
                 ),
-                Padding(
-                  padding: EdgeInsets.only(top: 40.0),
-                  child: CupertinoButton(
-                    padding: EdgeInsets.symmetric(horizontal: 5),
-                    onPressed: () async {
-                      Share.file(
-                        "Shared ${widget.attachment.mimeType!.split("/")[0]} from BlueBubbles: ${widget.attachment.transferName}",
-                        widget.file.path,
-                      );
-                    },
-                    child: Icon(
-                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.share : Icons.share,
-                      color: Colors.white,
+                if (!kIsWeb && !kIsDesktop)
+                  Padding(
+                    padding: EdgeInsets.only(top: 40.0),
+                    child: CupertinoButton(
+                      padding: EdgeInsets.symmetric(horizontal: 5),
+                      onPressed: () async {
+                        if (widget.file.path == null) return;
+                        Share.file(
+                          "Shared ${widget.attachment.mimeType!.split("/")[0]} from BlueBubbles: ${widget.attachment.transferName}",
+                          widget.file.path!,
+                        );
+                      },
+                      child: Icon(
+                        SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.share : Icons.share,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
-                ),
                 Padding(
                   padding: const EdgeInsets.only(top: 40.0),
                   child: CupertinoButton(
@@ -281,11 +302,11 @@ class _VideoViewerState extends State<VideoViewer> {
                     child: Icon(
                       controller.value.volume == 0.0
                           ? SettingsManager().settings.skin.value == Skins.iOS
-                          ? CupertinoIcons.volume_mute
-                          : Icons.volume_mute
+                              ? CupertinoIcons.volume_mute
+                              : Icons.volume_mute
                           : SettingsManager().settings.skin.value == Skins.iOS
-                          ? CupertinoIcons.volume_up
-                          : Icons.volume_up,
+                              ? CupertinoIcons.volume_up
+                              : Icons.volume_up,
                       color: Colors.white,
                     ),
                   ),
@@ -305,48 +326,50 @@ class _VideoViewerState extends State<VideoViewer> {
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
         body: Listener(
-          onPointerUp: (_) async {
-            setState(() {
-              showPlayPauseOverlay = true;
-            });
-            debounceOverlay();
-          },
-          child: Stack(
-            alignment: Alignment.bottomCenter,
-            children: <Widget>[
-              Obx(() {
-                if (!isReloading.value && chewieController != null)
-                  return SafeArea(
-                    child: Center(
-                      child: Theme(
-                        data: Theme.of(context).copyWith(
-                            platform: SettingsManager().settings.skin.value == Skins.iOS ? TargetPlatform.iOS : TargetPlatform.android,
-                            dialogBackgroundColor: Theme.of(context).accentColor,
-                            iconTheme: Theme.of(context).iconTheme.copyWith(color: Theme.of(context).textTheme.bodyText1?.color)),
-                        child: Chewie(
-                          controller: chewieController!,
+            onPointerUp: (_) async {
+              setState(() {
+                showPlayPauseOverlay = true;
+              });
+              debounceOverlay();
+            },
+            child: Stack(
+              alignment: Alignment.bottomCenter,
+              children: <Widget>[
+                Obx(() {
+                  if (!isReloading.value && chewieController != null)
+                    return SafeArea(
+                      child: Center(
+                        child: Theme(
+                          data: Theme.of(context).copyWith(
+                              platform: SettingsManager().settings.skin.value == Skins.iOS
+                                  ? TargetPlatform.iOS
+                                  : TargetPlatform.android,
+                              dialogBackgroundColor: Theme.of(context).accentColor,
+                              iconTheme: Theme.of(context)
+                                  .iconTheme
+                                  .copyWith(color: Theme.of(context).textTheme.bodyText1?.color)),
+                          child: Chewie(
+                                  controller: chewieController!,
+                                ),
                         ),
                       ),
-                    ),
-                  );
-                else return Center(
-                  child: CircularProgressIndicator(
-                    backgroundColor: Theme.of(context).accentColor,
-                    valueColor: AlwaysStoppedAnimation(Theme.of(context).primaryColor),
+                    );
+                  else
+                    return Center(
+                      child: CircularProgressIndicator(
+                        backgroundColor: Theme.of(context).accentColor,
+                        valueColor: AlwaysStoppedAnimation(Theme.of(context).primaryColor),
+                      ),
+                    );
+                }),
+                if (widget.showInteractions)
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    child: AbsorbPointer(absorbing: !showPlayPauseOverlay, child: overlay),
                   ),
-                );
-              }),
-              if (widget.showInteractions)
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  child: AbsorbPointer(
-                      absorbing: !showPlayPauseOverlay,
-                      child: overlay),
-                ),
-            ],
-          )
-        ),
+              ],
+            )),
       ),
     );
   }

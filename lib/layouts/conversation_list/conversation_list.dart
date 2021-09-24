@@ -1,5 +1,11 @@
 import 'dart:async';
-import 'dart:io';
+import 'package:bluebubbles/repository/database.dart';
+import 'package:bluebubbles/repository/models/fcm_data.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
+import 'package:bluebubbles/repository/models/settings.dart';
+import 'package:flutter/foundation.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:universal_io/io.dart';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -112,7 +118,7 @@ class ConversationListState extends State<ConversationList> {
     });
   }
 
-  void openNewChatCreator({List<File>? existing}) async {
+  void openNewChatCreator({List<PlatformFile>? existing}) async {
     bool shouldShowSnackbar = (await SettingsManager().getMacOSVersion())! >= 11;
     CustomNavigator.pushAndRemoveUntil(
       context,
@@ -169,6 +175,42 @@ class ConversationListState extends State<ConversationList> {
                   showUnknownSenders: true,
                 )
               );
+            } else if (value == 4) {
+              showDialog(
+                barrierDismissible: false,
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text(
+                      "Are you sure?",
+                      style: Theme.of(context).textTheme.bodyText1,
+                    ),
+                    backgroundColor: Theme.of(context).backgroundColor,
+                    actions: <Widget>[
+                      TextButton(
+                        child: Text("Yes"),
+                        onPressed: () async {
+                          await DBProvider.deleteDB();
+                          await SettingsManager().resetConnection();
+                          SettingsManager().settings.finishedSetup.value = false;
+                          SocketManager().finishedSetup.sink.add(false);
+                          Navigator.of(context).popUntil((route) => route.isFirst);
+                          SettingsManager().settings = new Settings();
+                          SettingsManager().settings.save();
+                          SettingsManager().fcmData = null;
+                          FCMData.deleteFcmData();
+                        },
+                      ),
+                      TextButton(
+                        child: Text("Cancel"),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
             }
           },
           itemBuilder: (context) {
@@ -202,6 +244,14 @@ class ConversationListState extends State<ConversationList> {
                   style: context.textTheme.bodyText1,
                 ),
               ),
+              if (kIsWeb)
+                PopupMenuItem(
+                  value: 4,
+                  child: Text(
+                    'Logout',
+                    style: context.textTheme.bodyText1,
+                  )
+                )
             ];
           },
           child: ThemeSwitcher(
@@ -248,6 +298,18 @@ class ConversationListState extends State<ConversationList> {
                 size: 20,
               ),
               onPressed: () async {
+                bool camera = await Permission.camera.isGranted;
+                if (!camera) {
+                  bool granted = (await Permission.camera.request()) == PermissionStatus.granted;
+                  if (!granted) {
+                    showSnackbar(
+                        "Error",
+                        "Camera was denied"
+                    );
+                    return;
+                  }
+                }
+
                 String appDocPath = SettingsManager().appDocDir.path;
                 String ext = ".png";
                 File file = new File("$appDocPath/attachments/" + randomString(16) + ext);
@@ -263,7 +325,12 @@ class ConversationListState extends State<ConversationList> {
                   return;
                 }
 
-                openNewChatCreator(existing: [file]);
+                openNewChatCreator(existing: [PlatformFile(
+                  name: file.path.split("/").last,
+                  path: file.path,
+                  bytes: file.readAsBytesSync(),
+                  size: file.lengthSync(),
+                )]);
               },
               heroTag: null,
             ),

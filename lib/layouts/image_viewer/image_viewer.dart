@@ -1,4 +1,6 @@
-import 'dart:io';
+import 'package:bluebubbles/repository/models/platform_file.dart';
+import 'package:flutter/foundation.dart';
+import 'package:universal_io/io.dart';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/navigator.dart';
@@ -24,7 +26,7 @@ class ImageViewer extends StatefulWidget {
     required this.attachment,
     required this.showInteractions,
   }) : super(key: key);
-  final File file;
+  final PlatformFile file;
   final Attachment attachment;
   final bool showInteractions;
 
@@ -52,11 +54,13 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
   }
 
   Future<void> initBytes() async {
-    if (widget.attachment.mimeType == "image/heic") {
+    if (kIsWeb || widget.file.path == null) {
+      bytes = widget.file.bytes;
+    } else if (widget.attachment.mimeType == "image/heic") {
       bytes =
-          await AttachmentHelper.compressAttachment(widget.attachment, widget.file.absolute.path, qualityOverride: 100);
+          await AttachmentHelper.compressAttachment(widget.attachment, widget.file.path!, qualityOverride: 100);
     } else {
-      bytes = await widget.file.readAsBytes();
+      bytes = await File(widget.file.path!).readAsBytes();
     }
     if (this.mounted) setState(() {});
   }
@@ -200,22 +204,24 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                     ),
                   ),
                 ),
-                Padding(
-                  padding: EdgeInsets.only(top: 40.0),
-                  child: CupertinoButton(
-                    padding: EdgeInsets.symmetric(horizontal: 5),
-                    onPressed: () async {
-                      Share.file(
-                        "Shared ${widget.attachment.mimeType!.split("/")[0]} from BlueBubbles: ${widget.attachment.transferName}",
-                        widget.file.path,
-                      );
-                    },
-                    child: Icon(
-                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.share : Icons.share,
-                      color: Colors.white,
+                if (!kIsWeb && !kIsDesktop)
+                  Padding(
+                    padding: EdgeInsets.only(top: 40.0),
+                    child: CupertinoButton(
+                      padding: EdgeInsets.symmetric(horizontal: 5),
+                      onPressed: () async {
+                        if (widget.file.path == null) return;
+                        Share.file(
+                          "Shared ${widget.attachment.mimeType!.split("/")[0]} from BlueBubbles: ${widget.attachment.transferName}",
+                          widget.file.path!,
+                        );
+                      },
+                      child: Icon(
+                        SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.share : Icons.share,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
           ])),

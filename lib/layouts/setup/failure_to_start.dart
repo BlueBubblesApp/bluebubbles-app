@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class FailureToStart extends StatelessWidget {
-  const FailureToStart({Key? key, this.e}) : super(key: key);
+  const FailureToStart({Key? key, this.e, this.otherTitle}) : super(key: key);
   final dynamic e;
+  final String? otherTitle;
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +26,7 @@ class FailureToStart extends StatelessWidget {
               children: [
                 Center(
                   child: Text(
-                    "Whoops, looks like we messed up. Unfortunately you will need to reinstall the app, sorry for the inconvenience :(",
+                    otherTitle ?? "Whoops, looks like we messed up. Unfortunately you will need to reinstall the app, sorry for the inconvenience :(",
                     style: TextStyle(color: Colors.white, fontSize: 30),
                     textAlign: TextAlign.center,
                   ),
