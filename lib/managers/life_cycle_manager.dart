@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
@@ -38,18 +39,20 @@ class LifeCycleManager {
 
   /// Public method called from [Home] when the app is opened or resumed
   opened() {
-    // If the app is not alive (was previously closed) and the curent chat is not null (a chat is already open)
+    // If the app is not alive (was previously closed) and the current chat is not null (a chat is already open)
     // Then mark the current chat as read.
-    if (!_isAlive && CurrentChat.activeChat != null) {
+    if (!_isAlive && CurrentChat.activeChat != null && !kIsDesktop) {
       NotificationManager().switchChat(CurrentChat.activeChat!.chat);
     }
 
     // Set the app as open and start the socket
     updateStatus(true);
-    SocketManager().startSocketIO();
+    if (!kIsDesktop) {
+      SocketManager().startSocketIO();
+    }
 
     // Refresh all the chats assuming that the app has already finished setup
-    if (SettingsManager().settings.finishedSetup.value) {
+    if (SettingsManager().settings.finishedSetup.value && !kIsDesktop) {
       ChatBloc().resumeRefresh();
     }
   }
@@ -62,11 +65,13 @@ class LifeCycleManager {
       // NOTE: [closeSocket] does not necessarily close the socket, it simply requests the SocketManager to attempt to do so
       // If there are socket processes using the socket, then it will not close, and will wait until those tasks are done
       updateStatus(false);
-      SocketManager().closeSocket();
+      if (!kIsDesktop) {
+        SocketManager().closeSocket();
 
-      // Closes the backgroun thread when the app is fully closed
-      // This does not necessarily mean that the isolate will be closed (such as if the app is not fully closed), but it will attempt to do so
-      MethodChannelInterface().closeThread();
+        // Closes the background thread when the app is fully closed
+        // This does not necessarily mean that the isolate will be closed (such as if the app is not fully closed), but it will attempt to do so
+        MethodChannelInterface().closeThread();
+      }
     }
   }
 

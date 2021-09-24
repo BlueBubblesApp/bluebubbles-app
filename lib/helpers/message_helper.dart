@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
-import 'package:universal_html/html.dart' as html;
 
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/logger.dart';
@@ -12,8 +10,11 @@ import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
+import 'package:universal_html/html.dart' as html;
+
 import 'emoji_regex.dart';
 
 class EmojiConst {
@@ -215,6 +216,8 @@ class MessageHelper {
     if (existingMessage != null) return;
     if (chat.shouldMuteNotification(message)) return; // Don''t notify if the chat is muted
     if (message.isFromMe! || message.handle == null) return; // Don't notify if the text is from me
+    // Don't notify if window focused in desktop and chat list notifs off
+    if (!SettingsManager().settings.notifyOnChatList.value && kIsDesktop && LifeCycleManager().isAlive) return;
 
     CurrentChat? currChat = CurrentChat.activeChat;
     if (((LifeCycleManager().isAlive && !kIsWeb) || (kIsWeb && !(html.window.document.hidden ?? false))) &&
