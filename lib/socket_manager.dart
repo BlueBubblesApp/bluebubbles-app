@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -17,6 +18,7 @@ import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:firebase_dart/firebase_dart.dart';
 import 'package:flutter/foundation.dart';
@@ -24,8 +26,6 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:socket_io_client/socket_io_client.dart';
-import 'dart:io';
-import 'package:bluebubbles/repository/models/models.dart';
 
 export 'package:bluebubbles/api_manager.dart';
 
@@ -154,7 +154,7 @@ class SocketManager {
               value(true);
             });
             socketProcesses = new Map();
-            if (!LifeCycleManager().isAlive) {
+            if (!LifeCycleManager().isAlive && !kIsDesktop) {
               closeSocket(force: true);
             }
           });
