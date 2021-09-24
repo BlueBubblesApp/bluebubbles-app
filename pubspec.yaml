@@ -97,7 +97,7 @@ dependencies:
   file_picker: ^4.0.2
   firebase_dart: ^1.0.0-dev.45
   dio_http: ^5.0.4
-  flutter_dropzone: ^2.0.1
+  flutter_dropzone: ^2.0.5
   transparent_pointer: ^1.0.0
   quick_notify: ^0.1.0+2
   qr_flutter: ^4.0.0
