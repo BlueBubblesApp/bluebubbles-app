@@ -11,6 +11,7 @@ import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
@@ -24,6 +25,7 @@ class SettingsScaffold extends StatelessWidget {
   final Color tileColor;
   final List<Widget> bodySlivers;
   final List<Widget> actions;
+  final RxDouble remainingHeight = RxDouble(0);
 
   SettingsScaffold({
     required this.title,
@@ -38,6 +40,16 @@ class SettingsScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    SchedulerBinding.instance!.addPostFrameCallback((_) {
+      if (SettingsManager().settings.skin.value != Skins.Samsung) return;
+      // this is so settings pages that would normally not scroll can still scroll
+      // to make the header large or small
+      if (controller.position.viewportDimension < context.height) {
+        remainingHeight.value = context.height - controller.position.viewportDimension + (context.height / 3 - 50);
+      } else if (controller.position.maxScrollExtent < context.height / 3 - 50) {
+        remainingHeight.value = context.height / 3 - 50 - controller.position.maxScrollExtent;
+      }
+    });
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: headerColor, // navigation bar color
@@ -81,6 +93,7 @@ class SettingsScaffold extends StatelessWidget {
           },
           child: CustomScrollView(
             controller: controller,
+            shrinkWrap: true,
             physics: ThemeSwitcher.getScrollPhysics(),
             slivers: <Widget>[
               if (SettingsManager().settings.skin.value == Skins.Samsung)
@@ -92,12 +105,11 @@ class SettingsScaffold extends StatelessWidget {
                   elevation: 0,
                   automaticallyImplyLeading: false,
                   flexibleSpace: LayoutBuilder(
-                    builder: (context, constraints) {
-                      var expandRatio = (constraints.maxHeight - 100)
+                    builder: (context, _) {
+                      var expandRatio = 1 - (controller.offset)
                           / (context.height / 3 - 50);
-
                       if (expandRatio > 1.0) expandRatio = 1.0;
-                      if (expandRatio < 0.0) expandRatio = 0.0;
+                      if (expandRatio < 0.1) expandRatio = 0.0;
                       final animation = AlwaysStoppedAnimation<double>(expandRatio);
 
                       return Stack(
@@ -196,6 +208,9 @@ class SettingsScaffold extends StatelessWidget {
               SliverList(
                 delegate: SliverChildListDelegate(
                   [
+                    Obx(() => SettingsManager().settings.skin.value == Skins.Samsung ? Container(
+                      height: remainingHeight.value
+                    ) : SizedBox.shrink()),
                     Container(
                         color: SettingsManager().settings.skin.value == Skins.Samsung ? null : tileColor,
                         padding: EdgeInsets.only(top: SettingsManager().settings.skin.value == Skins.Samsung ? 30 : 5.0)
@@ -436,6 +451,7 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
         color: backgroundColor,
         padding: EdgeInsets.symmetric(horizontal: 13),
         height: 50,
+        width: context.width,
         child: CupertinoSlidingSegmentedControl<T>(
           children: map,
           groupValue: initial,
@@ -545,9 +561,9 @@ class SettingsSlider extends StatelessWidget {
     }
 
     return Container(
-      color: backgroundColor,
+      color: SettingsManager().settings.skin.value == Skins.Samsung ? null : backgroundColor,
       child: ListTile(
-        tileColor: backgroundColor,
+        tileColor: SettingsManager().settings.skin.value == Skins.Samsung ? null : backgroundColor,
         leading: leading,
         trailing: Text(value),
         title: SettingsManager().settings.skin.value == Skins.iOS
@@ -625,7 +641,7 @@ class SettingsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(25),
+      borderRadius: SettingsManager().settings.skin.value == Skins.Samsung ? BorderRadius.circular(25) : BorderRadius.circular(0),
       child: Container(
         color: backgroundColor,
         child: Column(

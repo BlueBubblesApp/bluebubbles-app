@@ -455,7 +455,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         width: fileDragged ? size * 3 : size,
         margin: EdgeInsets.only(left: 5.0, right: 5.0),
         decoration: BoxDecoration(
-          color: Theme.of(context).primaryColor,
+          color: SettingsManager().settings.skin.value == Skins.Samsung ? null : Theme.of(context).primaryColor,
           borderRadius: BorderRadius.circular(fileDragged ? 5 : 40),
         ),
         child: Stack(
@@ -486,9 +486,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     child: fileDragged
                         ? Center(child: Text("Drop file here"))
                         : Icon(
-                            SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.share : Icons.share,
-                            color: Colors.white.withAlpha(225),
-                            size: 20,
+                            SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.share : SettingsManager().settings.skin.value == Skins.Samsung ? Icons.add : Icons.share,
+                            color: SettingsManager().settings.skin.value == Skins.Samsung ? context.theme.textTheme.bodyText1!.color : Colors.white,
+                            size: SettingsManager().settings.skin.value == Skins.Samsung ? 26 : 20,
                           ),
                   ),
                 ),
@@ -873,12 +873,12 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       sendMessage();
                     },
                     style: Theme.of(context).textTheme.bodyText1!.apply(
-                          color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) ==
-                                  Brightness.light
-                              ? Colors.black
-                              : Colors.white,
-                          fontSizeDelta: -0.25,
-                        ),
+                      color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) ==
+                          Brightness.light
+                          ? Colors.black
+                          : Colors.white,
+                      fontSizeDelta: -0.25,
+                    ),
                     onContentCommitted: onContentCommit,
                     decoration: InputDecoration(
                       isDense: true,
@@ -916,7 +916,12 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         right: 10,
                         bottom: 10,
                       ),
+                      filled: true,
+                      fillColor: context.theme.dividerColor,
                     ),
+                    keyboardType: TextInputType.multiline,
+                    maxLines: 14,
+                    minLines: 1,
                   ),
                 ),
               ),
@@ -1106,7 +1111,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     margin: EdgeInsets.only(left: 5.0),
                     child: ClipOval(
                       child: Material(
-                        color: Theme.of(context).primaryColor,
+                        color: SettingsManager().settings.skin.value == Skins.Samsung ? Colors.transparent : Theme.of(context).primaryColor,
                         child: InkWell(
                           onTap: sendAction,
                           child: Stack(
@@ -1116,9 +1121,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                     opacity: sendCountdown == null && canRecord.value && !kIsDesktop ? 1.0 : 0.0,
                                     duration: Duration(milliseconds: 150),
                                     child: Icon(
-                                      Icons.mic,
-                                      color: (isRecording.value) ? Colors.red : Colors.white,
-                                      size: 20,
+                                      SettingsManager().settings.skin.value == Skins.Samsung ? CupertinoIcons.waveform : Icons.mic,
+                                      color: (isRecording.value) ? Colors.red : SettingsManager().settings.skin.value == Skins.Samsung ? context.theme.textTheme.bodyText1!.color : Colors.white,
+                                      size: SettingsManager().settings.skin.value == Skins.Samsung ? 26 : 20,
                                     ),
                                   )),
                               Obx(() => AnimatedOpacity(
@@ -1129,8 +1134,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                     duration: Duration(milliseconds: 150),
                                     child: Icon(
                                       Icons.send,
-                                      color: Colors.white,
-                                      size: 20,
+                                      color: SettingsManager().settings.skin.value == Skins.Samsung ? context.theme.textTheme.bodyText1!.color : Colors.white,
+                                      size: SettingsManager().settings.skin.value == Skins.Samsung ? 26 : 20,
                                     ),
                                   )),
                               AnimatedOpacity(

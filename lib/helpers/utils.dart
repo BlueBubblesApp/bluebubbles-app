@@ -230,6 +230,10 @@ String buildDate(DateTime? dateTime) {
   return date;
 }
 
+String buildSeparatorDateSamsung(DateTime dateTime) {
+  return intl.DateFormat.yMMMMEEEEd().format(dateTime);
+}
+
 String buildTime(DateTime? dateTime) {
   if (dateTime == null || dateTime.millisecondsSinceEpoch == 0) return "";
   String time = SettingsManager().settings.use24HrFormat.value
@@ -239,6 +243,13 @@ String buildTime(DateTime? dateTime) {
 }
 
 extension DateHelpers on DateTime {
+  bool isTomorrow({DateTime? otherDate}) {
+    final now = otherDate?.add(Duration(days: 1)) ?? DateTime.now().add(Duration(days: 1));
+    return now.day == this.day &&
+        now.month == this.month &&
+        now.year == this.year;
+  }
+
   bool isToday() {
     final now = DateTime.now();
     return now.day == this.day && now.month == this.month && now.year == this.year;

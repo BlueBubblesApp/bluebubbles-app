@@ -197,7 +197,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
     }
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: context.theme.backgroundColor, // navigation bar color
+        systemNavigationBarColor: Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() || isEqual(Theme.of(context), whiteLightTheme) ? context.theme.accentColor : context.theme.backgroundColor, // navigation bar color
         systemNavigationBarIconBrightness:
         context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
@@ -383,7 +383,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
           return true;
         },
         child: Scaffold(
-          backgroundColor: context.theme.backgroundColor,
+          backgroundColor: Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() || isEqual(Theme.of(context), whiteLightTheme) ? context.theme.accentColor : context.theme.backgroundColor,
           body: SafeArea(
             child: ClipRRect(
               borderRadius: BorderRadius.circular(25),
@@ -404,7 +404,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
                   controller: scrollController,
                   slivers: [
                     SliverAppBar(
-                      backgroundColor: context.theme.backgroundColor,
+                      backgroundColor: Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() || isEqual(Theme.of(context), whiteLightTheme) ? context.theme.accentColor : context.theme.backgroundColor,
                       pinned: true,
                       stretch: true,
                       expandedHeight: context.height / 3,
