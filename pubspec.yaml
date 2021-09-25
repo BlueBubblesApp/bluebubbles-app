@@ -105,6 +105,7 @@ dependencies:
   window_manager: ^0.0.4
   objectbox: ^1.2.0
   objectbox_flutter_libs: any
+  js: ^0.6.3
 
 dependency_overrides:
   rxdart: ^0.27.2
