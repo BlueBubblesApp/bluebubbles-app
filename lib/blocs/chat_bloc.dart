@@ -15,6 +15,8 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
+import 'package:contacts_service/contacts_service.dart';
+import 'package:dio_http/dio_http.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
@@ -277,7 +279,7 @@ class ChatBloc {
   }
 
   Future<void> getChatBatches({int batchSize = 15}) async {
-    int count = Chat.count() ?? 0;
+    int count = (await Chat.count()) ?? (await api.chatCount()).data['data']['total'];
     if (count == 0 && !kIsWeb) {
       hasChats.value = false;
     } else {
@@ -291,7 +293,7 @@ class ChatBloc {
     for (int i = 0; i < batches; i++) {
       List<Chat> chats = [];
       if (kIsWeb) {
-        chats = await SocketManager().getChats({"withLastMessage": kIsWeb});
+        chats = await SocketManager().getChats({"withLastMessage": true, "limit": batchSize, "offset": i * batchSize});
       } else {
         chats = Chat.getChats(limit: batchSize, offset: i * batchSize);
       }

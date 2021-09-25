@@ -448,7 +448,7 @@ class Settings {
     SettingsManager().settings.colorfulAvatars.value = map['colorfulAvatars'] ?? false;
     SettingsManager().settings.colorfulBubbles.value = map['colorfulBubbles'] ?? false;
     SettingsManager().settings.hideDividers.value = map['hideDividers'] ?? false;
-    SettingsManager().settings.scrollVelocity.value = map['scrollVelocity'] ?? 1;
+    SettingsManager().settings.scrollVelocity.value = map['scrollVelocity'] is int? ? (map['scrollVelocity'] as int? ?? 1).toDouble() : map['scrollVelocity'] as double? ?? 1.0;
     SettingsManager().settings.sendWithReturn.value = map['sendWithReturn'] ?? (kIsWeb || kIsDesktop);
     SettingsManager().settings.doubleTapForDetails.value = map['doubleTapForDetails'] ?? false;
     SettingsManager().settings.denseChatTiles.value = map['denseChatTiles'] ?? false;

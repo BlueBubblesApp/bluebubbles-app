@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:file_picker/file_picker.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 import 'dart:typed_data';
@@ -114,7 +114,7 @@ class AttachmentSender {
 
   Future<void> send() async {
     _attachmentName = _attachment.name;
-    _imageBytes = _attachment.bytes!;
+    _imageBytes = _attachment.bytes ?? (await File(_attachment.path!).readAsBytes());;
 
     int numOfChunks = (_imageBytes.length / _chunkSize).ceil();
 
@@ -128,10 +128,10 @@ class AttachmentSender {
       transferName: _attachmentName,
       mimeType: mime(_attachmentName),
       width: mime(_attachmentName)!.startsWith("image")
-          ? (await AttachmentHelper.getImageSizing(kIsWeb ? _attachment.name : _attachment.path, bytes: _attachment.bytes)).width.toInt()
+          ? (await AttachmentHelper.getImageSizing(kIsWeb ? _attachment.name : _attachment.path ?? _attachment.name, bytes: _attachment.bytes)).width.toInt()
           : null,
       height: mime(_attachmentName)!.startsWith("image")
-          ? (await AttachmentHelper.getImageSizing(kIsWeb ? _attachment.name : _attachment.path, bytes: _attachment.bytes)).height.toInt()
+          ? (await AttachmentHelper.getImageSizing(kIsWeb ? _attachment.name : _attachment.path ?? _attachment.name, bytes: _attachment.bytes)).height.toInt()
           : null,
     );
 

@@ -1,4 +1,4 @@
-import 'package:file_picker/file_picker.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/cupertino.dart';
 
 /// [TextFieldBloc] holds in memory all of the data for all of the textfields.

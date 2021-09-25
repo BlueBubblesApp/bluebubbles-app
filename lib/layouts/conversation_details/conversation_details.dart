@@ -353,7 +353,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                       file.delete();
                                       chat.customAvatarPath = null;
                                       chat.save();
-                                      Navigator.of(context).pop();
+                                      Get.back();
                                     }),
                                 TextButton(
                                     child: Text("Set New",

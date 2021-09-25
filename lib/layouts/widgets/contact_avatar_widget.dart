@@ -173,7 +173,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
                 TextButton(
                   onPressed: () async {
                     didReset = true;
-                    Navigator.of(context).pop();
+                    Get.back();
                     widget.handle!.color = null;
                     widget.handle!.save();
                     ContactManager().colorStreamObject.sink.add({widget.handle!.address: null});

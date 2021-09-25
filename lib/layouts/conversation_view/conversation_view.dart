@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'dart:math';
 import 'dart:ui';
 

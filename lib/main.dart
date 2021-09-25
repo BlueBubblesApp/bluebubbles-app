@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:bluebubbles/layouts/setup/upgrading_db.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:collection/collection.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
@@ -51,7 +51,7 @@ import 'package:secure_application/secure_application.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-import 'package:window_size/window_size.dart';
+import 'package:window_manager/window_manager.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
 
 // final SentryClient _sentry = SentryClient(
@@ -203,7 +203,8 @@ Future<Null> main() async {
       await FlutterLibphonenumber().init();
     }
     if (kIsDesktop) {
-      setWindowTitle('BlueBubbles (Beta)');
+      await WindowManager.instance.setTitle('BlueBubbles (Beta)');
+      WindowManager.instance.addListener(DesktopWindowListener());
     }
   } catch (e) {
     exception = e;
@@ -226,6 +227,18 @@ Future<Null> main() async {
   } else {
     runApp(FailureToStart(e: exception));
     throw Exception(exception);
+  }
+}
+
+class DesktopWindowListener extends WindowListener {
+  @override
+  void onWindowFocus() {
+    LifeCycleManager().opened();
+  }
+
+  @override
+  void onWindowBlur() {
+    LifeCycleManager().close();
   }
 }
 

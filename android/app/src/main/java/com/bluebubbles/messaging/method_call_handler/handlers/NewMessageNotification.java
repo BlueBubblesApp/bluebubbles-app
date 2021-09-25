@@ -79,7 +79,6 @@ public class NewMessageNotification implements Handler {
         Boolean messageIsFromMe = (Boolean) call.argument("messageIsFromMe");
 
         // Notification stuff
-        Integer notificationVisibility = (Integer) call.argument("visibility");
         Integer notificationId = (Integer) call.argument("notificationId");
         Integer summaryId = (Integer) call.argument("summaryId");
         String soundPath = (String) call.argument("sound");
@@ -158,12 +157,6 @@ public class NewMessageNotification implements Handler {
         // Create a bundle with some extra information in it
         Bundle extras = new Bundle();
         extras.putCharSequence("chatGuid", chatGuid);
-
-        // Build the base notification
-        Integer visibility = Notification.VISIBILITY_PUBLIC;
-        if (notificationVisibility != null) {
-            visibility = notificationVisibility;
-        }
 
         // Create intent for opening the conversation in the app
         PendingIntent openIntent = PendingIntent.getActivity(
@@ -266,8 +259,6 @@ public class NewMessageNotification implements Handler {
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                 // Set the priority to high since it's a message they should see
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
-                // Set the visibility of the notification
-                .setVisibility(visibility)
                 // Sets the intent for when it's clicked
                 .setContentIntent(openIntent)
                 // Sets the intent for when it is swiped away
@@ -345,8 +336,6 @@ public class NewMessageNotification implements Handler {
                 .setAutoCancel(true)
                 // Set the priority to high since it's a notification they should see
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
-                // Set the visibility of the notification
-                .setVisibility(visibility)
                 // Sets the intent for when it's clicked
                 .setContentIntent(openSummaryIntent)
                 // Set the color. This is the blue primary color

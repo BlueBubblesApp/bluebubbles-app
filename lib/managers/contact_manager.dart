@@ -10,6 +10,7 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
 import 'package:fast_contacts/fast_contacts.dart' hide Contact;
+import 'package:dio_http/dio_http.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:faker/faker.dart';
@@ -123,8 +124,8 @@ class ContactManager {
         id: e.id,
       )).toList();
     } else {
-      contacts.clear();
       try {
+        contacts.clear();
         var vcfs = await SocketManager().sendMessage("get-vcf", {}, (_) {});
         if (vcfs['data'] != null) {
           if (vcfs['data'] is String) {
@@ -134,7 +135,27 @@ class ContactManager {
             contacts.add(Contact.fromMap(c));
           }
         }
-      } catch (_) {}
+      } catch (e, s) {
+        print(e);
+        print(s);
+      }
+      if (contacts.isEmpty) {
+        try {
+          if (contacts.isEmpty) {
+            var response = await api.contacts();
+            for (Map<String, dynamic> map in response.data['data']){
+              ContactManager().contacts.add(Contact(
+                displayName: map['firstName'] + " " + map['lastName'],
+                emails: (map['emails'] as List<dynamic>? ?? []).map((e) => Item(label: e['label']?.toString().replaceAll(new RegExp(r'(?:_|[^\w\s])+'), ''), value: e['address'])),
+                phones: (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => Item(label: e['label']?.toString().replaceAll(new RegExp(r'(?:_|[^\w\s])+'), ''), value: e['address'])),
+              ));
+            }
+          }
+        } catch (e, s) {
+          print(e);
+          print(s);
+        }
+      }
     }
     hasFetchedContacts = true;
 

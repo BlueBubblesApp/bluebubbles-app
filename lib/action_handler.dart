@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:file_picker/file_picker.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 
@@ -48,7 +48,7 @@ class ActionHandler {
       // Check for URLs
       RegExpMatch? linkMatch;
       String? linkMsg;
-      List<RegExpMatch> matches = parseLinks(text);
+      List<RegExpMatch> matches = parseLinks(text.replaceAll("\n", " "));
 
       // Get the first match (if it exists)
       if (matches.length > 0) {
