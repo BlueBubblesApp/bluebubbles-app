@@ -287,6 +287,10 @@ class ContactManager {
     return contact;
   }
 
+  Future<Uint8List?> getAvatar(String id) async {
+    return await FastContacts.getContactImage(id);
+  }
+
   Future<String?> getContactTitle(Handle? handle) async {
     if (handle == null) return "You";
     if (contacts.isEmpty) await getContacts();

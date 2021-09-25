@@ -481,12 +481,12 @@ class ActionHandler {
         Logger.info("Client received new message " + chats[i].guid!);
 
         // Gets the chat from the chat bloc
-        Chat? chat = await ChatBloc().getChat(chats[i].guid);
+        Chat? chat = Chat.findOne(guid: chats[i].guid);
         if (chat == null) {
           await ActionHandler.handleChat(chat: chats[i], checkIfExists: true, isHeadless: isHeadless);
           chat = chats[i];
         }
-
+        chat.getParticipants();
         Handle? handle = chat.participants.firstWhereOrNull((e) => e.address == message.handle?.address);
 
         if (handle != null) {
@@ -494,7 +494,6 @@ class ActionHandler {
           message.handle?.defaultPhone = handle.defaultPhone;
         }
 
-        chat.getParticipants();
         // Handle the notification based on the message and chat
         await MessageHelper.handleNotification(message, chat);
 

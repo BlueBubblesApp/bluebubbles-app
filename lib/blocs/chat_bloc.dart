@@ -309,6 +309,13 @@ class ChatBloc {
               cachedHandles.add(element);
             }
           });
+          if (chat.latestMessageGetter.hasAttachments) {
+            chat.latestMessageGetter.fetchAttachments();
+          }
+          if (chat.latestMessage?.handle == null && chat.latestMessage?.handleId != null) chat.latestMessage!.handle = Handle.findOne(originalROWID: chat.latestMessage!.handleId);
+          chat.latestMessageText = await MessageHelper.getNotificationText(chat.latestMessageGetter);
+          chat.fakeLatestMessageText = faker.lorem.words((chat.latestMessageText ?? "").split(" ").length).join(" ");
+          chat.latestMessageDate = chat.latestMessageGetter.dateCreated;
           await ContactManager().matchHandles();
         }
       }
@@ -328,26 +335,6 @@ class ChatBloc {
 
     if (chatRequest != null && !chatRequest!.isCompleted) {
       chatRequest!.complete();
-    }
-  }
-
-  Future<void> getMessageStuffWeb(Chat chat) async {
-    Map<String, dynamic> params = Map();
-    params["identifier"] = chat.guid;
-    params["withBlurhash"] = false;
-    params["limit"] = 1;
-    params["where"] = [
-      {"statement": "message.service = 'iMessage'", "args": null}
-    ];
-    List<dynamic> messages = await SocketManager().getChatMessages(params)!;
-    if (messages.isNotEmpty) {
-      Message message = Message.fromMap(messages.first);
-      if (message.hasAttachments) {
-        message.fetchAttachments();
-      }
-      chat.latestMessageText = await MessageHelper.getNotificationText(message);
-      chat.fakeLatestMessageText = faker.lorem.words((chat.latestMessageText ?? "").split(" ").length).join(" ");
-      chat.latestMessageDate = message.dateCreated;
     }
   }
 

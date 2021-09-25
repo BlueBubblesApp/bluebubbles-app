@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachment.dart';
@@ -47,6 +48,8 @@ class _MessageAttachmentsState extends State<MessageAttachments> with TickerProv
       if (widget.showTail || !widget.showHandle!) {
         if (!widget.message!.isFromMe!) {
           padding = EdgeInsets.only(left: 10.0, bottom: 2.0);
+        } else if (!isEmptyString(widget.message!.fullText)) {
+          padding = EdgeInsets.only(right: 10.0, bottom: 2.0);
         }
       } else {
         padding = EdgeInsets.only(left: 10.0);

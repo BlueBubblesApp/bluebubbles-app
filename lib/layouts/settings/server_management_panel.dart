@@ -239,18 +239,45 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                         )
                     );
                   }),
-                  Obx(() => (controller.serverVersionCode.value ?? 0) >= 42  && controller.stats.isNotEmpty
-                      ? SettingsDivider(thickness: 0.3) : SizedBox.shrink()),
-                  Obx(() => (controller.serverVersionCode.value ?? 0) >= 42  && controller.stats.isNotEmpty ? Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
-                        child: SelectableText.rich(
-                          TextSpan(
-                              children: controller.stats.entries.map((e) => TextSpan(text: "${e.key.capitalizeFirst!.replaceAll("Handles", "iMessage Numbers")}: ${e.value}${controller.stats.keys.last != e.key ? "\n\n" : ""}")).toList()
-                          ),
-                        ),
-                      )
+                  Obx(() => (controller.serverVersionCode.value ?? 0) >= 42  && controller.stats.isNotEmpty ? SettingsTile(
+                    title: "Show Stats",
+                    subtitle: "Show iMessage statistics",
+                    backgroundColor: tileColor,
+                    leading: SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.chart_bar_square,
+                      materialIcon: Icons.stacked_bar_chart,
+                    ),
+                    onTap: () {
+                      showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            content: Padding(
+                              padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
+                              child: SelectableText.rich(
+                                TextSpan(
+                                    children: controller.stats.entries.map((e) => TextSpan(text: "${e.key.capitalizeFirst!.replaceAll("Handles", "iMessage Numbers")}: ${e.value}${controller.stats.keys.last != e.key ? "\n\n" : ""}")).toList()
+                                ),
+                              ),
+                            ),
+                            title: Text("Stats"),
+                            actions: <Widget>[
+                              TextButton(
+                                child: Text("Dismiss"),
+                                onPressed: () {
+                                  Get.back();
+                                },
+                              ),
+                            ],
+                          )
+                      );
+                    },
+                  ) : SizedBox.shrink()),
+                  Obx(() => (controller.serverVersionCode.value ?? 0) >= 42  && controller.stats.isNotEmpty ?  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
+                    ),
                   ) : SizedBox.shrink()),
                   SettingsTile(
                     title: "Show QR Code",
@@ -286,6 +313,14 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                               ),
                             ),
                             title: Text("QR Code"),
+                            actions: <Widget>[
+                              TextButton(
+                                child: Text("Dismiss"),
+                                onPressed: () {
+                                  Get.back();
+                                },
+                              ),
+                            ],
                           )
                       );
                     },

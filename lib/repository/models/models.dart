@@ -61,11 +61,18 @@ class Contact {
   }
 
   factory Contact.fromMap(Map<String, dynamic> map) {
+    // backwards compatibility with old contacts plugin
+    if (map['phones'].isNotEmpty && map['phones'][0] is Map<String, dynamic>) {
+      map['phones'] = map['phones'].map((e) => e['value'] ?? "").toList();
+    }
+    if (map['emails'].isNotEmpty && map['emails'][0] is Map<String, dynamic>) {
+      map['emails'] = map['emails'].map((e) => e['value'] ?? "").toList();
+    }
     return Contact(
-      id: map['id'] as String,
+      id: (map['id'] ?? map['identifier']) as String,
       displayName: map['displayName'] as String,
-      phones: map['phones'] as List<String>,
-      emails: map['emails'] as List<String>,
+      phones: map['phones'].cast<String>(),
+      emails: map['emails'].cast<String>(),
     );
   }
 }
