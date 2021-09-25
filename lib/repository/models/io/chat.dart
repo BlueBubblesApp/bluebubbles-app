@@ -480,7 +480,7 @@ class Chat {
     final handles = handleBox.getMany(messages.map((e) => e.handleId ?? 0).toList()..removeWhere((element) => element == 0));
     for (Message element in messages) {
       if (handles.isNotEmpty && element.handleId != null && element.handleId != 0) {
-        element.handle = handles.firstWhere((e) => e?.id == element.handleId);
+        element.handle = handles.firstWhereOrNull((e) => e?.id == element.handleId);
       }
     }
     return messages;
