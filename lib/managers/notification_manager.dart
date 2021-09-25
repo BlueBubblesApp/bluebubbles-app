@@ -85,13 +85,13 @@ class NotificationManager {
   /// Creates notification channel for android
   /// This is done through native code and all of this data is hard coded for now
   Future<void> createNotificationChannel(String channelID, String channelName, String channelDescription) async {
-    List<String> sounds = ["twig.wav", "walrus.wav", "sugarfree.wav", "raspberry.wav"];
+    // List<String> sounds = ["twig.wav", "walrus.wav", "sugarfree.wav", "raspberry.wav"];
     await MethodChannelInterface().invokeMethod("create-notif-channel", {
       "channel_name": channelName,
       "channel_description": channelDescription,
       "CHANNEL_ID": channelID,
     });
-    if (channelID.contains("new_messages")) {
+    /*if (channelID.contains("new_messages")) {
       sounds.forEach((s) async {
         await MethodChannelInterface().invokeMethod("create-notif-channel", {
           "channel_name": channelName,
@@ -100,7 +100,7 @@ class NotificationManager {
           "sound": s,
         });
       });
-    }
+    }*/
   }
 
   Future<void> scheduleNotification(Chat chat, Message message, DateTime time) async {
