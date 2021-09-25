@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/layouts/setup/upgrading_db.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -391,7 +392,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     if (!kIsWeb && !kIsDesktop) {
       // This initialization sets the function address in the native code to be used later
       BackgroundIsolateInterface.initialize();
-
+      // Set a reference to the DB so it can be used in another isolate
+      prefs.setString("objectbox-reference", base64.encode(store.reference.buffer.asUint8List()));
       // Create the notification in case it hasn't been already. Doing this multiple times won't do anything, so we just do it on every app start
       NotificationManager().createNotificationChannel(
         NotificationManager.newMessageChannel,

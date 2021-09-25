@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/themes.dart';
@@ -41,7 +42,13 @@ callbackHandler() async {
     final sqlitePath = join(documentsDirectory.path, "chat.db");
 
     Future<void> initStore({bool saveThemes = false}) async {
-      store = await openStore(directory: (await getApplicationDocumentsDirectory()).path + '/objectbox');
+      if (prefs.getString("objectbox-reference") == null) {
+        debugPrint("Opening ObjectBox from Path");
+        store = await openStore(directory: (await getApplicationDocumentsDirectory()).path + '/objectbox');
+      } else {
+        debugPrint("Opening ObjectBox from Reference");
+        store = Store.fromReference(getObjectBoxModel(), base64.decode(prefs.getString("objectbox-reference")!).buffer.asByteData());
+      }
       attachmentBox = store.box<Attachment>();
       chatBox = store.box<Chat>();
       fcmDataBox = store.box<FCMData>();
