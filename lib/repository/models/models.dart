@@ -25,6 +25,8 @@ if (dart.library.html) 'package:bluebubbles/repository/models/html/theme_entry.d
 export 'package:bluebubbles/repository/models/io/theme_object.dart'
 if (dart.library.html) 'package:bluebubbles/repository/models/html/theme_object.dart';
 
+export 'package:bluebubbles/repository/models/platform_file.dart';
+
 import 'dart:typed_data';
 
 import 'package:fast_contacts/fast_contacts.dart';

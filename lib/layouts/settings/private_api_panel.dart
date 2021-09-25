@@ -7,7 +7,7 @@ import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';

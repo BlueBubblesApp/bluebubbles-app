@@ -637,10 +637,10 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                       primary: Theme.of(context).primaryColor,
                                     ),
                                     onPressed: () async {
-                                      List<ThemeObject> allThemes = (await ThemeObject.getThemes()).where((element) => !element.isPreset).toList();
+                                      List<ThemeObject> allThemes = (ThemeObject.getThemes()).where((element) => !element.isPreset).toList();
                                       for (ThemeObject e in allThemes) {
                                         List<dynamic> entryJson = [];
-                                        await e.fetchData();
+                                        e.fetchData();
                                         for (ThemeEntry e2 in e.entries) {
                                           entryJson.add(e2.toMap());
                                         }
@@ -734,8 +734,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                                                       }
                                                                       object.entries = entries;
                                                                       object.data = object.themeData;
-                                                                      await object.save();
-                                                                      await SettingsManager().saveSelectedTheme(context);
+                                                                      object.save();
+                                                                      SettingsManager().saveSelectedTheme(context);
                                                                       Get.back();
                                                                       showSnackbar("Success", "Theming restored successfully");
                                                                     },
