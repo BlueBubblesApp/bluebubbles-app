@@ -18,11 +18,11 @@ import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:dio_http/dio_http.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
-import 'package:file_picker/file_picker.dart' hide PlatformFile;
 import 'package:file_picker/file_picker.dart' as pf;
+import 'package:file_picker/file_picker.dart' hide PlatformFile;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -258,31 +258,31 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     }
   }
 
-  void onContentCommit(CommittedContent content) async {
-    // Add some debugging logs
-    Logger.info("[Content Commit] Keyboard received content");
-    Logger.info("  -> Content Type: ${content.mimeType}");
-    Logger.info("  -> URI: ${content.uri}");
-    Logger.info("  -> Content Length: ${content.hasData ? content.data!.length : "null"}");
-
-    // Parse the filename from the URI and read the data as a List<int>
-    String filename = uriToFilename(content.uri, content.mimeType);
-
-    // Save the data to a location and add it to the file picker
-    if (content.hasData) {
-      this.addAttachments([PlatformFile(
-        name: filename,
-        size: content.data!.length,
-        bytes: content.data,
-      )]);
-
-      // Update the state
-      updateTextFieldAttachments();
-      if (this.mounted) setState(() {});
-    } else {
-      showSnackbar('Insertion Failed', 'Attachment has no data!');
-    }
-  }
+  // void onContentCommit(CommittedContent content) async {
+  //   // Add some debugging logs
+  //   Logger.info("[Content Commit] Keyboard received content");
+  //   Logger.info("  -> Content Type: ${content.mimeType}");
+  //   Logger.info("  -> URI: ${content.uri}");
+  //   Logger.info("  -> Content Length: ${content.hasData ? content.data!.length : "null"}");
+  //
+  //   // Parse the filename from the URI and read the data as a List<int>
+  //   String filename = uriToFilename(content.uri, content.mimeType);
+  //
+  //   // Save the data to a location and add it to the file picker
+  //   if (content.hasData) {
+  //     this.addAttachments([PlatformFile(
+  //       name: filename,
+  //       size: content.data!.length,
+  //       bytes: content.data,
+  //     )]);
+  //
+  //     // Update the state
+  //     updateTextFieldAttachments();
+  //     if (this.mounted) setState(() {});
+  //   } else {
+  //     showSnackbar('Insertion Failed', 'Attachment has no data!');
+  //   }
+  // }
 
   Future<void> reviewAudio(BuildContext originalContext, PlatformFile file) async {
     showDialog(
@@ -746,7 +746,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         focusNode!.requestFocus();
                         sendMessage();
                       },
-                      onContentCommitted: onContentCommit,
+                      // onContentCommitted: onContentCommit,
                       textCapitalization: TextCapitalization.sentences,
                       focusNode: focusNode,
                       autocorrect: true,
@@ -801,7 +801,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                 : Colors.white,
                             fontSizeDelta: -0.25,
                           ),
-                      onContentCommitted: onContentCommit,
+                      // onContentCommitted: onContentCommit,
                       decoration: InputDecoration(
                         isDense: true,
                         enabledBorder: OutlineInputBorder(
@@ -867,7 +867,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                 : Colors.white,
                             fontSizeDelta: -0.25,
                           ),
-                      onContentCommitted: onContentCommit,
+                      // onContentCommitted: onContentCommit,
                       decoration: InputDecoration(
                         isDense: true,
                         enabledBorder: OutlineInputBorder(
