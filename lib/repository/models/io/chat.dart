@@ -528,9 +528,9 @@ class Chat {
 
     // find the join item and delete it
     final query = chJoinBox.query(ChatHandleJoin_.handleId.equals(participant.id!).and(ChatHandleJoin_.chatId.equals(this.id!))).build();
-    final result = query.find().first;
+    final result = query.findFirst();
     query.close();
-    chJoinBox.remove(result.id!);
+    if (result != null) chJoinBox.remove(result.id!);
 
     // Second, remove from this object instance
     this.participants.removeWhere((element) => participant.id == element.id);

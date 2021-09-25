@@ -67,9 +67,6 @@ class SettingsManager {
   /// @param [context] is an optional parameter to be used for setting the adaptive theme based on the settings.
   /// Setting to null will prevent the theme from being set and will be set to null in the background isolate
   Future<void> getSavedSettings({bool headless = false, BuildContext? context}) async {
-    for (ThemeObject theme in Themes.themes) {
-      theme.save(updateIfNotAbsent: false);
-    }
     settings = Settings.getSettings();
 
     fcmData = FCMData.getFCM();

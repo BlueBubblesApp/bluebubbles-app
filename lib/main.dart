@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/layouts/setup/upgrading_db.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:collection/collection.dart';
@@ -133,7 +134,7 @@ Future<Null> main() async {
       final objectBoxDirectory = Directory(documentsDirectory.path + '/objectbox/');
       final sqlitePath = join(documentsDirectory.path, "chat.db");
 
-      Future<void> Function() initStore = () async {
+      Future<void> Function({bool saveThemes}) initStore = ({bool saveThemes = false}) async {
         store = await openStore(directory: (await getApplicationDocumentsDirectory()).path + '/objectbox');
         attachmentBox = store.box<Attachment>();
         chatBox = store.box<Chat>();
@@ -147,6 +148,13 @@ Future<Null> main() async {
         chJoinBox = store.box<ChatHandleJoin>();
         cmJoinBox = store.box<ChatMessageJoin>();
         tvJoinBox = store.box<ThemeValueJoin>();
+        if (saveThemes && themeObjectBox.isEmpty()) {
+          for (ThemeObject theme in Themes.themes) {
+            if (theme.name == "OLED Dark") theme.selectedDarkTheme = true;
+            if (theme.name == "Bright White") theme.selectedLightTheme = true;
+            theme.save(updateIfNotAbsent: false);
+          }
+        }
       };
 
       if (!objectBoxDirectory.existsSync() && File(sqlitePath).existsSync()) {
@@ -167,7 +175,7 @@ Future<Null> main() async {
           s.stop();
           print("Migrated in ${s.elapsedMilliseconds} ms");
         } else {
-          await initStore();
+          await initStore(saveThemes: true);
         }
       }
     }

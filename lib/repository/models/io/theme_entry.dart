@@ -62,9 +62,10 @@ class ThemeEntry {
     if (existing != null) {
       this.id = existing.id;
     }
-    themeEntryBox.put(this);
-    if (this.id != null && theme.id != null && existing == null)
+    this.id = themeEntryBox.put(this);
+    if (this.id != null && theme.id != null && existing == null) {
       tvJoinBox.put(ThemeValueJoin(themeValueId: this.id!, themeId: theme.id!));
+    }
 
     return this;
   }

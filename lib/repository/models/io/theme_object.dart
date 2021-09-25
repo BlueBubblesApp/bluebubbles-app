@@ -72,7 +72,9 @@ class ThemeObject {
       ];
 
   ThemeObject save({bool updateIfNotAbsent = true}) {
-    assert(this.data != null);
+    if (this.data == null) {
+      this.fetchData();
+    }
     if (entries.isEmpty) {
       entries = this.toEntries();
     }
@@ -101,7 +103,7 @@ class ThemeObject {
     this.fetchData();
     themeEntryBox.removeMany(this.entries.map((e) => e.id!).toList());
     final query = tvJoinBox.query(ThemeValueJoin_.themeId.equals(this.id!)).build();
-    tvJoinBox.remove(query.find().first.themeId);
+    if (query.findFirst() != null) tvJoinBox.remove(query.findFirst()!.themeId);
     query.close();
     themeObjectBox.remove(this.id!);
   }
@@ -131,20 +133,20 @@ class ThemeObject {
   static void setSelectedTheme({int? light, int? dark}) {
     if (light != null) {
       final query = themeObjectBox.query(ThemeObject_.selectedLightTheme.equals(true)).build();
-      final result = query.find().first;
+      final result = query.findFirst();
       query.close();
-      result.selectedLightTheme = false;
-      result.save();
+      result?.selectedLightTheme = false;
+      result?.save();
       final lightTheme = themeObjectBox.get(light);
       lightTheme!.selectedLightTheme = true;
       lightTheme.save();
     }
     if (dark != null) {
       final query = themeObjectBox.query(ThemeObject_.selectedDarkTheme.equals(true)).build();
-      final result = query.find().first;
+      final result = query.findFirst();
       query.close();
-      result.selectedDarkTheme = false;
-      result.save();
+      result?.selectedDarkTheme = false;
+      result?.save();
       final darkTheme = themeObjectBox.get(dark);
       darkTheme!.selectedDarkTheme = true;
       darkTheme.save();
@@ -156,6 +158,7 @@ class ThemeObject {
     final query = themeObjectBox.query(ThemeObject_.name.equals(name)).build();
     query..limit = 1;
     final result = query.findFirst();
+    result?.fetchData();
     query.close();
     return result;
   }
