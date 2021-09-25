@@ -478,9 +478,16 @@ class Chat {
     final messages = query.find();
     query.close();
     final handles = handleBox.getMany(messages.map((e) => e.handleId ?? 0).toList()..removeWhere((element) => element == 0));
-    for (Message element in messages) {
-      if (handles.isNotEmpty && element.handleId != null && element.handleId != 0) {
-        element.handle = handles.firstWhereOrNull((e) => e?.id == element.handleId);
+    for (int i = 0; i < messages.length; i++) {
+      Message message = messages[i];
+      if (handles.isNotEmpty && message.handleId != 0) {
+        Handle? handle = handles.firstWhereOrNull((e) => e?.id == message.handleId);
+        if (handle == null) {
+          messages.remove(message);
+          i--;
+        } else {
+          message.handle = handle;
+        }
       }
     }
     return messages;
