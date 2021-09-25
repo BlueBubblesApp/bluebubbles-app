@@ -43,7 +43,7 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
       if (!(ContactManager().handleToContact[participant]?.avatar?.isNotEmpty ?? false)) {}
     }
 
-    if (participants.length == 0) {
+    if (participants.isEmpty) {
       return Container(
         width: widget.size,
         height: widget.size,

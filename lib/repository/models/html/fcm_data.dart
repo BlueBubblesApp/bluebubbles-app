@@ -38,7 +38,7 @@ class FCMData {
   }
 
   factory FCMData.fromConfigEntries(List<ConfigEntry> entries) {
-    FCMData data = new FCMData();
+    FCMData data = FCMData();
     for (ConfigEntry entry in entries) {
       if (entry.name == "projectID") {
         data.projectID = entry.value;
@@ -83,7 +83,7 @@ class FCMData {
   }
 
   static FCMData getFCM() {
-    return new FCMData(
+    return FCMData(
       projectID: prefs.getString('projectID'),
       storageBucket: prefs.getString('storageBucket'),
       apiKey: prefs.getString('apiKey'),
@@ -94,18 +94,18 @@ class FCMData {
   }
 
   Map<String, dynamic> toMap() => {
-        "project_id": this.projectID,
-        "storage_bucket": this.storageBucket,
-        "api_key": this.apiKey,
-        "firebase_url": this.firebaseURL,
-        "client_id": this.clientID,
-        "application_id": this.applicationID,
+        "project_id": projectID,
+        "storage_bucket": storageBucket,
+        "api_key": apiKey,
+        "firebase_url": firebaseURL,
+        "client_id": clientID,
+        "application_id": applicationID,
       };
   bool get isNull =>
-      this.projectID == null ||
-      this.storageBucket == null ||
-      this.apiKey == null ||
-      this.firebaseURL == null ||
-      this.clientID == null ||
-      this.applicationID == null;
+      projectID == null ||
+      storageBucket == null ||
+      apiKey == null ||
+      firebaseURL == null ||
+      clientID == null ||
+      applicationID == null;
 }

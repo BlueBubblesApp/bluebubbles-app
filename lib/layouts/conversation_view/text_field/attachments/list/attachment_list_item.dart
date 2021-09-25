@@ -40,11 +40,11 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
     String? mimeType = mime(widget.file.name);
     if (mimeType != null && mimeType.startsWith("video/") && widget.file.path != null) {
       preview = await AttachmentHelper.getVideoThumbnail(widget.file.path!);
-      if (this.mounted) setState(() {});
+      if (mounted) setState(() {});
     } else if (mimeType == null || mimeType.startsWith("image/")) {
       // Compress the file, using a dummy attachment object
       preview = widget.file.bytes;
-      if (this.mounted) setState(() {});
+      if (mounted) setState(() {});
     }
   }
 
@@ -67,9 +67,9 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
           ),
           onTap: () async {
             if (mimeType == null) return;
-            if (!this.mounted) return;
+            if (!mounted) return;
 
-            Attachment fakeAttachment = new Attachment(transferName: widget.file.name, mimeType: mimeType, bytes: widget.file.bytes);
+            Attachment fakeAttachment = Attachment(transferName: widget.file.name, mimeType: mimeType, bytes: widget.file.bytes);
             await Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (context) => AttachmentFullscreenViewer(

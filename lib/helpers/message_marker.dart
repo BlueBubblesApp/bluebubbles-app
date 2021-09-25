@@ -17,7 +17,7 @@ class MessageMarkers {
 
       // If it's the event we want
       if (event.type == NewMessageType.UPDATE || event.type == NewMessageType.ADD) {
-        this.updateMessageMarkers(event.event["message"] as Message);
+        updateMessageMarkers(event.event["message"] as Message);
       }
     });
   }
@@ -25,26 +25,26 @@ class MessageMarkers {
   updateMessageMarkers(Message msg) {
     if (!msg.isFromMe!) return;
 
-    if (this.myLastMessage == null ||
-        (this.myLastMessage?.dateCreated != null &&
+    if (myLastMessage == null ||
+        (myLastMessage?.dateCreated != null &&
             msg.dateCreated != null &&
-            msg.dateCreated!.millisecondsSinceEpoch > this.myLastMessage!.dateCreated!.millisecondsSinceEpoch)) {
-      this.myLastMessage = msg;
+            msg.dateCreated!.millisecondsSinceEpoch > myLastMessage!.dateCreated!.millisecondsSinceEpoch)) {
+      myLastMessage = msg;
     }
 
-    if ((this.lastReadMessage == null && msg.dateRead != null) ||
-        (this.lastReadMessage?.dateRead != null &&
+    if ((lastReadMessage == null && msg.dateRead != null) ||
+        (lastReadMessage?.dateRead != null &&
             msg.dateRead != null &&
-            msg.dateRead!.millisecondsSinceEpoch > this.lastReadMessage!.dateRead!.millisecondsSinceEpoch)) {
-      this.lastReadMessage = msg;
+            msg.dateRead!.millisecondsSinceEpoch > lastReadMessage!.dateRead!.millisecondsSinceEpoch)) {
+      lastReadMessage = msg;
     }
 
-    if ((this.lastDeliveredMessage == null && msg.dateDelivered != null) ||
-        (this.lastDeliveredMessage?.dateDelivered != null &&
+    if ((lastDeliveredMessage == null && msg.dateDelivered != null) ||
+        (lastDeliveredMessage?.dateDelivered != null &&
             msg.dateDelivered != null &&
             msg.dateDelivered!.millisecondsSinceEpoch >
-                this.lastDeliveredMessage!.dateDelivered!.millisecondsSinceEpoch)) {
-      this.lastDeliveredMessage = msg;
+                lastDeliveredMessage!.dateDelivered!.millisecondsSinceEpoch)) {
+      lastDeliveredMessage = msg;
     }
     markers.value = this;
   }

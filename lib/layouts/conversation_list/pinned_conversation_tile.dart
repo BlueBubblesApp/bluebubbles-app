@@ -62,7 +62,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
     bool isDark = now.computeLuminance() < 0.179;
     brightness = isDark ? Brightness.dark : Brightness.light;
     gotBrightness = true;
-    if (this.mounted) setState(() {});
+    if (mounted) setState(() {});
   }
 
   @override
@@ -86,11 +86,11 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
         Logger.error(ex.toString());
       }
 
-      this.setNewChatData(forceUpdate: true);
+      setNewChatData(forceUpdate: true);
     });
   }
 
-  void setNewChatData({forceUpdate: false}) async {
+  void setNewChatData({forceUpdate = false}) async {
     // Save the current participant list and get the latest
     List<Handle> ogParticipants = widget.chat.participants;
     widget.chat.getParticipants();
@@ -101,7 +101,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
 
     // If the original data is different, update the state
     if (ogTitle != widget.chat.title || ogParticipants.length != widget.chat.participants.length || forceUpdate) {
-      if (this.mounted) setState(() {});
+      if (mounted) setState(() {});
     }
   }
 
@@ -125,7 +125,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
   }
 
   void onTapUpBypass() {
-    this.onTapUp(TapUpDetails(kind: PointerDeviceKind.touch));
+    onTapUp(TapUpDetails(kind: PointerDeviceKind.touch));
   }
 
   Widget buildSubtitle() {
@@ -134,14 +134,16 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
         SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeContactNames.value;
 
     TextStyle? style = context.textTheme.subtitle1!.apply(fontSizeFactor: 0.85);
-    String? title = widget.chat.title != null ? widget.chat.title : "";
+    String title = widget.chat.title ?? "Fake Person";
 
-    if (generateNames)
+    if (generateNames) {
       title = widget.chat.fakeParticipants.length == 1 ? widget.chat.fakeParticipants[0] : "Group Chat";
-    else if (hideInfo) style = style.copyWith(color: Colors.transparent);
+    } else if (hideInfo) {
+      style = style.copyWith(color: Colors.transparent);
+    }
 
     return Text(
-      title!,
+      title,
       style: style,
       overflow: TextOverflow.ellipsis,
       textAlign: TextAlign.center,
@@ -234,7 +236,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
                                 chat: widget.chat,
                                 size: maxWidth,
                                 editable: false,
-                                onTap: this.onTapUpBypass,
+                                onTap: onTapUpBypass,
                               ),
                               if (widget.chat.muteType != "mute" && (widget.chat.hasUnreadMessage ?? false))
                                 Positioned(

@@ -39,7 +39,7 @@ class _PinnedTileTextBubbleState extends State<PinnedTileTextBubble> with Automa
     bool isDark = now.computeLuminance() < 0.179;
     brightness = isDark ? Brightness.dark : Brightness.light;
     gotBrightness = true;
-    if (this.mounted) setState(() {});
+    if (mounted) setState(() {});
   }
 
   @override

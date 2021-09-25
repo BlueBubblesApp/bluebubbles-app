@@ -22,7 +22,6 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
-import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 
@@ -51,7 +50,7 @@ class ActionHandler {
       List<RegExpMatch> matches = parseLinks(text.replaceAll("\n", " "));
 
       // Get the first match (if it exists)
-      if (matches.length > 0) {
+      if (matches.isNotEmpty) {
         linkMatch = matches.first;
         linkMsg = text.substring(linkMatch.start, linkMatch.end).trim();
       }
@@ -76,13 +75,13 @@ class ActionHandler {
       Message mainMsg = Message(
         text: mainText.trim(),
         dateCreated: DateTime.now(),
-        hasAttachments: attachments.length > 0 ? true : false,
+        hasAttachments: attachments.isNotEmpty ? true : false,
       );
 
       // Generate a Temp GUID
       mainMsg.generateTempGuid();
 
-      if (mainMsg.text!.trim().length > 0) messages.add(mainMsg);
+      if (mainMsg.text!.trim().isNotEmpty) messages.add(mainMsg);
 
       // If there is a link, build the link message
       if (shouldSplit) {
@@ -111,14 +110,14 @@ class ActionHandler {
         Map<String, dynamic> params = {"chat": chat, "message": message};
 
         // Add the message send to the queue
-        await OutgoingQueue().add(new QueueItem(event: "send-message", item: params));
+        await OutgoingQueue().add(QueueItem(event: "send-message", item: params));
       });
     } else {
       // Create the main message
       Message message = Message(
         text: text.trim(),
         dateCreated: DateTime.now(),
-        hasAttachments: attachments.length > 0 ? true : false,
+        hasAttachments: attachments.isNotEmpty ? true : false,
       );
 
       // Generate a Temp GUID
@@ -136,18 +135,18 @@ class ActionHandler {
       Map<String, dynamic> params = {"chat": chat, "message": message};
 
       // Add the message send to the queue
-      await OutgoingQueue().add(new QueueItem(event: "send-message", item: params));
+      await OutgoingQueue().add(QueueItem(event: "send-message", item: params));
     }
   }
 
   static Future<void> sendMessageHelper(Chat chat, Message message) async {
-    Completer<void> completer = new Completer<void>();
-    Map<String, dynamic> params = new Map();
+    Completer<void> completer = Completer<void>();
+    Map<String, dynamic> params = {};
     params["guid"] = chat.guid;
     params["message"] = message.text;
     params["tempGuid"] = message.guid;
 
-    VoidCallback sendSocketMessage = () {
+    void sendSocketMessage() {
       SocketManager().sendMessage("send-message", params, (response) async {
         String? tempGuid = message.guid;
 
@@ -163,7 +162,7 @@ class ActionHandler {
 
         completer.complete();
       });
-    };
+    }
 
     bool isConnected = kIsWeb;
     if (!isConnected) {
@@ -226,12 +225,12 @@ class ActionHandler {
     Map<String, dynamic> params = {"chat": chat, "message": message, "reaction": reaction};
 
     // Add the message send to the queue
-    await OutgoingQueue().add(new QueueItem(event: "send-reaction", item: params));
+    await OutgoingQueue().add(QueueItem(event: "send-reaction", item: params));
   }
 
   static Future<void> sendReactionHelper(Chat chat, Message message, String reaction) async {
-    Completer<void> completer = new Completer<void>();
-    Map<String, dynamic> params = new Map();
+    Completer<void> completer = Completer<void>();
+    Map<String, dynamic> params = {};
 
     String? text = !isEmptyString(message.text) ? message.text : "A text";
 
@@ -276,9 +275,9 @@ class ActionHandler {
       File file = File(pathName);
 
       OutgoingQueue().add(
-        new QueueItem(
+        QueueItem(
           event: "send-attachment",
-          item: new AttachmentSender(
+          item: AttachmentSender(
             PlatformFile(
               path: file.path,
               name: file.path.split("/").last,
@@ -293,13 +292,13 @@ class ActionHandler {
     }
 
     // If we sent attachments, return because we finished sending
-    if (message.attachments!.length > 0) return;
+    if (message.attachments!.isNotEmpty) return;
 
     // Generate the temp GUID for the message to be used
     message.generateTempGuid();
 
     // Build request parameters
-    Map<String, dynamic> params = new Map();
+    Map<String, dynamic> params = {};
     params["guid"] = chat.guid;
     params["message"] = message.text!.trim();
 
@@ -347,7 +346,7 @@ class ActionHandler {
   /// handleUpdatedMessage(JsonMap)
   /// ```
   static Future<void> handleUpdatedMessage(Map<String, dynamic> data, {bool headless = false}) async {
-    Message updatedMessage = new Message.fromMap(data);
+    Message updatedMessage = Message.fromMap(data);
 
     if (updatedMessage.isFromMe!) {
       await Future.delayed(Duration(milliseconds: 200));
@@ -513,7 +512,7 @@ class ActionHandler {
       List<dynamic> attachments = data.containsKey("attachments") ? data['attachments'] : [];
       for (var attachmentItem in attachments) {
         Attachment file = Attachment.fromMap(attachmentItem);
-        await file.save(message);
+        file.save(message);
 
         if ((await AttachmentHelper.canAutoDownload()) &&
             file.mimeType != null &&
@@ -522,9 +521,9 @@ class ActionHandler {
         }
       }
 
-      chats.forEach((element) {
+      for (Chat element in chats) {
         if (!isHeadless) NewMessageManager().addMessage(element, message);
-      });
+      }
     } else if (NotificationManager().hasProcessed(data["guid"])) {
       Message? existing = Message.findOne(guid: data['guid']);
       if (existing != null) {

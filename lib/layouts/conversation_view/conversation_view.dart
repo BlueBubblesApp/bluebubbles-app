@@ -42,9 +42,9 @@ import 'package:simple_animations/simple_animations.dart';
 import 'package:slugify/slugify.dart';
 
 abstract class ChatSelectorTypes {
-  static const String ALL = "ALL";
-  static const String ONLY_EXISTING = "ONLY_EXISTING";
-  static const String ONLY_CONTACTS = "ONLY_CONTACTS";
+  static const String all = "ALL";
+  static const String onlyExisting = "ONLY_EXISTING";
+  static const String onlyContacts = "ONLY_CONTACTS";
 }
 
 class ConversationView extends StatefulWidget {
@@ -64,7 +64,7 @@ class ConversationView extends StatefulWidget {
     this.customMessageBloc,
     this.onMessagesViewComplete,
     this.selected = const [],
-    this.type = ChatSelectorTypes.ALL,
+    this.type = ChatSelectorTypes.all,
     this.showSnackbar = false,
   }) : super(key: key);
 
@@ -104,9 +104,9 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
     getAdjustBackground();
 
-    this.selected = widget.selected.isEmpty ? [] : widget.selected;
-    this.existingAttachments = widget.existingAttachments.isEmpty ? [] : widget.existingAttachments;
-    this.existingText = widget.existingText;
+    selected = widget.selected.isEmpty ? [] : widget.selected;
+    existingAttachments = widget.existingAttachments.isEmpty ? [] : widget.existingAttachments;
+    existingText = widget.existingText;
 
     // Initialize the current chat state
     if (widget.chat != null) {
@@ -126,21 +126,19 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     initConversationViewState();
 
     LifeCycleManager().stream.listen((event) {
-      if (!this.mounted) return;
+      if (!mounted) return;
       currentChat?.isAlive = true;
     });
 
     ever(ChatBloc().chats, (List<Chat> chats) async {
-      if (currentChat == null) {
-        currentChat = CurrentChat.getCurrentChat(widget.chat);
-      }
+      currentChat ??= CurrentChat.getCurrentChat(widget.chat);
 
       if (currentChat != null) {
         Chat? _chat = chats.firstWhereOrNull((e) => e.guid == widget.chat?.guid);
         if (_chat != null) {
           _chat.getParticipants();
           currentChat!.chat = _chat;
-          if (this.mounted) setState(() {});
+          if (mounted) setState(() {});
         }
       }
     });
@@ -196,9 +194,9 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         // Skip deleted messages
         if (event.message != null && event.message!.dateDeleted != null) return;
 
-        if (event.type == MessageBlocEventType.insert && this.mounted && event.outGoing) {
+        if (event.type == MessageBlocEventType.insert && mounted && event.outGoing) {
           final constraints = BoxConstraints(
-            maxWidth: CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE,
+            maxWidth: CustomNavigator.width(context) * MessageWidgetMixin.maxSize,
             minHeight: Theme.of(context).textTheme.bodyText2!.fontSize!,
             maxHeight: Theme.of(context).textTheme.bodyText2!.fontSize!,
           );
@@ -214,7 +212,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
             setState(() {
               tween = Tween<double>(
                   begin: CustomNavigator.width(context) - 30,
-                  end: min(size.width + 68, CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE + 40));
+                  end: min(size.width + 68, CustomNavigator.width(context) * MessageWidgetMixin.maxSize + 40));
               controller = CustomAnimationControl.play;
               message = event.message;
             });
@@ -222,8 +220,8 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
             setState(() {
               isCreator = false;
               wasCreator = true;
-              this.existingText = "";
-              this.existingAttachments = [];
+              existingText = "";
+              existingAttachments = [];
             });
           }
         }
@@ -270,11 +268,11 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
           } else {
             chat = Chat.findOne(chatIdentifier: slugify(selected[0].address!, delimiter: ''));
           }
-        } catch (ex) {}
+        } catch (_) {}
       }
 
       // If the chat is null, create it
-      if (chat == null) chat = await createChat();
+      chat ??= await createChat();
 
       // If the chat is still null, return false
       if (chat == null) return false;
@@ -303,12 +301,12 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       }
     }
 
-    if (attachments.length > 0 && chat != null) {
+    if (attachments.isNotEmpty && chat != null) {
       for (int i = 0; i < attachments.length; i++) {
         OutgoingQueue().add(
-          new QueueItem(
+          QueueItem(
             event: "send-attachment",
-            item: new AttachmentSender(
+            item: AttachmentSender(
               attachments[i],
               chat!,
               // This means to send the text when the last attachment is sent
@@ -410,7 +408,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     bool isDark = now.computeLuminance() < 0.179;
     brightness = isDark ? Brightness.dark : Brightness.light;
     gotBrightness = true;
-    if (this.mounted) setState(() {});
+    if (mounted) setState(() {});
   }
 
   @override
@@ -431,8 +429,8 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       onSend: send,
       wasCreator: wasCreator,
       isCreator: isCreator,
-      existingAttachments: this.existingAttachments,
-      existingText: this.existingText,
+      existingAttachments: existingAttachments,
+      existingText: existingText,
     );
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -454,7 +452,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
           duration: Duration(seconds: 3),
           builder: (context, child, anim) {
             return Container(
-              decoration: (searchQuery.length == 0 || !isCreator!)
+              decoration: (searchQuery.isEmpty || !isCreator!)
                   && chat != null
                   && adjustBackground.value ? BoxDecoration(
                   gradient: LinearGradient(
@@ -476,14 +474,14 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                   controller: chatSelectorController,
                   onRemove: (UniqueContact item) {
                     if (item.isChat) {
-                      selected.removeWhere((e) => (e.chat?.guid ?? null) == item.chat!.guid);
+                      selected.removeWhere((e) => (e.chat?.guid) == item.chat!.guid);
                     } else {
                       selected.removeWhere((e) => e.address == item.address);
                     }
                     fetchCurrentChat();
                     filterContacts();
                     resetCursor();
-                    if (this.mounted) setState(() {});
+                    if (mounted) setState(() {});
                   },
                   onSelected: onSelected,
                   isCreator: widget.isCreator,
@@ -509,8 +507,9 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                       ),
                     ),
                   );
-                } else
+                } else {
                   return SizedBox.shrink();
+                }
               }),
               Expanded(
                 child: Stack(children: [
@@ -535,12 +534,12 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                             ),
                           ),
                         )
-                            : (searchQuery.length == 0 || !isCreator!) && chat != null
+                            : (searchQuery.isEmpty || !isCreator!) && chat != null
                             ? Stack(
                           alignment: Alignment.bottomCenter,
                           children: [
                             MessagesView(
-                              key: new Key(chat?.guid ?? "unknown-chat"),
+                              key: Key(chat?.guid ?? "unknown-chat"),
                               messageBloc: messageBloc,
                               showHandle: chat!.participants.length > 1,
                               chat: chat,
@@ -592,8 +591,8 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                         message = null;
                         isCreator = false;
                         wasCreator = true;
-                        this.existingText = "";
-                        this.existingAttachments = [];
+                        existingText = "";
+                        existingAttachments = [];
                       });
                     },
                     child: Visibility(

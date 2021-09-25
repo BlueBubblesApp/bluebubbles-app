@@ -76,7 +76,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
     bool isDark = now.computeLuminance() < 0.179;
     brightness = isDark ? Brightness.dark : Brightness.light;
     gotBrightness = true;
-    if (this.mounted) setState(() {});
+    if (mounted) setState(() {});
   }
 
   bool get selected {
@@ -105,11 +105,11 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
         Logger.error(ex.toString());
       }
 
-      this.setNewChatData(forceUpdate: true);
+      setNewChatData(forceUpdate: true);
     });
   }
 
-  void setNewChatData({forceUpdate: false}) async {
+  void setNewChatData({forceUpdate = false}) async {
     // Save the current participant list and get the latest
     List<Handle> ogParticipants = widget.chat.participants;
     widget.chat.getParticipants();
@@ -120,7 +120,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
 
     // If the original data is different, update the state
     if (ogTitle != widget.chat.title || ogParticipants.length != widget.chat.participants.length || forceUpdate) {
-      if (this.mounted) setState(() {});
+      if (mounted) setState(() {});
     }
   }
 
@@ -148,7 +148,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
   }
 
   void onTapUpBypass() {
-    this.onTapUp(TapUpDetails(kind: PointerDeviceKind.touch));
+    onTapUp(TapUpDetails(kind: PointerDeviceKind.touch));
   }
 
   Widget buildSlider(Widget child) {
@@ -166,7 +166,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
                 onTap: () {
                   widget.chat.togglePin(!widget.chat.isPinned!);
                   EventDispatcher().emit("refresh", null);
-                  if (this.mounted) setState(() {});
+                  if (mounted) setState(() {});
                 },
               ),
           ],
@@ -178,7 +178,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
                 icon: widget.chat.muteType == "mute" ? CupertinoIcons.bell : CupertinoIcons.bell_slash,
                 onTap: () {
                   widget.chat.toggleMute(widget.chat.muteType != "mute");
-                  if (this.mounted) setState(() {});
+                  if (mounted) setState(() {});
                 },
               ),
             if (SettingsManager().settings.iosShowDelete.value)
@@ -226,13 +226,15 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
         SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeContactNames.value;
 
     TextStyle? style = Theme.of(context).textTheme.bodyText1;
-    String? title = widget.chat.title != null ? widget.chat.title : "";
+    String? title = widget.chat.title ?? "Fake Person";
 
-    if (generateNames)
+    if (generateNames) {
       title = widget.chat.fakeParticipants.length == 1 ? widget.chat.fakeParticipants[0] : "Group Chat";
-    else if (hideInfo) style = style?.copyWith(color: Colors.transparent);
+    } else if (hideInfo) {
+      style = style?.copyWith(color: Colors.transparent);
+    }
 
-    return TextOneLine(title ?? 'Fake Person', style: style, overflow: TextOverflow.ellipsis);
+    return TextOneLine(title, style: style, overflow: TextOverflow.ellipsis);
   }
 
   Widget buildSubtitle() {
@@ -256,9 +258,11 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
                       ),
                 );
 
-            if (generateContent)
+            if (generateContent) {
               latestText = widget.chat.fakeLatestMessageText ?? "";
-            else if (hideContent) style = style.copyWith(color: Colors.transparent);
+            } else if (hideContent) {
+              style = style.copyWith(color: Colors.transparent);
+            }
 
             return Text(
               latestText,
@@ -292,7 +296,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
                         chat: widget.chat,
                         size: 40,
                         editable: false,
-                        onTap: this.onTapUpBypass,
+                        onTap: onTapUpBypass,
                       )
                     : Container(
                         decoration: BoxDecoration(
@@ -427,24 +431,25 @@ class __CupertinoState extends State<_Cupertino> {
         color: !isPressed ? Theme.of(context).backgroundColor : Theme.of(context).backgroundColor.lightenOrDarken(30),
         child: GestureDetector(
           onTapDown: (details) {
-            if (!this.mounted) return;
+            if (!mounted) return;
 
             setState(() {
               isPressed = true;
             });
           },
           onTapUp: (details) {
-            this.widget.parent.onTapUp(details);
+            widget.parent.onTapUp(details);
 
             Future.delayed(Duration(milliseconds: 200), () {
-              if (this.mounted)
+              if (mounted) {
                 setState(() {
                   isPressed = false;
                 });
+              }
             });
           },
           onTapCancel: () {
-            if (!this.mounted) return;
+            if (!mounted) return;
 
             setState(() {
               isPressed = false;
@@ -465,7 +470,7 @@ class __CupertinoState extends State<_Cupertino> {
           onLongPress: () {
             HapticFeedback.mediumImpact();
             ChatBloc().toggleChatUnread(widget.parent.widget.chat, !widget.parent.widget.chat.hasUnreadMessage!);
-            if (this.mounted) setState(() {});
+            if (mounted) setState(() {});
           },
           child: Stack(
             alignment: Alignment.centerLeft,
@@ -721,7 +726,7 @@ class _Samsung extends StatelessWidget {
                     ? Border(
                         top: BorderSide(
                           //
-                          color: new Color(0xff2F2F2F),
+                          color: Color(0xff2F2F2F),
                           width: 0.5,
                         ),
                       )

@@ -43,9 +43,9 @@ class ThemeEntry {
 
   dynamic get style => isFont!
       ? TextStyle(
-          color: this.color,
+          color: color,
           fontWeight: FontWeight.normal,
-          fontSize: fontSize?.toDouble() ?? null,
+          fontSize: fontSize?.toDouble(),
         )
       : color;
 
@@ -58,11 +58,11 @@ class ThemeEntry {
   }
 
   Map<String, dynamic> toMap() => {
-        "ROWID": this.id,
-        "name": this.name,
-        "themeId": this.themeId,
-        "color": this.color!.value.toRadixString(16),
-        "isFont": this.isFont! ? 1 : 0,
-        "fontSize": this.fontSize,
+        "ROWID": id,
+        "name": name,
+        "themeId": themeId,
+        "color": color!.value.toRadixString(16),
+        "isFont": isFont! ? 1 : 0,
+        "fontSize": fontSize,
       };
 }

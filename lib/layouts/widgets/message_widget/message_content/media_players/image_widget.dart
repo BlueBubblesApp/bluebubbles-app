@@ -162,7 +162,7 @@ class ImageWidget extends StatelessWidget {
     // Handle the cases when the image is done loading
     if (isLoaded) {
       // If we have controller.data.value and the image has a valid size, return an empty container (no placeholder)
-      if (controller.data.value != null && controller.data.value!.length > 0) {
+      if (controller.data.value != null && controller.data.value!.isNotEmpty) {
         return empty;
       } else {
         // If we don't have controller.data.value, show an invalid image placeholder

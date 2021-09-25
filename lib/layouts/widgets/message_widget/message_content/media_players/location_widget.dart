@@ -48,7 +48,7 @@ class _LocationWidgetState extends State<LocationWidget> with AutomaticKeepAlive
     }
     location = AttachmentHelper.parseAppleLocation(_location);
 
-    if (location != null && this.mounted) {
+    if (location != null && mounted) {
       setState(() {});
     }
   }
@@ -85,18 +85,18 @@ class _LocationWidgetState extends State<LocationWidget> with AutomaticKeepAlive
                             zoom: 14.0,
                           ),
                           layers: [
-                            new TileLayerOptions(
+                            TileLayerOptions(
                               urlTemplate: "http://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",
                               subdomains: ['0', '1', '2', '3'],
                               tileSize: 256,
                             ),
-                            new MarkerLayerOptions(
+                            MarkerLayerOptions(
                               markers: [
-                                new Marker(
+                                Marker(
                                   width: 40.0,
                                   height: 40.0,
-                                  point: new LatLng(location!.longitude!, location!.latitude!),
-                                  builder: (ctx) => new Container(
+                                  point: LatLng(location!.longitude!, location!.latitude!),
+                                  builder: (ctx) => Container(
                                     child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.location : Icons.pin_drop, color: Colors.red, size: 45),
                                   ),
                                 ),

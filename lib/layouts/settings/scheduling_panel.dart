@@ -110,7 +110,7 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
                       child: Text("Upcoming Messages", style: Theme.of(context).textTheme.headline1)),
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 25.0, vertical: 25.0),
-                    child: (upcoming.length > 0)
+                    child: (upcoming.isNotEmpty)
                         ? Container(
                             decoration: BoxDecoration(
                               border: Border.all(
@@ -136,7 +136,7 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
                       child: Text("Past Messages", style: Theme.of(context).textTheme.headline1)),
                   Padding(
                       padding: EdgeInsets.symmetric(horizontal: 25.0, vertical: 25.0),
-                      child: (old.length > 0)
+                      child: (old.isNotEmpty)
                           ? Container(
                               decoration: BoxDecoration(
                                 border: Border.all(

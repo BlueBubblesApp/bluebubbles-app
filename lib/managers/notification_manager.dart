@@ -26,8 +26,8 @@ class NotificationManager {
     return _manager;
   }
 
-  static const String NEW_MESSAGE_CHANNEL = "com.bluebubbles.new_messages";
-  static const String SOCKET_ERROR_CHANNEL = "com.bluebubbles.socket_error";
+  static const String newMessageChannel = "com.bluebubbles.new_messages";
+  static const String socketErrorChannel = "com.bluebubbles.socket_error";
 
   static final NotificationManager _manager = NotificationManager._internal();
   NotificationManager._internal();
@@ -109,9 +109,7 @@ class NotificationManager {
     bool isGroup = chat.isGroup();
 
     // If we couldn't get a chat title, generate placeholder names
-    if (chatTitle == null) {
-      chatTitle = isGroup ? 'Group Chat' : 'iMessage Chat';
-    }
+    chatTitle ??= isGroup ? 'Group Chat' : 'iMessage Chat';
     await flutterLocalNotificationsPlugin!.zonedSchedule(
         Random().nextInt(9998) + 1,
         'Reminder: $chatTitle',
@@ -211,9 +209,7 @@ class NotificationManager {
     bool isGroup = chat.isGroup();
 
     // If we couldn't get a chat title, generate placeholder names
-    if (chatTitle == null) {
-      chatTitle = isGroup ? 'Group Chat' : 'iMessage Chat';
-    }
+    chatTitle ??= isGroup ? 'Group Chat' : 'iMessage Chat';
 
     await createNewMessageNotification(
         chat.guid!,
@@ -252,7 +248,7 @@ class NotificationManager {
       return;
     }
     await MethodChannelInterface().platform.invokeMethod("new-message-notification", {
-      "CHANNEL_ID": NEW_MESSAGE_CHANNEL +
+      "CHANNEL_ID": newMessageChannel +
           (SettingsManager().settings.notificationSound.value == "default"
               ? ""
               : ("_" + SettingsManager().settings.notificationSound.value)),
@@ -278,7 +274,7 @@ class NotificationManager {
   void createSocketWarningNotification() {
     if (!kIsWeb && !kIsDesktop) {
       MethodChannelInterface().platform.invokeMethod("create-socket-issue-warning", {
-        "CHANNEL_ID": SOCKET_ERROR_CHANNEL,
+        "CHANNEL_ID": socketErrorChannel,
       });
     }
   }
@@ -286,7 +282,7 @@ class NotificationManager {
   void createFailedToSendMessage() {
     if (!kIsWeb && !kIsDesktop) {
       MethodChannelInterface().platform.invokeMethod("message-failed-to-send", {
-        "CHANNEL_ID": SOCKET_ERROR_CHANNEL,
+        "CHANNEL_ID": socketErrorChannel,
       });
     }
   }

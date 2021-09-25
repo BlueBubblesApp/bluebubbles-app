@@ -1,3 +1,4 @@
+//ignore: implementation_imports
 import 'package:objectbox/src/transaction.dart';
 
 /// READ: Dummy file to allow objectbox related code to compile on Web. We use

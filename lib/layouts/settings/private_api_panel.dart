@@ -280,7 +280,7 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                       ) : SizedBox.shrink()),
                       Obx(() {
                         if (SettingsManager().settings.enableQuickTapback.value &&
-                            SettingsManager().settings.skin.value == Skins.iOS)
+                            SettingsManager().settings.skin.value == Skins.iOS) {
                           return Container(
                             decoration: BoxDecoration(
                               color: tileColor,
@@ -288,11 +288,12 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                             padding: EdgeInsets.only(left: 15),
                             child: Text("Select Quick Tapback"),
                           );
-                        else
+                        } else {
                           return SizedBox.shrink();
+                        }
                       }),
                       Obx(() {
-                        if (SettingsManager().settings.enableQuickTapback.value)
+                        if (SettingsManager().settings.enableQuickTapback.value) {
                           return SettingsOptions<String>(
                             title: "Quick Tapback",
                             options: ReactionTypes.toList(),
@@ -320,8 +321,9 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                             backgroundColor: tileColor,
                             secondaryColor: headerColor,
                           );
-                        else
+                        } else {
                           return SizedBox.shrink();
+                        }
                       }),
                     ],
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),

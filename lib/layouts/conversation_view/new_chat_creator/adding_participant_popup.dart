@@ -29,22 +29,23 @@ class _AddingParticipantPopupState extends State<AddingParticipantPopup> {
   void recursiveAddParticipants(int i) {
     index = i;
     title = "Adding participant ${widget.contacts[i].displayName}";
-    if (this.mounted) setState(() {});
+    if (mounted) setState(() {});
 
     Map<String, dynamic> params = {};
     params["identifier"] = widget.chat.guid;
     params["address"] = cleansePhoneNumber(widget.contacts[i].address!);
     SocketManager().sendMessage("add-participant", params, (data) {
       if (data['status'] != 200) {
-        if (this.mounted)
+        if (mounted) {
           setState(() {
             title = "Failed to add participant ${widget.contacts[i].displayName}";
           });
+        }
         Timer(Duration(seconds: 3), () {
           if (i < widget.contacts.length - 1) {
             recursiveAddParticipants(i + 1);
           } else {
-            if (this.mounted) {
+            if (mounted) {
               Navigator.pop(context);
             }
           }
@@ -55,7 +56,7 @@ class _AddingParticipantPopupState extends State<AddingParticipantPopup> {
         if (i < widget.contacts.length - 1) {
           recursiveAddParticipants(i + 1);
         } else {
-          if (this.mounted) {
+          if (mounted) {
             setState(() {
               title = "Finished";
               index = widget.contacts.length;

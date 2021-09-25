@@ -3,12 +3,12 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/repository/models/config_entry.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+//ignore: implementation_imports
 import 'package:objectbox/src/transaction.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
-
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:path/path.dart';
@@ -44,24 +44,24 @@ class DBProvider {
   /// Contains list of functions to invoke when going from a previous to the current database verison
   /// The previous version is always [key - 1], for example for key 2, it will be the upgrade scheme from version 1 to version 2
   static final List<DBUpgradeItem> upgradeSchemes = [
-    new DBUpgradeItem(
+    DBUpgradeItem(
         addedInVersion: 2,
         upgrade: (Database db) {
           db.execute("ALTER TABLE message ADD COLUMN hasDdResults INTEGER DEFAULT 0;");
         }),
-    new DBUpgradeItem(
+    DBUpgradeItem(
         addedInVersion: 3,
         upgrade: (Database db) {
           db.execute("ALTER TABLE message ADD COLUMN balloonBundleId TEXT DEFAULT NULL;");
           db.execute("ALTER TABLE chat ADD COLUMN isFiltered INTEGER DEFAULT 0;");
         }),
-    new DBUpgradeItem(
+    DBUpgradeItem(
         addedInVersion: 4,
         upgrade: (Database db) {
           db.execute("ALTER TABLE message ADD COLUMN dateDeleted INTEGER DEFAULT NULL;");
           db.execute("ALTER TABLE chat ADD COLUMN isPinned INTEGER DEFAULT 0;");
         }),
-    new DBUpgradeItem(
+    DBUpgradeItem(
         addedInVersion: 5,
         upgrade: (Database db) {
           db.execute("ALTER TABLE handle ADD COLUMN originalROWID INTEGER DEFAULT NULL;");
@@ -69,49 +69,49 @@ class DBProvider {
           db.execute("ALTER TABLE attachment ADD COLUMN originalROWID INTEGER DEFAULT NULL;");
           db.execute("ALTER TABLE message ADD COLUMN otherHandle INTEGER DEFAULT NULL;");
         }),
-    new DBUpgradeItem(
+    DBUpgradeItem(
         addedInVersion: 6,
         upgrade: (Database db) {
           db.execute("ALTER TABLE attachment ADD COLUMN metadata TEXT DEFAULT NULL;");
         }),
-    new DBUpgradeItem(
+    DBUpgradeItem(
         addedInVersion: 7,
         upgrade: (Database db) {
           db.execute("ALTER TABLE message ADD COLUMN metadata TEXT DEFAULT NULL;");
         }),
-    new DBUpgradeItem(
+    DBUpgradeItem(
         addedInVersion: 8,
         upgrade: (Database db) {
           db.execute("ALTER TABLE handle ADD COLUMN color TEXT DEFAULT NULL;");
         }),
-    new DBUpgradeItem(
+    DBUpgradeItem(
         addedInVersion: 9,
         upgrade: (Database db) {
           db.execute("ALTER TABLE handle ADD COLUMN defaultPhone TEXT DEFAULT NULL;");
         }),
-    new DBUpgradeItem(
+    DBUpgradeItem(
         addedInVersion: 10,
         upgrade: (Database db) {
           db.execute("ALTER TABLE chat ADD COLUMN customAvatarPath TEXT DEFAULT NULL;");
         }),
-    new DBUpgradeItem(
+    DBUpgradeItem(
         addedInVersion: 11,
         upgrade: (Database db) {
           db.execute("ALTER TABLE chat ADD COLUMN pinIndex INTEGER DEFAULT NULL;");
         }),
-    new DBUpgradeItem(
+    DBUpgradeItem(
         addedInVersion: 12,
         upgrade: (Database db) async {
           db.execute("ALTER TABLE chat ADD COLUMN muteType TEXT DEFAULT NULL;");
           db.execute("ALTER TABLE chat ADD COLUMN muteArgs TEXT DEFAULT NULL;");
           await db.update("chat", {'muteType': 'mute'}, where: "isMuted = ?", whereArgs: [1]);
         }),
-    new DBUpgradeItem(
+    DBUpgradeItem(
         addedInVersion: 13,
         upgrade: (Database db) {
           db.execute("ALTER TABLE themes ADD COLUMN gradientBg INTEGER DEFAULT 0;");
         }),
-    new DBUpgradeItem(
+    DBUpgradeItem(
         addedInVersion: 14,
         upgrade: (Database db) async {
           db.execute("ALTER TABLE themes ADD COLUMN previousLightTheme INTEGER DEFAULT 0;");
@@ -202,27 +202,27 @@ class DBProvider {
       tvJoinBox.removeAll();
       store.runInTransaction(TxMode.write, () {
         List<Chat> chats = tableData[0].map((e) => Chat.fromMap(e)).toList();
-        chats.forEach((element) {
+        for (Chat element in chats) {
           element.id = null;
-        });
+        }
         chatBox.putMany(chats);
         chats.clear();
         List<Handle> handles = tableData[1].map((e) => Handle.fromMap(e)).toList();
-        handles.forEach((element) {
+        for (Handle element in handles) {
           element.id = null;
-        });
+        }
         handleBox.putMany(handles);
         handles.clear();
         List<Message> messages = tableData[2].map((e) => Message.fromMap(e)).toList();
-        messages.forEach((element) {
+        for (Message element in messages) {
           element.id = null;
-        });
+        }
         messageBox.putMany(messages);
         messages.clear();
         List<Attachment> attachments = tableData[3].map((e) => Attachment.fromMap(e)).toList();
-        attachments.forEach((element) {
+        for (Attachment element in attachments) {
           element.id = null;
-        });
+        }
         attachmentBox.putMany(attachments);
         attachments.clear();
         List<ChatHandleJoin> chJoins = tableData[4].map((e) => ChatHandleJoin.fromMap(e)).toList();
@@ -235,15 +235,15 @@ class DBProvider {
         amJoinBox.putMany(amJoins);
         amJoins.clear();
         List<ThemeObject> themeObjects = tableData[7].map((e) => ThemeObject.fromMap(e)).toList();
-        themeObjects.forEach((element) {
+        for (ThemeObject element in themeObjects) {
           element.id = null;
-        });
+        }
         themeObjectBox.putMany(themeObjects);
         themeObjects.clear();
         List<ThemeEntry> themeEntries = tableData[8].map((e) => ThemeEntry.fromMap(e)).toList();
-        themeEntries.forEach((element) {
+        for (ThemeEntry element in themeEntries) {
           element.id = null;
-        });
+        }
         themeEntryBox.putMany(themeEntries);
         themeEntries.clear();
         List<ThemeValueJoin> tvJoins = tableData[9].map((e) => ThemeValueJoin.fromMap(e)).toList();

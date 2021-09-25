@@ -13,34 +13,35 @@ class HexColor extends Color {
 
   @override
   bool operator ==(Object other) {
-    if (other.runtimeType != runtimeType)
+    if (other.runtimeType != runtimeType) {
       return false;
+    }
     return other is HexColor && other.value == value;
   }
 
   @override
-  int get hashCode => super.hashCode;
+  int get hashCode => value.hashCode;
 }
 
 extension ColorHelpers on Color {
   Color darkenPercent([double percent = 10]) {
     assert(1 <= percent && percent <= 100);
     var f = 1 - percent / 100;
-    return Color.fromARGB(this.alpha, (this.red * f).round(), (this.green * f).round(), (this.blue * f).round());
+    return Color.fromARGB(alpha, (red * f).round(), (green * f).round(), (blue * f).round());
   }
 
   Color lightenPercent([double percent = 10]) {
     assert(1 <= percent && percent <= 100);
     var p = percent / 100;
-    return Color.fromARGB(this.alpha, this.red + ((255 - this.red) * p).round(),
-        this.green + ((255 - this.green) * p).round(), this.blue + ((255 - this.blue) * p).round());
+    return Color.fromARGB(alpha, red + ((255 - red) * p).round(),
+        green + ((255 - green) * p).round(), blue + ((255 - blue) * p).round());
   }
 
   Color lightenOrDarken([double percent = 10]) {
-    if (this.computeLuminance() >= 0.5) {
-      return this.darkenPercent(percent);
+    if (computeLuminance() >= 0.5) {
+      return darkenPercent(percent);
     } else {
-      return this.lightenPercent(percent);
+      return lightenPercent(percent);
     }
   }
 

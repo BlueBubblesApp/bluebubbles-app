@@ -10,7 +10,7 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/layouts/image_viewer/image_viewer.dart';
 import 'package:bluebubbles/layouts/image_viewer/video_viewer.dart';
-import 'package:bluebubbles/layouts/widgets/CustomDismissible.dart';
+import 'package:bluebubbles/layouts/widgets/custom_dismissible.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/attachment_downloader_widget.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
@@ -33,7 +33,7 @@ class AttachmentFullscreenViewer extends StatefulWidget {
   final bool showInteractions;
 
   static AttachmentFullscreenViewerState? of(BuildContext context) {
-    return context.findAncestorStateOfType<AttachmentFullscreenViewerState>() ?? null;
+    return context.findAncestorStateOfType<AttachmentFullscreenViewerState>();
   }
 
   @override
@@ -52,7 +52,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
   void initState() {
     super.initState();
     if (kIsWeb) {
-      controller = new PageController(initialPage: 0);
+      controller = PageController(initialPage: 0);
     } else {
       init();
     }
@@ -68,7 +68,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
       getStartingIndex();
     }
 
-    if (widget.currentChat != null)
+    if (widget.currentChat != null) {
       newMessageEventStream = NewMessageManager().stream.listen((event) async {
         // We don't need to do anything if there isn't a new message
         if (event.type != NewMessageType.ADD) return;
@@ -90,8 +90,9 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
           controller!.animateToPage(currentIndex, duration: Duration(milliseconds: 0), curve: Curves.easeIn);
         }
       });
+    }
 
-    controller = new PageController(initialPage: kIsWeb ? 0 : startingIndex ?? 0);
+    controller = PageController(initialPage: kIsWeb ? 0 : startingIndex ?? 0);
   }
 
   void getStartingIndex() {
@@ -107,7 +108,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
   void didChangeDependencies() {
     super.didChangeDependencies();
     physics = ThemeSwitcher.getScrollPhysics();
-    if (this.mounted) setState(() {});
+    if (mounted) setState(() {});
   }
 
   @override
@@ -194,7 +195,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                                 onPressed: () {
                                   Get.put(AttachmentDownloadController(attachment: attachment), tag: attachment.guid);
                                   content = AttachmentHelper.getContent(attachment);
-                                  if (this.mounted) setState(() {});
+                                  if (mounted) setState(() {});
                                 },
                                 placeHolder: placeHolder,
                               ),
@@ -206,11 +207,11 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                         ever<PlatformFile?>(content.file, (file) {
                           if (file != null) {
                             content = file;
-                            if (this.mounted) setState(() {});
+                            if (mounted) setState(() {});
                           }
                         }, onError: (error) {
                           content = widget.attachment;
-                          if (this.mounted) setState(() {});
+                          if (mounted) setState(() {});
                         });
                         return Obx(() {
                           if (content.error.value = true) {

@@ -22,8 +22,7 @@ import 'package:firebase_dart/firebase_dart.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:socket_io_client/socket_io_client.dart' as IO;
-import 'package:socket_io_client/socket_io_client.dart';
+import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'dart:io';
 import 'package:bluebubbles/repository/models/models.dart';
 
@@ -54,15 +53,15 @@ class SocketManager {
 
   List<String> processedGUIDS = <String>[];
 
-  SetupBloc setup = new SetupBloc();
+  SetupBloc setup = SetupBloc();
   StreamController<bool?> finishedSetup = StreamController<bool?>();
   bool isAuthingFcm = false;
 
   //Socket io
-  IO.Socket? socket;
+  io.Socket? socket;
 
-  Map<String, AttachmentSender> attachmentSenders = Map();
-  Map<int, Function> socketProcesses = new Map();
+  Map<String, AttachmentSender> attachmentSenders = {};
+  Map<int, Function> socketProcesses = {};
 
   final Rx<SocketState> state = SocketState.DISCONNECTED.obs;
 
@@ -86,11 +85,11 @@ class SocketManager {
     });
   }
 
-  StreamController<List<int>> _socketProcessUpdater = StreamController<List<int>>.broadcast();
+  final StreamController<List<int>> _socketProcessUpdater = StreamController<List<int>>.broadcast();
 
   Stream<List<int>> get socketProcessUpdater => _socketProcessUpdater.stream;
 
-  StreamController<String> _attachmentSenderCompleter = StreamController<String>.broadcast();
+  final StreamController<String> _attachmentSenderCompleter = StreamController<String>.broadcast();
   Stream<String> get attachmentSenderCompleter => _attachmentSenderCompleter.stream;
 
   void addAttachmentSender(AttachmentSender sender) {
@@ -103,7 +102,7 @@ class SocketManager {
     _attachmentSenderCompleter.sink.add(attachmentGuid);
   }
 
-  Map<String, Function> disconnectSubscribers = new Map();
+  Map<String, Function> disconnectSubscribers = {};
 
   String? token;
 
@@ -123,14 +122,15 @@ class SocketManager {
         });
 
         state.value = SocketState.CONNECTED;
-        _manager.socketProcesses.values.forEach((element) {
+        for (Function element in _manager.socketProcesses.values) {
           element();
-        });
-        if (SettingsManager().settings.finishedSetup.value)
+        }
+        if (SettingsManager().settings.finishedSetup.value) {
           setup.startIncrementalSync(SettingsManager().settings, onConnectionError: (String err) {
             Logger.error("Error performing incremental sync. Not saving last sync date.", tag: "IncrementalSync");
             Logger.error(err);
           });
+        }
         return;
       case "connect_error":
         if (state.value != SocketState.ERROR && state.value != SocketState.FAILED) {
@@ -149,11 +149,11 @@ class SocketManager {
             }
 
             state.value = SocketState.FAILED;
-            List processes = socketProcesses.values.toList();
-            processes.forEach((value) {
+            List<Function> processes = socketProcesses.values.toList();
+            for (Function value in processes) {
               value(true);
-            });
-            socketProcesses = new Map();
+            }
+            socketProcesses = {};
             if (!LifeCycleManager().isAlive) {
               closeSocket(force: true);
             }
@@ -162,9 +162,9 @@ class SocketManager {
         return;
       case "disconnect":
         if (state.value == SocketState.FAILED) return;
-        _manager.disconnectSubscribers.values.forEach((f) {
+        for (Function f in _manager.disconnectSubscribers.values) {
           f();
-        });
+        }
 
         state.value = SocketState.DISCONNECTED;
         Timer t;
@@ -188,9 +188,9 @@ class SocketManager {
       case "reconnect":
         Logger.info("RECONNECTED");
         state.value = SocketState.CONNECTING;
-        _manager.socketProcesses.values.forEach((element) {
+        for (Function element in _manager.socketProcesses.values) {
           element();
-        });
+        }
         return;
       default:
         return;
@@ -199,7 +199,7 @@ class SocketManager {
 
   String handleNewMessage(_data) {
     Map<String, dynamic>? data = _data;
-    IncomingQueue().add(new QueueItem(event: "handle-message", item: {"data": data}));
+    IncomingQueue().add(QueueItem(event: "handle-message", item: {"data": data}));
     return "";
   }
 
@@ -207,7 +207,7 @@ class SocketManager {
     if (!SettingsManager().settings.enablePrivateAPI.value) return "";
 
     Map<String, dynamic>? data = _data;
-    IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_CHAT_STATUS_CHANGE, item: {"data": data}));
+    IncomingQueue().add(QueueItem(event: IncomingQueue.handleChatStatusChange, item: {"data": data}));
     return "";
   }
 
@@ -239,9 +239,9 @@ class SocketManager {
       /*_manager.socket = SocketIOManager().createSocketIO(serverAddress, "/",
           query: "guid=${encodeUri(SettingsManager().settings.guidAuthKey)}",
           socketStatusCallback: (data) => socketStatusUpdate(data));*/
-      _manager.socket = IO.io(
+      _manager.socket = io.io(
           serverAddress,
-          OptionBuilder()
+          io.OptionBuilder()
               .setQuery({"guid": encodeUri(SettingsManager().settings.guidAuthKey.value)})
               .setTransports(['websocket', 'polling'])
               // Disable so that we can create the listeners first
@@ -321,14 +321,14 @@ class SocketManager {
         // If there are no chats, try to find it in the DB via the message
         Chat? chat;
         if (isNullOrEmpty(data["chats"])!) {
-          chat = await Message.getChat(message);
+          chat = Message.getChat(message);
         } else {
           chat = Chat.fromMap(data['chats'][0]);
         }
 
         // Save the chat in-case is doesn't exist
         if (chat != null) {
-          await chat.save();
+          chat.save();
         }
 
         // Lastly, find the message
@@ -337,10 +337,10 @@ class SocketManager {
         // Check if we already have an error, and save if we don't
         if (msg.error == 0) {
           // TODO: ADD NOTIFICATION TO USER IF FAILURE
-          await message.save();
+          message.save();
         }
 
-        return new Future.value("");
+        return Future.value("");
       });
 
       /**
@@ -353,11 +353,11 @@ class SocketManager {
         Map<String, dynamic> data = _data;
 
         Message? message = Message.findOne(guid: data['tempGuid']);
-        if (message == null) return new Future.value("");
+        if (message == null) return Future.value("");
         message.error = 1003;
         message.guid = message.guid!.replaceAll("temp", "error-Message Timeout");
         await Message.replaceMessage(data["tempGuid"], message);
-        return new Future.value("");
+        return Future.value("");
       });
 
       /**
@@ -365,7 +365,7 @@ class SocketManager {
        * This may be when a read/delivered date has been changed.
        */
       _manager.socket!.on("updated-message", (_data) async {
-        IncomingQueue().add(new QueueItem(event: "handle-updated-message", item: {"data": _data}));
+        IncomingQueue().add(QueueItem(event: "handle-updated-message", item: {"data": _data}));
       });
 
       Logger.info("Connecting to the socket at: $serverAddress");
@@ -375,13 +375,13 @@ class SocketManager {
         throw ("[$tag] -> Failed to connect: ${e.toString()}");
       } else {
         Logger.error("Failed to connect", tag: tag);
-        Logger.error("${e.toString()}", tag: tag);
+        Logger.error(e.toString(), tag: tag);
       }
     }
   }
 
   void closeSocket({bool force = false}) {
-    if (!force && _manager.socketProcesses.length != 0) {
+    if (!force && _manager.socketProcesses.isNotEmpty) {
       Logger.info("Not closing the socket! Count: " + socketProcesses.length.toString());
       return;
     }
@@ -435,7 +435,7 @@ class SocketManager {
       Logger.info('Fetching FCM data from the server...', tag: 'FCM-Auth');
 
       // If the first try fails, let's try again, but first, get the FCM data from the server
-      Map<String, dynamic> fcmMeta = await this.getFcmClient();
+      Map<String, dynamic> fcmMeta = await getFcmClient();
       Logger.info('Received FCM data from the server. Attempting to re-authenticate', tag: 'FCM-Auth');
 
       try {
@@ -475,7 +475,7 @@ class SocketManager {
   }
 
   Future<dynamic>? registerDevice(String name, String? token) {
-    if (name.trim().length == 0 || token == null || token.trim().length == 0) return null;
+    if (name.trim().isEmpty || token == null || token.trim().isEmpty) return null;
     dynamic params = {"deviceId": token.trim(), "deviceName": name.trim()};
     return request("add-fcm-device", params);
   }
@@ -483,7 +483,7 @@ class SocketManager {
   Future<List<Chat>> getChats(Map<String, dynamic> params, {Function(List<dynamic>?)? cb}) async {
     List<Chat> chats = [];
     List<dynamic> data = await request('get-chats', params, cb: cb);
-    for (var item in data) {
+    for (dynamic item in data) {
       try {
         var chat = Chat.fromMap(item);
         chats.add(chat);
@@ -503,7 +503,7 @@ class SocketManager {
   }
 
   Future<dynamic>? request(String path, Map<String, dynamic> params, {Function(List<dynamic>?)? cb}) async {
-    Completer<List<dynamic>?> completer = new Completer();
+    Completer<List<dynamic>?> completer = Completer();
     if (_manager.socket == null) SocketManager().startSocketIO();
 
     Logger.info("Sending request for '$path'", tag: "Socket");
@@ -541,9 +541,9 @@ class SocketManager {
   }
 
   Future<List<dynamic>> loadMessageChunk(Chat chat, int offset, {limit = 25}) async {
-    Completer<List<dynamic>> completer = new Completer();
+    Completer<List<dynamic>> completer = Completer();
 
-    Map<String, dynamic> params = Map();
+    Map<String, dynamic> params = {};
     params["identifier"] = chat.guid;
     params["limit"] = limit;
     params["offset"] = offset;
@@ -564,15 +564,15 @@ class SocketManager {
   }
 
   Future<Chat?> fetchChat(String chatGuid, {withParticipants = true}) async {
-    Completer<Chat?> completer = new Completer();
+    Completer<Chat?> completer = Completer();
     Logger.info("[Fetch Chat] Fetching full chat metadata from server.");
 
-    Map<String, dynamic> params = Map();
+    Map<String, dynamic> params = {};
     params["chatGuid"] = chatGuid;
     params["withParticipants"] = withParticipants;
-    SocketManager().sendMessage("get-chat", params, (data) async {
+    SocketManager().sendMessage("get-chat", params, (data) {
       if (data['status'] != 200 && !completer.isCompleted) {
-        return completer.completeError(new Exception(data['error']['message']));
+        return completer.completeError(Exception(data['error']['message']));
       }
 
       Map<String, dynamic>? chatData = data["data"];
@@ -585,7 +585,7 @@ class SocketManager {
       Chat newChat = Chat.fromMap(chatData);
 
       // Resave the chat after we've got the participants
-      await newChat.save();
+      newChat.save();
       completer.complete(newChat);
     });
 
@@ -593,14 +593,14 @@ class SocketManager {
   }
 
   Future<dynamic>? fetchMessages(Chat? chat,
-      {int offset: 0,
-      int limit: 100,
+      {int offset = 0,
+      int limit = 100,
       int? after,
-      bool onlyAttachments: false,
-      List<Map<String, dynamic>> where: const []}) async {
+      bool onlyAttachments = false,
+      List<Map<String, dynamic>> where = const []}) async {
     Logger.info("(Fetch Messages) Fetching data.");
 
-    Map<String, dynamic> params = Map();
+    Map<String, dynamic> params = {};
     params["chatGuid"] = chat?.guid;
     params["offset"] = offset;
     params["limit"] = limit;
@@ -628,7 +628,7 @@ class SocketManager {
       {String? reason, bool awaitResponse = true, String? path}) {
     Completer<Map<String, dynamic>> completer = Completer();
     int _processId = 0;
-    Function socketCB = ([bool finishWithError = false]) {
+    void socketCB([bool finishWithError = false]) {
       if (finishWithError) {
         cb({
           'status': MessageError.NO_CONNECTION,
@@ -673,10 +673,10 @@ class SocketManager {
           });
         }
       }
-    };
+    }
 
     if (awaitResponse) {
-      _processId = _manager.addSocketProcess(socketCB as dynamic Function());
+      _processId = _manager.addSocketProcess(socketCB);
     } else {
       socketCB();
     }
@@ -772,7 +772,7 @@ class SocketManager {
   }
 
   Future<Map<String, dynamic>> getFcmClient() async {
-    Completer<Map<String, dynamic>> completer = new Completer<Map<String, dynamic>>();
+    Completer<Map<String, dynamic>> completer = Completer<Map<String, dynamic>>();
 
     SocketManager().sendMessage("get-fcm-client", {}, (data) {
       if (data["status"] == 200) {
@@ -783,7 +783,7 @@ class SocketManager {
           msg = data["error"]["message"];
         }
 
-        completer.completeError(new Exception(msg));
+        completer.completeError(Exception(msg));
       }
     }).catchError((err) {
       completer.completeError(err);

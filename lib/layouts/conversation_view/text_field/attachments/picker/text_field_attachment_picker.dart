@@ -45,7 +45,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
     });
 
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (!this.mounted) return;
+      if (!mounted) return;
       if (!event.containsKey("type")) return;
 
       if (event["type"] == "add-attachment") {
@@ -56,9 +56,9 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
   }
 
   Future<void> getAttachments() async {
-    if (!this.mounted) return;
+    if (!mounted) return;
     List<AssetPathEntity> list = await PhotoManager.getAssetPathList(onlyAll: true);
-    if (list.length > 0) {
+    if (list.isNotEmpty) {
       List<AssetEntity> images = await list.first.getAssetListRange(start: 0, end: 60);
       _images = images;
       if (DateTime.now().toLocal().isWithin(images.first.modifiedDateTime, minutes: 10)) {
@@ -72,10 +72,10 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
       }
     }
 
-    if (this.mounted) setState(() {});
+    if (mounted) setState(() {});
   }
 
-  Future<void> openFullCamera({String type: 'camera'}) async {
+  Future<void> openFullCamera({String type = 'camera'}) async {
     bool camera = await Permission.camera.isGranted;
     if (!camera) {
       bool granted = (await Permission.camera.request()) == PermissionStatus.granted;
@@ -91,7 +91,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
     // Create a file that the camera can write to
     String appDocPath = SettingsManager().appDocDir.path;
     String ext = (type == 'video') ? ".mp4" : ".png";
-    File file = new File("$appDocPath/attachments/" + randomString(16) + ext);
+    File file = File("$appDocPath/attachments/" + randomString(16) + ext);
     await file.create(recursive: true);
 
     // Take the picture after opening the camera

@@ -48,23 +48,23 @@ class ThemeEntry {
 
   dynamic get style => isFont!
       ? TextStyle(
-          color: this.color,
+          color: color,
           fontWeight: FontWeight.normal,
-          fontSize: fontSize?.toDouble() ?? null,
+          fontSize: fontSize?.toDouble(),
         )
       : color;
 
   ThemeEntry save(ThemeObject theme) {
     if (kIsWeb) return this;
     assert(theme.id != null);
-    this.themeId = theme.id;
-    ThemeEntry? existing = ThemeEntry.findOne(this.name!, this.themeId!);
+    themeId = theme.id;
+    ThemeEntry? existing = ThemeEntry.findOne(name!, themeId!);
     if (existing != null) {
-      this.id = existing.id;
+      id = existing.id;
     }
-    this.id = themeEntryBox.put(this);
-    if (this.id != null && theme.id != null && existing == null) {
-      tvJoinBox.put(ThemeValueJoin(themeValueId: this.id!, themeId: theme.id!));
+    id = themeEntryBox.put(this);
+    if (id != null && theme.id != null && existing == null) {
+      tvJoinBox.put(ThemeValueJoin(themeValueId: id!, themeId: theme.id!));
     }
 
     return this;
@@ -73,18 +73,18 @@ class ThemeEntry {
   static ThemeEntry? findOne(String name, int themeId) {
     if (kIsWeb) return null;
     final query = themeEntryBox.query(ThemeEntry_.name.equals(name).and(ThemeEntry_.themeId.equals(themeId))).build();
-    query..limit = 1;
+    query.limit = 1;
     final result = query.findFirst();
     query.close();
     return result;
   }
 
   Map<String, dynamic> toMap() => {
-        "ROWID": this.id,
-        "name": this.name,
-        "themeId": this.themeId,
-        "color": this.color!.value.toRadixString(16),
-        "isFont": this.isFont! ? 1 : 0,
-        "fontSize": this.fontSize,
+        "ROWID": id,
+        "name": name,
+        "themeId": themeId,
+        "color": color!.value.toRadixString(16),
+        "isFont": isFont! ? 1 : 0,
+        "fontSize": fontSize,
       };
 }

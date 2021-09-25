@@ -47,10 +47,10 @@ class _ContactWidgetState extends State<ContactWidget> {
     try {
       contact = AttachmentHelper.parseAppleContact(appleContact);
     } catch (ex) {
-      contact = new Contact(displayName: "Invalid Contact", id: randomString(8));
+      contact = Contact(displayName: "Invalid Contact", id: randomString(8));
     }
 
-    if (this.mounted) setState(() {});
+    if (mounted) setState(() {});
   }
 
   @override

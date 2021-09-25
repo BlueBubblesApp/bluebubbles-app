@@ -59,7 +59,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
   @override
   initState() {
     super.initState();
-    initMessageState(widget.message, widget.showHandle).then((value) => {if (this.mounted) setState(() {})});
+    initMessageState(widget.message, widget.showHandle).then((value) => {if (mounted) setState(() {})});
 
     // We need this here, or else messages without an avatar may not change.
     // Even if it fits the criteria
@@ -73,7 +73,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
         widget.message.handle!.color = color.value.toRadixString(16);
       }
 
-      if (this.mounted) setState(() {});
+      if (mounted) setState(() {});
     });
   }
 
@@ -106,7 +106,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
   Future<void> didChangeMessageDependencies(Message message, bool? showHandle) async {
     await getContactTitle(message, showHandle);
     // await fetchAvatar(message);
-    if (this.mounted) setState(() {});
+    if (mounted) setState(() {});
   }
 
   /// Builds the message bubble with teh tail (if applicable)
@@ -116,8 +116,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
           SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideEmojis.value;
 
       bool hasReactions = message
-          .getReactions()
-          .length > 0;
+          .getReactions().isNotEmpty;
       return Padding(
         padding: EdgeInsets.only(
           left: CurrentChat
@@ -127,8 +126,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
               .length > 1 ? 5.0 : 0.0,
           right: (hasReactions) ? 15.0 : 0.0,
           top: widget.message
-              .getReactions()
-              .length > 0 ? 15 : 0,
+              .getReactions().isNotEmpty ? 15 : 0,
         ),
         child: hideContent
             ? ClipRRect(
@@ -172,8 +170,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
         Container(
           margin: EdgeInsets.only(
             top: widget.message
-                .getReactions()
-                .length > 0 && !widget.message.hasAttachments
+                .getReactions().isNotEmpty && !widget.message.hasAttachments
                 ? 18
                 : (widget.message.isFromMe != widget.olderMessage?.isFromMe)
                 ? 5.0
@@ -182,7 +179,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
             right: 10,
           ),
           constraints: BoxConstraints(
-            maxWidth: CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE,
+            maxWidth: CustomNavigator.width(context) * MessageWidgetMixin.maxSize,
           ),
           padding: EdgeInsets.symmetric(
             vertical: 8,
@@ -271,8 +268,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
       messageColumn.add(
         Padding(
           padding: EdgeInsets.only(left: 15.0, top: 5.0, bottom: widget.message
-              .getReactions()
-              .length > 0 ? 0.0 : 3.0),
+              .getReactions().isNotEmpty ? 0.0 : 3.0),
           child: Text(
             getContactName(context, contactTitle, widget.message.handle!.address),
             style: Theme
@@ -289,8 +285,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
 
     // Second, add the attachments
     if (widget.message
-        .getRealAttachments()
-        .length > 0) {
+        .getRealAttachments().isNotEmpty) {
       messageColumn.add(
         addStickersToWidget(
           message: addReactionsToWidget(
@@ -354,8 +349,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
         0,
         Padding(
           padding: EdgeInsets.only(left: 15.0, top: 5.0, bottom: widget.message
-              .getReactions()
-              .length > 0 ? 0.0 : 3.0),
+              .getReactions().isNotEmpty ? 0.0 : 3.0),
           child: Text(
             getContactName(context, contactTitle, widget.message.handle!.address),
             style: Theme

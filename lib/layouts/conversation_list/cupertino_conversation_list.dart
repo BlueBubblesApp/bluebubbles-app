@@ -38,7 +38,7 @@ class CupertinoConversationList extends StatefulWidget {
 }
 
 class CupertinoConversationListState extends State<CupertinoConversationList> {
-  final key = new GlobalKey<NavigatorState>();
+  final key = GlobalKey<NavigatorState>();
   bool openedChatAlready = false;
 
   Future<void> openLastChat(BuildContext context) async {
@@ -122,7 +122,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                             ),
                           ),
                           firstChild: AppBar(
-                            leading: new Container(),
+                            leading: Container(),
                             elevation: 0,
                             brightness: brightness,
                             backgroundColor: context.theme.backgroundColor,
@@ -146,7 +146,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                           !showArchived &&
                           !showUnknown)
                   ? buildBackButton(context)
-                  : new Container(),
+                  : Container(),
               stretch: true,
               expandedHeight: (!showArchived && !showUnknown) ? 80 : 50,
               backgroundColor: Colors.transparent,
@@ -206,7 +206,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                                     height: 20,
                                     child: Icon(CupertinoIcons.pencil, color: context.theme.primaryColor, size: 12),
                                   ),
-                                  onTap: this.widget.parent.openNewChatCreator,
+                                  onTap: widget.parent.openNewChatCreator,
                                 ),
                               ),
                             ),
@@ -241,7 +241,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
 
                                     String appDocPath = SettingsManager().appDocDir.path;
                                     String ext = ".png";
-                                    File file = new File("$appDocPath/attachments/" + randomString(16) + ext);
+                                    File file = File("$appDocPath/attachments/" + randomString(16) + ext);
                                     await file.create(recursive: true);
 
                                     // Take the picture after opening the camera

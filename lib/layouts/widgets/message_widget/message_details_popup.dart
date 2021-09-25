@@ -20,8 +20,8 @@ import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
-import 'package:bluebubbles/layouts/widgets/CustomCupertinoAlertDialog.dart';
-import 'package:bluebubbles/layouts/widgets/CustomCupertinoNavBar.dart';
+import 'package:bluebubbles/layouts/widgets/custom_cupertino_alert_dialog.dart';
+import 'package:bluebubbles/layouts/widgets/custom_cupertino_nav_bar.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reaction_detail_widget.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
@@ -88,10 +88,11 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
 
     // Animate showing the copy menu, slightly delayed
     Future.delayed(Duration(milliseconds: 400), () {
-      if (this.mounted)
+      if (mounted) {
         setState(() {
           showTools = true;
         });
+      }
     });
   }
 
@@ -99,7 +100,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   void didChangeDependencies() {
     super.didChangeDependencies();
     SchedulerBinding.instance!.addPostFrameCallback((_) {
-      if (this.mounted) {
+      if (mounted) {
         setState(() {
           double totalHeight = context.height - detailsMenuHeight! - 20;
           double offset = (widget.childOffset.dy + widget.childSize!.height) - totalHeight;
@@ -190,7 +191,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                   duration: Duration(milliseconds: 500),
                   curve: Sprung.underDamped,
                   alignment: Alignment.center,
-                  child: reactionWidgets.length > 0
+                  child: reactionWidgets.isNotEmpty
                       ? ClipRRect(
                           borderRadius: BorderRadius.circular(20),
                           child: BackdropFilter(
@@ -293,12 +294,12 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                             } else {
                               currentlySelectedReaction = e;
                             }
-                            if (this.mounted) setState(() {});
+                            if (mounted) setState(() {});
                           },
                           onTapUp: (details) {},
                           onTapCancel: () {
                             currentlySelectedReaction = selfReaction;
-                            if (this.mounted) setState(() {});
+                            if (mounted) setState(() {});
                           },
                           child: Padding(
                             padding: const EdgeInsets.all(6),
@@ -318,8 +319,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
 
   bool get showDownload =>
       widget.message.hasAttachments &&
-      widget.message.attachments!.where((element) => element!.mimeStart != null).length > 0 &&
-      widget.message.attachments!.where((element) => AttachmentHelper.getContent(element!) is PlatformFile).length > 0;
+      widget.message.attachments!.where((element) => element!.mimeStart != null).isNotEmpty &&
+      widget.message.attachments!.where((element) => AttachmentHelper.getContent(element!) is PlatformFile).isNotEmpty;
 
   bool get isSent => !widget.message.guid!.startsWith('temp') && !widget.message.guid!.startsWith('error');
 
@@ -328,7 +329,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   }
 
   set detailsMenuHeight(double? value) {
-    this.height = value;
+    height = value;
   }
 
   Widget buildCopyPasteMenu() {
@@ -516,7 +517,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
           color: Colors.transparent,
           child: InkWell(
             onTap: () {
-              Clipboard.setData(new ClipboardData(text: widget.message.fullText));
+              Clipboard.setData(ClipboardData(text: widget.message.fullText));
               Navigator.of(context).pop();
               showSnackbar("Copied", "Copied to clipboard!", durationMs: 1000);
             },
@@ -645,7 +646,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             ),
           ),
         ),
-      if ((widget.message.hasAttachments && !kIsWeb && !kIsDesktop) || widget.message.text!.length > 0)
+      if ((widget.message.hasAttachments && !kIsWeb && !kIsDesktop) || widget.message.text!.isNotEmpty)
         Material(
           color: Colors.transparent,
           child: InkWell(
@@ -657,7 +658,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                     element.getPath(),
                   );
                 }
-              } else if (widget.message.text!.length > 0) {
+              } else if (widget.message.text!.isNotEmpty) {
                 Share.text(
                   "Text shared from BlueBubbles",
                   widget.message.text!,
@@ -745,7 +746,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               ...detailsActions,
-              if (moreActions.length > 0)
+              if (moreActions.isNotEmpty)
                 Material(
                   color: Colors.transparent,
                   child: InkWell(

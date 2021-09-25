@@ -17,10 +17,10 @@ import 'package:url_launcher/url_launcher.dart';
 abstract class MessageWidgetMixin {
   String contactTitle = "";
   bool hasHyperlinks = false;
-  static const double MAX_SIZE = 3 / 5;
+  static const double maxSize = 3 / 5;
 
   Future<void> initMessageState(Message message, bool? showHandle) async {
-    this.hasHyperlinks = parseLinks(message.text!).isNotEmpty;
+    hasHyperlinks = parseLinks(message.text!).isNotEmpty;
     await getContactTitle(message, showHandle);
   }
 
@@ -59,7 +59,7 @@ abstract class MessageWidgetMixin {
     );
   }
 
-  static List<InlineSpan> buildMessageSpans(BuildContext context, Message? message, {List<Color>? colors: const []}) {
+  static List<InlineSpan> buildMessageSpans(BuildContext context, Message? message, {List<Color>? colors = const []}) {
     List<InlineSpan> textSpans = <InlineSpan>[];
 
     final bool generateContent =
@@ -68,15 +68,15 @@ abstract class MessageWidgetMixin {
         (SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value && !generateContent);
 
     if (message != null && !isEmptyString(message.text)) {
-      RegExp exp = new RegExp(
+      RegExp exp = RegExp(
           r'((https?://)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9/()@:%_.~#?&=*\[\]]*)\b');
       List<RegExpMatch> matches = exp.allMatches(message.text!).toList();
 
       List<int> linkIndexMatches = <int>[];
-      matches.forEach((match) {
+      for (RegExpMatch match in matches) {
         linkIndexMatches.add(match.start);
         linkIndexMatches.add(match.end);
-      });
+      }
 
       TextStyle? textStyle = Theme.of(context).textTheme.bodyText2;
       if (!message.isFromMe!) {
@@ -98,7 +98,9 @@ abstract class MessageWidgetMixin {
                     ? Colors.transparent
                     : toColorGradient(message.handle?.address ?? "")[0].darkenAmount(0.35));
           }
-        } else if (hideContent) textStyle = textStyle!.apply(color: Colors.transparent);
+        } else if (hideContent) {
+          textStyle = textStyle!.apply(color: Colors.transparent);
+        }
       } else {
         textStyle = textStyle!.apply(color: hideContent ? Colors.transparent : Theme.of(context).primaryColor.computeLuminance() > 0.8 ? Colors.black : Colors.white);
       }
@@ -118,7 +120,7 @@ abstract class MessageWidgetMixin {
         );
       }
 
-      if (linkIndexMatches.length > 0) {
+      if (linkIndexMatches.isNotEmpty) {
         for (int i = 0; i < linkIndexMatches.length + 1; i++) {
           if (i == 0) {
             textSpans.add(
@@ -140,7 +142,7 @@ abstract class MessageWidgetMixin {
               textSpans.add(
                 TextSpan(
                   text: text,
-                  recognizer: new TapGestureRecognizer()
+                  recognizer: TapGestureRecognizer()
                     ..onTap = () async {
                       String url = text;
                       if (!url.startsWith("http://") && !url.startsWith("https://")) {
@@ -180,7 +182,7 @@ abstract class MessageWidgetMixin {
     return textSpans;
   }
 
-  static Future<List<InlineSpan>> buildMessageSpansAsync(BuildContext context, Message? message, {List<Color>? colors: const []}) async {
+  static Future<List<InlineSpan>> buildMessageSpansAsync(BuildContext context, Message? message, {List<Color>? colors = const []}) async {
     List<InlineSpan> textSpans = <InlineSpan>[];
 
     final bool generateContent =
@@ -189,32 +191,32 @@ abstract class MessageWidgetMixin {
         (SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value && !generateContent);
 
     if (message != null && !isEmptyString(message.text)) {
-      RegExp exp = new RegExp(
+      RegExp exp = RegExp(
           r'((https?://)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9/()@:%_.~#?&=*\[\]]*)\b');
       List<RegExpMatch> matches = exp.allMatches(message.text!).toList();
 
       List<Tuple2<String, int>> linkIndexMatches = <Tuple2<String, int>>[];
-      matches.forEach((match) {
+      for (RegExpMatch match in matches) {
         linkIndexMatches.add(Tuple2("link", match.start));
         linkIndexMatches.add(Tuple2("link", match.end));
-      });
+      }
       if (!kIsWeb && !kIsDesktop) {
         final List<EntityAnnotation> entities = await GoogleMlKit.nlp.entityExtractor(EntityExtractorOptions.ENGLISH).extractEntities(message.text!);
-        entities.forEach((element) {
+        for (EntityAnnotation element in entities) {
           if (element.entities.first is AddressEntity) {
             linkIndexMatches.add(Tuple2("map", element.start));
             linkIndexMatches.add(Tuple2("map", element.end));
-            return;
+            break;
           } else if (element.entities.first is PhoneEntity) {
             linkIndexMatches.add(Tuple2("phone", element.start));
             linkIndexMatches.add(Tuple2("phone", element.end));
-            return;
+            break;
           } else if (element.entities.first is EmailEntity) {
             linkIndexMatches.add(Tuple2("email", element.start));
             linkIndexMatches.add(Tuple2("email", element.end));
-            return;
+            break;
           }
-        });
+        }
       }
 
       TextStyle? textStyle = Theme.of(context).textTheme.bodyText2;
@@ -237,7 +239,9 @@ abstract class MessageWidgetMixin {
                     ? Colors.transparent
                     : toColorGradient(message.handle?.address ?? "")[0].darkenAmount(0.35));
           }
-        } else if (hideContent) textStyle = textStyle!.apply(color: Colors.transparent);
+        } else if (hideContent) {
+          textStyle = textStyle!.apply(color: Colors.transparent);
+        }
       } else {
         textStyle = textStyle!.apply(color: hideContent ? Colors.transparent : Theme.of(context).primaryColor.computeLuminance() > 0.8 ? Colors.black : Colors.white);
       }
@@ -257,7 +261,7 @@ abstract class MessageWidgetMixin {
         );
       }
 
-      if (linkIndexMatches.length > 0) {
+      if (linkIndexMatches.isNotEmpty) {
         for (int i = 0; i < linkIndexMatches.length + 1; i++) {
           if (i == 0) {
             textSpans.add(
@@ -280,7 +284,7 @@ abstract class MessageWidgetMixin {
               textSpans.add(
                 TextSpan(
                   text: text,
-                  recognizer: new TapGestureRecognizer()
+                  recognizer: TapGestureRecognizer()
                     ..onTap = () async {
                       if (type == "link") {
                         String url = text;

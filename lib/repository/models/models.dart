@@ -53,10 +53,10 @@ class Contact {
 
   Map<String, dynamic> toMap() {
     return {
-      'id': this.id,
-      'displayName': this.displayName,
-      'phones': this.phones,
-      'emails': this.emails,
+      'id': id,
+      'displayName': displayName,
+      'phones': phones,
+      'emails': emails,
     };
   }
 

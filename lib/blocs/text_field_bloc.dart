@@ -16,14 +16,14 @@ class TextFieldBloc {
 
   TextFieldBloc._internal();
 
-  Map<String, TextFieldData> _textFields = new Map();
+  final Map<String, TextFieldData> _textFields = {};
 
   TextFieldData? getTextField(String chatGuid) {
     if (_textFields.containsKey(chatGuid)) {
       return _textFields[chatGuid];
     } else {
-      _textFields[chatGuid] = new TextFieldData();
-      _textFields[chatGuid]!.controller = new TextEditingController();
+      _textFields[chatGuid] = TextFieldData();
+      _textFields[chatGuid]!.controller = TextEditingController();
       return _textFields[chatGuid];
     }
   }

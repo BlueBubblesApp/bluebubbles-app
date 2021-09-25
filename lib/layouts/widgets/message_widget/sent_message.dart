@@ -43,7 +43,7 @@ class SentMessageHelper {
         SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideEmojis.value;
 
     Widget msg;
-    bool hasReactions = (message?.getReactions() ?? []).length > 0;
+    bool hasReactions = (message?.getReactions() ?? []).isNotEmpty;
     Skins currentSkin = Skin.of(context)?.skin ?? SettingsManager().settings.skin.value;
 
     if (message?.isBigEmoji() ?? false) {
@@ -95,7 +95,7 @@ class SentMessageHelper {
               width: customWidth != null ? constraints.maxWidth : null,
               constraints: customWidth == null
                   ? BoxConstraints(
-                      maxWidth: CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE + (!padding ? 100 : 0),
+                      maxWidth: CustomNavigator.width(context) * MessageWidgetMixin.maxSize + (!padding ? 100 : 0),
                     )
                   : null,
               margin: EdgeInsets.only(
@@ -134,8 +134,7 @@ class SentMessageHelper {
                             : null,
                 color: customColor ?? bubbleColor,
               ),
-              child: customContent == null
-                  ? FutureBuilder<List<InlineSpan>>(
+              child: customContent ?? FutureBuilder<List<InlineSpan>>(
                       future: msgSpanFuture,
                       builder: (context, snapshot) {
                         if (snapshot.data != null) {
@@ -153,8 +152,7 @@ class SentMessageHelper {
                           ),
                         );
                       }
-                    )
-                  : customContent,
+                    ),
             );
           }),
         ],
@@ -199,12 +197,12 @@ class SentMessageHelper {
               context: context,
               builder: (BuildContext context) {
                 return AlertDialog(
-                  title: new Text("Message failed to send", style: TextStyle(color: Colors.black)),
-                  content: new Text("Error ($errorCode): $errorText"),
+                  title: Text("Message failed to send", style: TextStyle(color: Colors.black)),
+                  content: Text("Error ($errorCode): $errorText"),
                   actions: <Widget>[
                     if (chat != null)
-                      new TextButton(
-                        child: new Text("Retry"),
+                      TextButton(
+                        child: Text("Retry"),
                         onPressed: () async {
                           // Remove the OG alert dialog
                           Navigator.of(context).pop();
@@ -215,8 +213,8 @@ class SentMessageHelper {
                         },
                       ),
                     if (chat != null)
-                      new TextButton(
-                        child: new Text("Remove"),
+                      TextButton(
+                        child: Text("Remove"),
                         onPressed: () async {
                           Navigator.of(context).pop();
                           // Delete the message from the DB
@@ -235,8 +233,8 @@ class SentMessageHelper {
                           await ChatBloc().updateChatPosition(chat);
                         },
                       ),
-                    new TextButton(
-                      child: new Text("Cancel"),
+                    TextButton(
+                      child: Text("Cancel"),
                       onPressed: () {
                         Navigator.of(context).pop();
                         NotificationManager().clearFailedToSend();

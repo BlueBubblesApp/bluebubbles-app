@@ -27,7 +27,7 @@ class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepA
     path = (await widget.data.file)!.path;
 
     BlueBubblesTextField.of(context)!.stream.listen((event) {
-      if (this.mounted) setState(() {});
+      if (mounted) setState(() {});
     });
 
     load();
@@ -35,11 +35,11 @@ class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepA
 
   Future<void> load() async {
     image = await widget.data.thumbDataWithSize(800, 800, quality: SettingsManager().compressionQuality);
-    if (this.mounted) setState(() {});
+    if (mounted) setState(() {});
   }
 
   bool get containsThis =>
-      BlueBubblesTextField.of(context)!.pickedImages.where((element) => element.path == path).length > 0;
+      BlueBubblesTextField.of(context)!.pickedImages.where((element) => element.path == path).isNotEmpty;
 
   @override
   Widget build(BuildContext context) {

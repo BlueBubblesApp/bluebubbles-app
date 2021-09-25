@@ -62,7 +62,7 @@ class VideoWidgetController extends GetxController with SingleGetTickerProviderM
       controller = VideoPlayerController.network(url);
     } else {
       dynamic file = File(file2.path!);
-      controller = new VideoPlayerController.file(file);
+      controller = VideoPlayerController.file(file);
     }
     await controller.initialize();
     CurrentChat.of(context)!.changeCurrentPlayingVideo({attachment.guid!: controller});
@@ -77,10 +77,10 @@ class VideoWidgetController extends GetxController with SingleGetTickerProviderM
 
       // If the status hasn't changed, don't do anything
       if (currentStatus == status) return;
-      this.status = currentStatus;
+      status = currentStatus;
 
       // If the status is ended, restart
-      if (this.status == PlayerStatus.ENDED) {
+      if (status == PlayerStatus.ENDED) {
         showPlayPauseOverlay.value = true;
         await controller.pause();
         await controller.seekTo(Duration());

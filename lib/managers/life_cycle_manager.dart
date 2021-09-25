@@ -23,7 +23,7 @@ class LifeCycleManager {
 
   bool get isAlive => _isAlive;
 
-  StreamController<bool> _stream = new StreamController.broadcast();
+  final StreamController<bool> _stream = StreamController.broadcast();
   Stream<bool> get stream => _stream.stream;
 
   LifeCycleManager._internal() {
@@ -62,7 +62,7 @@ class LifeCycleManager {
       // NOTE: [closeSocket] does not necessarily close the socket, it simply requests the SocketManager to attempt to do so
       // If there are socket processes using the socket, then it will not close, and will wait until those tasks are done
       updateStatus(false);
-      SocketManager().closeSocket();
+      SocketManager().closeSocket(force: true);
 
       // Closes the backgroun thread when the app is fully closed
       // This does not necessarily mean that the isolate will be closed (such as if the app is not fully closed), but it will attempt to do so

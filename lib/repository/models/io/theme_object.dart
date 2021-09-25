@@ -34,7 +34,7 @@ class ThemeObject {
   });
 
   factory ThemeObject.fromData(ThemeData data, String name, {bool gradientBg = false}) {
-    ThemeObject object = new ThemeObject(
+    ThemeObject object = ThemeObject(
       data: data.copyWith(),
       name: name,
       gradientBg: gradientBg,
@@ -56,7 +56,7 @@ class ThemeObject {
     );
   }
 
-  bool get isPreset => this.name == "OLED Dark" || this.name == "Bright White" || this.name == "Nord Theme" || this.name == "Music Theme (Light)" || this.name == "Music Theme (Dark)";
+  bool get isPreset => name == "OLED Dark" || name == "Bright White" || name == "Nord Theme" || name == "Music Theme (Light)" || name == "Music Theme (Dark)";
 
   List<ThemeEntry> toEntries() => [
         ThemeEntry.fromStyle(ThemeColors.Headline1, data!.textTheme.headline1!),
@@ -72,26 +72,26 @@ class ThemeObject {
       ];
 
   ThemeObject save({bool updateIfNotAbsent = true}) {
-    if (this.data == null) {
-      this.fetchData();
+    if (data == null) {
+      fetchData();
     }
     if (entries.isEmpty) {
-      entries = this.toEntries();
+      entries = toEntries();
     }
-    ThemeObject? existing = ThemeObject.findOne(this.name!);
+    ThemeObject? existing = ThemeObject.findOne(name!);
     if (existing != null) {
-      this.id = existing.id;
+      id = existing.id;
     }
     try {
-      if (this.id != null && existing != null && updateIfNotAbsent) {
-        this.id = themeObjectBox.put(this);
-      } else if (this.id == null || existing == null) {
-        this.id = themeObjectBox.put(this);
+      if (id != null && existing != null && updateIfNotAbsent) {
+        id = themeObjectBox.put(this);
+      } else if (id == null || existing == null) {
+        id = themeObjectBox.put(this);
       }
     } on UniqueViolationException catch (_) {}
 
-    if (this.isPreset && !this.name!.contains("Music")) return this;
-    for (ThemeEntry entry in this.entries) {
+    if (isPreset && !name!.contains("Music")) return this;
+    for (ThemeEntry entry in entries) {
       entry.save(this);
     }
 
@@ -99,13 +99,13 @@ class ThemeObject {
   }
 
   void delete() {
-    if (kIsWeb || this.isPreset || this.id == null) return;
-    this.fetchData();
-    themeEntryBox.removeMany(this.entries.map((e) => e.id!).toList());
-    final query = tvJoinBox.query(ThemeValueJoin_.themeId.equals(this.id!)).build();
+    if (kIsWeb || isPreset || id == null) return;
+    fetchData();
+    themeEntryBox.removeMany(entries.map((e) => e.id!).toList());
+    final query = tvJoinBox.query(ThemeValueJoin_.themeId.equals(id!)).build();
     if (query.findFirst() != null) tvJoinBox.remove(query.findFirst()!.themeId);
     query.close();
-    themeObjectBox.remove(this.id!);
+    themeObjectBox.remove(id!);
   }
 
   static ThemeObject getLightTheme() {
@@ -156,7 +156,7 @@ class ThemeObject {
   static ThemeObject? findOne(String name) {
     if (kIsWeb) return null;
     final query = themeObjectBox.query(ThemeObject_.name.equals(name)).build();
-    query..limit = 1;
+    query.limit = 1;
     final result = query.findFirst();
     result?.fetchData();
     query.close();
@@ -172,46 +172,46 @@ class ThemeObject {
   List<ThemeEntry> fetchData() {
     if (isPreset && !name!.contains("Music")) {
       if (name == "OLED Dark") {
-        this.data = oledDarkTheme;
+        data = oledDarkTheme;
       } else if (name == "Bright White") {
-        this.data = whiteLightTheme;
+        data = whiteLightTheme;
       } else if (name == "Nord Theme") {
-        this.data = nordDarkTheme;
+        data = nordDarkTheme;
       }
 
-      this.entries = this.toEntries();
-      return this.entries;
+      entries = toEntries();
+      return entries;
     }
-    if (kIsWeb) return this.entries;
-    final query = tvJoinBox.query(ThemeValueJoin_.themeId.equals(this.id!)).build();
+    if (kIsWeb) return entries;
+    final query = tvJoinBox.query(ThemeValueJoin_.themeId.equals(id!)).build();
     final themeEntryIds = query.property(ThemeValueJoin_.themeValueId).find();
     final themeEntries2 = themeEntryBox.getMany(themeEntryIds, growableResult: true);
     themeEntries2.retainWhere((element) => element != null);
     final themeEntries = List<ThemeEntry>.from(themeEntries2);
     if (name == "Music Theme (Light)" && themeEntries.isEmpty) {
       data = whiteLightTheme;
-      entries = this.toEntries();
+      entries = toEntries();
     } else if (name == "Music Theme (Dark)" && themeEntries.isEmpty) {
       data = oledDarkTheme;
-      entries = this.toEntries();
+      entries = toEntries();
     } else if (themeEntries.isNotEmpty) {
-      this.entries = themeEntries;
-      this.data = themeData;
+      entries = themeEntries;
+      data = themeData;
     } else {
-      this.entries = [];
-      this.data = themeData;
+      entries = [];
+      data = themeData;
     }
-    return this.entries;
+    return entries;
   }
 
   Map<String, dynamic> toMap() => {
-        "ROWID": this.id,
-        "name": this.name,
-        "selectedLightTheme": this.selectedLightTheme ? 1 : 0,
-        "selectedDarkTheme": this.selectedDarkTheme ? 1 : 0,
-        "gradientBg": this.gradientBg ? 1 : 0,
-        "previousLightTheme": this.previousLightTheme ? 1 : 0,
-        "previousDarkTheme": this.previousDarkTheme ? 1 : 0,
+        "ROWID": id,
+        "name": name,
+        "selectedLightTheme": selectedLightTheme ? 1 : 0,
+        "selectedDarkTheme": selectedDarkTheme ? 1 : 0,
+        "gradientBg": gradientBg ? 1 : 0,
+        "previousLightTheme": previousLightTheme ? 1 : 0,
+        "previousDarkTheme": previousDarkTheme ? 1 : 0,
       };
 
   ThemeData get themeData {

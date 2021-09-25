@@ -29,7 +29,7 @@ class _StickersWidgetState extends State<StickersWidget> {
   }
 
   void toggleShow() {
-    if (!this.mounted) return;
+    if (!mounted) return;
     setState(() {
       _visible = !_visible;
     });
@@ -58,7 +58,7 @@ class _StickersWidgetState extends State<StickersWidget> {
             if (FileSystemEntity.typeSync(pathName) == FileSystemEntityType.notFound) {
               // Add the attachment as a sticker, and re-render the UI
               stickers.add(attachment);
-              if (this.mounted) setState(() {});
+              if (mounted) setState(() {});
             }
           }), tag: attachment.guid);
         } else {
@@ -82,7 +82,7 @@ class _StickersWidgetState extends State<StickersWidget> {
     return GestureDetector(
         onTap: toggleShow,
         child: Opacity(
-            key: new Key(this.stickers.first.guid!),
+            key: Key(this.stickers.first.guid!),
             opacity: _visible ? 1.0 : 0.25,
             child: Stack(children: stickers, alignment: Alignment.center)));
   }

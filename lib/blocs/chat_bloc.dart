@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/constants.dart';
@@ -58,7 +57,7 @@ class ChatBloc {
   Future<Chat?> getChat(String? guid) async {
     if (guid == null) return null;
     if (_chats.isEmpty) {
-      await this.refreshChats();
+      await refreshChats();
     }
 
     for (Chat? chat in _chats) {
@@ -79,15 +78,13 @@ class ChatBloc {
       await chatRequest!.future;
     }
 
-    chatRequest = new Completer<void>();
+    chatRequest = Completer<void>();
     Logger.info("Fetching chats (${force ? 'forced' : 'normal'})...", tag: "ChatBloc");
 
     // Get the contacts in case we haven't
     if (ContactManager().contacts.isEmpty) await ContactManager().getContacts();
 
-    if (_messageSubscription == null) {
-      _messageSubscription = setupMessageListener();
-    }
+    _messageSubscription ??= setupMessageListener();
 
     // Store the last time we fetched
     lastFetch = DateTime.now().toUtc().millisecondsSinceEpoch;
@@ -100,7 +97,7 @@ class ChatBloc {
     Logger.info('Performing ChatBloc resume request...', tag: 'ChatBloc-Resume');
 
     // Get the last message date
-    DateTime? lastMsgDate = await Message.lastMessageDate();
+    DateTime? lastMsgDate = Message.lastMessageDate();
 
     // If there is no last message, don't do anything
     if (lastMsgDate == null) {
@@ -113,7 +110,7 @@ class ChatBloc {
     if (lastMs >= lastFetch) {
       Logger.info('New messages detected! Refreshing the ChatBloc', tag: 'ChatBloc-Resume');
       Logger.debug("$lastMs >= $lastFetch", tag: 'ChatBloc-Resume');
-      await this.refreshChats();
+      await refreshChats();
     } else {
       Logger.info('No new messages detected. Not refreshing the ChatBloc', tag: 'ChatBloc-Resume');
     }
@@ -122,7 +119,7 @@ class ChatBloc {
   /// Inserts a [chat] into the chat bloc based on the lastMessage data
   Future<void> updateChatPosition(Chat chat) async {
     if (isNullOrEmpty(_chats)!) {
-      await this.refreshChats();
+      await refreshChats();
       if (isNullOrEmpty(_chats)!) return;
     }
 
@@ -181,7 +178,7 @@ class ChatBloc {
 
   void markAllAsRead() {
     // Enumerate the unread chats
-    List<Chat> unread = this.chats.where((element) => element.hasUnreadMessage!).toList();
+    List<Chat> unread = chats.where((element) => element.hasUnreadMessage!).toList();
 
     // Mark them as unread
     for (Chat chat in unread) {
@@ -193,7 +190,7 @@ class ChatBloc {
 
     // Update their position in the chat list
     for (Chat chat in unread) {
-      this.updateChatPosition(chat);
+      updateChatPosition(chat);
     }
   }
 
@@ -203,7 +200,7 @@ class ChatBloc {
     // Remove from notification shade
     MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
 
-    this.updateChatPosition(chat);
+    updateChatPosition(chat);
   }
 
   Future<void> updateAllShareTargets() async {
@@ -277,7 +274,7 @@ class ChatBloc {
   }
 
   Future<void> getChatBatches({int batchSize = 15}) async {
-    int count = (await Chat.count()) ?? (await api.chatCount()).data['data']['total'];
+    int count = Chat.count() ?? (await api.chatCount()).data['data']['total'];
     if (count == 0 && !kIsWeb) {
       hasChats.value = false;
     } else {
@@ -295,7 +292,7 @@ class ChatBloc {
       } else {
         chats = Chat.getChats(limit: batchSize, offset: i * batchSize);
       }
-      if (chats.length == 0) break;
+      if (chats.isEmpty) break;
 
       for (Chat chat in chats) {
         newChats.add(chat);
@@ -304,11 +301,11 @@ class ChatBloc {
           chat.getParticipants();
         }
         if (kIsWeb) {
-          chat.participants.forEach((element) {
+          for (Handle element in chat.participants) {
             if (cachedHandles.firstWhereOrNull((e) => e.address == element.address) == null) {
               cachedHandles.add(element);
             }
-          });
+          }
           if (chat.latestMessageGetter.hasAttachments) {
             chat.latestMessageGetter.fetchAttachments();
           }
@@ -320,7 +317,7 @@ class ChatBloc {
         }
       }
 
-      if (newChats.length != 0) {
+      if (newChats.isNotEmpty) {
         _chats.value = newChats;
         _chats.sort(Chat.sort);
       }
@@ -451,39 +448,38 @@ extension Helpers on RxList<Chat> {
   /// This helps reduce a vast amount of code in build methods so the widgets can
   /// update without StreamBuilders
   RxList<Chat> archivedHelper(bool archived) {
-    if (archived)
-      return this.where((e) => e.isArchived ?? false).toList().obs;
-    else
-      return this.where((e) => !(e.isArchived ?? false)).toList().obs;
+    if (archived) {
+      return where((e) => e.isArchived ?? false).toList().obs;
+    } else {
+      return where((e) => !(e.isArchived ?? false)).toList().obs;
+    }
   }
 
   RxList<Chat> bigPinHelper(bool pinned) {
-    if (pinned)
-      return this
-          .where((e) => SettingsManager().settings.skin.value == Skins.iOS ? (e.isPinned ?? false) : true)
+    if (pinned) {
+      return where((e) => SettingsManager().settings.skin.value == Skins.iOS ? (e.isPinned ?? false) : true)
           .toList()
           .obs;
-    else
-      return this
-          .where((e) => SettingsManager().settings.skin.value == Skins.iOS ? !(e.isPinned ?? false) : true)
+    } else {
+      return where((e) => SettingsManager().settings.skin.value == Skins.iOS ? !(e.isPinned ?? false) : true)
           .toList()
           .obs;
+    }
   }
 
   RxList<Chat> unknownSendersHelper(bool unknown) {
     if (!SettingsManager().settings.filterUnknownSenders.value) return this;
-    if (unknown)
-      return this
-          .where(
+    if (unknown) {
+      return where(
               (e) => e.participants.length == 1 && ContactManager().handleToContact[e.participants[0].address] == null)
           .toList()
           .obs;
-    else
-      return this
-          .where((e) =>
+    } else {
+      return where((e) =>
               e.participants.length > 1 ||
               (e.participants.length == 1 && ContactManager().handleToContact[e.participants[0].address] != null))
           .toList()
           .obs;
+    }
   }
 }

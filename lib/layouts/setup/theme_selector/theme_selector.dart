@@ -15,7 +15,7 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:faker/faker.dart';
-import 'package:bluebubbles/layouts/widgets/CustomCupertinoNavBar.dart';
+import 'package:bluebubbles/layouts/widgets/custom_cupertino_nav_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -801,7 +801,7 @@ Widget buildConversationViewHeader(BuildContext context, Chat chat, ThemeData th
 
   // Build the stack
   List<Widget> avatars = [];
-  chat.participants.forEach((Handle participant) {
+  for (Handle participant in chat.participants) {
     avatars.add(
       Container(
         height: 42.0, // 2 px larger than the diameter
@@ -813,7 +813,7 @@ Widget buildConversationViewHeader(BuildContext context, Chat chat, ThemeData th
         ),
       ),
     );
-  });
+  }
 
   TextStyle? titleStyle = theme.textTheme.bodyText1;
 

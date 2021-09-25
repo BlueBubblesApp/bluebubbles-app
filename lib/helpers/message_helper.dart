@@ -58,7 +58,7 @@ class MessageHelper {
       Chat? msgChat = chat;
       if (msgChat == null) {
         List<Chat> msgChats = parseChats(item);
-        msgChat = msgChats.length > 0 ? msgChats.first : null;
+        msgChat = msgChats.isNotEmpty ? msgChats.first : null;
 
         // If there is a cached chat, get it. Otherwise, save the new one
         if (msgChat != null && chats.containsKey(msgChat.guid)) {
@@ -92,10 +92,10 @@ class MessageHelper {
 
       // Create the attachments
       List<dynamic> attachments = item['attachments'];
-      attachments.forEach((attachmentItem) async {
+      for (Map<String, dynamic> attachmentItem in attachments) {
         Attachment file = Attachment.fromMap(attachmentItem);
-        await file.save(message);
-      });
+        file.save(message);
+      }
 
       // Add message to the "master list"
       _messages.add(message);
@@ -149,7 +149,7 @@ class MessageHelper {
       Chat? msgChat = chat;
       if (msgChat == null) {
         List<Chat> msgChats = parseChats(item);
-        msgChat = msgChats.length > 0 ? msgChats[0] : null;
+        msgChat = msgChats.isNotEmpty ? msgChats[0] : null;
 
         // If there is a cached chat, get it. Otherwise, save the new one
         if (msgChat != null && chats.containsKey(msgChat.guid)) {
@@ -173,7 +173,7 @@ class MessageHelper {
   }
 
   static Future<void> downloadAttachmentSync(Attachment file) {
-    Completer<void> completer = new Completer();
+    Completer<void> completer = Completer();
     Get.put(
         AttachmentDownloadController(
             attachment: file,
@@ -181,7 +181,7 @@ class MessageHelper {
               completer.complete();
             },
             onError: () {
-              completer.completeError(new Error());
+              completer.completeError(Error());
             }),
         tag: file.guid);
 
@@ -410,10 +410,10 @@ class MessageHelper {
     }
 
     List<String> items = val.split(":").reversed.toList();
-    return (items.length > 0) ? items[0] : val;
+    return (items.isNotEmpty) ? items[0] : val;
   }
 
-  static bool withinTimeThreshold(Message? first, Message? second, {threshold: 5}) {
+  static bool withinTimeThreshold(Message? first, Message? second, {threshold = 5}) {
     if (first == null || second == null) return false;
     return second.dateCreated!.difference(first.dateCreated!).inMinutes.abs() > threshold;
   }

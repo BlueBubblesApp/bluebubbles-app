@@ -176,7 +176,7 @@ class ChatListPanel extends StatelessWidget {
                       materialSubtitle: materialSubtitle,
                       text: "Appearance"),
                   Obx(() {
-                    if (SettingsManager().settings.skin.value != Skins.Samsung)
+                    if (SettingsManager().settings.skin.value != Skins.Samsung) {
                       return SettingsSwitch(
                         onChanged: (bool val) {
                           SettingsManager().settings.hideDividers.value = val;
@@ -187,11 +187,12 @@ class ChatListPanel extends StatelessWidget {
                         backgroundColor: tileColor,
                         subtitle: "Hides dividers between tiles",
                       );
-                    else
+                    } else {
                       return SizedBox.shrink();
+                    }
                   }),
                   Obx(() {
-                    if (SettingsManager().settings.skin.value != Skins.Samsung)
+                    if (SettingsManager().settings.skin.value != Skins.Samsung) {
                       return Container(
                         color: tileColor,
                         child: Padding(
@@ -199,8 +200,9 @@ class ChatListPanel extends StatelessWidget {
                           child: SettingsDivider(color: headerColor),
                         ),
                       );
-                    else
+                    } else {
                       return SizedBox.shrink();
+                    }
                   }),
                   Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
@@ -213,7 +215,7 @@ class ChatListPanel extends StatelessWidget {
                         subtitle: "Compresses chat tile size on the conversation list page",
                       )),
                   Obx(() {
-                    if (SettingsManager().settings.skin.value == Skins.iOS)
+                    if (SettingsManager().settings.skin.value == Skins.iOS) {
                       return Container(
                         color: tileColor,
                         child: Padding(
@@ -221,11 +223,12 @@ class ChatListPanel extends StatelessWidget {
                           child: SettingsDivider(color: headerColor),
                         ),
                       );
-                    else
+                    } else {
                       return SizedBox.shrink();
+                    }
                   }),
                   Obx(() {
-                    if (SettingsManager().settings.skin.value == Skins.iOS)
+                    if (SettingsManager().settings.skin.value == Skins.iOS) {
                       return SettingsSwitch(
                         onChanged: (bool val) {
                           SettingsManager().settings.reducedForehead.value = val;
@@ -236,22 +239,24 @@ class ChatListPanel extends StatelessWidget {
                         backgroundColor: tileColor,
                         subtitle: "Reduces the appbar size on conversation pages",
                       );
-                    else
+                    } else {
                       return SizedBox.shrink();
+                    }
                   }),
                   Obx(() {
-                    if (SettingsManager().settings.skin.value == Skins.iOS)
+                    if (SettingsManager().settings.skin.value == Skins.iOS) {
                       return SettingsTile(
                         title: "Max Pin Rows",
                         subtitle:
                             "The maximum row count of pins displayed when using the app in the portrait orientation",
                         backgroundColor: tileColor,
                       );
-                    else
+                    } else {
                       return SizedBox.shrink();
+                    }
                   }),
                   Obx(() {
-                    if (SettingsManager().settings.skin.value == Skins.iOS)
+                    if (SettingsManager().settings.skin.value == Skins.iOS) {
                       return SettingsSlider(
                         min: 2,
                         max: 4,
@@ -268,11 +273,12 @@ class ChatListPanel extends StatelessWidget {
                             " rows of " +
                             SettingsManager().settings.pinColumnsPortrait.toString(),
                       );
-                    else
+                    } else {
                       return SizedBox.shrink();
+                    }
                   }),
                   Obx(() {
-                    if (SettingsManager().settings.skin.value == Skins.iOS)
+                    if (SettingsManager().settings.skin.value == Skins.iOS) {
                       return Container(
                         color: tileColor,
                         child: Padding(
@@ -280,8 +286,9 @@ class ChatListPanel extends StatelessWidget {
                           child: SettingsDivider(color: headerColor),
                         ),
                       );
-                    else
+                    } else {
                       return SizedBox.shrink();
+                    }
                   }),
                   // Obx(() {
                   //   if (SettingsManager().settings.skin.value == Skins.iOS)
@@ -312,7 +319,7 @@ class ChatListPanel extends StatelessWidget {
                       text: "Swipe Actions"),
                   Obx(() {
                     if (SettingsManager().settings.skin.value == Skins.Samsung ||
-                        SettingsManager().settings.skin.value == Skins.Material)
+                        SettingsManager().settings.skin.value == Skins.Material) {
                       return SettingsSwitch(
                         onChanged: (bool val) {
                           SettingsManager().settings.swipableConversationTiles.value = val;
@@ -323,8 +330,9 @@ class ChatListPanel extends StatelessWidget {
                         subtitle: "Enables swipe actions for conversation tiles when using Material theme",
                         backgroundColor: tileColor,
                       );
-                    else
+                    } else {
                       return SizedBox.shrink();
+                    }
                   }),
                   if (SettingsManager().settings.skin.value == Skins.iOS)
                     SettingsTile(
@@ -333,7 +341,7 @@ class ChatListPanel extends StatelessWidget {
                       subtitle: "Enable or disable specific swipe actions",
                     ),
                   Obx(() {
-                    if (SettingsManager().settings.skin.value == Skins.iOS)
+                    if (SettingsManager().settings.skin.value == Skins.iOS) {
                       return Container(
                         color: tileColor,
                         constraints: BoxConstraints(maxWidth: CustomNavigator.width(context)),
@@ -592,7 +600,7 @@ class ChatListPanel extends StatelessWidget {
                           ),
                         ),
                       );
-                    else if (SettingsManager().settings.swipableConversationTiles.value)
+                    } else if (SettingsManager().settings.swipableConversationTiles.value) {
                       return Container(
                         color: tileColor,
                         child: Column(
@@ -630,8 +638,9 @@ class ChatListPanel extends StatelessWidget {
                           ],
                         ),
                       );
-                    else
+                    } else {
                       return SizedBox.shrink();
+                    }
                   }),
                   SettingsHeader(
                       headerColor: headerColor,

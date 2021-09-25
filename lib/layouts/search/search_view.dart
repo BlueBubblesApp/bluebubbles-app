@@ -29,11 +29,11 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
 
   GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
   final Duration animationDuration = Duration(milliseconds: 400);
-  final TextEditingController textEditingController = new TextEditingController();
+  final TextEditingController textEditingController = TextEditingController();
 
   bool isSearching = false;
   Map<String, Chat> chatCache = {};
-  FocusNode _focusNode = new FocusNode();
+  final FocusNode _focusNode = FocusNode();
   Map<String, int> resultCache = {};
   bool noResults = false;
   String? previousSearch;
@@ -45,14 +45,14 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
     // Listen for any incoming events
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
       if (!event.containsKey("type")) return;
-      if (event["type"] == 'theme-update' && this.mounted) {
+      if (event["type"] == 'theme-update' && mounted) {
         setState(() {});
       }
     });
 
     // When the user types again after no results, reset no results
     textEditingController.addListener(() {
-      if (textEditingController.text != previousSearch && noResults && this.mounted) {
+      if (textEditingController.text != previousSearch && noResults && mounted) {
         setState(() {
           noResults = false;
         });
@@ -69,7 +69,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
     previousSearch = term;
 
     // If we've already searched for the results and there are none, set no results and return
-    if (resultCache.containsKey(term) && resultCache[term] == 0 && this.mounted) {
+    if (resultCache.containsKey(term) && resultCache[term] == 0 && mounted) {
       setState(() {
         noResults = true;
       });
@@ -77,10 +77,11 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
       return;
     }
 
-    if (this.mounted)
+    if (mounted) {
       setState(() {
         isSearching = true;
       });
+    }
 
     List<dynamic> results = await SocketManager().fetchMessages(null, limit: 50, where: [
       {
@@ -122,7 +123,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
     }
 
     this.results = _results;
-    _listKey = new GlobalKey<AnimatedListState>();
+    _listKey = GlobalKey<AnimatedListState>();
 
     // Let the animated list know it should update
     _listKey.currentState?.setState(() {});
@@ -131,10 +132,10 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
     resultCache[term] = this.results.length;
 
     // Update the UI with the results
-    if (this.mounted) {
+    if (mounted) {
       setState(() {
         isSearching = false;
-        noResults = this.results.length == 0;
+        noResults = this.results.isEmpty;
       });
     }
   }
@@ -199,7 +200,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                                 border: Border.all(color: Theme.of(context).accentColor)),
                             maxLines: 1,
                           )),
-                      (!this.isSearching)
+                      (!isSearching)
                           ? CupertinoButton(
                               padding: EdgeInsets.all(0),
                               child: Icon(Icons.arrow_forward,
@@ -220,11 +221,11 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                             )
                     ])),
             Divider(color: Theme.of(context).accentColor),
-            (!this.isSearching && noResults)
+            (!isSearching && noResults)
                 ? Padding(
                     padding: EdgeInsets.only(top: 25.0),
                     child: Text("No results found!", style: Theme.of(context).textTheme.bodyText1))
-                : (!this.isSearching)
+                : (!isSearching)
                     ? Flexible(
                         fit: FlexFit.loose,
                         child: AnimatedList(
@@ -274,12 +275,12 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                             }
 
                             return Column(
-                              key: new Key("result-${message.guid}"),
+                              key: Key("result-${message.guid}"),
                               mainAxisAlignment: MainAxisAlignment.start,
                               children: [
                                 ListTile(
                                   onTap: () {
-                                    MessageBloc customBloc = new MessageBloc(chat, canLoadMore: false);
+                                    MessageBloc customBloc = MessageBloc(chat, canLoadMore: false);
                                     CustomNavigator.push(
                                       context,
                                       ConversationView(
@@ -299,7 +300,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     mainAxisAlignment: MainAxisAlignment.start,
                                     children: [
-                                      Text("${buildDate(message.dateCreated)}",
+                                      Text(buildDate(message.dateCreated),
                                           style: Theme.of(context).textTheme.subtitle1!.apply(fontSizeDelta: -2)),
                                       Container(height: 5.0),
                                       Text(chat?.title ?? "Unknown title", style: Theme.of(context).textTheme.bodyText1),

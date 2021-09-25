@@ -107,9 +107,9 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
             if (done.isEmail || done.isPhoneNumber) {
               Contact? contact = ContactManager().getCachedContactSync(done);
               if (contact == null) {
-                widget.onSelected(new UniqueContact(address: done, displayName: done.isEmail ? done : await formatPhoneNumber(done)));
+                widget.onSelected(UniqueContact(address: done, displayName: done.isEmail ? done : await formatPhoneNumber(done)));
               } else {
-                widget.onSelected(new UniqueContact(address: done, displayName: contact.displayName));
+                widget.onSelected(UniqueContact(address: done, displayName: contact.displayName));
               }
             } else {
               if (widget.allContacts.isEmpty) {

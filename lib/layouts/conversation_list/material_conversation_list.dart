@@ -40,7 +40,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
   bool openedChatAlready = false;
 
   bool hasPinnedChat() {
-    for (var i = 0; i < ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).unknownSendersHelper(widget.parent.widget.showUnknownSenders).length; i++) {
+    for (int i = 0; i < ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).unknownSendersHelper(widget.parent.widget.showUnknownSenders).length; i++) {
       if (ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).unknownSendersHelper(widget.parent.widget.showUnknownSenders)[i].isPinned!) {
         widget.parent.hasPinnedChats = true;
         return true;
@@ -53,7 +53,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
 
   bool hasNormalChats() {
     int counter = 0;
-    for (var i = 0; i < ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).unknownSendersHelper(widget.parent.widget.showUnknownSenders).length; i++) {
+    for (int i = 0; i < ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).unknownSendersHelper(widget.parent.widget.showUnknownSenders).length; i++) {
       if (ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).unknownSendersHelper(widget.parent.widget.showUnknownSenders)[i].isPinned!) {
         counter++;
       } else {}
@@ -301,7 +301,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
 
                       String appDocPath = SettingsManager().appDocDir.path;
                       String ext = ".png";
-                      File file = new File("$appDocPath/attachments/" + randomString(16) + ext);
+                      File file = File("$appDocPath/attachments/" + randomString(16) + ext);
                       await file.create(recursive: true);
 
                       // Take the picture after opening the camera
@@ -356,11 +356,11 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                             .contains(selected.where((element) => element.hasUnreadMessage!).length))
                           GestureDetector(
                             onTap: () {
-                              selected.forEach((element) {
+                              for (Chat element in selected) {
                                 element.toggleHasUnread(!element.hasUnreadMessage!);
-                              });
+                              }
                               selected = [];
-                              if (this.mounted) setState(() {});
+                              if (mounted) setState(() {});
                             },
                             child: Padding(
                               padding: const EdgeInsets.all(8.0),
@@ -374,11 +374,11 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                             .contains(selected.where((element) => element.muteType == "mute").length))
                           GestureDetector(
                             onTap: () {
-                              selected.forEach((element) {
+                              for (Chat element in selected) {
                                 element.toggleMute(element.muteType != "mute");
-                              });
+                              }
                               selected = [];
-                              if (this.mounted) setState(() {});
+                              if (mounted) setState(() {});
                             },
                             child: Padding(
                               padding: const EdgeInsets.all(8.0),
@@ -394,11 +394,11 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                             .contains(selected.where((element) => element.isPinned!).length))
                           GestureDetector(
                             onTap: () {
-                              selected.forEach((element) {
+                              for (Chat element in selected) {
                                 element.togglePin(!element.isPinned!);
-                              });
+                              }
                               selected = [];
-                              if (this.mounted) setState(() {});
+                              if (mounted) setState(() {});
                             },
                             child: Padding(
                               padding: const EdgeInsets.all(8.0),
@@ -410,15 +410,15 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                           ),
                         GestureDetector(
                           onTap: () {
-                            selected.forEach((element) {
+                            for (Chat element in selected) {
                               if (element.isArchived!) {
                                 ChatBloc().unArchiveChat(element);
                               } else {
                                 ChatBloc().archiveChat(element);
                               }
-                            });
+                            }
                             selected = [];
-                            if (this.mounted) setState(() {});
+                            if (mounted) setState(() {});
                           },
                           child: Padding(
                             padding: const EdgeInsets.all(8.0),
@@ -431,12 +431,12 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                         if (selected[0].isArchived!)
                           GestureDetector(
                             onTap: () {
-                              selected.forEach((element) {
+                              for (Chat element in selected) {
                                 ChatBloc().deleteChat(element);
                                 Chat.deleteChat(element);
-                              });
+                              }
                               selected = [];
-                              if (this.mounted) setState(() {});
+                              if (mounted) setState(() {});
                             },
                             child: Padding(
                               padding: const EdgeInsets.all(8.0),
@@ -509,12 +509,12 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                                     .archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]
                                     .togglePin(!ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isPinned!);
                                 EventDispatcher().emit("refresh", null);
-                                if (this.mounted) setState(() {});
+                                if (mounted) setState(() {});
                               } else if (SettingsManager().settings.materialLeftAction.value ==
                                   MaterialSwipeAction.alerts) {
                                 ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].toggleMute(
                                     ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].muteType != "mute");
-                                if (this.mounted) setState(() {});
+                                if (mounted) setState(() {});
                               } else if (SettingsManager().settings.materialLeftAction.value ==
                                   MaterialSwipeAction.delete) {
                                 ChatBloc().deleteChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
@@ -537,12 +537,12 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                                     .archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]
                                     .togglePin(!ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isPinned!);
                                 EventDispatcher().emit("refresh", null);
-                                if (this.mounted) setState(() {});
+                                if (mounted) setState(() {});
                               } else if (SettingsManager().settings.materialRightAction.value ==
                                   MaterialSwipeAction.alerts) {
                                 ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].toggleMute(
                                     ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].muteType != "mute");
-                                if (this.mounted) setState(() {});
+                                if (mounted) setState(() {});
                               } else if (SettingsManager().settings.materialRightAction.value ==
                                   MaterialSwipeAction.delete) {
                                 ChatBloc().deleteChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);

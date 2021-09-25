@@ -24,7 +24,7 @@ class AttachmentInfoBloc {
   Future<void> init(List<Chat> chats) async {
     for (Chat chat in chats) {
       if (chat.guid != null && !chatData.containsKey(chat.guid)) {
-        chatData[chat.guid!] = await _initChat(chat);
+        chatData[chat.guid!] = _initChat(chat);
       }
     }
   }
@@ -46,7 +46,7 @@ class AttachmentInfoBloc {
   }
 
   CurrentChat _initChat(Chat chat) {
-    CurrentChat currentChat = new CurrentChat(chat);
+    CurrentChat currentChat = CurrentChat(chat);
     currentChat.preloadMessageAttachments();
     return currentChat;
   }

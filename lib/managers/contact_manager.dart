@@ -10,7 +10,6 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
 import 'package:fast_contacts/fast_contacts.dart' hide Contact;
-import 'package:dio_http/dio_http.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:faker/faker.dart';
@@ -25,9 +24,9 @@ class ContactManager {
   static final ContactManager _manager = ContactManager._internal();
   static final tag = 'ContactManager';
 
-  StreamController<List<String>> _stream = new StreamController.broadcast();
+  final StreamController<List<String>> _stream = StreamController.broadcast();
 
-  StreamController<Map<String, Color?>> _colorStream = new StreamController.broadcast();
+  final StreamController<Map<String, Color?>> _colorStream = StreamController.broadcast();
 
   Stream<Map<String, Color?>> get colorStream => _colorStream.stream;
 
@@ -39,9 +38,9 @@ class ContactManager {
 
   List<Contact> contacts = [];
   bool hasFetchedContacts = false;
-  Map<String, Contact?> handleToContact = new Map();
-  Map<String, String?> handleToFakeName = new Map();
-  Map<String, ContactAvatarWidgetState> contactWidgetStates = new Map();
+  Map<String, Contact?> handleToContact = {};
+  Map<String, String?> handleToFakeName = {};
+  Map<String, ContactAvatarWidgetState> contactWidgetStates = {};
 
   // We need these so we don't have threads fetching at the same time
   Completer<bool>? getContactsFuture;
@@ -111,7 +110,7 @@ class ContactManager {
     lastRefresh = now;
 
     // Start a new completer
-    getContactsFuture = new Completer<bool>();
+    getContactsFuture = Completer<bool>();
 
     // Fetch the current list of contacts
     Logger.info("Fetching contacts", tag: tag);
@@ -161,7 +160,7 @@ class ContactManager {
     hasFetchedContacts = true;
 
     // Match handles in the database with contacts
-    await this.matchHandles();
+    await matchHandles();
 
     Logger.info("Finished fetching contacts (${handleToContact.length})", tag: tag);
     if (getContactsFuture != null && !getContactsFuture!.isCompleted) {
@@ -211,7 +210,7 @@ class ContactManager {
     }
 
     // Create a new completer for this
-    getAvatarsFuture = new Completer();
+    getAvatarsFuture = Completer();
 
     Logger.info("Fetching Avatars", tag: tag);
     for (String address in handleToContact.keys) {
@@ -296,8 +295,9 @@ class ContactManager {
     if (contacts.isEmpty) await getContacts();
 
     String? address = handle.address;
-    if (handleToContact.containsKey(address) && handleToContact[address] != null)
+    if (handleToContact.containsKey(address) && handleToContact[address] != null) {
       return handleToContact[address]!.displayName;
+    }
 
     try {
       Contact? contact = await getContact(handle);

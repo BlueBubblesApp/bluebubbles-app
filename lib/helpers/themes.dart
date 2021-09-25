@@ -2,16 +2,7 @@ import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
-import 'package:collection/src/iterable_extensions.dart';
-
-enum DarkThemes {
-  OLED,
-  Nord,
-}
-
-enum LightThemes {
-  Bright_White,
-}
+import 'package:collection/collection.dart';
 
 class Themes {
   static List<ThemeObject> get themes => [
@@ -167,9 +158,7 @@ ThemeObject revertToPreviousDarkTheme() {
   List<ThemeObject> allThemes = ThemeObject.getThemes();
   ThemeObject? previous = allThemes.firstWhereOrNull((e) => e.previousDarkTheme);
 
-  if (previous == null) {
-    previous = Themes.themes.firstWhereOrNull((element) => element.name == "OLED Dark");
-  }
+  previous ??= Themes.themes.firstWhereOrNull((element) => element.name == "OLED Dark");
 
   // Remove the previous flags
   previous!.previousDarkTheme = false;
@@ -182,9 +171,7 @@ ThemeObject revertToPreviousLightTheme() {
   List<ThemeObject> allThemes = ThemeObject.getThemes();
   ThemeObject? previous = allThemes.firstWhereOrNull((e) => e.previousDarkTheme);
 
-  if (previous == null) {
-    previous = Themes.themes.firstWhereOrNull((element) => element.name == "Bright White");
-  }
+  previous ??= Themes.themes.firstWhereOrNull((element) => element.name == "Bright White");
 
   // Remove the previous flags
   previous!.previousDarkTheme = false;

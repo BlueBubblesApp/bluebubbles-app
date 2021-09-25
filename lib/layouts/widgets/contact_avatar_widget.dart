@@ -50,7 +50,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
   late List<Color> colors;
   bool requested = false;
 
-  bool get isInvalid => (widget.handle?.address ?? null) == null;
+  bool get isInvalid => widget.handle?.address == null;
 
   String get keyPrefix => widget.handle?.address ?? randomString(8);
 
@@ -73,7 +73,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
           widget.handle!.color = color.value.toRadixString(16);
         }
 
-        if (this.mounted) setState(() {});
+        if (mounted) setState(() {});
       });
 
       ContactManager().stream.listen((event) {
@@ -112,7 +112,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
             contacts.where((element) => element.phones.any((e) => e == widget.handle!.address)).toList();
       }
 
-      if (contactRes.length > 0) {
+      if (contactRes.isNotEmpty) {
         contact = contactRes.first;
         if (isNullOrEmpty(contact.avatar)! && !kIsWeb && !kIsDesktop) {
           contact.avatar =
@@ -124,11 +124,11 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
     if (contact != null && contact.avatar != null && contact.avatar!.isNotEmpty && state!.contactImage == null) {
       try {
         state!.contactImage = MemoryImage(contact.avatar!);
-      } catch (e) {}
+      } catch (_) {}
     }
 
     requested = true;
-    if (this.mounted) setState(() {});
+    if (mounted) setState(() {});
   }
 
   Future<String?> getInitials({Handle? handle, double size = 30}) async {
@@ -144,11 +144,11 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
       case 1:
         return items[0][0].toUpperCase();
       default:
-        if (items.length - 1 < 0 || items[items.length - 1].length < 1) return "";
+        if (items.length - 1 < 0 || items[items.length - 1].isEmpty) return "";
         String first = items[0][0].toUpperCase();
         String last = items[items.length - 1][0].toUpperCase();
-        if (!last.contains(new RegExp('[A-Za-z]'))) last = items[1][0];
-        if (!last.contains(new RegExp('[A-Za-z]'))) last = "";
+        if (!last.contains(RegExp('[A-Za-z]'))) last = items[1][0];
+        if (!last.contains(RegExp('[A-Za-z]'))) last = "";
         return first + last;
     }
   }
@@ -235,7 +235,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
         width: widget.size ?? 40,
         height: widget.size ?? 40,
         padding: EdgeInsets.all(widget.borderThickness),
-        decoration: new BoxDecoration(
+        decoration: BoxDecoration(
           color: context.theme.backgroundColor, // border color
           shape: BoxShape.circle,
         ),
@@ -257,12 +257,12 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
                         colors: [
                           !SettingsManager().settings.colorfulAvatars.value
                               ? HexColor("928E8E")
-                              : colors.length > 0
+                              : colors.isNotEmpty
                                   ? colors[1]
                                   : HexColor("928E8E"),
                           !SettingsManager().settings.colorfulAvatars.value
                               ? HexColor("686868")
-                              : colors.length > 0
+                              : colors.isNotEmpty
                                   ? colors[0]
                                   : HexColor("686868")
                         ],

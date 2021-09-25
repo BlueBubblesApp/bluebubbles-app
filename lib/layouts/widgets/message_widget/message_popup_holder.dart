@@ -51,12 +51,12 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
         !sameSender(widget.message, widget.olderMessage) ||
         !widget.message.dateCreated!.isWithin(widget.olderMessage!.dateCreated!, minutes: 30));
 
-    this.childOffset = Offset(
+    childOffset = Offset(
         offset.dx - (increaseWidth ? 35 : 0),
         offset.dy -
             (doNotIncreaseHeight
                 ? 0
-                : widget.message.getReactions().length > 0
+                : widget.message.getReactions().isNotEmpty
                     ? 20.0
                     : 23.0));
     childSize = Size(
@@ -64,7 +64,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
         size.height +
             (doNotIncreaseHeight
                 ? 0
-                : widget.message.getReactions().length > 0
+                : widget.message.getReactions().isNotEmpty
                     ? 20.0
                     : 23.0));
   }
@@ -75,7 +75,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
     getOffset();
 
     CurrentChat? currentChat = CurrentChat.of(context);
-    if (this.mounted) {
+    if (mounted) {
       setState(() {
         visible = false;
       });
@@ -109,7 +109,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
       ),
     );
 
-    if (this.mounted) {
+    if (mounted) {
       setState(() {
         visible = true;
       });
@@ -126,20 +126,20 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
     return GestureDetector(
       key: containerKey,
       onDoubleTap: SettingsManager().settings.doubleTapForDetails.value && !widget.message.guid!.startsWith('temp')
-          ? this.openMessageDetails
+          ? openMessageDetails
           : SettingsManager().settings.enableQuickTapback.value
               ? () {
                   HapticFeedback.lightImpact();
-                  this.sendReaction(SettingsManager().settings.quickTapbackType.value);
+                  sendReaction(SettingsManager().settings.quickTapbackType.value);
                 }
               : null,
-      onLongPress: this.openMessageDetails,
+      onLongPress: openMessageDetails,
       onSecondaryTapUp: (details) async {
         if (!kIsWeb && !kIsDesktop) return;
         if (kIsWeb) {
           (await html.document.onContextMenu.first).preventDefault();
         }
-        this.openMessageDetails();
+        openMessageDetails();
       },
       child: Opacity(
         child: widget.child,

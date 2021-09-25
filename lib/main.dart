@@ -42,6 +42,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart' hide Message;
 import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 import 'package:firebase_dart/firebase_dart.dart';
+//ignore: implementation_imports
 import 'package:firebase_dart/src/auth/utils.dart' as fdu;
 import 'package:get/get.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -88,7 +89,7 @@ late final Box<ChatHandleJoin> chJoinBox;
 late final Box<ChatMessageJoin> cmJoinBox;
 late final Box<ThemeValueJoin> tvJoinBox;
 
-Future<Null> _reportError(dynamic error, dynamic stackTrace) async {
+Future<void> _reportError(dynamic error, dynamic stackTrace) async {
   // Print the exception to the console.
   Logger.error('Caught error: $error');
   Logger.error(stackTrace.toString());
@@ -107,8 +108,8 @@ class MyHttpOverrides extends HttpOverrides {
   }
 }
 
-Future<Null> main() async {
-  HttpOverrides.global = new MyHttpOverrides();
+Future<void> main() async {
+  HttpOverrides.global = MyHttpOverrides();
 
   // This captures errors reported by the Flutter framework.
   FlutterError.onError = (FlutterErrorDetails details) {
@@ -134,7 +135,7 @@ Future<Null> main() async {
       final objectBoxDirectory = Directory(documentsDirectory.path + '/objectbox/');
       final sqlitePath = join(documentsDirectory.path, "chat.db");
 
-      Future<void> Function({bool saveThemes}) initStore = ({bool saveThemes = false}) async {
+      Future<void> initStore({bool saveThemes = false}) async {
         store = await openStore(directory: (await getApplicationDocumentsDirectory()).path + '/objectbox');
         attachmentBox = store.box<Attachment>();
         chatBox = store.box<Chat>();
@@ -155,7 +156,7 @@ Future<Null> main() async {
             theme.save(updateIfNotAbsent: false);
           }
         }
-      };
+      }
 
       if (!objectBoxDirectory.existsSync() && File(sqlitePath).existsSync()) {
         runApp(UpgradingDB());
@@ -219,7 +220,7 @@ Future<Null> main() async {
   }
 
   if (exception == null) {
-    runZonedGuarded<Null>(() {
+    runZonedGuarded<void>(() {
       ThemeObject light = ThemeObject.getLightTheme();
       ThemeObject dark = ThemeObject.getDarkTheme();
 
@@ -267,8 +268,8 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
     return AdaptiveTheme(
       /// These are the default white and dark themes.
       /// These will be changed by [SettingsManager] when you set a custom theme
-      light: this.lightTheme,
-      dark: this.darkTheme,
+      light: lightTheme,
+      dark: darkTheme,
 
       /// The default is that the dark and light themes will follow the system theme
       /// This will be changed by [SettingsManager]
@@ -393,12 +394,12 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
       // Create the notification in case it hasn't been already. Doing this multiple times won't do anything, so we just do it on every app start
       NotificationManager().createNotificationChannel(
-        NotificationManager.NEW_MESSAGE_CHANNEL,
+        NotificationManager.newMessageChannel,
         "New Messages",
         "For new messages retreived",
       );
       NotificationManager().createNotificationChannel(
-        NotificationManager.SOCKET_ERROR_CHANNEL,
+        NotificationManager.socketErrorChannel,
         "Socket Connection Error",
         "Notifications that will appear when the connection to the server has failed",
       );
@@ -410,10 +411,10 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         Logger.info("SendPort received action ${data['action']}");
         if (data['action'] == 'new-message') {
           // Add it to the queue with the data as the item
-          IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_MESSAGE_EVENT, item: {"data": data}));
+          IncomingQueue().add(QueueItem(event: IncomingQueue.handleMessageEvent, item: {"data": data}));
         } else if (data['action'] == 'update-message') {
           // Add it to the queue with the data as the item
-          IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_UPDATE_MESSAGE, item: {"data": data}));
+          IncomingQueue().add(QueueItem(event: IncomingQueue.handleUpdateMessage, item: {"data": data}));
         }
       });
     }
@@ -454,15 +455,15 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
           // Add the attached files to a list
           List<PlatformFile> attachments = [];
-          value.forEach((element) {
+          for (SharedMediaFile element in value) {
             attachments.add(PlatformFile(
               name: element.path.split("/").last,
               path: element.path,
               size: 0,
             ));
-          });
+          }
 
-          if (attachments.length == 0) return;
+          if (attachments.isEmpty) return;
 
           // Go to the new chat creator, with all of our attachments
           CustomNavigator.pushAndRemoveUntil(

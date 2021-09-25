@@ -181,7 +181,7 @@ class MiscPanel extends StatelessWidget {
                         )),
                   if (SettingsManager().canAuthenticate)
                     Obx(() {
-                      if (SettingsManager().settings.shouldSecure.value)
+                      if (SettingsManager().settings.shouldSecure.value) {
                         return Container(
                             color: tileColor,
                             child: Padding(
@@ -217,12 +217,13 @@ class MiscPanel extends StatelessWidget {
                                 ),
                               ),
                             ));
-                      else
+                      } else {
                         return SizedBox.shrink();
+                      }
                     }),
                   if (SettingsManager().canAuthenticate)
                     Obx(() {
-                      if (SettingsManager().settings.shouldSecure.value)
+                      if (SettingsManager().settings.shouldSecure.value) {
                         return SettingsOptions<SecurityLevel>(
                           initial: SettingsManager().settings.securityLevel.value,
                           onChanged: (val) async {
@@ -250,8 +251,9 @@ class MiscPanel extends StatelessWidget {
                           backgroundColor: tileColor,
                           secondaryColor: headerColor,
                         );
-                      else
+                      } else {
                         return SizedBox.shrink();
+                      }
                     }),
                   if (SettingsManager().canAuthenticate)
                     Container(
@@ -290,7 +292,7 @@ class MiscPanel extends StatelessWidget {
                         backgroundColor: tileColor,
                       )),
                   Obx(() {
-                    if (SettingsManager().settings.skin.value == Skins.iOS)
+                    if (SettingsManager().settings.skin.value == Skins.iOS) {
                       return Container(
                         color: tileColor,
                         child: Padding(
@@ -298,21 +300,23 @@ class MiscPanel extends StatelessWidget {
                           child: SettingsDivider(color: headerColor),
                         ),
                       );
-                    else
+                    } else {
                       return SizedBox.shrink();
+                    }
                   }),
                   Obx(() {
-                    if (SettingsManager().settings.skin.value == Skins.iOS)
+                    if (SettingsManager().settings.skin.value == Skins.iOS) {
                       return SettingsTile(
                         title: "Scroll Speed Multiplier",
                         subtitle: "Controls how fast scrolling occurs",
                         backgroundColor: tileColor,
                       );
-                    else
+                    } else {
                       return SizedBox.shrink();
+                    }
                   }),
                   Obx(() {
-                    if (SettingsManager().settings.skin.value == Skins.iOS)
+                    if (SettingsManager().settings.skin.value == Skins.iOS) {
                       return SettingsSlider(
                           text: "Scroll Speed Multiplier",
                           startingVal: SettingsManager().settings.scrollVelocity.value,
@@ -325,8 +329,9 @@ class MiscPanel extends StatelessWidget {
                           min: 0.20,
                           max: 1,
                           divisions: 8);
-                    else
+                    } else {
                       return SizedBox.shrink();
+                    }
                   }),
                   SettingsHeader(
                       headerColor: headerColor,
@@ -345,7 +350,7 @@ class MiscPanel extends StatelessWidget {
                         backgroundColor: tileColor,
                       )),
                   Obx(() {
-                    if (!isNullOrZero(SettingsManager().settings.sendDelay.value))
+                    if (!isNullOrZero(SettingsManager().settings.sendDelay.value)) {
                       return SettingsSlider(
                           text: "Set send delay",
                           startingVal: SettingsManager().settings.sendDelay.toDouble(),
@@ -358,8 +363,9 @@ class MiscPanel extends StatelessWidget {
                           min: 1,
                           max: 10,
                           divisions: 9);
-                    else
+                    } else {
                       return SizedBox.shrink();
+                    }
                   }),
                   Container(
                     color: tileColor,
@@ -386,18 +392,19 @@ class MiscPanel extends StatelessWidget {
                     ),
                   ),
                   Obx(() {
-                    if (SettingsManager().settings.skin.value == Skins.iOS)
+                    if (SettingsManager().settings.skin.value == Skins.iOS) {
                       return SettingsTile(
                         title: "Maximum Group Avatar Size",
                         subtitle: "Controls the maximum number of contact avatars in a group chat's widget",
                         backgroundColor: tileColor,
                       );
-                    else
+                    } else {
                       return SizedBox.shrink();
+                    }
                   }),
                   Obx(
                         () {
-                      if (SettingsManager().settings.skin.value == Skins.iOS)
+                      if (SettingsManager().settings.skin.value == Skins.iOS) {
                         return SettingsSlider(
                           divisions: 3,
                           max: 5,
@@ -411,8 +418,9 @@ class MiscPanel extends StatelessWidget {
                           formatValue: ((double val) => val.toStringAsFixed(0)),
                           backgroundColor: tileColor,
                         );
-                      else
+                      } else {
                         return SizedBox.shrink();
+                      }
                     },
                   ),
                   Container(

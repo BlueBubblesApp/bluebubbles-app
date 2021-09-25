@@ -90,7 +90,7 @@ Future<String> formatPhoneNumber(dynamic item) async {
     if (!address.startsWith("+") && cc != null) {
       try {
         meta = await PhoneNumberUtil.formatAsYouType("${cc.dialCode}$address", countryCode);
-      } catch (x) {}
+      } catch (_) {}
     }
   }
 
@@ -106,7 +106,7 @@ Future<List<String>> getCompareOpts(Handle handle) async {
   int maxOpts = 4; // This is relatively arbitrary
   for (int i = 0; i < formatted.length; i += 1) {
     String val = formatted.substring(i);
-    if (val.length == 0) break;
+    if (val.isEmpty) break;
 
     opts.add(val);
     if (i + 1 >= maxOpts) break;
@@ -178,12 +178,12 @@ Future<String?> parsePhoneNumber(String number, String region) async {
 }
 
 String randomString(int length) {
-  var rand = new Random();
-  var codeUnits = new List.generate(length, (index) {
+  var rand = Random();
+  var codeUnits = List.generate(length, (index) {
     return rand.nextInt(33) + 89;
   });
 
-  return new String.fromCharCodes(codeUnits);
+  return String.fromCharCodes(codeUnits);
 }
 
 void showSnackbar(String title, String message,
@@ -217,7 +217,7 @@ String buildDate(DateTime? dateTime) {
   if (dateTime == null || dateTime.millisecondsSinceEpoch == 0) return "";
   String time = SettingsManager().settings.use24HrFormat.value
       ? intl.DateFormat.Hm().format(dateTime)
-      : new intl.DateFormat.jm().format(dateTime);
+      : intl.DateFormat.jm().format(dateTime);
   String date;
   if (dateTime.isToday()) {
     date = time;
@@ -235,23 +235,23 @@ String buildTime(DateTime? dateTime) {
   if (dateTime == null || dateTime.millisecondsSinceEpoch == 0) return "";
   String time = SettingsManager().settings.use24HrFormat.value
       ? intl.DateFormat.Hm().format(dateTime)
-      : new intl.DateFormat.jm().format(dateTime);
+      : intl.DateFormat.jm().format(dateTime);
   return time;
 }
 
 extension DateHelpers on DateTime {
   bool isToday() {
     final now = DateTime.now();
-    return now.day == this.day && now.month == this.month && now.year == this.year;
+    return now.day == day && now.month == month && now.year == year;
   }
 
   bool isYesterday() {
     final yesterday = DateTime.now().subtract(Duration(days: 1));
-    return yesterday.day == this.day && yesterday.month == this.month && yesterday.year == this.year;
+    return yesterday.day == day && yesterday.month == month && yesterday.year == year;
   }
 
   bool isWithin(DateTime other, {int? ms, int? seconds, int? minutes, int? hours}) {
-    Duration diff = this.difference(other);
+    Duration diff = difference(other);
     if (ms != null) {
       return diff.inMilliseconds < ms;
     } else if (seconds != null) {
@@ -261,7 +261,7 @@ extension DateHelpers on DateTime {
     } else if (hours != null) {
       return diff.inHours < hours;
     } else {
-      throw new Exception("No timerange specified!");
+      throw Exception("No timerange specified!");
     }
   }
 }
@@ -311,14 +311,15 @@ String uriToFilename(String? uri, String? mimeType) {
   filename = slugify(filename, delimiter: '_');
 
   // Rebuild the filename
-  return (ext != null && ext.length > 0) ? '$filename.$ext' : filename;
+  return (ext != null && ext.isNotEmpty) ? '$filename.$ext' : filename;
 }
 
 Future<String> getGroupEventText(Message message) async {
   String text = "Unknown group event";
   String? handle = "You";
-  if (!message.isFromMe! && message.handleId != null && message.handle != null)
+  if (!message.isFromMe! && message.handleId != null && message.handle != null) {
     handle = await ContactManager().getContactTitle(message.handle);
+  }
 
   String? other = "someone";
   if (message.otherHandle != null && [1, 2].contains(message.itemType)) {
@@ -414,7 +415,7 @@ List<Color> toColorGradient(String? str) {
     total += str!.codeUnitAt(i);
   }
 
-  Random random = new Random(total);
+  Random random = Random(total);
   int seed = random.nextInt(7);
 
   // These are my arbitrary weights. It's based on what I found
@@ -452,7 +453,7 @@ Size getGifDimensions(Uint8List bytes) {
 
   Logger.debug("GIF width: $width");
   Logger.debug("GIF height: $height");
-  Size size = new Size(width.toDouble(), height.toDouble());
+  Size size = Size(width.toDouble(), height.toDouble());
   return size;
 }
 
@@ -505,7 +506,7 @@ Future<String> getDeviceName() async {
     }
 
     // Set device name
-    if (items.length > 0) {
+    if (items.isNotEmpty) {
       deviceName = items.join("_").toLowerCase();
     }
   } catch (ex) {
@@ -554,13 +555,13 @@ Future<File?> saveImageFromUrl(String guid, String url) async {
   try {
     var response = await get(Uri.parse(url));
 
-    Directory baseDir = new Directory("${AttachmentHelper.getBaseAttachmentsPath()}/$guid");
+    Directory baseDir = Directory("${AttachmentHelper.getBaseAttachmentsPath()}/$guid");
     if (!baseDir.existsSync()) {
       baseDir.createSync(recursive: true);
     }
 
     String newPath = "${baseDir.path}/$filename";
-    File file = new File(newPath);
+    File file = File(newPath);
     file.writeAsBytesSync(response.bodyBytes);
 
     return file;
@@ -644,7 +645,7 @@ Future<PlayerStatus> getControllerStatus(VideoPlayerController controller) async
 extension PlatformSpecificCapitalize on String {
   String get psCapitalize {
     if (SettingsManager().settings.skin.value == Skins.iOS) {
-      return this.toUpperCase();
+      return toUpperCase();
     } else {
       return this;
     }

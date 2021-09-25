@@ -65,7 +65,7 @@ class _ContactTileState extends State<ContactTile> {
     MemoryImage? avatar = await loadAvatar(widget.chat, widget.handle);
     if (contactImage == null || contactImage!.bytes.length != avatar!.bytes.length) {
       contactImage = avatar;
-      if (this.mounted) setState(() {});
+      if (mounted) setState(() {});
     }
   }
 
@@ -74,7 +74,7 @@ class _ContactTileState extends State<ContactTile> {
       if (contact != null) {
         if (this.contact == null || this.contact!.id != contact.id) {
           this.contact = contact;
-          if (this.mounted) setState(() {});
+          if (mounted) setState(() {});
         }
       }
     });
@@ -116,7 +116,7 @@ class _ContactTileState extends State<ContactTile> {
     final bool isEmail = widget.handle.address.isEmail;
     return InkWell(
       onLongPress: () {
-        Clipboard.setData(new ClipboardData(text: widget.handle.address));
+        Clipboard.setData(ClipboardData(text: widget.handle.address));
         showSnackbar('Copied', 'Address copied to clipboard');
       },
       onTap: () async {
@@ -225,7 +225,7 @@ class _ContactTileState extends State<ContactTile> {
           builder: (BuildContext context) {
             return AlertDialog(
               backgroundColor: Theme.of(context).accentColor,
-              title: new Text("Select a Phone Number",
+              title: Text("Select a Phone Number",
                   style: TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
               content: ObxValue<Rx<bool>>(
                   (data) => Column(
@@ -235,7 +235,7 @@ class _ContactTileState extends State<ContactTile> {
                         children: [
                           for (int i = 0; i < phones.length; i++)
                             TextButton(
-                              child: Text("${phones[i]}",
+                              child: Text(phones[i],
                                   style: TextStyle(color: Theme.of(context).textTheme.bodyText1!.color),
                                   textAlign: TextAlign.start),
                               onPressed: () {
@@ -310,7 +310,7 @@ class _ContactTileState extends State<ContactTile> {
                         );
                       });
 
-                  Map<String, dynamic> params = new Map();
+                  Map<String, dynamic> params = {};
                   params["identifier"] = widget.chat.guid;
                   params["address"] = widget.handle.address;
                   SocketManager().sendMessage("remove-participant", params, (response) async {

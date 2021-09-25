@@ -94,7 +94,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     smartReplyController = StreamController<List<String>>.broadcast();
 
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (!this.mounted) return;
+      if (!mounted) return;
       if (!event.containsKey("type")) return;
 
       if (event["type"] == "refresh-messagebloc" && event["data"].containsKey("chatGuid")) {
@@ -110,7 +110,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
 
             // Reload the state after refreshing
             widget.messageBloc!.refresh();
-            if (this.mounted) {
+            if (mounted) {
               setState(() {});
             }
           }
@@ -137,7 +137,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
   }
 
   void resetReplies() {
-    if (replies.length == 0) return;
+    if (replies.isEmpty) return;
     replies = [];
     internalSmartReplies.clear();
     setState(() {});
@@ -180,18 +180,18 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     }
 
     // Create a new completer
-    loader = new Completer();
+    loader = Completer();
     loadedPages.add(messageCount);
 
     // Start loading the next chunk of messages
     widget.messageBloc!
         .loadMessageChunk(_messages.length, checkLocal: !noMoreLocalMessages)
         .then((LoadMessageResult val) {
-      if (val != LoadMessageResult.FAILED_TO_RETREIVE) {
-        if (val == LoadMessageResult.RETREIVED_NO_MESSAGES) {
+      if (val != LoadMessageResult.FAILED_TO_RETRIEVE) {
+        if (val == LoadMessageResult.RETRIEVED_NO_MESSAGES) {
           noMoreMessages = true;
           Logger.info("No more messages to load", tag: "MessageBloc");
-        } else if (val == LoadMessageResult.RETREIVED_LAST_PAGE) {
+        } else if (val == LoadMessageResult.RETRIEVED_LAST_PAGE) {
           // Mark this chat saying we have no more messages to load
           noMoreLocalMessages = true;
         }
@@ -201,11 +201,11 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
       loader!.complete(val);
 
       // Only update the state if there are messages that were added
-      if (val != LoadMessageResult.FAILED_TO_RETREIVE) {
-        if (this.mounted) setState(() {});
+      if (val != LoadMessageResult.FAILED_TO_RETRIEVE) {
+        if (mounted) setState(() {});
       }
     }).catchError((ex) {
-      loader!.complete(LoadMessageResult.FAILED_TO_RETREIVE);
+      loader!.complete(LoadMessageResult.FAILED_TO_RETRIEVE);
     });
 
     return loader!.future;
@@ -222,7 +222,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
       event.messages = event.messages.where((element) => element.dateDeleted == null).toList();
     }
 
-    if (event.type == MessageBlocEventType.insert && this.mounted) {
+    if (event.type == MessageBlocEventType.insert && mounted) {
       if (LifeCycleManager().isAlive && !event.outGoing) {
         NotificationManager().switchChat(CurrentChat.of(context)?.chat);
       }
@@ -260,10 +260,10 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
 
       if (event.message!.hasAttachments) {
         currentChat!.updateChatAttachments();
-        if (this.mounted) setState(() {});
+        if (mounted) setState(() {});
       }
 
-      if (isNewMessage && this.showSmartReplies) {
+      if (isNewMessage && showSmartReplies) {
         updateReplies();
       }
     } else if (event.type == MessageBlocEventType.remove) {
@@ -276,10 +276,10 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     } else {
       int originalMessageLength = _messages.length;
       _messages = event.messages;
-      _messages.forEach((message) {
+      for (Message message in _messages) {
         currentChat?.getAttachmentsForMessage(message);
         if (widgetsBuilt) currentChat?.messageMarkers.updateMessageMarkers(message);
-      });
+      }
 
       // This needs to be in reverse so that the oldest message gets added first
       // We also only want to grab the last 5, so long as there are at least 5 results
@@ -297,16 +297,17 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
 
       // We only want to update smart replies on the intial message fetch
       if (originalMessageLength == 0) {
-        if (this.showSmartReplies) {
-          if (_messages.length > 0) updateReplies();
+        if (showSmartReplies) {
+          if (_messages.isNotEmpty) updateReplies();
         }
       }
-      if (_listKey == null) _listKey = GlobalKey<SliverAnimatedListState>();
+      _listKey ??= GlobalKey<SliverAnimatedListState>();
 
       if (originalMessageLength < _messages.length) {
         for (int i = originalMessageLength; i < _messages.length; i++) {
-          if (_listKey != null && _listKey!.currentState != null)
+          if (_listKey != null && _listKey!.currentState != null) {
             _listKey!.currentState!.insertItem(i, duration: Duration(milliseconds: 0));
+          }
         }
       } else if (originalMessageLength > _messages.length) {
         for (int i = originalMessageLength; i >= _messages.length; i--) {
@@ -323,7 +324,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
       }
     }
 
-    if (this.mounted) setState(() {});
+    if (mounted) setState(() {});
   }
 
   /// All message update events are handled within the message widgets, to prevent top level setstates
@@ -384,8 +385,9 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
         behavior: HitTestBehavior.deferToChild,
         onHorizontalDragStart: (details) {},
         onHorizontalDragUpdate: (details) {
-          if (SettingsManager().settings.skin.value != Skins.Samsung)
+          if (SettingsManager().settings.skin.value != Skins.Samsung) {
             CurrentChat.of(context)!.timeStampOffset += details.delta.dx * 0.3;
+          }
         },
         onHorizontalDragEnd: (details) {
           if (SettingsManager().settings.skin.value != Skins.Samsung) CurrentChat.of(context)!.timeStampOffset = 0;
@@ -398,7 +400,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
           reverse: true,
           physics: ThemeSwitcher.getScrollPhysics(),
           slivers: <Widget>[
-            if (this.showSmartReplies)
+            if (showSmartReplies)
               StreamBuilder<List<String?>>(
                 stream: smartReplyController.stream,
                 builder: (context, snapshot) {

@@ -39,7 +39,7 @@ class _SamsungState extends State<SamsungConversationList> {
   bool openedChatAlready = false;
 
   bool hasPinnedChat() {
-    for (var i = 0; i < ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).unknownSendersHelper(widget.parent.widget.showUnknownSenders).length; i++) {
+    for (int i = 0; i < ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).unknownSendersHelper(widget.parent.widget.showUnknownSenders).length; i++) {
       if (ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).unknownSendersHelper(widget.parent.widget.showUnknownSenders)[i].isPinned!) {
         widget.parent.hasPinnedChats = true;
         return true;
@@ -52,7 +52,7 @@ class _SamsungState extends State<SamsungConversationList> {
 
   bool hasNormalChats() {
     int counter = 0;
-    for (var i = 0; i < ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).unknownSendersHelper(widget.parent.widget.showUnknownSenders).length; i++) {
+    for (int i = 0; i < ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).unknownSendersHelper(widget.parent.widget.showUnknownSenders).length; i++) {
       if (ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).unknownSendersHelper(widget.parent.widget.showUnknownSenders)[i].isPinned!) {
         counter++;
       } else {}
@@ -299,7 +299,7 @@ class _SamsungState extends State<SamsungConversationList> {
 
                       String appDocPath = SettingsManager().appDocDir.path;
                       String ext = ".png";
-                      File file = new File("$appDocPath/attachments/" + randomString(16) + ext);
+                      File file = File("$appDocPath/attachments/" + randomString(16) + ext);
                       await file.create(recursive: true);
 
                       // Take the picture after opening the camera
@@ -353,12 +353,12 @@ class _SamsungState extends State<SamsungConversationList> {
                         if (selected.length <= 1)
                           GestureDetector(
                             onTap: () {
-                              selected.forEach((element) {
+                              for (Chat element in selected) {
                                 element.toggleMute(element.muteType != "mute");
-                              });
+                              }
 
                               selected = [];
-                              if (this.mounted) setState(() {});
+                              if (mounted) setState(() {});
                             },
                             child: Padding(
                               padding: const EdgeInsets.all(8.0),
@@ -370,15 +370,15 @@ class _SamsungState extends State<SamsungConversationList> {
                           ),
                         GestureDetector(
                           onTap: () {
-                            selected.forEach((element) {
+                            for (Chat element in selected) {
                               if (element.isArchived!) {
                                 ChatBloc().unArchiveChat(element);
                               } else {
                                 ChatBloc().archiveChat(element);
                               }
-                            });
+                            }
                             selected = [];
-                            if (this.mounted) setState(() {});
+                            if (mounted) setState(() {});
                           },
                           child: Padding(
                             padding: const EdgeInsets.all(8.0),
@@ -390,12 +390,12 @@ class _SamsungState extends State<SamsungConversationList> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            selected.forEach((element) {
+                            for (Chat element in selected) {
                               element.togglePin(!element.isPinned!);
-                            });
+                            }
 
                             selected = [];
-                            if (this.mounted) setState(() {});
+                            if (mounted) setState(() {});
                           },
                           child: Padding(
                             padding: const EdgeInsets.all(8.0),
@@ -465,7 +465,7 @@ class _SamsungState extends State<SamsungConversationList> {
                   if (hasPinned)
                     Container(
                       padding: EdgeInsets.all(6.0),
-                      decoration: new BoxDecoration(
+                      decoration: BoxDecoration(
                         color: context.theme.accentColor,
                         borderRadius: BorderRadius.circular(20),
                       ),
@@ -494,12 +494,12 @@ class _SamsungState extends State<SamsungConversationList> {
                                           .archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]
                                           .togglePin(!ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isPinned!);
                                       EventDispatcher().emit("refresh", null);
-                                      if (this.mounted) setState(() {});
+                                      if (mounted) setState(() {});
                                     } else if (SettingsManager().settings.materialLeftAction.value ==
                                         MaterialSwipeAction.alerts) {
                                       ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].toggleMute(
                                           ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].muteType != "mute");
-                                      if (this.mounted) setState(() {});
+                                      if (mounted) setState(() {});
                                     } else if (SettingsManager().settings.materialLeftAction.value ==
                                         MaterialSwipeAction.delete) {
                                       ChatBloc().deleteChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
@@ -525,12 +525,12 @@ class _SamsungState extends State<SamsungConversationList> {
                                           .archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]
                                           .togglePin(!ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isPinned!);
                                       EventDispatcher().emit("refresh", null);
-                                      if (this.mounted) setState(() {});
+                                      if (mounted) setState(() {});
                                     } else if (SettingsManager().settings.materialRightAction.value ==
                                         MaterialSwipeAction.alerts) {
                                       ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].toggleMute(
                                           ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].muteType != "mute");
-                                      if (this.mounted) setState(() {});
+                                      if (mounted) setState(() {});
                                     } else if (SettingsManager().settings.materialRightAction.value ==
                                         MaterialSwipeAction.delete) {
                                       ChatBloc().deleteChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
@@ -573,16 +573,18 @@ class _SamsungState extends State<SamsungConversationList> {
                                           ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].guid);
                                     }
 
-                                    if (this.mounted) setState(() {});
+                                    if (mounted) setState(() {});
                                   },
                                 )
                                     : Container(),
                               );
                             } else {
-                              if (!showArchived && ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isArchived!)
+                              if (!showArchived && ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isArchived!) {
                                 return Container();
-                              if (showArchived && !ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isArchived!)
+                              }
+                              if (showArchived && !ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isArchived!) {
                                 return Container();
+                              }
                               if (ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isPinned!) {
                                 return ConversationTile(
                                   key: UniqueKey(),
@@ -592,11 +594,11 @@ class _SamsungState extends State<SamsungConversationList> {
                                   onSelect: (bool selected) {
                                     if (selected) {
                                       this.selected.add(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
-                                      if (this.mounted) setState(() {});
+                                      if (mounted) setState(() {});
                                     } else {
                                       this.selected.removeWhere((element) =>
                                       element.guid == ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].guid);
-                                      if (this.mounted) setState(() {});
+                                      if (mounted) setState(() {});
                                     }
                                   },
                                 );
@@ -620,9 +622,9 @@ class _SamsungState extends State<SamsungConversationList> {
                   if (hasNormalChats())
                     Container(
                       padding: const EdgeInsets.all(6.0),
-                      decoration: new BoxDecoration(
+                      decoration: BoxDecoration(
                           color: context.theme.accentColor,
-                          borderRadius: new BorderRadius.only(
+                          borderRadius: BorderRadius.only(
                             topLeft: const Radius.circular(20.0),
                             topRight: const Radius.circular(20.0),
                             bottomLeft: const Radius.circular(20.0),
@@ -653,12 +655,12 @@ class _SamsungState extends State<SamsungConversationList> {
                                           .archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]
                                           .togglePin(!ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isPinned!);
                                       EventDispatcher().emit("refresh", null);
-                                      if (this.mounted) setState(() {});
+                                      if (mounted) setState(() {});
                                     } else if (SettingsManager().settings.materialLeftAction.value ==
                                         MaterialSwipeAction.alerts) {
                                       ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].toggleMute(
                                           ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].muteType != "mute");
-                                      if (this.mounted) setState(() {});
+                                      if (mounted) setState(() {});
                                     } else if (SettingsManager().settings.materialLeftAction.value ==
                                         MaterialSwipeAction.delete) {
                                       ChatBloc().deleteChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
@@ -684,12 +686,12 @@ class _SamsungState extends State<SamsungConversationList> {
                                           .archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]
                                           .togglePin(!ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isPinned!);
                                       EventDispatcher().emit("refresh", null);
-                                      if (this.mounted) setState(() {});
+                                      if (mounted) setState(() {});
                                     } else if (SettingsManager().settings.materialRightAction.value ==
                                         MaterialSwipeAction.alerts) {
                                       ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].toggleMute(
                                           ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].muteType != "mute");
-                                      if (this.mounted) setState(() {});
+                                      if (mounted) setState(() {});
                                     } else if (SettingsManager().settings.materialRightAction.value ==
                                         MaterialSwipeAction.delete) {
                                       ChatBloc().deleteChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
@@ -732,16 +734,18 @@ class _SamsungState extends State<SamsungConversationList> {
                                           ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].guid);
                                     }
 
-                                    if (this.mounted) setState(() {});
+                                    if (mounted) setState(() {});
                                   },
                                 )
                                     : Container(),
                               );
                             } else {
-                              if (!showArchived && ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isArchived!)
+                              if (!showArchived && ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isArchived!) {
                                 return Container();
-                              if (showArchived && !ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isArchived!)
+                              }
+                              if (showArchived && !ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isArchived!) {
                                 return Container();
+                              }
                               if (!ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isPinned!) {
                                 return ConversationTile(
                                   key: UniqueKey(),
@@ -756,7 +760,7 @@ class _SamsungState extends State<SamsungConversationList> {
                                       element.guid == ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].guid);
                                     }
 
-                                    if (this.mounted) setState(() {});
+                                    if (mounted) setState(() {});
                                   },
                                 );
                               }

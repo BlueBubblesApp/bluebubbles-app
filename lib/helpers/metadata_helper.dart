@@ -41,7 +41,7 @@ class MetadataHelper {
     }
   }
 
-  static Map<String, Completer<Metadata>> _metaCache = {};
+  static final Map<String, Completer<Metadata>> _metaCache = {};
 
   static Future<Metadata?> fetchMetadata(Message? message) async {
     Metadata? data;
@@ -54,7 +54,7 @@ class MetadataHelper {
     }
 
     // Create a new completer for this request
-    Completer<Metadata> completer = new Completer();
+    Completer<Metadata> completer = Completer();
     _metaCache[message.guid!] = completer;
 
     // Make sure there is a schema with the URL
@@ -97,7 +97,7 @@ class MetadataHelper {
         return completer.future;
       }
 
-      data = new Metadata();
+      data = Metadata();
       data.title = (res!.containsKey("author_name")) ? res["author_name"] : "";
       data.description = (res.containsKey("html")) ? stripHtmlTags(res["html"].replaceAll("<br>", "\n")).trim() : "";
 
@@ -146,7 +146,7 @@ class MetadataHelper {
     }
 
     // If the URL is supposedly to an actual image, set the image to the URL manually
-    RegExp exp = new RegExp(r"(.png|.jpg|.gif|.tiff|.jpeg)$");
+    RegExp exp = RegExp(r"(.png|.jpg|.gif|.tiff|.jpeg)$");
     if (data?.image == null && data?.title == null && data!.url != null && exp.hasMatch(data.url!)) {
       data.image = data.url;
       data.title = "Image Preview";
@@ -211,7 +211,7 @@ class MetadataHelper {
 
   /// Manually tries to parse out metadata from a given [url]
   static Future<Metadata> _manuallyGetMetadata(String url) async {
-    Metadata meta = new Metadata();
+    Metadata meta = Metadata();
 
     try {
       Uri uri = Uri.parse(url);

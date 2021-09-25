@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/foundation.dart';
@@ -51,7 +50,7 @@ class ConversationListState extends State<ConversationList> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (this.mounted) {
+    if (mounted) {
       theme = Colors.transparent;
     }
 
@@ -80,7 +79,7 @@ class ConversationListState extends State<ConversationList> {
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
       if (!event.containsKey("type")) return;
 
-      if (event["type"] == 'refresh' && this.mounted) {
+      if (event["type"] == 'refresh' && mounted) {
         setState(() {});
       }
     });
@@ -193,7 +192,7 @@ class ConversationListState extends State<ConversationList> {
                           SettingsManager().settings.finishedSetup.value = false;
                           SocketManager().finishedSetup.sink.add(false);
                           Navigator.of(context).popUntil((route) => route.isFirst);
-                          SettingsManager().settings = new Settings();
+                          SettingsManager().settings = Settings();
                           SettingsManager().settings.save();
                           SettingsManager().fcmData = null;
                           FCMData.deleteFcmData();
@@ -310,7 +309,7 @@ class ConversationListState extends State<ConversationList> {
 
                 String appDocPath = SettingsManager().appDocDir.path;
                 String ext = ".png";
-                File file = new File("$appDocPath/attachments/" + randomString(16) + ext);
+                File file = File("$appDocPath/attachments/" + randomString(16) + ext);
                 await file.create(recursive: true);
 
                 // Take the picture after opening the camera

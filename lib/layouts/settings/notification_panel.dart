@@ -414,7 +414,7 @@ class ChatListState extends State<ChatList> {
                                       Get.back();
                                       chat.toggleMute(chat.muteType != "mute");
                                       chat.save();
-                                      if (this.mounted) setState(() {});
+                                      if (mounted) setState(() {});
                                       EventDispatcher().emit("refresh", null);
                                     },
                                 ),
@@ -497,7 +497,7 @@ class ChatListState extends State<ChatList> {
                                             chat.muteArgs = existing.join(",");
                                             Get.back();
                                             chat.save();
-                                            if (this.mounted) setState(() {});
+                                            if (mounted) setState(() {});
                                             EventDispatcher().emit("refresh", null);
                                           },
                                       );
@@ -525,7 +525,7 @@ class ChatListState extends State<ChatList> {
                                             chat.muteType = "temporary_mute";
                                             chat.muteArgs = finalDate.toIso8601String();
                                             chat.save();
-                                            if (this.mounted) setState(() {});
+                                            if (mounted) setState(() {});
                                             EventDispatcher().emit("refresh", null);
                                           }
                                         }
@@ -580,7 +580,7 @@ class ChatListState extends State<ChatList> {
                                           chat.muteArgs = controller.text;
                                           Get.back();
                                           chat.save();
-                                          if (this.mounted) setState(() {});
+                                          if (mounted) setState(() {});
                                           EventDispatcher().emit("refresh", null);
                                         },
                                       );
@@ -595,7 +595,7 @@ class ChatListState extends State<ChatList> {
                                     chat.muteType = null;
                                     chat.muteArgs = null;
                                     chat.save();
-                                    if (this.mounted) setState(() {});
+                                    if (mounted) setState(() {});
                                     EventDispatcher().emit("refresh", null);
                                   },
                                 ),

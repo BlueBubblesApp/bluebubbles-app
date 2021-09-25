@@ -31,7 +31,7 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
     ContactManager().getContactTitle(widget.handle).then((String? title) {
       if (title != contactTitle) {
         contactTitle = title;
-        if (this.mounted) setState(() {});
+        if (mounted) setState(() {});
       }
     });
   }
@@ -71,7 +71,7 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
             borderRadius: BorderRadius.circular(100),
             color: Theme.of(context).accentColor,
             boxShadow: [
-              new BoxShadow(
+              BoxShadow(
                 blurRadius: 1.0,
                 color: Colors.black,
               )

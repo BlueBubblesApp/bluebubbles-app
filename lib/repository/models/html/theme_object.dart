@@ -29,7 +29,7 @@ class ThemeObject {
   });
 
   factory ThemeObject.fromData(ThemeData data, String name, {bool gradientBg = false}) {
-    ThemeObject object = new ThemeObject(
+    ThemeObject object = ThemeObject(
       data: data.copyWith(),
       name: name,
       gradientBg: gradientBg,
@@ -51,7 +51,7 @@ class ThemeObject {
     );
   }
 
-  bool get isPreset => this.name == "OLED Dark" || this.name == "Bright White" || this.name == "Nord Theme" || this.name == "Music Theme (Light)" || this.name == "Music Theme (Dark)";
+  bool get isPreset => name == "OLED Dark" || name == "Bright White" || name == "Nord Theme" || name == "Music Theme (Light)" || name == "Music Theme (Dark)";
 
   List<ThemeEntry> toEntries() => [
         ThemeEntry.fromStyle(ThemeColors.Headline1, data!.textTheme.headline1!),
@@ -68,7 +68,7 @@ class ThemeObject {
 
   ThemeObject save({bool updateIfNotAbsent = true}) {
     if (entries.isEmpty) {
-      entries = this.toEntries();
+      entries = toEntries();
     }
     return this;
   }
@@ -117,26 +117,26 @@ class ThemeObject {
   List<ThemeEntry> fetchData() {
     if (isPreset && !name!.contains("Music")) {
       if (name == "OLED Dark") {
-        this.data = oledDarkTheme;
+        data = oledDarkTheme;
       } else if (name == "Bright White") {
-        this.data = whiteLightTheme;
+        data = whiteLightTheme;
       } else if (name == "Nord Theme") {
-        this.data = nordDarkTheme;
+        data = nordDarkTheme;
       }
 
-      this.entries = this.toEntries();
+      entries = toEntries();
     }
-    return this.entries;
+    return entries;
   }
 
   Map<String, dynamic> toMap() => {
-        "ROWID": this.id,
-        "name": this.name,
-        "selectedLightTheme": this.selectedLightTheme ? 1 : 0,
-        "selectedDarkTheme": this.selectedDarkTheme ? 1 : 0,
-        "gradientBg": this.gradientBg ? 1 : 0,
-        "previousLightTheme": this.previousLightTheme ? 1 : 0,
-        "previousDarkTheme": this.previousDarkTheme ? 1 : 0,
+        "ROWID": id,
+        "name": name,
+        "selectedLightTheme": selectedLightTheme ? 1 : 0,
+        "selectedDarkTheme": selectedDarkTheme ? 1 : 0,
+        "gradientBg": gradientBg ? 1 : 0,
+        "previousLightTheme": previousLightTheme ? 1 : 0,
+        "previousDarkTheme": previousDarkTheme ? 1 : 0,
       };
 
   ThemeData get themeData {

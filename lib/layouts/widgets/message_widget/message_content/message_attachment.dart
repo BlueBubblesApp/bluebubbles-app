@@ -35,7 +35,7 @@ class MessageAttachment extends StatefulWidget {
 
 class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeepAliveClientMixin {
   Widget? attachmentWidget;
-  var content;
+  dynamic content;
 
   @override
   void initState() {
@@ -53,7 +53,7 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
 
     // If we can download it, do so
     if (await AttachmentHelper.canAutoDownload() && content is Attachment) {
-      if (this.mounted) {
+      if (mounted) {
         setState(() {
           content = Get.put(AttachmentDownloadController(attachment: content), tag: content.guid);
         });
@@ -146,7 +146,7 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
       return AttachmentDownloaderWidget(
         onPressed: () {
           content = Get.put(AttachmentDownloadController(attachment: content), tag: content.guid);
-          if (this.mounted) setState(() {});
+          if (mounted) setState(() {});
         },
         attachment: content,
         placeHolder: buildPlaceHolder(widget),
@@ -162,7 +162,7 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
           return AttachmentDownloaderWidget(
             onPressed: () {
               content = Get.put(AttachmentDownloadController(attachment: content), tag: content.guid);
-              if (this.mounted) setState(() {});
+              if (mounted) setState(() {});
             },
             attachment: content,
             placeHolder: buildPlaceHolder(widget),
