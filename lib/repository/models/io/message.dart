@@ -204,34 +204,35 @@ class Message {
   }
 
   Message save() {
-   if (kIsWeb) return this;
-    Message? existing = Message.findOne(guid: guid);
-    if (existing != null) {
-      id = existing.id;
-    }
+    if (kIsWeb) return this;
+    store.runInTransaction(TxMode.write, () {
+     Message? existing = Message.findOne(guid: guid);
+     if (existing != null) {
+       id = existing.id;
+     }
 
-    // Save the participant & set the handle ID to the new participant
-    if (handle != null) {
-      handle!.save();
-      handleId = handle!.id;
-    }
-    if (associatedMessageType != null && associatedMessageGuid != null) {
-      Message? associatedMessage = Message.findOne(guid: associatedMessageGuid);
-      if (associatedMessage != null) {
-        associatedMessage.hasReactions = true;
-        associatedMessage.save();
-      }
-    } else if (!hasReactions) {
-      Message? reaction = Message.findOne(associatedMessageGuid: guid);
-      if (reaction != null) {
-        hasReactions = true;
-      }
-    }
+     // Save the participant & set the handle ID to the new participant
+     if (handle != null) {
+       handle!.save();
+       handleId = handle!.id;
+     }
+     if (associatedMessageType != null && associatedMessageGuid != null) {
+       Message? associatedMessage = Message.findOne(guid: associatedMessageGuid);
+       if (associatedMessage != null) {
+         associatedMessage.hasReactions = true;
+         associatedMessage.save();
+       }
+     } else if (!hasReactions) {
+       Message? reaction = Message.findOne(associatedMessageGuid: guid);
+       if (reaction != null) {
+         hasReactions = true;
+       }
+     }
 
-    try {
-      messageBox.put(this);
-    } on UniqueViolationException catch (_) {}
-
+     try {
+       messageBox.put(this);
+     } on UniqueViolationException catch (_) {}
+    });
     return this;
   }
 
@@ -279,16 +280,20 @@ class Message {
     }
 
     if (id == null) return [];
-    final attachmentIds = amJoinBox.getAll().where((element) => element.messageId == id!).map((e) => e.attachmentId).toList();
-    final attachments = attachmentBox.getMany(attachmentIds, growableResult: true);
-    this.attachments = attachments;
-    return attachments;
+    return store.runInTransaction(TxMode.read, () {
+      final attachmentIds = amJoinBox.getAll().where((element) => element.messageId == id!).map((e) => e.attachmentId).toList();
+      final attachments = attachmentBox.getMany(attachmentIds, growableResult: true);
+      this.attachments = attachments;
+      return attachments;
+    });
   }
 
   static Chat? getChat(Message message) {
     if (kIsWeb) return null;
-    final chatId = cmJoinBox.getAll().firstWhere((element) => element.messageId == message.id).chatId;
-    return chatBox.get(chatId);
+    return store.runInTransaction(TxMode.read, () {
+      final chatId = cmJoinBox.getAll().firstWhere((element) => element.messageId == message.id).chatId;
+      return chatBox.get(chatId);
+    });
   }
 
   Message fetchAssociatedMessages({MessageBloc? bloc}) {
@@ -309,7 +314,6 @@ class Message {
 
   Handle? getHandle() {
     if (kIsWeb) return null;
-    handle = handleBox.get(handleId!);
     return handleBox.get(handleId!);
   }
 
@@ -346,15 +350,17 @@ class Message {
 
   static void delete(String guid) {
     if (kIsWeb) return;
-    final query = messageBox.query(Message_.guid.equals(guid)).build();
-    final results = query.find();
-    final ids = results.map((e) => e.id!).toList();
-    query.close();
-    final query2 = cmJoinBox.query(ChatMessageJoin_.messageId.oneOf(ids)).build();
-    final results2 = query2.find();
-    query2.close();
-    cmJoinBox.removeMany(results2.map((e) => e.id!).toList());
-    messageBox.removeMany(ids);
+    store.runInTransaction(TxMode.write, () {
+      final query = messageBox.query(Message_.guid.equals(guid)).build();
+      final results = query.find();
+      final ids = results.map((e) => e.id!).toList();
+      query.close();
+      final query2 = cmJoinBox.query(ChatMessageJoin_.messageId.oneOf(ids)).build();
+      final results2 = query2.find();
+      query2.close();
+      cmJoinBox.removeMany(results2.map((e) => e.id!).toList());
+      messageBox.removeMany(ids);
+    });
   }
 
   static void softDelete(String guid) {

@@ -72,40 +72,43 @@ class ThemeObject {
       ];
 
   ThemeObject save({bool updateIfNotAbsent = true}) {
-    if (data == null) {
-      fetchData();
-    }
-    if (entries.isEmpty) {
-      entries = toEntries();
-    }
-    ThemeObject? existing = ThemeObject.findOne(name!);
-    if (existing != null) {
-      id = existing.id;
-    }
-    try {
-      if (id != null && existing != null && updateIfNotAbsent) {
-        id = themeObjectBox.put(this);
-      } else if (id == null || existing == null) {
-        id = themeObjectBox.put(this);
+    store.runInTransaction(TxMode.write, () {
+      if (data == null) {
+        fetchData();
       }
-    } on UniqueViolationException catch (_) {}
+      if (entries.isEmpty) {
+        entries = toEntries();
+      }
+      ThemeObject? existing = ThemeObject.findOne(name!);
+      if (existing != null) {
+        id = existing.id;
+      }
+      try {
+        if (id != null && existing != null && updateIfNotAbsent) {
+          id = themeObjectBox.put(this);
+        } else if (id == null || existing == null) {
+          id = themeObjectBox.put(this);
+        }
+      } on UniqueViolationException catch (_) {}
 
-    if (isPreset && !name!.contains("Music")) return this;
-    for (ThemeEntry entry in entries) {
-      entry.save(this);
-    }
-
+      if (isPreset && !name!.contains("Music")) return this;
+      for (ThemeEntry entry in entries) {
+        entry.save(this);
+      }
+    });
     return this;
   }
 
   void delete() {
     if (kIsWeb || isPreset || id == null) return;
-    fetchData();
-    themeEntryBox.removeMany(entries.map((e) => e.id!).toList());
-    final query = tvJoinBox.query(ThemeValueJoin_.themeId.equals(id!)).build();
-    if (query.findFirst() != null) tvJoinBox.remove(query.findFirst()!.themeId);
-    query.close();
-    themeObjectBox.remove(id!);
+    store.runInTransaction(TxMode.write, () {
+      fetchData();
+      themeEntryBox.removeMany(entries.map((e) => e.id!).toList());
+      final query = tvJoinBox.query(ThemeValueJoin_.themeId.equals(id!)).build();
+      if (query.findFirst() != null) tvJoinBox.remove(query.findFirst()!.themeId);
+      query.close();
+      themeObjectBox.remove(id!);
+    });
   }
 
   static ThemeObject getLightTheme() {
@@ -132,35 +135,41 @@ class ThemeObject {
 
   static void setSelectedTheme({int? light, int? dark}) {
     if (light != null) {
-      final query = themeObjectBox.query(ThemeObject_.selectedLightTheme.equals(true)).build();
-      final result = query.findFirst();
-      query.close();
-      result?.selectedLightTheme = false;
-      result?.save();
-      final lightTheme = themeObjectBox.get(light);
-      lightTheme!.selectedLightTheme = true;
-      lightTheme.save();
+      store.runInTransaction(TxMode.write, () {
+        final query = themeObjectBox.query(ThemeObject_.selectedLightTheme.equals(true)).build();
+        final result = query.findFirst();
+        query.close();
+        result?.selectedLightTheme = false;
+        result?.save();
+        final lightTheme = themeObjectBox.get(light);
+        lightTheme!.selectedLightTheme = true;
+        lightTheme.save();
+      });
     }
     if (dark != null) {
-      final query = themeObjectBox.query(ThemeObject_.selectedDarkTheme.equals(true)).build();
-      final result = query.findFirst();
-      query.close();
-      result?.selectedDarkTheme = false;
-      result?.save();
-      final darkTheme = themeObjectBox.get(dark);
-      darkTheme!.selectedDarkTheme = true;
-      darkTheme.save();
+      store.runInTransaction(TxMode.write, () {
+        final query = themeObjectBox.query(ThemeObject_.selectedDarkTheme.equals(true)).build();
+        final result = query.findFirst();
+        query.close();
+        result?.selectedDarkTheme = false;
+        result?.save();
+        final darkTheme = themeObjectBox.get(dark);
+        darkTheme!.selectedDarkTheme = true;
+        darkTheme.save();
+      });
     }
   }
 
   static ThemeObject? findOne(String name) {
     if (kIsWeb) return null;
-    final query = themeObjectBox.query(ThemeObject_.name.equals(name)).build();
-    query.limit = 1;
-    final result = query.findFirst();
-    result?.fetchData();
-    query.close();
-    return result;
+    return store.runInTransaction(TxMode.read, () {
+      final query = themeObjectBox.query(ThemeObject_.name.equals(name)).build();
+      query.limit = 1;
+      final result = query.findFirst();
+      result?.fetchData();
+      query.close();
+      return result;
+    });
   }
 
   static List<ThemeObject> getThemes() {
@@ -183,9 +192,12 @@ class ThemeObject {
       return entries;
     }
     if (kIsWeb) return entries;
-    final query = tvJoinBox.query(ThemeValueJoin_.themeId.equals(id!)).build();
-    final themeEntryIds = query.property(ThemeValueJoin_.themeValueId).find();
-    final themeEntries2 = themeEntryBox.getMany(themeEntryIds, growableResult: true);
+    final themeEntries2 = store.runInTransaction(TxMode.read, () {
+      final query = tvJoinBox.query(ThemeValueJoin_.themeId.equals(id!)).build();
+      final themeEntryIds = query.property(ThemeValueJoin_.themeValueId).find();
+      query.close();
+      return themeEntryBox.getMany(themeEntryIds, growableResult: true);
+    });
     themeEntries2.retainWhere((element) => element != null);
     final themeEntries = List<ThemeEntry>.from(themeEntries2);
     if (name == "Music Theme (Light)" && themeEntries.isEmpty) {

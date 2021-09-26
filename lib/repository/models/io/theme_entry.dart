@@ -58,15 +58,16 @@ class ThemeEntry {
     if (kIsWeb) return this;
     assert(theme.id != null);
     themeId = theme.id;
-    ThemeEntry? existing = ThemeEntry.findOne(name!, themeId!);
-    if (existing != null) {
-      id = existing.id;
-    }
-    id = themeEntryBox.put(this);
-    if (id != null && theme.id != null && existing == null) {
-      tvJoinBox.put(ThemeValueJoin(themeValueId: id!, themeId: theme.id!));
-    }
-
+    store.runInTransaction(TxMode.write, () {
+      ThemeEntry? existing = ThemeEntry.findOne(name!, themeId!);
+      if (existing != null) {
+        id = existing.id;
+      }
+      id = themeEntryBox.put(this);
+      if (id != null && theme.id != null && existing == null) {
+        tvJoinBox.put(ThemeValueJoin(themeValueId: id!, themeId: theme.id!));
+      }
+    });
     return this;
   }
 

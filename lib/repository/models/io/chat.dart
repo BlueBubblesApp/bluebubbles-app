@@ -183,16 +183,17 @@ class Chat {
 
   Chat save() {
     if (kIsWeb) return this;
-    Chat? existing = Chat.findOne(guid: guid);
-    id = existing?.id ?? id;
-    try {
-      chatBox.put(this);
-    } on UniqueViolationException catch (_) {}
-    // Save participants to the chat
-    for (int i = 0; i < participants.length; i++) {
-      addParticipant(participants[i]);
-    }
-
+    store.runInTransaction(TxMode.write, () {
+      Chat? existing = Chat.findOne(guid: guid);
+      id = existing?.id ?? id;
+      try {
+        chatBox.put(this);
+      } on UniqueViolationException catch (_) {}
+      // Save participants to the chat
+      for (int i = 0; i < participants.length; i++) {
+        addParticipant(participants[i]);
+      }
+    });
     return this;
   }
 
@@ -259,16 +260,18 @@ class Chat {
   static void deleteChat(Chat chat) {
     if (kIsWeb) return;
     List<Message> messages = Chat.getMessages(chat);
-    chatBox.remove(chat.id!);
-    messageBox.removeMany(messages.map((e) => e.id!).toList());
-    final query = chJoinBox.query(ChatHandleJoin_.chatId.equals(chat.id!)).build();
-    final results = query.property(ChatHandleJoin_.id).find();
-    query.close();
-    chJoinBox.removeMany(results);
-    final query2 = cmJoinBox.query(ChatMessageJoin_.chatId.equals(chat.id!)).build();
-    final results2 = query2.property(ChatMessageJoin_.id).find();
-    query2.close();
-    cmJoinBox.removeMany(results2);
+    store.runInTransaction(TxMode.write, () {
+      chatBox.remove(chat.id!);
+      messageBox.removeMany(messages.map((e) => e.id!).toList());
+      final query = chJoinBox.query(ChatHandleJoin_.chatId.equals(chat.id!)).build();
+      final results = query.property(ChatHandleJoin_.id).find();
+      query.close();
+      chJoinBox.removeMany(results);
+      final query2 = cmJoinBox.query(ChatMessageJoin_.chatId.equals(chat.id!)).build();
+      final results2 = query2.property(ChatMessageJoin_.id).find();
+      query2.close();
+      cmJoinBox.removeMany(results2);
+    });
   }
 
   Chat toggleHasUnread(bool hasUnread) {
@@ -439,66 +442,72 @@ class Chat {
 
   static List<Attachment> getAttachments(Chat chat, {int offset = 0, int limit = 25}) {
     if (kIsWeb || chat.id == null) return [];
-    final amJoinValues = amJoinBox.getAll();
-    final cmJoinValues = cmJoinBox.getAll().where((element) => element.chatId == chat.id).map((e) => e.messageId).toList();
-    final query2 = (messageBox.query(Message_.id.oneOf(cmJoinValues))..order(Message_.dateCreated, flags: Order.descending)).build();
-    final messages = query2.find();
-    final attachmentIds = amJoinValues.where((element) => cmJoinValues.contains(element.messageId)).map((e) => e.attachmentId).toList();
-    final query = attachmentBox.query(Attachment_.id.oneOf(attachmentIds)).build();
-    query
-      ..limit = limit
-      ..offset = offset;
-    final attachments = query.find()..removeWhere((element) => element.mimeType == null);
-    final actualAttachments = <Attachment>[];
-    for (Message m in messages) {
-      m.attachments = m.fetchAttachments();
-      for (Attachment a in attachments) {
-        if (m.attachments?.map((e) => e!.guid).contains(a.guid) ?? false) {
-          actualAttachments.add(a);
+    return store.runInTransaction(TxMode.read, () {
+      final amJoinValues = amJoinBox.getAll();
+      final cmJoinValues = cmJoinBox.getAll().where((element) => element.chatId == chat.id).map((e) => e.messageId).toList();
+      final query2 = (messageBox.query(Message_.id.oneOf(cmJoinValues))..order(Message_.dateCreated, flags: Order.descending)).build();
+      final messages = query2.find();
+      final attachmentIds = amJoinValues.where((element) => cmJoinValues.contains(element.messageId)).map((e) => e.attachmentId).toList();
+      final query = attachmentBox.query(Attachment_.id.oneOf(attachmentIds)).build();
+      query
+        ..limit = limit
+        ..offset = offset;
+      final attachments = query.find()..removeWhere((element) => element.mimeType == null);
+      final actualAttachments = <Attachment>[];
+      for (Message m in messages) {
+        m.attachments = m.fetchAttachments();
+        for (Attachment a in attachments) {
+          if (m.attachments?.map((e) => e!.guid).contains(a.guid) ?? false) {
+            actualAttachments.add(a);
+          }
         }
       }
-    }
-    if (actualAttachments.isNotEmpty) {
-      final guids = actualAttachments.map((e) => e.guid).toSet();
-      actualAttachments.retainWhere((element) => guids.remove(element.guid));
-    }
-    query.close();
-    return actualAttachments;
+      if (actualAttachments.isNotEmpty) {
+        final guids = actualAttachments.map((e) => e.guid).toSet();
+        actualAttachments.retainWhere((element) => guids.remove(element.guid));
+      }
+      query.close();
+      return actualAttachments;
+    });
   }
 
   static List<Message> getMessages(Chat chat, {int offset = 0, int limit = 25, bool includeDeleted = false}) {
     if (kIsWeb || chat.id == null) return [];
-    final messageIds = cmJoinBox.getAll().where((element) => element.chatId == chat.id).map((e) => e.messageId).toList();
-    final query = (messageBox.query(Message_.id.oneOf(messageIds)
-        .and(includeDeleted ? Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull()) : Message_.dateDeleted.isNull()))
-      ..order(Message_.dateCreated, flags: Order.descending)).build();
-    query
-      ..limit = limit
-      ..offset = offset;
-    final messages = query.find();
-    query.close();
-    final handles = handleBox.getMany(messages.map((e) => e.handleId ?? 0).toList()..removeWhere((element) => element == 0));
-    for (int i = 0; i < messages.length; i++) {
-      Message message = messages[i];
-      if (handles.isNotEmpty && message.handleId != 0) {
-        Handle? handle = handles.firstWhereOrNull((e) => e?.id == message.handleId);
-        if (handle == null) {
-          messages.remove(message);
-          i--;
-        } else {
-          message.handle = handle;
+    return store.runInTransaction(TxMode.read, () {
+      final messageIds = cmJoinBox.getAll().where((element) => element.chatId == chat.id).map((e) => e.messageId).toList();
+      final query = (messageBox.query(Message_.id.oneOf(messageIds)
+          .and(includeDeleted ? Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull()) : Message_.dateDeleted.isNull()))
+        ..order(Message_.dateCreated, flags: Order.descending)).build();
+      query
+        ..limit = limit
+        ..offset = offset;
+      final messages = query.find();
+      query.close();
+      final handles = handleBox.getMany(messages.map((e) => e.handleId ?? 0).toList()..removeWhere((element) => element == 0));
+      for (int i = 0; i < messages.length; i++) {
+        Message message = messages[i];
+        if (handles.isNotEmpty && message.handleId != 0) {
+          Handle? handle = handles.firstWhereOrNull((e) => e?.id == message.handleId);
+          if (handle == null) {
+            messages.remove(message);
+            i--;
+          } else {
+            message.handle = handle;
+          }
         }
       }
-    }
-    return messages;
+      return messages;
+    });
   }
 
   Chat getParticipants() {
     if (kIsWeb || id == null) return this;
-    final handleIds = chJoinBox.getAll().where((element) => element.chatId == id).map((e) => e.handleId);
-    final handles = handleBox.getMany(handleIds.toList(), growableResult: true)..retainWhere((e) => e != null);
-    final nonNullHandles = List<Handle>.from(handles);
-    participants = nonNullHandles;
+    store.runInTransaction(TxMode.read, () {
+      final handleIds = chJoinBox.getAll().where((element) => element.chatId == id).map((e) => e.handleId);
+      final handles = handleBox.getMany(handleIds.toList(), growableResult: true)..retainWhere((e) => e != null);
+      final nonNullHandles = List<Handle>.from(handles);
+      participants = nonNullHandles;
+    });
     _deduplicateParticipants();
     fakeParticipants = participants.map((p) => ContactManager().handleToFakeName[p.address] ?? "Unknown").toList();
     return this;
@@ -532,10 +541,12 @@ class Chat {
     }
 
     // find the join item and delete it
-    final query = chJoinBox.query(ChatHandleJoin_.handleId.equals(participant.id!).and(ChatHandleJoin_.chatId.equals(id!))).build();
-    final result = query.findFirst();
-    query.close();
-    if (result != null) chJoinBox.remove(result.id!);
+    store.runInTransaction(TxMode.write, () {
+      final query = chJoinBox.query(ChatHandleJoin_.handleId.equals(participant.id!).and(ChatHandleJoin_.chatId.equals(id!))).build();
+      final result = query.findFirst();
+      query.close();
+      if (result != null) chJoinBox.remove(result.id!);
+    });
 
     // Second, remove from this object instance
     participants.removeWhere((element) => participant.id == element.id);
@@ -617,12 +628,14 @@ class Chat {
 
   void clearTranscript() {
     if (kIsWeb) return;
-    final messageIds = cmJoinBox.getAll().where((element) => element.chatId == id!).map((e) => e.messageId);
-    final messages = messageBox.getAll().where((element) => messageIds.contains(element.id)).toList();
-    for (Message element in messages) {
-      element.dateDeleted = DateTime.now().toUtc();
-    }
-    messageBox.putMany(messages);
+    store.runInTransaction(TxMode.write, () {
+      final messageIds = cmJoinBox.getAll().where((element) => element.chatId == id!).map((e) => e.messageId);
+      final messages = messageBox.getAll().where((element) => messageIds.contains(element.id)).toList();
+      for (Message element in messages) {
+        element.dateDeleted = DateTime.now().toUtc();
+      }
+      messageBox.putMany(messages);
+    });
   }
 
   Message get latestMessageGetter {

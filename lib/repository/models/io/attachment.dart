@@ -124,17 +124,18 @@ class Attachment {
   /// when provided
   Attachment save(Message? message) {
     if (kIsWeb) return this;
-    Attachment? existing = Attachment.findOne(guid!);
-    if (existing != null) {
-      id = existing.id;
-    }
-    try {
-      attachmentBox.put(this);
-      if (id != null && message?.id != null) {
-        amJoinBox.put(AttachmentMessageJoin(attachmentId: id!, messageId: message!.id!));
+    store.runInTransaction(TxMode.write, () {
+      Attachment? existing = Attachment.findOne(guid!);
+      if (existing != null) {
+        id = existing.id;
       }
-    } on UniqueViolationException catch (_) {}
-
+      try {
+        attachmentBox.put(this);
+        if (id != null && message?.id != null) {
+          amJoinBox.put(AttachmentMessageJoin(attachmentId: id!, messageId: message!.id!));
+        }
+      } on UniqueViolationException catch (_) {}
+    });
     return this;
   }
 

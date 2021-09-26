@@ -43,14 +43,15 @@ class Handle {
 
   Handle save() {
     if (kIsWeb) return this;
-    Handle? existing = Handle.findOne(address: address);
-    if (existing != null) {
-      id = existing.id;
-    }
-    try {
-      handleBox.put(this);
-    } on UniqueViolationException catch (_) {}
-
+    store.runInTransaction(TxMode.write, () {
+      Handle? existing = Handle.findOne(address: address);
+      if (existing != null) {
+        id = existing.id;
+      }
+      try {
+        handleBox.put(this);
+      } on UniqueViolationException catch (_) {}
+    });
     return this;
   }
 
@@ -89,9 +90,11 @@ class Handle {
 
   static List<Chat> getChats(Handle handle) {
     if (kIsWeb) return [];
-    final chatIds = chJoinBox.getAll().where((element) => element.handleId == handle.id).map((e) => e.chatId);
-    final chats = chatBox.getAll().where((element) => chatIds.contains(element.id)).toList();
-    return chats;
+    return store.runInTransaction(TxMode.read, () {
+      final chatIds = chJoinBox.getAll().where((element) => element.handleId == handle.id).map((e) => e.chatId);
+      final chats = chatBox.getAll().where((element) => chatIds.contains(element.id)).toList();
+      return chats;
+    });
   }
 
   static void flush() {
