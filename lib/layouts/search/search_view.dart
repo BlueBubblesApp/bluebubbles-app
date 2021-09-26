@@ -7,7 +7,6 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
-import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
@@ -26,7 +25,6 @@ class SearchView extends StatefulWidget {
 
 class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
   List<dynamic> results = [];
-
   GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
   final Duration animationDuration = Duration(milliseconds: 400);
   final TextEditingController textEditingController = TextEditingController();
@@ -41,14 +39,6 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-
-    // Listen for any incoming events
-    EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (!event.containsKey("type")) return;
-      if (event["type"] == 'theme-update' && mounted) {
-        setState(() {});
-      }
-    });
 
     // When the user types again after no results, reset no results
     textEditingController.addListener(() {
@@ -124,9 +114,6 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
 
     this.results = _results;
     _listKey = GlobalKey<AnimatedListState>();
-
-    // Let the animated list know it should update
-    _listKey.currentState?.setState(() {});
 
     // Add the cached result
     resultCache[term] = this.results.length;

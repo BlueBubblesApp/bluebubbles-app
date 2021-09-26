@@ -57,11 +57,6 @@ class ConversationTile extends StatefulWidget {
 }
 
 class _ConversationTileState extends State<ConversationTile> {
-  bool isFetching = false;
-  Brightness? brightness;
-  Color? previousBackgroundColor;
-  bool gotBrightness = false;
-
   // Typing indicator
   bool showTypingIndicator = false;
 
@@ -723,6 +718,3 @@ class _Samsung extends StatelessWidget {
     );
   }
 }
-
-@override
-bool get wantKeepAlive => true;

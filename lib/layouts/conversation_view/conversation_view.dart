@@ -95,6 +95,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   GlobalKey key = GlobalKey();
   Worker? worker;
   final RxBool adjustBackground = RxBool(false);
+  final FocusNode chatSelectorNode = FocusNode();
 
   @override
   void initState() {
@@ -485,6 +486,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                   isCreator: widget.isCreator,
                   allContacts: contacts,
                   selectedContacts: selected,
+                  inputFieldNode: chatSelectorNode,
                 ),
               Obx(() {
                 if (!ChatBloc().hasChats.value) {

@@ -75,9 +75,9 @@ class _VideoViewerState extends State<VideoViewer> {
           bufferedColor: Theme.of(context).backgroundColor,
           backgroundColor: Theme.of(context).disabledColor),
     );
-    setState(() {});
     createListener(controller);
     showPlayPauseOverlay = !controller.value.isPlaying;
+    if (mounted) setState(() {});
   }
 
   void createListener(VideoPlayerController? controller) {

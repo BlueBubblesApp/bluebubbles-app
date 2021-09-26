@@ -7,7 +7,6 @@ import 'package:bluebubbles/helpers/message_marker.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/socket_singletons.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
-import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/pinned_tile_text_bubble.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
@@ -23,7 +22,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:universal_html/html.dart' as html;
 
@@ -43,32 +41,13 @@ class PinnedConversationTile extends StatefulWidget {
   _PinnedConversationTileState createState() => _PinnedConversationTileState();
 }
 
-class _PinnedConversationTileState extends State<PinnedConversationTile> with AutomaticKeepAliveClientMixin {
-  bool isFetching = false;
-  Brightness? brightness;
-  Color? previousBackgroundColor;
-  bool gotBrightness = false;
-
+class _PinnedConversationTileState extends State<PinnedConversationTile> {
   // Typing indicator
   RxBool showTypingIndicator = false.obs;
-
-  void loadBrightness() {
-    Color now = context.theme.backgroundColor;
-    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
-    if (!themeChanged && gotBrightness) return;
-
-    previousBackgroundColor = now;
-
-    bool isDark = now.computeLuminance() < 0.179;
-    brightness = isDark ? Brightness.dark : Brightness.light;
-    gotBrightness = true;
-    if (mounted) setState(() {});
-  }
 
   @override
   void initState() {
     super.initState();
-    fetchParticipants();
     // Listen for changes in the group
     NewMessageManager().stream.listen((NewMessageEvent event) async {
       // Make sure we have the required data to qualify for this tile
@@ -102,13 +81,6 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
     // If the original data is different, update the state
     if (ogTitle != widget.chat.title || ogParticipants.length != widget.chat.participants.length || forceUpdate) {
       if (mounted) setState(() {});
-    }
-  }
-
-  void fetchParticipants() {
-    // If our chat does not have any participants, get them
-    if (isNullOrEmpty(widget.chat.participants)!) {
-      widget.chat.getParticipants();
     }
   }
 
@@ -165,10 +137,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
-
     late Offset _tapPosition;
-
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onLongPressStart: (details) {
@@ -205,8 +174,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
         ),
         child: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints constraints) {
-            return Obx(
-              () {
+            return Obx(() {
                 // Great math right here
                 double availableWidth = constraints.maxWidth;
                 int colCount = SettingsManager().settings.pinColumnsPortrait.value;
@@ -399,7 +367,4 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
       ),
     );
   }
-
-  @override
-  bool get wantKeepAlive => true;
 }

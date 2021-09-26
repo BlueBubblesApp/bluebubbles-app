@@ -275,17 +275,19 @@ class AttachmentHelper {
         tag: attachment.guid);
   }
 
-  static Future<Uint8List?> getVideoThumbnail(String filePath) async {
+  static Future<Uint8List?> getVideoThumbnail(String filePath, {bool useCachedFile = true}) async {
     File cachedFile = File("$filePath.thumbnail");
-    if (cachedFile.existsSync()) {
-      return cachedFile.readAsBytes();
+    if (useCachedFile) {
+      if (cachedFile.existsSync()) {
+        return cachedFile.readAsBytes();
+      }
     }
     Uint8List? thumbnail = await VideoThumbnail.thumbnailData(
       video: filePath,
       imageFormat: ImageFormat.JPEG,
       quality: SettingsManager().compressionQuality,
     );
-    if (thumbnail != null) {
+    if (useCachedFile && thumbnail != null) {
       cachedFile.writeAsBytes(thumbnail);
     }
     return thumbnail;

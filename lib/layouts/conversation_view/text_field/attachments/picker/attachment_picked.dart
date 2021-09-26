@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/blue_bubbles_text_field.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -19,23 +21,24 @@ class AttachmentPicked extends StatefulWidget {
 
 class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepAliveClientMixin {
   Uint8List? image;
-  String? path;
+  late String path;
 
   @override
-  void didChangeDependencies() async {
-    super.didChangeDependencies();
-    path = (await widget.data.file)!.path;
-
-    BlueBubblesTextField.of(context)!.stream.listen((event) {
-      if (mounted) setState(() {});
-    });
-
+  void initState() {
+    super.initState();
     load();
   }
 
   Future<void> load() async {
-    image = await widget.data.thumbDataWithSize(800, 800, quality: SettingsManager().compressionQuality);
-    if (mounted) setState(() {});
+    path = (await widget.data.file)!.path;
+    final file = File(path);
+    if (widget.data.mimeType != null && widget.data.mimeType!.startsWith("video/")) {
+      image = await AttachmentHelper.getVideoThumbnail(file.path, useCachedFile: false);
+      if (mounted) setState(() {});
+    } else {
+      image = await file.readAsBytes();
+      if (mounted) setState(() {});
+    }
   }
 
   bool get containsThis =>
@@ -48,87 +51,93 @@ class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepA
         SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachments.value;
     final bool hideAttachmentTypes =
         SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachmentTypes.value;
-    return image != null
-        ? AnimatedContainer(
-            duration: Duration(milliseconds: 250),
-            padding: EdgeInsets.all(containsThis ? 20 : 5),
+    return AnimatedContainer(
+      duration: Duration(milliseconds: 250),
+      padding: EdgeInsets.all(containsThis ? 20 : 5),
+      child: Stack(
+        alignment: Alignment.bottomRight,
+        children: <Widget>[
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
             child: Stack(
-              alignment: Alignment.bottomRight,
               children: <Widget>[
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: Stack(
-                    children: <Widget>[
-                      Image.memory(
-                        image!,
-                        fit: BoxFit.cover,
-                        width: 150,
-                        height: 150,
-                      ),
-                      if (hideAttachments)
-                        Positioned.fill(
-                          child: Container(
-                            color: Theme.of(context).accentColor,
-                          ),
-                        ),
-                      if (hideAttachments && !hideAttachmentTypes)
-                        Positioned.fill(
-                          child: Container(
-                            alignment: Alignment.center,
-                            child: Text(
-                              mime(path)!,
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ),
-                    ],
+                if (image != null)
+                  Image.memory(
+                    image!,
+                    fit: BoxFit.cover,
+                    width: 150,
+                    height: 150,
+                    cacheWidth: 300,
+                    frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                      if (frame == null) {
+                        return Container(
+                          width: 150,
+                          height: 150,
+                          color: Theme.of(context).accentColor,
+                        );
+                      } else {
+                        return child;
+                      }
+                    },
                   ),
-                ),
-                if (containsThis)
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
+                if (image == null)
+                  Container(
+                    width: 150,
+                    height: 150,
+                    color: Theme.of(context).accentColor,
+                  ),
+                if (hideAttachments)
+                  Positioned.fill(
                     child: Container(
-                      child: Center(
-                        child: Icon(
-                          SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.check_mark_circled_solid : Icons.check_circle,
-                          color: Colors.white,
-                        ),
+                      color: Theme.of(context).accentColor,
+                    ),
+                  ),
+                if (hideAttachments && !hideAttachmentTypes)
+                  Positioned.fill(
+                    child: Container(
+                      alignment: Alignment.center,
+                      child: Text(
+                        mime(path)!,
+                        textAlign: TextAlign.center,
                       ),
-                      color: Colors.white.withAlpha(50),
                     ),
                   ),
-                Positioned.fill(
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      child: widget.data.type == AssetType.video
-                          ? Icon(
-                              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.play_circle_fill : Icons.play_circle_filled,
-                              color: Colors.white.withOpacity(0.5),
-                              size: 50,
-                            )
-                          : Container(),
-                      onTap: () async {
-                        widget.onTap();
-                      },
-                    ),
-                  ),
-                ),
               ],
             ),
-          )
-        : SizedBox(
-            width: 100,
-            height: 100,
-            child: Center(
-              child: CircularProgressIndicator(
-                backgroundColor: Theme.of(context).backgroundColor,
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  Theme.of(context).primaryColor,
+          ),
+          if (containsThis)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                child: Center(
+                  child: Icon(
+                    SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.check_mark_circled_solid : Icons.check_circle,
+                    color: Colors.white,
+                  ),
                 ),
+                color: Colors.white.withAlpha(50),
               ),
             ),
-          );
+          Positioned.fill(
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                child: widget.data.type == AssetType.video
+                    ? Icon(
+                        SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.play_circle_fill : Icons.play_circle_filled,
+                        color: Colors.white.withOpacity(0.5),
+                        size: 50,
+                      )
+                    : Container(),
+                onTap: () async {
+                  widget.onTap();
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
