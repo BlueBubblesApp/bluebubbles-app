@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:bluebubbles/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/foundation.dart';
@@ -190,8 +191,10 @@ class ConversationListState extends State<ConversationList> {
                         onPressed: () async {
                           await SettingsManager().resetConnection();
                           SettingsManager().settings.finishedSetup.value = false;
-                          SocketManager().finishedSetup.sink.add(false);
-                          Navigator.of(context).popUntil((route) => route.isFirst);
+                          Get.offAll(() => WillPopScope(
+                            onWillPop: () async => false,
+                            child: SetupView(),
+                          ), duration: Duration.zero, transition: Transition.noTransition);
                           SettingsManager().settings = Settings();
                           SettingsManager().settings.save();
                           SettingsManager().fcmData = null;

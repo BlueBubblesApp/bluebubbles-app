@@ -57,25 +57,9 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:window_manager/window_manager.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
 
-// final SentryClient _sentry = SentryClient(
-//     dsn:
-//         "https://3123d4f0d82d405190cb599d0e904adc@o373132.ingest.sentry.io/5372783");
-
-bool get isInDebugMode {
-  // Assume you're in production mode.
-  bool inDebugMode = false;
-
-  // Assert expressions are only evaluated during development. They are ignored
-  // in production. Therefore, this code only sets `inDebugMode` to true
-  // in a development environment.
-  assert(inDebugMode = true);
-
-  return inDebugMode;
-}
-
 FlutterLocalNotificationsPlugin? flutterLocalNotificationsPlugin;
 late SharedPreferences prefs;
-late FirebaseApp app;
+late final FirebaseApp app;
 late final Store store;
 late final Box<Attachment> attachmentBox;
 late final Box<Chat> chatBox;
@@ -89,12 +73,6 @@ late final Box<AttachmentMessageJoin> amJoinBox;
 late final Box<ChatHandleJoin> chJoinBox;
 late final Box<ChatMessageJoin> cmJoinBox;
 late final Box<ThemeValueJoin> tvJoinBox;
-
-Future<void> _reportError(dynamic error, dynamic stackTrace) async {
-  // Print the exception to the console.
-  Logger.error('Caught error: $error');
-  Logger.error(stackTrace.toString());
-}
 
 class MyHttpOverrides extends HttpOverrides {
   @override
@@ -116,14 +94,6 @@ Future<void> main() async {
   FlutterError.onError = (FlutterErrorDetails details) {
     Logger.error(details.exceptionAsString());
     Logger.error(details.stack.toString());
-    if (isInDebugMode) {
-      // In development mode simply print to console.
-      FlutterError.dumpErrorToConsole(details);
-    } else {
-      // In production mode report to the application zone to report to
-      // Sentry.
-      Zone.current.handleUncaughtError(details.exception, details.stack!);
-    }
   };
 
   WidgetsFlutterBinding.ensureInitialized();
@@ -230,9 +200,8 @@ Future<void> main() async {
         darkTheme: dark.themeData,
       ));
     }, (Object error, StackTrace stackTrace) async {
-      // Whenever an error occurs, call the `_reportError` function. This sends
-      // Dart errors to the dev console or Sentry depending on the environment.
-      await _reportError(error, stackTrace);
+      Logger.error('Caught error: $error');
+      Logger.error(stackTrace.toString());
     });
   } else {
     runApp(FailureToStart(e: exception));
@@ -279,7 +248,7 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
         /// Hide the debug banner in debug mode
         debugShowCheckedModeBanner: false,
 
-        title: 'BlueBubbles ${kIsWeb ? "(Beta)" : ""}',
+        title: 'BlueBubbles',
 
         /// Set the light theme from the [AdaptiveTheme]
         theme: theme.copyWith(appBarTheme: theme.appBarTheme.copyWith(elevation: 0.0)),
@@ -421,9 +390,10 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       });
     }
 
+    SettingsManager().getSavedSettings();
+
     // Get the saved settings from the settings manager after the first frame
     SchedulerBinding.instance!.addPostFrameCallback((_) async {
-      await SettingsManager().getSavedSettings(context: context);
 
       if (SettingsManager().settings.colorsFromMedia.value) {
         try {
@@ -556,38 +526,30 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       ),
       child: Scaffold(
         backgroundColor: Colors.black,
-        // The stream builder connects to the [SocketManager] to check if the app has finished the setup or not
-        body: StreamBuilder(
-          stream: SocketManager().finishedSetup.stream,
-          builder: (BuildContext context, AsyncSnapshot<bool?> snapshot) {
-            if (snapshot.hasData) {
-              // If the app has already gone through setup, show the convo list
-              // Otherwise show the setup
-              if (snapshot.data!) {
-                SystemChrome.setPreferredOrientations([
-                  DeviceOrientation.landscapeRight,
-                  DeviceOrientation.landscapeLeft,
-                  DeviceOrientation.portraitUp,
-                  DeviceOrientation.portraitDown,
-                ]);
-                if (!serverCompatible && kIsWeb) {
-                  return FailureToStart(otherTitle: "Server version too low, please upgrade!", e: "Required Server Version: v0.2.0",);
-                }
-                return ConversationList(
-                  showArchivedChats: false,
-                  showUnknownSenders: false,
-                );
-              } else {
-                SystemChrome.setPreferredOrientations([
-                  DeviceOrientation.portraitUp,
-                ]);
-                return WillPopScope(
-                  onWillPop: () async => false,
-                  child: SetupView(),
-                );
+        body: Builder(
+          builder: (BuildContext context) {
+            if (SettingsManager().settings.finishedSetup.value) {
+              SystemChrome.setPreferredOrientations([
+                DeviceOrientation.landscapeRight,
+                DeviceOrientation.landscapeLeft,
+                DeviceOrientation.portraitUp,
+                DeviceOrientation.portraitDown,
+              ]);
+              if (!serverCompatible && kIsWeb) {
+                return FailureToStart(otherTitle: "Server version too low, please upgrade!", e: "Required Server Version: v0.2.0",);
               }
+              return ConversationList(
+                showArchivedChats: false,
+                showUnknownSenders: false,
+              );
             } else {
-              return Container();
+              SystemChrome.setPreferredOrientations([
+                DeviceOrientation.portraitUp,
+              ]);
+              return WillPopScope(
+                onWillPop: () async => false,
+                child: SetupView(),
+              );
             }
           },
         ),
