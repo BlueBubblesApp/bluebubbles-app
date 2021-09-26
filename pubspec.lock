@@ -805,7 +805,7 @@ packages:
       name: libphonenumber
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.0.1"
+    version: "2.0.2"
   libphonenumber_platform_interface:
     dependency: transitive
     description:

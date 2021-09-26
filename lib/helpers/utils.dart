@@ -314,18 +314,18 @@ String uriToFilename(String? uri, String? mimeType) {
   return (ext != null && ext.isNotEmpty) ? '$filename.$ext' : filename;
 }
 
-Future<String> getGroupEventText(Message message) async {
+String getGroupEventText(Message message) {
   String text = "Unknown group event";
   String? handle = "You";
   if (!message.isFromMe! && message.handleId != null && message.handle != null) {
-    handle = await ContactManager().getContactTitle(message.handle);
+    handle = ContactManager().getContactTitle(message.handle);
   }
 
   String? other = "someone";
   if (message.otherHandle != null && [1, 2].contains(message.itemType)) {
     Handle? item = Handle.findOne(originalROWID: message.otherHandle);
     if (item != null) {
-      other = await ContactManager().getContactTitle(item);
+      other = ContactManager().getContactTitle(item);
     }
   }
 
@@ -351,10 +351,10 @@ Future<String> getGroupEventText(Message message) async {
   return text;
 }
 
-Future<MemoryImage?> loadAvatar(Chat chat, Handle? handle) async {
+MemoryImage? loadAvatar(Chat chat, Handle? handle) {
   // Get the contact
-  Contact? contact = await ContactManager().getCachedContact(handle);
-  Uint8List? avatar = contact?.avatar;
+  Contact? contact = ContactManager().getCachedContact(handle: handle);
+  Uint8List? avatar = contact?.avatar.value;
   if (isNullOrEmpty(avatar)!) return null;
 
   // Set the contact image

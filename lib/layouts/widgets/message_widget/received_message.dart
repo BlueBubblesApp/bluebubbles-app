@@ -11,7 +11,6 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/messa
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_time_stamp.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_popup_holder.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -59,22 +58,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
   @override
   initState() {
     super.initState();
-    initMessageState(widget.message, widget.showHandle).then((value) => {if (mounted) setState(() {})});
-
-    // We need this here, or else messages without an avatar may not change.
-    // Even if it fits the criteria
-    ContactManager().colorStream.listen((event) {
-      if (!event.containsKey(widget.message.handle?.address)) return;
-
-      Color? color = event[widget.message.handle?.address];
-      if (color == null) {
-        widget.message.handle!.color = null;
-      } else {
-        widget.message.handle!.color = color.value.toRadixString(16);
-      }
-
-      if (mounted) setState(() {});
-    });
+    initMessageState(widget.message, widget.showHandle);
   }
 
   @override
@@ -103,8 +87,8 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     return bubbleColors;
   }
 
-  Future<void> didChangeMessageDependencies(Message message, bool? showHandle) async {
-    await getContactTitle(message, showHandle);
+  void didChangeMessageDependencies(Message message, bool? showHandle) {
+    getContactTitle(message, showHandle);
     // await fetchAvatar(message);
     if (mounted) setState(() {});
   }
@@ -163,10 +147,10 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
       alignment: AlignmentDirectional.bottomStart,
       children: [
         if (widget.showTail && skin.value == Skins.iOS)
-          MessageTail(
+          Obx(() => MessageTail(
             isFromMe: false,
             color: getBubbleColors()[0],
-          ),
+          )),
         Container(
           margin: EdgeInsets.only(
             top: widget.message
@@ -228,13 +212,13 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                     ),
                   );
                 }
-                return RichText(
+                return Obx(() => RichText(
                   text: TextSpan(
                     children: MessageWidgetMixin.buildMessageSpans(context, widget.message,
                         colors: widget.message.handle?.color != null ? getBubbleColors() : null),
                     style: Theme.of(context).textTheme.bodyText2,
                   ),
-                );
+                ));
               }
           ),
         ),

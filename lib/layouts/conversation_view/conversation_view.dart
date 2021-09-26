@@ -161,7 +161,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     initListener();
 
     SchedulerBinding.instance!.addPostFrameCallback((_) async {
-      if ((await SettingsManager().getMacOSVersion())! >= 11) {
+      if (widget.isCreator && (await SettingsManager().getMacOSVersion())! >= 11) {
         showSnackbar('Warning',
             'Support for creating chats is currently limited on MacOS 11 (Big Sur) and up due to limitations imposed by Apple');
       }

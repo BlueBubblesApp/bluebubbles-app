@@ -417,7 +417,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             onTap: () async {
               Handle? handle = widget.message.handle;
               String? address = handle?.address ?? "";
-              Contact? contact = ContactManager().getCachedContactSync(address);
+              Contact? contact = ContactManager().getCachedContact(address: address);
               UniqueContact uniqueContact;
               if (contact == null) {
                 uniqueContact = UniqueContact(address: address, displayName: (await formatPhoneNumber(handle)));

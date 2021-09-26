@@ -25,20 +25,21 @@ import 'package:metadata_fetch/metadata_fetch.dart';
 import 'handle.dart';
 import 'message.dart';
 
-Future<String> getFullChatTitle(Chat _chat) async {
+String getFullChatTitle(Chat _chat) {
   String? title = "";
   if (isNullOrEmpty(_chat.displayName)!) {
     Chat chat = _chat.getParticipants();
 
-    // If there are no participants, try to get them from the server
+    //todo - do we really need this here?
+    /*// If there are no participants, try to get them from the server
     if (chat.participants.isEmpty) {
       await ActionHandler.handleChat(chat: chat);
       chat = chat.getParticipants();
-    }
+    }*/
 
     List<String> titles = [];
     for (int i = 0; i < chat.participants.length; i++) {
-      String? name = await ContactManager().getContactTitle(chat.participants[i]);
+      String? name = ContactManager().getContactTitle(chat.participants[i]);
 
       if (chat.participants.length > 1 && !name!.isPhoneNumber) {
         name = name.trim().split(" ")[0];
@@ -161,7 +162,7 @@ class Chat {
               : ((json['hasUnreadMessage'] == 1) ? true : false)
           : false,
       latestMessage: message,
-      latestMessageText: json.containsKey("latestMessageText") ? json["latestMessageText"] : message != null ? MessageHelper.getNotificationTextSync(message) : null,
+      latestMessageText: json.containsKey("latestMessageText") ? json["latestMessageText"] : message != null ? MessageHelper.getNotificationText(message) : null,
       fakeLatestMessageText: json.containsKey("latestMessageText")
           ? faker.lorem.words((json["latestMessageText"] ?? "").split(" ").length).join(" ")
           : null,
@@ -207,8 +208,8 @@ class Chat {
     return this;
   }
 
-  Future<String?> getTitle() async {
-    title = await getFullChatTitle(this);
+  String? getTitle() {
+    title = getFullChatTitle(this);
     return title;
   }
 
@@ -324,7 +325,7 @@ class Chat {
 
     if (isNewer && checkForMessageText) {
       latestMessage = message;
-      latestMessageText = await MessageHelper.getNotificationText(message);
+      latestMessageText = MessageHelper.getNotificationText(message);
       fakeLatestMessageText = faker.lorem.words((latestMessageText ?? "").split(" ").length).join(" ");
       latestMessageDate = message.dateCreated;
     }

@@ -544,7 +544,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           } else if (hideInfo) {
             placeholder = "BlueBubbles";
           } else {
-            String? title = await CurrentChat.of(context)?.chat.getTitle();
+            String? title = CurrentChat.of(context)?.chat.getTitle();
             if (!isNullOrEmpty(title)!) {
               placeholder = title!;
             }
@@ -557,7 +557,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           } else {
             // If it's not a group chat, get the participant's contact info
             Handle? handle = CurrentChat.of(context)?.chat.participants[0];
-            Contact? contact = ContactManager().getCachedContactSync(handle?.address ?? "");
+            Contact? contact = ContactManager().getCachedContact(address: handle?.address ?? "");
             if (contact == null) {
               placeholder = await formatPhoneNumber(handle);
             } else {

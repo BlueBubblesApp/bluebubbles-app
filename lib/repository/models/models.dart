@@ -33,6 +33,7 @@ export 'package:bluebubbles/repository/models/platform_file.dart';
 import 'dart:typed_data';
 
 import 'package:fast_contacts/fast_contacts.dart';
+import 'package:get/get.dart';
 
 class Contact {
   Contact({
@@ -41,15 +42,17 @@ class Contact {
     this.phones = const [],
     this.emails = const [],
     this.structuredName,
-    this.avatar,
-  });
+    Uint8List? avatarBytes,
+  }) {
+    avatar.value = avatarBytes;
+  }
 
   String id;
   String displayName;
   List<String> phones;
   List<String> emails;
   StructuredName? structuredName;
-  Uint8List? avatar;
+  final Rxn<Uint8List> avatar = Rxn<Uint8List>();
 
   Map<String, dynamic> toMap() {
     return {

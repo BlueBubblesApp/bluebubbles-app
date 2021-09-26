@@ -57,12 +57,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
   void fetchChatTitle(Chat? chat) {
     if (chat == null) return;
 
-    getFullChatTitle(chat).then((String title) {
-      if (!mounted) return;
-      setState(() {
-        this.title = title;
-      });
-    });
+    title = getFullChatTitle(chat);
   }
 
   void setChat(Chat? chat) {

@@ -105,7 +105,7 @@ class NotificationManager {
 
   Future<void> scheduleNotification(Chat chat, Message message, DateTime time) async {
     // Get a title as best as we can
-    String? chatTitle = await chat.getTitle();
+    String? chatTitle = chat.getTitle();
     bool isGroup = chat.isGroup();
 
     // If we couldn't get a chat title, generate placeholder names
@@ -113,7 +113,7 @@ class NotificationManager {
     await flutterLocalNotificationsPlugin!.zonedSchedule(
         Random().nextInt(9998) + 1,
         'Reminder: $chatTitle',
-        await MessageHelper.getNotificationText(message),
+        MessageHelper.getNotificationText(message),
         tz.TZDateTime.from(time, tz.local),
         fln.NotificationDetails(
             android: fln.AndroidNotificationDetails(
@@ -124,7 +124,7 @@ class NotificationManager {
           importance: fln.Importance.max,
           color: HexColor("4990de"),
         )),
-        payload: await MessageHelper.getNotificationText(message),
+        payload: MessageHelper.getNotificationText(message),
         androidAllowWhileIdle: true,
         uiLocalNotificationDateInterpretation: fln.UILocalNotificationDateInterpretation.absoluteTime);
   }
@@ -160,7 +160,7 @@ class NotificationManager {
     // Get the contact name if the message is not from you
     String? contactName = 'You';
     if (!message.isFromMe!) {
-      contactName = await ContactManager().getContactTitle(message.handle);
+      contactName = ContactManager().getContactTitle(message.handle);
     }
 
     // If it's still null or empty, we need to put something in there... so 'You'
@@ -169,24 +169,24 @@ class NotificationManager {
     }
 
     // Get the actual contact metadata
-    Contact? contact = await ContactManager().getCachedContact(message.handle);
+    Contact? contact = ContactManager().getCachedContact(handle: message.handle);
 
     // Build the message text for the notification
-    String? messageText = await MessageHelper.getNotificationText(message);
+    String? messageText = MessageHelper.getNotificationText(message);
     if (SettingsManager().settings.hideTextPreviews.value) messageText = "iMessage";
 
     // Try to load in an avatar for the person
     try {
       // If there is a contact specified, we can use it's avatar
-      if (contact != null && contact.avatar != null && contact.avatar!.isNotEmpty) {
-        contactIcon = contact.avatar;
+      if (contact != null && contact.avatar.value != null && contact.avatar.value!.isNotEmpty) {
+        contactIcon = contact.avatar.value;
         // Otherwise if there isn't, we use the [defaultAvatar]
       } else {
         if (contact != null) {
-          contact.avatar = await ContactManager().getAvatar(contact.id);
+          contact.avatar.value = await ContactManager().getAvatar(contact.id);
         }
         // If [defaultAvatar] is not loaded, load it from assets
-        if ((contact?.avatar == null || contact!.avatar!.isEmpty) && defaultAvatar == null) {
+        if ((contact?.avatar == null || contact!.avatar.value!.isEmpty) && defaultAvatar == null) {
           ByteData file = await loadAsset("assets/images/person64.png");
           defaultAvatar = file.buffer.asUint8List();
         }
@@ -205,7 +205,7 @@ class NotificationManager {
     }
 
     // Get a title as best as we can
-    String? chatTitle = await chat.getTitle();
+    String? chatTitle = chat.getTitle();
     bool isGroup = chat.isGroup();
 
     // If we couldn't get a chat title, generate placeholder names

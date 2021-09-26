@@ -19,15 +19,15 @@ abstract class MessageWidgetMixin {
   bool hasHyperlinks = false;
   static const double maxSize = 3 / 5;
 
-  Future<void> initMessageState(Message message, bool? showHandle) async {
+  void initMessageState(Message message, bool? showHandle) {
     hasHyperlinks = parseLinks(message.text!).isNotEmpty;
-    await getContactTitle(message, showHandle);
+    getContactTitle(message, showHandle);
   }
 
-  Future<void> getContactTitle(Message message, bool? showHandle) async {
+  void getContactTitle(Message message, bool? showHandle) {
     if (message.handle == null || !showHandle!) return;
 
-    String? title = await ContactManager().getContactTitle(message.handle);
+    String? title = ContactManager().getContactTitle(message.handle);
 
     if (title != contactTitle) {
       contactTitle = title ?? "";

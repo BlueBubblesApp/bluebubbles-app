@@ -90,14 +90,14 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
     });
   }
 
-  void setNewChatData({forceUpdate = false}) async {
+  void setNewChatData({forceUpdate = false}) {
     // Save the current participant list and get the latest
     List<Handle> ogParticipants = widget.chat.participants;
     widget.chat.getParticipants();
 
     // Save the current title and generate the new one
     String? ogTitle = widget.chat.title;
-    await widget.chat.getTitle();
+    widget.chat.getTitle();
 
     // If the original data is different, update the state
     if (ogTitle != widget.chat.title || ogParticipants.length != widget.chat.participants.length || forceUpdate) {

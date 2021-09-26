@@ -227,7 +227,7 @@ class SentMessageHelper {
                           List<Message> latest = Chat.getMessages(chat, limit: 1);
                           chat.latestMessage = latest.first;
                           chat.latestMessageDate = latest.first.dateCreated;
-                          chat.latestMessageText = await MessageHelper.getNotificationText(latest.first);
+                          chat.latestMessageText = MessageHelper.getNotificationText(latest.first);
 
                           // Update it in the Bloc
                           await ChatBloc().updateChatPosition(chat);

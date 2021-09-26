@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/layouts/setup/upgrading_db.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:collection/collection.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
@@ -169,6 +170,9 @@ Future<void> main() async {
     await SettingsManager().init();
     await SettingsManager().getSavedSettings(headless: true);
     Get.put(AttachmentDownloadService());
+    if (SettingsManager().settings.finishedSetup.value) {
+      await ContactManager().getContacts();
+    }
     if (!kIsWeb && !kIsDesktop) {
       flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
       const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('ic_stat_icon');

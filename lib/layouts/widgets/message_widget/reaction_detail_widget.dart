@@ -28,12 +28,11 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
 
     contactTitle = widget.message.isFromMe! ? "You" : widget.handle!.address;
     if (widget.message.isFromMe! || widget.handle == null) return;
-    ContactManager().getContactTitle(widget.handle).then((String? title) {
-      if (title != contactTitle) {
-        contactTitle = title;
-        if (mounted) setState(() {});
-      }
-    });
+    String? title = ContactManager().getContactTitle(widget.handle);
+    if (title != contactTitle) {
+      contactTitle = title;
+      if (mounted) setState(() {});
+    }
   }
 
   @override

@@ -56,7 +56,7 @@ class _PinnedTileTextBubbleState extends State<PinnedTileTextBubble> with Automa
     bool generate = SettingsManager().settings.redactedMode.value &&
         SettingsManager().settings.generateFakeMessageContent.value;
 
-    String messageText = MessageHelper.getNotificationTextSync(message);
+    String messageText = MessageHelper.getNotificationText(message);
     if (generate) messageText = widget.chat.fakeLatestMessageText ?? "";
     if (message.associatedMessageGuid != null ||
         message.isFromMe! ||
