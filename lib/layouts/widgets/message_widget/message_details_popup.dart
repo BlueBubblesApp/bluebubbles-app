@@ -415,7 +415,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             splashColor: Colors.transparent,
             highlightColor: Colors.transparent,
             onTap: () async {
-              bool shouldShowSnackbar = (await SettingsManager().getMacOSVersion())! >= 11;
               Handle? handle = widget.message.handle;
               String? address = handle?.address ?? "";
               Contact? contact = ContactManager().getCachedContactSync(address);
@@ -432,7 +431,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                     return ConversationView(
                       isCreator: true,
                       selected: [uniqueContact],
-                      showSnackbar: shouldShowSnackbar,
                     );
                   },
                 ),
@@ -453,8 +451,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
       Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () async {
-            bool shouldShowSnackbar = (await SettingsManager().getMacOSVersion())! >= 11;
+          onTap: () {
             Navigator.of(context).pop();
             Navigator.pushReplacement(
               context,
@@ -474,7 +471,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                     isCreator: true,
                     existingText: widget.message.text,
                     existingAttachments: existingAttachments,
-                    showSnackbar: shouldShowSnackbar,
                   );
                 },
               ),
