@@ -11,6 +11,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/messa
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_time_stamp.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_popup_holder.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -52,19 +53,14 @@ class ReceivedMessage extends StatefulWidget {
 
 class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMixin {
   bool checkedHandle = false;
+  late String contactTitle;
   final Rx<Skins> skin = Rx<Skins>(SettingsManager().settings.skin.value);
   late final spanFuture = MessageWidgetMixin.buildMessageSpansAsync(context, widget.message, colors: widget.message.handle?.color != null ? getBubbleColors() : null);
 
   @override
   initState() {
     super.initState();
-    initMessageState(widget.message, widget.showHandle);
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    didChangeMessageDependencies(widget.message, widget.showHandle);
+    contactTitle = ContactManager().getContactTitle(widget.message.handle) ?? "";
   }
 
   List<Color> getBubbleColors() {
@@ -85,12 +81,6 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
       }
     }
     return bubbleColors;
-  }
-
-  void didChangeMessageDependencies(Message message, bool? showHandle) {
-    getContactTitle(message, showHandle);
-    // await fetchAvatar(message);
-    if (mounted) setState(() {});
   }
 
   /// Builds the message bubble with teh tail (if applicable)
@@ -271,8 +261,8 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     if (widget.message
         .getRealAttachments().isNotEmpty) {
       messageColumn.add(
-        addStickersToWidget(
-          message: addReactionsToWidget(
+        MessageWidgetMixin.addStickersToWidget(
+          message: MessageWidgetMixin.addReactionsToWidget(
               messageWidget: widget.attachmentsWidget,
               reactions: widget.reactionsWidget,
               message: widget.message,
@@ -313,8 +303,8 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     // Fourth, let's add any reactions or stickers to the widget
     if (message != null) {
       messageColumn.add(
-        addStickersToWidget(
-          message: addReactionsToWidget(
+        MessageWidgetMixin.addStickersToWidget(
+          message: MessageWidgetMixin.addReactionsToWidget(
               messageWidget: message,
               reactions: widget.reactionsWidget,
               message: widget.message,

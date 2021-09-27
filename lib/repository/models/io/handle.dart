@@ -96,8 +96,12 @@ class Handle {
   static List<Chat> getChats(Handle handle) {
     if (kIsWeb) return [];
     return store.runInTransaction(TxMode.read, () {
-      final chatIds = chJoinBox.getAll().where((element) => element.handleId == handle.id).map((e) => e.chatId);
-      final chats = chatBox.getAll().where((element) => chatIds.contains(element.id)).toList();
+      final chatIdQuery = chJoinBox.query(ChatHandleJoin_.handleId.equals(handle.id!)).build();
+      final chatIds = chatIdQuery.property(ChatHandleJoin_.chatId).find();
+      chatIdQuery.close();
+      final chatQuery = chatBox.query(Chat_.id.oneOf(chatIds)).build();
+      final chats = chatQuery.find();
+      chatQuery.close();
       return chats;
     });
   }

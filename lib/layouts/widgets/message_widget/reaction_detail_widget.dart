@@ -31,7 +31,6 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
     String? title = ContactManager().getContactTitle(widget.handle);
     if (title != contactTitle) {
       contactTitle = title;
-      if (mounted) setState(() {});
     }
   }
 

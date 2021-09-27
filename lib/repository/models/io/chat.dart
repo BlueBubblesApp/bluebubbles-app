@@ -444,21 +444,27 @@ class Chat {
   static List<Attachment> getAttachments(Chat chat, {int offset = 0, int limit = 25}) {
     if (kIsWeb || chat.id == null) return [];
     return store.runInTransaction(TxMode.read, () {
-      final amJoinValues = amJoinBox.getAll();
-      final cmJoinValues = cmJoinBox.getAll().where((element) => element.chatId == chat.id).map((e) => e.messageId).toList();
-      final query2 = (messageBox.query(Message_.id.oneOf(cmJoinValues))..order(Message_.dateCreated, flags: Order.descending)).build();
-      final messages = query2.find();
-      final attachmentIds = amJoinValues.where((element) => cmJoinValues.contains(element.messageId)).map((e) => e.attachmentId).toList();
-      final query = attachmentBox.query(Attachment_.id.oneOf(attachmentIds)).build();
-      query
+      final cmJoinQuery = cmJoinBox.query(ChatMessageJoin_.chatId.equals(chat.id!)).build();
+      final cmJoinValues = cmJoinQuery.property(ChatMessageJoin_.messageId).find();
+      cmJoinQuery.close();
+      final amJoinQuery = amJoinBox.query(AttachmentMessageJoin_.messageId.oneOf(cmJoinValues)).build();
+      amJoinQuery
         ..limit = limit
         ..offset = offset;
+      final amJoinValues = amJoinQuery.find();
+      amJoinQuery.close();
+      final messageIds = amJoinValues.map((e) => e.messageId).toList();
+      final attachmentIds = amJoinValues.map((e) => e.attachmentId).toList();
+      final query2 = (messageBox.query(Message_.id.oneOf(messageIds))..order(Message_.dateCreated, flags: Order.descending)).build();
+      final messages = query2.find();
+      final query = attachmentBox.query(Attachment_.id.oneOf(attachmentIds)).build();
       final attachments = query.find()..removeWhere((element) => element.mimeType == null);
       final actualAttachments = <Attachment>[];
+      final map = Message.fetchAttachmentsByMessages(messages);
       for (Message m in messages) {
-        m.attachments = m.fetchAttachments();
-        for (Attachment a in attachments) {
-          if (m.attachments?.map((e) => e!.guid).contains(a.guid) ?? false) {
+        m.attachments = map[m.guid];
+        for (Attachment? a in m.attachments ?? []) {
+          if (attachments.map((e) => e.guid).contains(a!.guid)) {
             actualAttachments.add(a);
           }
         }
@@ -475,7 +481,9 @@ class Chat {
   static List<Message> getMessages(Chat chat, {int offset = 0, int limit = 25, bool includeDeleted = false}) {
     if (kIsWeb || chat.id == null) return [];
     return store.runInTransaction(TxMode.read, () {
-      final messageIds = cmJoinBox.getAll().where((element) => element.chatId == chat.id).map((e) => e.messageId).toList();
+      final messageIdQuery = cmJoinBox.query(ChatMessageJoin_.chatId.equals(chat.id!)).build();
+      final messageIds = messageIdQuery.property(ChatMessageJoin_.messageId).find();
+      messageIdQuery.close();
       final query = (messageBox.query(Message_.id.oneOf(messageIds)
           .and(includeDeleted ? Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull()) : Message_.dateDeleted.isNull()))
         ..order(Message_.dateCreated, flags: Order.descending)).build();
@@ -504,7 +512,9 @@ class Chat {
   Chat getParticipants() {
     if (kIsWeb || id == null) return this;
     store.runInTransaction(TxMode.read, () {
-      final handleIds = chJoinBox.getAll().where((element) => element.chatId == id).map((e) => e.handleId);
+      final handleIdQuery = chJoinBox.query(ChatHandleJoin_.chatId.equals(id!)).build();
+      final handleIds = handleIdQuery.property(ChatHandleJoin_.handleId).find();
+      handleIdQuery.close();
       final handles = handleBox.getMany(handleIds.toList(), growableResult: true)..retainWhere((e) => e != null);
       final nonNullHandles = List<Handle>.from(handles);
       participants = nonNullHandles;
@@ -630,8 +640,12 @@ class Chat {
   void clearTranscript() {
     if (kIsWeb) return;
     store.runInTransaction(TxMode.write, () {
-      final messageIds = cmJoinBox.getAll().where((element) => element.chatId == id!).map((e) => e.messageId);
-      final messages = messageBox.getAll().where((element) => messageIds.contains(element.id)).toList();
+      final messageIdQuery = cmJoinBox.query(ChatMessageJoin_.chatId.equals(id!)).build();
+      final messageIds = messageIdQuery.property(ChatMessageJoin_.messageId).find();
+      messageIdQuery.close();
+      final messagesQuery = messageBox.query(Message_.id.oneOf(messageIds)).build();
+      final messages = messagesQuery.find();
+      messagesQuery.close();
       for (Message element in messages) {
         element.dateDeleted = DateTime.now().toUtc();
       }

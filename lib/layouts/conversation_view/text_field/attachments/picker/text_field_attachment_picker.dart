@@ -71,7 +71,6 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
         });
       }
     }
-    print(_images.length);
     if (mounted) setState(() {});
   }
 

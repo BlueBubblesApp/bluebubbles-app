@@ -37,12 +37,13 @@ class _StickersWidgetState extends State<StickersWidget> {
 
   void loadStickers() {
     // For each message, load the sticker for it
+    final map = Message.fetchAttachmentsByMessages(widget.messages);
     for (Message msg in widget.messages) {
       // If the message type isn't a sticker, skip it
       if (msg.associatedMessageType != "sticker") continue;
 
       // Get the associated attachments
-      msg.fetchAttachments();
+      msg.attachments = map[msg.guid];
       for (Attachment? attachment in msg.attachments!) {
         // If we've already loaded it, don't try again
         if (loaded.contains(attachment!.guid)) continue;

@@ -450,37 +450,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                   ],
                 ),
               ),
-            widget.messages.isNotEmpty
-                ? SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        Message? olderMessage;
-                        Message? newerMessage;
-                        if (index + 1 >= 0 && index + 1 < _messages.length) {
-                          olderMessage = _messages[index + 1];
-                        }
-                        if (index - 1 >= 0 && index - 1 < _messages.length) {
-                          newerMessage = _messages[index - 1];
-                        }
-
-                        return Padding(
-                            padding: EdgeInsets.only(left: 5.0, right: 5.0),
-                            child: MessageWidget(
-                              key: Key(_messages[index].guid!),
-                              message: _messages[index],
-                              olderMessage: olderMessage,
-                              newerMessage: newerMessage,
-                              showHandle: widget.showHandle,
-                              isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages[index].guid,
-                              showHero: false,
-                              onUpdate: (event) => onUpdateMessage(event),
-                              bloc: widget.messageBloc!,
-                            ));
-                      },
-                      childCount: _messages.length,
-                    ),
-                  )
-                : _listKey != null
+            _listKey != null
                     ? SliverAnimatedList(
                         initialItemCount: _messages.length + 1,
                         key: _listKey,

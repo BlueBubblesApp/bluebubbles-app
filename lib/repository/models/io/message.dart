@@ -5,6 +5,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/repository/models/io/attachment.dart';
+import 'package:bluebubbles/repository/models/objectbox.dart';
 import 'package:collection/collection.dart';
 import 'package:crypto/crypto.dart' as crypto;
 import 'package:bluebubbles/helpers/message_helper.dart';
@@ -13,7 +14,7 @@ import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:flutter/foundation.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Condition;
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'chat.dart';
 import 'handle.dart';
@@ -268,20 +269,47 @@ class Message {
     return this;
   }
 
-  List<Attachment?>? fetchAttachments({CurrentChat? currentChat}) {
-    if (kIsWeb || (hasAttachments && this.attachments != null && this.attachments!.isNotEmpty)) {
-      return this.attachments;
+  static Map<String, List<Attachment?>> fetchAttachmentsByMessages(List<Message?> messages, {CurrentChat? currentChat}) {
+    final Map<String, List<Attachment?>> map = {};
+    if (kIsWeb/* || (hasAttachments && attachments != null && attachments!.isNotEmpty)*/) {
+      map.addEntries(messages.map((e) => MapEntry(e!.guid!, e.attachments ?? [])));
+      return map;
     }
 
     if (currentChat != null) {
-      this.attachments = currentChat.getAttachmentsForMessage(this);
-      if (this.attachments == null) this.attachments = [];
-      if (this.attachments!.isNotEmpty) return this.attachments;
+      map.addEntries(messages.map((e) => MapEntry(e!.guid!, currentChat.getAttachmentsForMessage(e) ?? [])));
+      return map;
+    }
+
+    return store.runInTransaction(TxMode.read, () {
+      final messageIds = messages.map((e) => e!.id!).toList();
+      final amJoinQuery = amJoinBox.query(AttachmentMessageJoin_.messageId.oneOf(messageIds)).build();
+      final amJoins = amJoinQuery.find();
+      amJoinQuery.close();
+      map.addEntries(messages.map(
+          (e) => MapEntry(e!.guid!, attachmentBox.getMany(amJoins.where(
+              (e2) => e2.messageId == e.id).map(
+                  (e3) => e3.attachmentId).toSet().toList(), growableResult: true))));
+      return map;
+    });
+  }
+
+  List<Attachment?>? fetchAttachments({CurrentChat? currentChat}) {
+    if (kIsWeb || (hasAttachments && attachments != null && attachments!.isNotEmpty)) {
+      return attachments;
+    }
+
+    if (currentChat != null) {
+      attachments = currentChat.getAttachmentsForMessage(this);
+      attachments ??= [];
+      if (attachments!.isNotEmpty) return attachments;
     }
 
     if (id == null) return [];
     return store.runInTransaction(TxMode.read, () {
-      final attachmentIds = amJoinBox.getAll().where((element) => element.messageId == id!).map((e) => e.attachmentId).toList();
+      final attachmentIdQuery = amJoinBox.query(AttachmentMessageJoin_.messageId.equals(id!)).build();
+      final attachmentIds = attachmentIdQuery.property(AttachmentMessageJoin_.attachmentId).find().toSet().toList();
+      attachmentIdQuery.close();
       final attachments = attachmentBox.getMany(attachmentIds, growableResult: true);
       this.attachments = attachments;
       return attachments;
@@ -291,7 +319,9 @@ class Message {
   static Chat? getChat(Message message) {
     if (kIsWeb) return null;
     return store.runInTransaction(TxMode.read, () {
-      final chatId = cmJoinBox.getAll().firstWhere((element) => element.messageId == message.id).chatId;
+      final chatIdQuery = cmJoinBox.query(ChatMessageJoin_.messageId.equals(message.id!)).build();
+      final chatId = chatIdQuery.property(ChatMessageJoin_.chatId).find().first;
+      chatIdQuery.close();
       return chatBox.get(chatId);
     });
   }
@@ -305,7 +335,7 @@ class Message {
     if (kIsWeb) {
       associatedMessages = bloc?.reactionMessages.values.where((element) => element.associatedMessageGuid == guid).toList() ?? [];
     } else {
-      associatedMessages = Message.find().where((element) => element.associatedMessageGuid == guid).toList();
+      associatedMessages = Message.find(cond: Message_.associatedMessageGuid.equals(guid!));
     }
     associatedMessages.sort((a, b) => a.originalROWID!.compareTo(b.originalROWID!));
     if (!kIsWeb) associatedMessages = MessageHelper.normalizedAssociatedMessages(associatedMessages);
@@ -344,8 +374,9 @@ class Message {
     return messages.isEmpty ? null : messages.first.dateCreated;
   }
 
-  static List<Message> find() {
-    return messageBox.getAll();
+  static List<Message> find({Condition<Message>? cond}) {
+    final query = messageBox.query(cond).build();
+    return query.find();
   }
 
   static void delete(String guid) {
@@ -439,7 +470,10 @@ class Message {
 
   static int? countForChat(Chat? chat) {
     if (kIsWeb || chat == null || chat.id == null) return 0;
-    return cmJoinBox.getAll().where((element) => element.chatId == chat.id).length;
+    final chatIdQuery = cmJoinBox.query(ChatMessageJoin_.chatId.equals(chat.id!)).build();
+    final length = chatIdQuery.find().length;
+    chatIdQuery.close();
+    return length;
   }
 
   void merge(Message otherMessage) {

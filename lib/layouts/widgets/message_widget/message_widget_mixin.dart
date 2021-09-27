@@ -1,6 +1,7 @@
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:faker/faker.dart';
@@ -15,27 +16,10 @@ import 'package:url_launcher/url_launcher.dart';
 
 // Mixin just for commonly shared functions and properties between the SentMessage and ReceivedMessage
 abstract class MessageWidgetMixin {
-  String contactTitle = "";
-  bool hasHyperlinks = false;
   static const double maxSize = 3 / 5;
 
-  void initMessageState(Message message, bool? showHandle) {
-    hasHyperlinks = parseLinks(message.text!).isNotEmpty;
-    getContactTitle(message, showHandle);
-  }
-
-  void getContactTitle(Message message, bool? showHandle) {
-    if (message.handle == null || !showHandle!) return;
-
-    String? title = ContactManager().getContactTitle(message.handle);
-
-    if (title != contactTitle) {
-      contactTitle = title ?? "";
-    }
-  }
-
   /// Adds reacts to a [message] widget
-  Widget addReactionsToWidget(
+  static Widget addReactionsToWidget(
       {required Widget messageWidget, required Widget reactions, required Message? message, bool shouldShow = true}) {
     if (!shouldShow) return messageWidget;
 
@@ -49,7 +33,7 @@ abstract class MessageWidgetMixin {
   }
 
   /// Adds reacts to a [message] widget
-  Widget addStickersToWidget({required Widget message, required Widget stickers, required bool isFromMe}) {
+  static Widget addStickersToWidget({required Widget message, required Widget stickers, required bool isFromMe}) {
     return Stack(
       alignment: (isFromMe) ? AlignmentDirectional.bottomEnd : AlignmentDirectional.bottomStart,
       children: [
@@ -201,7 +185,13 @@ abstract class MessageWidgetMixin {
         linkIndexMatches.add(Tuple2("link", match.end));
       }
       if (!kIsWeb && !kIsDesktop) {
-        final List<EntityAnnotation> entities = await GoogleMlKit.nlp.entityExtractor(EntityExtractorOptions.ENGLISH).extractEntities(message.text!);
+        List<EntityAnnotation> entities = [];
+        if (CurrentChat.of(context)!.entityExtractorData[message.guid] == null) {
+          entities = await GoogleMlKit.nlp.entityExtractor(EntityExtractorOptions.ENGLISH).extractEntities(message.text!);
+          CurrentChat.of(context)!.entityExtractorData[message.guid!] = entities;
+        } else {
+          entities = CurrentChat.of(context)!.entityExtractorData[message.guid]!;
+        }
         for (EntityAnnotation element in entities) {
           if (element.entities.first is AddressEntity) {
             linkIndexMatches.add(Tuple2("map", element.start));

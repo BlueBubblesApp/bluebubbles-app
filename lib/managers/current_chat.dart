@@ -13,6 +13,7 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:chewie_audio/chewie_audio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:tuple/tuple.dart';
 import 'package:video_player/video_player.dart';
@@ -36,6 +37,7 @@ class CurrentChat {
   Map<String, Metadata> urlPreviews = {};
   Map<String, VideoPlayerController> currentPlayingVideo = {};
   Map<String, Tuple2<ChewieAudioController, VideoPlayerController>> audioPlayers = {};
+  Map<String, List<EntityAnnotation>> entityExtractorData = {};
   List<VideoPlayerController> videoControllersToDispose = [];
   List<Attachment> chatAttachments = [];
   List<Message?> sentMessages = [];
@@ -232,12 +234,7 @@ class CurrentChat {
   void preloadMessageAttachments({List<Message?>? specificMessages}) {
     List<Message?> messages =
         specificMessages ?? Chat.getMessages(chat, limit: 25);
-    for (Message? message in messages) {
-      if (message!.hasAttachments) {
-        List<Attachment?>? attachments = message.fetchAttachments();
-        messageAttachments[message.guid!] = attachments ?? [];
-      }
-    }
+    messageAttachments = Message.fetchAttachmentsByMessages(messages);
   }
 
   void displayTypingIndicator() {

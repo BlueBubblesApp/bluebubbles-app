@@ -56,9 +56,8 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
   int lastRequestCount = -1;
   int attachmentCount = 0;
   int associatedCount = 0;
-  bool handledInit = false;
   CurrentChat? currentChat;
-  StreamSubscription<NewMessageEvent>? subscription;
+  late StreamSubscription<NewMessageEvent> subscription;
   late Message _message;
   Message? _newerMessage;
   Message? _olderMessage;
@@ -66,23 +65,17 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
   @override
   void initState() {
     super.initState();
+    currentChat = CurrentChat.of(context);
+    _message = widget.message;
+    _newerMessage = widget.newerMessage;
+    _olderMessage = widget.olderMessage;
     init();
   }
 
   void init() {
-    currentChat = CurrentChat.of(context);
-    if (handledInit) return;
-    handledInit = true;
-    _message = widget.message;
-    _newerMessage = widget.newerMessage;
-    _olderMessage = widget.olderMessage;
-
     checkHandle();
     fetchAssociatedMessages();
     fetchAttachments();
-
-    // If we already are listening to the stream, no need to do it again
-    if (subscription != null) return;
 
     // Listen for new messages
     subscription = NewMessageManager().stream.listen((data) {
@@ -143,7 +136,7 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
 
   @override
   void dispose() {
-    subscription?.cancel();
+    subscription.cancel();
     super.dispose();
   }
 
@@ -176,8 +169,6 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
         _message.hasReactions = true;
         _message.save();
       }
-
-      if (mounted && forceReload) setState(() {});
     }
   }
 
@@ -278,6 +269,7 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
         shouldFadeIn: currentChat?.sentMessages.firstWhereOrNull((e) => e?.guid == _message.guid) != null,
         showHero: widget.showHero,
         showDeliveredReceipt: widget.isFirstSentMessage,
+        context: context,
       );
     } else {
       message = ReceivedMessage(
