@@ -275,7 +275,7 @@ class MessageBloc {
       int count = 0;
 
       // Should we check locally first?
-      if (checkLocal) messages = Chat.getMessages(currChat, offset: offset + reactionCnt);
+      if (checkLocal) messages = await Chat.getMessagesAsync(currChat, offset: offset + reactionCnt);
 
       // Fetch messages from the socket
       count = messages.length;
@@ -321,7 +321,7 @@ class MessageBloc {
 
       if (currentChat != null) {
         List<Message> messagesWithAttachment = messages.where((element) => element.hasAttachments).toList();
-        currentChat.preloadMessageAttachments(specificMessages: messagesWithAttachment);
+        await currentChat.preloadMessageAttachmentsAsync(specificMessages: messagesWithAttachment);
       }
 
       emitLoaded();

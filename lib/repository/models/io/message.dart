@@ -5,6 +5,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/repository/models/io/attachment.dart';
+import 'package:bluebubbles/repository/models/io/join_tables.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
 import 'package:collection/collection.dart';
 import 'package:crypto/crypto.dart' as crypto;
@@ -18,6 +19,25 @@ import 'package:get/get.dart' hide Condition;
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'chat.dart';
 import 'handle.dart';
+
+Future<Map<String, List<Attachment?>>> fetchAttachmentsIsolate(List<dynamic> stuff) async {
+  List<int> messageIds = stuff[0];
+  List<String> guids = stuff[1];
+  String? storeRef = stuff[2];
+  Map<String, List<Attachment?>> map = {};
+  final store = Store.fromReference(getObjectBoxModel(), base64.decode(storeRef!).buffer.asByteData());
+  final amJoinBox = store.box<AttachmentMessageJoin>();
+  return store.runInTransaction(TxMode.read, () {
+    final amJoinQuery = amJoinBox.query(AttachmentMessageJoin_.messageId.oneOf(messageIds)).build();
+    final amJoins = amJoinQuery.find();
+    amJoinQuery.close();
+    map.addEntries(guids.mapIndexed(
+            (index, e) => MapEntry(e, attachmentBox.getMany(amJoins.where(
+                (e2) => e2.messageId == messageIds[index]).map(
+                (e3) => e3.attachmentId).toSet().toList(), growableResult: true))));
+    return map;
+  });
+}
 
 @Entity()
 class Message {
@@ -271,7 +291,7 @@ class Message {
 
   static Map<String, List<Attachment?>> fetchAttachmentsByMessages(List<Message?> messages, {CurrentChat? currentChat}) {
     final Map<String, List<Attachment?>> map = {};
-    if (kIsWeb/* || (hasAttachments && attachments != null && attachments!.isNotEmpty)*/) {
+    if (kIsWeb) {
       map.addEntries(messages.map((e) => MapEntry(e!.guid!, e.attachments ?? [])));
       return map;
     }
@@ -292,6 +312,21 @@ class Message {
                   (e3) => e3.attachmentId).toSet().toList(), growableResult: true))));
       return map;
     });
+  }
+
+  static Future<Map<String, List<Attachment?>>> fetchAttachmentsByMessagesAsync(List<Message?> messages, {CurrentChat? currentChat}) async {
+    final Map<String, List<Attachment?>> map = {};
+    if (kIsWeb) {
+      map.addEntries(messages.map((e) => MapEntry(e!.guid!, e.attachments ?? [])));
+      return map;
+    }
+
+    if (currentChat != null) {
+      map.addEntries(messages.map((e) => MapEntry(e!.guid!, currentChat.getAttachmentsForMessage(e) ?? [])));
+      return map;
+    }
+
+    return await compute(fetchAttachmentsIsolate, [messages.map((e) => e!.id!).toList(), messages.map((e) => e!.guid!).toList(), prefs.getString("objectbox-reference")]);
   }
 
   List<Attachment?>? fetchAttachments({CurrentChat? currentChat}) {

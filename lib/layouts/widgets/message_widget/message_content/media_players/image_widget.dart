@@ -45,28 +45,28 @@ class ImageWidgetController extends GetxController {
       // If it's an image, compress the image when loading it
       if (kIsWeb || file.path == null) {
         if (attachment.guid != "redacted-mode-demo-attachment") {
-          data.value = file.bytes;
+          tmpData = file.bytes;
         } else {
-          data.value = Uint8List.view((await rootBundle.load(attachment.transferName!)).buffer);
+          tmpData = Uint8List.view((await rootBundle.load(attachment.transferName!)).buffer);
         }
       } else if (AttachmentHelper.canCompress(attachment) &&
           attachment.guid != "redacted-mode-demo-attachment" &&
           !attachment.guid!.contains("theme-selector")) {
-        data.value = await AttachmentHelper.compressAttachment(attachment, file.path!);
+        tmpData = await AttachmentHelper.compressAttachment(attachment, file.path!);
         // All other attachments can be held in memory as bytes
       } else {
         if (attachment.guid == "redacted-mode-demo-attachment" || attachment.guid!.contains("theme-selector")) {
-          data.value = (await rootBundle.load(file.path!)).buffer.asUint8List();
+          tmpData = (await rootBundle.load(file.path!)).buffer.asUint8List();
           return;
         }
-        data.value = await File(file.path!).readAsBytes();
+        tmpData = await File(file.path!).readAsBytes();
       }
 
-      if (data.value == null || CurrentChat.of(context) == null) return;
-      CurrentChat.of(context)?.saveImageData(data.value!, attachment);
-    } else {
-      data.value = tmpData;
+      if (tmpData == null || CurrentChat.activeChat == null) return;
+      CurrentChat.activeChat?.saveImageData(tmpData, attachment);
     }
+    await precacheImage(MemoryImage(tmpData), context, size: attachment.width == null ? null : Size.fromWidth(attachment.width! / 2));
+    data.value = tmpData;
   }
 }
 
@@ -136,7 +136,7 @@ class ImageWidget extends StatelessWidget {
                   controller.data.value!,
                   // prevents the image widget from "refreshing" when the provider changes
                   gaplessPlayback: true,
-                  filterQuality: FilterQuality.medium,
+                  filterQuality: FilterQuality.none,
                   cacheWidth: attachment.width == null ? null : attachment.width! ~/ 2,
                   frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
                     return Stack(children: [

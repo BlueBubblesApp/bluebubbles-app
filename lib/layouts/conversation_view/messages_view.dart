@@ -93,7 +93,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
 
     smartReplyController = StreamController<List<String>>.broadcast();
 
-    EventDispatcher().stream.listen((Map<String, dynamic> event) {
+    EventDispatcher().stream.listen((Map<String, dynamic> event) async {
       if (!mounted) return;
       if (!event.containsKey("type")) return;
 
@@ -111,18 +111,18 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
             // Reload the state after refreshing
             widget.messageBloc!.refresh();
             if (mounted) {
-              setState(() {});
+              await rebuild(this);
             }
           }
         }
       } else if (event["type"] == "add-custom-smartreply") {
         if (event["data"]["path"] != null) {
-          internalSmartReplies.addEntries([_buildReply("Attach recent photo", onTap: () {
+          internalSmartReplies.addEntries([_buildReply("Attach recent photo", onTap: () async {
             EventDispatcher().emit('add-attachment', event['data']);
             internalSmartReplies.remove('Attach recent photo');
-            setState(() {});
+            await rebuild(this);
           })]);
-          setState(() {});
+          await rebuild(this);
         }
       }
     });
@@ -136,19 +136,19 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     if (widget.initComplete != null) widget.initComplete!();
   }
 
-  void resetReplies() {
+  Future<void> resetReplies() async {
     if (replies.isEmpty) return;
     replies = [];
     internalSmartReplies.clear();
-    setState(() {});
+    await rebuild(this);
     return smartReplyController.sink.add(replies);
   }
 
   void updateReplies() async {
     // If there are no messages or the latest message is from me, reset the replies
-    if (isNullOrEmpty(_messages)!) return resetReplies();
-    if (_messages.first.isFromMe!) return resetReplies();
-    if (kIsWeb || kIsDesktop) return resetReplies();
+    if (isNullOrEmpty(_messages)!) return await resetReplies();
+    if (_messages.first.isFromMe!) return await resetReplies();
+    if (kIsWeb || kIsDesktop) return await resetReplies();
 
     Logger.info("Getting smart replies...");
     Map<String, dynamic> results = await smartReply.suggestReplies();
@@ -199,11 +199,6 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
 
       // Complete the future
       loader!.complete(val);
-
-      // Only update the state if there are messages that were added
-      if (val != LoadMessageResult.FAILED_TO_RETRIEVE) {
-        if (mounted) setState(() {});
-      }
     }).catchError((ex) {
       loader!.complete(LoadMessageResult.FAILED_TO_RETRIEVE);
     });
@@ -260,7 +255,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
 
       if (event.message!.hasAttachments) {
         currentChat!.updateChatAttachments();
-        if (mounted) setState(() {});
+        if (mounted) await rebuild(this);
       }
 
       if (isNewMessage && showSmartReplies) {
@@ -276,10 +271,10 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     } else {
       int originalMessageLength = _messages.length;
       _messages = event.messages;
-      for (Message message in _messages) {
+      /*for (Message message in _messages) {
         currentChat?.getAttachmentsForMessage(message);
         if (widgetsBuilt) currentChat?.messageMarkers.updateMessageMarkers(message);
-      }
+      }*/
 
       // This needs to be in reverse so that the oldest message gets added first
       // We also only want to grab the last 5, so long as there are at least 5 results
@@ -301,9 +296,9 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
           if (_messages.isNotEmpty) updateReplies();
         }
       }
-      _listKey ??= GlobalKey<SliverAnimatedListState>();
+      _listKey = GlobalKey<SliverAnimatedListState>();
 
-      if (originalMessageLength < _messages.length) {
+      /*if (originalMessageLength < _messages.length) {
         for (int i = originalMessageLength; i < _messages.length; i++) {
           if (_listKey != null && _listKey!.currentState != null) {
             _listKey!.currentState!.insertItem(i, duration: Duration(milliseconds: 0));
@@ -321,10 +316,10 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
             }
           }
         }
-      }
+      }*/
     }
 
-    if (mounted) setState(() {});
+    if (mounted) await rebuild(this);
   }
 
   /// All message update events are handled within the message widgets, to prevent top level setstates

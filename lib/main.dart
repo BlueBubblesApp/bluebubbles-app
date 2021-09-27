@@ -88,7 +88,7 @@ class MyHttpOverrides extends HttpOverrides {
   }
 }
 
-Future<void> main() async {
+main() async {
   HttpOverrides.global = MyHttpOverrides();
 
   // This captures errors reported by the Flutter framework.

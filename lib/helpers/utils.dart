@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:universal_io/io.dart';
 import 'dart:math';
@@ -640,6 +641,20 @@ Future<PlayerStatus> getControllerStatus(VideoPlayerController controller) async
   }
 
   return PlayerStatus.NONE;
+}
+
+Future<bool> rebuild(State s) async {
+  if (!s.mounted) return false;
+
+  // if there's a current frame,
+  if (SchedulerBinding.instance!.schedulerPhase != SchedulerPhase.idle) {
+    // wait for the end of that frame.
+    await SchedulerBinding.instance!.endOfFrame;
+    if (!s.mounted) return false;
+  }
+
+  s.setState(() {});
+  return true;
 }
 
 extension PlatformSpecificCapitalize on String {

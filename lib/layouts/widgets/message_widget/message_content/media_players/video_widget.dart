@@ -42,7 +42,7 @@ class VideoWidgetController extends GetxController with SingleGetTickerProviderM
   void onInit() {
     super.onInit();
     muted.value = SettingsManager().settings.startVideosMuted.value;
-    Map<String, VideoPlayerController> controllers = CurrentChat.of(context)!.currentPlayingVideo;
+    Map<String, VideoPlayerController> controllers = CurrentChat.activeChat!.currentPlayingVideo;
     showPlayPauseOverlay.value =
         !controllers.containsKey(attachment.guid) || !controllers[attachment.guid]!.value.isPlaying;
 
@@ -65,7 +65,7 @@ class VideoWidgetController extends GetxController with SingleGetTickerProviderM
       controller = VideoPlayerController.file(file);
     }
     await controller.initialize();
-    CurrentChat.of(context)!.changeCurrentPlayingVideo({attachment.guid!: controller});
+    CurrentChat.activeChat?.changeCurrentPlayingVideo({attachment.guid!: controller});
   }
 
   void createListener(VideoPlayerController controller) {

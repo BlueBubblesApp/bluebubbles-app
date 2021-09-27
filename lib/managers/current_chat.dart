@@ -237,6 +237,12 @@ class CurrentChat {
     messageAttachments = Message.fetchAttachmentsByMessages(messages);
   }
 
+  Future<void> preloadMessageAttachmentsAsync({List<Message?>? specificMessages}) async {
+    List<Message?> messages =
+        specificMessages ?? Chat.getMessages(chat, limit: 25);
+    messageAttachments = await Message.fetchAttachmentsByMessagesAsync(messages);
+  }
+
   void displayTypingIndicator() {
     showTypingIndicator = true;
     _stream.sink.add(
