@@ -5,6 +5,7 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:fast_contacts/fast_contacts.dart' hide Contact;
@@ -35,7 +36,7 @@ class ContactAvatarWidget extends StatefulWidget {
   _ContactAvatarWidgetState createState() => _ContactAvatarWidgetState();
 }
 
-class _ContactAvatarWidgetState extends State<ContactAvatarWidget> {
+class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with AutomaticKeepAliveClientMixin {
   Contact? contact;
 
   String get keyPrefix => widget.handle?.address ?? randomString(8);
@@ -44,6 +45,16 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> {
   void initState() {
     super.initState();
     contact = ContactManager().getCachedContact(handle: widget.handle);
+    EventDispatcher().stream.listen((Map<String, dynamic> event) {
+      if (!event.containsKey("type")) return;
+
+      if (event["type"] == 'refresh-avatar' && event["data"][0] == widget.handle?.address && mounted) {
+        print(widget.onTap);
+        print(event['data'][1]);
+        widget.handle?.color = event['data'][1];
+        setState(() {});
+      }
+    });
   }
 
   String? getInitials({Handle? handle, double size = 30}) {
@@ -91,6 +102,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> {
                     Get.back();
                     widget.handle!.color = null;
                     widget.handle!.save();
+                    EventDispatcher().emit("refresh-avatar", [widget.handle?.address, widget.handle?.color]);
                   },
                   child: Text("RESET"),
                 )
@@ -131,10 +143,12 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> {
     }
 
     widget.handle!.save();
+    EventDispatcher().emit("refresh-avatar", [widget.handle?.address, widget.handle?.color]);
   }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return GestureDetector(
       onTap: onAvatarTap,
       child: Container(
@@ -211,4 +225,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> {
       ),
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }

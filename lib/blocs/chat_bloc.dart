@@ -322,7 +322,7 @@ class ChatBloc {
         loadedChatBatch.value = true;
       }
     }
-    ContactManager().matchHandles();
+    await ContactManager().matchHandles();
     Logger.info("Finished fetching chats (${_chats.length}).", tag: "ChatBloc");
     await updateAllShareTargets();
 

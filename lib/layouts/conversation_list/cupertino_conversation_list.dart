@@ -47,13 +47,12 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
     super.initState();
     widget.parent.scrollController.addListener(() {
       if (widget.parent.scrollController.hasClients && widget.parent.scrollController.offset > (125 - kToolbarHeight)) {
-        headerColor.value = context.theme.accentColor.withOpacity(0.5);
+        headerColor.value = Get.context!.theme.accentColor.withOpacity(0.5);
       } else {
         headerColor.value = Colors.transparent;
       }
     });
   }
-
 
   Future<void> openLastChat(BuildContext context) async {
     if (ChatBloc().chatRequest != null &&

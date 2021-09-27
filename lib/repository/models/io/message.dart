@@ -302,7 +302,7 @@ class Message {
     }
 
     return store.runInTransaction(TxMode.read, () {
-      final messageIds = messages.map((e) => e!.id!).toList();
+      final messageIds = messages.where((element) => element?.id != null).map((e) => e!.id!).toList();
       final amJoinQuery = amJoinBox.query(AttachmentMessageJoin_.messageId.oneOf(messageIds)).build();
       final amJoins = amJoinQuery.find();
       amJoinQuery.close();

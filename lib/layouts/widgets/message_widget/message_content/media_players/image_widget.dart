@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
@@ -56,7 +57,7 @@ class ImageWidgetController extends GetxController {
         // All other attachments can be held in memory as bytes
       } else {
         if (attachment.guid == "redacted-mode-demo-attachment" || attachment.guid!.contains("theme-selector")) {
-          tmpData = (await rootBundle.load(file.path!)).buffer.asUint8List();
+          data.value = (await rootBundle.load(file.path!)).buffer.asUint8List();
           return;
         }
         tmpData = await File(file.path!).readAsBytes();
@@ -65,7 +66,7 @@ class ImageWidgetController extends GetxController {
       if (tmpData == null || CurrentChat.activeChat == null) return;
       CurrentChat.activeChat?.saveImageData(tmpData, attachment);
     }
-    await precacheImage(MemoryImage(tmpData), context, size: attachment.width == null ? null : Size.fromWidth(attachment.width! / 2));
+    //await precacheImage(MemoryImage(tmpData), context, size: attachment.width == null ? null : Size.fromWidth(attachment.width! / 2));
     data.value = tmpData;
   }
 }
@@ -101,25 +102,22 @@ class ImageWidget extends StatelessWidget {
             controller.initBytes(runForcefully: true);
           }
         },
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            child: buildSwitcher(context, controller),
-            onTap: () async {
-              controller.navigated = true;
-              CurrentChat? currentChat = CurrentChat.of(context);
-              await Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => AttachmentFullscreenViewer(
-                    currentChat: currentChat,
-                    attachment: controller.attachment,
-                    showInteractions: true,
-                  ),
+        child: GestureDetector(
+          child: buildSwitcher(context, controller),
+          onTap: () async {
+            controller.navigated = true;
+            CurrentChat? currentChat = CurrentChat.of(context);
+            await Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => AttachmentFullscreenViewer(
+                  currentChat: currentChat,
+                  attachment: controller.attachment,
+                  showInteractions: true,
                 ),
-              );
-              controller.navigated = false;
-            },
-          ),
+              ),
+            );
+            controller.navigated = false;
+          },
         ),
       ),
     );
@@ -132,27 +130,10 @@ class ImageWidget extends StatelessWidget {
             ? Container(
               width: controller.attachment.guid == "redacted-mode-demo-attachment" ? controller.attachment.width!.toDouble() : null,
               height: controller.attachment.guid == "redacted-mode-demo-attachment" ? controller.attachment.height!.toDouble() : null,
-              child: Image.memory(
-                  controller.data.value!,
-                  // prevents the image widget from "refreshing" when the provider changes
-                  gaplessPlayback: true,
-                  filterQuality: FilterQuality.none,
-                  cacheWidth: attachment.width == null ? null : attachment.width! ~/ 2,
-                  frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-                    return Stack(children: [
-                      buildPlaceHolder(context, controller, isLoaded: wasSynchronouslyLoaded),
-                      AnimatedOpacity(
-                        opacity: (frame == null &&
-                                controller.attachment.guid != "redacted-mode-demo-attachment" &&
-                                controller.attachment.guid!.contains("theme-selector"))
-                            ? 0
-                            : 1,
-                        child: child,
-                        duration: const Duration(milliseconds: 250),
-                        curve: Curves.easeInOut,
-                      )
-                    ]);
-                  },
+              child: FadeInImage(
+                  placeholder: MemoryImage(kTransparentImage),
+                  image: MemoryImage(controller.data.value!),
+                  fadeInDuration: Duration(milliseconds: 200),
                 ),
             )
             : buildPlaceHolder(context, controller),

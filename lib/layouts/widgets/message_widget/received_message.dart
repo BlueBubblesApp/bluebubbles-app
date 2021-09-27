@@ -13,6 +13,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_popup_holder.
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/helpers/darty.dart';
@@ -61,6 +62,15 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
   initState() {
     super.initState();
     contactTitle = ContactManager().getContactTitle(widget.message.handle) ?? "";
+
+    EventDispatcher().stream.listen((Map<String, dynamic> event) {
+      if (!event.containsKey("type")) return;
+
+      if (event["type"] == 'refresh-avatar' && event["data"][0] == widget.message.handle?.address && mounted) {
+        widget.message.handle?.color = event['data'][1];
+        setState(() {});
+      }
+    });
   }
 
   List<Color> getBubbleColors() {
@@ -193,22 +203,15 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
           ),
           child: FutureBuilder<List<InlineSpan>>(
               future: spanFuture,
+              initialData: MessageWidgetMixin.buildMessageSpans(context, widget.message,
+                colors: widget.message.handle?.color != null ? getBubbleColors() : null),
               builder: (context, snapshot) {
-                if (snapshot.data != null) {
-                  return RichText(
-                    text: TextSpan(
-                      children: snapshot.data!,
-                      style: Theme.of(context).textTheme.bodyText2,
-                    ),
-                  );
-                }
-                return Obx(() => RichText(
+                return RichText(
                   text: TextSpan(
-                    children: MessageWidgetMixin.buildMessageSpans(context, widget.message,
-                        colors: widget.message.handle?.color != null ? getBubbleColors() : null),
+                    children: snapshot.data!,
                     style: Theme.of(context).textTheme.bodyText2,
                   ),
-                ));
+                );
               }
           ),
         ),

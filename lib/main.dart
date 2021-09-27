@@ -88,7 +88,7 @@ class MyHttpOverrides extends HttpOverrides {
   }
 }
 
-main() async {
+Future<Null> main() async {
   HttpOverrides.global = MyHttpOverrides();
 
   // This captures errors reported by the Flutter framework.
@@ -195,7 +195,7 @@ main() async {
   }
 
   if (exception == null) {
-    runZonedGuarded<void>(() {
+    runZonedGuarded<Null>(() {
       ThemeObject light = ThemeObject.getLightTheme();
       ThemeObject dark = ThemeObject.getDarkTheme();
 
@@ -394,10 +394,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       });
     }
 
-    SettingsManager().getSavedSettings();
-
     // Get the saved settings from the settings manager after the first frame
     SchedulerBinding.instance!.addPostFrameCallback((_) async {
+      await SettingsManager().getSavedSettings();
 
       if (SettingsManager().settings.colorsFromMedia.value) {
         try {

@@ -28,6 +28,7 @@ class ContactManager {
   bool hasFetchedContacts = false;
   Map<String, Contact?> handleToContact = {};
   Map<String, String?> handleToFakeName = {};
+  Map<String, String> handleToFormattedAddress = {};
 
   // We need these so we don't have threads fetching at the same time
   Completer<bool>? getContactsFuture;
@@ -143,7 +144,7 @@ class ContactManager {
     hasFetchedContacts = true;
 
     // Match handles in the database with contacts
-    matchHandles();
+    await matchHandles();
 
     Logger.info("Finished fetching contacts (${handleToContact.length})", tag: tag);
     if (getContactsFuture != null && !getContactsFuture!.isCompleted) {
@@ -155,7 +156,7 @@ class ContactManager {
     return true;
   }
 
-  void matchHandles() {
+  Future<void> matchHandles() async {
     // Match handles to contacts
     List<Handle> handles = Handle.find();
     for (Handle handle in handles) {
@@ -169,6 +170,7 @@ class ContactManager {
 
       try {
         contactMatch = getContact(handle);
+        handleToFormattedAddress[handle.address] = await formatPhoneNumber(handle.address);
         handleToContact[handle.address] = contactMatch;
       } catch (ex) {
         Logger.error('Failed to match handle for address, "${handle.address}": ${ex.toString()}', tag: tag);
@@ -267,7 +269,7 @@ class ContactManager {
       String contactTitle = address;
       bool isEmailAddr = contactTitle.isEmail;
       if (contactTitle == address && !isEmailAddr) {
-        return handle.address;
+        return handleToFormattedAddress[handle.address] ?? handle.address;
       }
 
       // If it's an email and starts with "e:", strip it out

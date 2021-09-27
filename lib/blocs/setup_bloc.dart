@@ -179,7 +179,7 @@ class SetupBloc {
                 chat.save();
 
                 // Re-match the handles with the contacts
-                ContactManager().matchHandles();
+                await ContactManager().matchHandles();
 
                 await syncChat(chat, messages);
                 addOutput("Finished syncing chat, '${chat.chatIdentifier}'", SetupOutputType.LOG);

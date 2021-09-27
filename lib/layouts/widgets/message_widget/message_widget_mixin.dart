@@ -186,9 +186,9 @@ abstract class MessageWidgetMixin {
       }
       if (!kIsWeb && !kIsDesktop) {
         List<EntityAnnotation> entities = [];
-        if (CurrentChat.of(context)!.entityExtractorData[message.guid] == null) {
+        if (CurrentChat.of(context)?.entityExtractorData[message.guid] == null) {
           entities = await GoogleMlKit.nlp.entityExtractor(EntityExtractorOptions.ENGLISH).extractEntities(message.text!);
-          CurrentChat.of(context)!.entityExtractorData[message.guid!] = entities;
+          CurrentChat.of(context)?.entityExtractorData[message.guid!] = entities;
         } else {
           entities = CurrentChat.of(context)!.entityExtractorData[message.guid]!;
         }

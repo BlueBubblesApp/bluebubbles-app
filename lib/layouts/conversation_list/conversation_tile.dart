@@ -122,6 +122,7 @@ class _ConversationTileState extends State<ConversationTile> {
         (route) => route.isFirst,
       );
     }
+    Future.delayed(Duration(milliseconds: 500), () => update());
   }
 
   void onTapUpBypass() {
@@ -349,6 +350,7 @@ class _ConversationTileState extends State<ConversationTile> {
       ),
       (route) => route.isFirst,
     );
+    Future.delayed(Duration(milliseconds: 500), () => update());
   }
 
   void onSelect() {
