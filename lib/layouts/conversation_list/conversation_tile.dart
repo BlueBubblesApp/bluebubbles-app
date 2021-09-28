@@ -387,123 +387,126 @@ class _Cupertino extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return parent.buildSlider(
-      GestureDetector(
-        onTapUp: (details) {
-          parent.onTapUp(details);
-        },
-        onSecondaryTapUp: (details) async {
-          if (kIsWeb) {
-            (await html.document.onContextMenu.first).preventDefault();
-          }
-          showConversationTileMenu(
-            context,
-            this,
-            parent.widget.chat,
-            details.globalPosition,
-            context.textTheme,
-          );
-        },
-        onLongPress: () {
-          HapticFeedback.mediumImpact();
-          ChatBloc().toggleChatUnread(parent.widget.chat, !parent.widget.chat.hasUnreadMessage!);
-          if (parent.mounted) parent.update();
-        },
-        child: Stack(
-          alignment: Alignment.centerLeft,
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.only(left: 20.0),
-              child: Obx(
-                () => Container(
-                  decoration: BoxDecoration(
-                    border: (!SettingsManager().settings.hideDividers.value)
-                        ? Border(
-                            bottom: BorderSide(
-                              color: Theme.of(context).dividerColor,
-                              width: 0.5,
-                            ),
-                          )
-                        : null,
-                  ),
-                  child: ListTile(
-                    dense: SettingsManager().settings.denseChatTiles.value,
-                    contentPadding: EdgeInsets.only(left: 0),
-                    minVerticalPadding: 10,
-                    title: parent.buildTitle(),
-                    subtitle: parent.widget.subtitle ?? parent.buildSubtitle(),
-                    leading: parent.buildLeading(),
-                    trailing: Container(
-                      padding: EdgeInsets.only(right: 8),
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: <Widget>[
-                            Container(
-                              padding: EdgeInsets.only(right: 3),
-                              child: parent._buildDate(),
-                            ),
-                            Icon(
-                              SettingsManager().settings.skin.value == Skins.iOS
-                                  ? CupertinoIcons.forward
-                                  : Icons.arrow_forward,
-                              color: Theme.of(context).textTheme.subtitle1!.color,
-                              size: 15,
-                            ),
-                          ],
+      Material(
+        color: Theme.of(context).backgroundColor,
+        child: GestureDetector(
+          onTapUp: (details) {
+            parent.onTapUp(details);
+          },
+          onSecondaryTapUp: (details) async {
+            if (kIsWeb) {
+              (await html.document.onContextMenu.first).preventDefault();
+            }
+            showConversationTileMenu(
+              context,
+              this,
+              parent.widget.chat,
+              details.globalPosition,
+              context.textTheme,
+            );
+          },
+          onLongPress: () {
+            HapticFeedback.mediumImpact();
+            ChatBloc().toggleChatUnread(parent.widget.chat, !parent.widget.chat.hasUnreadMessage!);
+            if (parent.mounted) parent.update();
+          },
+          child: Stack(
+            alignment: Alignment.centerLeft,
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.only(left: 20.0),
+                child: Obx(
+                  () => Container(
+                    decoration: BoxDecoration(
+                      border: (!SettingsManager().settings.hideDividers.value)
+                          ? Border(
+                              bottom: BorderSide(
+                                color: Theme.of(context).dividerColor,
+                                width: 0.5,
+                              ),
+                            )
+                          : null,
+                    ),
+                    child: ListTile(
+                      dense: SettingsManager().settings.denseChatTiles.value,
+                      contentPadding: EdgeInsets.only(left: 0),
+                      minVerticalPadding: 10,
+                      title: parent.buildTitle(),
+                      subtitle: parent.widget.subtitle ?? parent.buildSubtitle(),
+                      leading: parent.buildLeading(),
+                      trailing: Container(
+                        padding: EdgeInsets.only(right: 8),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: <Widget>[
+                              Container(
+                                padding: EdgeInsets.only(right: 3),
+                                child: parent._buildDate(),
+                              ),
+                              Icon(
+                                SettingsManager().settings.skin.value == Skins.iOS
+                                    ? CupertinoIcons.forward
+                                    : Icons.arrow_forward,
+                                color: Theme.of(context).textTheme.subtitle1!.color,
+                                size: 15,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(left: 6.0),
-              child: Container(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Stack(
-                      alignment: AlignmentDirectional.centerStart,
-                      children: [
-                        (parent.widget.chat.muteType != "mute" && parent.widget.chat.hasUnreadMessage!)
-                            ? Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(35),
-                                  color: Theme.of(context).primaryColor.withOpacity(0.8),
-                                ),
-                                width: 10,
-                                height: 10,
-                              )
-                            : Container(),
-                        parent.widget.chat.isPinned!
-                            ? Icon(
-                                CupertinoIcons.pin,
-                                size: 10,
-                                color: Colors
-                                    .yellow[AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ? 100 : 700],
-                              )
-                            : Container(),
-                      ],
-                    ),
-                    parent.widget.chat.muteType == "mute"
-                        ? SvgPicture.asset(
-                            "assets/icon/moon.svg",
-                            color: parentProps.chat.hasUnreadMessage!
-                                ? Theme.of(context).primaryColor.withOpacity(0.8)
-                                : Theme.of(context).textTheme.subtitle1!.color,
-                            width: 10,
-                            height: 10,
-                          )
-                        : Container()
-                  ],
+              Padding(
+                padding: const EdgeInsets.only(left: 6.0),
+                child: Container(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Stack(
+                        alignment: AlignmentDirectional.centerStart,
+                        children: [
+                          (parent.widget.chat.muteType != "mute" && parent.widget.chat.hasUnreadMessage!)
+                              ? Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(35),
+                                    color: Theme.of(context).primaryColor.withOpacity(0.8),
+                                  ),
+                                  width: 10,
+                                  height: 10,
+                                )
+                              : Container(),
+                          parent.widget.chat.isPinned!
+                              ? Icon(
+                                  CupertinoIcons.pin,
+                                  size: 10,
+                                  color: Colors
+                                      .yellow[AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ? 100 : 700],
+                                )
+                              : Container(),
+                        ],
+                      ),
+                      parent.widget.chat.muteType == "mute"
+                          ? SvgPicture.asset(
+                              "assets/icon/moon.svg",
+                              color: parentProps.chat.hasUnreadMessage!
+                                  ? Theme.of(context).primaryColor.withOpacity(0.8)
+                                  : Theme.of(context).textTheme.subtitle1!.color,
+                              width: 10,
+                              height: 10,
+                            )
+                          : Container()
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
