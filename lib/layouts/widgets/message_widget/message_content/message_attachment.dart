@@ -33,7 +33,7 @@ class MessageAttachment extends StatefulWidget {
   MessageAttachmentState createState() => MessageAttachmentState();
 }
 
-class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeepAliveClientMixin {
+class MessageAttachmentState extends State<MessageAttachment> {
   Widget? attachmentWidget;
   dynamic content;
 
@@ -63,7 +63,6 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
     updateContent();
 
     return ClipRRect(
@@ -224,7 +223,4 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
   Widget buildPlaceHolder(MessageAttachment parent) {
     return buildImagePlaceholder(context, widget.attachment, Container());
   }
-
-  @override
-  bool get wantKeepAlive => true;
 }

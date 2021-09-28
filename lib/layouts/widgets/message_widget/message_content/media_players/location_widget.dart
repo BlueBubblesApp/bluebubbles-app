@@ -27,7 +27,7 @@ class LocationWidget extends StatefulWidget {
   _LocationWidgetState createState() => _LocationWidgetState();
 }
 
-class _LocationWidgetState extends State<LocationWidget> with AutomaticKeepAliveClientMixin {
+class _LocationWidgetState extends State<LocationWidget> {
   AppleLocation? location;
 
   @override
@@ -61,8 +61,6 @@ class _LocationWidgetState extends State<LocationWidget> with AutomaticKeepAlive
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
-
     if (location != null &&
         location!.longitude != null &&
         location!.longitude!.abs() < 90 &&
@@ -120,7 +118,4 @@ class _LocationWidgetState extends State<LocationWidget> with AutomaticKeepAlive
       );
     }
   }
-
-  @override
-  bool get wantKeepAlive => true;
 }

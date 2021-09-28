@@ -50,7 +50,7 @@ class MessageWidget extends StatefulWidget {
   _MessageState createState() => _MessageState();
 }
 
-class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMixin {
+class _MessageState extends State<MessageWidget> {
   bool showTail = true;
   Completer<void>? attachmentsRequest;
   int lastRequestCount = -1;
@@ -202,7 +202,6 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
 
     if (_newerMessage != null) {
       if (_newerMessage!.isGroupEvent()) {
@@ -283,7 +282,4 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
       ],
     );
   }
-
-  @override
-  bool get wantKeepAlive => true;
 }

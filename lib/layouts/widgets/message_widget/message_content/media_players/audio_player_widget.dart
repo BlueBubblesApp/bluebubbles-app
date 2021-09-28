@@ -31,12 +31,9 @@ class AudioPlayerWiget extends StatefulWidget {
   _AudioPlayerWigetState createState() => _AudioPlayerWigetState();
 }
 
-class _AudioPlayerWigetState extends State<AudioPlayerWiget> with AutomaticKeepAliveClientMixin {
+class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
   late final ChewieAudioController controller;
   late final VideoPlayerController audioController;
-
-  @override
-  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -104,7 +101,6 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> with AutomaticKeepA
     if (!(ModalRoute.of(context)?.isCurrent ?? false)) {
       controller.pause();
     }
-    super.build(context);
     return Container(
       alignment: Alignment.center,
       color: Theme.of(context).accentColor,
