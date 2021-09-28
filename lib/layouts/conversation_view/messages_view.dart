@@ -372,11 +372,13 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
           onTap: onTap ?? () {
             ActionHandler.sendMessage(currentChat!.chat, text);
           },
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 13.0),
-            child: Text(
-              text,
-              style: Theme.of(context).textTheme.bodyText1,
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 13.0),
+              child: Text(
+                text,
+                style: Theme.of(context).textTheme.bodyText1,
+              ),
             ),
           ),
         ),

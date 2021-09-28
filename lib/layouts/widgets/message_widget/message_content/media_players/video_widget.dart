@@ -189,36 +189,40 @@ class VideoWidget extends StatelessWidget {
                   opacity: controller.showPlayPauseOverlay.value ? 1 : 0,
                   duration: Duration(milliseconds: 250),
                   child: Container(
+                    height: 75,
+                    width: 75,
                     decoration: BoxDecoration(
                       color: HexColor('26262a').withOpacity(0.5),
                       borderRadius: BorderRadius.circular(40),
                     ),
                     padding: EdgeInsets.all(10),
-                    child: controller.controller!.value.isPlaying
-                        ? GestureDetector(
-                            child: Icon(
-                              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.pause : Icons.pause,
-                              color: Colors.white,
-                              size: 45,
-                            ),
-                            onTap: () {
-                              controller.controller!.pause();
-                              controller.showPlayPauseOverlay.value = true;
-                            },
-                          )
-                        : GestureDetector(
-                            child: Icon(
-                              SettingsManager().settings.skin.value == Skins.iOS
-                                  ? CupertinoIcons.play
-                                  : Icons.play_arrow,
-                              color: Colors.white,
-                              size: 45,
-                            ),
-                            onTap: () {
-                              controller.controller!.play();
-                              controller.showPlayPauseOverlay.value = false;
-                            },
-                          ),
+                    child: Padding(
+                      padding: EdgeInsets.only(left: SettingsManager().settings.skin.value == Skins.iOS && !controller.controller!.value.isPlaying ? 7 : 0,
+                          top: SettingsManager().settings.skin.value == Skins.iOS ? 3 : 0),
+                      child: controller.controller!.value.isPlaying ? GestureDetector(
+                        child: Icon(
+                          SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.pause : Icons.pause,
+                          color: Colors.white,
+                          size: 45,
+                        ),
+                        onTap: () {
+                          controller.controller!.pause();
+                          controller.showPlayPauseOverlay.value = true;
+                        },
+                      ) : GestureDetector(
+                        child: Icon(
+                          SettingsManager().settings.skin.value == Skins.iOS
+                              ? CupertinoIcons.play
+                              : Icons.play_arrow,
+                          color: Colors.white,
+                          size: 45,
+                        ),
+                        onTap: () {
+                          controller.controller!.play();
+                          controller.showPlayPauseOverlay.value = false;
+                        },
+                      ),
+                    )
                   ),
                 ),
                 Positioned.fill(
@@ -282,15 +286,23 @@ class VideoWidget extends StatelessWidget {
           child: buildSwitcher(controller),
         ),
         Container(
+          height: 75,
+          width: 75,
           decoration: BoxDecoration(
             color: HexColor('26262a').withOpacity(0.5),
             borderRadius: BorderRadius.circular(40),
           ),
           padding: EdgeInsets.all(10),
-          child: Icon(
-            Icons.play_arrow,
-            color: Colors.white,
-            size: 45,
+          child: Padding(
+            padding: EdgeInsets.only(left: SettingsManager().settings.skin.value == Skins.iOS ? 7 : 0,
+                top: SettingsManager().settings.skin.value == Skins.iOS ? 3 : 0),
+            child: Icon(
+              SettingsManager().settings.skin.value == Skins.iOS
+                  ? CupertinoIcons.play
+                  : Icons.play_arrow,
+              color: Colors.white,
+              size: 45,
+            ),
           ),
         ),
         Positioned.fill(
@@ -309,7 +321,13 @@ class VideoWidget extends StatelessWidget {
                   ),
                   padding: EdgeInsets.all(5),
                   child: Obx(() => Icon(
-                    controller.muted.value ? Icons.volume_mute : Icons.volume_up,
+                    controller.muted.value
+                        ? SettingsManager().settings.skin.value == Skins.iOS
+                        ? CupertinoIcons.volume_mute
+                        : Icons.volume_mute
+                        : SettingsManager().settings.skin.value == Skins.iOS
+                        ? CupertinoIcons.volume_up
+                        : Icons.volume_up,
                     color: Colors.white,
                     size: 15,
                   )),

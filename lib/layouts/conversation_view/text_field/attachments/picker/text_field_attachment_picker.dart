@@ -61,7 +61,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
     if (list.isNotEmpty) {
       List<AssetEntity> images = await list.first.getAssetListRange(start: 0, end: 24);
       _images = images;
-      if (DateTime.now().toLocal().isWithin(images.first.modifiedDateTime, minutes: 10)) {
+      if (DateTime.now().toLocal().isWithin(images.first.modifiedDateTime, minutes: 2)) {
         dynamic file = await images.first.file;
         EventDispatcher().emit('add-custom-smartreply', {
           "path": file.path,
