@@ -242,7 +242,7 @@ class SetupBloc {
     Settings _settingsCopy = SettingsManager().settings;
     _settingsCopy.finishedSetup.value = true;
     await SettingsManager().saveSettings(_settingsCopy);
-
+    if (!kIsWeb) await ContactManager().getContacts(force: true);
     if (!kIsWeb) await ChatBloc().refreshChats(force: true);
     await SocketManager().authFCM(force: true);
     closeSync();
