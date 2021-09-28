@@ -66,7 +66,9 @@ class ImageWidgetController extends GetxController {
       if (tmpData == null || CurrentChat.activeChat == null) return;
       CurrentChat.activeChat?.saveImageData(tmpData, attachment);
     }
-    //await precacheImage(MemoryImage(tmpData), context, size: attachment.width == null ? null : Size.fromWidth(attachment.width! / 2));
+    if (!(attachment.mimeType?.endsWith("heic") ?? false)) {
+      await precacheImage(MemoryImage(tmpData), context, size: attachment.width == null ? null : Size.fromWidth(attachment.width! / 2));
+    }
     data.value = tmpData;
   }
 }

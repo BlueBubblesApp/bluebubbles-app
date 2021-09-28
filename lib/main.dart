@@ -4,6 +4,7 @@ import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/layouts/setup/upgrading_db.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/repository/models/objectbox.dart';
 import 'package:collection/collection.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
@@ -44,7 +45,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart' hide Message;
 import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 import 'package:firebase_dart/firebase_dart.dart';
-//ignore: implementation_imports
 import 'package:firebase_dart/src/auth/utils.dart' as fdu;
 import 'package:get/get.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -56,7 +56,22 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:window_manager/window_manager.dart';
-import 'package:bluebubbles/repository/models/objectbox.dart';
+
+// final SentryClient _sentry = SentryClient(
+//     dsn:
+//         "https://3123d4f0d82d405190cb599d0e904adc@o373132.ingest.sentry.io/5372783");
+
+bool get isInDebugMode {
+  // Assume you're in production mode.
+  bool inDebugMode = false;
+
+  // Assert expressions are only evaluated during development. They are ignored
+  // in production. Therefore, this code only sets `inDebugMode` to true
+  // in a development environment.
+  assert(inDebugMode = true);
+
+  return inDebugMode;
+}
 
 FlutterLocalNotificationsPlugin? flutterLocalNotificationsPlugin;
 late SharedPreferences prefs;
@@ -74,6 +89,13 @@ late final Box<AttachmentMessageJoin> amJoinBox;
 late final Box<ChatHandleJoin> chJoinBox;
 late final Box<ChatMessageJoin> cmJoinBox;
 late final Box<ThemeValueJoin> tvJoinBox;
+
+
+Future<Null> _reportError(dynamic error, dynamic stackTrace) async {
+  // Print the exception to the console.
+  Logger.error('Caught error: $error');
+  Logger.error(stackTrace.toString());
+}
 
 class MyHttpOverrides extends HttpOverrides {
   @override
@@ -95,6 +117,14 @@ Future<Null> main() async {
   FlutterError.onError = (FlutterErrorDetails details) {
     Logger.error(details.exceptionAsString());
     Logger.error(details.stack.toString());
+    if (isInDebugMode) {
+      // In development mode simply print to console.
+      FlutterError.dumpErrorToConsole(details);
+    } else {
+      // In production mode report to the application zone to report to
+      // Sentry.
+      Zone.current.handleUncaughtError(details.exception, details.stack!);
+    }
   };
 
   WidgetsFlutterBinding.ensureInitialized();
@@ -170,9 +200,6 @@ Future<Null> main() async {
     await SettingsManager().init();
     await SettingsManager().getSavedSettings(headless: true);
     Get.put(AttachmentDownloadService());
-    if (SettingsManager().settings.finishedSetup.value) {
-      await ContactManager().getContacts();
-    }
     if (!kIsWeb && !kIsDesktop) {
       flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
       const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('ic_stat_icon');
@@ -195,17 +222,18 @@ Future<Null> main() async {
   }
 
   if (exception == null) {
-    runZonedGuarded<Null>(() {
-      ThemeObject light = ThemeObject.getLightTheme();
-      ThemeObject dark = ThemeObject.getDarkTheme();
+    runZonedGuarded<Future<Null>>(() async {
+      ThemeObject light = await ThemeObject.getLightTheme();
+      ThemeObject dark = await ThemeObject.getDarkTheme();
 
       runApp(Main(
         lightTheme: light.themeData,
         darkTheme: dark.themeData,
       ));
     }, (Object error, StackTrace stackTrace) async {
-      Logger.error('Caught error: $error');
-      Logger.error(stackTrace.toString());
+      // Whenever an error occurs, call the `_reportError` function. This sends
+      // Dart errors to the dev console or Sentry depending on the environment.
+      await _reportError(error, stackTrace);
     });
   } else {
     runApp(FailureToStart(e: exception));

@@ -146,7 +146,7 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
     if (_message.handle != null) return;
 
     try {
-      _message.getHandle();
+     _message.handle = _message.getHandle();
     } catch (_) {}
   }
 
@@ -184,19 +184,6 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
       _message.fetchAttachments(currentChat: currentChat);
     } catch (ex) {
       return attachmentsRequest!.completeError(ex);
-    }
-
-    // If this is a URL preview and we don't have attachments, we need to get them
-    List<Attachment?> nullAttachments = _message.getPreviewAttachments();
-    if (_message.fullText.replaceAll("\n", " ").hasUrl && nullAttachments.isEmpty) {
-      if (lastRequestCount != nullAttachments.length) {
-        lastRequestCount = nullAttachments.length;
-
-        List<dynamic> msgs = (await SocketManager().getAttachments(currentChat!.chat.guid!, _message.guid!)) ?? [];
-        for (var msg in msgs) {
-          await ActionHandler.handleMessage(msg, forceProcess: true);
-        }
-      }
     }
 
     bool hasChanges = false;

@@ -21,6 +21,7 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
 
@@ -296,11 +297,16 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
           if (_messages.isNotEmpty) updateReplies();
         }
       }
-      _listKey = GlobalKey<SliverAnimatedListState>();
 
-      /*if (originalMessageLength < _messages.length) {
+      _listKey ??= GlobalKey<SliverAnimatedListState>();
+
+      if (originalMessageLength < _messages.length) {
         for (int i = originalMessageLength; i < _messages.length; i++) {
           if (_listKey != null && _listKey!.currentState != null) {
+            if (SchedulerBinding.instance!.schedulerPhase != SchedulerPhase.idle) {
+              // wait for the end of that frame.
+              await SchedulerBinding.instance!.endOfFrame;
+            }
             _listKey!.currentState!.insertItem(i, duration: Duration(milliseconds: 0));
           }
         }
@@ -308,6 +314,10 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
         for (int i = originalMessageLength; i >= _messages.length; i--) {
           if (_listKey != null && _listKey!.currentState != null) {
             try {
+              if (SchedulerBinding.instance!.schedulerPhase != SchedulerPhase.idle) {
+                // wait for the end of that frame.
+                await SchedulerBinding.instance!.endOfFrame;
+              }
               _listKey!.currentState!
                   .removeItem(i, (context, animation) => Container(), duration: Duration(milliseconds: 0));
             } catch (ex) {
@@ -316,10 +326,8 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
             }
           }
         }
-      }*/
+      }
     }
-
-    if (mounted) await rebuild(this);
   }
 
   /// All message update events are handled within the message widgets, to prevent top level setstates

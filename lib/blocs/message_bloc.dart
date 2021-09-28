@@ -298,7 +298,7 @@ class MessageBloc {
             // If the handle is empty, load it
             for (Message msg in messages) {
               if (msg.isFromMe! || msg.handle != null) continue;
-              msg.getHandle();
+              msg.handle = msg.getHandle();
             }
           }
         } catch (ex) {

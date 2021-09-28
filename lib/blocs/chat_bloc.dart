@@ -78,6 +78,8 @@ class ChatBloc {
       await chatRequest!.future;
     }
 
+    if (ContactManager().contacts.isEmpty) await ContactManager().getContacts();
+
     chatRequest = Completer<void>();
     Logger.info("Fetching chats (${force ? 'forced' : 'normal'})...", tag: "ChatBloc");
 

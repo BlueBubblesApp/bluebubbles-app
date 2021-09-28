@@ -122,7 +122,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
 
     reactionWidgets = [];
     for (Message reaction in reactionMessages) {
-      reaction.getHandle();
+      reaction.handle = reaction.getHandle();
       if (reaction.isFromMe!) {
         selfReaction = reaction.associatedMessageType;
         currentlySelectedReaction = selfReaction;
