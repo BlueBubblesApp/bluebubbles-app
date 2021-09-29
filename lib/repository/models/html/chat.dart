@@ -22,17 +22,18 @@ import 'package:get/get.dart';
 import 'package:faker/faker.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 
-Future<String> getFullChatTitle(Chat _chat) async {
+String getFullChatTitle(Chat _chat) {
   String? title = "";
   if (isNullOrEmpty(_chat.displayName)!) {
     Chat chat = _chat.getParticipants();
 
-    // If there are no participants, try to get them from the server
+    //todo - do we really need this here?
+    /*// If there are no participants, try to get them from the server
     if (chat.participants.isEmpty) {
       // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       await ActionHandler.handleChat(chat: chat);
       chat = chat.getParticipants();
-    }
+    }*/
 
     List<String> titles = [];
     for (int i = 0; i < chat.participants.length; i++) {
@@ -188,8 +189,8 @@ class Chat {
     return this;
   }
 
-  Future<String?> getTitle() async {
-    title = await getFullChatTitle(this);
+  String? getTitle() {
+    title = getFullChatTitle(this);
     return title;
   }
 
@@ -410,7 +411,11 @@ class Chat {
     return [];
   }
 
-  static List<Message> getMessages(Chat chat, {int offset = 0, int limit = 25, bool includeDeleted = false}) {
+  static List<Message> getMessages(Chat chat, {int offset = 0, int limit = 25, bool includeDeleted = false, bool getDetails = false}) {
+    return [];
+  }
+
+  static Future<List<Message>> getMessagesAsync(Chat chat, {int offset = 0, int limit = 25, bool includeDeleted = false, bool getDetails = false}) async {
     return [];
   }
 

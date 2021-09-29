@@ -106,6 +106,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
         SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeContactNames.value;
 
     TextStyle? style = context.textTheme.subtitle1!.apply(fontSizeFactor: 0.85);
+    if (widget.chat.title == null) widget.chat.getTitle();
     String title = widget.chat.title ?? "Fake Person";
 
     if (generateNames) {
