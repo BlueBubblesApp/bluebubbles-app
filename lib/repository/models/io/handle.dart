@@ -57,7 +57,7 @@ class Handle {
         id = existing.id;
       }
       try {
-        handleBox.put(this);
+        id = handleBox.put(this);
       } on UniqueViolationException catch (_) {}
     });
     return this;

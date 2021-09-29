@@ -34,13 +34,16 @@ class _ContactWidgetState extends State<ContactWidget> {
   @override
   void initState() {
     super.initState();
+    init();
+  }
 
+  void init() async {
     String appleContact;
 
     if (kIsWeb || widget.file.path == null) {
       appleContact = utf8.decode(widget.file.bytes!);
     } else {
-      appleContact = File(widget.file.path!).readAsStringSync();
+      appleContact = await File(widget.file.path!).readAsString();
     }
 
     try {
@@ -49,7 +52,7 @@ class _ContactWidgetState extends State<ContactWidget> {
       contact = Contact(displayName: "Invalid Contact", id: randomString(8));
     }
 
-    if (mounted) setState(() {});
+    if (!kIsWeb && widget.file.path != null && mounted) setState(() {});
   }
 
   @override

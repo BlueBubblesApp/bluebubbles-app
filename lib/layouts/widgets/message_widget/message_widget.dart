@@ -73,9 +73,10 @@ class _MessageState extends State<MessageWidget> {
   }
 
   void init() {
-    checkHandle();
-    fetchAssociatedMessages();
-    fetchAttachments();
+    if (!_message.hasReactions && _message.getReactions().isNotEmpty) {
+      _message.hasReactions = true;
+      _message.save();
+    }
 
     // Listen for new messages
     subscription = NewMessageManager().stream.listen((data) {
@@ -150,17 +151,8 @@ class _MessageState extends State<MessageWidget> {
     super.dispose();
   }
 
-  void checkHandle() {
-    // Checks ordered in a specific way to ever so slightly reduce processing
-    if (_message.isFromMe!) return;
-    if (_message.handle != null) return;
-
-    try {
-      _message.handle = _message.getHandle();
-    } catch (_) {}
-  }
-
   void fetchAssociatedMessages({bool forceReload = false}) {
+    associatedCount = _message.associatedMessages.length;
     try {
       _message.fetchAssociatedMessages(bloc: widget.bloc);
     } catch (_) {}

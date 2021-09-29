@@ -179,11 +179,7 @@ class SetupBloc {
               addOutput(
                   "Received ${messages.length} messages for chat, '${chat.chatIdentifier}'!", SetupOutputType.LOG);
               if (!skipEmptyChats || (skipEmptyChats && messages.isNotEmpty)) {
-                chat.save();
-
-                // Re-match the handles with the contacts
-                await ContactManager().matchHandles();
-
+                chat = chat.save();
                 await syncChat(chat, messages);
                 addOutput("Finished syncing chat, '${chat.chatIdentifier}'", SetupOutputType.LOG);
               } else {
@@ -216,6 +212,7 @@ class SetupBloc {
       addOutput("Failed to sync chats!", SetupOutputType.ERROR);
       addOutput("Error: ${ex.toString()}", SetupOutputType.ERROR);
     } finally {
+      await ContactManager().matchHandles();
       finishSetup();
     }
 
@@ -245,7 +242,7 @@ class SetupBloc {
     Settings _settingsCopy = SettingsManager().settings;
     _settingsCopy.finishedSetup.value = true;
     await SettingsManager().saveSettings(_settingsCopy);
-
+    if (!kIsWeb) await ContactManager().getContacts(force: true);
     if (!kIsWeb) await ChatBloc().refreshChats(force: true);
     await SocketManager().authFCM(force: true);
     closeSync();

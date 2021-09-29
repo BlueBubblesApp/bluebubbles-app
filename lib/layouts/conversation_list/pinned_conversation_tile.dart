@@ -304,24 +304,31 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
                                             : context.textTheme.subtitle1!.color,
                                       ),
                                     ),
-                                    Transform.rotate(
-                                      angle: shouldShow(widget.chat.latestMessage, markers?.myLastMessage,
-                                                  markers?.lastReadMessage, markers?.lastDeliveredMessage) !=
-                                              Indicator.SENT
-                                          ? pi / 2
-                                          : 0,
-                                      child: Icon(
-                                        shouldShow(widget.chat.latestMessage, markers?.myLastMessage,
-                                                    markers?.lastReadMessage, markers?.lastDeliveredMessage) ==
-                                                Indicator.DELIVERED
-                                            ? CupertinoIcons.location_north_fill
-                                            : shouldShow(widget.chat.latestMessage, markers?.myLastMessage,
-                                                        markers?.lastReadMessage, markers?.lastDeliveredMessage) ==
-                                                    Indicator.READ
-                                                ? CupertinoIcons.location_north
-                                                : CupertinoIcons.location_fill,
-                                        color: Colors.white,
-                                        size: maxWidth * 0.14,
+                                    Padding(
+                                      padding: EdgeInsets.only(left: shouldShow(widget.chat.latestMessage, markers?.myLastMessage,
+                                          markers?.lastReadMessage, markers?.lastDeliveredMessage) ==
+                                          Indicator.SENT ? 0 : 1, top: 1, right: shouldShow(widget.chat.latestMessage, markers?.myLastMessage,
+                                          markers?.lastReadMessage, markers?.lastDeliveredMessage) ==
+                                          Indicator.SENT ? 1 : 0),
+                                      child: Transform.rotate(
+                                        angle: shouldShow(widget.chat.latestMessage, markers?.myLastMessage,
+                                                    markers?.lastReadMessage, markers?.lastDeliveredMessage) !=
+                                                Indicator.SENT
+                                            ? pi / 2
+                                            : 0,
+                                        child: Icon(
+                                          shouldShow(widget.chat.latestMessage, markers?.myLastMessage,
+                                                      markers?.lastReadMessage, markers?.lastDeliveredMessage) ==
+                                                  Indicator.DELIVERED
+                                              ? CupertinoIcons.location_north_fill
+                                              : shouldShow(widget.chat.latestMessage, markers?.myLastMessage,
+                                                          markers?.lastReadMessage, markers?.lastDeliveredMessage) ==
+                                                      Indicator.READ
+                                                  ? CupertinoIcons.location_north
+                                                  : CupertinoIcons.location_fill,
+                                          color: Colors.white,
+                                          size: maxWidth * 0.14,
+                                        ),
                                       ),
                                     ),
                                   ],
