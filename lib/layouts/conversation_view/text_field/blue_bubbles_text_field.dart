@@ -19,11 +19,11 @@ import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:dio_http/dio_http.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
-import 'package:file_picker/file_picker.dart' hide PlatformFile;
 import 'package:file_picker/file_picker.dart' as pf;
+import 'package:file_picker/file_picker.dart' hide PlatformFile;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -771,7 +771,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         focusNode!.requestFocus();
                         sendMessage();
                       },
-                      // onContentCommitted: onContentCommit,
+                      onContentCommitted: onContentCommit,
                       textCapitalization: TextCapitalization.sentences,
                       focusNode: focusNode,
                       autocorrect: true,
@@ -826,7 +826,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                 : Colors.white,
                             fontSizeDelta: -0.25,
                           ),
-                      // onContentCommitted: onContentCommit,
+                      onContentCommitted: onContentCommit,
                       decoration: InputDecoration(
                         isDense: true,
                         enabledBorder: OutlineInputBorder(
@@ -892,7 +892,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                 : Colors.white,
                             fontSizeDelta: -0.25,
                           ),
-                      // onContentCommitted: onContentCommit,
+                      onContentCommitted: onContentCommit,
                       decoration: InputDecoration(
                         isDense: true,
                         enabledBorder: OutlineInputBorder(
