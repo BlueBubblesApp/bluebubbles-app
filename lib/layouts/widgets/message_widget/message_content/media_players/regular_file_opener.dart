@@ -1,15 +1,17 @@
 import 'dart:convert';
-
 import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
+import 'package:file_picker/file_picker.dart' as fp;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'package:universal_html/html.dart' as html;
+import 'package:universal_io/io.dart';
 
 class RegularFileOpener extends StatelessWidget {
   RegularFileOpener({
@@ -32,6 +34,18 @@ class RegularFileOpener extends StatelessWidget {
             ..setAttribute("download", file.name)
             ..click();
         } else {
+          if (kIsDesktop) {
+            String? savePath = await fp.FilePicker.platform.saveFile(
+              dialogTitle: 'Choose a location to save this file',
+              fileName: file.name,
+            );
+            Logger.info(savePath);
+            if (savePath != null) {
+              File(file.path!).copy(savePath);
+              return showSnackbar('Success', 'Saved attachment to $savePath!');
+            }
+            return;
+          }
           try {
             await MethodChannelInterface().invokeMethod(
               "open_file",

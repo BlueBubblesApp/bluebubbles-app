@@ -207,7 +207,8 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                           if (mounted) setState(() {});
                         });
                         return Obx(() {
-                          if (content.error.value = true) {
+                          bool error = content.error.value;
+                          if (error) {
                             return Text(
                               "Error loading",
                               style: Theme.of(context).textTheme.bodyText1,

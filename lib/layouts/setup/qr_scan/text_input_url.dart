@@ -97,6 +97,15 @@ class _TextInputURLState extends State<TextInputURL> {
                 labelText: "Password",
               ),
               obscureText: true,
+              onSubmitted: (value) {
+                if (urlController.text == "googleplaytest" && value == "googleplaytest") {
+                  Get.toNamed("/testing-mode");
+                  return;
+                }
+                connect(urlController.text, value);
+                connecting = true;
+                if (mounted) setState(() {});
+              },
             ),
           ],
         ),

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/logger.dart';
@@ -104,12 +105,10 @@ class AttachmentDownloadController extends GetxController {
     SocketManager().sendMessage("get-attachment-chunk", params, (attachmentResponse) async {
       if (attachmentResponse['status'] != 200 ||
           (attachmentResponse.containsKey("error") && attachmentResponse["error"] != null)) {
-        if (!kIsWeb) {
           File file = File(attachment.getPath());
           if (await file.exists()) {
             await file.delete();
           }
-        }
 
         if (onError != null) onError!.call();
 
@@ -118,6 +117,7 @@ class AttachmentDownloadController extends GetxController {
         return;
       }
 
+      currentBytes += base64.decode(attachmentResponse["data"]);
       int? numBytes = attachmentResponse["byteLength"];
 
       if (numBytes == chunkSize) {
@@ -151,7 +151,7 @@ class AttachmentDownloadController extends GetxController {
         // Finish the downloader
         Get.find<AttachmentDownloadService>().removeFromQueue(this);
         if (onComplete != null) onComplete!();
-        attachment.bytes = base64.decode(attachmentResponse['data']);
+        attachment.bytes = Uint8List.fromList(currentBytes);
         // Add attachment to sink based on if we got data
 
         file.value = PlatformFile(
@@ -163,7 +163,7 @@ class AttachmentDownloadController extends GetxController {
         if (kIsDesktop) {
           if (attachment.bytes != null) {
             File _file = await File(attachment.getPath()).create(recursive: true);
-            _file.writeAsBytesSync(attachment.bytes!.toList());
+            _file.writeAsBytesSync(currentBytes);
           }
         }
       }

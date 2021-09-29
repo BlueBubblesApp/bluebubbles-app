@@ -14,6 +14,7 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:exif/exif.dart';
+import 'package:file_picker/file_picker.dart' as fp;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -21,8 +22,6 @@ import 'package:flutter_native_image/flutter_native_image.dart';
 import 'package:get/get.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:image_size_getter/image_size_getter.dart' as isg;
-import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
@@ -146,9 +145,16 @@ class AttachmentHelper {
       return;
     }
     if (kIsDesktop) {
-      String downloadsPath = (await getDownloadsDirectory())!.path;
-      File(join(downloadsPath, file.name)).writeAsBytes(file.bytes!);
-      return showSnackbar('Success', 'Saved attachment to $downloadsPath!');
+      String? savePath = await fp.FilePicker.platform.saveFile(
+        dialogTitle: 'Choose a location to save this file',
+        fileName: file.name,
+      );
+      Logger.info(savePath);
+      if (savePath != null) {
+        File(file.path!).copy(savePath);
+        return showSnackbar('Success', 'Saved attachment to $savePath!');
+      }
+      return showSnackbar('Failed', 'You didn''t select a file path!');
     }
     void showDeniedSnackbar({String? err}) {
       showSnackbar("Save Failed", err ?? "Failed to save attachment!");
