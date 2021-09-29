@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
@@ -9,7 +10,7 @@ import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/list/text_field_attachment_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/picker/text_field_attachment_picker.dart';
-import 'package:bluebubbles/layouts/widgets/CustomCupertinoTextField.dart';
+import 'package:bluebubbles/layouts/widgets/custom_cupertino_text_field.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/audio_player_widget.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
@@ -18,11 +19,11 @@ import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:dio_http/dio_http.dart';
-import 'package:file_picker/file_picker.dart' as pf;
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:file_picker/file_picker.dart' hide PlatformFile;
+import 'package:file_picker/file_picker.dart' as pf;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -64,7 +65,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   FocusNode? focusNode;
   List<PlatformFile> pickedImages = [];
   TextFieldData? textFieldData;
-  StreamController _streamController = new StreamController.broadcast();
+  final StreamController _streamController = StreamController.broadcast();
   DropzoneViewController? dropZoneController;
   CurrentChat? safeChat;
 
@@ -72,6 +73,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   int? sendCountdown;
   bool? stopSending;
   bool fileDragged = false;
+  int? previousKeyCode;
 
   final RxString placeholder = "BlueBubbles".obs;
   final RxBool isRecording = false.obs;
@@ -96,7 +98,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       textFieldData = TextFieldBloc().getTextField(CurrentChat.of(context)!.chat.guid!);
     }
 
-    controller = textFieldData != null ? textFieldData!.controller : new TextEditingController();
+    controller = textFieldData != null ? textFieldData!.controller : TextEditingController();
 
     // Add the text listener to detect when we should send the typing indicators
     controller!.addListener(() {
@@ -109,13 +111,14 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         return;
       }
 
-      if (controller!.text.length == 0 && pickedImages.length == 0 && selfTyping) {
+      if (controller!.text.isEmpty && pickedImages.isEmpty && selfTyping) {
         selfTyping = false;
         SocketManager().sendMessage("stopped-typing", {"chatGuid": CurrentChat.of(context)!.chat.guid}, (data) {});
-      } else if (!selfTyping && (controller!.text.length > 0 || pickedImages.length > 0)) {
+      } else if (!selfTyping && (controller!.text.isNotEmpty || pickedImages.isNotEmpty)) {
         selfTyping = true;
-        if (SettingsManager().settings.privateSendTypingIndicators.value)
+        if (SettingsManager().settings.privateSendTypingIndicators.value) {
           SocketManager().sendMessage("started-typing", {"chatGuid": CurrentChat.of(context)!.chat.guid}, (data) {});
+        }
       }
 
       if (mounted) setState(() {});
@@ -123,11 +126,11 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
     // Create the focus node and then add a an event emitter whenever
     // the focus changes
-    focusNode = new FocusNode();
+    focusNode = FocusNode();
     focusNode!.addListener(() {
       CurrentChat.of(context)?.keyboardOpen = focusNode?.hasFocus ?? false;
 
-      if (focusNode!.hasFocus && this.mounted) {
+      if (focusNode!.hasFocus && mounted) {
         if (!showShareMenu.value) return;
         showShareMenu.value = false;
       }
@@ -179,19 +182,19 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     }
 
     if (widget.existingAttachments != null) {
-      this.addAttachments(widget.existingAttachments ?? []);
+      addAttachments(widget.existingAttachments ?? []);
       updateTextFieldAttachments();
     }
 
     if (textFieldData != null) {
-      this.addAttachments(textFieldData?.attachments ?? []);
+      addAttachments(textFieldData?.attachments ?? []);
     }
 
     setCanRecord();
   }
 
   void setCanRecord() {
-    bool canRec = this._canRecord;
+    bool canRec = _canRecord;
     if (canRec != canRecord.value) {
       canRecord.value = canRec;
     }
@@ -258,31 +261,31 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     }
   }
 
-  // void onContentCommit(CommittedContent content) async {
-  //   // Add some debugging logs
-  //   Logger.info("[Content Commit] Keyboard received content");
-  //   Logger.info("  -> Content Type: ${content.mimeType}");
-  //   Logger.info("  -> URI: ${content.uri}");
-  //   Logger.info("  -> Content Length: ${content.hasData ? content.data!.length : "null"}");
-  //
-  //   // Parse the filename from the URI and read the data as a List<int>
-  //   String filename = uriToFilename(content.uri, content.mimeType);
-  //
-  //   // Save the data to a location and add it to the file picker
-  //   if (content.hasData) {
-  //     this.addAttachments([PlatformFile(
-  //       name: filename,
-  //       size: content.data!.length,
-  //       bytes: content.data,
-  //     )]);
-  //
-  //     // Update the state
-  //     updateTextFieldAttachments();
-  //     if (this.mounted) setState(() {});
-  //   } else {
-  //     showSnackbar('Insertion Failed', 'Attachment has no data!');
-  //   }
-  // }
+  void onContentCommit(CommittedContent content) async {
+    // Add some debugging logs
+    Logger.info("[Content Commit] Keyboard received content");
+    Logger.info("  -> Content Type: ${content.mimeType}");
+    Logger.info("  -> URI: ${content.uri}");
+    Logger.info("  -> Content Length: ${content.hasData ? content.data!.length : "null"}");
+
+    // Parse the filename from the URI and read the data as a List<int>
+    String filename = uriToFilename(content.uri, content.mimeType);
+
+    // Save the data to a location and add it to the file picker
+    if (content.hasData) {
+      addAttachments([PlatformFile(
+        name: filename,
+        size: content.data!.length,
+        bytes: content.data,
+      )]);
+
+      // Update the state
+      updateTextFieldAttachments();
+      if (mounted) setState(() {});
+    } else {
+      showSnackbar('Insertion Failed', 'Attachment has no data!');
+    }
+  }
 
   Future<void> reviewAudio(BuildContext originalContext, PlatformFile file) async {
     showDialog(
@@ -291,41 +294,41 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: Theme.of(context).accentColor,
-          title: new Text("Send it?", style: Theme.of(context).textTheme.headline1),
+          title: Text("Send it?", style: Theme.of(context).textTheme.headline1),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text("Review your audio snippet before sending it", style: Theme.of(context).textTheme.subtitle1),
               Container(height: 10.0),
               AudioPlayerWiget(
-                key: new Key("AudioMessage-${file.size}"),
+                key: Key("AudioMessage-${file.size}"),
                 file: file,
                 context: originalContext,
               )
             ],
           ),
           actions: <Widget>[
-            new TextButton(
-                child: new Text("Discard", style: Theme.of(context).textTheme.subtitle1),
+            TextButton(
+                child: Text("Discard", style: Theme.of(context).textTheme.subtitle1),
                 onPressed: () {
                   // Dispose of the audio controller
-                  if (!kIsWeb) this.disposeAudioFile(originalContext, file);
+                  if (!kIsWeb) disposeAudioFile(originalContext, file);
 
                   // Remove the OG alert dialog
                   Get.back();
                 }),
-            new TextButton(
-              child: new Text(
+            TextButton(
+              child: Text(
                 "Send",
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               onPressed: () async {
                 CurrentChat? thisChat = CurrentChat.of(originalContext);
                 if (thisChat == null) {
-                  this.addAttachments([file]);
+                  addAttachments([file]);
                 } else {
                   await widget.onSend([file], "");
-                  if (!kIsWeb) this.disposeAudioFile(originalContext, file);
+                  if (!kIsWeb) disposeAudioFile(originalContext, file);
                 }
 
                 // Remove the OG alert dialog
@@ -407,7 +410,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
   Future<bool> _onWillPop() async {
     if (showShareMenu.value) {
-      if (this.mounted) {
+      if (mounted) {
         showShareMenu.value = false;
       }
       return false;
@@ -418,7 +421,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
   @override
   Widget build(BuildContext context) {
-    return new WillPopScope(
+    return WillPopScope(
         onWillPop: _onWillPop,
         child: Row(
           mainAxisSize: MainAxisSize.max,
@@ -448,7 +451,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             pickedImages
                 .removeWhere((element) => kIsWeb ? element.bytes == element.bytes : element.path == attachment.path);
             updateTextFieldAttachments();
-            if (this.mounted) setState(() {});
+            if (mounted) setState(() {});
           },
         ),
       );
@@ -541,7 +544,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           } else if (hideInfo) {
             placeholder = "BlueBubbles";
           } else {
-            String? title = await CurrentChat.of(context)?.chat.getTitle();
+            String? title = CurrentChat.of(context)?.chat.getTitle();
             if (!isNullOrEmpty(title)!) {
               placeholder = title!;
             }
@@ -554,7 +557,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           } else {
             // If it's not a group chat, get the participant's contact info
             Handle? handle = CurrentChat.of(context)?.chat.participants[0];
-            Contact? contact = ContactManager().getCachedContactSync(handle?.address ?? "");
+            Contact? contact = ContactManager().getCachedContact(address: handle?.address ?? "");
             if (contact == null) {
               placeholder = await formatPhoneNumber(handle);
             } else {
@@ -589,7 +592,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 child: Focus(
                   focusNode: FocusNode(),
                   onKey: (focus, event) {
-                    if (!(event is RawKeyDownEvent)) return KeyEventResult.ignored;
+                    if (event is! RawKeyDownEvent) return KeyEventResult.ignored;
                     Logger.info("Got key label ${event.data.keyLabel}, physical key ${event.data.physicalKey.toString()}, logical key ${event.data.logicalKey.toString()}", tag: "RawKeyboardListener");
                     if (event.data is RawKeyEventDataWindows) {
                       var data = event.data as RawKeyEventDataWindows;
@@ -612,7 +615,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
                         // Get the word
                         List<String> words = text.trimRight().split(RegExp("[ \n]"));
-                        RegExp punctuation = RegExp("[\!\"\#\$\%\&\'\(\)\*\+\,\-\.\/\:\;\<\=\>\?\@\[\\\]\^\_\`\{\|\}\~]");
+                        RegExp punctuation = RegExp("[!\"#\$%&'()*+,-./:;<=>?@[\\]^_`{|}~]");
                         int trailing = text.length - text.trimRight().length;
                         List<int> counts = words.map((word) => word.length).toList();
                         int end = startPos - 1 - trailing;
@@ -622,10 +625,11 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         } else {
                           for (int i = 0; i < counts.length; i++) {
                             int count = counts[i];
-                            if (start + count < end)
+                            if (start + count < end) {
                               start += count + (i == counts.length - 1 ? 0 : 1);
-                            else
+                            } else {
                               break;
+                            }
                           }
                         }
                         end += trailing; // Account for trimming
@@ -677,10 +681,11 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                           int start = 0;
                           for (int i = 0; i < counts.length; i++) {
                             int count = counts[i];
-                            if (start + count < end)
+                            if (start + count < end) {
                               start += count + (i == counts.length - 1 ? 0 : 1);
-                            else
+                            } else {
                               break;
+                            }
                           }
                           end += trailing; // Account for trimming
                           start -= 1; // Remove the space after the previous word
@@ -702,6 +707,26 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         focusNode!.requestFocus();
                         return KeyEventResult.handled;
                       }
+                      if ((data.physicalKey == PhysicalKeyboardKey.keyV || data.logicalKey == LogicalKeyboardKey.keyV)
+                          && (event.isControlPressed || previousKeyCode == 0x1700000000)) {
+                        getPastedImageWeb().then((value) {
+                          if (value != null) {
+                            var r = html.FileReader();
+                            r.readAsArrayBuffer(value);
+                            r.onLoadEnd.listen((e) {
+                              if (r.result != null && r.result is Uint8List) {
+                                Uint8List data = r.result as Uint8List;
+                                addAttachment(PlatformFile(
+                                  name: randomString(8) + ".png",
+                                  bytes: data,
+                                  size: data.length,
+                                ));
+                              }
+                            });
+                          }
+                        });
+                      }
+                      previousKeyCode = data.logicalKey.keyId;
                       return KeyEventResult.ignored;
                     }
                     if (event.physicalKey == PhysicalKeyboardKey.enter &&
@@ -927,7 +952,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         directory.createSync();
       }
       pathName = "$appDocPath/attachments/OutgoingAudioMessage.m4a";
-      File file = new File(pathName);
+      File file = File(pathName);
       if (file.existsSync()) file.deleteSync();
     }
 
@@ -939,7 +964,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         samplingRate: 44100, // by default
       );
 
-      if (this.mounted) {
+      if (mounted) {
         isRecording.value = true;
       }
     }
@@ -951,16 +976,18 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     if (isRecording.value) {
       String? pathName = await Record().stop();
 
-      if (this.mounted) {
+      if (mounted) {
         isRecording.value = false;
       }
 
-      if (pathName != null) reviewAudio(context, PlatformFile(
+      if (pathName != null) {
+        reviewAudio(context, PlatformFile(
         name: "${randomString(8)}.m4a",
         path: kIsWeb ? null : pathName,
         size: 0,
         bytes: kIsWeb ? (await Dio().get(pathName, options: Options(responseType: ResponseType.bytes))).data : null,
       ));
+      }
     }
   }
 
@@ -972,16 +999,16 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         if (i != 0 && sendCountdown == null) break;
 
         // Update UI with new state information
-        if (this.mounted) {
+        if (mounted) {
           setState(() {
             sendCountdown = SettingsManager().settings.sendDelay.value - i;
           });
         }
 
-        await Future.delayed(new Duration(seconds: 1));
+        await Future.delayed(Duration(seconds: 1));
       }
 
-      if (this.mounted) {
+      if (mounted) {
         setState(() {
           sendCountdown = null;
         });
@@ -1019,7 +1046,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       await sendMessage();
     }
 
-    if (shouldUpdate && this.mounted) setState(() {});
+    if (shouldUpdate && mounted) setState(() {});
   }
 
   Widget buildSendButton() => Align(
@@ -1153,13 +1180,13 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       if (image.bytes == file.bytes) {
         pickedImages.removeWhere((element) => element.bytes == file.bytes);
         updateTextFieldAttachments();
-        if (this.mounted) setState(() {});
+        if (mounted) setState(() {});
         return;
       }
     }
 
-    this.addAttachments([file]);
+    addAttachments([file]);
     updateTextFieldAttachments();
-    if (this.mounted) setState(() {});
+    if (mounted) setState(() {});
   }
 }

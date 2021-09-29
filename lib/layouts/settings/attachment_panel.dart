@@ -213,13 +213,15 @@ class AttachmentPanel extends StatelessWidget {
                       text: "Attachment Viewer"
                   ),
                   Obx(() {
-                    if (SettingsManager().settings.skin.value == Skins.iOS)
+                    if (SettingsManager().settings.skin.value == Skins.iOS) {
                       return SettingsTile(
                         backgroundColor: tileColor,
                         title: "Swipe direction",
                         subtitle: "Set the swipe direction to go to previous media items",
                       );
-                    else return SizedBox.shrink();
+                    } else {
+                      return SizedBox.shrink();
+                    }
                   }),
                   Obx(() => SettingsOptions<SwipeDirection>(
                     initial: SettingsManager().settings.fullscreenViewerSwipeDir.value,

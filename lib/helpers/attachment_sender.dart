@@ -59,7 +59,7 @@ class AttachmentSender {
 
   sendChunkRecursive(int index, int total, String? tempGuid) {
     // if (index < ) {
-    Map<String, dynamic> params = new Map();
+    Map<String, dynamic> params = {};
     params["guid"] = _chat.guid;
     params["tempGuid"] = tempGuid;
     params["message"] = _text;
@@ -114,7 +114,7 @@ class AttachmentSender {
 
   Future<void> send() async {
     _attachmentName = _attachment.name;
-    _imageBytes = _attachment.bytes ?? (await File(_attachment.path!).readAsBytes());;
+    _imageBytes = _attachment.bytes ?? (await File(_attachment.path!).readAsBytes());
 
     int numOfChunks = (_imageBytes.length / _chunkSize).ceil();
 
@@ -155,7 +155,7 @@ class AttachmentSender {
     if (!kIsWeb) {
       String appDocPath = SettingsManager().appDocDir.path;
       String pathName = "$appDocPath/attachments/${messageAttachment!.guid}/$_attachmentName";
-      File file = await new File(pathName).create(recursive: true);
+      File file = await File(pathName).create(recursive: true);
       await file.writeAsBytes(_imageBytes);
     }
 

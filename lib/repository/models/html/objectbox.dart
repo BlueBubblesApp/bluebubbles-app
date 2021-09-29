@@ -1,3 +1,4 @@
+//ignore: implementation_imports
 import 'package:objectbox/src/transaction.dart';
 
 /// READ: Dummy file to allow objectbox related code to compile on Web. We use
@@ -27,12 +28,18 @@ class Box<T> {
 
   /// Removes (deletes) ALL Objects in a single transaction.
   int removeAll() => throw Exception('Unsupported Platform');
+
+  bool isEmpty() => throw Exception('Unsupported Platform');
 }
 
 class Store {
   Box<T> box<T>() => throw Exception('Unsupported Platform');
 
   R runInTransaction<R>(TxMode mode, R Function() fn) => throw Exception('Unsupported Platform');
+
+  dynamic get reference => throw Exception('Unsupported Platform');
+
+  Store.fromReference(dynamic _, dynamic __);
 }
 
 Future<Store> openStore(
@@ -42,3 +49,5 @@ Future<Store> openStore(
       int? maxReaders,
       bool queriesCaseSensitiveDefault = true,
       String? macosApplicationGroup}) async => throw Exception('Unsupported Platform');
+
+dynamic getObjectBoxModel() => throw Exception('Unsupported Platform');

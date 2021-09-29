@@ -24,7 +24,7 @@ class LifeCycleManager {
 
   bool get isAlive => _isAlive;
 
-  StreamController<bool> _stream = new StreamController.broadcast();
+  final StreamController<bool> _stream = StreamController.broadcast();
   Stream<bool> get stream => _stream.stream;
 
   LifeCycleManager._internal() {
@@ -66,7 +66,7 @@ class LifeCycleManager {
       // If there are socket processes using the socket, then it will not close, and will wait until those tasks are done
       updateStatus(false);
       if (!kIsDesktop) {
-        SocketManager().closeSocket();
+        SocketManager().closeSocket(force: true);
 
         // Closes the background thread when the app is fully closed
         // This does not necessarily mean that the isolate will be closed (such as if the app is not fully closed), but it will attempt to do so

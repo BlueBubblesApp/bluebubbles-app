@@ -29,7 +29,7 @@ class _StickersWidgetState extends State<StickersWidget> {
   }
 
   void toggleShow() {
-    if (!this.mounted) return;
+    if (!mounted) return;
     setState(() {
       _visible = !_visible;
     });
@@ -37,12 +37,13 @@ class _StickersWidgetState extends State<StickersWidget> {
 
   void loadStickers() {
     // For each message, load the sticker for it
+    final map = Message.fetchAttachmentsByMessages(widget.messages);
     for (Message msg in widget.messages) {
       // If the message type isn't a sticker, skip it
       if (msg.associatedMessageType != "sticker") continue;
 
       // Get the associated attachments
-      msg.fetchAttachments();
+      msg.attachments = map[msg.guid];
       for (Attachment? attachment in msg.attachments!) {
         // If we've already loaded it, don't try again
         if (loaded.contains(attachment!.guid)) continue;
@@ -58,7 +59,7 @@ class _StickersWidgetState extends State<StickersWidget> {
             if (FileSystemEntity.typeSync(pathName) == FileSystemEntityType.notFound) {
               // Add the attachment as a sticker, and re-render the UI
               stickers.add(attachment);
-              if (this.mounted) setState(() {});
+              if (mounted) setState(() {});
             }
           }), tag: attachment.guid);
         } else {
@@ -82,7 +83,7 @@ class _StickersWidgetState extends State<StickersWidget> {
     return GestureDetector(
         onTap: toggleShow,
         child: Opacity(
-            key: new Key(this.stickers.first.guid!),
+            key: Key(this.stickers.first.guid!),
             opacity: _visible ? 1.0 : 0.25,
             child: Stack(children: stickers, alignment: Alignment.center)));
   }

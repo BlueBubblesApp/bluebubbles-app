@@ -28,10 +28,8 @@ class ContactSelectorOption extends StatelessWidget {
 
     List<String> formatted = [];
     for (var item in item.chat!.participants) {
-      String? contact = ContactManager().getCachedContactSync(item.address)?.displayName;
-      if (contact == null) {
-        contact = await formatPhoneNumber(item);
-      }
+      String? contact = ContactManager().getCachedContact(address: item.address)?.displayName;
+      contact ??= await formatPhoneNumber(item);
 
       formatted.add(contact);
     }
@@ -51,10 +49,10 @@ class ContactSelectorOption extends StatelessWidget {
         future: formatPhoneNumber(item),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
-            return this.getTextWidget(context, address);
+            return getTextWidget(context, address);
           }
 
-          return this.getTextWidget(context, snapshot.data);
+          return getTextWidget(context, snapshot.data);
         });
   }
 
@@ -117,7 +115,7 @@ class ContactSelectorOption extends StatelessWidget {
     }
 
     return ListTile(
-      key: new Key("chat-${item.displayName}"),
+      key: Key("chat-${item.displayName}"),
       onTap: () => onSelected(item),
       title: Text(
         title,

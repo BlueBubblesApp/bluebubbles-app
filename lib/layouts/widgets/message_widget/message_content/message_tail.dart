@@ -62,7 +62,7 @@ class TailClipper extends CustomClipper<Path>{
   }
 
   @override
-  bool shouldReclip(CustomClipper clipper) {
+  bool shouldReclip(covariant CustomClipper oldClipper) {
     return false;
   }
 }

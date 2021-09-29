@@ -27,7 +27,7 @@ class LocationWidget extends StatefulWidget {
   _LocationWidgetState createState() => _LocationWidgetState();
 }
 
-class _LocationWidgetState extends State<LocationWidget> with AutomaticKeepAliveClientMixin {
+class _LocationWidgetState extends State<LocationWidget> {
   AppleLocation? location;
 
   @override
@@ -36,7 +36,7 @@ class _LocationWidgetState extends State<LocationWidget> with AutomaticKeepAlive
     loadLocation();
   }
 
-  void loadLocation() {
+  void loadLocation() async {
     // If we already have location data, don't load it again
     if (location != null) return;
     String _location;
@@ -44,11 +44,11 @@ class _LocationWidgetState extends State<LocationWidget> with AutomaticKeepAlive
     if (kIsWeb || widget.file.path == null) {
       _location = utf8.decode(widget.file.bytes!);
     } else {
-      _location = File(widget.file.path!).readAsStringSync();
+      _location = await File(widget.file.path!).readAsString();
     }
     location = AttachmentHelper.parseAppleLocation(_location);
 
-    if (location != null && this.mounted) {
+    if (location != null && mounted) {
       setState(() {});
     }
   }
@@ -61,8 +61,6 @@ class _LocationWidgetState extends State<LocationWidget> with AutomaticKeepAlive
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
-
     if (location != null &&
         location!.longitude != null &&
         location!.longitude!.abs() < 90 &&
@@ -85,18 +83,18 @@ class _LocationWidgetState extends State<LocationWidget> with AutomaticKeepAlive
                             zoom: 14.0,
                           ),
                           layers: [
-                            new TileLayerOptions(
+                            TileLayerOptions(
                               urlTemplate: "http://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",
                               subdomains: ['0', '1', '2', '3'],
                               tileSize: 256,
                             ),
-                            new MarkerLayerOptions(
+                            MarkerLayerOptions(
                               markers: [
-                                new Marker(
+                                Marker(
                                   width: 40.0,
                                   height: 40.0,
-                                  point: new LatLng(location!.longitude!, location!.latitude!),
-                                  builder: (ctx) => new Container(
+                                  point: LatLng(location!.longitude!, location!.latitude!),
+                                  builder: (ctx) => Container(
                                     child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.location : Icons.pin_drop, color: Colors.red, size: 45),
                                   ),
                                 ),
@@ -120,7 +118,4 @@ class _LocationWidgetState extends State<LocationWidget> with AutomaticKeepAlive
       );
     }
   }
-
-  @override
-  bool get wantKeepAlive => true;
 }

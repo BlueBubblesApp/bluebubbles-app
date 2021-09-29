@@ -31,12 +31,9 @@ class AudioPlayerWiget extends StatefulWidget {
   _AudioPlayerWigetState createState() => _AudioPlayerWigetState();
 }
 
-class _AudioPlayerWigetState extends State<AudioPlayerWiget> with AutomaticKeepAliveClientMixin {
+class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
   late final ChewieAudioController controller;
   late final VideoPlayerController audioController;
-
-  @override
-  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -53,7 +50,7 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> with AutomaticKeepA
         audioController = VideoPlayerController.network(url);
       } else {
         dynamic file = File(widget.file.path!);
-        audioController = new VideoPlayerController.file(file);
+        audioController = VideoPlayerController.file(file);
       }
       controller = ChewieAudioController(
         videoPlayerController: audioController,
@@ -104,12 +101,11 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> with AutomaticKeepA
     if (!(ModalRoute.of(context)?.isCurrent ?? false)) {
       controller.pause();
     }
-    super.build(context);
     return Container(
       alignment: Alignment.center,
       color: Theme.of(context).accentColor,
       height: SettingsManager().settings.skin.value == Skins.iOS ? 75 : 48,
-      constraints: new BoxConstraints(maxWidth: maxWidth),
+      constraints: BoxConstraints(maxWidth: maxWidth),
       child: Theme(
         data: Theme.of(context).copyWith(
             platform: SettingsManager().settings.skin.value == Skins.iOS ? TargetPlatform.iOS : TargetPlatform.android,

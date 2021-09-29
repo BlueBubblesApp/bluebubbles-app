@@ -5,7 +5,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/repository/models/html/attachment.dart';
 import 'package:bluebubbles/repository/models/html/chat.dart';
 import 'package:bluebubbles/repository/models/html/handle.dart';
-import 'package:collection/src/iterable_extensions.dart';
+import 'package:collection/collection.dart';
 import 'package:crypto/crypto.dart' as crypto;
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/darty.dart';
@@ -103,12 +103,12 @@ class Message {
   }
 
   String get fullText {
-    String fullText = this.subject ?? "";
+    String fullText = subject ?? "";
     if (fullText.isNotEmpty) {
       fullText += "\n";
     }
 
-    fullText += this.text ?? "";
+    fullText += text ?? "";
 
     return sanitizeString(fullText);
   }
@@ -118,7 +118,7 @@ class Message {
     if (json.containsKey("hasAttachments")) {
       hasAttachments = json["hasAttachments"] == 1 ? true : false;
     } else if (json.containsKey("attachments")) {
-      hasAttachments = (json['attachments'] as List).length > 0 ? true : false;
+      hasAttachments = (json['attachments'] as List).isNotEmpty ? true : false;
     }
 
     List<Attachment> attachments =
@@ -131,7 +131,7 @@ class Message {
       if (metadata is String) {
         try {
           metadata = jsonDecode(metadata);
-        } catch (ex) {}
+        } catch (_) {}
       }
     }
 
@@ -144,7 +144,7 @@ class Message {
       }
     }
 
-    var data = new Message(
+    var data = Message(
       id: json.containsKey("ROWID") ? json["ROWID"] : null,
       originalROWID: json.containsKey("originalROWID") ? json["originalROWID"] : null,
       guid: json["guid"],
@@ -193,9 +193,7 @@ class Message {
     );
 
     // Adds fallback getter for the ID
-    if (data.id == null) {
-      data.id = json.containsKey("id") ? json["id"] : null;
-    }
+    data.id ??= json.containsKey("id") ? json["id"] : null;
 
     return data;
   }
@@ -234,7 +232,7 @@ class Message {
   }
 
   List<Attachment?>? fetchAttachments({CurrentChat? currentChat}) {
-    return this.attachments;
+    return attachments;
   }
 
   static Chat? getChat(Message message) {
@@ -242,9 +240,9 @@ class Message {
   }
 
   Message fetchAssociatedMessages({MessageBloc? bloc}) {
-    if (this.associatedMessages.isNotEmpty &&
-        this.associatedMessages.length == 1 &&
-        this.associatedMessages[0].guid == this.guid) {
+    if (associatedMessages.isNotEmpty &&
+        associatedMessages.length == 1 &&
+        associatedMessages[0].guid == guid) {
       return this;
     }
     associatedMessages = (bloc?.reactionMessages.values.where((element) => element.associatedMessageGuid == guid).toList() ?? []).cast<Message>();
@@ -273,7 +271,7 @@ class Message {
   }
 
   static void softDelete(String guid) {
-    return null;
+    return;
   }
 
   static void flush() {
@@ -282,67 +280,64 @@ class Message {
 
   bool isUrlPreview() {
     // first condition is for macOS < 11 and second condition is for macOS >= 11
-    return (this.balloonBundleId != null &&
-            this.balloonBundleId == "com.apple.messages.URLBalloonProvider" &&
-            this.hasDdResults!) ||
-        (this.hasDdResults! && (this.text ?? "").replaceAll("\n", " ").hasUrl);
+    return (balloonBundleId != null &&
+            balloonBundleId == "com.apple.messages.URLBalloonProvider" &&
+            hasDdResults!) ||
+        (hasDdResults! && (text ?? "").replaceAll("\n", " ").hasUrl);
   }
 
   String? getUrl() {
     if (text == null) return null;
-    List<String> splits = this.text!.replaceAll("\n", " ").split(" ");
+    List<String> splits = text!.replaceAll("\n", " ").split(" ");
     return splits.firstWhereOrNull((String element) => element.hasUrl);
   }
 
   bool isInteractive() {
-    return this.balloonBundleId != null && this.balloonBundleId != "com.apple.messages.URLBalloonProvider";
+    return balloonBundleId != null && balloonBundleId != "com.apple.messages.URLBalloonProvider";
   }
 
   bool hasText({stripWhitespace = false}) {
-    return !isEmptyString(this.fullText, stripWhitespace: stripWhitespace);
+    return !isEmptyString(fullText, stripWhitespace: stripWhitespace);
   }
 
   bool isGroupEvent() {
-    return isEmptyString(this.fullText) && !this.hasAttachments && this.balloonBundleId == null;
+    return isEmptyString(fullText) && !hasAttachments && balloonBundleId == null;
   }
 
   bool isBigEmoji() {
     // We are checking the variable first because we want to
     // avoid processing twice for this as it won't change
-    if (this.bigEmoji == null) {
-      this.bigEmoji = MessageHelper.shouldShowBigEmoji(this.fullText);
-    }
+    bigEmoji ??= MessageHelper.shouldShowBigEmoji(fullText);
 
-    return this.bigEmoji!;
+    return bigEmoji!;
   }
 
   List<Attachment?> getRealAttachments() {
-    return this.attachments!.where((item) => item!.mimeType != null).toList();
+    return attachments!.where((item) => item!.mimeType != null).toList();
   }
 
   List<Attachment?> getPreviewAttachments() {
-    return this.attachments!.where((item) => item!.mimeType == null).toList();
+    return attachments!.where((item) => item!.mimeType == null).toList();
   }
 
   List<Message> getReactions() {
-    return this
-        .associatedMessages
+    return associatedMessages
         .where((item) => ReactionTypes.toList().contains(item.associatedMessageType))
         .toList();
   }
 
   void generateTempGuid() {
-    List<String> unique = [this.text ?? "", this.dateCreated?.millisecondsSinceEpoch.toString() ?? ""];
+    List<String> unique = [text ?? "", dateCreated?.millisecondsSinceEpoch.toString() ?? ""];
 
     String preHashed;
-    if (unique.every((element) => element.trim().length == 0)) {
+    if (unique.every((element) => element.trim().isEmpty)) {
       preHashed = randomString(8);
     } else {
       preHashed = unique.join(":");
     }
 
     String hashed = crypto.sha1.convert(utf8.encode(preHashed)).toString();
-    this.guid = "temp-$hashed";
+    guid = "temp-$hashed";
   }
 
   static int? countForChat(Chat? chat) {
@@ -350,35 +345,35 @@ class Message {
   }
 
   void merge(Message otherMessage) {
-    if (this.dateCreated == null && otherMessage.dateCreated != null) {
-      this.dateCreated = otherMessage.dateCreated;
+    if (dateCreated == null && otherMessage.dateCreated != null) {
+      dateCreated = otherMessage.dateCreated;
     }
-    if (this.dateDelivered == null && otherMessage.dateDelivered != null) {
-      this.dateDelivered = otherMessage.dateDelivered;
+    if (dateDelivered == null && otherMessage.dateDelivered != null) {
+      dateDelivered = otherMessage.dateDelivered;
     }
-    if (this.dateRead == null && otherMessage.dateRead != null) {
-      this.dateRead = otherMessage.dateRead;
+    if (dateRead == null && otherMessage.dateRead != null) {
+      dateRead = otherMessage.dateRead;
     }
-    if (this.dateDeleted == null && otherMessage.dateDeleted != null) {
-      this.dateDeleted = otherMessage.dateDeleted;
+    if (dateDeleted == null && otherMessage.dateDeleted != null) {
+      dateDeleted = otherMessage.dateDeleted;
     }
-    if (this.datePlayed == null && otherMessage.datePlayed != null) {
-      this.datePlayed = otherMessage.datePlayed;
+    if (datePlayed == null && otherMessage.datePlayed != null) {
+      datePlayed = otherMessage.datePlayed;
     }
-    if (this.metadata == null && otherMessage.metadata != null) {
-      this.metadata = otherMessage.metadata;
+    if (metadata == null && otherMessage.metadata != null) {
+      metadata = otherMessage.metadata;
     }
-    if (this.originalROWID == null && otherMessage.originalROWID != null) {
-      this.originalROWID = otherMessage.originalROWID;
+    if (originalROWID == null && otherMessage.originalROWID != null) {
+      originalROWID = otherMessage.originalROWID;
     }
-    if (!this.hasAttachments && otherMessage.hasAttachments) {
-      this.hasAttachments = otherMessage.hasAttachments;
+    if (!hasAttachments && otherMessage.hasAttachments) {
+      hasAttachments = otherMessage.hasAttachments;
     }
-    if (!this.hasReactions && otherMessage.hasReactions) {
-      this.hasReactions = otherMessage.hasReactions;
+    if (!hasReactions && otherMessage.hasReactions) {
+      hasReactions = otherMessage.hasReactions;
     }
-    if (this._error.value == 0 && otherMessage._error.value != 0) {
-      this._error.value = otherMessage._error.value;
+    if (_error.value == 0 && otherMessage._error.value != 0) {
+      _error.value = otherMessage._error.value;
     }
   }
 

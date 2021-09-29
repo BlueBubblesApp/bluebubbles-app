@@ -19,7 +19,7 @@ String encryptAESCryptoJS(String plainText, String passphrase) {
         Uint8List.fromList(createUint8ListFromString("Salted__") + salt + encrypted.bytes);
     return base64.encode(encryptedBytesWithSalt);
   } catch (error) {
-    throw error;
+    rethrow;
   }
 }
 
@@ -37,7 +37,7 @@ String decryptAESCryptoJS(String encrypted, String passphrase) {
     final decrypted = encrypter.decrypt64(base64.encode(encryptedBytes), iv: iv);
     return decrypted;
   } catch (error) {
-    throw error;
+    rethrow;
   }
 }
 
@@ -50,10 +50,11 @@ Tuple2<Uint8List, Uint8List> deriveKeyAndIV(String passphrase, Uint8List salt) {
 
   while (!enoughBytesForKey) {
     // int preHashLength = currentHash.length + password.length + salt.length;
-    if (currentHash.length > 0)
+    if (currentHash.isNotEmpty) {
       preHash = Uint8List.fromList(currentHash + password + salt);
-    else
+    } else {
       preHash = Uint8List.fromList(password + salt);
+    }
 
     currentHash = md5.convert(preHash).bytes as Uint8List;
     concatenatedHashes = Uint8List.fromList(concatenatedHashes + currentHash);
@@ -62,11 +63,11 @@ Tuple2<Uint8List, Uint8List> deriveKeyAndIV(String passphrase, Uint8List salt) {
 
   var keyBtyes = concatenatedHashes.sublist(0, 32);
   var ivBtyes = concatenatedHashes.sublist(32, 48);
-  return new Tuple2(keyBtyes, ivBtyes);
+  return Tuple2(keyBtyes, ivBtyes);
 }
 
 Uint8List createUint8ListFromString(String s) {
-  var ret = new Uint8List(s.length);
+  var ret = Uint8List(s.length);
   for (var i = 0; i < s.length; i++) {
     ret[i] = s.codeUnitAt(i);
   }

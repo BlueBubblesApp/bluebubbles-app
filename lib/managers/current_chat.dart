@@ -13,6 +13,7 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:chewie_audio/chewie_audio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:tuple/tuple.dart';
 import 'package:video_player/video_player.dart';
@@ -36,6 +37,7 @@ class CurrentChat {
   Map<String, Metadata> urlPreviews = {};
   Map<String, VideoPlayerController> currentPlayingVideo = {};
   Map<String, Tuple2<ChewieAudioController, VideoPlayerController>> audioPlayers = {};
+  Map<String, List<EntityAnnotation>> entityExtractorData = {};
   List<VideoPlayerController> videoControllersToDispose = [];
   List<Attachment> chatAttachments = [];
   List<Message?> sentMessages = [];
@@ -67,7 +69,7 @@ class CurrentChat {
   final RxBool showScrollDown = false.obs;
 
   CurrentChat(this.chat) {
-    messageMarkers = new MessageMarkers(this.chat);
+    messageMarkers = MessageMarkers(chat);
 
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
       if (!event.containsKey("type")) return;
@@ -170,8 +172,7 @@ class CurrentChat {
 
   static CurrentChat? of(BuildContext context) {
     return context.findAncestorStateOfType<ConversationViewState>()?.currentChat ??
-        context.findAncestorStateOfType<MessageDetailsPopupState>()?.currentChat ??
-        null;
+        context.findAncestorStateOfType<MessageDetailsPopupState>()?.currentChat;
   }
 
   /// Fetch and store all of the attachments for a [message]
@@ -182,7 +183,7 @@ class CurrentChat {
       preloadMessageAttachments(specificMessages: [message]);
       return messageAttachments[message.guid];
     }
-    if (messageAttachments[message.guid] != null && messageAttachments[message.guid]!.length > 0) {
+    if (messageAttachments[message.guid] != null && messageAttachments[message.guid]!.isNotEmpty) {
       final guids = messageAttachments[message.guid]!.map((e) => e!.guid).toSet();
       messageAttachments[message.guid]!.retainWhere((element) => guids.remove(element!.guid));
     }
@@ -232,13 +233,14 @@ class CurrentChat {
 
   void preloadMessageAttachments({List<Message?>? specificMessages}) {
     List<Message?> messages =
-        specificMessages != null ? specificMessages : Chat.getMessages(chat, limit: 25);
-    for (Message? message in messages) {
-      if (message!.hasAttachments) {
-        List<Attachment?>? attachments = message.fetchAttachments();
-        messageAttachments[message.guid!] = attachments ?? [];
-      }
-    }
+        specificMessages ?? Chat.getMessages(chat, limit: 25);
+    messageAttachments = Message.fetchAttachmentsByMessages(messages);
+  }
+
+  Future<void> preloadMessageAttachmentsAsync({List<Message?>? specificMessages}) async {
+    List<Message?> messages =
+        specificMessages ?? Chat.getMessages(chat, limit: 25);
+    messageAttachments = await Message.fetchAttachmentsByMessagesAsync(messages);
   }
 
   void displayTypingIndicator() {
@@ -270,9 +272,9 @@ class CurrentChat {
 
   void changeCurrentPlayingVideo(Map<String, VideoPlayerController> video) {
     if (!isNullOrEmpty(currentPlayingVideo)!) {
-      currentPlayingVideo.values.forEach((element) {
+      for (VideoPlayerController element in currentPlayingVideo.values) {
         videoControllersToDispose.add(element);
-      });
+      }
     }
     currentPlayingVideo = video;
     _stream.sink.add(
@@ -286,16 +288,16 @@ class CurrentChat {
   /// Dispose all of the controllers and whatnot
   void dispose() {
     if (!isNullOrEmpty(currentPlayingVideo)!) {
-      currentPlayingVideo.values.forEach((element) {
+      for (VideoPlayerController element in currentPlayingVideo.values) {
         element.dispose();
-      });
+      }
     }
 
     if (!isNullOrEmpty(audioPlayers)!) {
-      audioPlayers.values.forEach((element) {
+      for (Tuple2<ChewieAudioController, VideoPlayerController> element in audioPlayers.values) {
         element.item1.dispose();
         element.item2.dispose();
-      });
+      }
       audioPlayers = {};
     }
 
@@ -346,9 +348,9 @@ class CurrentChat {
   }
 
   void disposeVideoControllers() {
-    videoControllersToDispose.forEach((element) {
+    for (VideoPlayerController element in videoControllersToDispose) {
       element.dispose();
-    });
+    }
     videoControllersToDispose = [];
   }
 

@@ -5,6 +5,7 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:fast_contacts/fast_contacts.dart' hide Contact;
@@ -13,16 +14,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
-class ContactAvatarWidgetState {
-  MemoryImage? contactImage;
-  String? initials;
-
-  ContactAvatarWidgetState({
-    this.initials,
-    this.contactImage,
-  });
-}
 
 class ContactAvatarWidget extends StatefulWidget {
   ContactAvatarWidget({
@@ -46,94 +37,29 @@ class ContactAvatarWidget extends StatefulWidget {
 }
 
 class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with AutomaticKeepAliveClientMixin {
-  ContactAvatarWidgetState? state;
-  late List<Color> colors;
-  bool requested = false;
-
-  bool get isInvalid => (widget.handle?.address ?? null) == null;
+  Contact? contact;
 
   String get keyPrefix => widget.handle?.address ?? randomString(8);
 
   @override
   void initState() {
     super.initState();
+    contact = ContactManager().getCachedContact(handle: widget.handle);
+    EventDispatcher().stream.listen((Map<String, dynamic> event) {
+      if (!event.containsKey("type")) return;
 
-    state = ContactManager().getState(widget.handle?.address ?? "");
-
-    if (!isInvalid) {
-      ContactManager().colorStream.listen((event) {
-        if (!event.containsKey(widget.handle?.address)) return;
-
-        Color? color = event[widget.handle?.address];
-        if (color == null) {
-          colors = toColorGradient(widget.handle!.address);
-          widget.handle!.color = null;
-        } else {
-          colors = [color.lightenAmount(0.02), color];
-          widget.handle!.color = color.value.toRadixString(16);
-        }
-
-        if (this.mounted) setState(() {});
-      });
-
-      ContactManager().stream.listen((event) {
-        if (event.any((element) => element == widget.handle?.address)) {
-          refresh(force: true);
-        }
-      });
-    }
-
-    refresh();
+      if (event["type"] == 'refresh-avatar' && event["data"][0] == widget.handle?.address && mounted) {
+        print(widget.onTap);
+        print(event['data'][1]);
+        widget.handle?.color = event['data'][1];
+        setState(() {});
+      }
+    });
   }
 
-  Future<void> refresh({bool force = false}) async {
-    // Update the colors
-    if (widget.handle?.color == null) {
-      colors = toColorGradient(widget.handle?.address);
-    } else {
-      colors = [
-        HexColor(widget.handle!.color!).lightenAmount(0.02),
-        HexColor(widget.handle!.color!),
-      ];
-    }
-
-    if (state!.initials != null && (state!.contactImage != null || requested) && !force) return;
-    state!.initials = await getInitials(handle: widget.handle);
-
-    Contact? contact = await ContactManager().getCachedContact(widget.handle);
-    if (contact == null && !isInvalid) {
-      List<Contact> contactRes = [];
-      List<Contact> contacts = ContactManager().contacts;
-      if (widget.handle!.address.isEmail) {
-        contactRes =
-            contacts.where((element) => element.emails.any((e) => e == widget.handle!.address)).toList();
-      } else {
-        contactRes =
-            contacts.where((element) => element.phones.any((e) => e == widget.handle!.address)).toList();
-      }
-
-      if (contactRes.length > 0) {
-        contact = contactRes.first;
-        if (isNullOrEmpty(contact.avatar)! && !kIsWeb && !kIsDesktop) {
-          contact.avatar =
-              await FastContacts.getContactImage(contact.id);
-        }
-      }
-    }
-
-    if (contact != null && contact.avatar != null && contact.avatar!.isNotEmpty && state!.contactImage == null) {
-      try {
-        state!.contactImage = MemoryImage(contact.avatar!);
-      } catch (e) {}
-    }
-
-    requested = true;
-    if (this.mounted) setState(() {});
-  }
-
-  Future<String?> getInitials({Handle? handle, double size = 30}) async {
+  String? getInitials({Handle? handle, double size = 30}) {
     if (handle == null) return "Y";
-    String? name = (await ContactManager().getContactTitle(handle)) ?? "Unknown Name";
+    String? name = ContactManager().getContactTitle(handle) ?? "Unknown Name";
     if (name.isEmail) return name[0].toUpperCase();
 
     // Check if it's just a regular number, no contact
@@ -144,11 +70,11 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
       case 1:
         return items[0][0].toUpperCase();
       default:
-        if (items.length - 1 < 0 || items[items.length - 1].length < 1) return "";
+        if (items.length - 1 < 0 || items[items.length - 1].isEmpty) return "";
         String first = items[0][0].toUpperCase();
         String last = items[items.length - 1][0].toUpperCase();
-        if (!last.contains(new RegExp('[A-Za-z]'))) last = items[1][0];
-        if (!last.contains(new RegExp('[A-Za-z]'))) last = "";
+        if (!last.contains(RegExp('[A-Za-z]'))) last = items[1][0];
+        if (!last.contains(RegExp('[A-Za-z]'))) last = "";
         return first + last;
     }
   }
@@ -176,7 +102,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
                     Get.back();
                     widget.handle!.color = null;
                     widget.handle!.save();
-                    ContactManager().colorStreamObject.sink.add({widget.handle!.address: null});
+                    EventDispatcher().emit("refresh-avatar", [widget.handle?.address, widget.handle?.color]);
                   },
                   child: Text("RESET"),
                 )
@@ -216,18 +142,13 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
       widget.handle!.color = color.value.toRadixString(16);
     }
 
-    widget.handle!.updateColor(widget.handle!.color);
-
-    ContactManager()
-        .colorStreamObject
-        .sink
-        .add({widget.handle!.address: widget.handle?.color == null ? null : HexColor(widget.handle!.color!)});
+    widget.handle!.save();
+    EventDispatcher().emit("refresh-avatar", [widget.handle?.address, widget.handle?.color]);
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-
     return GestureDetector(
       onTap: onAvatarTap,
       child: Container(
@@ -235,19 +156,28 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
         width: widget.size ?? 40,
         height: widget.size ?? 40,
         padding: EdgeInsets.all(widget.borderThickness),
-        decoration: new BoxDecoration(
+        decoration: BoxDecoration(
           color: context.theme.backgroundColor, // border color
           shape: BoxShape.circle,
         ),
-        child: Obx(
-          () => CircleAvatar(
+        child: Obx(() {
+          List<Color> colors = [];
+          if (widget.handle?.color == null) {
+            colors = toColorGradient(widget.handle?.address);
+          } else {
+            colors = [
+              HexColor(widget.handle!.color!).lightenAmount(0.02),
+              HexColor(widget.handle!.color!),
+            ];
+          }
+          return CircleAvatar(
             key: Key("$keyPrefix-avatar"),
             radius: (widget.size != null) ? widget.size! / 2 : 20,
             backgroundImage:
-                !(SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactPhotos.value)
-                    ? state!.contactImage
+                !(SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactPhotos.value) && contact?.avatar.value != null
+                    ? MemoryImage(contact!.avatar.value!)
                     : null,
-            child: state!.contactImage == null ||
+            child: contact?.avatar.value == null ||
                     (SettingsManager().settings.redactedMode.value &&
                         SettingsManager().settings.hideContactPhotos.value)
                 ? Container(
@@ -257,12 +187,12 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
                         colors: [
                           !SettingsManager().settings.colorfulAvatars.value
                               ? HexColor("928E8E")
-                              : colors.length > 0
+                              : colors.isNotEmpty
                                   ? colors[1]
                                   : HexColor("928E8E"),
                           !SettingsManager().settings.colorfulAvatars.value
                               ? HexColor("686868")
-                              : colors.length > 0
+                              : colors.isNotEmpty
                                   ? colors[0]
                                   : HexColor("686868")
                         ],
@@ -272,14 +202,14 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
                     child: Container(
                       child: (SettingsManager().settings.redactedMode.value &&
                                   SettingsManager().settings.removeLetterAvatars.value) ||
-                              state!.initials == null
+                              getInitials(handle: widget.handle) == null
                           ? Icon(
                               SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.person_fill : Icons.person,
                               key: Key("$keyPrefix-avatar-icon"),
                               size: (widget.size ?? 40) / 2,
                             )
                           : Text(
-                              state!.initials!,
+                              getInitials(handle: widget.handle)!,
                               key: Key("$keyPrefix-avatar-text"),
                               style: TextStyle(
                                 fontSize: widget.fontSize ?? 18,
@@ -290,8 +220,8 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
                     ),
                   )
                 : null,
-          ),
-        ),
+          );
+        }),
       ),
     );
   }

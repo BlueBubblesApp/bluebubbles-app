@@ -20,7 +20,7 @@ class Handle {
   });
 
   factory Handle.fromMap(Map<String, dynamic> json) {
-    var data = new Handle(
+    var data = Handle(
       id: json.containsKey("ROWID") ? json["ROWID"] : null,
       originalROWID: json.containsKey("originalROWID") ? json["originalROWID"] : null,
       address: json["address"],
@@ -31,9 +31,7 @@ class Handle {
     );
 
     // Adds fallback getter for the ID
-    if (data.id == null) {
-      data.id = json.containsKey("id") ? json["id"] : null;
-    }
+    data.id ??= json.containsKey("id") ? json["id"] : null;
 
     return data;
   }
@@ -43,14 +41,14 @@ class Handle {
   }
 
   Handle updateColor(String? newColor) {
-    this.color = newColor;
-    this.save();
+    color = newColor;
+    save();
     return this;
   }
 
   Handle updateDefaultPhone(String newPhone) {
-    this.defaultPhone = newPhone;
-    this.save();
+    defaultPhone = newPhone;
+    save();
     return this;
   }
 

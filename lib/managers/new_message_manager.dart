@@ -36,7 +36,7 @@ class NewMessageManager {
   //   }
   // }
 
-  StreamController<NewMessageEvent> _stream = new StreamController<NewMessageEvent>.broadcast();
+  final StreamController<NewMessageEvent> _stream = StreamController<NewMessageEvent>.broadcast();
 
   Stream<NewMessageEvent> get stream => _stream.stream;
 

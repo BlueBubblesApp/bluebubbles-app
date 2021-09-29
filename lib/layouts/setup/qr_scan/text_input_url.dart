@@ -26,8 +26,8 @@ class _TextInputURLState extends State<TextInputURL> {
   @override
   void initState() {
     super.initState();
-    urlController = new TextEditingController();
-    passwordController = new TextEditingController();
+    urlController = TextEditingController();
+    passwordController = TextEditingController();
   }
 
   void connect(String url, String password) async {
@@ -36,7 +36,7 @@ class _TextInputURLState extends State<TextInputURL> {
     String? addr = getServerAddress(address: url);
     if (addr == null) {
       error = "Server address is invalid!";
-      if (this.mounted) setState(() {});
+      if (mounted) setState(() {});
       return;
     }
 
@@ -47,7 +47,7 @@ class _TextInputURLState extends State<TextInputURL> {
       SocketManager().startSocketIO(forceNewConnection: true, catchException: false);
     } catch (e) {
       error = e.toString();
-      if (this.mounted) setState(() {});
+      if (mounted) setState(() {});
     }
   }
 
@@ -55,7 +55,7 @@ class _TextInputURLState extends State<TextInputURL> {
     SocketManager().sendMessage("get-fcm-client", {}, (_data) {
       if (_data["status"] != 200) {
         error = _data["error"]["message"];
-        if (this.mounted) setState(() {});
+        if (mounted) setState(() {});
         return;
       }
       FCMData? copy = SettingsManager().fcmData;
@@ -110,7 +110,7 @@ class _TextInputURLState extends State<TextInputURL> {
               }
               connect(urlController.text, passwordController.text);
               connecting = true;
-              if (this.mounted) setState(() {});
+              if (mounted) setState(() {});
             },
           ),
           TextButton(
@@ -130,11 +130,12 @@ class _TextInputURLState extends State<TextInputURL> {
           if (result) {
             retreiveFCMData();
           } else {
-            if (this.mounted)
+            if (mounted) {
               setState(() {
                 error =
                     "Failed to connect to ${getServerAddress()}! Please check that the url is correct (including http://) and the server logs for more info.";
               });
+            }
           }
         },
       );

@@ -26,8 +26,8 @@ class NotificationManager {
     return _manager;
   }
 
-  static const String NEW_MESSAGE_CHANNEL = "com.bluebubbles.new_messages";
-  static const String SOCKET_ERROR_CHANNEL = "com.bluebubbles.socket_error";
+  static const String newMessageChannel = "com.bluebubbles.new_messages";
+  static const String socketErrorChannel = "com.bluebubbles.socket_error";
 
   static final NotificationManager _manager = NotificationManager._internal();
   NotificationManager._internal();
@@ -85,13 +85,13 @@ class NotificationManager {
   /// Creates notification channel for android
   /// This is done through native code and all of this data is hard coded for now
   Future<void> createNotificationChannel(String channelID, String channelName, String channelDescription) async {
-    List<String> sounds = ["twig.wav", "walrus.wav", "sugarfree.wav", "raspberry.wav"];
+    // List<String> sounds = ["twig.wav", "walrus.wav", "sugarfree.wav", "raspberry.wav"];
     await MethodChannelInterface().invokeMethod("create-notif-channel", {
       "channel_name": channelName,
       "channel_description": channelDescription,
       "CHANNEL_ID": channelID,
     });
-    if (channelID.contains("new_messages")) {
+    /*if (channelID.contains("new_messages")) {
       sounds.forEach((s) async {
         await MethodChannelInterface().invokeMethod("create-notif-channel", {
           "channel_name": channelName,
@@ -100,22 +100,20 @@ class NotificationManager {
           "sound": s,
         });
       });
-    }
+    }*/
   }
 
   Future<void> scheduleNotification(Chat chat, Message message, DateTime time) async {
     // Get a title as best as we can
-    String? chatTitle = await chat.getTitle();
+    String? chatTitle = chat.getTitle();
     bool isGroup = chat.isGroup();
 
     // If we couldn't get a chat title, generate placeholder names
-    if (chatTitle == null) {
-      chatTitle = isGroup ? 'Group Chat' : 'iMessage Chat';
-    }
+    chatTitle ??= isGroup ? 'Group Chat' : 'iMessage Chat';
     await flutterLocalNotificationsPlugin!.zonedSchedule(
         Random().nextInt(9998) + 1,
         'Reminder: $chatTitle',
-        await MessageHelper.getNotificationText(message),
+        MessageHelper.getNotificationText(message),
         tz.TZDateTime.from(time, tz.local),
         fln.NotificationDetails(
             android: fln.AndroidNotificationDetails(
@@ -126,7 +124,7 @@ class NotificationManager {
           importance: fln.Importance.max,
           color: HexColor("4990de"),
         )),
-        payload: await MessageHelper.getNotificationText(message),
+        payload: MessageHelper.getNotificationText(message),
         androidAllowWhileIdle: true,
         uiLocalNotificationDateInterpretation: fln.UILocalNotificationDateInterpretation.absoluteTime);
   }
@@ -162,7 +160,7 @@ class NotificationManager {
     // Get the contact name if the message is not from you
     String? contactName = 'You';
     if (!message.isFromMe!) {
-      contactName = await ContactManager().getContactTitle(message.handle);
+      contactName = ContactManager().getContactTitle(message.handle);
     }
 
     // If it's still null or empty, we need to put something in there... so 'You'
@@ -171,21 +169,24 @@ class NotificationManager {
     }
 
     // Get the actual contact metadata
-    Contact? contact = await ContactManager().getCachedContact(message.handle);
+    Contact? contact = ContactManager().getCachedContact(handle: message.handle);
 
     // Build the message text for the notification
-    String? messageText = await MessageHelper.getNotificationText(message);
+    String? messageText = MessageHelper.getNotificationText(message);
     if (SettingsManager().settings.hideTextPreviews.value) messageText = "iMessage";
 
     // Try to load in an avatar for the person
     try {
       // If there is a contact specified, we can use it's avatar
-      if (contact != null && contact.avatar != null) {
-        if (contact.avatar!.length > 0) contactIcon = contact.avatar;
+      if (contact != null && contact.avatar.value != null && contact.avatar.value!.isNotEmpty) {
+        contactIcon = contact.avatar.value;
         // Otherwise if there isn't, we use the [defaultAvatar]
       } else {
+        if (contact != null) {
+          contact.avatar.value = await ContactManager().getAvatar(contact.id);
+        }
         // If [defaultAvatar] is not loaded, load it from assets
-        if (defaultAvatar == null) {
+        if ((contact?.avatar == null || contact!.avatar.value!.isEmpty) && defaultAvatar == null) {
           ByteData file = await loadAsset("assets/images/person64.png");
           defaultAvatar = file.buffer.asUint8List();
         }
@@ -204,13 +205,11 @@ class NotificationManager {
     }
 
     // Get a title as best as we can
-    String? chatTitle = await chat.getTitle();
+    String? chatTitle = chat.getTitle();
     bool isGroup = chat.isGroup();
 
     // If we couldn't get a chat title, generate placeholder names
-    if (chatTitle == null) {
-      chatTitle = isGroup ? 'Group Chat' : 'iMessage Chat';
-    }
+    chatTitle ??= isGroup ? 'Group Chat' : 'iMessage Chat';
 
     await createNewMessageNotification(
         chat.guid!,
@@ -249,7 +248,7 @@ class NotificationManager {
       return;
     }
     await MethodChannelInterface().platform.invokeMethod("new-message-notification", {
-      "CHANNEL_ID": NEW_MESSAGE_CHANNEL +
+      "CHANNEL_ID": newMessageChannel +
           (SettingsManager().settings.notificationSound.value == "default"
               ? ""
               : ("_" + SettingsManager().settings.notificationSound.value)),
@@ -275,7 +274,7 @@ class NotificationManager {
   void createSocketWarningNotification() {
     if (!kIsWeb && !kIsDesktop) {
       MethodChannelInterface().platform.invokeMethod("create-socket-issue-warning", {
-        "CHANNEL_ID": SOCKET_ERROR_CHANNEL,
+        "CHANNEL_ID": socketErrorChannel,
       });
     }
   }
@@ -283,7 +282,7 @@ class NotificationManager {
   void createFailedToSendMessage() {
     if (!kIsWeb && !kIsDesktop) {
       MethodChannelInterface().platform.invokeMethod("message-failed-to-send", {
-        "CHANNEL_ID": SOCKET_ERROR_CHANNEL,
+        "CHANNEL_ID": socketErrorChannel,
       });
     }
   }

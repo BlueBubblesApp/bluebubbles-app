@@ -1,4 +1,19 @@
 import 'dart:async';
+import 'dart:convert';
+import 'package:bluebubbles/helpers/themes.dart';
+import 'package:bluebubbles/layouts/setup/upgrading_db.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/repository/models/objectbox.dart';
+import 'package:collection/collection.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
+import 'package:google_ml_kit/google_ml_kit.dart';
+import 'package:path/path.dart' show join;
+import 'package:path_provider/path_provider.dart';
+import 'package:universal_io/io.dart';
+import 'package:universal_html/html.dart' as html;
 import 'dart:isolate';
 import 'dart:ui';
 
@@ -12,7 +27,6 @@ import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/setup/failure_to_start.dart';
 import 'package:bluebubbles/layouts/setup/setup_view.dart';
-import 'package:bluebubbles/layouts/setup/upgrading_db.dart';
 import 'package:bluebubbles/layouts/testing_mode.dart';
 import 'package:bluebubbles/managers/background_isolate.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
@@ -23,35 +37,24 @@ import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
-import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/repository/models/objectbox.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:bluebubbles/socket_manager.dart';
-import 'package:collection/collection.dart';
-import 'package:firebase_dart/firebase_dart.dart';
-import 'package:firebase_dart/src/auth/utils.dart' as fdu;
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' hide Priority;
 import 'package:flutter/services.dart';
-import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart' hide Message;
 import 'package:flutter_native_timezone/flutter_native_timezone.dart';
+import 'package:firebase_dart/firebase_dart.dart';
+import 'package:firebase_dart/src/auth/utils.dart' as fdu;
 import 'package:get/get.dart';
-import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:path/path.dart' show join;
-import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:secure_application/secure_application.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-import 'package:universal_html/html.dart' as html;
-import 'package:universal_io/io.dart';
 import 'package:window_manager/window_manager.dart';
 
 // final SentryClient _sentry = SentryClient(
@@ -72,7 +75,7 @@ bool get isInDebugMode {
 
 FlutterLocalNotificationsPlugin? flutterLocalNotificationsPlugin;
 late SharedPreferences prefs;
-late FirebaseApp app;
+late final FirebaseApp app;
 late final Store store;
 late final Box<Attachment> attachmentBox;
 late final Box<Chat> chatBox;
@@ -86,6 +89,7 @@ late final Box<AttachmentMessageJoin> amJoinBox;
 late final Box<ChatHandleJoin> chJoinBox;
 late final Box<ChatMessageJoin> cmJoinBox;
 late final Box<ThemeValueJoin> tvJoinBox;
+
 
 Future<Null> _reportError(dynamic error, dynamic stackTrace) async {
   // Print the exception to the console.
@@ -107,7 +111,7 @@ class MyHttpOverrides extends HttpOverrides {
 }
 
 Future<Null> main() async {
-  HttpOverrides.global = new MyHttpOverrides();
+  HttpOverrides.global = MyHttpOverrides();
 
   // This captures errors reported by the Flutter framework.
   FlutterError.onError = (FlutterErrorDetails details) {
@@ -133,8 +137,8 @@ Future<Null> main() async {
       final objectBoxDirectory = Directory(documentsDirectory.path + '/objectbox/');
       final sqlitePath = join(documentsDirectory.path, "chat.db");
 
-      Future<void> Function() initStore = () async {
-        store = await openStore(directory: documentsDirectory.path + '/objectbox');
+      Future<void> initStore({bool saveThemes = false}) async {
+        store = await openStore(directory: (await getApplicationDocumentsDirectory()).path + '/objectbox');
         attachmentBox = store.box<Attachment>();
         chatBox = store.box<Chat>();
         fcmDataBox = store.box<FCMData>();
@@ -147,7 +151,14 @@ Future<Null> main() async {
         chJoinBox = store.box<ChatHandleJoin>();
         cmJoinBox = store.box<ChatMessageJoin>();
         tvJoinBox = store.box<ThemeValueJoin>();
-      };
+        if (saveThemes && themeObjectBox.isEmpty()) {
+          for (ThemeObject theme in Themes.themes) {
+            if (theme.name == "OLED Dark") theme.selectedDarkTheme = true;
+            if (theme.name == "Bright White") theme.selectedLightTheme = true;
+            theme.save(updateIfNotAbsent: false);
+          }
+        }
+      }
 
       if (!objectBoxDirectory.existsSync() && File(sqlitePath).existsSync()) {
         runApp(UpgradingDB());
@@ -167,7 +178,7 @@ Future<Null> main() async {
           s.stop();
           print("Migrated in ${s.elapsedMilliseconds} ms");
         } else {
-          await initStore();
+          await initStore(saveThemes: true);
         }
       }
     }
@@ -193,7 +204,7 @@ Future<Null> main() async {
       flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
       const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('ic_stat_icon');
       final InitializationSettings initializationSettings =
-          InitializationSettings(android: initializationSettingsAndroid);
+      InitializationSettings(android: initializationSettingsAndroid);
       await flutterLocalNotificationsPlugin!.initialize(initializationSettings);
       tz.initializeTimeZones();
       tz.setLocalLocation(tz.getLocation(await FlutterNativeTimezone.getLocalTimezone()));
@@ -211,9 +222,9 @@ Future<Null> main() async {
   }
 
   if (exception == null) {
-    runZonedGuarded<Null>(() {
-      ThemeObject light = ThemeObject.getLightTheme();
-      ThemeObject dark = ThemeObject.getDarkTheme();
+    runZonedGuarded<Future<Null>>(() async {
+      ThemeObject light = await ThemeObject.getLightTheme();
+      ThemeObject dark = await ThemeObject.getDarkTheme();
 
       runApp(Main(
         lightTheme: light.themeData,
@@ -252,7 +263,6 @@ class DesktopWindowListener extends WindowListener {
 class Main extends StatelessWidget with WidgetsBindingObserver {
   final ThemeData darkTheme;
   final ThemeData lightTheme;
-
   const Main({Key? key, required this.lightTheme, required this.darkTheme}) : super(key: key);
 
   @override
@@ -260,8 +270,8 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
     return AdaptiveTheme(
       /// These are the default white and dark themes.
       /// These will be changed by [SettingsManager] when you set a custom theme
-      light: this.lightTheme,
-      dark: this.darkTheme,
+      light: lightTheme,
+      dark: darkTheme,
 
       /// The default is that the dark and light themes will follow the system theme
       /// This will be changed by [SettingsManager]
@@ -270,7 +280,7 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
         /// Hide the debug banner in debug mode
         debugShowCheckedModeBanner: false,
 
-        title: 'BlueBubbles ${kIsWeb ? "(Beta)" : ""}',
+        title: 'BlueBubbles',
 
         /// Set the light theme from the [AdaptiveTheme]
         theme: theme.copyWith(appBarTheme: theme.appBarTheme.copyWith(elevation: 0.0)),
@@ -383,15 +393,16 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     if (!kIsWeb && !kIsDesktop) {
       // This initialization sets the function address in the native code to be used later
       BackgroundIsolateInterface.initialize();
-
+      // Set a reference to the DB so it can be used in another isolate
+      prefs.setString("objectbox-reference", base64.encode(store.reference.buffer.asUint8List()));
       // Create the notification in case it hasn't been already. Doing this multiple times won't do anything, so we just do it on every app start
       NotificationManager().createNotificationChannel(
-        NotificationManager.NEW_MESSAGE_CHANNEL,
+        NotificationManager.newMessageChannel,
         "New Messages",
         "For new messages retreived",
       );
       NotificationManager().createNotificationChannel(
-        NotificationManager.SOCKET_ERROR_CHANNEL,
+        NotificationManager.socketErrorChannel,
         "Socket Connection Error",
         "Notifications that will appear when the connection to the server has failed",
       );
@@ -403,17 +414,17 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         Logger.info("SendPort received action ${data['action']}");
         if (data['action'] == 'new-message') {
           // Add it to the queue with the data as the item
-          IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_MESSAGE_EVENT, item: {"data": data}));
+          IncomingQueue().add(QueueItem(event: IncomingQueue.handleMessageEvent, item: {"data": data}));
         } else if (data['action'] == 'update-message') {
           // Add it to the queue with the data as the item
-          IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_UPDATE_MESSAGE, item: {"data": data}));
+          IncomingQueue().add(QueueItem(event: IncomingQueue.handleUpdateMessage, item: {"data": data}));
         }
       });
     }
 
     // Get the saved settings from the settings manager after the first frame
     SchedulerBinding.instance!.addPostFrameCallback((_) async {
-      await SettingsManager().getSavedSettings(context: context);
+      await SettingsManager().getSavedSettings();
 
       if (SettingsManager().settings.colorsFromMedia.value) {
         try {
@@ -447,15 +458,15 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
           // Add the attached files to a list
           List<PlatformFile> attachments = [];
-          value.forEach((element) {
+          for (SharedMediaFile element in value) {
             attachments.add(PlatformFile(
               name: element.path.split("/").last,
               path: element.path,
               size: 0,
             ));
-          });
+          }
 
-          if (attachments.length == 0) return;
+          if (attachments.isEmpty) return;
 
           // Go to the new chat creator, with all of our attachments
           CustomNavigator.pushAndRemoveUntil(
@@ -464,7 +475,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
               existingAttachments: attachments,
               isCreator: true,
             ),
-            (route) => route.isFirst,
+                (route) => route.isFirst,
           );
         });
 
@@ -480,7 +491,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
               existingText: text,
               isCreator: true,
             ),
-            (route) => route.isFirst,
+                (route) => route.isFirst,
           );
         });
 
@@ -546,41 +557,30 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       ),
       child: Scaffold(
         backgroundColor: Colors.black,
-        // The stream builder connects to the [SocketManager] to check if the app has finished the setup or not
-        body: StreamBuilder(
-          stream: SocketManager().finishedSetup.stream,
-          builder: (BuildContext context, AsyncSnapshot<bool?> snapshot) {
-            if (snapshot.hasData) {
-              // If the app has already gone through setup, show the convo list
-              // Otherwise show the setup
-              if (snapshot.data!) {
-                SystemChrome.setPreferredOrientations([
-                  DeviceOrientation.landscapeRight,
-                  DeviceOrientation.landscapeLeft,
-                  DeviceOrientation.portraitUp,
-                  DeviceOrientation.portraitDown,
-                ]);
-                if (!serverCompatible && kIsWeb) {
-                  return FailureToStart(
-                    otherTitle: "Server version too low, please upgrade!",
-                    e: "Required Server Version: v0.2.0",
-                  );
-                }
-                return ConversationList(
-                  showArchivedChats: false,
-                  showUnknownSenders: false,
-                );
-              } else {
-                SystemChrome.setPreferredOrientations([
-                  DeviceOrientation.portraitUp,
-                ]);
-                return WillPopScope(
-                  onWillPop: () async => false,
-                  child: SetupView(),
-                );
+        body: Builder(
+          builder: (BuildContext context) {
+            if (SettingsManager().settings.finishedSetup.value) {
+              SystemChrome.setPreferredOrientations([
+                DeviceOrientation.landscapeRight,
+                DeviceOrientation.landscapeLeft,
+                DeviceOrientation.portraitUp,
+                DeviceOrientation.portraitDown,
+              ]);
+              if (!serverCompatible && kIsWeb) {
+                return FailureToStart(otherTitle: "Server version too low, please upgrade!", e: "Required Server Version: v0.2.0",);
               }
+              return ConversationList(
+                showArchivedChats: false,
+                showUnknownSenders: false,
+              );
             } else {
-              return Container();
+              SystemChrome.setPreferredOrientations([
+                DeviceOrientation.portraitUp,
+              ]);
+              return WillPopScope(
+                onWillPop: () async => false,
+                child: SetupView(),
+              );
             }
           },
         ),

@@ -13,7 +13,7 @@ class ScheduledMessage {
   ScheduledMessage({this.id, this.chatGuid, this.message, this.epochTime, this.completed});
 
   factory ScheduledMessage.fromMap(Map<String, dynamic> json) {
-    return new ScheduledMessage(
+    return ScheduledMessage(
         id: json.containsKey("ROWID") ? json["ROWID"] : null,
         chatGuid: json["chatGuid"],
         message: json["message"],

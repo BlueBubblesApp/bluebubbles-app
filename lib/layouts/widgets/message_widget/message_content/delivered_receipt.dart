@@ -27,10 +27,9 @@ class _DeliveredReceiptState extends State<DeliveredReceipt> with TickerProvider
     if (widget.message.dateDelivered == null) return false;
 
     if (CurrentChat.of(context) != null) {
-      if (lastReadMessage == null) lastReadMessage = CurrentChat.of(context)?.messageMarkers.lastReadMessage;
-      if (lastDeliveredMessage == null)
-        lastDeliveredMessage = CurrentChat.of(context)?.messageMarkers.lastDeliveredMessage;
-      if (myLastMessage == null) myLastMessage = CurrentChat.of(context)?.messageMarkers.myLastMessage;
+      lastReadMessage ??= CurrentChat.of(context)?.messageMarkers.lastReadMessage;
+      lastDeliveredMessage ??= CurrentChat.of(context)?.messageMarkers.lastDeliveredMessage;
+      myLastMessage ??= CurrentChat.of(context)?.messageMarkers.myLastMessage;
     }
 
     // If the message is the same as the last read message, we want to show it

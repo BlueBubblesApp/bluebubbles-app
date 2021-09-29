@@ -23,7 +23,7 @@ class QRScan extends StatefulWidget {
 
 class _QRScanState extends State<QRScan> {
   Future<void> scanQRCode() async {
-    var result;
+    dynamic result;
     try {
       result = await Navigator.of(context).push(
         CupertinoPageRoute(
@@ -34,7 +34,7 @@ class _QRScanState extends State<QRScan> {
       );
 
       if (isNullOrEmpty(result)!) {
-        throw new Exception("No data was scanned! Please re-scan your QRCode!");
+        throw Exception("No data was scanned! Please re-scan your QRCode!");
       }
 
       result = jsonDecode(result);

@@ -24,7 +24,7 @@ class Share {
   }
 
   static Future<void> location(Chat chat) async {
-    Location location = new Location();
+    Location location = Location();
 
     bool _serviceEnabled;
     PermissionStatus _permissionGranted;
@@ -77,7 +77,7 @@ class Share {
     await chat.addMessage(sentMessage);
 
     // Send message to the server to be sent out
-    Map<String, dynamic> params = new Map();
+    Map<String, dynamic> params = {};
     params["guid"] = chat.guid;
     params["attachmentGuid"] = _attachmentGuid;
     params["attachmentName"] = fileName;

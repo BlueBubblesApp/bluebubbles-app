@@ -29,7 +29,7 @@ class ApiService extends GetxService {
   /// Initialize dio with a couple options and intercept all requests for logging
   @override
   void onInit() {
-    dio = new Dio(BaseOptions(connectTimeout: 30000, receiveTimeout: 30000, sendTimeout: 30000));
+    dio = Dio(BaseOptions(connectTimeout: 30000, receiveTimeout: 30000, sendTimeout: 30000));
     dio.interceptors.add(ApiInterceptor());
     // Uncomment to run tests on most API requests
     // testAPI();
@@ -301,7 +301,7 @@ class ApiService extends GetxService {
   /// Get the basic landing page for the server URL
   Future<Response> landingPage({CancelToken? cancelToken}) async {
     return await dio.get(
-        "$origin".replaceAll("/api/v1", ""),
+        origin.replaceAll("/api/v1", ""),
         queryParameters: buildQueryParams(),
         cancelToken: cancelToken
     );
@@ -452,8 +452,7 @@ class ApiInterceptor extends Interceptor {
   @override
   void onError(DioError err, ErrorInterceptorHandler handler) {
     Logger.error("PATH: ${err.requestOptions.path}", tag: "ERROR[${err.response?.statusCode}]");
-    print(err.error);
-    print(err.requestOptions.contentType);
+    if (err.response != null) handler.resolve(err.response!);
     return super.onError(err, handler);
   }
 }

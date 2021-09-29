@@ -51,7 +51,7 @@ class SettingsManager {
 
   /// [init] is run at start and fetches both the [appDocDir] and sets the [settings] to a default value
   Future<void> init() async {
-    settings = new Settings();
+    settings = Settings();
     if (!kIsWeb) {
       //ignore: unnecessary_cast, we need this as a workaround
       appDocDir = (await getApplicationSupportDirectory()) as Directory;
@@ -66,10 +66,7 @@ class SettingsManager {
   ///
   /// @param [context] is an optional parameter to be used for setting the adaptive theme based on the settings.
   /// Setting to null will prevent the theme from being set and will be set to null in the background isolate
-  Future<void> getSavedSettings({bool headless = false, BuildContext? context}) async {
-    for (ThemeObject theme in Themes.themes) {
-      theme.save(updateIfNotAbsent: false);
-    }
+  Future<void> getSavedSettings({bool headless = false}) async {
     settings = Settings.getSettings();
 
     fcmData = FCMData.getFCM();
@@ -79,28 +76,24 @@ class SettingsManager {
       theme.fetchData();
     }
 
-    // // If [context] is null, then we can't set the theme, and we shouldn't anyway
-    loadTheme(context);
-
     try {
       // Set the [displayMode] to that saved in settings
       if (!kIsWeb && !kIsDesktop) {
-        await FlutterDisplayMode.setPreferredMode(await settings.getDisplayMode());
+        FlutterDisplayMode.setPreferredMode(await settings.getDisplayMode());
       }
-    } catch (e) {}
+    } catch (_) {}
 
     // Change the [finishedSetup] status to that of the settings
     if (!settings.finishedSetup.value) {
       DBProvider.deleteDB();
     }
-    SocketManager().finishedSetup.sink.add(settings.finishedSetup.value);
 
     // If we aren't running in the background, then we should auto start the socket and authorize fcm just in case we haven't
     if (!headless) {
       try {
         SocketManager().startSocketIO();
         SocketManager().authFCM();
-      } catch (e) {}
+      } catch (_) {}
     }
   }
 
@@ -116,7 +109,7 @@ class SettingsManager {
       if (!kIsWeb && !kIsDesktop) {
         await FlutterDisplayMode.setPreferredMode(await settings.getDisplayMode());
       }
-    } catch (e) {}
+    } catch (_) {}
   }
 
   /// Updates the selected theme for the app
@@ -133,7 +126,7 @@ class SettingsManager {
   }) {
     selectedLightTheme?.save();
     selectedDarkTheme?.save();
-    ThemeObject.setSelectedTheme(light: selectedLightTheme?.id ?? null, dark: selectedDarkTheme?.id ?? null);
+    ThemeObject.setSelectedTheme(light: selectedLightTheme?.id, dark: selectedDarkTheme?.id);
 
     ThemeData lightTheme = ThemeObject.getLightTheme().themeData;
     ThemeData darkTheme = ThemeObject.getDarkTheme().themeData;
@@ -158,12 +151,12 @@ class SettingsManager {
       SocketManager().socket!.disconnect();
     }
 
-    Settings temp = this.settings;
+    Settings temp = settings;
     temp.finishedSetup.value = false;
     temp.guidAuthKey.value = "";
     temp.serverAddress.value = "";
     temp.lastIncrementalSync.value = 0;
-    await this.saveSettings(temp);
+    await saveSettings(temp);
   }
 
   FutureOr<int?> getMacOSVersion() async {

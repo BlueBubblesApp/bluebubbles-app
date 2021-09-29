@@ -107,7 +107,7 @@ class UrlPreviewWidget extends StatelessWidget {
   dynamic attachmentFile(Attachment attachment) {
     String appDocPath = SettingsManager().appDocDir.path;
     String pathName = "$appDocPath/attachments/${attachment.guid}/${attachment.transferName}";
-    return new File(pathName);
+    return File(pathName);
   }
 
   @override
@@ -198,7 +198,7 @@ class UrlPreviewWidget extends StatelessWidget {
                       ],
                     ),
                   ),
-                  (!kIsWeb && linkPreviews.length > 0 && linkPreviews.first!.existsOnDisk)
+                  (!kIsWeb && linkPreviews.isNotEmpty && linkPreviews.first!.existsOnDisk)
                       ? Padding(
                           padding: EdgeInsets.only(left: 10.0, bottom: 10.0),
                           child: ClipRRect(

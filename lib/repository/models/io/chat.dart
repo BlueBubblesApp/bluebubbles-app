@@ -1,46 +1,46 @@
 import 'dart:async';
-
+import 'dart:convert';
+import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/objectbox.g.dart';
+import 'package:bluebubbles/repository/models/io/attachment.dart';
+import 'package:bluebubbles/repository/models/io/join_tables.dart';
+import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
+import 'package:universal_io/io.dart';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
-import 'package:bluebubbles/helpers/darty.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/metadata_helper.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
-import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/objectbox.g.dart';
-import 'package:bluebubbles/repository/models/io/attachment.dart';
-import 'package:bluebubbles/repository/models/io/join_tables.dart';
 import 'package:bluebubbles/socket_manager.dart';
-import 'package:collection/collection.dart';
-import 'package:faker/faker.dart';
-import 'package:flutter/foundation.dart';
+import 'package:bluebubbles/helpers/darty.dart';
 import 'package:get/get.dart';
+import 'package:faker/faker.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
-import 'package:universal_io/io.dart';
-
 import 'handle.dart';
 import 'message.dart';
 
-Future<String> getFullChatTitle(Chat _chat) async {
+String getFullChatTitle(Chat _chat) {
   String? title = "";
   if (isNullOrEmpty(_chat.displayName)!) {
     Chat chat = _chat.getParticipants();
 
-    // If there are no participants, try to get them from the server
+    //todo - do we really need this here?
+    /*// If there are no participants, try to get them from the server
     if (chat.participants.isEmpty) {
       await ActionHandler.handleChat(chat: chat);
       chat = chat.getParticipants();
-    }
+    }*/
 
     List<String> titles = [];
     for (int i = 0; i < chat.participants.length; i++) {
-      String? name = await ContactManager().getContactTitle(chat.participants[i]);
+      String? name = ContactManager().getContactTitle(chat.participants[i]);
 
       if (chat.participants.length > 1 && !name!.isPhoneNumber) {
         name = name.trim().split(" ")[0];
@@ -68,6 +68,43 @@ Future<String> getFullChatTitle(Chat _chat) async {
   }
 
   return title!;
+}
+
+Future<List<Message>> messagesIsolate(List<dynamic> stuff) async {
+  int chatId = stuff[0];
+  int offset = stuff[1];
+  int limit = stuff[2];
+  bool includeDeleted = stuff[3];
+  String? storeRef = stuff[4];
+  final store = Store.fromReference(getObjectBoxModel(), base64.decode(storeRef!).buffer.asByteData());
+  final handleBox = store.box<Handle>();
+  final messageBox = store.box<Message>();
+  final cmJoinBox = store.box<ChatMessageJoin>();
+  return store.runInTransaction(TxMode.read, () {
+    final messageIds = cmJoinBox.getAll().where((element) => element.chatId == chatId).map((e) => e.messageId).toList();
+    final query = (messageBox.query(Message_.id.oneOf(messageIds)
+        .and(includeDeleted ? Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull()) : Message_.dateDeleted.isNull()))
+      ..order(Message_.dateCreated, flags: Order.descending)).build();
+    query
+      ..limit = limit
+      ..offset = offset;
+    final messages = query.find();
+    query.close();
+    final handles = handleBox.getMany(messages.map((e) => e.handleId ?? 0).toList()..removeWhere((element) => element == 0));
+    for (int i = 0; i < messages.length; i++) {
+      Message message = messages[i];
+      if (handles.isNotEmpty && message.handleId != 0) {
+        Handle? handle = handles.firstWhereOrNull((e) => e?.id == message.handleId);
+        if (handle == null) {
+          messages.remove(message);
+          i--;
+        } else {
+          message.handle = handle;
+        }
+      }
+    }
+    return messages;
+  });
 }
 
 @Entity()
@@ -129,16 +166,16 @@ class Chat {
     List<Handle> participants = [];
     List<String> fakeParticipants = [];
     if (json.containsKey('participants')) {
-      (json['participants'] as List<dynamic>).forEach((item) {
+      for (dynamic item in (json['participants'] as List<dynamic>)) {
         participants.add(Handle.fromMap(item));
         fakeParticipants.add(ContactManager().handleToFakeName[participants.last.address] ?? "Unknown");
-      });
+      }
     }
     Message? message;
     if (json['lastMessage'] != null) {
       message = Message.fromMap(json['lastMessage']);
     }
-    var data = new Chat(
+    var data = Chat(
       id: json.containsKey("ROWID") ? json["ROWID"] : null,
       originalROWID: json.containsKey("originalROWID") ? json["originalROWID"] : null,
       guid: json["guid"],
@@ -163,12 +200,12 @@ class Chat {
               : ((json['hasUnreadMessage'] == 1) ? true : false)
           : false,
       latestMessage: message,
-      latestMessageText: json.containsKey("latestMessageText") ? json["latestMessageText"] : message != null ? MessageHelper.getNotificationTextSync(message) : null,
+      latestMessageText: json.containsKey("latestMessageText") ? json["latestMessageText"] : message != null ? MessageHelper.getNotificationText(message) : null,
       fakeLatestMessageText: json.containsKey("latestMessageText")
           ? faker.lorem.words((json["latestMessageText"] ?? "").split(" ").length).join(" ")
           : null,
       latestMessageDate: json.containsKey("latestMessageDate") && json['latestMessageDate'] != null
-          ? new DateTime.fromMillisecondsSinceEpoch(json['latestMessageDate'] as int)
+          ? DateTime.fromMillisecondsSinceEpoch(json['latestMessageDate'] as int)
           : message?.dateCreated,
       displayName: json.containsKey("displayName") ? json["displayName"] : null,
       customAvatar: json['_customAvatarPath'],
@@ -178,51 +215,50 @@ class Chat {
     );
 
     // Adds fallback getter for the ID
-    if (data.id == null) {
-      data.id = json.containsKey("id") ? json["id"] : null;
-    }
+    data.id ??= json.containsKey("id") ? json["id"] : null;
 
     return data;
   }
 
   Chat save() {
     if (kIsWeb) return this;
-    Chat? existing = Chat.findOne(guid: this.guid);
-    this.id = existing?.id ?? this.id;
-    try {
-      chatBox.put(this);
-    } on UniqueViolationException catch (_) {}
-    // Save participants to the chat
-    for (int i = 0; i < this.participants.length; i++) {
-      this.addParticipant(this.participants[i]);
-    }
-
+    store.runInTransaction(TxMode.write, () {
+      Chat? existing = Chat.findOne(guid: guid);
+      id = existing?.id ?? id;
+      try {
+        chatBox.put(this);
+      } on UniqueViolationException catch (_) {}
+      // Save participants to the chat
+      for (int i = 0; i < participants.length; i++) {
+        addParticipant(participants[i]);
+      }
+    });
     return this;
   }
 
   Chat changeName(String? name) {
     if (kIsWeb) {
-      this.displayName = name;
+      displayName = name;
       return this;
     }
-    this.displayName = name;
+    displayName = name;
     chatBox.put(this);
     return this;
   }
 
-  Future<String?> getTitle() async {
-    this.title = await getFullChatTitle(this);
-    return this.title;
+  String? getTitle() {
+    title = getFullChatTitle(this);
+    return title;
   }
 
   String getDateText() {
-    return buildDate(this.latestMessageDate);
+    return buildDate(latestMessageDate);
   }
 
   bool shouldMuteNotification(Message? message) {
     if (SettingsManager().settings.filterUnknownSenders.value
-        && this.participants.length == 1
-        && ContactManager().handleToContact[this.participants[0].address] == null) {
+        && participants.length == 1
+        && ContactManager().handleToContact[participants[0].address] == null) {
       return true;
     } else if (SettingsManager().settings.globalTextDetection.value.isNotEmpty) {
       List<String> text = SettingsManager().settings.globalTextDetection.value.split(",");
@@ -241,10 +277,10 @@ class Chat {
       DateTime time = DateTime.parse(muteArgs!);
       bool shouldMute = DateTime.now().toLocal().difference(time).inSeconds.isNegative;
       if (!shouldMute) {
-        this.toggleMute(false);
-        this.muteType = null;
-        this.muteArgs = null;
-        this.save();
+        toggleMute(false);
+        muteType = null;
+        muteArgs = null;
+        save();
       }
       return shouldMute;
     } else if (muteType == "text_detection") {
@@ -263,39 +299,41 @@ class Chat {
   static void deleteChat(Chat chat) {
     if (kIsWeb) return;
     List<Message> messages = Chat.getMessages(chat);
-    chatBox.remove(chat.id!);
-    messageBox.removeMany(messages.map((e) => e.id!).toList());
-    final query = chJoinBox.query(ChatHandleJoin_.chatId.equals(chat.id!)).build();
-    final results = query.property(ChatHandleJoin_.id).find();
-    query.close();
-    chJoinBox.removeMany(results);
-    final query2 = cmJoinBox.query(ChatMessageJoin_.chatId.equals(chat.id!)).build();
-    final results2 = query2.property(ChatMessageJoin_.id).find();
-    query2.close();
-    cmJoinBox.removeMany(results2);
+    store.runInTransaction(TxMode.write, () {
+      chatBox.remove(chat.id!);
+      messageBox.removeMany(messages.map((e) => e.id!).toList());
+      final query = chJoinBox.query(ChatHandleJoin_.chatId.equals(chat.id!)).build();
+      final results = query.property(ChatHandleJoin_.id).find();
+      query.close();
+      chJoinBox.removeMany(results);
+      final query2 = cmJoinBox.query(ChatMessageJoin_.chatId.equals(chat.id!)).build();
+      final results2 = query2.property(ChatMessageJoin_.id).find();
+      query2.close();
+      cmJoinBox.removeMany(results2);
+    });
   }
 
   Chat toggleHasUnread(bool hasUnread) {
     if (hasUnread) {
-      if (CurrentChat.isActive(this.guid!)) {
+      if (CurrentChat.isActive(guid!)) {
         return this;
       }
     }
 
-    this.hasUnreadMessage = hasUnread;
-    this.save();
+    hasUnreadMessage = hasUnread;
+    save();
 
     if (hasUnread) {
-      EventDispatcher().emit("add-unread-chat", {"chatGuid": this.guid});
+      EventDispatcher().emit("add-unread-chat", {"chatGuid": guid});
     } else {
-      EventDispatcher().emit("remove-unread-chat", {"chatGuid": this.guid});
+      EventDispatcher().emit("remove-unread-chat", {"chatGuid": guid});
     }
 
     ChatBloc().updateUnreads();
     return this;
   }
 
-  Future<Chat> addMessage(Message message, {bool changeUnreadStatus: true, bool checkForMessageText = true}) async {
+  Future<Chat> addMessage(Message message, {bool changeUnreadStatus = true, bool checkForMessageText = true}) async {
     //final Database? db = await DBProvider.db.database;
 
     // Save the message
@@ -316,18 +354,18 @@ class Chat {
     // If the message was saved correctly, update this chat's latestMessage info,
     // but only if the incoming message's date is newer
     if ((newMessage!.id != null || kIsWeb) && checkForMessageText) {
-      if (this.latestMessageDate == null) {
+      if (latestMessageDate == null) {
         isNewer = true;
-      } else if (this.latestMessageDate!.millisecondsSinceEpoch < message.dateCreated!.millisecondsSinceEpoch) {
+      } else if (latestMessageDate!.millisecondsSinceEpoch < message.dateCreated!.millisecondsSinceEpoch) {
         isNewer = true;
       }
     }
 
     if (isNewer && checkForMessageText) {
-      this.latestMessage = message;
-      this.latestMessageText = await MessageHelper.getNotificationText(message);
-      this.fakeLatestMessageText = faker.lorem.words((this.latestMessageText ?? "").split(" ").length).join(" ");
-      this.latestMessageDate = message.dateCreated;
+      latestMessage = message;
+      latestMessageText = MessageHelper.getNotificationText(message);
+      fakeLatestMessageText = faker.lorem.words((latestMessageText ?? "").split(" ").length).join(" ");
+      latestMessageDate = message.dateCreated;
     }
 
     // Save any attachments
@@ -338,11 +376,11 @@ class Chat {
     // Save the chat.
     // This will update the latestMessage info as well as update some
     // other fields that we want to "mimic" from the server
-    this.save();
+    save();
 
     try {
       // Add the relationship
-      cmJoinBox.put(ChatMessageJoin(chatId: this.id!, messageId: message.id!));
+      cmJoinBox.put(ChatMessageJoin(chatId: id!, messageId: message.id!));
     } catch (ex) {
       // Don't do anything if it already exists
     }
@@ -352,9 +390,9 @@ class Chat {
       // If the message is from me, mark it unread
       // If the message is not from the same chat as the current chat, mark unread
       if (message.isFromMe!) {
-        this.toggleHasUnread(false);
-      } else if (!CurrentChat.isActive(this.guid!)) {
-        this.toggleHasUnread(true);
+        toggleHasUnread(false);
+      } else if (!CurrentChat.isActive(guid!)) {
+        toggleHasUnread(true);
       }
     }
 
@@ -401,35 +439,34 @@ class Chat {
 
   void serverSyncParticipants() {
     // Send message to server to get the participants
-    SocketManager().sendMessage("get-participants", {"identifier": this.guid}, (response) {
+    SocketManager().sendMessage("get-participants", {"identifier": guid}, (response) {
       if (response["status"] == 200) {
         // Get all the participants from the server
         List data = response["data"];
         List<Handle> handles = data.map((e) => Handle.fromMap(e)).toList();
 
         // Make sure that all participants for our local chat are fetched
-        this.getParticipants();
+        getParticipants();
 
         // We want to determine all the participants that exist in the response that are not already in our locally saved chat (AKA all the new participants)
         List<Handle> newParticipants = handles
-            .where((a) => (this.participants.where((b) => b.address == a.address).toList().length == 0))
+            .where((a) => (participants.where((b) => b.address == a.address).toList().isEmpty))
             .toList();
 
         // We want to determine all the participants that exist in the locally saved chat that are not in the response (AKA all the removed participants)
-        List<Handle> removedParticipants = this
-            .participants
-            .where((a) => (handles.where((b) => b.address == a.address).toList().length == 0))
+        List<Handle> removedParticipants = participants
+            .where((a) => (handles.where((b) => b.address == a.address).toList().isEmpty))
             .toList();
 
         // Add all participants that are missing from our local db
         for (Handle newParticipant in newParticipants) {
-          this.addParticipant(newParticipant);
+          addParticipant(newParticipant);
         }
 
         // Remove all extraneous participants from our local db
         for (Handle removedParticipant in removedParticipants) {
           removedParticipant.save();
-          this.removeParticipant(removedParticipant);
+          removeParticipant(removedParticipant);
         }
 
         // Sync all changes with the chatbloc
@@ -442,77 +479,92 @@ class Chat {
     return chatBox.count();
   }
 
-  static List<Attachment> getAttachments(Chat chat, {int offset = 0, int limit = 25}) {
+  static List<Attachment> getAttachments(Chat chat) {
     if (kIsWeb || chat.id == null) return [];
-    final amJoinValues = amJoinBox.getAll();
-    final cmJoinValues = cmJoinBox.getAll().where((element) => element.chatId == chat.id).map((e) => e.messageId).toList();
-    final query2 = (messageBox.query(Message_.id.oneOf(cmJoinValues))..order(Message_.dateCreated, flags: Order.descending)).build();
-    final messages = query2.find();
-    final attachmentIds = amJoinValues.where((element) => cmJoinValues.contains(element.messageId)).map((e) => e.attachmentId).toList();
-    final query = attachmentBox.query(Attachment_.id.oneOf(attachmentIds)).build();
-    query
-      ..limit = limit
-      ..offset = offset;
-    final attachments = query.find()..removeWhere((element) => element.mimeType == null);
-    final actualAttachments = <Attachment>[];
-    for (Message m in messages) {
-      m.attachments = m.fetchAttachments();
-      for (Attachment a in attachments) {
-        if (m.attachments?.map((e) => e!.guid).contains(a.guid) ?? false) {
-          actualAttachments.add(a);
-        }
+    return store.runInTransaction(TxMode.read, () {
+      final cmJoinQuery = cmJoinBox.query(ChatMessageJoin_.chatId.equals(chat.id!)).build();
+      final cmJoinValues = cmJoinQuery.property(ChatMessageJoin_.messageId).find();
+      cmJoinQuery.close();
+      final amJoinQuery = amJoinBox.query(AttachmentMessageJoin_.messageId.oneOf(cmJoinValues)).build();
+      final amJoinValues = amJoinQuery.find();
+      amJoinQuery.close();
+      final attachmentIds = amJoinValues.map((e) => e.attachmentId).toList();
+      final messageIds = amJoinValues.map((e) => e.messageId).toList();
+      final query2 = (messageBox.query(Message_.id.oneOf(messageIds))..order(Message_.dateCreated, flags: Order.descending)).build();
+      final messages = query2.find();
+      final query = attachmentBox.query(Attachment_.id.oneOf(attachmentIds)).build();
+      final attachments = query.find()..removeWhere((element) => element.mimeType == null);
+      final actualAttachments = <Attachment>[];
+      for (Message m in messages) {
+        final attachmentIdsForMessage = amJoinValues.where((element) => element.messageId == m.id).map((e) => e.attachmentId).toList();
+        m.attachments = attachments.where((element) => attachmentIdsForMessage.contains(element.id)).toList();
+        actualAttachments.addAll((m.attachments ?? []).map((e) => e!));
       }
-    }
-    if (actualAttachments.length > 0) {
-      final guids = actualAttachments.map((e) => e.guid).toSet();
-      actualAttachments.retainWhere((element) => guids.remove(element.guid));
-    }
-    query.close();
-    return actualAttachments;
+      if (actualAttachments.isNotEmpty) {
+        final guids = actualAttachments.map((e) => e.guid).toSet();
+        actualAttachments.retainWhere((element) => guids.remove(element.guid));
+      }
+      query.close();
+      return actualAttachments;
+    });
   }
 
-  static List<Message> getMessages(Chat chat, {int offset = 0, int limit = 25, bool includeDeleted: false}) {
+  static List<Message> getMessages(Chat chat, {int offset = 0, int limit = 25, bool includeDeleted = false}) {
     if (kIsWeb || chat.id == null) return [];
-    final messageIds = cmJoinBox.getAll().where((element) => element.chatId == chat.id).map((e) => e.messageId).toList();
-    final query = (messageBox.query(Message_.id.oneOf(messageIds)
-        .and(includeDeleted ? Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull()) : Message_.dateDeleted.isNull()))
-      ..order(Message_.dateCreated, flags: Order.descending)).build();
-    query
-      ..limit = limit
-      ..offset = offset;
-    final messages = query.find();
-    query.close();
-    final handles = handleBox.getMany(messages.where((e) => e.handleId != null).map((e) => e.handleId!).toList()..removeWhere((element) => element == 0));
-    for (int i = 0; i < messages.length; i++) {
-      Message message = messages[i];
-      if (handles.isNotEmpty && message.handleId != 0) {
-        Handle? handle = handles.firstWhereOrNull((e) => e?.id == message.handleId);
-        if (handle == null) {
-          messages.remove(message);
-          i--;
-        } else {
-          message.handle = handle;
+    return store.runInTransaction(TxMode.read, () {
+      final messageIdQuery = cmJoinBox.query(ChatMessageJoin_.chatId.equals(chat.id!)).build();
+      final messageIds = messageIdQuery.property(ChatMessageJoin_.messageId).find();
+      messageIdQuery.close();
+      final query = (messageBox.query(Message_.id.oneOf(messageIds)
+          .and(includeDeleted ? Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull()) : Message_.dateDeleted.isNull()))
+        ..order(Message_.dateCreated, flags: Order.descending)).build();
+      query
+        ..limit = limit
+        ..offset = offset;
+      final messages = query.find();
+      query.close();
+      final handles = handleBox.getMany(messages.map((e) => e.handleId ?? 0).toList()..removeWhere((element) => element == 0));
+      for (int i = 0; i < messages.length; i++) {
+        Message message = messages[i];
+        if (handles.isNotEmpty && message.handleId != 0) {
+          Handle? handle = handles.firstWhereOrNull((e) => e?.id == message.handleId);
+          if (handle == null) {
+            messages.remove(message);
+            i--;
+          } else {
+            message.handle = handle;
+          }
         }
       }
-    }
-    return messages;
+      return messages;
+    });
+  }
+
+  static Future<List<Message>> getMessagesAsync(Chat chat, {int offset = 0, int limit = 25, bool includeDeleted = false}) async {
+    if (kIsWeb || chat.id == null) return [];
+
+    return await compute(messagesIsolate, [chat.id, offset, limit, includeDeleted, prefs.getString("objectbox-reference")]);
   }
 
   Chat getParticipants() {
-    if (kIsWeb || this.id == null) return this;
-    final handleIds = chJoinBox.getAll().where((element) => element.chatId == this.id).map((e) => e.handleId);
-    final handles = handleBox.getMany(handleIds.toList(), growableResult: true)..retainWhere((e) => e != null);
-    final nonNullHandles = List<Handle>.from(handles);
-    this.participants = nonNullHandles;
-    this._deduplicateParticipants();
-    this.fakeParticipants = this.participants.map((p) => ContactManager().handleToFakeName[p.address] ?? "Unknown").toList();
+    if (kIsWeb || id == null) return this;
+    store.runInTransaction(TxMode.read, () {
+      final handleIdQuery = chJoinBox.query(ChatHandleJoin_.chatId.equals(id!)).build();
+      final handleIds = handleIdQuery.property(ChatHandleJoin_.handleId).find();
+      handleIdQuery.close();
+      final handles = handleBox.getMany(handleIds.toList(), growableResult: true)..retainWhere((e) => e != null);
+      final nonNullHandles = List<Handle>.from(handles);
+      participants = nonNullHandles;
+    });
+    _deduplicateParticipants();
+    fakeParticipants = participants.map((p) => ContactManager().handleToFakeName[p.address] ?? "Unknown").toList();
     return this;
   }
 
   Chat addParticipant(Handle participant) {
     if (kIsWeb) {
-      this.participants.add(participant);
-      this._deduplicateParticipants();
+      participants.add(participant);
+      _deduplicateParticipants();
       return this;
     }
     // Save participant and add to list
@@ -520,62 +572,64 @@ class Chat {
     if (participant.id == null) return this;
 
     try {
-      chJoinBox.put(ChatHandleJoin(chatId: this.id!, handleId: participant.id!));
-    } catch (ex) {}
+      chJoinBox.put(ChatHandleJoin(chatId: id!, handleId: participant.id!));
+    } catch (_) {}
 
     // Add to the class and deduplicate
-    this.participants.add(participant);
-    this._deduplicateParticipants();
+    participants.add(participant);
+    _deduplicateParticipants();
     return this;
   }
 
   Chat removeParticipant(Handle participant) {
     if (kIsWeb) {
-      this.participants.removeWhere((element) => participant.id == element.id);
-      this._deduplicateParticipants();
+      participants.removeWhere((element) => participant.id == element.id);
+      _deduplicateParticipants();
       return this;
     }
 
     // find the join item and delete it
-    final query = chJoinBox.query(ChatHandleJoin_.handleId.equals(participant.id!).and(ChatHandleJoin_.chatId.equals(this.id!))).build();
-    final result = query.find().first;
-    query.close();
-    chJoinBox.remove(result.id!);
+    store.runInTransaction(TxMode.write, () {
+      final query = chJoinBox.query(ChatHandleJoin_.handleId.equals(participant.id!).and(ChatHandleJoin_.chatId.equals(id!))).build();
+      final result = query.findFirst();
+      query.close();
+      if (result != null) chJoinBox.remove(result.id!);
+    });
 
     // Second, remove from this object instance
-    this.participants.removeWhere((element) => participant.id == element.id);
-    this._deduplicateParticipants();
+    participants.removeWhere((element) => participant.id == element.id);
+    _deduplicateParticipants();
     return this;
   }
 
   void _deduplicateParticipants() {
-    if (this.participants.length == 0) return;
-    final ids = this.participants.map((e) => e.address).toSet();
-    this.participants.retainWhere((element) => ids.remove(element.address));
+    if (participants.isEmpty) return;
+    final ids = participants.map((e) => e.address).toSet();
+    participants.retainWhere((element) => ids.remove(element.address));
   }
 
   Chat togglePin(bool isPinned) {
-    if (this.id == null) return this;
+    if (id == null) return this;
     this.isPinned = isPinned;
-    this._pinIndex.value = null;
-    this.save();
+    _pinIndex.value = null;
+    save();
     ChatBloc().updateChat(this);
     return this;
   }
 
   Chat toggleMute(bool isMuted) {
-    if (this.id == null) return this;
-    this.muteType = isMuted ? "mute" : null;
-    this.muteArgs = null;
-    this.save();
+    if (id == null) return this;
+    muteType = isMuted ? "mute" : null;
+    muteArgs = null;
+    save();
     ChatBloc().updateChat(this);
     return this;
   }
 
   Chat toggleArchived(bool isArchived) {
-    if (this.id == null) return this;
+    if (id == null) return this;
     this.isArchived = isArchived;
-    this.save();
+    save();
     ChatBloc().updateChat(this);
     return this;
   }
@@ -617,17 +671,23 @@ class Chat {
   }
 
   bool isGroup() {
-    return this.participants.length > 1;
+    return participants.length > 1;
   }
 
   void clearTranscript() {
     if (kIsWeb) return;
-    final messageIds = cmJoinBox.getAll().where((element) => element.chatId == this.id!).map((e) => e.messageId);
-    final messages = messageBox.getAll().where((element) => messageIds.contains(element.id)).toList();
-    messages.forEach((element) {
-      element.dateDeleted = DateTime.now().toUtc();
+    store.runInTransaction(TxMode.write, () {
+      final messageIdQuery = cmJoinBox.query(ChatMessageJoin_.chatId.equals(id!)).build();
+      final messageIds = messageIdQuery.property(ChatMessageJoin_.messageId).find();
+      messageIdQuery.close();
+      final messagesQuery = messageBox.query(Message_.id.oneOf(messageIds)).build();
+      final messages = messagesQuery.find();
+      messagesQuery.close();
+      for (Message element in messages) {
+        element.dateDeleted = DateTime.now().toUtc();
+      }
+      messageBox.putMany(messages);
     });
-    messageBox.putMany(messages);
   }
 
   Message get latestMessageGetter {

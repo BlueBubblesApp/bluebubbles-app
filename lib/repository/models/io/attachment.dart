@@ -54,22 +54,22 @@ class Attachment {
 
   bool get existsOnDisk {
     if (kIsWeb) return false;
-    File attachment = new File(AttachmentHelper.getAttachmentPath(this));
+    File attachment = File(AttachmentHelper.getAttachmentPath(this));
     return attachment.existsSync();
   }
 
   String get orientation {
     String orientation = 'portrait'; // Default
-    if (this.metadata == null) return orientation;
+    if (metadata == null) return orientation;
     // This key is from FlutterNativeImage
-    if (this.metadata!.containsKey('orientation') &&
-        (this.metadata!['orientation'].toString().toLowerCase().contains('landscape') ||
-            this.metadata!['orientation'].toString() == '0')) {
+    if (metadata!.containsKey('orientation') &&
+        (metadata!['orientation'].toString().toLowerCase().contains('landscape') ||
+            metadata!['orientation'].toString() == '0')) {
       orientation = 'landscape';
       // This key is from the Exif loader
-    } else if (this.metadata!.containsKey('Image Orientation') &&
-        (this.metadata!['Image Orientation'].toString().toLowerCase().contains('horizontal') ||
-            this.metadata!['orientation'].toString() == '0')) {
+    } else if (metadata!.containsKey('Image Orientation') &&
+        (metadata!['Image Orientation'].toString().toLowerCase().contains('horizontal') ||
+            metadata!['orientation'].toString() == '0')) {
       orientation = 'landscape';
     }
 
@@ -90,11 +90,11 @@ class Attachment {
       if (metadata is String) {
         try {
           metadata = jsonDecode(metadata);
-        } catch (ex) {}
+        } catch (_) {}
       }
     }
 
-    var data = new Attachment(
+    var data = Attachment(
       id: json.containsKey("ROWID") ? json["ROWID"] : null,
       originalROWID: json.containsKey("originalROWID") ? json["originalROWID"] : null,
       guid: json["guid"],
@@ -114,9 +114,7 @@ class Attachment {
     );
 
     // Adds fallback getter for the ID
-    if (data.id == null) {
-      data.id = json.containsKey("id") ? json["id"] : null;
-    }
+    data.id ??= json.containsKey("id") ? json["id"] : null;
 
     return data;
   }
@@ -126,16 +124,18 @@ class Attachment {
   /// when provided
   Attachment save(Message? message) {
     if (kIsWeb) return this;
-    Attachment? existing = Attachment.findOne(this.guid!);
-    if (existing != null) {
-      this.id = existing.id;
-    }
-    try {
-      attachmentBox.put(this);
-      if (this.id != null && message?.id != null)
-        amJoinBox.put(AttachmentMessageJoin(attachmentId: this.id!, messageId: message!.id!));
-    } on UniqueViolationException catch (_) {}
-
+    store.runInTransaction(TxMode.write, () {
+      Attachment? existing = Attachment.findOne(guid!);
+      if (existing != null) {
+        id = existing.id;
+      }
+      try {
+        attachmentBox.put(this);
+        if (id != null && message?.id != null) {
+          amJoinBox.put(AttachmentMessageJoin(attachmentId: id!, messageId: message!.id!));
+        }
+      } on UniqueViolationException catch (_) {}
+    });
     return this;
   }
 
@@ -178,7 +178,7 @@ class Attachment {
   static Attachment? findOne(String guid) {
     if (kIsWeb) return null;
     final query = attachmentBox.query(Attachment_.guid.equals(guid)).build();
-    query..limit = 1;
+    query.limit = 1;
     final result = query.findFirst();
     query.close();
     return result;
@@ -186,12 +186,13 @@ class Attachment {
 
   /// clear the attachment DB
   static void flush() {
-    if (!kIsWeb)
+    if (!kIsWeb) {
       attachmentBox.removeAll();
+    }
   }
 
-  String getFriendlySize({decimals: 2}) {
-    double size = (this.totalBytes! / 1024000.0);
+  String getFriendlySize({decimals = 2}) {
+    double size = (totalBytes! / 1024000.0);
     String postfix = "MB";
     if (size < 1) {
       size = size * 1024;
@@ -207,21 +208,21 @@ class Attachment {
   bool get hasValidSize => (width ?? 0) > 0 && (height ?? 0) > 0;
 
   String? get mimeStart {
-    if (this.mimeType == null) return null;
-    String _mimeType = this.mimeType!;
+    if (mimeType == null) return null;
+    String _mimeType = mimeType!;
     _mimeType = _mimeType.substring(0, _mimeType.indexOf("/"));
     return _mimeType;
   }
 
   String getPath() {
-    String? fileName = this.transferName;
+    String? fileName = transferName;
     String appDocPath = SettingsManager().appDocDir.path;
-    String pathName = "$appDocPath/attachments/${this.guid}/$fileName";
+    String pathName = "$appDocPath/attachments/$guid/$fileName";
     return pathName;
   }
 
   String getCompressedPath() {
-    return "${this.getPath()}.${SettingsManager().compressionQuality}.compressed";
+    return "${getPath()}.${SettingsManager().compressionQuality}.compressed";
   }
 
   Map<String, dynamic> toMap() => {

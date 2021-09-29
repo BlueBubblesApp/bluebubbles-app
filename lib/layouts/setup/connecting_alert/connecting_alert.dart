@@ -19,7 +19,7 @@ class _ConnectingAlertState extends State<ConnectingAlert> {
 
     // Setup a listener to wait for connect events
     ever(SocketManager().state, (event) {
-      if (!this.mounted) return;
+      if (!mounted) return;
 
       Logger.info("Connection Status Changed");
       if (event == SocketState.CONNECTED) {
@@ -28,7 +28,7 @@ class _ConnectingAlertState extends State<ConnectingAlert> {
         widget.onConnect(false);
       }
 
-      if (this.mounted) setState(() {});
+      if (mounted) setState(() {});
     });
 
     // If we are already connected, invoke the connect callback

@@ -1,7 +1,7 @@
 import 'dart:convert';
+import 'package:bluebubbles/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/repository/models/models.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
@@ -25,13 +25,14 @@ import 'package:bluebubbles/layouts/settings/server_management_panel.dart';
 import 'package:bluebubbles/layouts/settings/theme_panel.dart';
 import 'package:bluebubbles/layouts/settings/troubleshoot_panel.dart';
 import 'package:bluebubbles/layouts/widgets/vertical_split_view.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:collection/collection.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/misc_panel.dart';
-import 'package:bluebubbles/layouts/widgets/CustomCupertinoTextField.dart';
+import 'package:bluebubbles/layouts/widgets/custom_cupertino_text_field.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -64,7 +65,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
       if (!event.containsKey("type")) return;
 
-      if (event["type"] == 'theme-update' && this.mounted) {
+      if (event["type"] == 'theme-update' && mounted) {
         setState(() {});
       }
     });
@@ -197,7 +198,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           );
                         },
                         onLongPress: () {
-                          Clipboard.setData(new ClipboardData(text: _settingsCopy.serverAddress.value));
+                          Clipboard.setData(ClipboardData(text: _settingsCopy.serverAddress.value));
                           showSnackbar('Copied', "Address copied to clipboard");
                         },
                         leading: Column(
@@ -637,10 +638,10 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                       primary: Theme.of(context).primaryColor,
                                     ),
                                     onPressed: () async {
-                                      List<ThemeObject> allThemes = (await ThemeObject.getThemes()).where((element) => !element.isPreset).toList();
+                                      List<ThemeObject> allThemes = (ThemeObject.getThemes()).where((element) => !element.isPreset).toList();
                                       for (ThemeObject e in allThemes) {
                                         List<dynamic> entryJson = [];
-                                        await e.fetchData();
+                                        e.fetchData();
                                         for (ThemeEntry e2 in e.entries) {
                                           entryJson.add(e2.toMap());
                                         }
@@ -734,7 +735,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                                                       }
                                                                       object.entries = entries;
                                                                       object.data = object.themeData;
-                                                                      await object.save();
+                                                                      object.save();
                                                                       SettingsManager().saveSelectedTheme(context);
                                                                       Get.back();
                                                                       showSnackbar("Success", "Theming restored successfully");
@@ -878,13 +879,13 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                       primary: Theme.of(context).primaryColor,
                                     ),
                                     onPressed: () async {
-                                      List<ThemeObject> allThemes = await ThemeObject.getThemes();
+                                      List<ThemeObject> allThemes = ThemeObject.getThemes();
                                       String jsonStr = "[";
-                                      allThemes.forEachIndexed((index, e) async {
+                                      allThemes.forEachIndexed((index, e) {
                                         String entryJson = "[";
-                                        await e.fetchData();
+                                        e.fetchData();
                                         e.entries.forEachIndexed((index, e2) {
-                                          entryJson = entryJson + "${jsonEncode(e2.toMap())}";
+                                          entryJson = entryJson + jsonEncode(e2.toMap());
                                           if (index != e.entries.length - 1) {
                                             entryJson = entryJson + ",";
                                           } else {
@@ -894,7 +895,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                         Map<String, dynamic> map = e.toMap();
                                         Logger.debug(entryJson);
                                         map['entries'] = jsonDecode(entryJson);
-                                        jsonStr = jsonStr + "${jsonEncode(map)}";
+                                        jsonStr = jsonStr + jsonEncode(map);
                                         if (index != allThemes.length - 1) {
                                           jsonStr = jsonStr + ",";
                                         } else {
@@ -955,38 +956,38 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                           .pickFiles(withData: true, type: FileType.custom, allowedExtensions: ["json"]);
                                       if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
 
-                                      try {
-                                        String jsonString = Utf8Decoder().convert(res.files.first.bytes!);
-                                        List<dynamic> json = jsonDecode(jsonString);
-                                        for (var e in json) {
-                                          ThemeObject object = ThemeObject.fromMap(e);
-                                          List<dynamic> entriesJson = e['entries'];
-                                          List<ThemeEntry> entries = [];
-                                          for (var e2 in entriesJson) {
-                                            entries.add(ThemeEntry.fromMap(e2));
-                                          }
-                                          object.entries = entries;
-                                          object.data = object.themeData;
-                                          await object.save();
+                                    try {
+                                      String jsonString = Utf8Decoder().convert(res.files.first.bytes!);
+                                      List<dynamic> json = jsonDecode(jsonString);
+                                      for (var e in json) {
+                                        ThemeObject object = ThemeObject.fromMap(e);
+                                        List<dynamic> entriesJson = e['entries'];
+                                        List<ThemeEntry> entries = [];
+                                        for (var e2 in entriesJson) {
+                                          entries.add(ThemeEntry.fromMap(e2));
                                         }
-                                        SettingsManager().saveSelectedTheme(context);
-                                        Get.back();
-                                        showSnackbar("Success", "Theming restored successfully");
-                                      } catch (_) {
-                                        Get.back();
-                                        showSnackbar("Error", "Something went wrong");
+                                        object.entries = entries;
+                                        object.data = object.themeData;
+                                        object.save();
                                       }
-                                    },
-                                    child: Text(
-                                      "Load Theming",
-                                      style: TextStyle(
-                                        color: Theme.of(context).textTheme.bodyText1!.color,
-                                        fontSize: 13,
-                                      ),
+                                      SettingsManager().saveSelectedTheme(context);
+                                      Get.back();
+                                      showSnackbar("Success", "Theming restored successfully");
+                                    } catch (_) {
+                                      Get.back();
+                                      showSnackbar("Error", "Something went wrong");
+                                    }
+                                  },
+                                  child: Text(
+                                    "Load Theming",
+                                    style: TextStyle(
+                                      color: Theme.of(context).textTheme.bodyText1!.color,
+                                      fontSize: 13,
                                     ),
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
+                            ),
                           ]),
                           barrierDismissible: true,
                           backgroundColor: Theme.of(context).backgroundColor,
@@ -1014,7 +1015,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           ContactManager().handleToContact.values.where((element) => element != null).forEachIndexed((index, c) {
                             var map = c!.toMap();
                             map.remove("avatar");
-                            json = json + "${jsonEncode(map)}";
+                            json = json + jsonEncode(map);
                             if (index != ContactManager().handleToContact.values.where((element) => element != null).length - 1) {
                               json = json + ",";
                             } else {
@@ -1055,12 +1056,14 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                 TextButton(
                                   child: Text("Yes"),
                                   onPressed: () async {
-                                    await DBProvider.deleteDB();
+                                    DBProvider.deleteDB();
                                     await SettingsManager().resetConnection();
                                     SettingsManager().settings.finishedSetup.value = false;
-                                    SocketManager().finishedSetup.sink.add(false);
-                                    Navigator.of(context).popUntil((route) => route.isFirst);
-                                    SettingsManager().settings = new Settings();
+                                    Get.offAll(() => WillPopScope(
+                                      onWillPop: () async => false,
+                                      child: SetupView(),
+                                    ), duration: Duration.zero, transition: Transition.noTransition);
+                                    SettingsManager().settings = Settings();
                                     SettingsManager().settings.save();
                                     SettingsManager().fcmData = null;
                                     FCMData.deleteFcmData();
@@ -1234,15 +1237,15 @@ class SettingsTile extends StatelessWidget {
     return Container(
       color: backgroundColor,
       child: ListTile(
-        onLongPress: this.onLongPress as void Function()?,
+        onLongPress: onLongPress as void Function()?,
         tileColor: backgroundColor,
-        onTap: this.onTap as void Function()?,
+        onTap: onTap as void Function()?,
         leading: leading,
         title: Text(
-          this.title!,
+          title!,
           style: Theme.of(context).textTheme.bodyText1,
         ),
-        trailing: this.trailing,
+        trailing: trailing,
         subtitle: subtitle != null
             ? Text(
                 subtitle!,
@@ -1282,15 +1285,15 @@ class SettingsTextField extends StatelessWidget {
     return Material(
       color: Theme.of(context).backgroundColor,
       child: InkWell(
-        onTap: this.onTap as void Function()?,
+        onTap: onTap as void Function()?,
         child: Column(
           children: <Widget>[
             ListTile(
               title: Text(
-                this.title,
+                title,
                 style: Theme.of(context).textTheme.bodyText1,
               ),
-              trailing: this.trailing,
+              trailing: trailing,
               subtitle: Padding(
                 padding: EdgeInsets.only(top: 10.0),
                 child: CustomCupertinoTextField(

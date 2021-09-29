@@ -4,20 +4,20 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
-import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/socket_manager.dart';
+import 'package:flutter/foundation.dart';
+import 'package:get/get.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
-import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class PrivateAPIPanelBinding extends Bindings {
@@ -280,7 +280,7 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                       ) : SizedBox.shrink()),
                       Obx(() {
                         if (SettingsManager().settings.enableQuickTapback.value &&
-                            SettingsManager().settings.skin.value == Skins.iOS)
+                            SettingsManager().settings.skin.value == Skins.iOS) {
                           return Container(
                             decoration: BoxDecoration(
                               color: tileColor,
@@ -288,11 +288,12 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                             padding: EdgeInsets.only(left: 15),
                             child: Text("Select Quick Tapback"),
                           );
-                        else
+                        } else {
                           return SizedBox.shrink();
+                        }
                       }),
                       Obx(() {
-                        if (SettingsManager().settings.enableQuickTapback.value)
+                        if (SettingsManager().settings.enableQuickTapback.value) {
                           return SettingsOptions<String>(
                             title: "Quick Tapback",
                             options: ReactionTypes.toList(),
@@ -320,8 +321,9 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                             backgroundColor: tileColor,
                             secondaryColor: headerColor,
                           );
-                        else
+                        } else {
                           return SizedBox.shrink();
+                        }
                       }),
                     ],
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),

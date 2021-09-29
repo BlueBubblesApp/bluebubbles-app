@@ -1,4 +1,8 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
+import 'package:universal_io/io.dart';
 import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui';
@@ -19,17 +23,14 @@ import 'package:collection/collection.dart';
 import 'package:convert/convert.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
+import 'package:libphonenumber_plugin/libphonenumber_plugin.dart';
 import 'package:get/get.dart';
 import 'package:html/parser.dart';
 import 'package:http/http.dart' show get;
 import 'package:intl/intl.dart' as intl;
-import 'package:libphonenumber_plugin/libphonenumber_plugin.dart';
 import 'package:slugify/slugify.dart';
-import 'package:universal_io/io.dart';
 import 'package:video_player/video_player.dart';
 
 DateTime? parseDate(dynamic value) {
@@ -78,7 +79,7 @@ Future<String> formatPhoneNumber(dynamic item) async {
   }
 
   // If we don't have a valid address, or it's an email, return it
-  if (address == null || address.isEmail) return address!;
+  if (address == null || address.isEmail) return address ?? "Unknown";
   address = address.trim(); // Trim it just in case
 
   String? meta;
@@ -90,7 +91,7 @@ Future<String> formatPhoneNumber(dynamic item) async {
     if (!address.startsWith("+") && cc != null) {
       try {
         meta = await PhoneNumberUtil.formatAsYouType("${cc.dialCode}$address", countryCode);
-      } catch (x) {}
+      } catch (_) {}
     }
   }
 
@@ -106,7 +107,7 @@ Future<List<String>> getCompareOpts(Handle handle) async {
   int maxOpts = 4; // This is relatively arbitrary
   for (int i = 0; i < formatted.length; i += 1) {
     String val = formatted.substring(i);
-    if (val.length == 0) break;
+    if (val.isEmpty) break;
 
     opts.add(val);
     if (i + 1 >= maxOpts) break;
@@ -178,12 +179,12 @@ Future<String?> parsePhoneNumber(String number, String region) async {
 }
 
 String randomString(int length) {
-  var rand = new Random();
-  var codeUnits = new List.generate(length, (index) {
+  var rand = Random();
+  var codeUnits = List.generate(length, (index) {
     return rand.nextInt(33) + 89;
   });
 
-  return new String.fromCharCodes(codeUnits);
+  return String.fromCharCodes(codeUnits);
 }
 
 void showSnackbar(String title, String message,
@@ -217,7 +218,7 @@ String buildDate(DateTime? dateTime) {
   if (dateTime == null || dateTime.millisecondsSinceEpoch == 0) return "";
   String time = SettingsManager().settings.use24HrFormat.value
       ? intl.DateFormat.Hm().format(dateTime)
-      : new intl.DateFormat.jm().format(dateTime);
+      : intl.DateFormat.jm().format(dateTime);
   String date;
   if (dateTime.isToday()) {
     date = time;
@@ -235,23 +236,23 @@ String buildTime(DateTime? dateTime) {
   if (dateTime == null || dateTime.millisecondsSinceEpoch == 0) return "";
   String time = SettingsManager().settings.use24HrFormat.value
       ? intl.DateFormat.Hm().format(dateTime)
-      : new intl.DateFormat.jm().format(dateTime);
+      : intl.DateFormat.jm().format(dateTime);
   return time;
 }
 
 extension DateHelpers on DateTime {
   bool isToday() {
     final now = DateTime.now();
-    return now.day == this.day && now.month == this.month && now.year == this.year;
+    return now.day == day && now.month == month && now.year == year;
   }
 
   bool isYesterday() {
     final yesterday = DateTime.now().subtract(Duration(days: 1));
-    return yesterday.day == this.day && yesterday.month == this.month && yesterday.year == this.year;
+    return yesterday.day == day && yesterday.month == month && yesterday.year == year;
   }
 
   bool isWithin(DateTime other, {int? ms, int? seconds, int? minutes, int? hours}) {
-    Duration diff = this.difference(other);
+    Duration diff = difference(other);
     if (ms != null) {
       return diff.inMilliseconds < ms;
     } else if (seconds != null) {
@@ -261,7 +262,7 @@ extension DateHelpers on DateTime {
     } else if (hours != null) {
       return diff.inHours < hours;
     } else {
-      throw new Exception("No timerange specified!");
+      throw Exception("No timerange specified!");
     }
   }
 }
@@ -311,20 +312,21 @@ String uriToFilename(String? uri, String? mimeType) {
   filename = slugify(filename, delimiter: '_');
 
   // Rebuild the filename
-  return (ext != null && ext.length > 0) ? '$filename.$ext' : filename;
+  return (ext != null && ext.isNotEmpty) ? '$filename.$ext' : filename;
 }
 
-Future<String> getGroupEventText(Message message) async {
+String getGroupEventText(Message message) {
   String text = "Unknown group event";
   String? handle = "You";
-  if (!message.isFromMe! && message.handleId != null && message.handle != null)
-    handle = await ContactManager().getContactTitle(message.handle);
+  if (!message.isFromMe! && message.handleId != null && message.handle != null) {
+    handle = ContactManager().getContactTitle(message.handle);
+  }
 
   String? other = "someone";
   if (message.otherHandle != null && [1, 2].contains(message.itemType)) {
     Handle? item = Handle.findOne(originalROWID: message.otherHandle);
     if (item != null) {
-      other = await ContactManager().getContactTitle(item);
+      other = ContactManager().getContactTitle(item);
     }
   }
 
@@ -350,10 +352,10 @@ Future<String> getGroupEventText(Message message) async {
   return text;
 }
 
-Future<MemoryImage?> loadAvatar(Chat chat, Handle? handle) async {
+MemoryImage? loadAvatar(Chat chat, Handle? handle) {
   // Get the contact
-  Contact? contact = await ContactManager().getCachedContact(handle);
-  Uint8List? avatar = contact?.avatar;
+  Contact? contact = ContactManager().getCachedContact(handle: handle);
+  Uint8List? avatar = contact?.avatar.value;
   if (isNullOrEmpty(avatar)!) return null;
 
   // Set the contact image
@@ -414,7 +416,7 @@ List<Color> toColorGradient(String? str) {
     total += str!.codeUnitAt(i);
   }
 
-  Random random = new Random(total);
+  Random random = Random(total);
   int seed = random.nextInt(7);
 
   // These are my arbitrary weights. It's based on what I found
@@ -452,7 +454,7 @@ Size getGifDimensions(Uint8List bytes) {
 
   Logger.debug("GIF width: $width");
   Logger.debug("GIF height: $height");
-  Size size = new Size(width.toDouble(), height.toDouble());
+  Size size = Size(width.toDouble(), height.toDouble());
   return size;
 }
 
@@ -505,7 +507,7 @@ Future<String> getDeviceName() async {
     }
 
     // Set device name
-    if (items.length > 0) {
+    if (items.isNotEmpty) {
       deviceName = items.join("_").toLowerCase();
     }
   } catch (ex) {
@@ -554,13 +556,13 @@ Future<File?> saveImageFromUrl(String guid, String url) async {
   try {
     var response = await get(Uri.parse(url));
 
-    Directory baseDir = new Directory("${AttachmentHelper.getBaseAttachmentsPath()}/$guid");
+    Directory baseDir = Directory("${AttachmentHelper.getBaseAttachmentsPath()}/$guid");
     if (!baseDir.existsSync()) {
       baseDir.createSync(recursive: true);
     }
 
     String newPath = "${baseDir.path}/$filename";
-    File file = new File(newPath);
+    File file = File(newPath);
     file.writeAsBytesSync(response.bodyBytes);
 
     return file;
@@ -641,10 +643,91 @@ Future<PlayerStatus> getControllerStatus(VideoPlayerController controller) async
   return PlayerStatus.NONE;
 }
 
+Future<bool> rebuild(State s) async {
+  if (!s.mounted) return false;
+
+  // if there's a current frame,
+  if (SchedulerBinding.instance!.schedulerPhase != SchedulerPhase.idle) {
+    // wait for the end of that frame.
+    await SchedulerBinding.instance!.endOfFrame;
+    if (!s.mounted) return false;
+  }
+
+  s.setState(() {});
+  return true;
+}
+
+final Uint8List kTransparentImage = Uint8List.fromList(<int>[
+  0x89,
+  0x50,
+  0x4E,
+  0x47,
+  0x0D,
+  0x0A,
+  0x1A,
+  0x0A,
+  0x00,
+  0x00,
+  0x00,
+  0x0D,
+  0x49,
+  0x48,
+  0x44,
+  0x52,
+  0x00,
+  0x00,
+  0x00,
+  0x01,
+  0x00,
+  0x00,
+  0x00,
+  0x01,
+  0x08,
+  0x06,
+  0x00,
+  0x00,
+  0x00,
+  0x1F,
+  0x15,
+  0xC4,
+  0x89,
+  0x00,
+  0x00,
+  0x00,
+  0x0A,
+  0x49,
+  0x44,
+  0x41,
+  0x54,
+  0x78,
+  0x9C,
+  0x63,
+  0x00,
+  0x01,
+  0x00,
+  0x00,
+  0x05,
+  0x00,
+  0x01,
+  0x0D,
+  0x0A,
+  0x2D,
+  0xB4,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x49,
+  0x45,
+  0x4E,
+  0x44,
+  0xAE,
+]);
+
 extension PlatformSpecificCapitalize on String {
   String get psCapitalize {
     if (SettingsManager().settings.skin.value == Skins.iOS) {
-      return this.toUpperCase();
+      return toUpperCase();
     } else {
       return this;
     }

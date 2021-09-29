@@ -35,9 +35,9 @@ class CustomAvatarColorPanelController extends GetxController {
     getCustomHandles();
   }
 
-  Future<void> getCustomHandles({force: false}) async {
+  Future<void> getCustomHandles({bool force = false}) async {
     // If we are already fetching or have results,
-    if (!false && (isFetching || !isNullOrEmpty(this.handleWidgets)!)) return;
+    if (!false && (isFetching || !isNullOrEmpty(handleWidgets)!)) return;
     List<Handle> handles = Handle.find();
     if (isNullOrEmpty(handles)!) return;
 
@@ -47,14 +47,14 @@ class CustomAvatarColorPanelController extends GetxController {
     List<Widget> items = [];
     for (var item in handles) {
       items.add(SettingsTile(
-        title: ContactManager().getCachedContactSync(item.address)?.displayName ?? await formatPhoneNumber(item),
+        title: ContactManager().getCachedContact(address: item.address)?.displayName ?? await formatPhoneNumber(item),
         subtitle: "Tap avatar to change color",
         trailing: ContactAvatarWidget(handle: item),
       ));
     }
 
     if (!isNullOrEmpty(items)!) {
-      this.handleWidgets.value = items;
+      handleWidgets.value = items;
     }
   }
 
@@ -105,7 +105,7 @@ class CustomAvatarColorPanel extends GetView<CustomAvatarColorPanelController> {
                   delegate: SliverChildListDelegate(
                     <Widget>[
                       Container(padding: EdgeInsets.only(top: 5.0)),
-                      if (controller.handleWidgets.length == 0)
+                      if (controller.handleWidgets.isEmpty)
                         Container(
                             padding: EdgeInsets.all(30),
                             child: Text(

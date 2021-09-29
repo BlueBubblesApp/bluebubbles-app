@@ -43,7 +43,7 @@ class SentMessageHelper {
         SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideEmojis.value;
 
     Widget msg;
-    bool hasReactions = (message?.getReactions() ?? []).length > 0;
+    bool hasReactions = (message?.getReactions() ?? []).isNotEmpty;
     Skins currentSkin = Skin.of(context)?.skin ?? SettingsManager().settings.skin.value;
 
     if (message?.isBigEmoji() ?? false) {
@@ -95,7 +95,7 @@ class SentMessageHelper {
               width: customWidth != null ? constraints.maxWidth : null,
               constraints: customWidth == null
                   ? BoxConstraints(
-                      maxWidth: CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE + (!padding ? 100 : 0),
+                      maxWidth: CustomNavigator.width(context) * MessageWidgetMixin.maxSize + (!padding ? 100 : 0),
                     )
                   : null,
               margin: EdgeInsets.only(
@@ -134,27 +134,18 @@ class SentMessageHelper {
                             : null,
                 color: customColor ?? bubbleColor,
               ),
-              child: customContent == null
-                  ? FutureBuilder<List<InlineSpan>>(
+              child: customContent ?? FutureBuilder<List<InlineSpan>>(
                       future: msgSpanFuture,
+                      initialData: MessageWidgetMixin.buildMessageSpans(context, message),
                       builder: (context, snapshot) {
-                        if (snapshot.data != null) {
-                          return RichText(
-                            text: TextSpan(
-                              children: snapshot.data!,
-                              style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
-                            ),
-                          );
-                        }
                         return RichText(
                           text: TextSpan(
-                            children: MessageWidgetMixin.buildMessageSpans(context, message),
+                            children: snapshot.data!,
                             style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
                           ),
                         );
                       }
-                    )
-                  : customContent,
+                    ),
             );
           }),
         ],
@@ -199,12 +190,12 @@ class SentMessageHelper {
               context: context,
               builder: (BuildContext context) {
                 return AlertDialog(
-                  title: new Text("Message failed to send", style: TextStyle(color: Colors.black)),
-                  content: new Text("Error ($errorCode): $errorText"),
+                  title: Text("Message failed to send", style: TextStyle(color: Colors.black)),
+                  content: Text("Error ($errorCode): $errorText"),
                   actions: <Widget>[
                     if (chat != null)
-                      new TextButton(
-                        child: new Text("Retry"),
+                      TextButton(
+                        child: Text("Retry"),
                         onPressed: () async {
                           // Remove the OG alert dialog
                           Navigator.of(context).pop();
@@ -215,8 +206,8 @@ class SentMessageHelper {
                         },
                       ),
                     if (chat != null)
-                      new TextButton(
-                        child: new Text("Remove"),
+                      TextButton(
+                        child: Text("Remove"),
                         onPressed: () async {
                           Navigator.of(context).pop();
                           // Delete the message from the DB
@@ -229,14 +220,14 @@ class SentMessageHelper {
                           List<Message> latest = Chat.getMessages(chat, limit: 1);
                           chat.latestMessage = latest.first;
                           chat.latestMessageDate = latest.first.dateCreated;
-                          chat.latestMessageText = await MessageHelper.getNotificationText(latest.first);
+                          chat.latestMessageText = MessageHelper.getNotificationText(latest.first);
 
                           // Update it in the Bloc
                           await ChatBloc().updateChatPosition(chat);
                         },
                       ),
-                    new TextButton(
-                      child: new Text("Cancel"),
+                    TextButton(
+                      child: Text("Cancel"),
                       onPressed: () {
                         Navigator.of(context).pop();
                         NotificationManager().clearFailedToSend();
@@ -255,7 +246,7 @@ class SentMessageHelper {
   }
 }
 
-class SentMessage extends StatefulWidget {
+class SentMessage extends StatelessWidget {
   final bool showTail;
   final Message message;
   final Message? olderMessage;
@@ -285,21 +276,14 @@ class SentMessage extends StatefulWidget {
     required this.attachmentsWidget,
     required this.reactionsWidget,
     required this.urlPreviewWidget,
-  }) : super(key: key);
-
-  @override
-  _SentMessageState createState() => _SentMessageState();
-}
-
-class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin, MessageWidgetMixin {
-  final Rx<Skins> skin = Rx<Skins>(SettingsManager().settings.skin.value);
-  late final spanFuture = MessageWidgetMixin.buildMessageSpansAsync(context, widget.message);
-
-  @override
-  void initState() {
-    super.initState();
-    initMessageState(widget.message, false);
+    
+    required BuildContext context,
+  }) : super(key: key) {
+   spanFuture = MessageWidgetMixin.buildMessageSpansAsync(context, message); 
   }
+
+  final Rx<Skins> skin = Rx<Skins>(SettingsManager().settings.skin.value);
+  late final Future<List<InlineSpan>> spanFuture;
 
   @override
   Widget build(BuildContext context) {
@@ -310,72 +294,72 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
     List<Widget> messageColumn = [];
 
     // Second, add the attachments
-    if (isEmptyString(widget.message.fullText)) {
+    if (isEmptyString(message.fullText)) {
       messageColumn.add(
-        addStickersToWidget(
-          message: addReactionsToWidget(
-              messageWidget: widget.attachmentsWidget, reactions: widget.reactionsWidget, message: widget.message),
-          stickers: widget.stickersWidget,
-          isFromMe: widget.message.isFromMe!,
+        MessageWidgetMixin.addStickersToWidget(
+          message: MessageWidgetMixin.addReactionsToWidget(
+              messageWidget: attachmentsWidget, reactions: reactionsWidget, message: message),
+          stickers: stickersWidget,
+          isFromMe: message.isFromMe!,
         ),
       );
     } else {
-      messageColumn.add(widget.attachmentsWidget);
+      messageColumn.add(attachmentsWidget);
     }
 
     // Third, let's add the message or URL preview
-    Widget? message;
-    if (widget.message.balloonBundleId != null &&
-        widget.message.balloonBundleId != 'com.apple.messages.URLBalloonProvider') {
-      message = BalloonBundleWidget(message: widget.message);
-    } else if (!isEmptyString(widget.message.text)) {
-      message = SentMessageHelper.buildMessageWithTail(
-          context, widget.message, widget.showTail, widget.message.hasReactions, widget.message.bigEmoji ?? false, spanFuture,
-          olderMessage: widget.olderMessage);
-      if (widget.showHero) {
-        message = Hero(
+    Widget? messageWidget;
+    if (message.balloonBundleId != null &&
+        message.balloonBundleId != 'com.apple.messages.URLBalloonProvider') {
+      messageWidget = BalloonBundleWidget(message: message);
+    } else if (!isEmptyString(message.text)) {
+      messageWidget = SentMessageHelper.buildMessageWithTail(
+          context, message, showTail, message.hasReactions, message.bigEmoji ?? false, spanFuture,
+          olderMessage: olderMessage);
+      if (showHero) {
+        messageWidget = Hero(
           tag: "first",
           child: Material(
             type: MaterialType.transparency,
-            child: message,
+            child: messageWidget,
           ),
         );
       }
-      if (widget.message.fullText.replaceAll("\n", " ").hasUrl) {
-        message = widget.message.fullText.isURL ? Padding(
+      if (message.fullText.replaceAll("\n", " ").hasUrl) {
+        messageWidget = message.fullText.isURL ? Padding(
           padding: EdgeInsets.only(right: 5.0),
-          child: widget.urlPreviewWidget,
+          child: urlPreviewWidget,
         ) : Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [
               Padding(
                 padding: EdgeInsets.only(right: 5.0),
-                child: widget.urlPreviewWidget,
+                child: urlPreviewWidget,
               ),
-              message,
+              messageWidget,
         ]);
       }
     }
 
     // Fourth, let's add any reactions or stickers to the widget
-    if (message != null) {
+    if (messageWidget != null) {
       messageColumn.add(
-        addStickersToWidget(
-          message: addReactionsToWidget(
+        MessageWidgetMixin.addStickersToWidget(
+          message: MessageWidgetMixin.addReactionsToWidget(
               messageWidget: Padding(
-                padding: EdgeInsets.only(bottom: widget.showTail ? 2.0 : 0),
-                child: message,
+                padding: EdgeInsets.only(bottom: showTail ? 2.0 : 0),
+                child: messageWidget,
               ),
-              reactions: widget.reactionsWidget,
-              message: widget.message),
-          stickers: widget.stickersWidget,
-          isFromMe: widget.message.isFromMe!,
+              reactions: reactionsWidget,
+              message: message),
+          stickers: stickersWidget,
+          isFromMe: message.isFromMe!,
         ),
       );
     }
     messageColumn.add(
       DeliveredReceipt(
-        message: widget.message,
-        showDeliveredReceipt: widget.showDeliveredReceipt,
-        shouldAnimate: widget.shouldFadeIn,
+        message: message,
+        showDeliveredReceipt: showDeliveredReceipt,
+        shouldAnimate: shouldFadeIn,
       ),
     );
 
@@ -389,15 +373,15 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
       Padding(
         // Padding to shift the bubble up a bit, relative to the avatar
         padding: EdgeInsets.only(
-            top: (skin.value != Skins.iOS && widget.message.isFromMe == widget.olderMessage?.isFromMe)
+            top: (skin.value != Skins.iOS && message.isFromMe == olderMessage?.isFromMe)
                 ? (skin.value != Skins.iOS)
                     ? 0
                     : 3
                 : (skin.value == Skins.iOS)
                     ? 0.0
                     : 10,
-            bottom: (skin.value == Skins.iOS && widget.showTail && !isEmptyString(widget.message.fullText)) ? 5.0 : 0,
-            right: isEmptyString(widget.message.fullText) && widget.message.error == 0 ? 10.0 : 0.0),
+            bottom: (skin.value == Skins.iOS && showTail && !isEmptyString(message.fullText)) ? 5.0 : 0,
+            right: isEmptyString(message.fullText) && message.error == 0 ? 10.0 : 0.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -413,9 +397,9 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         MessagePopupHolder(
-          message: widget.message,
-          olderMessage: widget.olderMessage,
-          newerMessage: widget.newerMessage,
+          message: message,
+          olderMessage: olderMessage,
+          newerMessage: newerMessage,
           child: Row(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.end,
@@ -429,9 +413,9 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
             children: msgRow,
           ),
         ),
-        if (skin.value != Skins.Samsung && widget.message.guid != widget.olderMessage?.guid)
+        if (skin.value != Skins.Samsung && message.guid != olderMessage?.guid)
           MessageTimeStamp(
-            message: widget.message,
+            message: message,
           )
       ],
     );

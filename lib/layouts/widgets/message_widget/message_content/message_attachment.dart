@@ -33,9 +33,9 @@ class MessageAttachment extends StatefulWidget {
   MessageAttachmentState createState() => MessageAttachmentState();
 }
 
-class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeepAliveClientMixin {
+class MessageAttachmentState extends State<MessageAttachment> {
   Widget? attachmentWidget;
-  var content;
+  dynamic content;
 
   @override
   void initState() {
@@ -53,7 +53,7 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
 
     // If we can download it, do so
     if (await AttachmentHelper.canAutoDownload() && content is Attachment) {
-      if (this.mounted) {
+      if (mounted) {
         setState(() {
           content = Get.put(AttachmentDownloadController(attachment: content), tag: content.guid);
         });
@@ -63,7 +63,6 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
     updateContent();
 
     return ClipRRect(
@@ -146,7 +145,7 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
       return AttachmentDownloaderWidget(
         onPressed: () {
           content = Get.put(AttachmentDownloadController(attachment: content), tag: content.guid);
-          if (this.mounted) setState(() {});
+          if (mounted) setState(() {});
         },
         attachment: content,
         placeHolder: buildPlaceHolder(widget),
@@ -162,7 +161,7 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
           return AttachmentDownloaderWidget(
             onPressed: () {
               content = Get.put(AttachmentDownloadController(attachment: content), tag: content.guid);
-              if (this.mounted) setState(() {});
+              if (mounted) setState(() {});
             },
             attachment: content,
             placeHolder: buildPlaceHolder(widget),
@@ -224,7 +223,4 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
   Widget buildPlaceHolder(MessageAttachment parent) {
     return buildImagePlaceholder(context, widget.attachment, Container());
   }
-
-  @override
-  bool get wantKeepAlive => true;
 }

@@ -13,6 +13,9 @@ if (dart.library.html) 'package:bluebubbles/repository/models/html/handle.dart';
 export 'package:bluebubbles/repository/models/io/join_tables.dart'
 if (dart.library.html) 'package:bluebubbles/repository/models/html/join_tables.dart';
 
+export 'package:bluebubbles/repository/models/io/js.dart'
+if (dart.library.html) 'package:bluebubbles/repository/models/html/js.dart';
+
 export 'package:bluebubbles/repository/models/io/message.dart'
 if (dart.library.html) 'package:bluebubbles/repository/models/html/message.dart';
 
@@ -25,9 +28,15 @@ if (dart.library.html) 'package:bluebubbles/repository/models/html/theme_entry.d
 export 'package:bluebubbles/repository/models/io/theme_object.dart'
 if (dart.library.html) 'package:bluebubbles/repository/models/html/theme_object.dart';
 
+export 'package:bluebubbles/repository/models/platform_file.dart';
+
 import 'dart:typed_data';
 
 import 'package:fast_contacts/fast_contacts.dart';
+import 'package:get/get.dart';
+import 'package:image_size_getter/image_size_getter.dart';
+import 'package:image_size_getter/src/utils/file_utils.dart';
+import 'package:universal_io/io.dart';
 
 class Contact {
   Contact({
@@ -36,31 +45,82 @@ class Contact {
     this.phones = const [],
     this.emails = const [],
     this.structuredName,
-    this.avatar,
-  });
+    Uint8List? avatarBytes,
+  }) {
+    avatar.value = avatarBytes;
+  }
 
   String id;
   String displayName;
   List<String> phones;
   List<String> emails;
   StructuredName? structuredName;
-  Uint8List? avatar;
+  final Rxn<Uint8List> avatar = Rxn<Uint8List>();
 
   Map<String, dynamic> toMap() {
     return {
-      'id': this.id,
-      'displayName': this.displayName,
-      'phones': this.phones,
-      'emails': this.emails,
+      'id': id,
+      'displayName': displayName,
+      'phones': phones,
+      'emails': emails,
     };
   }
 
   factory Contact.fromMap(Map<String, dynamic> map) {
+    // backwards compatibility with old contacts plugin
+    if (map['phones'].isNotEmpty && map['phones'][0] is Map<String, dynamic>) {
+      map['phones'] = map['phones'].map((e) => e['value'] ?? "").toList();
+    }
+    if (map['emails'].isNotEmpty && map['emails'][0] is Map<String, dynamic>) {
+      map['emails'] = map['emails'].map((e) => e['value'] ?? "").toList();
+    }
     return Contact(
-      id: map['id'] as String,
+      id: (map['id'] ?? map['identifier']) as String,
       displayName: map['displayName'] as String,
-      phones: map['phones'] as List<String>,
-      emails: map['emails'] as List<String>,
+      phones: map['phones'].cast<String>(),
+      emails: map['emails'].cast<String>(),
     );
+  }
+}
+
+class AsyncFileInput extends AsyncImageInput {
+  final File file;
+
+  AsyncFileInput(this.file);
+
+  @override
+  Future<List<int>> getRange(int start, int end) async {
+    final utils = FileUtils(file);
+    return await utils.getRange(start, end);
+  }
+
+  @override
+  Future<int> get length async => await file.length();
+
+  @override
+  Future<bool> exists() async {
+    return await file.exists();
+  }
+}
+
+class AsyncMemoryInput extends AsyncImageInput {
+  final Uint8List bytes;
+  const AsyncMemoryInput(this.bytes);
+
+  factory AsyncMemoryInput.byteBuffer(ByteBuffer buffer) {
+    return AsyncMemoryInput(buffer.asUint8List());
+  }
+
+  @override
+  Future<List<int>> getRange(int start, int end) async {
+    return bytes.sublist(start, end);
+  }
+
+  @override
+  Future<int> get length async => bytes.length;
+
+  @override
+  Future<bool> exists() async {
+    return bytes.isNotEmpty;
   }
 }

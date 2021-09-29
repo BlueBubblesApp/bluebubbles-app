@@ -5,7 +5,9 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/repository/models/io/attachment.dart';
-import 'package:collection/src/iterable_extensions.dart';
+import 'package:bluebubbles/repository/models/io/join_tables.dart';
+import 'package:bluebubbles/repository/models/objectbox.dart';
+import 'package:collection/collection.dart';
 import 'package:crypto/crypto.dart' as crypto;
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/darty.dart';
@@ -13,10 +15,29 @@ import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:flutter/foundation.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Condition;
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'chat.dart';
 import 'handle.dart';
+
+Future<Map<String, List<Attachment?>>> fetchAttachmentsIsolate(List<dynamic> stuff) async {
+  List<int> messageIds = stuff[0];
+  List<String> guids = stuff[1];
+  String? storeRef = stuff[2];
+  Map<String, List<Attachment?>> map = {};
+  final store = Store.fromReference(getObjectBoxModel(), base64.decode(storeRef!).buffer.asByteData());
+  final amJoinBox = store.box<AttachmentMessageJoin>();
+  return store.runInTransaction(TxMode.read, () {
+    final amJoinQuery = amJoinBox.query(AttachmentMessageJoin_.messageId.oneOf(messageIds)).build();
+    final amJoins = amJoinQuery.find();
+    amJoinQuery.close();
+    map.addEntries(guids.mapIndexed(
+            (index, e) => MapEntry(e, attachmentBox.getMany(amJoins.where(
+                (e2) => e2.messageId == messageIds[index]).map(
+                (e3) => e3.attachmentId).toSet().toList(), growableResult: true))));
+    return map;
+  });
+}
 
 @Entity()
 class Message {
@@ -108,12 +129,12 @@ class Message {
   }
 
   String get fullText {
-    String fullText = this.subject ?? "";
+    String fullText = subject ?? "";
     if (fullText.isNotEmpty) {
       fullText += "\n";
     }
 
-    fullText += this.text ?? "";
+    fullText += text ?? "";
 
     return sanitizeString(fullText);
   }
@@ -123,7 +144,7 @@ class Message {
     if (json.containsKey("hasAttachments")) {
       hasAttachments = json["hasAttachments"] == 1 ? true : false;
     } else if (json.containsKey("attachments")) {
-      hasAttachments = (json['attachments'] as List).length > 0 ? true : false;
+      hasAttachments = (json['attachments'] as List).isNotEmpty ? true : false;
     }
 
     List<Attachment> attachments =
@@ -136,7 +157,7 @@ class Message {
       if (metadata is String) {
         try {
           metadata = jsonDecode(metadata);
-        } catch (ex) {}
+        } catch (_) {}
       }
     }
 
@@ -149,7 +170,7 @@ class Message {
       }
     }
 
-    var data = new Message(
+    var data = Message(
       id: json.containsKey("ROWID") ? json["ROWID"] : null,
       originalROWID: json.containsKey("originalROWID") ? json["originalROWID"] : null,
       guid: json["guid"],
@@ -198,42 +219,41 @@ class Message {
     );
 
     // Adds fallback getter for the ID
-    if (data.id == null) {
-      data.id = json.containsKey("id") ? json["id"] : null;
-    }
+    data.id ??= json.containsKey("id") ? json["id"] : null;
 
     return data;
   }
 
   Message save() {
-   if (kIsWeb) return this;
-    Message? existing = Message.findOne(guid: this.guid);
-    if (existing != null) {
-      this.id = existing.id;
-    }
+    if (kIsWeb) return this;
+    store.runInTransaction(TxMode.write, () {
+     Message? existing = Message.findOne(guid: guid);
+     if (existing != null) {
+       id = existing.id;
+     }
 
-    // Save the participant & set the handle ID to the new participant
-    if (this.handle != null) {
-      this.handle!.save();
-      this.handleId = this.handle!.id;
-    }
-    if (this.associatedMessageType != null && this.associatedMessageGuid != null) {
-      Message? associatedMessage = Message.findOne(guid: this.associatedMessageGuid);
-      if (associatedMessage != null) {
-        associatedMessage.hasReactions = true;
-        associatedMessage.save();
-      }
-    } else if (!this.hasReactions) {
-      Message? reaction = Message.findOne(associatedMessageGuid: this.guid);
-      if (reaction != null) {
-        this.hasReactions = true;
-      }
-    }
+     // Save the participant & set the handle ID to the new participant
+     if (handle != null) {
+       handle!.save();
+       handleId = handle!.id;
+     }
+     if (associatedMessageType != null && associatedMessageGuid != null) {
+       Message? associatedMessage = Message.findOne(guid: associatedMessageGuid);
+       if (associatedMessage != null) {
+         associatedMessage.hasReactions = true;
+         associatedMessage.save();
+       }
+     } else if (!hasReactions) {
+       Message? reaction = Message.findOne(associatedMessageGuid: guid);
+       if (reaction != null) {
+         hasReactions = true;
+       }
+     }
 
-    try {
-      messageBox.put(this);
-    } on UniqueViolationException catch (_) {}
-
+     try {
+       messageBox.put(this);
+     } on UniqueViolationException catch (_) {}
+    });
     return this;
   }
 
@@ -263,46 +283,94 @@ class Message {
   }
 
   Message updateMetadata(Metadata? metadata) {
-    if (kIsWeb || this.id == null) return this;
+    if (kIsWeb || id == null) return this;
     this.metadata = metadata!.toJson();
-    this.save();
+    save();
     return this;
   }
 
-  List<Attachment?>? fetchAttachments({CurrentChat? currentChat}) {
-    if (kIsWeb || (this.hasAttachments && this.attachments != null && this.attachments!.length != 0)) {
-      return this.attachments;
+  static Map<String, List<Attachment?>> fetchAttachmentsByMessages(List<Message?> messages, {CurrentChat? currentChat}) {
+    final Map<String, List<Attachment?>> map = {};
+    if (kIsWeb) {
+      map.addEntries(messages.map((e) => MapEntry(e!.guid!, e.attachments ?? [])));
+      return map;
     }
 
     if (currentChat != null) {
-      this.attachments = currentChat.getAttachmentsForMessage(this);
-      if (this.attachments == null) this.attachments = [];
-      if (this.attachments!.length != 0) return this.attachments;
+      map.addEntries(messages.map((e) => MapEntry(e!.guid!, currentChat.getAttachmentsForMessage(e) ?? [])));
+      return map;
     }
 
-    if (this.id == null) return [];
-    final attachmentIds = amJoinBox.getAll().where((element) => element.messageId == this.id!).map((e) => e.attachmentId).toList();
-    final attachments = attachmentBox.getMany(attachmentIds, growableResult: true);
-    this.attachments = attachments;
-    return attachments;
+    return store.runInTransaction(TxMode.read, () {
+      final messageIds = messages.where((element) => element?.id != null).map((e) => e!.id!).toList();
+      final amJoinQuery = amJoinBox.query(AttachmentMessageJoin_.messageId.oneOf(messageIds)).build();
+      final amJoins = amJoinQuery.find();
+      amJoinQuery.close();
+      map.addEntries(messages.map(
+          (e) => MapEntry(e!.guid!, attachmentBox.getMany(amJoins.where(
+              (e2) => e2.messageId == e.id).map(
+                  (e3) => e3.attachmentId).toSet().toList(), growableResult: true))));
+      return map;
+    });
+  }
+
+  static Future<Map<String, List<Attachment?>>> fetchAttachmentsByMessagesAsync(List<Message?> messages, {CurrentChat? currentChat}) async {
+    final Map<String, List<Attachment?>> map = {};
+    if (kIsWeb) {
+      map.addEntries(messages.map((e) => MapEntry(e!.guid!, e.attachments ?? [])));
+      return map;
+    }
+
+    if (currentChat != null) {
+      map.addEntries(messages.map((e) => MapEntry(e!.guid!, currentChat.getAttachmentsForMessage(e) ?? [])));
+      return map;
+    }
+
+    return await compute(fetchAttachmentsIsolate, [messages.map((e) => e!.id!).toList(), messages.map((e) => e!.guid!).toList(), prefs.getString("objectbox-reference")]);
+  }
+
+  List<Attachment?>? fetchAttachments({CurrentChat? currentChat}) {
+    if (kIsWeb || (hasAttachments && attachments != null && attachments!.isNotEmpty)) {
+      return attachments;
+    }
+
+    if (currentChat != null) {
+      attachments = currentChat.getAttachmentsForMessage(this);
+      attachments ??= [];
+      if (attachments!.isNotEmpty) return attachments;
+    }
+
+    if (id == null) return [];
+    return store.runInTransaction(TxMode.read, () {
+      final attachmentIdQuery = amJoinBox.query(AttachmentMessageJoin_.messageId.equals(id!)).build();
+      final attachmentIds = attachmentIdQuery.property(AttachmentMessageJoin_.attachmentId).find().toSet().toList();
+      attachmentIdQuery.close();
+      final attachments = attachmentBox.getMany(attachmentIds, growableResult: true);
+      this.attachments = attachments;
+      return attachments;
+    });
   }
 
   static Chat? getChat(Message message) {
     if (kIsWeb) return null;
-    final chatId = cmJoinBox.getAll().firstWhere((element) => element.messageId == message.id).chatId;
-    return chatBox.get(chatId);
+    return store.runInTransaction(TxMode.read, () {
+      final chatIdQuery = cmJoinBox.query(ChatMessageJoin_.messageId.equals(message.id!)).build();
+      final chatId = chatIdQuery.property(ChatMessageJoin_.chatId).find().first;
+      chatIdQuery.close();
+      return chatBox.get(chatId);
+    });
   }
 
   Message fetchAssociatedMessages({MessageBloc? bloc}) {
-    if (this.associatedMessages.isNotEmpty &&
-        this.associatedMessages.length == 1 &&
-        this.associatedMessages[0].guid == this.guid) {
+    if (associatedMessages.isNotEmpty &&
+        associatedMessages.length == 1 &&
+        associatedMessages[0].guid == guid) {
       return this;
     }
     if (kIsWeb) {
       associatedMessages = bloc?.reactionMessages.values.where((element) => element.associatedMessageGuid == guid).toList() ?? [];
     } else {
-      associatedMessages = Message.find().where((element) => element.associatedMessageGuid == this.guid).toList();
+      associatedMessages = Message.find(cond: Message_.associatedMessageGuid.equals(guid!));
     }
     associatedMessages.sort((a, b) => a.originalROWID!.compareTo(b.originalROWID!));
     if (!kIsWeb) associatedMessages = MessageHelper.normalizedAssociatedMessages(associatedMessages);
@@ -311,21 +379,20 @@ class Message {
 
   Handle? getHandle() {
     if (kIsWeb) return null;
-    this.handle = handleBox.get(this.handleId!);
-    return handleBox.get(this.handleId!);
+    return handleBox.get(handleId!);
   }
 
   static Message? findOne({String? guid, String? associatedMessageGuid}) {
     if (kIsWeb) return null;
     if (guid != null) {
       final query = messageBox.query(Message_.guid.equals(guid)).build();
-      query..limit = 1;
+      query.limit = 1;
       final result = query.findFirst();
       query.close();
       return result;
     } else if (associatedMessageGuid != null) {
       final query = messageBox.query(Message_.associatedMessageGuid.equals(associatedMessageGuid)).build();
-      query..limit = 1;
+      query.limit = 1;
       final result = query.findFirst();
       query.close();
       return result;
@@ -336,31 +403,34 @@ class Message {
   static DateTime? lastMessageDate() {
     if (kIsWeb) return null;
     final query = (messageBox.query()..order(Message_.dateCreated, flags: Order.descending)).build();
-    query..limit = 1;
+    query.limit = 1;
     final messages = query.find();
     query.close();
     return messages.isEmpty ? null : messages.first.dateCreated;
   }
 
-  static List<Message> find() {
-    return messageBox.getAll();
+  static List<Message> find({Condition<Message>? cond}) {
+    final query = messageBox.query(cond).build();
+    return query.find();
   }
 
   static void delete(String guid) {
     if (kIsWeb) return;
-    final query = messageBox.query(Message_.guid.equals(guid)).build();
-    final results = query.find();
-    final ids = results.map((e) => e.id!).toList();
-    query.close();
-    final query2 = cmJoinBox.query(ChatMessageJoin_.messageId.oneOf(ids)).build();
-    final results2 = query2.find();
-    query2.close();
-    cmJoinBox.removeMany(results2.map((e) => e.id!).toList());
-    messageBox.removeMany(ids);
+    store.runInTransaction(TxMode.write, () {
+      final query = messageBox.query(Message_.guid.equals(guid)).build();
+      final results = query.find();
+      final ids = results.map((e) => e.id!).toList();
+      query.close();
+      final query2 = cmJoinBox.query(ChatMessageJoin_.messageId.oneOf(ids)).build();
+      final results2 = query2.find();
+      query2.close();
+      cmJoinBox.removeMany(results2.map((e) => e.id!).toList());
+      messageBox.removeMany(ids);
+    });
   }
 
   static void softDelete(String guid) {
-    if (kIsWeb) return null;
+    if (kIsWeb) return;
     Message? toDelete = Message.findOne(guid: guid);
     toDelete?.dateDeleted = DateTime.now().toUtc();
     toDelete?.save();
@@ -373,104 +443,104 @@ class Message {
 
   bool isUrlPreview() {
     // first condition is for macOS < 11 and second condition is for macOS >= 11
-    return (this.balloonBundleId != null &&
-            this.balloonBundleId == "com.apple.messages.URLBalloonProvider" &&
-            this.hasDdResults!) ||
-        (this.hasDdResults! && (this.text ?? "").replaceAll("\n", " ").hasUrl);
+    return (balloonBundleId != null &&
+            balloonBundleId == "com.apple.messages.URLBalloonProvider" &&
+            hasDdResults!) ||
+        (hasDdResults! && (text ?? "").replaceAll("\n", " ").hasUrl);
   }
 
   String? getUrl() {
     if (text == null) return null;
-    List<String> splits = this.text!.replaceAll("\n", " ").split(" ");
+    List<String> splits = text!.replaceAll("\n", " ").split(" ");
     return splits.firstWhereOrNull((String element) => element.hasUrl);
   }
 
   bool isInteractive() {
-    return this.balloonBundleId != null && this.balloonBundleId != "com.apple.messages.URLBalloonProvider";
+    return balloonBundleId != null && balloonBundleId != "com.apple.messages.URLBalloonProvider";
   }
 
   bool hasText({stripWhitespace = false}) {
-    return !isEmptyString(this.fullText, stripWhitespace: stripWhitespace);
+    return !isEmptyString(fullText, stripWhitespace: stripWhitespace);
   }
 
   bool isGroupEvent() {
-    return isEmptyString(this.fullText) && !this.hasAttachments && this.balloonBundleId == null;
+    return isEmptyString(fullText) && !hasAttachments && balloonBundleId == null;
   }
 
   bool isBigEmoji() {
     // We are checking the variable first because we want to
     // avoid processing twice for this as it won't change
-    if (this.bigEmoji == null) {
-      this.bigEmoji = MessageHelper.shouldShowBigEmoji(this.fullText);
-    }
+    bigEmoji ??= MessageHelper.shouldShowBigEmoji(fullText);
 
-    return this.bigEmoji!;
+    return bigEmoji!;
   }
 
   List<Attachment?> getRealAttachments() {
-    return this.attachments!.where((item) => item!.mimeType != null).toList();
+    return attachments!.where((item) => item!.mimeType != null).toList();
   }
 
   List<Attachment?> getPreviewAttachments() {
-    return this.attachments!.where((item) => item!.mimeType == null).toList();
+    return attachments!.where((item) => item!.mimeType == null).toList();
   }
 
   List<Message> getReactions() {
-    return this
-        .associatedMessages
+    return associatedMessages
         .where((item) => ReactionTypes.toList().contains(item.associatedMessageType))
         .toList();
   }
 
   void generateTempGuid() {
-    List<String> unique = [this.text ?? "", this.dateCreated?.millisecondsSinceEpoch.toString() ?? ""];
+    List<String> unique = [text ?? "", dateCreated?.millisecondsSinceEpoch.toString() ?? ""];
 
     String preHashed;
-    if (unique.every((element) => element.trim().length == 0)) {
+    if (unique.every((element) => element.trim().isEmpty)) {
       preHashed = randomString(8);
     } else {
       preHashed = unique.join(":");
     }
 
     String hashed = crypto.sha1.convert(utf8.encode(preHashed)).toString();
-    this.guid = "temp-$hashed";
+    guid = "temp-$hashed";
   }
 
   static int? countForChat(Chat? chat) {
     if (kIsWeb || chat == null || chat.id == null) return 0;
-    return cmJoinBox.getAll().where((element) => element.chatId == chat.id).length;
+    final chatIdQuery = cmJoinBox.query(ChatMessageJoin_.chatId.equals(chat.id!)).build();
+    final length = chatIdQuery.find().length;
+    chatIdQuery.close();
+    return length;
   }
 
   void merge(Message otherMessage) {
-    if (this.dateCreated == null && otherMessage.dateCreated != null) {
-      this.dateCreated = otherMessage.dateCreated;
+    if (dateCreated == null && otherMessage.dateCreated != null) {
+      dateCreated = otherMessage.dateCreated;
     }
-    if (this.dateDelivered == null && otherMessage.dateDelivered != null) {
-      this.dateDelivered = otherMessage.dateDelivered;
+    if (dateDelivered == null && otherMessage.dateDelivered != null) {
+      dateDelivered = otherMessage.dateDelivered;
     }
-    if (this.dateRead == null && otherMessage.dateRead != null) {
-      this.dateRead = otherMessage.dateRead;
+    if (dateRead == null && otherMessage.dateRead != null) {
+      dateRead = otherMessage.dateRead;
     }
-    if (this.dateDeleted == null && otherMessage.dateDeleted != null) {
-      this.dateDeleted = otherMessage.dateDeleted;
+    if (dateDeleted == null && otherMessage.dateDeleted != null) {
+      dateDeleted = otherMessage.dateDeleted;
     }
-    if (this.datePlayed == null && otherMessage.datePlayed != null) {
-      this.datePlayed = otherMessage.datePlayed;
+    if (datePlayed == null && otherMessage.datePlayed != null) {
+      datePlayed = otherMessage.datePlayed;
     }
-    if (this.metadata == null && otherMessage.metadata != null) {
-      this.metadata = otherMessage.metadata;
+    if (metadata == null && otherMessage.metadata != null) {
+      metadata = otherMessage.metadata;
     }
-    if (this.originalROWID == null && otherMessage.originalROWID != null) {
-      this.originalROWID = otherMessage.originalROWID;
+    if (originalROWID == null && otherMessage.originalROWID != null) {
+      originalROWID = otherMessage.originalROWID;
     }
-    if (!this.hasAttachments && otherMessage.hasAttachments) {
-      this.hasAttachments = otherMessage.hasAttachments;
+    if (!hasAttachments && otherMessage.hasAttachments) {
+      hasAttachments = otherMessage.hasAttachments;
     }
-    if (!this.hasReactions && otherMessage.hasReactions) {
-      this.hasReactions = otherMessage.hasReactions;
+    if (!hasReactions && otherMessage.hasReactions) {
+      hasReactions = otherMessage.hasReactions;
     }
-    if (this._error.value == 0 && otherMessage._error.value != 0) {
-      this._error.value = otherMessage._error.value;
+    if (_error.value == 0 && otherMessage._error.value != 0) {
+      _error.value = otherMessage._error.value;
     }
   }
 

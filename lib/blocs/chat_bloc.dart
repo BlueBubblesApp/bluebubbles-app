@@ -57,7 +57,7 @@ class ChatBloc {
   Future<Chat?> getChat(String? guid) async {
     if (guid == null) return null;
     if (_chats.isEmpty) {
-      await this.refreshChats();
+      await refreshChats();
     }
 
     for (Chat? chat in _chats) {
@@ -78,15 +78,12 @@ class ChatBloc {
       await chatRequest!.future;
     }
 
-    chatRequest = new Completer<void>();
-    Logger.info("Fetching chats (${force ? 'forced' : 'normal'})...", tag: "ChatBloc");
-
-    // Get the contacts in case we haven't
     if (ContactManager().contacts.isEmpty) await ContactManager().getContacts();
 
-    if (_messageSubscription == null) {
-      _messageSubscription = setupMessageListener();
-    }
+    chatRequest = Completer<void>();
+    Logger.info("Fetching chats (${force ? 'forced' : 'normal'})...", tag: "ChatBloc");
+
+    _messageSubscription ??= setupMessageListener();
 
     // Store the last time we fetched
     lastFetch = DateTime.now().toUtc().millisecondsSinceEpoch;
@@ -99,7 +96,7 @@ class ChatBloc {
     Logger.info('Performing ChatBloc resume request...', tag: 'ChatBloc-Resume');
 
     // Get the last message date
-    DateTime? lastMsgDate = await Message.lastMessageDate();
+    DateTime? lastMsgDate = Message.lastMessageDate();
 
     // If there is no last message, don't do anything
     if (lastMsgDate == null) {
@@ -112,7 +109,7 @@ class ChatBloc {
     if (lastMs >= lastFetch) {
       Logger.info('New messages detected! Refreshing the ChatBloc', tag: 'ChatBloc-Resume');
       Logger.debug("$lastMs >= $lastFetch", tag: 'ChatBloc-Resume');
-      await this.refreshChats();
+      await refreshChats();
     } else {
       Logger.info('No new messages detected. Not refreshing the ChatBloc', tag: 'ChatBloc-Resume');
     }
@@ -121,7 +118,7 @@ class ChatBloc {
   /// Inserts a [chat] into the chat bloc based on the lastMessage data
   Future<void> updateChatPosition(Chat chat) async {
     if (isNullOrEmpty(_chats)!) {
-      await this.refreshChats();
+      await refreshChats();
       if (isNullOrEmpty(_chats)!) return;
     }
 
@@ -149,7 +146,7 @@ class ChatBloc {
     if (!shouldUpdate) return;
 
     if (isNullOrEmpty(chat.title)!) {
-      await chat.getTitle();
+      chat.getTitle();
     }
 
     // If the current chat isn't found in the bloc, let's insert it at the correct position
@@ -180,7 +177,7 @@ class ChatBloc {
 
   void markAllAsRead() {
     // Enumerate the unread chats
-    List<Chat> unread = this.chats.where((element) => element.hasUnreadMessage!).toList();
+    List<Chat> unread = chats.where((element) => element.hasUnreadMessage!).toList();
 
     // Mark them as unread
     for (Chat chat in unread) {
@@ -192,7 +189,7 @@ class ChatBloc {
 
     // Update their position in the chat list
     for (Chat chat in unread) {
-      this.updateChatPosition(chat);
+      updateChatPosition(chat);
     }
   }
 
@@ -202,7 +199,7 @@ class ChatBloc {
     // Remove from notification shade
     MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
 
-    this.updateChatPosition(chat);
+    updateChatPosition(chat);
   }
 
   Future<void> updateAllShareTargets() async {
@@ -218,11 +215,11 @@ class ChatBloc {
   Future<void> updateShareTarget(Chat chat) async {
     Uint8List? icon;
     Contact? contact =
-        chat.participants.length == 1 ? await ContactManager().getCachedContact(chat.participants.first) : null;
+        chat.participants.length == 1 ? ContactManager().getCachedContact(handle: chat.participants.first) : null;
     try {
       // If there is a contact specified, we can use it's avatar
-      if (contact != null && contact.avatar != null && contact.avatar!.isNotEmpty) {
-        icon = contact.avatar;
+      if (contact != null && contact.avatar.value != null && contact.avatar.value!.isNotEmpty) {
+        icon = contact.avatar.value;
         // Otherwise if there isn't, we use the [defaultAvatar]
       } else {
         // If [defaultAvatar] is not loaded, load it from assets
@@ -239,7 +236,7 @@ class ChatBloc {
 
     // If we don't have a title, try to get it
     if (isNullOrEmpty(chat.title)!) {
-      await chat.getTitle();
+      chat.getTitle();
     }
 
     // If we still don't have a title, bye felicia
@@ -263,7 +260,7 @@ class ChatBloc {
       Chat updatedChat = event.event["chat"];
 
       // Update the tile values for the chat (basically just the title)
-      await initTileValsForChat(updatedChat);
+      initTileValsForChat(updatedChat);
 
       // Insert/move the chat to the correct position
       await updateChatPosition(updatedChat);
@@ -276,7 +273,7 @@ class ChatBloc {
   }
 
   Future<void> getChatBatches({int batchSize = 15}) async {
-    int count = Chat.count() ?? 0;
+    int count = Chat.count() ?? (await api.chatCount()).data['data']['total'];
     if (count == 0 && !kIsWeb) {
       hasChats.value = false;
     } else {
@@ -290,29 +287,35 @@ class ChatBloc {
     for (int i = 0; i < batches; i++) {
       List<Chat> chats = [];
       if (kIsWeb) {
-        chats = await SocketManager().getChats({"withLastMessage": kIsWeb});
+        chats = await SocketManager().getChats({"withLastMessage": true, "limit": batchSize, "offset": i * batchSize});
       } else {
         chats = Chat.getChats(limit: batchSize, offset: i * batchSize);
       }
-      if (chats.length == 0) break;
+      if (chats.isEmpty) break;
 
       for (Chat chat in chats) {
         newChats.add(chat);
-        await initTileValsForChat(chat);
+        initTileValsForChat(chat);
         if (isNullOrEmpty(chat.participants)!) {
           chat.getParticipants();
         }
         if (kIsWeb) {
-          chat.participants.forEach((element) {
+          for (Handle element in chat.participants) {
             if (cachedHandles.firstWhereOrNull((e) => e.address == element.address) == null) {
               cachedHandles.add(element);
             }
-          });
-          await ContactManager().matchHandles();
+          }
+          if (chat.latestMessageGetter.hasAttachments) {
+            chat.latestMessageGetter.fetchAttachments();
+          }
+          if (chat.latestMessage?.handle == null && chat.latestMessage?.handleId != null) chat.latestMessage!.handle = Handle.findOne(originalROWID: chat.latestMessage!.handleId);
+          chat.latestMessageText = MessageHelper.getNotificationText(chat.latestMessageGetter);
+          chat.fakeLatestMessageText = faker.lorem.words((chat.latestMessageText ?? "").split(" ").length).join(" ");
+          chat.latestMessageDate = chat.latestMessageGetter.dateCreated;
         }
       }
 
-      if (newChats.length != 0) {
+      if (newChats.isNotEmpty) {
         _chats.value = newChats;
         _chats.sort(Chat.sort);
       }
@@ -321,7 +324,7 @@ class ChatBloc {
         loadedChatBatch.value = true;
       }
     }
-
+    await ContactManager().matchHandles();
     Logger.info("Finished fetching chats (${_chats.length}).", tag: "ChatBloc");
     await updateAllShareTargets();
 
@@ -330,31 +333,11 @@ class ChatBloc {
     }
   }
 
-  Future<void> getMessageStuffWeb(Chat chat) async {
-    Map<String, dynamic> params = Map();
-    params["identifier"] = chat.guid;
-    params["withBlurhash"] = false;
-    params["limit"] = 1;
-    params["where"] = [
-      {"statement": "message.service = 'iMessage'", "args": null}
-    ];
-    List<dynamic> messages = await SocketManager().getChatMessages(params)!;
-    if (messages.isNotEmpty) {
-      Message message = Message.fromMap(messages.first);
-      if (message.hasAttachments) {
-        message.fetchAttachments();
-      }
-      chat.latestMessageText = await MessageHelper.getNotificationText(message);
-      chat.fakeLatestMessageText = faker.lorem.words((chat.latestMessageText ?? "").split(" ").length).join(" ");
-      chat.latestMessageDate = message.dateCreated;
-    }
-  }
-
   /// Get the values for the chat, specifically the title
   /// @param chat to initialize
-  Future<void> initTileValsForChat(Chat chat) async {
+  void initTileValsForChat(Chat chat) {
     if (chat.title == null) {
-      await chat.getTitle();
+      chat.getTitle();
     }
     AttachmentInfoBloc().initChat(chat);
   }
@@ -423,7 +406,7 @@ class ChatBloc {
       Chat _chat = _chats[i];
       if (_chat.guid == chat.guid) {
         _chats[i] = chat;
-        await initTileValsForChat(chats[i]);
+        initTileValsForChat(chats[i]);
       }
     }
     for (int i = 0; i < _chats.length; i++) {
@@ -463,39 +446,38 @@ extension Helpers on RxList<Chat> {
   /// This helps reduce a vast amount of code in build methods so the widgets can
   /// update without StreamBuilders
   RxList<Chat> archivedHelper(bool archived) {
-    if (archived)
-      return this.where((e) => e.isArchived ?? false).toList().obs;
-    else
-      return this.where((e) => !(e.isArchived ?? false)).toList().obs;
+    if (archived) {
+      return where((e) => e.isArchived ?? false).toList().obs;
+    } else {
+      return where((e) => !(e.isArchived ?? false)).toList().obs;
+    }
   }
 
   RxList<Chat> bigPinHelper(bool pinned) {
-    if (pinned)
-      return this
-          .where((e) => SettingsManager().settings.skin.value == Skins.iOS ? (e.isPinned ?? false) : true)
+    if (pinned) {
+      return where((e) => SettingsManager().settings.skin.value == Skins.iOS ? (e.isPinned ?? false) : true)
           .toList()
           .obs;
-    else
-      return this
-          .where((e) => SettingsManager().settings.skin.value == Skins.iOS ? !(e.isPinned ?? false) : true)
+    } else {
+      return where((e) => SettingsManager().settings.skin.value == Skins.iOS ? !(e.isPinned ?? false) : true)
           .toList()
           .obs;
+    }
   }
 
   RxList<Chat> unknownSendersHelper(bool unknown) {
     if (!SettingsManager().settings.filterUnknownSenders.value) return this;
-    if (unknown)
-      return this
-          .where(
+    if (unknown) {
+      return where(
               (e) => e.participants.length == 1 && ContactManager().handleToContact[e.participants[0].address] == null)
           .toList()
           .obs;
-    else
-      return this
-          .where((e) =>
+    } else {
+      return where((e) =>
               e.participants.length > 1 ||
               (e.participants.length == 1 && ContactManager().handleToContact[e.participants[0].address] != null))
           .toList()
           .obs;
+    }
   }
 }

@@ -13,6 +13,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_popup_holder.
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/helpers/darty.dart';
@@ -53,34 +54,23 @@ class ReceivedMessage extends StatefulWidget {
 
 class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMixin {
   bool checkedHandle = false;
+  late String contactTitle;
   final Rx<Skins> skin = Rx<Skins>(SettingsManager().settings.skin.value);
   late final spanFuture = MessageWidgetMixin.buildMessageSpansAsync(context, widget.message, colors: widget.message.handle?.color != null ? getBubbleColors() : null);
 
   @override
   initState() {
     super.initState();
-    initMessageState(widget.message, widget.showHandle).then((value) => {if (this.mounted) setState(() {})});
+    contactTitle = ContactManager().getContactTitle(widget.message.handle) ?? "";
 
-    // We need this here, or else messages without an avatar may not change.
-    // Even if it fits the criteria
-    ContactManager().colorStream.listen((event) {
-      if (!event.containsKey(widget.message.handle?.address)) return;
+    EventDispatcher().stream.listen((Map<String, dynamic> event) {
+      if (!event.containsKey("type")) return;
 
-      Color? color = event[widget.message.handle?.address];
-      if (color == null) {
-        widget.message.handle!.color = null;
-      } else {
-        widget.message.handle!.color = color.value.toRadixString(16);
+      if (event["type"] == 'refresh-avatar' && event["data"][0] == widget.message.handle?.address && mounted) {
+        widget.message.handle?.color = event['data'][1];
+        setState(() {});
       }
-
-      if (this.mounted) setState(() {});
     });
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    didChangeMessageDependencies(widget.message, widget.showHandle);
   }
 
   List<Color> getBubbleColors() {
@@ -103,12 +93,6 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     return bubbleColors;
   }
 
-  Future<void> didChangeMessageDependencies(Message message, bool? showHandle) async {
-    await getContactTitle(message, showHandle);
-    // await fetchAvatar(message);
-    if (this.mounted) setState(() {});
-  }
-
   /// Builds the message bubble with teh tail (if applicable)
   Widget _buildMessageWithTail(Message message) {
     if (message.isBigEmoji()) {
@@ -116,8 +100,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
           SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideEmojis.value;
 
       bool hasReactions = message
-          .getReactions()
-          .length > 0;
+          .getReactions().isNotEmpty;
       return Padding(
         padding: EdgeInsets.only(
           left: CurrentChat
@@ -127,8 +110,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
               .length > 1 ? 5.0 : 0.0,
           right: (hasReactions) ? 15.0 : 0.0,
           top: widget.message
-              .getReactions()
-              .length > 0 ? 15 : 0,
+              .getReactions().isNotEmpty ? 15 : 0,
         ),
         child: hideContent
             ? ClipRRect(
@@ -165,15 +147,14 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
       alignment: AlignmentDirectional.bottomStart,
       children: [
         if (widget.showTail && skin.value == Skins.iOS)
-          MessageTail(
+          Obx(() => MessageTail(
             isFromMe: false,
             color: getBubbleColors()[0],
-          ),
+          )),
         Container(
           margin: EdgeInsets.only(
             top: widget.message
-                .getReactions()
-                .length > 0 && !widget.message.hasAttachments
+                .getReactions().isNotEmpty && !widget.message.hasAttachments
                 ? 18
                 : (widget.message.isFromMe != widget.olderMessage?.isFromMe)
                 ? 5.0
@@ -182,7 +163,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
             right: 10,
           ),
           constraints: BoxConstraints(
-            maxWidth: CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE,
+            maxWidth: CustomNavigator.width(context) * MessageWidgetMixin.maxSize,
           ),
           padding: EdgeInsets.symmetric(
             vertical: 8,
@@ -222,19 +203,12 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
           ),
           child: FutureBuilder<List<InlineSpan>>(
               future: spanFuture,
+              initialData: MessageWidgetMixin.buildMessageSpans(context, widget.message,
+                colors: widget.message.handle?.color != null ? getBubbleColors() : null),
               builder: (context, snapshot) {
-                if (snapshot.data != null) {
-                  return RichText(
-                    text: TextSpan(
-                      children: snapshot.data!,
-                      style: Theme.of(context).textTheme.bodyText2,
-                    ),
-                  );
-                }
                 return RichText(
                   text: TextSpan(
-                    children: MessageWidgetMixin.buildMessageSpans(context, widget.message,
-                        colors: widget.message.handle?.color != null ? getBubbleColors() : null),
+                    children: snapshot.data!,
                     style: Theme.of(context).textTheme.bodyText2,
                   ),
                 );
@@ -271,10 +245,9 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
       messageColumn.add(
         Padding(
           padding: EdgeInsets.only(left: 15.0, top: 5.0, bottom: widget.message
-              .getReactions()
-              .length > 0 ? 0.0 : 3.0),
+              .getReactions().isNotEmpty ? 0.0 : 3.0),
           child: Text(
-            getContactName(context, contactTitle, widget.message.handle!.address),
+            getContactName(context, contactTitle, widget.message.handle?.address),
             style: Theme
                 .of(context)
                 .textTheme
@@ -289,11 +262,10 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
 
     // Second, add the attachments
     if (widget.message
-        .getRealAttachments()
-        .length > 0) {
+        .getRealAttachments().isNotEmpty) {
       messageColumn.add(
-        addStickersToWidget(
-          message: addReactionsToWidget(
+        MessageWidgetMixin.addStickersToWidget(
+          message: MessageWidgetMixin.addReactionsToWidget(
               messageWidget: widget.attachmentsWidget,
               reactions: widget.reactionsWidget,
               message: widget.message,
@@ -334,8 +306,8 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     // Fourth, let's add any reactions or stickers to the widget
     if (message != null) {
       messageColumn.add(
-        addStickersToWidget(
-          message: addReactionsToWidget(
+        MessageWidgetMixin.addStickersToWidget(
+          message: MessageWidgetMixin.addReactionsToWidget(
               messageWidget: message,
               reactions: widget.reactionsWidget,
               message: widget.message,
@@ -354,8 +326,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
         0,
         Padding(
           padding: EdgeInsets.only(left: 15.0, top: 5.0, bottom: widget.message
-              .getReactions()
-              .length > 0 ? 0.0 : 3.0),
+              .getReactions().isNotEmpty ? 0.0 : 3.0),
           child: Text(
             getContactName(context, contactTitle, widget.message.handle!.address),
             style: Theme

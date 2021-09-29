@@ -72,7 +72,7 @@ class AttachmentDownloadController extends GetxController {
 
   Future<void> getChunkRecursive(String guid, int index, int total, List<int> currentBytes) async {
     // if (index <= total) {
-    Map<String, dynamic> params = new Map();
+    Map<String, dynamic> params = {};
     params["identifier"] = guid;
     params["start"] = index * chunkSize;
     params["chunkSize"] = chunkSize;
@@ -107,7 +107,7 @@ class AttachmentDownloadController extends GetxController {
       if (attachmentResponse['status'] != 200 ||
           (attachmentResponse.containsKey("error") && attachmentResponse["error"] != null)) {
         if (!kIsWeb) {
-          File file = new File(attachment.getPath());
+          File file = File(attachment.getPath());
           if (await file.exists()) {
             await file.delete();
           }
@@ -141,7 +141,7 @@ class AttachmentDownloadController extends GetxController {
           // Compress the attachment
           if (!kIsWeb) {
             await AttachmentHelper.compressAttachment(attachment, attachment.getPath());
-            await attachment.save(null);
+            attachment.save(null);
           } else if (CurrentChat.activeChat?.chatAttachments.firstWhereOrNull((e) => e.guid == attachment.guid) ==
               null) {
             CurrentChat.activeChat?.chatAttachments.add(attachment);

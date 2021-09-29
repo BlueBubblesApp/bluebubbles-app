@@ -9,16 +9,16 @@ class IncomingQueue extends QueueManager {
 
   static final IncomingQueue _queue = IncomingQueue._internal();
 
-  static const String HANDLE_MESSAGE_EVENT = "handle-message";
-  static const String HANDLE_UPDATE_MESSAGE = "handle-updated-message";
-  static const String HANDLE_CHAT_STATUS_CHANGE = "chat-status-change";
+  static const String handleMessageEvent = "handle-message";
+  static const String handleUpdateMessage = "handle-updated-message";
+  static const String handleChatStatusChange = "chat-status-change";
 
   IncomingQueue._internal();
 
   @override
   Future<void> handleQueueItem(QueueItem item) async {
     switch (item.event) {
-      case HANDLE_MESSAGE_EVENT:
+      case handleMessageEvent:
         {
           Map<String, dynamic> params = item.item;
           await ActionHandler.handleMessage(params["data"],
@@ -27,14 +27,14 @@ class IncomingQueue extends QueueManager {
               isHeadless: params.containsKey("isHeadless") ? params["isHeadless"] : false);
           break;
         }
-      case HANDLE_UPDATE_MESSAGE:
+      case handleUpdateMessage:
         {
           Map<String, dynamic> params = item.item;
           await ActionHandler.handleUpdatedMessage(params["data"],
               headless: params.containsKey("isHeadless") ? params["isHeadless"] : false);
           break;
         }
-      case HANDLE_CHAT_STATUS_CHANGE:
+      case handleChatStatusChange:
         {
           Map<String, dynamic> params = item.item;
           await ActionHandler.handleChatStatusChange(params["chatGuid"], params["status"]);

@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/setup/upgrading_db.dart';
 import 'package:bluebubbles/main.dart';
@@ -39,8 +41,14 @@ callbackHandler() async {
     final objectBoxDirectory = Directory(documentsDirectory.path + '/objectbox/');
     final sqlitePath = join(documentsDirectory.path, "chat.db");
 
-    Future<void> Function() initStore = () async {
-      store = await openStore(directory: documentsDirectory.path + '/objectbox');
+    Future<void> initStore({bool saveThemes = false}) async {
+      if (prefs.getString("objectbox-reference") == null) {
+        debugPrint("Opening ObjectBox from Path");
+        store = await openStore(directory: (await getApplicationDocumentsDirectory()).path + '/objectbox');
+      } else {
+        debugPrint("Opening ObjectBox from Reference");
+        store = Store.fromReference(getObjectBoxModel(), base64.decode(prefs.getString("objectbox-reference")!).buffer.asByteData());
+      }
       attachmentBox = store.box<Attachment>();
       chatBox = store.box<Chat>();
       fcmDataBox = store.box<FCMData>();
@@ -53,7 +61,14 @@ callbackHandler() async {
       chJoinBox = store.box<ChatHandleJoin>();
       cmJoinBox = store.box<ChatMessageJoin>();
       tvJoinBox = store.box<ThemeValueJoin>();
-    };
+      if (saveThemes && themeObjectBox.isEmpty()) {
+        for (ThemeObject theme in Themes.themes) {
+          if (theme.name == "OLED Dark") theme.selectedDarkTheme = true;
+          if (theme.name == "Bright White") theme.selectedLightTheme = true;
+          theme.save(updateIfNotAbsent: false);
+        }
+      }
+    }
 
     if (!objectBoxDirectory.existsSync() && File(sqlitePath).existsSync()) {
       runApp(UpgradingDB());

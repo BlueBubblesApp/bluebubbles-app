@@ -1,4 +1,10 @@
 import 'dart:async';
+import 'package:bluebubbles/layouts/setup/setup_view.dart';
+import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/repository/models/settings.dart';
+import 'package:flutter/foundation.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:universal_io/io.dart';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -17,18 +23,11 @@ import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/database.dart';
-import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
-import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:universal_io/io.dart';
 
 class ConversationList extends StatefulWidget {
   ConversationList({Key? key, required this.showArchivedChats, required this.showUnknownSenders}) : super(key: key);
@@ -43,71 +42,33 @@ class ConversationList extends StatefulWidget {
 class ConversationListState extends State<ConversationList> {
   Color? currentHeaderColor;
   bool hasPinnedChats = false;
-
-  // ignore: close_sinks
-  StreamController<Color?> headerColorStream = StreamController<Color?>.broadcast();
-
-  late ScrollController scrollController;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (this.mounted) {
-      theme = Colors.transparent;
-    }
-
-    SystemChannels.textInput.invokeMethod('TextInput.hide').catchError((e) {
-      Logger.error("Error caught while hiding keyboard: ${e.toString()}");
-    });
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-
-    // Remove the scroll listener from the state
-    scrollController.removeListener(scrollListener);
-  }
+  final ScrollController scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    if (!widget.showUnknownSenders) {
-      ChatBloc().refreshChats();
-    }
-    scrollController = ScrollController()..addListener(scrollListener);
+    SystemChannels.textInput.invokeMethod('TextInput.hide').catchError((e) {
+      Logger.error("Error caught while hiding keyboard: ${e.toString()}");
+    });
 
     // Listen for any incoming events
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
       if (!event.containsKey("type")) return;
 
-      if (event["type"] == 'refresh' && this.mounted) {
+      if (event["type"] == 'refresh' && mounted) {
         setState(() {});
       }
     });
   }
 
-  Color? get theme => currentHeaderColor;
-
-  set theme(Color? color) {
-    if (currentHeaderColor == color) return;
-    currentHeaderColor = color;
-    if (!headerColorStream.isClosed) headerColorStream.sink.add(currentHeaderColor);
-  }
-
-  void scrollListener() {
-    !_isAppBarExpanded ? theme = Colors.transparent : theme = context.theme.accentColor.withOpacity(0.5);
-  }
-
-  bool get _isAppBarExpanded {
-    return scrollController.hasClients && scrollController.offset > (125 - kToolbarHeight);
-  }
-
-  List<Widget> getHeaderTextWidgets({double? size}) {
+  Widget getHeaderTextWidget({double? size}) {
     TextStyle? style = context.textTheme.headline1;
     if (size != null) style = style!.copyWith(fontSize: size);
 
-    return [Text(widget.showArchivedChats ? "Archive" : widget.showUnknownSenders ? "Unknown Senders" : "Messages", style: style), Container(width: 10)];
+    return Padding(
+      padding: const EdgeInsets.only(right: 10.0),
+      child: Text(widget.showArchivedChats ? "Archive" : widget.showUnknownSenders ? "Unknown Senders" : "Messages", style: style),
+    );
   }
 
   Widget getSyncIndicatorWidget() {
@@ -118,31 +79,15 @@ class ConversationListState extends State<ConversationList> {
     });
   }
 
-  void openNewChatCreator({List<PlatformFile>? existing}) async {
-    bool shouldShowSnackbar = (await SettingsManager().getMacOSVersion())! >= 11;
+  void openNewChatCreator({List<PlatformFile>? existing}) {
     CustomNavigator.pushAndRemoveUntil(
       context,
       ConversationView(
         isCreator: true,
-        showSnackbar: shouldShowSnackbar,
         existingAttachments: existing ?? [],
       ),
       (route) => route.isFirst,
     );
-  }
-
-  void sortChats() {
-    ChatBloc().chats.sort((a, b) {
-      if (a.pinIndex != null && b.pinIndex != null) return a.pinIndex!.compareTo(b.pinIndex!);
-      if (b.pinIndex != null) return 1;
-      if (a.pinIndex != null) return -1;
-      if (!a.isPinned! && b.isPinned!) return 1;
-      if (a.isPinned! && !b.isPinned!) return -1;
-      if (a.latestMessageDate == null && b.latestMessageDate == null) return 0;
-      if (a.latestMessageDate == null) return 1;
-      if (b.latestMessageDate == null) return -1;
-      return -a.latestMessageDate!.compareTo(b.latestMessageDate!);
-    });
   }
 
   Widget buildSettingsButton() => !widget.showArchivedChats && !widget.showUnknownSenders
@@ -190,12 +135,13 @@ class ConversationListState extends State<ConversationList> {
                       TextButton(
                         child: Text("Yes"),
                         onPressed: () async {
-                          await DBProvider.deleteDB();
                           await SettingsManager().resetConnection();
                           SettingsManager().settings.finishedSetup.value = false;
-                          SocketManager().finishedSetup.sink.add(false);
-                          Navigator.of(context).popUntil((route) => route.isFirst);
-                          SettingsManager().settings = new Settings();
+                          Get.offAll(() => WillPopScope(
+                            onWillPop: () async => false,
+                            child: SetupView(),
+                          ), duration: Duration.zero, transition: Transition.noTransition);
+                          SettingsManager().settings = Settings();
                           SettingsManager().settings.save();
                           SettingsManager().fcmData = null;
                           FCMData.deleteFcmData();
@@ -312,8 +258,8 @@ class ConversationListState extends State<ConversationList> {
 
                 String appDocPath = SettingsManager().appDocDir.path;
                 String ext = ".png";
-                File file = new File("$appDocPath/attachments/" + randomString(16) + ext);
-                await file.create(recursive: true);
+                File file = File("$appDocPath/attachments/" + randomString(16) + ext);
+                file.createSync(recursive: true);
 
                 // Take the picture after opening the camera
                 await MethodChannelInterface().invokeMethod("open-camera", {"path": file.path, "type": "camera"});
@@ -347,10 +293,13 @@ class ConversationListState extends State<ConversationList> {
     );
   }
 
-  List<Widget> getConnectionIndicatorWidgets() {
-    if (!SettingsManager().settings.showConnectionIndicator.value) return [];
+  Widget getConnectionIndicatorWidget() {
+    if (!SettingsManager().settings.showConnectionIndicator.value) return Container();
 
-    return [Obx(() => getIndicatorIcon(SocketManager().state.value, size: 12)), Container(width: 10.0)];
+    return Obx(() => Padding(
+      padding: const EdgeInsets.only(right: 10.0),
+      child: getIndicatorIcon(SocketManager().state.value, size: 12),
+    ));
   }
 
   @override

@@ -31,14 +31,14 @@ class MessageBlocEvent {
 
 class MessageBloc {
   final Rxn<MessageBlocEvent> event = Rxn<MessageBlocEvent>();
-  LinkedHashMap<String, Message> _allMessages = new LinkedHashMap();
-  LinkedHashMap<String, Message> _reactionMessages = new LinkedHashMap();
+  Map<String, Message> _allMessages = {};
+  final Map<String, Message> _reactionMessages = {};
   int _reactions = 0;
   bool showDeleted = false;
   bool _canLoadMore = true;
   bool _isGettingMore = false;
 
-  LinkedHashMap<String, Message> get messages {
+  Map<String, Message> get messages {
     if (!showDeleted) {
       _allMessages.removeWhere((key, value) => value.dateDeleted != null);
     }
@@ -46,7 +46,7 @@ class MessageBloc {
     return _allMessages;
   }
 
-  LinkedHashMap<String, Message> get reactionMessages {
+  Map<String, Message> get reactionMessages {
     if (!showDeleted) {
       _reactionMessages.removeWhere((key, value) => value.dateDeleted != null);
     }
@@ -77,7 +77,7 @@ class MessageBloc {
 
       // Iterate over each action that needs to take place on the chat
       bool addToRx = true;
-      MessageBlocEvent baseEvent = new MessageBlocEvent();
+      MessageBlocEvent baseEvent = MessageBlocEvent();
 
       // If we want to remove something, set the event data correctly
       if (msgEvent.type == NewMessageType.REMOVE && _allMessages.containsKey(msgEvent.event["guid"])) {
@@ -191,16 +191,16 @@ class MessageBloc {
     event.value = mbEvent;
   }
 
-  LinkedHashMap<String, Message> getMessages() {
+  Map<String, Message> getMessages() {
     // If we are already fetching, return empty
-    if (_isGettingMore || !this._canLoadMore) return new LinkedHashMap();
+    if (_isGettingMore || !_canLoadMore) return {};
     _isGettingMore = true;
 
     // Fetch messages
     List<Message> messages = Chat.getMessages(_currentChat!);
 
     if (isNullOrEmpty(messages)!) {
-      _allMessages = new LinkedHashMap();
+      _allMessages = {};
     } else {
       for (var element in messages) {
         if (element.associatedMessageGuid == null && element.guid != null) {
@@ -212,7 +212,7 @@ class MessageBloc {
       }
     }
 
-    this.emitLoaded();
+    emitLoaded();
 
     _isGettingMore = false;
     return _allMessages;
@@ -231,7 +231,7 @@ class MessageBloc {
 
     // List<dynamic> res =
     //     await SocketManager().fetchMessages(null, limit: 3, where: params);
-    _allMessages = new LinkedHashMap();
+    _allMessages = {};
     if (message.guid != null) {
       _allMessages.addAll({message.guid!: message});
     }
@@ -256,15 +256,15 @@ class MessageBloc {
 
     // Logger.instance.log(_allMessages.length);
 
-    this.emitLoaded();
+    emitLoaded();
   }
 
   Future<LoadMessageResult> loadMessageChunk(int offset,
       {bool includeReactions = true, bool checkLocal = true, CurrentChat? currentChat}) async {
     int reactionCnt = includeReactions ? _reactions : 0;
-    Completer<LoadMessageResult> completer = new Completer();
-    if (!this._canLoadMore) {
-      completer.complete(LoadMessageResult.RETREIVED_LAST_PAGE);
+    Completer<LoadMessageResult> completer = Completer();
+    if (!_canLoadMore) {
+      completer.complete(LoadMessageResult.RETRIEVED_LAST_PAGE);
       return completer.future;
     }
 
@@ -275,7 +275,7 @@ class MessageBloc {
       int count = 0;
 
       // Should we check locally first?
-      if (checkLocal) messages = Chat.getMessages(currChat, offset: offset + reactionCnt);
+      if (checkLocal) messages = await Chat.getMessagesAsync(currChat, offset: offset + reactionCnt);
 
       // Fetch messages from the socket
       count = messages.length;
@@ -288,7 +288,7 @@ class MessageBloc {
           // Handle the messages
           if (isNullOrEmpty(_messages)!) {
             Logger.info("No message chunks left from server", tag: "MessageBloc");
-            completer.complete(LoadMessageResult.RETREIVED_NO_MESSAGES);
+            completer.complete(LoadMessageResult.RETRIEVED_NO_MESSAGES);
           } else {
             Logger.info("Received ${_messages.length} messages from socket", tag: "MessageBloc");
 
@@ -298,13 +298,13 @@ class MessageBloc {
             // If the handle is empty, load it
             for (Message msg in messages) {
               if (msg.isFromMe! || msg.handle != null) continue;
-              msg.getHandle();
+              msg.handle = msg.getHandle();
             }
           }
         } catch (ex) {
           Logger.error("Failed to load message chunk!", tag: "MessageBloc");
           Logger.error(ex.toString());
-          completer.complete(LoadMessageResult.FAILED_TO_RETREIVE);
+          completer.complete(LoadMessageResult.FAILED_TO_RETRIEVE);
         }
       }
 
@@ -321,36 +321,36 @@ class MessageBloc {
 
       if (currentChat != null) {
         List<Message> messagesWithAttachment = messages.where((element) => element.hasAttachments).toList();
-        currentChat.preloadMessageAttachments(specificMessages: messagesWithAttachment);
+        await currentChat.preloadMessageAttachmentsAsync(specificMessages: messagesWithAttachment);
       }
 
-      this.emitLoaded();
+      emitLoaded();
 
       // Complete the execution
       if (count < 25 && !completer.isCompleted) {
-        completer.complete(LoadMessageResult.RETREIVED_LAST_PAGE);
+        completer.complete(LoadMessageResult.RETRIEVED_LAST_PAGE);
       } else if (count >= 25 && !completer.isCompleted) {
-        completer.complete(LoadMessageResult.RETREIVED_MESSAGES);
+        completer.complete(LoadMessageResult.RETRIEVED_MESSAGES);
       }
     } else {
       Logger.error(" Failed to load message chunk! Unknown chat!", tag: "MessageBloc");
-      completer.complete(LoadMessageResult.FAILED_TO_RETREIVE);
+      completer.complete(LoadMessageResult.FAILED_TO_RETRIEVE);
     }
 
     return completer.future;
   }
 
   void refresh() {
-    _allMessages = new LinkedHashMap();
+    _allMessages = {};
     _reactionMessages.clear();
     _reactions = 0;
 
-    this.getMessages();
+    getMessages();
   }
 
   void dispose() {
-    _allMessages = new LinkedHashMap();
+    _allMessages = {};
   }
 }
 
-enum LoadMessageResult { RETREIVED_MESSAGES, RETREIVED_NO_MESSAGES, FAILED_TO_RETREIVE, RETREIVED_LAST_PAGE }
+enum LoadMessageResult { RETRIEVED_MESSAGES, RETRIEVED_NO_MESSAGES, FAILED_TO_RETRIEVE, RETRIEVED_LAST_PAGE }

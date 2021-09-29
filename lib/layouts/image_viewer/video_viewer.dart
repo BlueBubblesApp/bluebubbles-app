@@ -55,7 +55,7 @@ class _VideoViewerState extends State<VideoViewer> {
       controller = VideoPlayerController.network(url);
     } else {
       dynamic file = File(widget.file.path!);
-      controller = new VideoPlayerController.file(file);
+      controller = VideoPlayerController.file(file);
     }
     controller.setVolume(SettingsManager().settings.startVideosMutedFullscreen.value ? 0 : 1);
     await controller.initialize();
@@ -75,9 +75,9 @@ class _VideoViewerState extends State<VideoViewer> {
           bufferedColor: Theme.of(context).backgroundColor,
           backgroundColor: Theme.of(context).disabledColor),
     );
-    setState(() {});
-    this.createListener(controller);
+    createListener(controller);
     showPlayPauseOverlay = !controller.value.isPlaying;
+    if (mounted) setState(() {});
   }
 
   void createListener(VideoPlayerController? controller) {
@@ -89,16 +89,16 @@ class _VideoViewerState extends State<VideoViewer> {
 
       // If the status hasn't changed, don't do anything
       if (currentStatus == status) return;
-      this.status = currentStatus;
+      status = currentStatus;
 
       // If the status is ended, restart
-      if (this.status == PlayerStatus.ENDED) {
+      if (status == PlayerStatus.ENDED) {
         showPlayPauseOverlay = true;
         await controller.pause();
         await controller.seekTo(Duration());
       }
 
-      if (this.mounted) setState(() {});
+      if (mounted) setState(() {});
     });
 
     hasListener = true;
@@ -154,7 +154,7 @@ class _VideoViewerState extends State<VideoViewer> {
                         ])));
                       }
 
-                      if (metaWidgets.length == 0) {
+                      if (metaWidgets.isEmpty) {
                         metaWidgets.add(Text(
                           "No metadata available",
                           style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2),
@@ -225,7 +225,7 @@ class _VideoViewerState extends State<VideoViewer> {
                           controller = VideoPlayerController.network(url);
                         } else {
                           dynamic file = File(widget.file.path!);
-                          controller = new VideoPlayerController.file(file);
+                          controller = VideoPlayerController.file(file);
                         }
                         await controller.initialize();
                         isReloading.value = false;
@@ -246,12 +246,12 @@ class _VideoViewerState extends State<VideoViewer> {
                               bufferedColor: Theme.of(context).backgroundColor,
                               backgroundColor: Theme.of(context).disabledColor),
                         );
-                        this.createListener(controller);
+                        createListener(controller);
                         showPlayPauseOverlay = !controller.value.isPlaying;
                       }, onError: () {
                         Navigator.pop(context);
                       });
-                      if (this.mounted) setState(() {});
+                      if (mounted) setState(() {});
                     },
                     child: Icon(
                       SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.refresh : Icons.refresh,
@@ -336,7 +336,7 @@ class _VideoViewerState extends State<VideoViewer> {
               alignment: Alignment.bottomCenter,
               children: <Widget>[
                 Obx(() {
-                  if (!isReloading.value && chewieController != null)
+                  if (!isReloading.value && chewieController != null) {
                     return SafeArea(
                       child: Center(
                         child: Theme(
@@ -354,13 +354,14 @@ class _VideoViewerState extends State<VideoViewer> {
                         ),
                       ),
                     );
-                  else
+                  } else {
                     return Center(
                       child: CircularProgressIndicator(
                         backgroundColor: Theme.of(context).accentColor,
                         valueColor: AlwaysStoppedAnimation(Theme.of(context).primaryColor),
                       ),
                     );
+                  }
                 }),
                 if (widget.showInteractions)
                   Positioned(

@@ -124,7 +124,7 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
                             builder: (BuildContext context) {
                               return AlertDialog(
                                   backgroundColor: Theme.of(context).accentColor,
-                                  title: new Text("Custom Avatar",
+                                  title: Text("Custom Avatar",
                                       style:
                                       TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
                                   content: Column(
@@ -154,7 +154,7 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
                                                 .subtitle1!
                                                 .apply(color: Theme.of(context).primaryColor)),
                                         onPressed: () {
-                                          File file = new File(ChatBloc().chats[index].customAvatarPath!);
+                                          File file = File(ChatBloc().chats[index].customAvatarPath!);
                                           file.delete();
                                           ChatBloc().chats[index].customAvatarPath = null;
                                           ChatBloc().chats[index].save();
