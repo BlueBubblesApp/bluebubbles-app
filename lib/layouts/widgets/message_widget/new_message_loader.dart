@@ -17,12 +17,20 @@ class NewMessageLoader extends StatelessWidget {
         ),
         Padding(
           padding: const EdgeInsets.all(16.0),
-          child: SettingsManager().settings.skin.value == Skins.iOS ? Theme(
-            data: ThemeData(
-              cupertinoOverrideTheme: CupertinoThemeData(brightness: Brightness.dark),
-            ),
-            child: CupertinoActivityIndicator(),
-          ) : Container(height: 20, width: 20, child: Center(child: CircularProgressIndicator(strokeWidth: 2,))),
+          child: SettingsManager().settings.skin.value == Skins.iOS
+              ? Theme(
+                  data: ThemeData(
+                    cupertinoOverrideTheme: CupertinoThemeData(brightness: Brightness.dark),
+                  ),
+                  child: CupertinoActivityIndicator(),
+                )
+              : Container(
+                  height: 20,
+                  width: 20,
+                  child: Center(
+                      child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                  ))),
         ),
       ],
     );

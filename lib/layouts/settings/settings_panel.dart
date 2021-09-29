@@ -1,47 +1,47 @@
 import 'dart:convert';
-import 'package:bluebubbles/layouts/setup/setup_view.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
-import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:flutter/foundation.dart';
-import 'package:universal_io/io.dart';
-import 'package:universal_html/html.dart' as html;
 import 'dart:ui';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/about_panel.dart';
 import 'package:bluebubbles/layouts/settings/attachment_panel.dart';
 import 'package:bluebubbles/layouts/settings/chat_list_panel.dart';
 import 'package:bluebubbles/layouts/settings/conversation_panel.dart';
+import 'package:bluebubbles/layouts/settings/misc_panel.dart';
 import 'package:bluebubbles/layouts/settings/notification_panel.dart';
 import 'package:bluebubbles/layouts/settings/private_api_panel.dart';
 import 'package:bluebubbles/layouts/settings/redacted_mode_panel.dart';
 import 'package:bluebubbles/layouts/settings/server_management_panel.dart';
 import 'package:bluebubbles/layouts/settings/theme_panel.dart';
 import 'package:bluebubbles/layouts/settings/troubleshoot_panel.dart';
-import 'package:bluebubbles/layouts/widgets/vertical_split_view.dart';
-import 'package:bluebubbles/repository/models/models.dart';
-import 'package:collection/collection.dart';
-import 'package:get/get.dart';
-import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/settings/misc_panel.dart';
+import 'package:bluebubbles/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/layouts/widgets/custom_cupertino_text_field.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/layouts/widgets/vertical_split_view.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:collection/collection.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
+import 'package:universal_html/html.dart' as html;
+import 'package:universal_io/io.dart';
 
 List disconnectedStates = [SocketState.DISCONNECTED, SocketState.ERROR, SocketState.FAILED];
 
@@ -497,7 +497,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           cancel: Container(height: 0, width: 0),
                           content: Column(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
                             SizedBox(
-                            height: 15.0,
+                              height: 15.0,
                             ),
                             Text("Load From / Save To Server", style: Theme.of(context).textTheme.subtitle1),
                             Padding(
@@ -516,7 +516,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                   ),
                                   onPressed: () async {
                                     DateTime now = DateTime.now().toLocal();
-                                    String name = "Android_${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}";
+                                    String name =
+                                        "Android_${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}";
                                     Map<String, dynamic> json = SettingsManager().settings.toMap();
                                     var response = await api.setSettings(name, json);
                                     if (response.statusCode != 200) {
@@ -573,36 +574,36 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                                 constraints: BoxConstraints(
                                                   maxHeight: Get.height - 300,
                                                 ),
-                                                child: StatefulBuilder(
-                                                    builder: (context, setState) {
-                                                      return SingleChildScrollView(
-                                                        child: Column(
-                                                          mainAxisSize: MainAxisSize.min,
-                                                          children: [
-                                                            Padding(
-                                                              padding: const EdgeInsets.all(8.0),
-                                                              child: Text("Select the backup you would like to restore"),
-                                                            ),
-                                                            ListView.builder(
-                                                              shrinkWrap: true,
-                                                              itemCount: json.length,
-                                                              physics: NeverScrollableScrollPhysics(),
-                                                              itemBuilder: (context, index) {
-                                                                return ListTile(
-                                                                  title: Text(json[index]['name'], style: Theme.of(context).textTheme.headline1),
-                                                                  onTap: () {
-                                                                    Settings.updateFromMap(json[index]);
-                                                                    Get.back();
-                                                                    showSnackbar("Success", "Settings restored successfully");
-                                                                  },
-                                                                );
-                                                              },
-                                                            ),
-                                                          ],
+                                                child: StatefulBuilder(builder: (context, setState) {
+                                                  return SingleChildScrollView(
+                                                    child: Column(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        Padding(
+                                                          padding: const EdgeInsets.all(8.0),
+                                                          child: Text("Select the backup you would like to restore"),
                                                         ),
-                                                      );
-                                                    }
-                                                ),
+                                                        ListView.builder(
+                                                          shrinkWrap: true,
+                                                          itemCount: json.length,
+                                                          physics: NeverScrollableScrollPhysics(),
+                                                          itemBuilder: (context, index) {
+                                                            return ListTile(
+                                                              title: Text(json[index]['name'],
+                                                                  style: Theme.of(context).textTheme.headline1),
+                                                              onTap: () {
+                                                                Settings.updateFromMap(json[index]);
+                                                                Get.back();
+                                                                showSnackbar(
+                                                                    "Success", "Settings restored successfully");
+                                                              },
+                                                            );
+                                                          },
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  );
+                                                }),
                                               ),
                                             ),
                                           ),
@@ -627,150 +628,148 @@ class _SettingsPanelState extends State<SettingsPanel> {
                               ],
                             ),
                             if (!kIsWeb)
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      primary: Theme.of(context).primaryColor,
+                              Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
                                     ),
-                                    onPressed: () async {
-                                      List<ThemeObject> allThemes = (ThemeObject.getThemes()).where((element) => !element.isPreset).toList();
-                                      for (ThemeObject e in allThemes) {
-                                        List<dynamic> entryJson = [];
-                                        e.fetchData();
-                                        for (ThemeEntry e2 in e.entries) {
-                                          entryJson.add(e2.toMap());
-                                        }
-                                        Map<String, dynamic> map = e.toMap();
-                                        map['entries'] = entryJson;
-                                        String name = "Android_${e.name}";
-                                        var response = await api.setTheme(name, map);
-                                        if (response.statusCode != 200) {
-                                          showSnackbar(
-                                            "Error",
-                                            "Somthing went wrong",
-                                          );
-                                        } else {
-                                          showSnackbar(
-                                            "Success",
-                                            "Theme ${e.name} exported successfully to server",
-                                          );
-                                        }
+                                    primary: Theme.of(context).primaryColor,
+                                  ),
+                                  onPressed: () async {
+                                    List<ThemeObject> allThemes =
+                                        (ThemeObject.getThemes()).where((element) => !element.isPreset).toList();
+                                    for (ThemeObject e in allThemes) {
+                                      List<dynamic> entryJson = [];
+                                      e.fetchData();
+                                      for (ThemeEntry e2 in e.entries) {
+                                        entryJson.add(e2.toMap());
                                       }
-                                      if (allThemes.isEmpty) {
+                                      Map<String, dynamic> map = e.toMap();
+                                      map['entries'] = entryJson;
+                                      String name = "Android_${e.name}";
+                                      var response = await api.setTheme(name, map);
+                                      if (response.statusCode != 200) {
                                         showSnackbar(
-                                          "Notice",
-                                          "No custom themes found!",
+                                          "Error",
+                                          "Somthing went wrong",
+                                        );
+                                      } else {
+                                        showSnackbar(
+                                          "Success",
+                                          "Theme ${e.name} exported successfully to server",
                                         );
                                       }
-                                      Get.back();
-                                    },
-                                    child: Text(
-                                      "Save Theming",
-                                      style: TextStyle(
-                                        color: Theme.of(context).textTheme.bodyText1!.color,
-                                        fontSize: 13,
-                                      ),
+                                    }
+                                    if (allThemes.isEmpty) {
+                                      showSnackbar(
+                                        "Notice",
+                                        "No custom themes found!",
+                                      );
+                                    }
+                                    Get.back();
+                                  },
+                                  child: Text(
+                                    "Save Theming",
+                                    style: TextStyle(
+                                      color: Theme.of(context).textTheme.bodyText1!.color,
+                                      fontSize: 13,
                                     ),
                                   ),
-                                  SizedBox(width: 10),
-                                  ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(10),
-                                          side: BorderSide(color: Theme.of(context).primaryColor)),
-                                      primary: Theme.of(context).backgroundColor,
-                                    ),
-                                    onPressed: () async {
-                                      var response = await api.getTheme();
-                                      if (response.statusCode == 200 && response.data.isNotEmpty) {
-                                        try {
-                                          List<dynamic> json = response.data['data'];
-                                          Get.back();
-                                          Get.defaultDialog(
-                                            title: "Theme Backups",
-                                            titleStyle: Theme.of(context).textTheme.headline1,
-                                            confirm: Container(height: 0, width: 0),
-                                            cancel: Container(height: 0, width: 0),
-                                            backgroundColor: Theme.of(context).backgroundColor,
-                                            buttonColor: Theme.of(context).primaryColor,
-                                            content: Container(
-                                              constraints: BoxConstraints(
-                                                maxHeight: 300,
-                                              ),
-                                              child: Center(
-                                                child: Container(
-                                                  width: 300,
-                                                  height: 300,
-                                                  constraints: BoxConstraints(
-                                                    maxHeight: Get.height - 300,
-                                                  ),
-                                                  child: StatefulBuilder(
-                                                      builder: (context, setState) {
-                                                        return SingleChildScrollView(
-                                                          child: Column(
-                                                            mainAxisSize: MainAxisSize.min,
-                                                            children: [
-                                                              Padding(
-                                                                padding: const EdgeInsets.all(8.0),
-                                                                child: Text("Select the backup you would like to restore"),
-                                                              ),
-                                                              ListView.builder(
-                                                                shrinkWrap: true,
-                                                                itemCount: json.length,
-                                                                physics: NeverScrollableScrollPhysics(),
-                                                                itemBuilder: (context, index) {
-                                                                  return ListTile(
-                                                                    title: Text(json[index]['name'], style: Theme.of(context).textTheme.headline1),
-                                                                    onTap: () async {
-                                                                      ThemeObject object = ThemeObject.fromMap(json[index]);
-                                                                      List<dynamic> entriesJson = json[index]['entries'];
-                                                                      List<ThemeEntry> entries = [];
-                                                                      for (var e2 in entriesJson) {
-                                                                        entries.add(ThemeEntry.fromMap(e2));
-                                                                      }
-                                                                      object.entries = entries;
-                                                                      object.data = object.themeData;
-                                                                      object.save();
-                                                                      SettingsManager().saveSelectedTheme(context);
-                                                                      Get.back();
-                                                                      showSnackbar("Success", "Theming restored successfully");
-                                                                    },
-                                                                  );
-                                                                },
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        );
-                                                      }
-                                                  ),
+                                ),
+                                SizedBox(width: 10),
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        side: BorderSide(color: Theme.of(context).primaryColor)),
+                                    primary: Theme.of(context).backgroundColor,
+                                  ),
+                                  onPressed: () async {
+                                    var response = await api.getTheme();
+                                    if (response.statusCode == 200 && response.data.isNotEmpty) {
+                                      try {
+                                        List<dynamic> json = response.data['data'];
+                                        Get.back();
+                                        Get.defaultDialog(
+                                          title: "Theme Backups",
+                                          titleStyle: Theme.of(context).textTheme.headline1,
+                                          confirm: Container(height: 0, width: 0),
+                                          cancel: Container(height: 0, width: 0),
+                                          backgroundColor: Theme.of(context).backgroundColor,
+                                          buttonColor: Theme.of(context).primaryColor,
+                                          content: Container(
+                                            constraints: BoxConstraints(
+                                              maxHeight: 300,
+                                            ),
+                                            child: Center(
+                                              child: Container(
+                                                width: 300,
+                                                height: 300,
+                                                constraints: BoxConstraints(
+                                                  maxHeight: Get.height - 300,
                                                 ),
+                                                child: StatefulBuilder(builder: (context, setState) {
+                                                  return SingleChildScrollView(
+                                                    child: Column(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        Padding(
+                                                          padding: const EdgeInsets.all(8.0),
+                                                          child: Text("Select the backup you would like to restore"),
+                                                        ),
+                                                        ListView.builder(
+                                                          shrinkWrap: true,
+                                                          itemCount: json.length,
+                                                          physics: NeverScrollableScrollPhysics(),
+                                                          itemBuilder: (context, index) {
+                                                            return ListTile(
+                                                              title: Text(json[index]['name'],
+                                                                  style: Theme.of(context).textTheme.headline1),
+                                                              onTap: () async {
+                                                                ThemeObject object = ThemeObject.fromMap(json[index]);
+                                                                List<dynamic> entriesJson = json[index]['entries'];
+                                                                List<ThemeEntry> entries = [];
+                                                                for (var e2 in entriesJson) {
+                                                                  entries.add(ThemeEntry.fromMap(e2));
+                                                                }
+                                                                object.entries = entries;
+                                                                object.data = object.themeData;
+                                                                object.save();
+                                                                SettingsManager().saveSelectedTheme(context);
+                                                                Get.back();
+                                                                showSnackbar(
+                                                                    "Success", "Theming restored successfully");
+                                                              },
+                                                            );
+                                                          },
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  );
+                                                }),
                                               ),
                                             ),
-                                          );
-                                        } catch (_) {
-                                          Get.back();
-                                          showSnackbar("Error", "Something went wrong");
-                                        }
-                                      } else {
+                                          ),
+                                        );
+                                      } catch (_) {
                                         Get.back();
                                         showSnackbar("Error", "Something went wrong");
                                       }
-                                    },
-                                    child: Text(
-                                      "Load Theming",
-                                      style: TextStyle(
-                                        color: Theme.of(context).textTheme.bodyText1!.color,
-                                        fontSize: 13,
-                                      ),
+                                    } else {
+                                      Get.back();
+                                      showSnackbar("Error", "Something went wrong");
+                                    }
+                                  },
+                                  child: Text(
+                                    "Load Theming",
+                                    style: TextStyle(
+                                      color: Theme.of(context).textTheme.bodyText1!.color,
+                                      fontSize: 13,
                                     ),
                                   ),
-                                ]
-                              ),
+                                ),
+                              ]),
                             SizedBox(
                               height: 15.0,
                             ),
@@ -952,42 +951,42 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                       primary: Theme.of(context).backgroundColor,
                                     ),
                                     onPressed: () async {
-                                      final res = await FilePicker.platform
-                                          .pickFiles(withData: true, type: FileType.custom, allowedExtensions: ["json"]);
+                                      final res = await FilePicker.platform.pickFiles(
+                                          withData: true, type: FileType.custom, allowedExtensions: ["json"]);
                                       if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
 
-                                    try {
-                                      String jsonString = Utf8Decoder().convert(res.files.first.bytes!);
-                                      List<dynamic> json = jsonDecode(jsonString);
-                                      for (var e in json) {
-                                        ThemeObject object = ThemeObject.fromMap(e);
-                                        List<dynamic> entriesJson = e['entries'];
-                                        List<ThemeEntry> entries = [];
-                                        for (var e2 in entriesJson) {
-                                          entries.add(ThemeEntry.fromMap(e2));
+                                      try {
+                                        String jsonString = Utf8Decoder().convert(res.files.first.bytes!);
+                                        List<dynamic> json = jsonDecode(jsonString);
+                                        for (var e in json) {
+                                          ThemeObject object = ThemeObject.fromMap(e);
+                                          List<dynamic> entriesJson = e['entries'];
+                                          List<ThemeEntry> entries = [];
+                                          for (var e2 in entriesJson) {
+                                            entries.add(ThemeEntry.fromMap(e2));
+                                          }
+                                          object.entries = entries;
+                                          object.data = object.themeData;
+                                          object.save();
                                         }
-                                        object.entries = entries;
-                                        object.data = object.themeData;
-                                        object.save();
+                                        SettingsManager().saveSelectedTheme(context);
+                                        Get.back();
+                                        showSnackbar("Success", "Theming restored successfully");
+                                      } catch (_) {
+                                        Get.back();
+                                        showSnackbar("Error", "Something went wrong");
                                       }
-                                      SettingsManager().saveSelectedTheme(context);
-                                      Get.back();
-                                      showSnackbar("Success", "Theming restored successfully");
-                                    } catch (_) {
-                                      Get.back();
-                                      showSnackbar("Error", "Something went wrong");
-                                    }
-                                  },
-                                  child: Text(
-                                    "Load Theming",
-                                    style: TextStyle(
-                                      color: Theme.of(context).textTheme.bodyText1!.color,
-                                      fontSize: 13,
+                                    },
+                                    child: Text(
+                                      "Load Theming",
+                                      style: TextStyle(
+                                        color: Theme.of(context).textTheme.bodyText1!.color,
+                                        fontSize: 13,
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
+                                ],
+                              ),
                           ]),
                           barrierDismissible: true,
                           backgroundColor: Theme.of(context).backgroundColor,
@@ -1012,17 +1011,24 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         backgroundColor: tileColor,
                         onTap: () async {
                           String json = "[";
-                          ContactManager().handleToContact.values.where((element) => element != null).forEachIndexed((index, c) {
+                          ContactManager()
+                              .handleToContact
+                              .values
+                              .where((element) => element != null)
+                              .forEachIndexed((index, c) {
                             var map = c!.toMap();
                             map.remove("avatar");
                             json = json + jsonEncode(map);
-                            if (index != ContactManager().handleToContact.values.where((element) => element != null).length - 1) {
+                            if (index !=
+                                ContactManager().handleToContact.values.where((element) => element != null).length -
+                                    1) {
                               json = json + ",";
                             } else {
                               json = json + "]";
                             }
                           });
-                          SocketManager().sendMessage("save-vcf", {"vcf": json}, (_) => showSnackbar("Notice", "Successfully exported contacts to server"));
+                          SocketManager().sendMessage("save-vcf", {"vcf": json},
+                              (_) => showSnackbar("Notice", "Successfully exported contacts to server"));
                         },
                         leading: SettingsLeadingIcon(
                           iosIcon: CupertinoIcons.group,
@@ -1059,10 +1065,13 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                     DBProvider.deleteDB();
                                     await SettingsManager().resetConnection();
                                     SettingsManager().settings.finishedSetup.value = false;
-                                    Get.offAll(() => WillPopScope(
-                                      onWillPop: () async => false,
-                                      child: SetupView(),
-                                    ), duration: Duration.zero, transition: Transition.noTransition);
+                                    Get.offAll(
+                                        () => WillPopScope(
+                                              onWillPop: () async => false,
+                                              child: SetupView(),
+                                            ),
+                                        duration: Duration.zero,
+                                        transition: Transition.noTransition);
                                     SettingsManager().settings = Settings();
                                     SettingsManager().settings.save();
                                     SettingsManager().fcmData = null;

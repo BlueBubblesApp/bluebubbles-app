@@ -32,7 +32,9 @@ class SetupOutputData {
 class SetupBloc {
   // Setup as a Singleton
   static final SetupBloc _setupBloc = SetupBloc._internal();
+
   SetupBloc._internal();
+
   factory SetupBloc() {
     return _setupBloc;
   }
@@ -174,7 +176,8 @@ class SetupBloc {
                 {"statement": "message.service = 'iMessage'", "args": null}
               ];
               List<dynamic> messages = await SocketManager().getChatMessages(params)!;
-              addOutput("Received ${messages.length} messages for chat, '${chat.chatIdentifier}'!", SetupOutputType.LOG);
+              addOutput(
+                  "Received ${messages.length} messages for chat, '${chat.chatIdentifier}'!", SetupOutputType.LOG);
               if (!skipEmptyChats || (skipEmptyChats && messages.isNotEmpty)) {
                 chat.save();
 

@@ -1,14 +1,14 @@
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/models.dart';
-import 'package:collection/collection.dart';
-import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/contact_selector_custom_cupertino_textfield.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/models.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class ChatSelectorTextField extends StatelessWidget {
   ChatSelectorTextField({
@@ -90,7 +90,8 @@ class ChatSelectorTextField extends StatelessWidget {
             if (done.isEmail || done.isPhoneNumber) {
               Contact? contact = ContactManager().getCachedContact(address: done);
               if (contact == null) {
-                onSelected(UniqueContact(address: done, displayName: done.isEmail ? done : await formatPhoneNumber(done)));
+                onSelected(
+                    UniqueContact(address: done, displayName: done.isEmail ? done : await formatPhoneNumber(done)));
               } else {
                 onSelected(UniqueContact(address: done, displayName: contact.displayName));
               }

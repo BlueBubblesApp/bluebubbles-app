@@ -1,16 +1,15 @@
 import 'dart:convert';
 
-import 'package:bluebubbles/repository/models/platform_file.dart';
-import 'package:flutter/foundation.dart';
-import 'package:universal_html/html.dart' as html;
-
-import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
+import 'package:universal_html/html.dart' as html;
 
 class RegularFileOpener extends StatelessWidget {
   RegularFileOpener({
@@ -29,8 +28,7 @@ class RegularFileOpener extends StatelessWidget {
       onTap: () async {
         if (kIsWeb || file.path == null) {
           final content = base64.encode(file.bytes!);
-          html.AnchorElement(
-              href: "data:application/octet-stream;charset=utf-16le;base64,$content")
+          html.AnchorElement(href: "data:application/octet-stream;charset=utf-16le;base64,$content")
             ..setAttribute("download", file.name)
             ..click();
         } else {
@@ -38,10 +36,7 @@ class RegularFileOpener extends StatelessWidget {
             await MethodChannelInterface().invokeMethod(
               "open_file",
               {
-                "path": "/attachments/" +
-                    attachment.guid! +
-                    "/" +
-                    basename(file.path!),
+                "path": "/attachments/" + attachment.guid! + "/" + basename(file.path!),
                 "mimeType": attachment.mimeType,
               },
             );

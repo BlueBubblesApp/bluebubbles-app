@@ -1,8 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:bluebubbles/repository/models/platform_file.dart';
-import 'package:flutter/foundation.dart';
-import 'package:universal_io/io.dart';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
@@ -12,10 +9,13 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:tuple/tuple.dart';
+import 'package:universal_io/io.dart';
 
 class AttachmentSender {
   final Rx<Tuple2<num?, bool>> attachmentData = Rx<Tuple2<num?, bool>>(Tuple2(null, false));
@@ -91,8 +91,7 @@ class AttachmentSender {
 
         String? tempGuid = sentMessage!.guid;
         sentMessage!.guid = sentMessage!.guid!.replaceAll("temp", "error-${response['error']['message']}");
-        sentMessage!.error =
-            response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
+        sentMessage!.error = response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
 
         await Message.replaceMessage(tempGuid, sentMessage);
         NewMessageManager().updateMessage(_chat, tempGuid!, sentMessage!);
@@ -128,10 +127,16 @@ class AttachmentSender {
       transferName: _attachmentName,
       mimeType: mime(_attachmentName),
       width: mime(_attachmentName)!.startsWith("image")
-          ? (await AttachmentHelper.getImageSizing(kIsWeb ? _attachment.name : _attachment.path ?? _attachment.name, bytes: _attachment.bytes)).width.toInt()
+          ? (await AttachmentHelper.getImageSizing(kIsWeb ? _attachment.name : _attachment.path ?? _attachment.name,
+                  bytes: _attachment.bytes))
+              .width
+              .toInt()
           : null,
       height: mime(_attachmentName)!.startsWith("image")
-          ? (await AttachmentHelper.getImageSizing(kIsWeb ? _attachment.name : _attachment.path ?? _attachment.name, bytes: _attachment.bytes)).height.toInt()
+          ? (await AttachmentHelper.getImageSizing(kIsWeb ? _attachment.name : _attachment.path ?? _attachment.name,
+                  bytes: _attachment.bytes))
+              .height
+              .toInt()
           : null,
     );
 

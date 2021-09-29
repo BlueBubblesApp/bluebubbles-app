@@ -1,23 +1,23 @@
-import 'package:bluebubbles/repository/models/platform_file.dart';
-import 'package:flutter/foundation.dart';
-import 'package:universal_io/io.dart';
 import 'dart:typed_data';
 
-import 'package:bluebubbles/helpers/navigator.dart';
-import 'package:bluebubbles/helpers/utils.dart';
-import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/share.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachment_fullscreen_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:photo_view/photo_view.dart';
+import 'package:universal_io/io.dart';
 
 class ImageViewer extends StatefulWidget {
   ImageViewer({
@@ -57,8 +57,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
     if (kIsWeb || widget.file.path == null) {
       bytes = widget.file.bytes;
     } else if (widget.attachment.mimeType == "image/heic") {
-      bytes =
-          await AttachmentHelper.compressAttachment(widget.attachment, widget.file.path!, qualityOverride: 100);
+      bytes = await AttachmentHelper.compressAttachment(widget.attachment, widget.file.path!, qualityOverride: 100);
     } else {
       bytes = await File(widget.file.path!).readAsBytes();
     }
@@ -199,7 +198,9 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                       await AttachmentHelper.saveToGallery(context, widget.file);
                     },
                     child: Icon(
-                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.cloud_download : Icons.file_download,
+                      SettingsManager().settings.skin.value == Skins.iOS
+                          ? CupertinoIcons.cloud_download
+                          : Icons.file_download,
                       color: Colors.white,
                     ),
                   ),
@@ -266,9 +267,9 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                         if (AttachmentFullscreenViewer.of(context) == null) return;
                         if (mounted) {
                           AttachmentFullscreenViewerState? state = AttachmentFullscreenViewer.of(context);
-                          if (scale == PhotoViewScaleState.zoomedIn
-                              || scale == PhotoViewScaleState.covering
-                              || scale == PhotoViewScaleState.originalSize) {
+                          if (scale == PhotoViewScaleState.zoomedIn ||
+                              scale == PhotoViewScaleState.covering ||
+                              scale == PhotoViewScaleState.originalSize) {
                             if (state!.physics != NeverScrollableScrollPhysics()) {
                               AttachmentFullscreenViewer.of(context)!.setState(() {
                                 AttachmentFullscreenViewer.of(context)!.physics = NeverScrollableScrollPhysics();

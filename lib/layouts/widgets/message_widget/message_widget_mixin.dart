@@ -1,6 +1,5 @@
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -49,7 +48,9 @@ abstract class MessageWidgetMixin {
     final bool generateContent =
         SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeMessageContent.value;
     final bool hideContent = (message?.guid?.contains("theme-selector") ?? false) ||
-        (SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value && !generateContent);
+        (SettingsManager().settings.redactedMode.value &&
+            SettingsManager().settings.hideMessageContent.value &&
+            !generateContent);
 
     if (message != null && !isEmptyString(message.text)) {
       RegExp exp = RegExp(
@@ -86,7 +87,12 @@ abstract class MessageWidgetMixin {
           textStyle = textStyle!.apply(color: Colors.transparent);
         }
       } else {
-        textStyle = textStyle!.apply(color: hideContent ? Colors.transparent : Theme.of(context).primaryColor.computeLuminance() > 0.8 ? Colors.black : Colors.white);
+        textStyle = textStyle!.apply(
+            color: hideContent
+                ? Colors.transparent
+                : Theme.of(context).primaryColor.computeLuminance() > 0.8
+                    ? Colors.black
+                    : Colors.white);
       }
 
       if (!isNullOrEmpty(message.subject)!) {
@@ -166,13 +172,16 @@ abstract class MessageWidgetMixin {
     return textSpans;
   }
 
-  static Future<List<InlineSpan>> buildMessageSpansAsync(BuildContext context, Message? message, {List<Color>? colors = const []}) async {
+  static Future<List<InlineSpan>> buildMessageSpansAsync(BuildContext context, Message? message,
+      {List<Color>? colors = const []}) async {
     List<InlineSpan> textSpans = <InlineSpan>[];
 
     final bool generateContent =
         SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeMessageContent.value;
     final bool hideContent = (message?.guid?.contains("theme-selector") ?? false) ||
-        (SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value && !generateContent);
+        (SettingsManager().settings.redactedMode.value &&
+            SettingsManager().settings.hideMessageContent.value &&
+            !generateContent);
 
     if (message != null && !isEmptyString(message.text)) {
       RegExp exp = RegExp(
@@ -187,7 +196,8 @@ abstract class MessageWidgetMixin {
       if (!kIsWeb && !kIsDesktop) {
         List<EntityAnnotation> entities = [];
         if (CurrentChat.activeChat?.entityExtractorData[message.guid] == null) {
-          entities = await GoogleMlKit.nlp.entityExtractor(EntityExtractorOptions.ENGLISH).extractEntities(message.text!);
+          entities =
+              await GoogleMlKit.nlp.entityExtractor(EntityExtractorOptions.ENGLISH).extractEntities(message.text!);
           CurrentChat.activeChat?.entityExtractorData[message.guid!] = entities;
         } else {
           entities = CurrentChat.activeChat!.entityExtractorData[message.guid]!;
@@ -233,7 +243,12 @@ abstract class MessageWidgetMixin {
           textStyle = textStyle!.apply(color: Colors.transparent);
         }
       } else {
-        textStyle = textStyle!.apply(color: hideContent ? Colors.transparent : Theme.of(context).primaryColor.computeLuminance() > 0.8 ? Colors.black : Colors.white);
+        textStyle = textStyle!.apply(
+            color: hideContent
+                ? Colors.transparent
+                : Theme.of(context).primaryColor.computeLuminance() > 0.8
+                    ? Colors.black
+                    : Colors.white);
       }
 
       if (!isNullOrEmpty(message.subject)!) {

@@ -1,14 +1,10 @@
 import 'dart:async';
-import 'package:bluebubbles/repository/models/platform_file.dart';
-import 'package:flutter/foundation.dart';
-import 'package:universal_io/io.dart';
 import 'dart:typed_data';
 
-import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
-import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachment_fullscreen_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/circle_progress_bar.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/regular_file_opener.dart';
@@ -16,9 +12,13 @@ import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:path/path.dart';
+import 'package:universal_io/io.dart';
 
 class AttachmentDetailsCard extends StatefulWidget {
   AttachmentDetailsCard({Key? key, required this.attachment, required this.allAttachments}) : super(key: key);
@@ -50,8 +50,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
   void subscribeToDownloadStream() {
     if (Get.find<AttachmentDownloadService>().downloaders.contains(widget.attachment.guid)) {
       AttachmentDownloadController controller = Get.find<AttachmentDownloadController>(tag: widget.attachment.guid);
-      ever<PlatformFile?>(controller.file,
-          (file) {
+      ever<PlatformFile?>(controller.file, (file) {
         if (file != null && mounted) {
           Future.delayed(Duration(milliseconds: 500), () {
             if (!mounted) return;
@@ -88,7 +87,9 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
             widget.attachment.getFriendlySize(),
             style: Theme.of(context).textTheme.bodyText1,
           ),
-          Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.cloud_download : Icons.cloud_download, size: 28.0),
+          Icon(
+              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.cloud_download : Icons.cloud_download,
+              size: 28.0),
           (widget.attachment.mimeType != null && attachmentFile.path != null)
               ? Text(
                   basename(attachmentFile.path!),
@@ -143,33 +144,33 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
           Center(
             child: !Get.find<AttachmentDownloadService>().downloaders.contains(attachment.guid)
                 ? buildReadyToDownload(context)
-                : Builder(
-                    builder: (context) {
-                      bool attachmentExists = kIsWeb ? false : File(attachmentFile.path ?? "").existsSync();
+                : Builder(builder: (context) {
+                    bool attachmentExists = kIsWeb ? false : File(attachmentFile.path ?? "").existsSync();
 
-                      // If the attachment exists, build the preview
-                      if (attachmentExists) return buildPreview(context);
+                    // If the attachment exists, build the preview
+                    if (attachmentExists) return buildPreview(context);
 
-                      // If the attachment is not being downloaded, show the downloader
-                      if (!Get.find<AttachmentDownloadService>().downloaders.contains(attachment.guid)) {
-                        return buildReadyToDownload(context);
-                      }
+                    // If the attachment is not being downloaded, show the downloader
+                    if (!Get.find<AttachmentDownloadService>().downloaders.contains(attachment.guid)) {
+                      return buildReadyToDownload(context);
+                    }
 
-                      return Obx(() {
-                        AttachmentDownloadController controller = Get.find<AttachmentDownloadController>(tag: attachment.guid);
-                        // If the download is complete, show the preview
-                        if (controller.file.value != null) return buildPreview(context);
+                    return Obx(() {
+                      AttachmentDownloadController controller =
+                          Get.find<AttachmentDownloadController>(tag: attachment.guid);
+                      // If the download is complete, show the preview
+                      if (controller.file.value != null) return buildPreview(context);
 
-                        // If all else fails, show the downloader
-                        return Container(
-                            height: 40,
-                            width: 40,
-                            child: CircleProgressBar(
-                                foregroundColor: Colors.white,
-                                backgroundColor: Colors.grey,
-                                value: controller.progress.value?.toDouble() ?? 0));
-                      });
-                    }),
+                      // If all else fails, show the downloader
+                      return Container(
+                          height: 40,
+                          width: 40,
+                          child: CircleProgressBar(
+                              foregroundColor: Colors.white,
+                              backgroundColor: Colors.grey,
+                              value: controller.progress.value?.toDouble() ?? 0));
+                    });
+                  }),
           ),
         ],
       );

@@ -1,22 +1,22 @@
 import 'dart:ui';
 
+import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/logger.dart';
-import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
-import 'package:get/get.dart';
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/redacted_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -129,42 +129,52 @@ class ContactTile extends StatelessWidget {
           handle: handle,
           borderThickness: 0.1,
         ),
-        trailing: kIsWeb ? Container(width: 2) : FittedBox(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            mainAxisSize: MainAxisSize.max,
-            children: <Widget>[
-              if (isEmail)
-                ButtonTheme(
-                  minWidth: 1,
-                  child: TextButton(
-                    style: TextButton.styleFrom(
-                      shape: CircleBorder(),
-                      backgroundColor: Theme.of(context).accentColor,
-                    ),
-                    onPressed: () {
-                      startEmail(handle.address);
-                    },
-                    child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.mail : Icons.email, color: Theme.of(context).primaryColor, size: 20),
-                  ),
-                ),
-              (((contact == null && !isEmail) || (contact?.phones.length ?? 0) > 0) && !kIsWeb && !kIsDesktop)
-                  ? ButtonTheme(
-                      minWidth: 1,
-                      child: TextButton(
-                        style: TextButton.styleFrom(
-                          shape: CircleBorder(),
-                          backgroundColor: Theme.of(context).accentColor,
+        trailing: kIsWeb
+            ? Container(width: 2)
+            : FittedBox(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.max,
+                  children: <Widget>[
+                    if (isEmail)
+                      ButtonTheme(
+                        minWidth: 1,
+                        child: TextButton(
+                          style: TextButton.styleFrom(
+                            shape: CircleBorder(),
+                            backgroundColor: Theme.of(context).accentColor,
+                          ),
+                          onPressed: () {
+                            startEmail(handle.address);
+                          },
+                          child: Icon(
+                              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.mail : Icons.email,
+                              color: Theme.of(context).primaryColor,
+                              size: 20),
                         ),
-                        onLongPress: () => onPressContactTrailing(context, longPressed: true),
-                        onPressed: () => onPressContactTrailing(context),
-                        child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.phone : Icons.call, color: Theme.of(context).primaryColor, size: 20),
                       ),
-                    )
-                  : Container()
-            ],
-          ),
-        ),
+                    (((contact == null && !isEmail) || (contact?.phones.length ?? 0) > 0) && !kIsWeb && !kIsDesktop)
+                        ? ButtonTheme(
+                            minWidth: 1,
+                            child: TextButton(
+                              style: TextButton.styleFrom(
+                                shape: CircleBorder(),
+                                backgroundColor: Theme.of(context).accentColor,
+                              ),
+                              onLongPress: () => onPressContactTrailing(context, longPressed: true),
+                              onPressed: () => onPressContactTrailing(context),
+                              child: Icon(
+                                  SettingsManager().settings.skin.value == Skins.iOS
+                                      ? CupertinoIcons.phone
+                                      : Icons.call,
+                                  color: Theme.of(context).primaryColor,
+                                  size: 20),
+                            ),
+                          )
+                        : Container()
+                  ],
+                ),
+              ),
       ),
     );
   }
@@ -184,8 +194,8 @@ class ContactTile extends StatelessWidget {
           builder: (BuildContext context) {
             return AlertDialog(
               backgroundColor: Theme.of(context).accentColor,
-              title: Text("Select a Phone Number",
-                  style: TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
+              title:
+                  Text("Select a Phone Number", style: TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
               content: ObxValue<Rx<bool>>(
                   (data) => Column(
                         mainAxisAlignment: MainAxisAlignment.center,

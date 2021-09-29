@@ -107,15 +107,18 @@ class ServerManagementPanelController extends GetxController {
 }
 
 class ServerManagementPanel extends GetView<ServerManagementPanelController> {
-
   @override
   Widget build(BuildContext context) {
-    final iosSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
-    final materialSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
+    final iosSubtitle =
+        Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
+    final materialSubtitle = Theme.of(context)
+        .textTheme
+        .subtitle1
+        ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
     Color headerColor;
     Color tileColor;
-    if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance()
-        || SettingsManager().settings.skin.value != Skins.iOS) {
+    if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+        SettingsManager().settings.skin.value != Skins.iOS) {
       headerColor = Theme.of(context).accentColor;
       tileColor = Theme.of(context).backgroundColor;
     } else {
@@ -129,8 +132,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: headerColor, // navigation bar color
-        systemNavigationBarIconBrightness:
-        headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarIconBrightness: headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
@@ -163,19 +165,21 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                   Container(
                       height: SettingsManager().settings.skin.value == Skins.iOS ? 30 : 40,
                       alignment: Alignment.bottomLeft,
-                      decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
-                        color: headerColor,
-                        border: Border(
-                            bottom: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
-                        ),
-                      ) : BoxDecoration(
-                        color: tileColor,
-                      ),
+                      decoration: SettingsManager().settings.skin.value == Skins.iOS
+                          ? BoxDecoration(
+                              color: headerColor,
+                              border: Border(
+                                  bottom: BorderSide(
+                                      color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
+                            )
+                          : BoxDecoration(
+                              color: tileColor,
+                            ),
                       child: Padding(
                         padding: const EdgeInsets.only(bottom: 8.0, left: 15),
-                        child: Text("Connection & Server Details".psCapitalize, style: SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
-                      )
-                  ),
+                        child: Text("Connection & Server Details".psCapitalize,
+                            style: SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
+                      )),
                   Obx(() {
                     bool redact = SettingsManager().settings.redactedMode.value;
                     return Container(
@@ -186,38 +190,51 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                             duration: Duration(milliseconds: 300),
                             opacity: controller.opacity.value,
                             child: SelectableText.rich(
-                              TextSpan(
-                                  children: [
-                                    TextSpan(text: "Connection Status: "),
-                                    TextSpan(text: describeEnum(SocketManager().state.value), style: TextStyle(color: getIndicatorColor(SocketManager().state.value))),
-                                    TextSpan(text: "\n\n"),
-                                    if ((controller.serverVersionCode.value ?? 0) >= 42)
-                                      TextSpan(text: "Private API Status: "),
-                                    if ((controller.serverVersionCode.value ?? 0) >= 42)
-                                      TextSpan(text: controller.privateAPIStatus.value ? "ENABLED" : "DISABLED", style: TextStyle(color: getIndicatorColor(controller.privateAPIStatus.value
-                                          ? SocketState.CONNECTED
-                                          : SocketState.DISCONNECTED))),
-                                    if ((controller.serverVersionCode.value ?? 0) >= 42)
-                                      TextSpan(text: "\n\n"),
-                                    if ((controller.serverVersionCode.value ?? 0) >= 42)
-                                      TextSpan(text: "Private API Helper Bundle Status: "),
-                                    if ((controller.serverVersionCode.value ?? 0) >= 42)
-                                      TextSpan(text: controller.helperBundleStatus.value ? "CONNECTED" : "DISCONNECTED", style: TextStyle(color: getIndicatorColor(controller.helperBundleStatus.value
-                                          ? SocketState.CONNECTED
-                                          : SocketState.DISCONNECTED))),
-                                    if ((controller.serverVersionCode.value ?? 0) >= 42)
-                                      TextSpan(text: "\n\n"),
-                                    TextSpan(text: "Server URL: ${redact ? "Redacted" : controller._settingsCopy.serverAddress}"),
-                                    TextSpan(text: "\n\n"),
-                                    TextSpan(text: "Latency: ${redact ? "Redacted" : ((controller.latency.value ?? "N/A").toString() + " ms")}"),
-                                    TextSpan(text: "\n\n"),
-                                    TextSpan(text: "Server Version: ${redact ? "Redacted" : (controller.serverVersion.value ?? "N/A")}"),
-                                    TextSpan(text: "\n\n"),
-                                    TextSpan(text: "macOS Version: ${redact ? "Redacted" : (controller.macOSVersion.value ?? "N/A")}"),
-                                    TextSpan(text: "\n\n"),
-                                    TextSpan(text: "Tap to update values...", style: TextStyle(fontStyle: FontStyle.italic)),
-                                  ]
-                              ),
+                              TextSpan(children: [
+                                TextSpan(text: "Connection Status: "),
+                                TextSpan(
+                                    text: describeEnum(SocketManager().state.value),
+                                    style: TextStyle(color: getIndicatorColor(SocketManager().state.value))),
+                                TextSpan(text: "\n\n"),
+                                if ((controller.serverVersionCode.value ?? 0) >= 42)
+                                  TextSpan(text: "Private API Status: "),
+                                if ((controller.serverVersionCode.value ?? 0) >= 42)
+                                  TextSpan(
+                                      text: controller.privateAPIStatus.value ? "ENABLED" : "DISABLED",
+                                      style: TextStyle(
+                                          color: getIndicatorColor(controller.privateAPIStatus.value
+                                              ? SocketState.CONNECTED
+                                              : SocketState.DISCONNECTED))),
+                                if ((controller.serverVersionCode.value ?? 0) >= 42) TextSpan(text: "\n\n"),
+                                if ((controller.serverVersionCode.value ?? 0) >= 42)
+                                  TextSpan(text: "Private API Helper Bundle Status: "),
+                                if ((controller.serverVersionCode.value ?? 0) >= 42)
+                                  TextSpan(
+                                      text: controller.helperBundleStatus.value ? "CONNECTED" : "DISCONNECTED",
+                                      style: TextStyle(
+                                          color: getIndicatorColor(controller.helperBundleStatus.value
+                                              ? SocketState.CONNECTED
+                                              : SocketState.DISCONNECTED))),
+                                if ((controller.serverVersionCode.value ?? 0) >= 42) TextSpan(text: "\n\n"),
+                                TextSpan(
+                                    text:
+                                        "Server URL: ${redact ? "Redacted" : controller._settingsCopy.serverAddress}"),
+                                TextSpan(text: "\n\n"),
+                                TextSpan(
+                                    text:
+                                        "Latency: ${redact ? "Redacted" : ((controller.latency.value ?? "N/A").toString() + " ms")}"),
+                                TextSpan(text: "\n\n"),
+                                TextSpan(
+                                    text:
+                                        "Server Version: ${redact ? "Redacted" : (controller.serverVersion.value ?? "N/A")}"),
+                                TextSpan(text: "\n\n"),
+                                TextSpan(
+                                    text:
+                                        "macOS Version: ${redact ? "Redacted" : (controller.macOSVersion.value ?? "N/A")}"),
+                                TextSpan(text: "\n\n"),
+                                TextSpan(
+                                    text: "Tap to update values...", style: TextStyle(fontStyle: FontStyle.italic)),
+                              ]),
                               onTap: () {
                                 if (SocketManager().state.value != SocketState.CONNECTED) return;
                                 controller.opacity.value = 0.0;
@@ -235,49 +252,60 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                               },
                             ),
                           ),
-                        )
-                    );
+                        ));
                   }),
-                  Obx(() => (controller.serverVersionCode.value ?? 0) >= 42  && controller.stats.isNotEmpty ? SettingsTile(
-                    title: "Show Stats",
-                    subtitle: "Show iMessage statistics",
-                    backgroundColor: tileColor,
-                    leading: SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.chart_bar_square,
-                      materialIcon: Icons.stacked_bar_chart,
-                    ),
-                    onTap: () {
-                      showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            content: Padding(
-                              padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
-                              child: SelectableText.rich(
-                                TextSpan(
-                                    children: controller.stats.entries.map((e) => TextSpan(text: "${e.key.capitalizeFirst!.replaceAll("Handles", "iMessage Numbers")}: ${e.value}${controller.stats.keys.last != e.key ? "\n\n" : ""}")).toList()
-                                ),
-                              ),
-                            ),
-                            title: Text("Stats"),
-                            actions: <Widget>[
-                              TextButton(
-                                child: Text("Dismiss"),
-                                onPressed: () {
-                                  Get.back();
-                                },
-                              ),
-                            ],
-                          )
-                      );
-                    },
-                  ) : SizedBox.shrink()),
-                  Obx(() => (controller.serverVersionCode.value ?? 0) >= 42  && controller.stats.isNotEmpty ?  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
-                    ),
-                  ) : SizedBox.shrink()),
+                  Obx(() => (controller.serverVersionCode.value ?? 0) >= 42 && controller.stats.isNotEmpty
+                      ? SettingsTile(
+                          title: "Show Stats",
+                          subtitle: "Show iMessage statistics",
+                          backgroundColor: tileColor,
+                          leading: SettingsLeadingIcon(
+                            iosIcon: CupertinoIcons.chart_bar_square,
+                            materialIcon: Icons.stacked_bar_chart,
+                          ),
+                          onTap: () {
+                            showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                      backgroundColor: context.theme.accentColor,
+                                      content: Padding(
+                                        padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
+                                        child: SelectableText.rich(
+                                          TextSpan(
+                                            children: controller.stats.entries
+                                                .map((e) => TextSpan(
+                                                    text:
+                                                        "${e.key.capitalizeFirst!.replaceAll("Handles", "iMessage Numbers")}: ${e.value}${controller.stats.keys.last != e.key ? "\n\n" : ""}"))
+                                                .toList(),
+                                            style: context.textTheme.subtitle1,
+                                          ),
+                                        ),
+                                      ),
+                                      title: Text(
+                                        "Stats",
+                                        style: context.textTheme.headline1,
+                                      ),
+                                      actions: <Widget>[
+                                        TextButton(
+                                          child: Text("Dismiss"),
+                                          onPressed: () {
+                                            Get.back();
+                                          },
+                                        ),
+                                      ],
+                                    ));
+                          },
+                        )
+                      : SizedBox.shrink()),
+                  Obx(() => (controller.serverVersionCode.value ?? 0) >= 42 && controller.stats.isNotEmpty
+                      ? Container(
+                          color: tileColor,
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 65.0),
+                            child: SettingsDivider(color: headerColor),
+                          ),
+                        )
+                      : SizedBox.shrink()),
                   SettingsTile(
                     title: "Show QR Code",
                     subtitle: "Generate QR Code to screenshot or sync other devices",
@@ -301,27 +329,26 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                       showDialog(
                           context: context,
                           builder: (context) => AlertDialog(
-                            content: Container(
-                              height: 320,
-                              width: 320,
-                              child: QrImage(
-                                data: qrtext,
-                                version: QrVersions.auto,
-                                size: 320,
-                                gapless: true,
-                              ),
-                            ),
-                            title: Text("QR Code"),
-                            actions: <Widget>[
-                              TextButton(
-                                child: Text("Dismiss"),
-                                onPressed: () {
-                                  Get.back();
-                                },
-                              ),
-                            ],
-                          )
-                      );
+                                content: Container(
+                                  height: 320,
+                                  width: 320,
+                                  child: QrImage(
+                                    data: qrtext,
+                                    version: QrVersions.auto,
+                                    size: 320,
+                                    gapless: true,
+                                  ),
+                                ),
+                                title: Text("QR Code"),
+                                actions: <Widget>[
+                                  TextButton(
+                                    child: Text("Dismiss"),
+                                    onPressed: () {
+                                      Get.back();
+                                    },
+                                  ),
+                                ],
+                              ));
                     },
                   ),
                   SettingsHeader(
@@ -329,8 +356,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                       tileColor: tileColor,
                       iosSubtitle: iosSubtitle,
                       materialSubtitle: materialSubtitle,
-                      text: "Connection & Sync"
-                  ),
+                      text: "Connection & Sync"),
                   /*Obx(() {
                     if (controller.proxyService.value != null && SettingsManager().settings.skin.value == Skins.iOS)
                       return Container(
@@ -437,8 +463,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                             onConnect: () {
                               Get.back();
                               SocketManager().authFCM();
-                              SocketManager()
-                                  .startSocketIO(forceNewConnection: true);
+                              SocketManager().startSocketIO(forceNewConnection: true);
                             },
                             onClose: () {
                               Get.back();
@@ -519,63 +544,63 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                       tileColor: tileColor,
                       iosSubtitle: iosSubtitle,
                       materialSubtitle: materialSubtitle,
-                      text: "Server Actions"
-                  ),
+                      text: "Server Actions"),
                   Obx(() => SettingsTile(
-                    title: "Fetch${kIsWeb || kIsDesktop ? "" : " & Share"} Server Logs",
-                    subtitle: controller.fetchStatus.value
-                        ?? (SocketManager().state.value == SocketState.CONNECTED ? "Tap to fetch logs" : "Disconnected, cannot fetch logs"),
-                    backgroundColor: tileColor,
-                    leading: SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.doc_plaintext,
-                      materialIcon: Icons.article,
-                    ),
-                    onTap: () {
-                      if (![SocketState.CONNECTED].contains(SocketManager().state.value)) return;
+                        title: "Fetch${kIsWeb || kIsDesktop ? "" : " & Share"} Server Logs",
+                        subtitle: controller.fetchStatus.value ??
+                            (SocketManager().state.value == SocketState.CONNECTED
+                                ? "Tap to fetch logs"
+                                : "Disconnected, cannot fetch logs"),
+                        backgroundColor: tileColor,
+                        leading: SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.doc_plaintext,
+                          materialIcon: Icons.article,
+                        ),
+                        onTap: () {
+                          if (![SocketState.CONNECTED].contains(SocketManager().state.value)) return;
 
-                      controller.fetchStatus.value = "Fetching logs, please wait...";
+                          controller.fetchStatus.value = "Fetching logs, please wait...";
 
-                      SocketManager().sendMessage("get-logs", {"count": 500}, (Map<String, dynamic> res) async {
-                        if (res['status'] != 200) {
-                          controller.fetchStatus.value = "Failed to fetch logs!";
+                          SocketManager().sendMessage("get-logs", {"count": 500}, (Map<String, dynamic> res) async {
+                            if (res['status'] != 200) {
+                              controller.fetchStatus.value = "Failed to fetch logs!";
 
-                          return;
-                        }
+                              return;
+                            }
 
-                        if (kIsDesktop) {
-                          String downloadsPath = (await getDownloadsDirectory())!.path;
-                          File(join(downloadsPath, "main.log")).writeAsStringSync(res['data']);
-                          return showSnackbar('Success', 'Saved logs to $downloadsPath!');
-                        }
+                            if (kIsDesktop) {
+                              String downloadsPath = (await getDownloadsDirectory())!.path;
+                              File(join(downloadsPath, "main.log")).writeAsStringSync(res['data']);
+                              return showSnackbar('Success', 'Saved logs to $downloadsPath!');
+                            }
 
-                        if (kIsWeb) {
-                          final bytes = utf8.encode(res['data']);
-                          final content = base64.encode(bytes);
-                          html.AnchorElement(
-                              href: "data:application/octet-stream;charset=utf-16le;base64,$content")
-                            ..setAttribute("download", "main.log")
-                            ..click();
-                          return;
-                        }
+                            if (kIsWeb) {
+                              final bytes = utf8.encode(res['data']);
+                              final content = base64.encode(bytes);
+                              html.AnchorElement(href: "data:application/octet-stream;charset=utf-16le;base64,$content")
+                                ..setAttribute("download", "main.log")
+                                ..click();
+                              return;
+                            }
 
-                        String appDocPath = SettingsManager().appDocDir.path;
-                        File logFile = File("$appDocPath/attachments/main.log");
+                            String appDocPath = SettingsManager().appDocDir.path;
+                            File logFile = File("$appDocPath/attachments/main.log");
 
-                        if (logFile.existsSync()) {
-                          logFile.deleteSync();
-                        }
+                            if (logFile.existsSync()) {
+                              logFile.deleteSync();
+                            }
 
-                        logFile.writeAsStringSync(res['data']);
+                            logFile.writeAsStringSync(res['data']);
 
-                        try {
-                          Share.file("BlueBubbles Server Log", logFile.absolute.path);
-                          controller.fetchStatus.value = null;
-                        } catch (ex) {
-                          controller.fetchStatus.value = "Failed to share file! ${ex.toString()}";
-                        }
-                      });
-                    },
-                  )),
+                            try {
+                              Share.file("BlueBubbles Server Log", logFile.absolute.path);
+                              controller.fetchStatus.value = null;
+                            } catch (ex) {
+                              controller.fetchStatus.value = "Failed to share file! ${ex.toString()}";
+                            }
+                          });
+                        },
+                      )),
                   Container(
                     color: tileColor,
                     child: Padding(
@@ -585,21 +610,27 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                   ),
                   Obx(() => SettingsTile(
                       title: "Restart iMessage",
-                      subtitle: controller.isRestartingMessages.value && SocketManager().state.value == SocketState.CONNECTED
-                          ? "Restart in progress..." : SocketManager().state.value == SocketState.CONNECTED ? "Restart the iMessage app" : "Disconnected, cannot restart",
+                      subtitle:
+                          controller.isRestartingMessages.value && SocketManager().state.value == SocketState.CONNECTED
+                              ? "Restart in progress..."
+                              : SocketManager().state.value == SocketState.CONNECTED
+                                  ? "Restart the iMessage app"
+                                  : "Disconnected, cannot restart",
                       backgroundColor: tileColor,
                       leading: SettingsLeadingIcon(
                         iosIcon: CupertinoIcons.chat_bubble,
                         materialIcon: Icons.sms,
                       ),
                       onTap: () async {
-                        if (![SocketState.CONNECTED].contains(SocketManager().state.value) || controller.isRestartingMessages.value) return;
+                        if (![SocketState.CONNECTED].contains(SocketManager().state.value) ||
+                            controller.isRestartingMessages.value) return;
 
                         controller.isRestartingMessages.value = true;
 
                         // Prevent restarting more than once every 30 seconds
                         int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-                        if (controller.lastRestartMessages != null && now - controller.lastRestartMessages! < 1000 * 30) return;
+                        if (controller.lastRestartMessages != null && now - controller.lastRestartMessages! < 1000 * 30)
+                          return;
 
                         // Save the last time we restarted
                         controller.lastRestartMessages = now;
@@ -624,14 +655,14 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                       trailing: (!controller.isRestartingMessages.value)
                           ? Icon(Icons.refresh, color: Colors.grey)
                           : Container(
-                          constraints: BoxConstraints(
-                            maxHeight: 20,
-                            maxWidth: 20,
-                          ),
-                          child: CircularProgressIndicator(
-                            strokeWidth: 3,
-                            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
-                          )))),
+                              constraints: BoxConstraints(
+                                maxHeight: 20,
+                                maxWidth: 20,
+                              ),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 3,
+                                valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                              )))),
                   Obx(() {
                     if (SettingsManager().settings.enablePrivateAPI.value) {
                       return Container(
@@ -646,25 +677,31 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                     }
                   }),
                   Obx(() {
-                    if (SettingsManager().settings.enablePrivateAPI.value
-                        && (controller.serverVersionCode.value ?? 0) >= 41) {
+                    if (SettingsManager().settings.enablePrivateAPI.value &&
+                        (controller.serverVersionCode.value ?? 0) >= 41) {
                       return SettingsTile(
                           title: "Restart Private API",
-                          subtitle: controller.isRestartingPrivateAPI.value && SocketManager().state.value == SocketState.CONNECTED
-                              ? "Restart in progress..." : SocketManager().state.value == SocketState.CONNECTED ? "Restart the Private API" : "Disconnected, cannot restart",
+                          subtitle: controller.isRestartingPrivateAPI.value &&
+                                  SocketManager().state.value == SocketState.CONNECTED
+                              ? "Restart in progress..."
+                              : SocketManager().state.value == SocketState.CONNECTED
+                                  ? "Restart the Private API"
+                                  : "Disconnected, cannot restart",
                           backgroundColor: tileColor,
                           leading: SettingsLeadingIcon(
                             iosIcon: CupertinoIcons.exclamationmark_shield,
                             materialIcon: Icons.gpp_maybe,
                           ),
                           onTap: () async {
-                            if (![SocketState.CONNECTED].contains(SocketManager().state.value) || controller.isRestartingPrivateAPI.value) return;
+                            if (![SocketState.CONNECTED].contains(SocketManager().state.value) ||
+                                controller.isRestartingPrivateAPI.value) return;
 
                             controller.isRestartingPrivateAPI.value = true;
 
                             // Prevent restarting more than once every 30 seconds
                             int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-                            if (controller.lastRestartPrivateAPI != null && now - controller.lastRestartPrivateAPI! < 1000 * 30) return;
+                            if (controller.lastRestartPrivateAPI != null &&
+                                now - controller.lastRestartPrivateAPI! < 1000 * 30) return;
 
                             // Save the last time we restarted
                             controller.lastRestartPrivateAPI = now;
@@ -689,14 +726,14 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                           trailing: (!controller.isRestartingPrivateAPI.value)
                               ? Icon(Icons.refresh, color: Colors.grey)
                               : Container(
-                              constraints: BoxConstraints(
-                                maxHeight: 20,
-                                maxWidth: 20,
-                              ),
-                              child: CircularProgressIndicator(
-                                strokeWidth: 3,
-                                valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
-                              )));
+                                  constraints: BoxConstraints(
+                                    maxHeight: 20,
+                                    maxWidth: 20,
+                                  ),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 3,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                                  )));
                     } else {
                       return SizedBox.shrink();
                     }
@@ -758,62 +795,65 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                                 strokeWidth: 3,
                                 valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
                               )))),
-
-                  Obx(() => (controller.serverVersionCode.value ?? 0) >= 42 ? Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
-                    ),
-                  ) : SizedBox.shrink()),
-                  Obx(() => (controller.serverVersionCode.value ?? 0) >= 42 ? SettingsTile(
-                      title: "Check for Server Updates",
-                      subtitle: "Check for new BlueBubbles Server updates",
-                      backgroundColor: tileColor,
-                      leading: SettingsLeadingIcon(
-                        iosIcon: CupertinoIcons.desktopcomputer,
-                        materialIcon: Icons.dvr,
-                      ),
-                      onTap: () async {
-                        var data = await SocketManager().sendMessage("check-for-server-update", {}, (_) {});
-                        if (data['status'] == 200) {
-                          bool available = data['data']['available'] ?? false;
-                          Map<String, dynamic> metadata = data['data']['metadata'] ?? {};
-                          Get.defaultDialog(
-                            title: "Update Check",
-                            titleStyle: Theme.of(context).textTheme.headline1,
-                            confirm: Container(height: 0, width: 0),
-                            cancel: Container(height: 0, width: 0),
-                            content: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: <Widget>[
+                  Obx(() => (controller.serverVersionCode.value ?? 0) >= 42
+                      ? Container(
+                          color: tileColor,
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 65.0),
+                            child: SettingsDivider(color: headerColor),
+                          ),
+                        )
+                      : SizedBox.shrink()),
+                  Obx(() => (controller.serverVersionCode.value ?? 0) >= 42
+                      ? SettingsTile(
+                          title: "Check for Server Updates",
+                          subtitle: "Check for new BlueBubbles Server updates",
+                          backgroundColor: tileColor,
+                          leading: SettingsLeadingIcon(
+                            iosIcon: CupertinoIcons.desktopcomputer,
+                            materialIcon: Icons.dvr,
+                          ),
+                          onTap: () async {
+                            var data = await SocketManager().sendMessage("check-for-server-update", {}, (_) {});
+                            if (data['status'] == 200) {
+                              bool available = data['data']['available'] ?? false;
+                              Map<String, dynamic> metadata = data['data']['metadata'] ?? {};
+                              Get.defaultDialog(
+                                title: "Update Check",
+                                titleStyle: Theme.of(context).textTheme.headline1,
+                                confirm: Container(height: 0, width: 0),
+                                cancel: Container(height: 0, width: 0),
+                                content: Column(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
                                   SizedBox(
                                     height: 15.0,
                                   ),
-                                  Text(available ? "Updates available:" : "Your server is up-to-date!", style: context.theme.textTheme.bodyText1),
+                                  Text(available ? "Updates available:" : "Your server is up-to-date!",
+                                      style: context.theme.textTheme.bodyText1),
                                   SizedBox(
                                     height: 15.0,
                                   ),
                                   if (metadata.isNotEmpty)
-                                    Text("Version: ${metadata['version'] ?? "Unknown"}\nRelease Date: ${metadata['release_date'] ?? "Unknown"}\nRelease Name: ${metadata['release_name'] ?? "Unknown"}")
-                                ]
-                            ),
-                            backgroundColor: Theme.of(context).backgroundColor,
-                          );
-                        } else {
-                          showSnackbar("Error", "Failed to check for updates!");
-                        }
-                      },
-                  ) : SizedBox.shrink()),
+                                    Text(
+                                        "Version: ${metadata['version'] ?? "Unknown"}\nRelease Date: ${metadata['release_date'] ?? "Unknown"}\nRelease Name: ${metadata['release_name'] ?? "Unknown"}")
+                                ]),
+                                backgroundColor: Theme.of(context).backgroundColor,
+                              );
+                            } else {
+                              showSnackbar("Error", "Failed to check for updates!");
+                            }
+                          },
+                        )
+                      : SizedBox.shrink()),
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
                   Container(
                     height: 30,
-                    decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
-                      color: headerColor,
-                      border: Border(
-                          top: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
-                      ),
-                    ) : null,
+                    decoration: SettingsManager().settings.skin.value == Skins.iOS
+                        ? BoxDecoration(
+                            color: headerColor,
+                            border: Border(
+                                top: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
+                          )
+                        : null,
                   ),
                 ],
               ),

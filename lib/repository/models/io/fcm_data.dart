@@ -1,11 +1,10 @@
 import 'dart:async';
 
 import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/repository/models/config_entry.dart';
 import 'package:firebase_dart/firebase_dart.dart';
 import 'package:flutter/foundation.dart';
-import 'package:bluebubbles/objectbox.g.dart';
-
 
 @Entity()
 class FCMData {
@@ -78,12 +77,12 @@ class FCMData {
 
   static Future<void> initializeFirebase(FCMData data) async {
     var options = FirebaseOptions(
-        appId: data.applicationID!,
-        apiKey: data.apiKey!,
-        projectId: data.projectID!,
-        storageBucket: data.storageBucket,
-        databaseURL: data.firebaseURL,
-        messagingSenderId: data.clientID,
+      appId: data.applicationID!,
+      apiKey: data.apiKey!,
+      projectId: data.projectID!,
+      storageBucket: data.storageBucket,
+      databaseURL: data.firebaseURL,
+      messagingSenderId: data.clientID,
     );
     app = await Firebase.initializeApp(options: options);
   }
@@ -121,6 +120,7 @@ class FCMData {
         "client_id": clientID,
         "application_id": applicationID,
       };
+
   bool get isNull =>
       projectID == null ||
       storageBucket == null ||

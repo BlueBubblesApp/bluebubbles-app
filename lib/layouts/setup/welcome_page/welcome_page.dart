@@ -45,11 +45,11 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
     subtitleOffset = Tween<Offset>(begin: Offset(0.0, 5), end: Offset(0.0, 2))
         .animate(CurvedAnimation(parent: _subtitleController, curve: Curves.easeInOut));
 
-    opacitySubtitle = Tween<double>(begin: 0, end: 1)
-        .animate(CurvedAnimation(parent: _subtitleController, curve: Curves.easeInOut));
+    opacitySubtitle =
+        Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(parent: _subtitleController, curve: Curves.easeInOut));
 
-    opacityButton = Tween<double>(begin: 0, end: 1)
-        .animate(CurvedAnimation(parent: _subtitleController, curve: Curves.easeInOut));
+    opacityButton =
+        Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(parent: _subtitleController, curve: Curves.easeInOut));
   }
 
   Future<void> animateTitle() async {
@@ -74,7 +74,8 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarIconBrightness:
+            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(

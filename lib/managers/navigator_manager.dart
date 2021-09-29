@@ -12,5 +12,6 @@ class NavigatorManager {
   static final NavigatorManager _manager = NavigatorManager._internal();
 
   NavigatorManager._internal();
+
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 }

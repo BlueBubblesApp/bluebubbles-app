@@ -159,16 +159,16 @@ class ChatListPanel extends StatelessWidget {
                     ),
                   ),
                   Obx(() => SettingsSwitch(
-                    onChanged: (bool val) {
-                      SettingsManager().settings.filterUnknownSenders.value = val;
-                      saveSettings();
-                    },
-                    initialVal: SettingsManager().settings.filterUnknownSenders.value,
-                    title: "Filter Unknown Senders",
-                    subtitle:
-                    "Turn off notifications for senders who aren't in your contacts and sort them into a separate chat list",
-                    backgroundColor: tileColor,
-                  )),
+                        onChanged: (bool val) {
+                          SettingsManager().settings.filterUnknownSenders.value = val;
+                          saveSettings();
+                        },
+                        initialVal: SettingsManager().settings.filterUnknownSenders.value,
+                        title: "Filter Unknown Senders",
+                        subtitle:
+                            "Turn off notifications for senders who aren't in your contacts and sort them into a separate chat list",
+                        backgroundColor: tileColor,
+                      )),
                   SettingsHeader(
                       headerColor: headerColor,
                       tileColor: tileColor,
@@ -508,7 +508,8 @@ class ChatListPanel extends StatelessWidget {
                                           color: Colors.blue,
                                           width: CustomNavigator.width(context) / 5 - 8,
                                           child: IconButton(
-                                            icon: Icon(CupertinoIcons.person_crop_circle_badge_exclam, color: Colors.white),
+                                            icon: Icon(CupertinoIcons.person_crop_circle_badge_exclam,
+                                                color: Colors.white),
                                             onPressed: () {
                                               SettingsManager().settings.iosShowMarkRead.value =
                                                   !SettingsManager().settings.iosShowMarkRead.value;
@@ -668,15 +669,16 @@ class ChatListPanel extends StatelessWidget {
                     ),
                   if (!kIsWeb && !kIsDesktop)
                     Obx(() => SettingsSwitch(
-                      onChanged: (bool val) {
-                        SettingsManager().settings.cameraFAB.value = val;
-                        saveSettings();
-                      },
-                      initialVal: SettingsManager().settings.cameraFAB.value,
-                      title: "Add Camera Button",
-                      subtitle: "Adds a dedicated camera button near the new chat creator button to easily send pictures",
-                      backgroundColor: tileColor,
-                    )),
+                          onChanged: (bool val) {
+                            SettingsManager().settings.cameraFAB.value = val;
+                            saveSettings();
+                          },
+                          initialVal: SettingsManager().settings.cameraFAB.value,
+                          title: "Add Camera Button",
+                          subtitle:
+                              "Adds a dedicated camera button near the new chat creator button to easily send pictures",
+                          backgroundColor: tileColor,
+                        )),
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
                   Container(
                     height: 30,

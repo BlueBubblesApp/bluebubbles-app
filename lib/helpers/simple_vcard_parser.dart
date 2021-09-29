@@ -188,6 +188,7 @@ class VCard {
   }
 
   List<dynamic> get typedEmail => _typedProperty('EMAIL');
+
   List<dynamic> get typedURL => _typedProperty('URL');
 
   List<dynamic> _typedProperty(String property) {

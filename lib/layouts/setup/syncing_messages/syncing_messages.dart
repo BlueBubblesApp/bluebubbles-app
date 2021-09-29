@@ -1,11 +1,11 @@
+import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
-import 'package:get/get.dart';
-import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/layouts/setup/qr_scan/failed_to_scan_dialog.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 
 class SyncingMessages extends StatefulWidget {
   SyncingMessages({Key? key, required this.controller}) : super(key: key);
@@ -38,10 +38,13 @@ class _SyncingMessagesState extends State<SyncingMessages> {
           curve: Curves.easeInOut,
         );*/
         SocketManager().toggleSetupFinished(true, applyToDb: true);
-        Get.offAll(() => ConversationList(
-          showArchivedChats: false,
-          showUnknownSenders: false,
-        ), duration: Duration.zero, transition: Transition.noTransition);
+        Get.offAll(
+            () => ConversationList(
+                  showArchivedChats: false,
+                  showUnknownSenders: false,
+                ),
+            duration: Duration.zero,
+            transition: Transition.noTransition);
       }
     });
   }
@@ -64,7 +67,8 @@ class _SyncingMessagesState extends State<SyncingMessages> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarIconBrightness:
+            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
@@ -113,8 +117,8 @@ class _SyncingMessagesState extends State<SyncingMessages> {
                       child: ListView.builder(
                         physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                         itemBuilder: (context, index) {
-                          SetupOutputData data = SocketManager().setup.data.value?.output.reversed.toList()[index]
-                              ?? SetupOutputData("Unknown", SetupOutputType.ERROR);
+                          SetupOutputData data = SocketManager().setup.data.value?.output.reversed.toList()[index] ??
+                              SetupOutputData("Unknown", SetupOutputType.ERROR);
                           return Text(
                             data.text,
                             style: TextStyle(

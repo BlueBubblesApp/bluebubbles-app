@@ -1,6 +1,3 @@
-import 'package:bluebubbles/managers/current_chat.dart';
-import 'package:flutter/foundation.dart';
-import 'package:universal_io/io.dart';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -13,15 +10,18 @@ import 'package:bluebubbles/layouts/conversation_details/attachment_details_card
 import 'package:bluebubbles/layouts/conversation_details/contact_tile.dart';
 import 'package:bluebubbles/layouts/widgets/avatar_crop.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:collection/collection.dart';
+import 'package:universal_io/io.dart';
 
 class ConversationDetails extends StatefulWidget {
   final Chat chat;
@@ -214,7 +214,9 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                         );
                                       },
                                       child: Icon(
-                                        SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.info : Icons.info_outline,
+                                        SettingsManager().settings.skin.value == Skins.iOS
+                                            ? CupertinoIcons.info
+                                            : Icons.info_outline,
                                         color: Theme.of(context).primaryColor,
                                       ))),
                             if (chat.displayName!.isEmpty)
@@ -410,7 +412,9 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                   trailing: Padding(
                     padding: EdgeInsets.only(right: 15),
                     child: Icon(
-                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.cloud_download : Icons.file_download,
+                      SettingsManager().settings.skin.value == Skins.iOS
+                          ? CupertinoIcons.cloud_download
+                          : Icons.file_download,
                       color: Theme.of(context).primaryColor,
                     ),
                   ),
@@ -435,7 +439,9 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                   trailing: Padding(
                     padding: EdgeInsets.only(right: 15),
                     child: Icon(
-                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.arrow_counterclockwise : Icons.replay,
+                      SettingsManager().settings.skin.value == Skins.iOS
+                          ? CupertinoIcons.arrow_counterclockwise
+                          : Icons.replay,
                       color: Theme.of(context).primaryColor,
                     ),
                   ),
@@ -541,11 +547,15 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                           )
                         : (isCleared)
                             ? Icon(
-                                SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.checkmark : Icons.done,
+                                SettingsManager().settings.skin.value == Skins.iOS
+                                    ? CupertinoIcons.checkmark
+                                    : Icons.done,
                                 color: Theme.of(context).primaryColor,
                               )
                             : Icon(
-                                SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.trash : Icons.delete_forever,
+                                SettingsManager().settings.skin.value == Skins.iOS
+                                    ? CupertinoIcons.trash
+                                    : Icons.delete_forever,
                                 color: Theme.of(context).primaryColor,
                               ),
                   ),

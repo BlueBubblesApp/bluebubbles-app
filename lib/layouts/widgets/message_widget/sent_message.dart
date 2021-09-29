@@ -1,15 +1,14 @@
 import 'dart:ui';
 
-import 'package:bluebubbles/helpers/navigator.dart';
-import 'package:bluebubbles/layouts/setup/theme_selector/theme_selector.dart';
-import 'package:bluebubbles/managers/notification_manager.dart';
-import 'package:get/get.dart';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/darty.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/setup/theme_selector/theme_selector.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/delivered_receipt.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/balloon_bundle_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_tail.dart';
@@ -18,15 +17,17 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_popup_holder.
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/helpers/darty.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class SentMessageHelper {
-  static Widget buildMessageWithTail(
-      BuildContext context, Message? message, bool showTail, bool hasReactions, bool bigEmoji, Future<List<InlineSpan>> msgSpanFuture,
+  static Widget buildMessageWithTail(BuildContext context, Message? message, bool showTail, bool hasReactions,
+      bool bigEmoji, Future<List<InlineSpan>> msgSpanFuture,
       {Widget? customContent,
       Message? olderMessage,
       CurrentChat? currentChat,
@@ -134,7 +135,8 @@ class SentMessageHelper {
                             : null,
                 color: customColor ?? bubbleColor,
               ),
-              child: customContent ?? FutureBuilder<List<InlineSpan>>(
+              child: customContent ??
+                  FutureBuilder<List<InlineSpan>>(
                       future: msgSpanFuture,
                       initialData: MessageWidgetMixin.buildMessageSpans(context, message),
                       builder: (context, snapshot) {
@@ -144,8 +146,7 @@ class SentMessageHelper {
                             style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
                           ),
                         );
-                      }
-                    ),
+                      }),
             );
           }),
         ],
@@ -238,7 +239,11 @@ class SentMessageHelper {
               },
             );
           },
-          child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.exclamationmark_circle : Icons.error_outline, color: Colors.red),
+          child: Icon(
+              SettingsManager().settings.skin.value == Skins.iOS
+                  ? CupertinoIcons.exclamationmark_circle
+                  : Icons.error_outline,
+              color: Colors.red),
         ),
       );
     }
@@ -276,10 +281,9 @@ class SentMessage extends StatelessWidget {
     required this.attachmentsWidget,
     required this.reactionsWidget,
     required this.urlPreviewWidget,
-    
     required BuildContext context,
   }) : super(key: key) {
-   spanFuture = MessageWidgetMixin.buildMessageSpansAsync(context, message); 
+    spanFuture = MessageWidgetMixin.buildMessageSpansAsync(context, message);
   }
 
   final Rx<Skins> skin = Rx<Skins>(SettingsManager().settings.skin.value);
@@ -309,8 +313,7 @@ class SentMessage extends StatelessWidget {
 
     // Third, let's add the message or URL preview
     Widget? messageWidget;
-    if (message.balloonBundleId != null &&
-        message.balloonBundleId != 'com.apple.messages.URLBalloonProvider') {
+    if (message.balloonBundleId != null && message.balloonBundleId != 'com.apple.messages.URLBalloonProvider') {
       messageWidget = BalloonBundleWidget(message: message);
     } else if (!isEmptyString(message.text)) {
       messageWidget = SentMessageHelper.buildMessageWithTail(
@@ -326,16 +329,21 @@ class SentMessage extends StatelessWidget {
         );
       }
       if (message.fullText.replaceAll("\n", " ").hasUrl) {
-        messageWidget = message.fullText.isURL ? Padding(
-          padding: EdgeInsets.only(right: 5.0),
-          child: urlPreviewWidget,
-        ) : Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Padding(
+        messageWidget = message.fullText.isURL
+            ? Padding(
                 padding: EdgeInsets.only(right: 5.0),
                 child: urlPreviewWidget,
-              ),
-              messageWidget,
-        ]);
+              )
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                    Padding(
+                      padding: EdgeInsets.only(right: 5.0),
+                      child: urlPreviewWidget,
+                    ),
+                    messageWidget,
+                  ]);
       }
     }
 
@@ -413,7 +421,7 @@ class SentMessage extends StatelessWidget {
             children: msgRow,
           ),
         ),
-        if (skin.value != Skins.Samsung && message.guid != olderMessage?.guid)
+        if (!kIsDesktop && !kIsWeb && skin.value != Skins.Samsung && message.guid != olderMessage?.guid)
           MessageTimeStamp(
             message: message,
           )

@@ -30,6 +30,7 @@ class NotificationManager {
   static const String socketErrorChannel = "com.bluebubbles.socket_error";
 
   static final NotificationManager _manager = NotificationManager._internal();
+
   NotificationManager._internal();
 
   /// [processedItems] holds all of the notifications that have already been notified / processed

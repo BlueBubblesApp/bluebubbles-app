@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
@@ -18,6 +16,7 @@ class GroupEvent extends StatelessWidget {
   }) : super(key: key) {
     text = getGroupEventText(message!);
   }
+
   final Message? message;
   late final String text;
 

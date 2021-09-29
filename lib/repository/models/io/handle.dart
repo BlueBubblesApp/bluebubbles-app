@@ -2,6 +2,7 @@ import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+
 import './chat.dart';
 
 @Entity()
@@ -12,7 +13,9 @@ class Handle {
   String address;
   String? country;
   final RxnString _color = RxnString();
+
   String? get color => _color.value;
+
   set color(String? val) => _color.value = val;
   String? defaultPhone;
   String? uncanonicalizedId;

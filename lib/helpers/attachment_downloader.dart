@@ -1,18 +1,17 @@
 import 'dart:convert';
 
-import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
-import 'package:flutter/foundation.dart';
-import 'package:universal_io/io.dart';
-
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:universal_io/io.dart';
 
 class AttachmentDownloadService extends GetxService {
   int maxDownloads = 10;
@@ -84,8 +83,7 @@ class AttachmentDownloadController extends GetxController {
       stopwatch.stop();
       Logger.info("Attachment downloaded in ${stopwatch.elapsedMilliseconds} ms");
 
-      if (CurrentChat.activeChat?.chatAttachments.firstWhereOrNull((e) => e.guid == attachment.guid) ==
-          null) {
+      if (CurrentChat.activeChat?.chatAttachments.firstWhereOrNull((e) => e.guid == attachment.guid) == null) {
         CurrentChat.activeChat?.chatAttachments.add(attachment);
       }
 

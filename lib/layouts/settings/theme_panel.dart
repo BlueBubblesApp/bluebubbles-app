@@ -5,9 +5,9 @@ import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
-import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/custom_avatar_color_panel.dart';
 import 'package:bluebubbles/layouts/settings/custom_avatar_panel.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
@@ -16,8 +16,8 @@ import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -216,15 +216,15 @@ class ThemePanel extends GetView<ThemePanelController> {
                       ),
                     ),
                     Obx(() => SettingsSwitch(
-                      onChanged: (bool val) {
-                        controller._settingsCopy.tabletMode.value = val;
-                        saveSettings();
-                      },
-                      initialVal: controller._settingsCopy.tabletMode.value,
-                      title: "Tablet Mode",
-                      backgroundColor: tileColor,
-                      subtitle: "Enables tablet mode (split view) depending on screen width",
-                    )),
+                          onChanged: (bool val) {
+                            controller._settingsCopy.tabletMode.value = val;
+                            saveSettings();
+                          },
+                          initialVal: controller._settingsCopy.tabletMode.value,
+                          title: "Tablet Mode",
+                          backgroundColor: tileColor,
+                          subtitle: "Enables tablet mode (split view) depending on screen width",
+                        )),
                     SettingsHeader(
                         headerColor: headerColor,
                         tileColor: tileColor,

@@ -13,9 +13,9 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_details/conversation_details.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/contact_selector_option.dart';
-import 'package:bluebubbles/layouts/widgets/custom_cupertino_nav_bar.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
+import 'package:bluebubbles/layouts/widgets/custom_cupertino_nav_bar.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
@@ -66,11 +66,9 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
   TextEditingController chatSelectorController = TextEditingController(text: " ");
 
-  static Rx<MultiTween<String>> gradientTween = Rx<MultiTween<String>>(
-      MultiTween<String>()
-        ..add("color1", Tween<double>(begin: 0, end: 0.2))
-        ..add("color2", Tween<double>(begin: 0.8, end: 1))
-  );
+  static Rx<MultiTween<String>> gradientTween = Rx<MultiTween<String>>(MultiTween<String>()
+    ..add("color1", Tween<double>(begin: 0, end: 0.2))
+    ..add("color2", Tween<double>(begin: 0.8, end: 1)));
   Timer? _debounce;
 
   /// Conversation view methods
@@ -289,7 +287,9 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           padding: EdgeInsets.only(right: SettingsManager().settings.colorblindMode.value ? 10.0 : 5.0),
           child: GestureDetector(
             child: Icon(
-              (markedAsRead) ? cupertino.CupertinoIcons.check_mark_circled : cupertino.CupertinoIcons.check_mark_circled_solid,
+              (markedAsRead)
+                  ? cupertino.CupertinoIcons.check_mark_circled
+                  : cupertino.CupertinoIcons.check_mark_circled_solid,
               color: (markedAsRead) ? HexColor('32CD32').withAlpha(200) : fontColor,
             ),
             onTap: markChatAsRead,
@@ -379,11 +379,11 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                   child: Icon(
                     (markedAsRead)
                         ? SettingsManager().settings.skin.value == Skins.iOS
-                        ? cupertino.CupertinoIcons.check_mark_circled_solid
-                        : Icons.check_circle
+                            ? cupertino.CupertinoIcons.check_mark_circled_solid
+                            : Icons.check_circle
                         : SettingsManager().settings.skin.value == Skins.iOS
-                        ? cupertino.CupertinoIcons.check_mark_circled
-                        : Icons.check_circle_outline,
+                            ? cupertino.CupertinoIcons.check_mark_circled
+                            : Icons.check_circle_outline,
                     color: (markedAsRead) ? HexColor('32CD32').withAlpha(200) : fontColor,
                   ),
                   onTap: markChatAsRead,
@@ -397,7 +397,9 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             padding: const EdgeInsets.only(right: 8.0),
             child: GestureDetector(
               child: Icon(
-                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.ellipsis : Icons.more_vert,
+                SettingsManager().settings.skin.value == Skins.iOS
+                    ? cupertino.CupertinoIcons.ellipsis
+                    : Icons.more_vert,
                 color: fontColor,
               ),
               onTap: openDetails,
@@ -1010,7 +1012,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         for (Handle e in item.chat?.participants ?? []) {
           UniqueContact contact = UniqueContact(
               address: e.address,
-              displayName: ContactManager().getCachedContact(address: e.address)?.displayName ?? await formatPhoneNumber(e));
+              displayName:
+                  ContactManager().getCachedContact(address: e.address)?.displayName ?? await formatPhoneNumber(e));
           selected.add(contact);
         }
 

@@ -4,24 +4,24 @@ import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
+import 'package:faker/faker.dart';
 import 'package:fast_contacts/fast_contacts.dart' hide Contact;
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
-import 'package:faker/faker.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class ContactManager {
   factory ContactManager() {
     return _manager;
   }
+
   static final ContactManager _manager = ContactManager._internal();
   static final tag = 'ContactManager';
+
   ContactManager._internal();
 
   List<Contact> contacts = [];
@@ -99,13 +99,15 @@ class ContactManager {
     // Fetch the current list of contacts
     Logger.info("Fetching contacts", tag: tag);
     if (!kIsWeb && !kIsDesktop) {
-      contacts = (await FastContacts.allContacts).map((e) => Contact(
-        displayName: e.displayName,
-        emails: e.emails,
-        phones: e.phones,
-        structuredName: e.structuredName,
-        id: e.id,
-      )).toList();
+      contacts = (await FastContacts.allContacts)
+          .map((e) => Contact(
+                displayName: e.displayName,
+                emails: e.emails,
+                phones: e.phones,
+                structuredName: e.structuredName,
+                id: e.id,
+              ))
+          .toList();
     } else {
       try {
         contacts.clear();
@@ -126,13 +128,13 @@ class ContactManager {
         try {
           if (contacts.isEmpty) {
             var response = await api.contacts();
-            for (Map<String, dynamic> map in response.data['data']){
+            for (Map<String, dynamic> map in response.data['data']) {
               ContactManager().contacts.add(Contact(
-                id: randomString(8),
-                displayName: map['firstName'] + " " + map['lastName'],
-                emails: (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList(),
-                phones: (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList(),
-              ));
+                    id: randomString(8),
+                    displayName: map['firstName'] + " " + map['lastName'],
+                    emails: (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList(),
+                    phones: (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList(),
+                  ));
             }
           }
         } catch (e, s) {

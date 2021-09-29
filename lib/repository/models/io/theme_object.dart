@@ -1,4 +1,5 @@
 import 'dart:core';
+
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/themes.dart';
@@ -56,7 +57,12 @@ class ThemeObject {
     );
   }
 
-  bool get isPreset => name == "OLED Dark" || name == "Bright White" || name == "Nord Theme" || name == "Music Theme (Light)" || name == "Music Theme (Dark)";
+  bool get isPreset =>
+      name == "OLED Dark" ||
+      name == "Bright White" ||
+      name == "Nord Theme" ||
+      name == "Music Theme (Light)" ||
+      name == "Music Theme (Dark)";
 
   List<ThemeEntry> toEntries() => [
         ThemeEntry.fromStyle(ThemeColors.Headline1, data!.textTheme.headline1!),
@@ -269,8 +275,9 @@ class ThemeObject {
   }
 
   static bool inDarkMode(BuildContext context) {
-    return (AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark
-        || (AdaptiveTheme.of(context).mode == AdaptiveThemeMode.system && SchedulerBinding.instance!.window.platformBrightness == Brightness.dark));
+    return (AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ||
+        (AdaptiveTheme.of(context).mode == AdaptiveThemeMode.system &&
+            SchedulerBinding.instance!.window.platformBrightness == Brightness.dark));
   }
 
   @override

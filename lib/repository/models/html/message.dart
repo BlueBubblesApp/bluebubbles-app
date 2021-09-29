@@ -1,17 +1,18 @@
 import 'dart:async';
 import 'dart:convert';
+
 import 'package:bluebubbles/blocs/message_bloc.dart';
+import 'package:bluebubbles/helpers/darty.dart';
+import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/repository/models/html/attachment.dart';
 import 'package:bluebubbles/repository/models/html/chat.dart';
 import 'package:bluebubbles/repository/models/html/handle.dart';
 import 'package:collection/collection.dart';
 import 'package:crypto/crypto.dart' as crypto;
-import 'package:bluebubbles/helpers/message_helper.dart';
-import 'package:bluebubbles/helpers/darty.dart';
-import 'package:bluebubbles/helpers/reaction.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
-import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:get/get.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 
@@ -25,7 +26,9 @@ class Message {
   String? subject;
   String? country;
   final RxInt _error = RxInt(0);
+
   int get error => _error.value;
+
   set error(int i) => _error.value = i;
   DateTime? dateCreated;
   DateTime? dateRead;
@@ -240,12 +243,12 @@ class Message {
   }
 
   Message fetchAssociatedMessages({MessageBloc? bloc}) {
-    if (associatedMessages.isNotEmpty &&
-        associatedMessages.length == 1 &&
-        associatedMessages[0].guid == guid) {
+    if (associatedMessages.isNotEmpty && associatedMessages.length == 1 && associatedMessages[0].guid == guid) {
       return this;
     }
-    associatedMessages = (bloc?.reactionMessages.values.where((element) => element.associatedMessageGuid == guid).toList() ?? []).cast<Message>();
+    associatedMessages =
+        (bloc?.reactionMessages.values.where((element) => element.associatedMessageGuid == guid).toList() ?? [])
+            .cast<Message>();
     associatedMessages.sort((a, b) => a.originalROWID!.compareTo(b.originalROWID!));
     return this;
   }
@@ -280,9 +283,7 @@ class Message {
 
   bool isUrlPreview() {
     // first condition is for macOS < 11 and second condition is for macOS >= 11
-    return (balloonBundleId != null &&
-            balloonBundleId == "com.apple.messages.URLBalloonProvider" &&
-            hasDdResults!) ||
+    return (balloonBundleId != null && balloonBundleId == "com.apple.messages.URLBalloonProvider" && hasDdResults!) ||
         (hasDdResults! && (text ?? "").replaceAll("\n", " ").hasUrl);
   }
 
@@ -321,9 +322,7 @@ class Message {
   }
 
   List<Message> getReactions() {
-    return associatedMessages
-        .where((item) => ReactionTypes.toList().contains(item.associatedMessageType))
-        .toList();
+    return associatedMessages.where((item) => ReactionTypes.toList().contains(item.associatedMessageType)).toList();
   }
 
   void generateTempGuid() {

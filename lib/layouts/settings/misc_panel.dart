@@ -20,41 +20,20 @@ class MiscPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iosSubtitle =
-    Theme
-        .of(context)
+        Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
+    final materialSubtitle = Theme.of(context)
         .textTheme
         .subtitle1
-        ?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
-    final materialSubtitle = Theme
-        .of(context)
-        .textTheme
-        .subtitle1
-        ?.copyWith(color: Theme
-        .of(context)
-        .primaryColor, fontWeight: FontWeight.bold);
+        ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
     Color headerColor;
     Color tileColor;
-    if (Theme
-        .of(context)
-        .accentColor
-        .computeLuminance() < Theme
-        .of(context)
-        .backgroundColor
-        .computeLuminance() ||
+    if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
         SettingsManager().settings.skin.value != Skins.iOS) {
-      headerColor = Theme
-          .of(context)
-          .accentColor;
-      tileColor = Theme
-          .of(context)
-          .backgroundColor;
+      headerColor = Theme.of(context).accentColor;
+      tileColor = Theme.of(context).backgroundColor;
     } else {
-      headerColor = Theme
-          .of(context)
-          .backgroundColor;
-      tileColor = Theme
-          .of(context)
-          .accentColor;
+      headerColor = Theme.of(context).backgroundColor;
+      tileColor = Theme.of(context).accentColor;
     }
     if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
       tileColor = headerColor;
@@ -80,10 +59,7 @@ class MiscPanel extends StatelessWidget {
                 backgroundColor: headerColor.withOpacity(0.5),
                 title: Text(
                   "Miscellaneous and Advanced",
-                  style: Theme
-                      .of(context)
-                      .textTheme
-                      .headline1,
+                  style: Theme.of(context).textTheme.headline1,
                 ),
               ),
               filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
@@ -101,25 +77,21 @@ class MiscPanel extends StatelessWidget {
                       alignment: Alignment.bottomLeft,
                       decoration: SettingsManager().settings.skin.value == Skins.iOS
                           ? BoxDecoration(
-                        color: headerColor,
-                        border: Border(
-                            bottom: BorderSide(
-                                color: Theme
-                                    .of(context)
-                                    .dividerColor
-                                    .lightenOrDarken(40), width: 0.3)),
-                      )
+                              color: headerColor,
+                              border: Border(
+                                  bottom: BorderSide(
+                                      color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
+                            )
                           : BoxDecoration(
-                        color: tileColor,
-                      ),
+                              color: tileColor,
+                            ),
                       child: Padding(
                         padding: const EdgeInsets.only(bottom: 8.0, left: 15),
                         child: Text("Notifications".psCapitalize,
                             style: SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
                       )),
                   Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
-                  Obx(() =>
-                      SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
                           SettingsManager().settings.hideTextPreviews.value = val;
                           saveSettings();
@@ -136,8 +108,7 @@ class MiscPanel extends StatelessWidget {
                       child: SettingsDivider(color: headerColor),
                     ),
                   ),
-                  Obx(() =>
-                      SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
                           SettingsManager().settings.showIncrementalSync.value = val;
                           saveSettings();
@@ -155,13 +126,12 @@ class MiscPanel extends StatelessWidget {
                         materialSubtitle: materialSubtitle,
                         text: "Security"),
                   if (SettingsManager().canAuthenticate)
-                    Obx(() =>
-                        SettingsSwitch(
+                    Obx(() => SettingsSwitch(
                           onChanged: (bool val) async {
                             var localAuth = LocalAuthentication();
                             bool didAuthenticate = await localAuth.authenticate(
                                 localizedReason:
-                                'Please authenticate to ${val == true ? "enable" : "disable"} security',
+                                    'Please authenticate to ${val == true ? "enable" : "disable"} security',
                                 stickyAuth: true);
                             if (didAuthenticate) {
                               SettingsManager().settings.shouldSecure.value = val;
@@ -193,7 +163,7 @@ class MiscPanel extends StatelessWidget {
                                     TextSpan(text: "\n\n"),
                                     TextSpan(
                                         text:
-                                        "BlueBubbles will use the fingerprints and pin/password set on your device as authentication. Please note that BlueBubbles does not have access to your authentication information - all biometric checks are handled securely by your operating system. The app is only notified when the unlock is successful."),
+                                            "BlueBubbles will use the fingerprints and pin/password set on your device as authentication. Please note that BlueBubbles does not have access to your authentication information - all biometric checks are handled securely by your operating system. The app is only notified when the unlock is successful."),
                                     TextSpan(text: "\n\n"),
                                     TextSpan(text: "There are two different security levels you can choose from:"),
                                     TextSpan(text: "\n\n"),
@@ -203,17 +173,12 @@ class MiscPanel extends StatelessWidget {
                                     TextSpan(text: "Locked and secured", style: TextStyle(fontWeight: FontWeight.bold)),
                                     TextSpan(
                                         text:
-                                        " - Requires biometrics/pin any time the app is brought into the foreground, hides content in the app switcher, and disables screenshots & screen recordings"),
+                                            " - Requires biometrics/pin any time the app is brought into the foreground, hides content in the app switcher, and disables screenshots & screen recordings"),
                                   ],
-                                  style: Theme
-                                      .of(context)
+                                  style: Theme.of(context)
                                       .textTheme
                                       .subtitle1
-                                      ?.copyWith(color: Theme
-                                      .of(context)
-                                      .textTheme
-                                      .bodyText1
-                                      ?.color),
+                                      ?.copyWith(color: Theme.of(context).textTheme.bodyText1?.color),
                                 ),
                               ),
                             ));
@@ -243,10 +208,7 @@ class MiscPanel extends StatelessWidget {
                             }
                           },
                           options: SecurityLevel.values,
-                          textProcessing: (val) =>
-                          val.toString().split(".")[1]
-                              .replaceAll("_", " ")
-                              .capitalizeFirst!,
+                          textProcessing: (val) => val.toString().split(".")[1].replaceAll("_", " ").capitalizeFirst!,
                           title: "Security Level",
                           backgroundColor: tileColor,
                           secondaryColor: headerColor,
@@ -279,8 +241,7 @@ class MiscPanel extends StatelessWidget {
                       iosSubtitle: iosSubtitle,
                       materialSubtitle: materialSubtitle,
                       text: "Speed & Responsiveness"),
-                  Obx(() =>
-                      SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
                           SettingsManager().settings.lowMemoryMode.value = val;
                           saveSettings();
@@ -288,7 +249,7 @@ class MiscPanel extends StatelessWidget {
                         initialVal: SettingsManager().settings.lowMemoryMode.value,
                         title: "Low Memory Mode",
                         subtitle:
-                        "Reduces background processes and deletes cached storage items to improve performance on lower-end devices",
+                            "Reduces background processes and deletes cached storage items to improve performance on lower-end devices",
                         backgroundColor: tileColor,
                       )),
                   Obx(() {
@@ -334,13 +295,13 @@ class MiscPanel extends StatelessWidget {
                     }
                   }),
                   SettingsHeader(
-                      headerColor: headerColor,
-                      tileColor: tileColor,
-                      iosSubtitle: iosSubtitle,
-                      materialSubtitle: materialSubtitle,
-                      text: "Other",),
-                  Obx(() =>
-                      SettingsSwitch(
+                    headerColor: headerColor,
+                    tileColor: tileColor,
+                    iosSubtitle: iosSubtitle,
+                    materialSubtitle: materialSubtitle,
+                    text: "Other",
+                  ),
+                  Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
                           SettingsManager().settings.sendDelay.value = val ? 3 : 0;
                           saveSettings();
@@ -374,8 +335,7 @@ class MiscPanel extends StatelessWidget {
                       child: SettingsDivider(color: headerColor),
                     ),
                   ),
-                  Obx(() =>
-                      SettingsSwitch(
+                  Obx(() => SettingsSwitch(
                         onChanged: (bool val) {
                           SettingsManager().settings.use24HrFormat.value = val;
                           saveSettings();
@@ -403,7 +363,7 @@ class MiscPanel extends StatelessWidget {
                     }
                   }),
                   Obx(
-                        () {
+                    () {
                       if (SettingsManager().settings.skin.value == Skins.iOS) {
                         return SettingsSlider(
                           divisions: 3,
@@ -427,13 +387,10 @@ class MiscPanel extends StatelessWidget {
                     height: 30,
                     decoration: SettingsManager().settings.skin.value == Skins.iOS
                         ? BoxDecoration(
-                      color: headerColor,
-                      border: Border(
-                          top: BorderSide(color: Theme
-                              .of(context)
-                              .dividerColor
-                              .lightenOrDarken(40), width: 0.3)),
-                    )
+                            color: headerColor,
+                            border: Border(
+                                top: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
+                          )
                         : null,
                   ),
                 ],

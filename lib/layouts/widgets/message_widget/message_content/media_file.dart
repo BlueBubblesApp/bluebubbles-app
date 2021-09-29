@@ -34,7 +34,8 @@ class _MediaFileState extends State<MediaFile> {
 
   @override
   Widget build(BuildContext context) {
-    final bool hideAttachments = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachments.value;
+    final bool hideAttachments =
+        SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachments.value;
     final bool hideAttachmentTypes =
         SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachmentTypes.value;
 
@@ -56,9 +57,7 @@ class _MediaFileState extends State<MediaFile> {
                 height: 40,
                 width: 40,
                 child: CircleProgressBar(
-                    foregroundColor: Colors.white,
-                    backgroundColor: Colors.grey,
-                    value: data.item1?.toDouble() ?? 0));
+                    foregroundColor: Colors.white, backgroundColor: Colors.grey, value: data.item1?.toDouble() ?? 0));
           }),
         ],
       );
@@ -67,14 +66,22 @@ class _MediaFileState extends State<MediaFile> {
         widget.child,
         if (widget.attachment.originalROWID == null)
           Container(
-            child: SettingsManager().settings.skin.value == Skins.iOS ? Theme(
-              data: ThemeData(
-                cupertinoOverrideTheme: CupertinoThemeData(brightness: Brightness.dark),
-              ),
-              child: CupertinoActivityIndicator(
-                radius: 10,
-              ),
-            ) : Container(height: 20, width: 20, child: Center(child: CircularProgressIndicator(strokeWidth: 2,))),
+            child: SettingsManager().settings.skin.value == Skins.iOS
+                ? Theme(
+                    data: ThemeData(
+                      cupertinoOverrideTheme: CupertinoThemeData(brightness: Brightness.dark),
+                    ),
+                    child: CupertinoActivityIndicator(
+                      radius: 10,
+                    ),
+                  )
+                : Container(
+                    height: 20,
+                    width: 20,
+                    child: Center(
+                        child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                    ))),
             height: 45,
             width: 45,
             decoration: BoxDecoration(

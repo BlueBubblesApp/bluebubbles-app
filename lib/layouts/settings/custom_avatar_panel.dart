@@ -1,4 +1,3 @@
-import 'package:universal_io/io.dart';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -6,13 +5,14 @@ import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_tile.dart';
 import 'package:bluebubbles/layouts/widgets/avatar_crop.dart';
-import 'package:get/get.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
+import 'package:universal_io/io.dart';
 
 class CustomAvatarPanelBinding implements Bindings {
   @override
@@ -111,10 +111,9 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
 
               return SliverList(
                 delegate: SliverChildBuilderDelegate(
-                      (context, index) {
+                  (context, index) {
                     return ConversationTile(
-                      key: Key(
-                          ChatBloc().chats[index].guid.toString()),
+                      key: Key(ChatBloc().chats[index].guid.toString()),
                       chat: ChatBloc().chats[index],
                       inSelectMode: true,
                       onSelect: (_) {
@@ -125,8 +124,7 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
                               return AlertDialog(
                                   backgroundColor: Theme.of(context).accentColor,
                                   title: Text("Custom Avatar",
-                                      style:
-                                      TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
+                                      style: TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
                                   content: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     mainAxisSize: MainAxisSize.min,

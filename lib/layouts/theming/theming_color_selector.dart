@@ -35,40 +35,28 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
                   context,
                   widget.entry.color!,
                   title: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8),
-                    child: Text('Choose a Color',
-                        style: Theme.of(context).textTheme.headline6)
-                  ),
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: Text('Choose a Color', style: Theme.of(context).textTheme.headline6)),
                   heading: StatefulBuilder(
                     builder: (BuildContext context, void Function(void Function()) setState) {
-                      return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (widget.entry.isFont!)
-                              Padding(
-                                  padding: EdgeInsets.only(left: 25),
-                                  child: Text("Font Size")
-                              ),
-                            if (widget.entry.isFont!)
-                              Slider(
-                                onChanged: (double value) {
-                                  setState(() {
-                                    widget.entry.fontSize = value.floor();
-                                  });
-                                },
-                                value: widget.entry.fontSize!.toDouble(),
-                                min: 5,
-                                max: 30,
-                                divisions: 25,
-                                label: widget.entry.fontSize.toString(),
-                              ),
-                            if (widget.entry.isFont!)
-                              Padding(
-                                  padding: EdgeInsets.only(left: 25, bottom: 10),
-                                  child: Text("Color")
-                              ),
-                          ]
-                      );
+                      return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        if (widget.entry.isFont!) Padding(padding: EdgeInsets.only(left: 25), child: Text("Font Size")),
+                        if (widget.entry.isFont!)
+                          Slider(
+                            onChanged: (double value) {
+                              setState(() {
+                                widget.entry.fontSize = value.floor();
+                              });
+                            },
+                            value: widget.entry.fontSize!.toDouble(),
+                            min: 5,
+                            max: 30,
+                            divisions: 25,
+                            label: widget.entry.fontSize.toString(),
+                          ),
+                        if (widget.entry.isFont!)
+                          Padding(padding: EdgeInsets.only(left: 25, bottom: 10), child: Text("Color")),
+                      ]);
                     },
                   ),
                   width: 40,
@@ -90,7 +78,9 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
                     dialogActionButtons: true,
                   ),
                   constraints: BoxConstraints(
-                      minHeight: 480, minWidth: CustomNavigator.width(context) - 70, maxWidth: CustomNavigator.width(context) - 70),
+                      minHeight: 480,
+                      minWidth: CustomNavigator.width(context) - 70,
+                      maxWidth: CustomNavigator.width(context) - 70),
                 );
                 widget.entry.color = color;
                 widget.entry.save(widget.currentTheme);

@@ -1,20 +1,18 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'dart:math';
 import 'dart:ui';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/logger.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
-import 'package:bluebubbles/helpers/ui_helpers.dart';
-import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_sender.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
+import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/conversation_view/messages_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/chat_selector_text_field.dart';
@@ -22,6 +20,7 @@ import 'package:bluebubbles/layouts/conversation_view/text_field/blue_bubbles_te
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
@@ -30,8 +29,9 @@ import 'package:bluebubbles/managers/outgoing_queue.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
@@ -175,8 +175,8 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   void getAdjustBackground() {
     var lightTheme = ThemeObject.getLightTheme();
     var darkTheme = ThemeObject.getDarkTheme();
-    if ((lightTheme.gradientBg && !ThemeObject.inDarkMode(Get.context!))
-        || (darkTheme.gradientBg && ThemeObject.inDarkMode(Get.context!))) {
+    if ((lightTheme.gradientBg && !ThemeObject.inDarkMode(Get.context!)) ||
+        (darkTheme.gradientBg && ThemeObject.inDarkMode(Get.context!))) {
       adjustBackground.value = true;
     } else {
       adjustBackground.value = false;
@@ -469,46 +469,46 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
             Column(mainAxisAlignment: MainAxisAlignment.end, mainAxisSize: MainAxisSize.min, children: [
               Expanded(
                 child: Obx(
-                      () => fetchingCurrentChat.value
+                  () => fetchingCurrentChat.value
                       ? Center(
-                    child: Container(
-                      padding: EdgeInsets.symmetric(vertical: 20.0),
-                      child: Column(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                              "Loading chat...",
-                              style: Theme.of(context).textTheme.subtitle1,
+                          child: Container(
+                            padding: EdgeInsets.symmetric(vertical: 20.0),
+                            child: Column(
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    "Loading chat...",
+                                    style: Theme.of(context).textTheme.subtitle1,
+                                  ),
+                                ),
+                                buildProgressIndicator(context, size: 15),
+                              ],
                             ),
                           ),
-                          buildProgressIndicator(context, size: 15),
-                        ],
-                      ),
-                    ),
-                  )
+                        )
                       : (searchQuery.isEmpty || !isCreator!) && chat != null
-                      ? Stack(
-                    alignment: Alignment.bottomCenter,
-                    children: [
-                      MessagesView(
-                        key: Key(chat?.guid ?? "unknown-chat"),
-                        messageBloc: messageBloc,
-                        showHandle: chat!.participants.length > 1,
-                        chat: chat,
-                        initComplete: widget.onMessagesViewComplete,
-                      ),
-                      currentChat != null
-                          ? Obx(() => AnimatedOpacity(
-                        duration: Duration(milliseconds: 250),
-                        opacity: currentChat!.showScrollDown.value ? 1 : 0,
-                        curve: Curves.easeInOut,
-                        child: buildScrollToBottomFAB(context),
-                      ))
-                          : Container(),
-                    ],
-                  )
-                      : buildChatSelectorBody(),
+                          ? Stack(
+                              alignment: Alignment.bottomCenter,
+                              children: [
+                                MessagesView(
+                                  key: Key(chat?.guid ?? "unknown-chat"),
+                                  messageBloc: messageBloc,
+                                  showHandle: chat!.participants.length > 1,
+                                  chat: chat,
+                                  initComplete: widget.onMessagesViewComplete,
+                                ),
+                                currentChat != null
+                                    ? Obx(() => AnimatedOpacity(
+                                          duration: Duration(milliseconds: 250),
+                                          opacity: currentChat!.showScrollDown.value ? 1 : 0,
+                                          curve: Curves.easeInOut,
+                                          child: buildScrollToBottomFAB(context),
+                                        ))
+                                    : Container(),
+                              ],
+                            )
+                          : buildChatSelectorBody(),
                 ),
               ),
               if (widget.onSelect == null)
@@ -564,7 +564,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                         MessageWidgetMixin.buildMessageSpansAsync(context, message),
                         currentChat: currentChat,
                         customWidth:
-                        (message?.hasAttachments ?? false) && (message?.text?.isEmpty ?? true) ? null : value,
+                            (message?.hasAttachments ?? false) && (message?.text?.isEmpty ?? true) ? null : value,
                         customColor: (message?.hasAttachments ?? false) && (message?.text?.isEmpty ?? true)
                             ? Colors.transparent
                             : null,
@@ -573,10 +573,10 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                     },
                     child: (message?.hasAttachments ?? false) && (message?.text?.isEmpty ?? true)
                         ? MessageAttachments(
-                      message: message,
-                      showTail: true,
-                      showHandle: false,
-                    )
+                            message: message,
+                            showTail: true,
+                            showHandle: false,
+                          )
                         : null),
               ),
             ),
@@ -598,28 +598,31 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         appBar: !isCreator!
             ? buildConversationViewHeader() as PreferredSizeWidget?
             : buildChatSelectorHeader() as PreferredSizeWidget?,
-        body: Obx(() => adjustBackground.value ? MirrorAnimation<MultiTweenValues<String>>(
-          tween: ConversationViewMixin.gradientTween.value,
-          curve: Curves.fastOutSlowIn,
-          duration: Duration(seconds: 3),
-          builder: (context, child, anim) {
-            return Container(
-              decoration: (searchQuery.isEmpty || !isCreator!)
-                  && chat != null
-                  && adjustBackground.value ? BoxDecoration(
-                  gradient: LinearGradient(
-                      begin: Alignment.topRight,
-                      end: Alignment.bottomLeft,
-                      stops: [anim.get("color1"), anim.get("color2")],
-                      colors: [AdaptiveTheme.of(context).mode == AdaptiveThemeMode.light ?
-                        Theme.of(context).primaryColor.lightenPercent(20) : Theme.of(context).primaryColor.darkenPercent(20), Theme.of(context).backgroundColor]
-                  )
-              ) : null,
-              child: child,
-            );
-          },
-          child: child,
-        ) : child),
+        body: Obx(() => adjustBackground.value
+            ? MirrorAnimation<MultiTweenValues<String>>(
+                tween: ConversationViewMixin.gradientTween.value,
+                curve: Curves.fastOutSlowIn,
+                duration: Duration(seconds: 3),
+                builder: (context, child, anim) {
+                  return Container(
+                    decoration: (searchQuery.isEmpty || !isCreator!) && chat != null && adjustBackground.value
+                        ? BoxDecoration(
+                            gradient: LinearGradient(begin: Alignment.topRight, end: Alignment.bottomLeft, stops: [
+                            anim.get("color1"),
+                            anim.get("color2")
+                          ], colors: [
+                            AdaptiveTheme.of(context).mode == AdaptiveThemeMode.light
+                                ? Theme.of(context).primaryColor.lightenPercent(20)
+                                : Theme.of(context).primaryColor.darkenPercent(20),
+                            Theme.of(context).backgroundColor
+                          ]))
+                        : null,
+                    child: child,
+                  );
+                },
+                child: child,
+              )
+            : child),
         floatingActionButton: AnimatedOpacity(
             duration: Duration(milliseconds: 250), opacity: 1, curve: Curves.easeInOut, child: buildFAB()),
       ),

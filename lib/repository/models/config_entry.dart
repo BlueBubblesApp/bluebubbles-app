@@ -1,6 +1,5 @@
 import 'package:bluebubbles/repository/helpers/db_converter.dart';
 
-
 class ConfigEntry<T> {
   int? id;
   String? name;

@@ -35,12 +35,13 @@ class MessageTail extends StatelessWidget {
   }
 }
 
-class TailClipper extends CustomClipper<Path>{
+class TailClipper extends CustomClipper<Path> {
   bool isFromMe;
+
   TailClipper(this.isFromMe);
 
   @override
-  Path getClip(Size size){
+  Path getClip(Size size) {
     Path path = Path();
     if (!isFromMe) {
       path.moveTo(2, size.height);

@@ -5,8 +5,10 @@ import 'package:bluebubbles/repository/models/models.dart';
 class NewMessageType {
   // ignore: non_constant_identifier_names
   static String ADD = "NEW";
+
   // ignore: non_constant_identifier_names
   static String REMOVE = "REMOVE";
+
   // ignore: non_constant_identifier_names
   static String UPDATE = "UPDATE";
 }
@@ -25,6 +27,7 @@ class NewMessageManager {
   }
 
   static final NewMessageManager _manager = NewMessageManager._internal();
+
   NewMessageManager._internal();
 
   // Structure of the stream data:

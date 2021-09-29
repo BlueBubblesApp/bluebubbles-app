@@ -128,7 +128,7 @@ class CustomDismissible extends StatefulWidget {
     this.crossAxisEndOffset = 0.0,
     this.dragStartBehavior = DragStartBehavior.start,
     this.behavior = HitTestBehavior.opaque,
-  }) : assert(secondaryBackground == null || background != null),
+  })  : assert(secondaryBackground == null || background != null),
         super(key: key);
 
   /// The widget below this widget in the tree.
@@ -259,14 +259,14 @@ class _DismissibleClipper extends CustomClipper<Rect> {
 
   @override
   bool shouldReclip(_DismissibleClipper oldClipper) {
-    return oldClipper.axis != axis
-        || oldClipper.moveAnimation.value != moveAnimation.value;
+    return oldClipper.axis != axis || oldClipper.moveAnimation.value != moveAnimation.value;
   }
 }
 
 enum _FlingGestureKind { none, forward, reverse }
 
-class _CustomDismissibleState extends State<CustomDismissible> with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
+class _CustomDismissibleState extends State<CustomDismissible>
+    with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   @override
   void initState() {
     super.initState();
@@ -296,9 +296,9 @@ class _CustomDismissibleState extends State<CustomDismissible> with TickerProvid
   }
 
   bool get _directionIsXAxis {
-    return widget.direction == CustomDismissDirection.horizontal
-        || widget.direction == CustomDismissDirection.endToStart
-        || widget.direction == CustomDismissDirection.startToEnd;
+    return widget.direction == CustomDismissDirection.horizontal ||
+        widget.direction == CustomDismissDirection.endToStart ||
+        widget.direction == CustomDismissDirection.startToEnd;
   }
 
   CustomDismissDirection _extentToDirection(double extent) {
@@ -415,9 +415,7 @@ class _CustomDismissibleState extends State<CustomDismissible> with TickerProvid
     _moveAnimation = _moveController!.drive(
       Tween<Offset>(
         begin: Offset.zero,
-        end: _directionIsXAxis
-            ? Offset(end, widget.crossAxisEndOffset)
-            : Offset(widget.crossAxisEndOffset, end),
+        end: _directionIsXAxis ? Offset(end, widget.crossAxisEndOffset) : Offset(widget.crossAxisEndOffset, end),
       ),
     );
   }
@@ -463,7 +461,8 @@ class _CustomDismissibleState extends State<CustomDismissible> with TickerProvid
       _startResizeAnimation();
       return;
     }
-    final double flingVelocity = _directionIsXAxis ? details.velocity.pixelsPerSecond.dx : details.velocity.pixelsPerSecond.dy;
+    final double flingVelocity =
+        _directionIsXAxis ? details.velocity.pixelsPerSecond.dx : details.velocity.pixelsPerSecond.dy;
     switch (_describeFlingGesture(details.velocity)) {
       case _FlingGestureKind.forward:
         assert(_dragExtent != 0.0);
@@ -482,7 +481,8 @@ class _CustomDismissibleState extends State<CustomDismissible> with TickerProvid
         _moveController!.fling(velocity: -flingVelocity.abs() * _kFlingVelocityScale);
         break;
       case _FlingGestureKind.none:
-        if (!_moveController!.isDismissed) { // we already know it's not completed, we check that above
+        if (!_moveController!.isDismissed) {
+          // we already know it's not completed, we check that above
           if (_moveController!.value > (widget.dismissThresholds[_dismissDirection] ?? _kDismissThreshold)) {
             _moveController!.forward();
           } else {
@@ -529,16 +529,18 @@ class _CustomDismissibleState extends State<CustomDismissible> with TickerProvid
       _resizeController!.forward();
       setState(() {
         _sizePriorToCollapse = context.size;
-        _resizeAnimation = _resizeController!.drive(
-          CurveTween(
-            curve: _kResizeTimeCurve,
-          ),
-        ).drive(
-          Tween<double>(
-            begin: 1.0,
-            end: 0.0,
-          ),
-        );
+        _resizeAnimation = _resizeController!
+            .drive(
+              CurveTween(
+                curve: _kResizeTimeCurve,
+              ),
+            )
+            .drive(
+              Tween<double>(
+                begin: 1.0,
+                end: 0.0,
+              ),
+            );
       });
     }
   }
@@ -574,7 +576,7 @@ class _CustomDismissibleState extends State<CustomDismissible> with TickerProvid
             ErrorSummary('A dismissed Dismissible widget is still part of the tree.'),
             ErrorHint(
               'Make sure to implement the onDismissed handler and to immediately remove the Dismissible '
-                  'widget from the application once that handler has fired.',
+              'widget from the application once that handler has fired.',
             ),
           ]);
         }
@@ -615,11 +617,15 @@ class _CustomDismissibleState extends State<CustomDismissible> with TickerProvid
 
     // We are not resizing but we may be being dragging in widget.direction.
     return GestureDetector(
-      onHorizontalDragStart: _directionIsXAxis && widget.direction != CustomDismissDirection.none ? _handleDragStart : null,
-      onHorizontalDragUpdate: _directionIsXAxis && widget.direction != CustomDismissDirection.none ? _handleDragUpdate : null,
+      onHorizontalDragStart:
+          _directionIsXAxis && widget.direction != CustomDismissDirection.none ? _handleDragStart : null,
+      onHorizontalDragUpdate:
+          _directionIsXAxis && widget.direction != CustomDismissDirection.none ? _handleDragUpdate : null,
       onHorizontalDragEnd: _directionIsXAxis && widget.direction != CustomDismissDirection.none ? _handleDragEnd : null,
-      onVerticalDragStart: _directionIsXAxis || widget.direction == CustomDismissDirection.none ? null : _handleDragStart,
-      onVerticalDragUpdate: _directionIsXAxis || widget.direction == CustomDismissDirection.none ? null : _handleDragUpdate,
+      onVerticalDragStart:
+          _directionIsXAxis || widget.direction == CustomDismissDirection.none ? null : _handleDragStart,
+      onVerticalDragUpdate:
+          _directionIsXAxis || widget.direction == CustomDismissDirection.none ? null : _handleDragUpdate,
       onVerticalDragEnd: _directionIsXAxis || widget.direction == CustomDismissDirection.none ? null : _handleDragEnd,
       behavior: widget.behavior,
       dragStartBehavior: widget.dragStartBehavior,

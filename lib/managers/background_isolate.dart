@@ -22,10 +22,8 @@ import 'package:universal_io/io.dart';
 
 abstract class BackgroundIsolateInterface {
   static void initialize() {
-    CallbackHandle callbackHandle =
-        PluginUtilities.getCallbackHandle(callbackHandler)!;
-    MethodChannelInterface().invokeMethod("initialize-background-handle",
-        {"handle": callbackHandle.toRawHandle()});
+    CallbackHandle callbackHandle = PluginUtilities.getCallbackHandle(callbackHandler)!;
+    MethodChannelInterface().invokeMethod("initialize-background-handle", {"handle": callbackHandle.toRawHandle()});
   }
 }
 
@@ -37,17 +35,19 @@ callbackHandler() async {
   prefs = await SharedPreferences.getInstance();
   if (!kIsWeb) {
     //ignore: unnecessary_cast, we need this as a workaround
-    var documentsDirectory = (kIsDesktop ? await getApplicationSupportDirectory() : await getApplicationDocumentsDirectory()) as Directory;
+    var documentsDirectory =
+        (kIsDesktop ? await getApplicationSupportDirectory() : await getApplicationDocumentsDirectory()) as Directory;
     final objectBoxDirectory = Directory(documentsDirectory.path + '/objectbox/');
     final sqlitePath = join(documentsDirectory.path, "chat.db");
 
     Future<void> initStore({bool saveThemes = false}) async {
       if (prefs.getString("objectbox-reference") == null) {
         debugPrint("Opening ObjectBox from Path");
-        store = await openStore(directory: (await getApplicationDocumentsDirectory()).path + '/objectbox');
+        store = await openStore(directory: documentsDirectory.path + '/objectbox');
       } else {
         debugPrint("Opening ObjectBox from Reference");
-        store = Store.fromReference(getObjectBoxModel(), base64.decode(prefs.getString("objectbox-reference")!).buffer.asByteData());
+        store = Store.fromReference(
+            getObjectBoxModel(), base64.decode(prefs.getString("objectbox-reference")!).buffer.asByteData());
       }
       attachmentBox = store.box<Attachment>();
       chatBox = store.box<Chat>();

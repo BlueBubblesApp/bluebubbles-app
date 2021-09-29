@@ -1,38 +1,37 @@
 import 'dart:convert';
-
-import 'package:bluebubbles/repository/models/platform_file.dart';
-import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:universal_io/io.dart';
-import 'package:universal_html/html.dart' as html;
 import 'dart:isolate';
 import 'dart:typed_data';
 import 'dart:ui';
 
+import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/simple_vcard_parser.dart';
+import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:exif/exif.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_native_image/flutter_native_image.dart';
 import 'package:get/get.dart';
-import 'package:bluebubbles/helpers/attachment_downloader.dart';
-import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/models.dart';
-import 'package:flutter/material.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
-import 'package:image_size_getter/file_input.dart';
 import 'package:image_size_getter/image_size_getter.dart' as isg;
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:universal_html/html.dart' as html;
+import 'package:universal_io/io.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
 class AppleLocation {
   double? longitude;
   double? latitude;
+
   AppleLocation({required this.latitude, required this.longitude});
 }
 
@@ -141,8 +140,7 @@ class AttachmentHelper {
   static Future<void> saveToGallery(BuildContext context, PlatformFile file) async {
     if (kIsWeb) {
       final content = base64.encode(file.bytes!);
-      html.AnchorElement(
-          href: "data:application/octet-stream;charset=utf-16le;base64,$content")
+      html.AnchorElement(href: "data:application/octet-stream;charset=utf-16le;base64,$content")
         ..setAttribute("download", file.name)
         ..click();
       return;
@@ -211,9 +209,10 @@ class AttachmentHelper {
     String pathName = path ?? "$appDocPath/attachments/${attachment.guid}/${attachment.transferName}";
     if (Get.find<AttachmentDownloadService>().downloaders.contains(attachment.guid)) {
       return Get.find<AttachmentDownloadController>(tag: attachment.guid);
-    } else if (!kIsWeb && (FileSystemEntity.typeSync(pathName) != FileSystemEntityType.notFound ||
-        attachment.guid == "redacted-mode-demo-attachment" ||
-        (attachment.guid != null && attachment.guid!.contains("theme-selector")))) {
+    } else if (!kIsWeb &&
+        (FileSystemEntity.typeSync(pathName) != FileSystemEntityType.notFound ||
+            attachment.guid == "redacted-mode-demo-attachment" ||
+            (attachment.guid != null && attachment.guid!.contains("theme-selector")))) {
       return PlatformFile(
         name: attachment.transferName!,
         path: pathName,
@@ -227,7 +226,10 @@ class AttachmentHelper {
   }
 
   static IconData getIcon(String mimeType) {
-    if (mimeType.isEmpty) return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.arrow_up_right_square : Icons.open_in_new;
+    if (mimeType.isEmpty)
+      return SettingsManager().settings.skin.value == Skins.iOS
+          ? CupertinoIcons.arrow_up_right_square
+          : Icons.open_in_new;
     if (mimeType == "application/pdf") {
       return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.doc_on_doc : Icons.picture_as_pdf;
     } else if (mimeType == "application/zip") {
@@ -241,7 +243,9 @@ class AttachmentHelper {
     } else if (mimeType.startsWith("text")) {
       return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.doc_text : Icons.note;
     }
-    return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.arrow_up_right_square : Icons.open_in_new;
+    return SettingsManager().settings.skin.value == Skins.iOS
+        ? CupertinoIcons.arrow_up_right_square
+        : Icons.open_in_new;
   }
 
   static Future<bool> canAutoDownload() async {

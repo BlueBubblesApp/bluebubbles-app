@@ -42,8 +42,7 @@ class MessageMarkers {
     if ((lastDeliveredMessage == null && msg.dateDelivered != null) ||
         (lastDeliveredMessage?.dateDelivered != null &&
             msg.dateDelivered != null &&
-            msg.dateDelivered!.millisecondsSinceEpoch >
-                lastDeliveredMessage!.dateDelivered!.millisecondsSinceEpoch)) {
+            msg.dateDelivered!.millisecondsSinceEpoch > lastDeliveredMessage!.dateDelivered!.millisecondsSinceEpoch)) {
       lastDeliveredMessage = msg;
     }
     markers.value = this;

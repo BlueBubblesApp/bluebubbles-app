@@ -1,8 +1,8 @@
+import 'package:battery_optimization/battery_optimization.dart';
 import 'package:bluebubbles/layouts/stateful_wrapper.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:battery_optimization/battery_optimization.dart';
 
 class BatteryOptimizationPage extends StatelessWidget {
   const BatteryOptimizationPage({Key? key, required this.controller}) : super(key: key);
@@ -25,7 +25,8 @@ class BatteryOptimizationPage extends StatelessWidget {
         child: AnnotatedRegion<SystemUiOverlayStyle>(
           value: SystemUiOverlayStyle(
             systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
-            systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+            systemNavigationBarIconBrightness:
+                Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
             statusBarColor: Colors.transparent, // status bar color
           ),
           child: Scaffold(

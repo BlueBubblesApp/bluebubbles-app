@@ -15,13 +15,13 @@ class VerticalSplitView extends StatefulWidget {
 
   const VerticalSplitView(
       {Key? key,
-        required this.left,
-        required this.right,
-        this.initialRatio = 0.5,
-        this.allowResize = true,
-        this.dividerWidth = 16.0,
-        this.minRatio = 0,
-        this.maxRatio = 0})
+      required this.left,
+      required this.right,
+      this.initialRatio = 0.5,
+      this.allowResize = true,
+      this.dividerWidth = 16.0,
+      this.minRatio = 0,
+      this.maxRatio = 0})
       : assert(initialRatio >= 0),
         assert(initialRatio <= 1),
         super(key: key);
@@ -68,37 +68,41 @@ class _VerticalSplitViewState extends State<VerticalSplitView> {
       }
 
       return SizedBox(
-        width: constraints.maxWidth,
-        child: Obx(() => Row(
-          children: <Widget>[
-            SizedBox(
-              width: _width1,
-              child: widget.left,
+          width: constraints.maxWidth,
+          child: Obx(
+            () => Row(
+              children: <Widget>[
+                SizedBox(
+                  width: _width1,
+                  child: widget.left,
+                ),
+                (widget.allowResize)
+                    ? GestureDetector(
+                        behavior: HitTestBehavior.translucent,
+                        child: Container(
+                            color: Theme.of(context).accentColor,
+                            child: SizedBox(
+                              width: widget.dividerWidth,
+                              height: constraints.maxHeight,
+                              child: Icon(Icons.drag_indicator,
+                                  color: Theme.of(context).textTheme.subtitle1?.color, size: 10),
+                            )),
+                        onPanUpdate: (DragUpdateDetails details) {
+                          _ratio.value =
+                              (_ratio.value + (details.delta.dx / _maxWidth!)).clamp(widget.minRatio, widget.maxRatio);
+                        },
+                      )
+                    : SizedBox(
+                        width: widget.dividerWidth,
+                        height: constraints.maxHeight,
+                        child: Container(color: Theme.of(context).accentColor)),
+                SizedBox(
+                  width: _width2,
+                  child: widget.right,
+                ),
+              ],
             ),
-            (widget.allowResize) ? GestureDetector(
-              behavior: HitTestBehavior.translucent,
-              child: Container(
-                  color: Theme.of(context).accentColor,
-                  child: SizedBox(
-                    width: widget.dividerWidth,
-                    height: constraints.maxHeight,
-                    child: Icon(Icons.drag_indicator, color: Theme.of(context).textTheme.subtitle1?.color, size: 10),
-                  )),
-              onPanUpdate: (DragUpdateDetails details) {
-                _ratio.value = (_ratio.value + (details.delta.dx / _maxWidth!)).clamp(widget.minRatio, widget.maxRatio);
-              },
-            ) : SizedBox(
-              width: widget.dividerWidth,
-              height: constraints.maxHeight,
-              child: Container(color: Theme.of(context).accentColor)
-            ),
-            SizedBox(
-              width: _width2,
-              child: widget.right,
-            ),
-          ],
-        ),
-      ));
+          ));
     });
   }
 }

@@ -44,8 +44,8 @@ class _ThemingPanelState extends State<ThemingPanel> with TickerProviderStateMix
   Widget build(BuildContext context) {
     Color headerColor;
     Color tileColor;
-    if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance()
-        || SettingsManager().settings.skin.value != Skins.iOS) {
+    if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+        SettingsManager().settings.skin.value != Skins.iOS) {
       headerColor = Theme.of(context).accentColor;
       tileColor = Theme.of(context).backgroundColor;
     } else {
@@ -59,8 +59,7 @@ class _ThemingPanelState extends State<ThemingPanel> with TickerProviderStateMix
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: headerColor, // navigation bar color
-        systemNavigationBarIconBrightness:
-        headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarIconBrightness: headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
@@ -101,13 +100,11 @@ class _ThemingPanelState extends State<ThemingPanel> with TickerProviderStateMix
         floatingActionButton: Padding(
           padding: const EdgeInsets.only(bottom: .0),
           child: FloatingActionButton(
-            backgroundColor: Colors.blue,
-            onPressed: () {
-              streamController.sink.add(null);
-            },
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
+              backgroundColor: Colors.blue,
+              onPressed: () {
+                streamController.sink.add(null);
+              },
+              child: Stack(alignment: Alignment.center, children: [
                 Icon(
                   Icons.copy,
                   color: Colors.white,
@@ -121,9 +118,7 @@ class _ThemingPanelState extends State<ThemingPanel> with TickerProviderStateMix
                     size: 12,
                   ),
                 ),
-              ]
-            )
-          ),
+              ])),
         ),
         bottomSheet: Container(
           color: tileColor,

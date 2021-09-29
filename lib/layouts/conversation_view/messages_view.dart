@@ -72,7 +72,9 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
   }
 
   bool get showSmartReplies =>
-      SettingsManager().settings.smartReply.value && !kIsWeb && !kIsDesktop &&
+      SettingsManager().settings.smartReply.value &&
+      !kIsWeb &&
+      !kIsDesktop &&
       (!SettingsManager().settings.redactedMode.value || !SettingsManager().settings.hideMessageContent.value);
   bool widgetsBuilt = false;
 
@@ -118,11 +120,13 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
         }
       } else if (event["type"] == "add-custom-smartreply") {
         if (event["data"]["path"] != null) {
-          internalSmartReplies.addEntries([_buildReply("Attach recent photo", onTap: () async {
-            EventDispatcher().emit('add-attachment', event['data']);
-            internalSmartReplies.remove('Attach recent photo');
-            await rebuild(this);
-          })]);
+          internalSmartReplies.addEntries([
+            _buildReply("Attach recent photo", onTap: () async {
+              EventDispatcher().emit('add-attachment', event['data']);
+              internalSmartReplies.remove('Attach recent photo');
+              await rebuild(this);
+            })
+          ]);
           await rebuild(this);
         }
       }
@@ -355,7 +359,9 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     return message;
   }
 
-  MapEntry<String, Widget> _buildReply(String text, {Function()? onTap}) => MapEntry(text, Container(
+  MapEntry<String, Widget> _buildReply(String text, {Function()? onTap}) => MapEntry(
+      text,
+      Container(
         margin: EdgeInsets.all(5),
         decoration: BoxDecoration(
           border: Border.all(
@@ -369,9 +375,10 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
           customBorder: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(19),
           ),
-          onTap: onTap ?? () {
-            ActionHandler.sendMessage(currentChat!.chat, text);
-          },
+          onTap: onTap ??
+              () {
+                ActionHandler.sendMessage(currentChat!.chat, text);
+              },
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 13.0),
             child: Text(
@@ -416,13 +423,16 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                         child: internalSmartReplies.isEmpty
                             ? Container()
                             : Container(
-                              height: Theme.of(context).textTheme.bodyText1!.fontSize! + 30,
-                              child: ListView(
-                                reverse: true,
-                                scrollDirection: Axis.horizontal,
-                                children: (internalSmartReplies..addEntries(replies
-                                    .map((e) => _buildReply(e)))).values.toList().reversed.toList()),
-                            ),
+                                height: Theme.of(context).textTheme.bodyText1!.fontSize! + 30,
+                                child: ListView(
+                                    reverse: true,
+                                    scrollDirection: Axis.horizontal,
+                                    children: (internalSmartReplies..addEntries(replies.map((e) => _buildReply(e))))
+                                        .values
+                                        .toList()
+                                        .reversed
+                                        .toList()),
+                              ),
                       ),
                     ),
                   );
@@ -454,77 +464,77 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                 ),
               ),
             _listKey != null
-                    ? SliverAnimatedList(
-                        initialItemCount: _messages.length + 1,
-                        key: _listKey,
-                        itemBuilder: (BuildContext context, int index, Animation<double> animation) {
-                          // Load more messages if we are at the top and we aren't alrady loading
-                          // and we have more messages to load
-                          if (index == _messages.length) {
-                            if (!noMoreMessages &&
-                                (loader == null || !loader!.isCompleted || !loadedPages.contains(_messages.length))) {
-                              loadNextChunk();
-                              return NewMessageLoader();
-                            }
+                ? SliverAnimatedList(
+                    initialItemCount: _messages.length + 1,
+                    key: _listKey,
+                    itemBuilder: (BuildContext context, int index, Animation<double> animation) {
+                      // Load more messages if we are at the top and we aren't alrady loading
+                      // and we have more messages to load
+                      if (index == _messages.length) {
+                        if (!noMoreMessages &&
+                            (loader == null || !loader!.isCompleted || !loadedPages.contains(_messages.length))) {
+                          loadNextChunk();
+                          return NewMessageLoader();
+                        }
 
-                            return Container();
-                          } else if (index > _messages.length) {
-                            return Container();
-                          }
+                        return Container();
+                      } else if (index > _messages.length) {
+                        return Container();
+                      }
 
-                          Message? olderMessage;
-                          Message? newerMessage;
-                          if (index + 1 >= 0 && index + 1 < _messages.length) {
-                            olderMessage = _messages[index + 1];
-                          }
-                          if (index - 1 >= 0 && index - 1 < _messages.length) {
-                            newerMessage = _messages[index - 1];
-                          }
+                      Message? olderMessage;
+                      Message? newerMessage;
+                      if (index + 1 >= 0 && index + 1 < _messages.length) {
+                        olderMessage = _messages[index + 1];
+                      }
+                      if (index - 1 >= 0 && index - 1 < _messages.length) {
+                        newerMessage = _messages[index - 1];
+                      }
 
-                          bool fullAnimation =
-                              index == 0 && (!_messages[index].isFromMe! || _messages[index].originalROWID == null);
+                      bool fullAnimation =
+                          index == 0 && (!_messages[index].isFromMe! || _messages[index].originalROWID == null);
 
-                          Widget messageWidget = Padding(
-                              padding: EdgeInsets.only(left: 5.0, right: 5.0),
-                              child: MessageWidget(
-                                key: Key(_messages[index].guid!),
-                                message: _messages[index],
-                                olderMessage: olderMessage,
-                                newerMessage: newerMessage,
-                                showHandle: widget.showHandle,
-                                isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages[index].guid,
-                                showHero: fullAnimation,
-                                onUpdate: (event) => onUpdateMessage(event),
-                                bloc: widget.messageBloc!,
-                              ));
+                      Widget messageWidget = Padding(
+                          padding: EdgeInsets.only(left: 5.0, right: 5.0),
+                          child: MessageWidget(
+                            key: Key(_messages[index].guid!),
+                            message: _messages[index],
+                            olderMessage: olderMessage,
+                            newerMessage: newerMessage,
+                            showHandle: widget.showHandle,
+                            isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages[index].guid,
+                            showHero: fullAnimation,
+                            onUpdate: (event) => onUpdateMessage(event),
+                            bloc: widget.messageBloc!,
+                          ));
 
-                          if (fullAnimation) {
-                            return SizeTransition(
-                              axis: Axis.vertical,
-                              sizeFactor: animation
-                                  .drive(Tween(begin: 0.0, end: 1.0).chain(CurveTween(curve: Curves.easeInOut))),
-                              child: SlideTransition(
-                                position: animation.drive(
-                                  Tween(
-                                    begin: Offset(0.0, 1),
-                                    end: Offset(0.0, 0.0),
-                                  ).chain(
-                                    CurveTween(
-                                      curve: Curves.easeInOut,
-                                    ),
-                                  ),
-                                ),
-                                child: Opacity(
-                                  opacity: animation.isCompleted || !_messages[index].isFromMe! ? 1 : 0,
-                                  child: messageWidget,
+                      if (fullAnimation) {
+                        return SizeTransition(
+                          axis: Axis.vertical,
+                          sizeFactor:
+                              animation.drive(Tween(begin: 0.0, end: 1.0).chain(CurveTween(curve: Curves.easeInOut))),
+                          child: SlideTransition(
+                            position: animation.drive(
+                              Tween(
+                                begin: Offset(0.0, 1),
+                                end: Offset(0.0, 0.0),
+                              ).chain(
+                                CurveTween(
+                                  curve: Curves.easeInOut,
                                 ),
                               ),
-                            );
-                          }
+                            ),
+                            child: Opacity(
+                              opacity: animation.isCompleted || !_messages[index].isFromMe! ? 1 : 0,
+                              child: messageWidget,
+                            ),
+                          ),
+                        );
+                      }
 
-                          return messageWidget;
-                        })
-                    : SliverToBoxAdapter(child: Container()),
+                      return messageWidget;
+                    })
+                : SliverToBoxAdapter(child: Container()),
             SliverPadding(
               padding: EdgeInsets.all(70),
             ),

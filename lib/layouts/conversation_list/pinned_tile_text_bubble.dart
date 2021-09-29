@@ -25,16 +25,13 @@ class PinnedTileTextBubble extends StatelessWidget {
     if (!(chat.hasUnreadMessage ?? false)) return Container();
     Message message = chat.latestMessageGetter;
     bool leftSide = Random(message.id).nextBool();
-    bool hide =
-        SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value;
-    bool generate = SettingsManager().settings.redactedMode.value &&
-        SettingsManager().settings.generateFakeMessageContent.value;
+    bool hide = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value;
+    bool generate =
+        SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeMessageContent.value;
 
     String messageText = MessageHelper.getNotificationText(message);
     if (generate) messageText = chat.fakeLatestMessageText ?? "";
-    if (message.associatedMessageGuid != null ||
-        message.isFromMe! ||
-        isNullOrEmpty(messageText, trimString: true)!) {
+    if (message.associatedMessageGuid != null || message.isFromMe! || isNullOrEmpty(messageText, trimString: true)!) {
       return Container();
     }
 
@@ -45,20 +42,20 @@ class PinnedTileTextBubble extends StatelessWidget {
     return Align(
       alignment: showTail
           ? leftSide
-          ? Alignment.centerLeft
-          : Alignment.centerRight
+              ? Alignment.centerLeft
+              : Alignment.centerRight
           : Alignment.center,
       child: Padding(
         padding: EdgeInsets.only(
           left: showTail
               ? leftSide
-              ? size * 0.06
-              : size * 0.02
+                  ? size * 0.06
+                  : size * 0.02
               : size * 0.04,
           right: showTail
               ? leftSide
-              ? size * 0.02
-              : size * 0.06
+                  ? size * 0.02
+                  : size * 0.06
               : size * 0.04,
         ),
         child: Stack(

@@ -1,12 +1,12 @@
 import 'dart:ui';
 
+import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
@@ -132,7 +132,8 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        systemNavigationBarIconBrightness:
+            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
@@ -166,7 +167,8 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.search : Icons.search, color: Theme.of(context).textTheme.bodyText1!.color),
+                      Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.search : Icons.search,
+                          color: Theme.of(context).textTheme.bodyText1!.color),
                       Container(padding: EdgeInsets.only(right: 5.0)),
                       Flexible(
                           fit: FlexFit.loose,
@@ -197,14 +199,22 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                               })
                           : Padding(
                               padding: const EdgeInsets.all(12.0),
-                              child: SettingsManager().settings.skin.value == Skins.iOS ? Theme(
-                                data: ThemeData(
-                                  cupertinoOverrideTheme: CupertinoThemeData(
-                                      brightness:
-                                          ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor)),
-                                ),
-                                child: CupertinoActivityIndicator(),
-                              ) : Container(height: 20, width: 20, child: Center(child: CircularProgressIndicator(strokeWidth: 2,))),
+                              child: SettingsManager().settings.skin.value == Skins.iOS
+                                  ? Theme(
+                                      data: ThemeData(
+                                        cupertinoOverrideTheme: CupertinoThemeData(
+                                            brightness: ThemeData.estimateBrightnessForColor(
+                                                Theme.of(context).backgroundColor)),
+                                      ),
+                                      child: CupertinoActivityIndicator(),
+                                    )
+                                  : Container(
+                                      height: 20,
+                                      width: 20,
+                                      child: Center(
+                                          child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ))),
                             )
                     ])),
             Divider(color: Theme.of(context).accentColor),
@@ -290,7 +300,8 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                                       Text(buildDate(message.dateCreated),
                                           style: Theme.of(context).textTheme.subtitle1!.apply(fontSizeDelta: -2)),
                                       Container(height: 5.0),
-                                      Text(chat?.title ?? "Unknown title", style: Theme.of(context).textTheme.bodyText1),
+                                      Text(chat?.title ?? "Unknown title",
+                                          style: Theme.of(context).textTheme.bodyText1),
                                     ],
                                   ),
                                   subtitle: Padding(
@@ -300,7 +311,9 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                                     ),
                                   ),
                                   trailing: Icon(
-                                    SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.forward : Icons.arrow_forward_ios,
+                                    SettingsManager().settings.skin.value == Skins.iOS
+                                        ? CupertinoIcons.forward
+                                        : Icons.arrow_forward_ios,
                                     color: Theme.of(context).textTheme.bodyText1!.color,
                                   ),
                                 ),

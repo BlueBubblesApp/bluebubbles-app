@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
@@ -8,7 +6,6 @@ import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:fast_contacts/fast_contacts.dart' hide Contact;
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -91,24 +88,19 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
       widget.handle?.color != null ? HexColor(widget.handle!.color!) : toColorGradient(widget.handle!.address)[0],
       title: Container(
           width: CustomNavigator.width(context) - 112,
-          child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Choose a Color',
-                    style: Theme.of(context).textTheme.headline6),
-                TextButton(
-                  onPressed: () async {
-                    didReset = true;
-                    Get.back();
-                    widget.handle!.color = null;
-                    widget.handle!.save();
-                    EventDispatcher().emit("refresh-avatar", [widget.handle?.address, widget.handle?.color]);
-                  },
-                  child: Text("RESET"),
-                )
-              ]
-          )
-      ),
+          child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Text('Choose a Color', style: Theme.of(context).textTheme.headline6),
+            TextButton(
+              onPressed: () async {
+                didReset = true;
+                Get.back();
+                widget.handle!.color = null;
+                widget.handle!.save();
+                EventDispatcher().emit("refresh-avatar", [widget.handle?.address, widget.handle?.color]);
+              },
+              child: Text("RESET"),
+            )
+          ])),
       width: 40,
       height: 40,
       spacing: 0,
@@ -173,10 +165,11 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
           return CircleAvatar(
             key: Key("$keyPrefix-avatar"),
             radius: (widget.size != null) ? widget.size! / 2 : 20,
-            backgroundImage:
-                !(SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactPhotos.value) && contact?.avatar.value != null
-                    ? MemoryImage(contact!.avatar.value!)
-                    : null,
+            backgroundImage: !(SettingsManager().settings.redactedMode.value &&
+                        SettingsManager().settings.hideContactPhotos.value) &&
+                    contact?.avatar.value != null
+                ? MemoryImage(contact!.avatar.value!)
+                : null,
             child: contact?.avatar.value == null ||
                     (SettingsManager().settings.redactedMode.value &&
                         SettingsManager().settings.hideContactPhotos.value)
@@ -204,7 +197,9 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
                                   SettingsManager().settings.removeLetterAvatars.value) ||
                               getInitials(handle: widget.handle) == null
                           ? Icon(
-                              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.person_fill : Icons.person,
+                              SettingsManager().settings.skin.value == Skins.iOS
+                                  ? CupertinoIcons.person_fill
+                                  : Icons.person,
                               key: Key("$keyPrefix-avatar-icon"),
                               size: (widget.size ?? 40) / 2,
                             )

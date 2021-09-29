@@ -1,22 +1,24 @@
 import 'dart:async';
 import 'dart:convert';
+
 import 'package:bluebubbles/blocs/message_bloc.dart';
+import 'package:bluebubbles/helpers/darty.dart';
+import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/repository/models/io/attachment.dart';
 import 'package:bluebubbles/repository/models/io/join_tables.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
 import 'package:collection/collection.dart';
 import 'package:crypto/crypto.dart' as crypto;
-import 'package:bluebubbles/helpers/message_helper.dart';
-import 'package:bluebubbles/helpers/darty.dart';
-import 'package:bluebubbles/helpers/reaction.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
-import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart' hide Condition;
 import 'package:metadata_fetch/metadata_fetch.dart';
+
 import 'chat.dart';
 import 'handle.dart';
 
@@ -31,10 +33,11 @@ Future<Map<String, List<Attachment?>>> fetchAttachmentsIsolate(List<dynamic> stu
     final amJoinQuery = amJoinBox.query(AttachmentMessageJoin_.messageId.oneOf(messageIds)).build();
     final amJoins = amJoinQuery.find();
     amJoinQuery.close();
-    map.addEntries(guids.mapIndexed(
-            (index, e) => MapEntry(e, attachmentBox.getMany(amJoins.where(
-                (e2) => e2.messageId == messageIds[index]).map(
-                (e3) => e3.attachmentId).toSet().toList(), growableResult: true))));
+    map.addEntries(guids.mapIndexed((index, e) => MapEntry(
+        e,
+        attachmentBox.getMany(
+            amJoins.where((e2) => e2.messageId == messageIds[index]).map((e3) => e3.attachmentId).toSet().toList(),
+            growableResult: true))));
     return map;
   });
 }
@@ -51,7 +54,9 @@ class Message {
   String? subject;
   String? country;
   final RxInt _error = RxInt(0);
+
   int get error => _error.value;
+
   set error(int i) => _error.value = i;
   DateTime? dateCreated;
   DateTime? dateRead;
@@ -227,32 +232,32 @@ class Message {
   Message save() {
     if (kIsWeb) return this;
     store.runInTransaction(TxMode.write, () {
-     Message? existing = Message.findOne(guid: guid);
-     if (existing != null) {
-       id = existing.id;
-     }
+      Message? existing = Message.findOne(guid: guid);
+      if (existing != null) {
+        id = existing.id;
+      }
 
-     // Save the participant & set the handle ID to the new participant
-     if (handle != null) {
-       handle!.save();
-       handleId = handle!.id;
-     }
-     if (associatedMessageType != null && associatedMessageGuid != null) {
-       Message? associatedMessage = Message.findOne(guid: associatedMessageGuid);
-       if (associatedMessage != null) {
-         associatedMessage.hasReactions = true;
-         associatedMessage.save();
-       }
-     } else if (!hasReactions) {
-       Message? reaction = Message.findOne(associatedMessageGuid: guid);
-       if (reaction != null) {
-         hasReactions = true;
-       }
-     }
+      // Save the participant & set the handle ID to the new participant
+      if (handle != null) {
+        handle!.save();
+        handleId = handle!.id;
+      }
+      if (associatedMessageType != null && associatedMessageGuid != null) {
+        Message? associatedMessage = Message.findOne(guid: associatedMessageGuid);
+        if (associatedMessage != null) {
+          associatedMessage.hasReactions = true;
+          associatedMessage.save();
+        }
+      } else if (!hasReactions) {
+        Message? reaction = Message.findOne(associatedMessageGuid: guid);
+        if (reaction != null) {
+          hasReactions = true;
+        }
+      }
 
-     try {
-       messageBox.put(this);
-     } on UniqueViolationException catch (_) {}
+      try {
+        messageBox.put(this);
+      } on UniqueViolationException catch (_) {}
     });
     return this;
   }
@@ -289,7 +294,8 @@ class Message {
     return this;
   }
 
-  static Map<String, List<Attachment?>> fetchAttachmentsByMessages(List<Message?> messages, {CurrentChat? currentChat}) {
+  static Map<String, List<Attachment?>> fetchAttachmentsByMessages(List<Message?> messages,
+      {CurrentChat? currentChat}) {
     final Map<String, List<Attachment?>> map = {};
     if (kIsWeb) {
       map.addEntries(messages.map((e) => MapEntry(e!.guid!, e.attachments ?? [])));
@@ -306,15 +312,17 @@ class Message {
       final amJoinQuery = amJoinBox.query(AttachmentMessageJoin_.messageId.oneOf(messageIds)).build();
       final amJoins = amJoinQuery.find();
       amJoinQuery.close();
-      map.addEntries(messages.map(
-          (e) => MapEntry(e!.guid!, attachmentBox.getMany(amJoins.where(
-              (e2) => e2.messageId == e.id).map(
-                  (e3) => e3.attachmentId).toSet().toList(), growableResult: true))));
+      map.addEntries(messages.map((e) => MapEntry(
+          e!.guid!,
+          attachmentBox.getMany(
+              amJoins.where((e2) => e2.messageId == e.id).map((e3) => e3.attachmentId).toSet().toList(),
+              growableResult: true))));
       return map;
     });
   }
 
-  static Future<Map<String, List<Attachment?>>> fetchAttachmentsByMessagesAsync(List<Message?> messages, {CurrentChat? currentChat}) async {
+  static Future<Map<String, List<Attachment?>>> fetchAttachmentsByMessagesAsync(List<Message?> messages,
+      {CurrentChat? currentChat}) async {
     final Map<String, List<Attachment?>> map = {};
     if (kIsWeb) {
       map.addEntries(messages.map((e) => MapEntry(e!.guid!, e.attachments ?? [])));
@@ -326,7 +334,11 @@ class Message {
       return map;
     }
 
-    return await compute(fetchAttachmentsIsolate, [messages.map((e) => e!.id!).toList(), messages.map((e) => e!.guid!).toList(), prefs.getString("objectbox-reference")]);
+    return await compute(fetchAttachmentsIsolate, [
+      messages.map((e) => e!.id!).toList(),
+      messages.map((e) => e!.guid!).toList(),
+      prefs.getString("objectbox-reference")
+    ]);
   }
 
   List<Attachment?>? fetchAttachments({CurrentChat? currentChat}) {
@@ -362,13 +374,12 @@ class Message {
   }
 
   Message fetchAssociatedMessages({MessageBloc? bloc}) {
-    if (associatedMessages.isNotEmpty &&
-        associatedMessages.length == 1 &&
-        associatedMessages[0].guid == guid) {
+    if (associatedMessages.isNotEmpty && associatedMessages.length == 1 && associatedMessages[0].guid == guid) {
       return this;
     }
     if (kIsWeb) {
-      associatedMessages = bloc?.reactionMessages.values.where((element) => element.associatedMessageGuid == guid).toList() ?? [];
+      associatedMessages =
+          bloc?.reactionMessages.values.where((element) => element.associatedMessageGuid == guid).toList() ?? [];
     } else {
       associatedMessages = Message.find(cond: Message_.associatedMessageGuid.equals(guid!));
     }
@@ -443,9 +454,7 @@ class Message {
 
   bool isUrlPreview() {
     // first condition is for macOS < 11 and second condition is for macOS >= 11
-    return (balloonBundleId != null &&
-            balloonBundleId == "com.apple.messages.URLBalloonProvider" &&
-            hasDdResults!) ||
+    return (balloonBundleId != null && balloonBundleId == "com.apple.messages.URLBalloonProvider" && hasDdResults!) ||
         (hasDdResults! && (text ?? "").replaceAll("\n", " ").hasUrl);
   }
 
@@ -484,9 +493,7 @@ class Message {
   }
 
   List<Message> getReactions() {
-    return associatedMessages
-        .where((item) => ReactionTypes.toList().contains(item.associatedMessageType))
-        .toList();
+    return associatedMessages.where((item) => ReactionTypes.toList().contains(item.associatedMessageType)).toList();
   }
 
   void generateTempGuid() {

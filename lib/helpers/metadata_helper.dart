@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -9,6 +8,7 @@ import 'package:html/dom.dart';
 import 'package:html/parser.dart' as parser;
 import 'package:http/http.dart' as http;
 import 'package:metadata_fetch/metadata_fetch.dart';
+import 'package:universal_io/io.dart';
 
 /// Adds getter/setter for the original [Response.request.url]
 extension HttpRequestData on Document? {

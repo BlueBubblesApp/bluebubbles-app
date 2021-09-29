@@ -111,7 +111,9 @@ class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepA
               child: Container(
                 child: Center(
                   child: Icon(
-                    SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.check_mark_circled_solid : Icons.check_circle,
+                    SettingsManager().settings.skin.value == Skins.iOS
+                        ? CupertinoIcons.check_mark_circled_solid
+                        : Icons.check_circle,
                     color: Colors.white,
                   ),
                 ),
@@ -124,7 +126,9 @@ class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepA
               child: InkWell(
                 child: widget.data.type == AssetType.video
                     ? Icon(
-                        SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.play_circle_fill : Icons.play_circle_filled,
+                        SettingsManager().settings.skin.value == Skins.iOS
+                            ? CupertinoIcons.play_circle_fill
+                            : Icons.play_circle_filled,
                         color: Colors.white.withOpacity(0.5),
                         size: 50,
                       )

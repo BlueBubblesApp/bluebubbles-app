@@ -25,8 +25,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
-import 'dart:io';
-import 'package:bluebubbles/repository/models/models.dart';
 
 export 'package:bluebubbles/api_manager.dart';
 
@@ -91,6 +89,7 @@ class SocketManager {
   Stream<List<int>> get socketProcessUpdater => _socketProcessUpdater.stream;
 
   final StreamController<String> _attachmentSenderCompleter = StreamController<String>.broadcast();
+
   Stream<String> get attachmentSenderCompleter => _attachmentSenderCompleter.stream;
 
   void addAttachmentSender(AttachmentSender sender) {
@@ -422,7 +421,8 @@ class SocketManager {
     String? result;
 
     if (kIsWeb || kIsDesktop) {
-      Logger.debug("Platform ${kIsWeb ? "web" : Platform.operatingSystem} detected, not authing with FCM!", tag: 'FCM-Auth');
+      Logger.debug("Platform ${kIsWeb ? "web" : Platform.operatingSystem} detected, not authing with FCM!",
+          tag: 'FCM-Auth');
       isAuthingFcm = false;
       return;
     }

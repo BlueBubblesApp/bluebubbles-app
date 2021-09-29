@@ -51,7 +51,6 @@ class ThemeSwitcher extends StatefulWidget {
 }
 
 class _ThemeSwitcherState extends State<ThemeSwitcher> {
-
   @override
   void initState() {
     super.initState();

@@ -202,8 +202,7 @@ class MessageHelper {
     return chats;
   }
 
-  static Future<void> handleNotification(Message message, Chat chat,
-      {bool force = false}) async {
+  static Future<void> handleNotification(Message message, Chat chat, {bool force = false}) async {
     // See if there is an existing message for the given GUID
     Message? existingMessage;
     if (!force) existingMessage = Message.findOne(guid: message.guid);

@@ -72,10 +72,8 @@ class _SetupViewState extends State<SetupView> {
             WelcomePage(
               controller: controller,
             ),
-            if (!kIsWeb && !kIsDesktop)
-              RequestContacts(controller: controller),
-            if (!kIsWeb && !kIsDesktop)
-              BatteryOptimizationPage(controller: controller),
+            if (!kIsWeb && !kIsDesktop) RequestContacts(controller: controller),
+            if (!kIsWeb && !kIsDesktop) BatteryOptimizationPage(controller: controller),
             SetupMacApp(controller: controller),
             QRScan(
               controller: controller,

@@ -1,8 +1,4 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/scheduler.dart';
-import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
-import 'package:universal_io/io.dart';
 import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui';
@@ -23,14 +19,18 @@ import 'package:collection/collection.dart';
 import 'package:convert/convert.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
-import 'package:libphonenumber_plugin/libphonenumber_plugin.dart';
+import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:get/get.dart';
 import 'package:html/parser.dart';
 import 'package:http/http.dart' show get;
 import 'package:intl/intl.dart' as intl;
+import 'package:libphonenumber_plugin/libphonenumber_plugin.dart';
 import 'package:slugify/slugify.dart';
+import 'package:universal_io/io.dart';
 import 'package:video_player/video_player.dart';
 
 DateTime? parseDate(dynamic value) {

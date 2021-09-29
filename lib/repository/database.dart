@@ -1,18 +1,19 @@
 import 'dart:async';
+
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/repository/models/config_entry.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/repository/models/settings.dart';
+import 'package:flutter/foundation.dart';
 //ignore: implementation_imports
 import 'package:objectbox/src/transaction.dart';
-import 'package:sqflite/sqflite.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'package:flutter/foundation.dart';
-import 'package:universal_io/io.dart';
-import 'package:bluebubbles/helpers/logger.dart';
-import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:universal_io/io.dart';
 
 enum Tables {
   chat,
@@ -37,6 +38,7 @@ class DBUpgradeItem {
 
 class DBProvider {
   DBProvider._();
+
   static final DBProvider db = DBProvider._();
 
   static int currentVersion = 14;

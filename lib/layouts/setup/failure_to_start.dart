@@ -13,7 +13,8 @@ class FailureToStart extends StatelessWidget {
       home: AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle(
           systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
-          systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+          systemNavigationBarIconBrightness:
+              Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
           statusBarColor: Colors.transparent, // status bar color
         ),
         child: Scaffold(
@@ -26,7 +27,8 @@ class FailureToStart extends StatelessWidget {
               children: [
                 Center(
                   child: Text(
-                    otherTitle ?? "Whoops, looks like we messed up. Unfortunately you will need to reinstall the app, sorry for the inconvenience :(",
+                    otherTitle ??
+                        "Whoops, looks like we messed up. Unfortunately you will need to reinstall the app, sorry for the inconvenience :(",
                     style: TextStyle(color: Colors.white, fontSize: 30),
                     textAlign: TextAlign.center,
                   ),

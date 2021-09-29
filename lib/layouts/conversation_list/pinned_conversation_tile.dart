@@ -174,7 +174,8 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
         ),
         child: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints constraints) {
-            return Obx(() {
+            return Obx(
+              () {
                 // Great math right here
                 double availableWidth = constraints.maxWidth;
                 int colCount = SettingsManager().settings.pinColumnsPortrait.value;

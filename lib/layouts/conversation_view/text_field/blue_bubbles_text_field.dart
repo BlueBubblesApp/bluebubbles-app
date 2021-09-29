@@ -22,8 +22,8 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:dio_http/dio_http.dart';
-import 'package:file_picker/file_picker.dart' as pf;
 import 'package:file_picker/file_picker.dart' hide PlatformFile;
+import 'package:file_picker/file_picker.dart' as pf;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -498,8 +498,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   addAttachment(PlatformFile(
                       name: await dropZoneController!.getFilename(ev),
                       bytes: await dropZoneController!.getFileData(ev),
-                      size: await dropZoneController!.getFileSize(ev)
-                  ));
+                      size: await dropZoneController!.getFileSize(ev)));
                 },
               ),
             TransparentPointer(
@@ -507,7 +506,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 child: InkWell(
                   onTap: toggleShareMenu,
                   child: Padding(
-                    padding: EdgeInsets.only(right: SettingsManager().settings.skin.value == Skins.iOS ? 0 : 1, left: SettingsManager().settings.skin.value == Skins.iOS ? 0.5 : 0),
+                    padding: EdgeInsets.only(
+                        right: SettingsManager().settings.skin.value == Skins.iOS ? 0 : 1,
+                        left: SettingsManager().settings.skin.value == Skins.iOS ? 0.5 : 0),
                     child: fileDragged
                         ? Center(child: Text("Drop file here"))
                         : Icon(
@@ -593,7 +594,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   focusNode: FocusNode(),
                   onKey: (focus, event) {
                     if (event is! RawKeyDownEvent) return KeyEventResult.ignored;
-                    Logger.info("Got key label ${event.data.keyLabel}, physical key ${event.data.physicalKey.toString()}, logical key ${event.data.logicalKey.toString()}", tag: "RawKeyboardListener");
+                    Logger.info(
+                        "Got key label ${event.data.keyLabel}, physical key ${event.data.physicalKey.toString()}, logical key ${event.data.logicalKey.toString()}",
+                        tag: "RawKeyboardListener");
                     if (event.data is RawKeyEventDataWindows) {
                       var data = event.data as RawKeyEventDataWindows;
                       if (data.keyCode == 13 && !event.isShiftPressed) {
@@ -642,7 +645,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       }
                       return KeyEventResult.ignored;
                     }
-                    // TODO figure out the Linux keycode
                     if (event.data is RawKeyEventDataLinux) {
                       var data = event.data as RawKeyEventDataLinux;
                       if (data.keyCode == 65293 && !event.isShiftPressed) {
@@ -707,8 +709,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         focusNode!.requestFocus();
                         return KeyEventResult.handled;
                       }
-                      if ((data.physicalKey == PhysicalKeyboardKey.keyV || data.logicalKey == LogicalKeyboardKey.keyV)
-                          && (event.isControlPressed || previousKeyCode == 0x1700000000)) {
+                      if ((data.physicalKey == PhysicalKeyboardKey.keyV ||
+                              data.logicalKey == LogicalKeyboardKey.keyV) &&
+                          (event.isControlPressed || previousKeyCode == 0x1700000000)) {
                         getPastedImageWeb().then((value) {
                           if (value != null) {
                             var r = html.FileReader();
@@ -981,12 +984,15 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       }
 
       if (pathName != null) {
-        reviewAudio(context, PlatformFile(
-        name: "${randomString(8)}.m4a",
-        path: kIsWeb ? null : pathName,
-        size: 0,
-        bytes: kIsWeb ? (await Dio().get(pathName, options: Options(responseType: ResponseType.bytes))).data : null,
-      ));
+        reviewAudio(
+            context,
+            PlatformFile(
+              name: "${randomString(8)}.m4a",
+              path: kIsWeb ? null : pathName,
+              size: 0,
+              bytes:
+                  kIsWeb ? (await Dio().get(pathName, options: Options(responseType: ResponseType.bytes))).data : null,
+            ));
       }
     }
   }
@@ -1036,10 +1042,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     } else if (isRecording.value) {
       await stopRecording();
       shouldUpdate = true;
-    } else if (canRecord.value &&
-        !isRecording.value &&
-        !kIsDesktop &&
-        await Record().hasPermission()) {
+    } else if (canRecord.value && !isRecording.value && !kIsDesktop && await Record().hasPermission()) {
       await startRecording();
       shouldUpdate = true;
     } else {

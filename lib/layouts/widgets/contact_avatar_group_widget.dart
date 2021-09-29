@@ -1,4 +1,3 @@
-import 'package:universal_io/io.dart';
 import 'dart:math';
 import 'dart:ui';
 
@@ -11,6 +10,7 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:universal_io/io.dart';
 
 class ContactAvatarGroupWidget extends StatefulWidget {
   ContactAvatarGroupWidget({Key? key, this.size = 40, this.editable = true, this.onTap, required this.chat})
@@ -54,23 +54,21 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
       () {
         if (widget.chat.customAvatarPath != null) {
           dynamic file = File(widget.chat.customAvatarPath!);
-          return Stack(
-            children: [
-              Container(
-                width: widget.size,
-                height: widget.size,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(widget.size / 2),
-                ),
+          return Stack(children: [
+            Container(
+              width: widget.size,
+              height: widget.size,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(widget.size / 2),
               ),
-              CircleAvatar(
-                key: Key("${participants.first.address}-avatar"),
-                radius: widget.size / 2,
-                backgroundImage: FileImage(file),
-                backgroundColor: Colors.transparent,
-              ),
-            ]
-          );
+            ),
+            CircleAvatar(
+              key: Key("${participants.first.address}-avatar"),
+              radius: widget.size / 2,
+              backgroundImage: FileImage(file),
+              backgroundColor: Colors.transparent,
+            ),
+          ]);
         }
 
         int maxAvatars = SettingsManager().settings.maxAvatarsInGroupWidget.value;
@@ -121,7 +119,9 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
                                       color: context.theme.accentColor.withOpacity(0.8),
                                     ),
                                     child: Icon(
-                                      SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.group_solid : Icons.people,
+                                      SettingsManager().settings.skin.value == Skins.iOS
+                                          ? CupertinoIcons.group_solid
+                                          : Icons.people,
                                       size: size * 0.65,
                                       color: context.textTheme.subtitle1!.color!.withOpacity(0.8),
                                     ),

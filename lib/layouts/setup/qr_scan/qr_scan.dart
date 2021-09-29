@@ -135,7 +135,9 @@ class _QRScanState extends State<QRScan> {
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20.0),
                 child: Text(
-                  kIsWeb || kIsDesktop ? "Please enter your server URL and password to access your messages" : "BlueBubbles tries to make the setup process as easy as possible. We've created a QR code on your server that you can use to easily register this device with the server.",
+                  kIsWeb || kIsDesktop
+                      ? "Please enter your server URL and password to access your messages"
+                      : "BlueBubbles tries to make the setup process as easy as possible. We've created a QR code on your server that you can use to easily register this device with the server.",
                   style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
                   textAlign: TextAlign.center,
                 ),
@@ -158,8 +160,7 @@ class _QRScanState extends State<QRScan> {
                     ),
                   ),
                 ),
-              if (!kIsWeb && !kIsDesktop)
-                Container(height: 80.0),
+              if (!kIsWeb && !kIsDesktop) Container(height: 80.0),
               if (!kIsWeb && !kIsDesktop)
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20.0),

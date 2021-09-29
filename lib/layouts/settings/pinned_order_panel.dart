@@ -1,4 +1,3 @@
-
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -17,7 +16,7 @@ class PinnedOrderPanel extends StatelessWidget {
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
         systemNavigationBarIconBrightness:
-        Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
@@ -39,10 +38,7 @@ class PinnedOrderPanel extends StatelessWidget {
                 actions: [
                   TextButton(
                       child: Text("RESET",
-                          style: Theme.of(context)
-                              .textTheme
-                              .subtitle1!
-                              .apply(color: Theme.of(context).primaryColor)),
+                          style: Theme.of(context).textTheme.subtitle1!.apply(color: Theme.of(context).primaryColor)),
                       onPressed: () {
                         ChatBloc().removePinIndices();
                       }),

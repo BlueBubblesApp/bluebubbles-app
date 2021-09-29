@@ -1,5 +1,4 @@
 import 'dart:ui';
-import 'package:universal_html/html.dart' as uh;
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
@@ -21,6 +20,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:universal_html/html.dart' as uh;
 
 class NotificationPanelController extends GetxController with SingleGetTickerProviderMixin {
   late final TabController tabController;
@@ -34,27 +34,26 @@ class NotificationPanelController extends GetxController with SingleGetTickerPro
           SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.globe : Icons.public,
           color: Theme.of(Get.context!).textTheme.bodyText1!.color,
         ),
-        text: "GLOBAL OPTIONS"
-    ));
+        text: "GLOBAL OPTIONS"));
     if (!kIsWeb) {
       tabs.add(Tab(
           icon: Icon(
-            SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.conversation_bubble : Icons.chat_bubble_outline,
+            SettingsManager().settings.skin.value == Skins.iOS
+                ? CupertinoIcons.conversation_bubble
+                : Icons.chat_bubble_outline,
             color: Theme.of(Get.context!).textTheme.bodyText1!.color,
           ),
-          text: "CHAT-SPECIFIC OPTIONS"
-      ));
+          text: "CHAT-SPECIFIC OPTIONS"));
     }
     super.onInit();
   }
 }
 
 class NotificationPanel extends StatelessWidget {
-
   @override
   Widget build(BuildContext context) {
     final iosSubtitle =
-    Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
+        Theme.of(context).textTheme.subtitle1?.copyWith(color: Colors.grey, fontWeight: FontWeight.w300);
     final materialSubtitle = Theme.of(context)
         .textTheme
         .subtitle1
@@ -117,31 +116,33 @@ class NotificationPanel extends StatelessWidget {
                             alignment: Alignment.bottomLeft,
                             decoration: SettingsManager().settings.skin.value == Skins.iOS
                                 ? BoxDecoration(
-                              color: headerColor,
-                              border: Border(
-                                  bottom: BorderSide(
-                                      color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
-                            )
+                                    color: headerColor,
+                                    border: Border(
+                                        bottom: BorderSide(
+                                            color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
+                                  )
                                 : BoxDecoration(
-                              color: tileColor,
-                            ),
+                                    color: tileColor,
+                                  ),
                             child: Padding(
                               padding: const EdgeInsets.only(bottom: 8.0, left: 15),
                               child: Text("Notifications".psCapitalize,
-                                  style: SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
+                                  style: SettingsManager().settings.skin.value == Skins.iOS
+                                      ? iosSubtitle
+                                      : materialSubtitle),
                             )),
                         Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
                         if (!kIsWeb)
                           Obx(() => SettingsSwitch(
-                            onChanged: (bool val) {
-                              SettingsManager().settings.notifyOnChatList.value = val;
-                              saveSettings();
-                            },
-                            initialVal: SettingsManager().settings.notifyOnChatList.value,
-                            title: "Send Notifications on Chat List",
-                            subtitle: "Sends notifications for new messages while in the chat list or chat creator",
-                            backgroundColor: tileColor,
-                          )),
+                                onChanged: (bool val) {
+                                  SettingsManager().settings.notifyOnChatList.value = val;
+                                  saveSettings();
+                                },
+                                initialVal: SettingsManager().settings.notifyOnChatList.value,
+                                title: "Send Notifications on Chat List",
+                                subtitle: "Sends notifications for new messages while in the chat list or chat creator",
+                                backgroundColor: tileColor,
+                              )),
                         if (kIsWeb)
                           SettingsTile(
                             onTap: () async {
@@ -150,9 +151,10 @@ class NotificationPanel extends StatelessWidget {
                               showSnackbar("Notice", "Notification permission $res");
                             },
                             title: uh.Notification.permission == "granted"
-                                ? "Notifications enabled" : uh.Notification.permission == "denied"
-                                ? "Notifications denied, please update your browser settings to re-enable notifications"
-                                : "Click to enable notifications",
+                                ? "Notifications enabled"
+                                : uh.Notification.permission == "denied"
+                                    ? "Notifications denied, please update your browser settings to re-enable notifications"
+                                    : "Click to enable notifications",
                             backgroundColor: tileColor,
                           ),
                         Container(
@@ -163,15 +165,15 @@ class NotificationPanel extends StatelessWidget {
                           ),
                         ),
                         Obx(() => SettingsSwitch(
-                          onChanged: (bool val) {
-                            SettingsManager().settings.notifyReactions.value = val;
-                            saveSettings();
-                          },
-                          initialVal: SettingsManager().settings.notifyReactions.value,
-                          title: "Notify for Reactions",
-                          subtitle: "Sends notifications for incoming reactions",
-                          backgroundColor: tileColor,
-                        )),
+                              onChanged: (bool val) {
+                                SettingsManager().settings.notifyReactions.value = val;
+                                saveSettings();
+                              },
+                              initialVal: SettingsManager().settings.notifyReactions.value,
+                              title: "Notify for Reactions",
+                              subtitle: "Sends notifications for incoming reactions",
+                              backgroundColor: tileColor,
+                            )),
                         Container(
                           color: tileColor,
                           child: Padding(
@@ -225,30 +227,33 @@ class NotificationPanel extends StatelessWidget {
                               titleStyle: Theme.of(context).textTheme.headline1,
                               backgroundColor: Theme.of(context).backgroundColor,
                               buttonColor: Theme.of(context).primaryColor,
-                              content: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Text("Enter any text separated by commas to whitelist notifications for. These are case insensitive.\n\nE.g. 'John,hey guys,homework'\n"),
+                              content: Column(mainAxisSize: MainAxisSize.min, children: [
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                      "Enter any text separated by commas to whitelist notifications for. These are case insensitive.\n\nE.g. 'John,hey guys,homework'\n"),
+                                ),
+                                Theme(
+                                  data: Theme.of(context).copyWith(
+                                      inputDecorationTheme: const InputDecorationTheme(
+                                    labelStyle: TextStyle(color: Colors.grey),
+                                  )),
+                                  child: TextField(
+                                    controller: controller,
+                                    decoration: InputDecoration(
+                                      labelText: "Enter text to whitelist...",
+                                      enabledBorder: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                        color: Colors.grey,
+                                      )),
+                                      focusedBorder: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                        color: Theme.of(context).primaryColor,
+                                      )),
                                     ),
-                                    Theme(
-                                      data: Theme.of(context).copyWith(
-                                          inputDecorationTheme: const InputDecorationTheme(
-                                            labelStyle: TextStyle(color: Colors.grey),
-                                          )
-                                      ),
-                                      child: TextField(
-                                        controller: controller,
-                                        decoration: InputDecoration(
-                                          labelText: "Enter text to whitelist...",
-                                          enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey,)),
-                                          focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).primaryColor,)),
-                                        ),
-                                      ),
-                                    ),
-                                  ]
-                              ),
+                                  ),
+                                ),
+                              ]),
                               onConfirm: () async {
                                 SettingsManager().settings.globalTextDetection.value = controller.text;
                                 saveSettings();
@@ -264,10 +269,11 @@ class NotificationPanel extends StatelessWidget {
                           height: 30,
                           decoration: SettingsManager().settings.skin.value == Skins.iOS
                               ? BoxDecoration(
-                            color: headerColor,
-                            border: Border(
-                                top: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
-                          )
+                                  color: headerColor,
+                                  border: Border(
+                                      top: BorderSide(
+                                          color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
+                                )
                               : null,
                         ),
                       ],
@@ -278,8 +284,7 @@ class NotificationPanel extends StatelessWidget {
                   ),
                 ],
               ),
-              if (!kIsWeb)
-                ChatList(),
+              if (!kIsWeb) ChatList(),
             ],
           ),
           bottomSheet: Container(
@@ -314,7 +319,6 @@ class ChatList extends StatefulWidget {
 }
 
 class ChatListState extends State<ChatList> {
-
   String getSubtitle(Chat chat) {
     if (chat.muteType == null) {
       return "No settings set";
@@ -322,7 +326,8 @@ class ChatListState extends State<ChatList> {
       String muteArgsStr = "";
       if (chat.muteArgs != null) {
         if (chat.muteType == "mute_individuals") {
-          final participants = chat.participants.where((element) => chat.muteArgs!.split(",").contains(element.address));
+          final participants =
+              chat.participants.where((element) => chat.muteArgs!.split(",").contains(element.address));
           muteArgsStr = " - ${participants.length > 1 ? "${participants.length} people" : "1 person"}";
         } else if (chat.muteType == "temporary_mute") {
           final DateTime time = DateTime.parse(chat.muteArgs!).toLocal();
@@ -387,10 +392,9 @@ class ChatListState extends State<ChatList> {
 
           return SliverList(
             delegate: SliverChildBuilderDelegate(
-                  (context, index) {
+              (context, index) {
                 return ConversationTile(
-                  key: Key(
-                      ChatBloc().chats[index].guid.toString()),
+                  key: Key(ChatBloc().chats[index].guid.toString()),
                   chat: ChatBloc().chats[index],
                   inSelectMode: true,
                   subtitle: Text(getSubtitle(ChatBloc().chats[index]), style: Theme.of(context).textTheme.subtitle1),
@@ -404,200 +408,217 @@ class ChatListState extends State<ChatList> {
                       content: Container(
                         height: context.height - 200,
                         child: SingleChildScrollView(
-                          child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: <Widget>[
-                                ListTile(
-                                    title: Text(chat.muteType == "mute" ? "Unmute" : "Mute", style: Theme.of(context).textTheme.bodyText1),
-                                    subtitle: Text("Completely ${chat.muteType == "mute" ? "unmute" : "mute"} this chat", style: Theme.of(context).textTheme.subtitle1),
-                                    onTap: () {
-                                      Get.back();
-                                      chat.toggleMute(chat.muteType != "mute");
-                                      chat.save();
-                                      if (mounted) setState(() {});
-                                      EventDispatcher().emit("refresh", null);
-                                    },
-                                ),
-                                ListTile(
-                                    title: Text("Mute Individuals", style: Theme.of(context).textTheme.bodyText1),
-                                    subtitle: Text("Mute certain individuals in this chat", style: Theme.of(context).textTheme.subtitle1),
-                                    onTap: () async {
-                                      Get.back();
-                                      List<String?> names = chat.participants.map((e) => ContactManager().getContactTitle(e)).toList();
-                                      List<String> existing = chat.muteArgs?.split(",") ?? [];
-                                      Get.defaultDialog(
-                                          title: "Mute Individuals",
-                                          titleStyle: Theme.of(context).textTheme.headline1,
-                                          backgroundColor: Theme.of(context).backgroundColor,
-                                          buttonColor: Theme.of(context).primaryColor,
-
-                                          content: Container(
-                                            constraints: BoxConstraints(
-                                              maxHeight: 300,
-                                            ),
-                                            child: Center(
-                                              child: Container(
-                                                width: 300,
-                                                height: 200,
-                                                constraints: BoxConstraints(
-                                                  maxHeight: Get.height - 300,
+                          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
+                            ListTile(
+                              title: Text(chat.muteType == "mute" ? "Unmute" : "Mute",
+                                  style: Theme.of(context).textTheme.bodyText1),
+                              subtitle: Text("Completely ${chat.muteType == "mute" ? "unmute" : "mute"} this chat",
+                                  style: Theme.of(context).textTheme.subtitle1),
+                              onTap: () {
+                                Get.back();
+                                chat.toggleMute(chat.muteType != "mute");
+                                chat.save();
+                                if (mounted) setState(() {});
+                                EventDispatcher().emit("refresh", null);
+                              },
+                            ),
+                            ListTile(
+                              title: Text("Mute Individuals", style: Theme.of(context).textTheme.bodyText1),
+                              subtitle: Text("Mute certain individuals in this chat",
+                                  style: Theme.of(context).textTheme.subtitle1),
+                              onTap: () async {
+                                Get.back();
+                                List<String?> names =
+                                    chat.participants.map((e) => ContactManager().getContactTitle(e)).toList();
+                                List<String> existing = chat.muteArgs?.split(",") ?? [];
+                                Get.defaultDialog(
+                                  title: "Mute Individuals",
+                                  titleStyle: Theme.of(context).textTheme.headline1,
+                                  backgroundColor: Theme.of(context).backgroundColor,
+                                  buttonColor: Theme.of(context).primaryColor,
+                                  content: Container(
+                                    constraints: BoxConstraints(
+                                      maxHeight: 300,
+                                    ),
+                                    child: Center(
+                                      child: Container(
+                                        width: 300,
+                                        height: 200,
+                                        constraints: BoxConstraints(
+                                          maxHeight: Get.height - 300,
+                                        ),
+                                        child: StatefulBuilder(builder: (context, setState) {
+                                          return SingleChildScrollView(
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Padding(
+                                                  padding: const EdgeInsets.all(8.0),
+                                                  child: Text("Select the individuals you would like to mute"),
                                                 ),
-                                                child: StatefulBuilder(
-                                                  builder: (context, setState) {
-                                                    return SingleChildScrollView(
-                                                      child: Column(
-                                                        mainAxisSize: MainAxisSize.min,
-                                                        children: [
-                                                          Padding(
-                                                            padding: const EdgeInsets.all(8.0),
-                                                            child: Text("Select the individuals you would like to mute"),
-                                                          ),
-                                                          ListView.builder(
-                                                            shrinkWrap: true,
-                                                            itemCount: chat.participants.length,
-                                                            physics: NeverScrollableScrollPhysics(),
-                                                            itemBuilder: (context, index) {
-                                                              return Theme(
-                                                                data: Theme.of(context).copyWith(unselectedWidgetColor: Theme.of(context).textTheme.headline1!.color),
-                                                                child: CheckboxListTile(
-                                                                    value: existing.contains(chat.participants[index].address),
-                                                                    onChanged: (val) {
-                                                                      setState(() {
-                                                                        if (val!) {
-                                                                          existing.add(chat.participants[index].address);
-                                                                        } else {
-                                                                          existing.removeWhere((element) => element == chat.participants[index].address);
-                                                                        }
-                                                                      });
-                                                                    },
-                                                                    activeColor: Theme.of(context).primaryColor,
-                                                                    title: Text(names[index] ?? chat.participants[index].address, style: Theme.of(context).textTheme.headline1),
-                                                                ),
-                                                              );
-                                                            },
-                                                          ),
-                                                        ],
+                                                ListView.builder(
+                                                  shrinkWrap: true,
+                                                  itemCount: chat.participants.length,
+                                                  physics: NeverScrollableScrollPhysics(),
+                                                  itemBuilder: (context, index) {
+                                                    return Theme(
+                                                      data: Theme.of(context).copyWith(
+                                                          unselectedWidgetColor:
+                                                              Theme.of(context).textTheme.headline1!.color),
+                                                      child: CheckboxListTile(
+                                                        value: existing.contains(chat.participants[index].address),
+                                                        onChanged: (val) {
+                                                          setState(() {
+                                                            if (val!) {
+                                                              existing.add(chat.participants[index].address);
+                                                            } else {
+                                                              existing.removeWhere((element) =>
+                                                                  element == chat.participants[index].address);
+                                                            }
+                                                          });
+                                                        },
+                                                        activeColor: Theme.of(context).primaryColor,
+                                                        title: Text(names[index] ?? chat.participants[index].address,
+                                                            style: Theme.of(context).textTheme.headline1),
                                                       ),
                                                     );
-                                                  }
+                                                  },
                                                 ),
-                                              ),
+                                              ],
                                             ),
-                                          ),
-                                          onConfirm: () async {
-                                            if (existing.isEmpty) {
-                                              showSnackbar("Error", "Please select at least one person!");
-                                              return;
-                                            }
-                                            chat.toggleMute(false);
-                                            chat.muteType = "mute_individuals";
-                                            chat.muteArgs = existing.join(",");
-                                            Get.back();
-                                            chat.save();
-                                            if (mounted) setState(() {});
-                                            EventDispatcher().emit("refresh", null);
-                                          },
-                                      );
-                                    },
-                                ),
-                                ListTile(
-                                    title: Text(chat.muteType == "temporary_mute" && shouldMuteDateTime(chat.muteArgs) ? "Delete Temporary Mute" : "Temporary Mute", style: Theme.of(context).textTheme.bodyText1),
-                                    subtitle: Text(chat.muteType == "temporary_mute" && shouldMuteDateTime(chat.muteArgs) ? "" : "Mute this chat temporarily", style: Theme.of(context).textTheme.subtitle1),
-                                    onTap: () async {
-                                      Get.back();
-                                      if (shouldMuteDateTime(chat.muteArgs)) {
-                                        chat.muteType = null;
-                                        chat.muteArgs = null;
-                                      } else {
-                                        final messageDate = await showDatePicker(
-                                            context: context,
-                                            initialDate: DateTime.now().toLocal(),
-                                            firstDate: DateTime.now().toLocal(),
-                                            lastDate: DateTime.now().toLocal().add(Duration(days: 365)));
-                                        if (messageDate != null) {
-                                          final messageTime = await showTimePicker(context: context, initialTime: TimeOfDay.now());
-                                          if (messageTime != null) {
-                                            final finalDate = DateTime(messageDate.year, messageDate.month, messageDate.day, messageTime.hour, messageTime.minute);
-                                            chat.toggleMute(false);
-                                            chat.muteType = "temporary_mute";
-                                            chat.muteArgs = finalDate.toIso8601String();
-                                            chat.save();
-                                            if (mounted) setState(() {});
-                                            EventDispatcher().emit("refresh", null);
-                                          }
-                                        }
-                                      }
-                                    },
-                                ),
-                                ListTile(
-                                    title: Text("Text Detection", style: Theme.of(context).textTheme.bodyText1),
-                                    subtitle: Text("Completely mute this chat, except when a message contains certain text", style: Theme.of(context).textTheme.subtitle1),
-                                    onTap: () async {
-                                      Get.back();
-                                      final TextEditingController controller = TextEditingController();
-                                      if (chat.muteType == "text_detection") {
-                                        controller.text = chat.muteArgs!;
-                                      }
-                                      Get.defaultDialog(
-                                        title: "Text detection",
-                                        titleStyle: Theme.of(context).textTheme.headline1,
-                                        backgroundColor: Theme.of(context).backgroundColor,
-                                        buttonColor: Theme.of(context).primaryColor,
-                                        content: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Padding(
-                                              padding: const EdgeInsets.all(8.0),
-                                              child: Text("Enter any text separated by commas to whitelist notifications for. These are case insensitive.\n\nE.g. 'John,hey guys,homework'\n"),
-                                            ),
-                                            Theme(
-                                              data: Theme.of(context).copyWith(
-                                                inputDecorationTheme: const InputDecorationTheme(
-                                                    labelStyle: TextStyle(color: Colors.grey),
-                                                  )
-                                                ),
-                                              child: TextField(
-                                                controller: controller,
-                                                decoration: InputDecoration(
-                                                  labelText: "Enter text to whitelist...",
-                                                  enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey,)),
-                                                  focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).primaryColor,)),
-                                                ),
-                                              ),
-                                            ),
-                                          ]
-                                        ),
-                                        onConfirm: () async {
-                                          if (controller.text.isEmpty) {
-                                            showSnackbar("Error", "Please enter text!");
-                                            return;
-                                          }
-                                          chat.toggleMute(false);
-                                          chat.muteType = "text_detection";
-                                          chat.muteArgs = controller.text;
-                                          Get.back();
-                                          chat.save();
-                                          if (mounted) setState(() {});
-                                          EventDispatcher().emit("refresh", null);
-                                        },
-                                      );
-                                    },
-                                ),
-                                ListTile(
-                                  title: Text("Reset chat-specific settings", style: Theme.of(context).textTheme.bodyText1),
-                                  subtitle: Text("Delete your custom settings", style: Theme.of(context).textTheme.subtitle1),
-                                  onTap: () async {
-                                    Get.back();
+                                          );
+                                        }),
+                                      ),
+                                    ),
+                                  ),
+                                  onConfirm: () async {
+                                    if (existing.isEmpty) {
+                                      showSnackbar("Error", "Please select at least one person!");
+                                      return;
+                                    }
                                     chat.toggleMute(false);
-                                    chat.muteType = null;
-                                    chat.muteArgs = null;
+                                    chat.muteType = "mute_individuals";
+                                    chat.muteArgs = existing.join(",");
+                                    Get.back();
                                     chat.save();
                                     if (mounted) setState(() {});
                                     EventDispatcher().emit("refresh", null);
                                   },
-                                ),
-                              ]
-                          ),
+                                );
+                              },
+                            ),
+                            ListTile(
+                              title: Text(
+                                  chat.muteType == "temporary_mute" && shouldMuteDateTime(chat.muteArgs)
+                                      ? "Delete Temporary Mute"
+                                      : "Temporary Mute",
+                                  style: Theme.of(context).textTheme.bodyText1),
+                              subtitle: Text(
+                                  chat.muteType == "temporary_mute" && shouldMuteDateTime(chat.muteArgs)
+                                      ? ""
+                                      : "Mute this chat temporarily",
+                                  style: Theme.of(context).textTheme.subtitle1),
+                              onTap: () async {
+                                Get.back();
+                                if (shouldMuteDateTime(chat.muteArgs)) {
+                                  chat.muteType = null;
+                                  chat.muteArgs = null;
+                                } else {
+                                  final messageDate = await showDatePicker(
+                                      context: context,
+                                      initialDate: DateTime.now().toLocal(),
+                                      firstDate: DateTime.now().toLocal(),
+                                      lastDate: DateTime.now().toLocal().add(Duration(days: 365)));
+                                  if (messageDate != null) {
+                                    final messageTime =
+                                        await showTimePicker(context: context, initialTime: TimeOfDay.now());
+                                    if (messageTime != null) {
+                                      final finalDate = DateTime(messageDate.year, messageDate.month, messageDate.day,
+                                          messageTime.hour, messageTime.minute);
+                                      chat.toggleMute(false);
+                                      chat.muteType = "temporary_mute";
+                                      chat.muteArgs = finalDate.toIso8601String();
+                                      chat.save();
+                                      if (mounted) setState(() {});
+                                      EventDispatcher().emit("refresh", null);
+                                    }
+                                  }
+                                }
+                              },
+                            ),
+                            ListTile(
+                              title: Text("Text Detection", style: Theme.of(context).textTheme.bodyText1),
+                              subtitle: Text("Completely mute this chat, except when a message contains certain text",
+                                  style: Theme.of(context).textTheme.subtitle1),
+                              onTap: () async {
+                                Get.back();
+                                final TextEditingController controller = TextEditingController();
+                                if (chat.muteType == "text_detection") {
+                                  controller.text = chat.muteArgs!;
+                                }
+                                Get.defaultDialog(
+                                  title: "Text detection",
+                                  titleStyle: Theme.of(context).textTheme.headline1,
+                                  backgroundColor: Theme.of(context).backgroundColor,
+                                  buttonColor: Theme.of(context).primaryColor,
+                                  content: Column(mainAxisSize: MainAxisSize.min, children: [
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Text(
+                                          "Enter any text separated by commas to whitelist notifications for. These are case insensitive.\n\nE.g. 'John,hey guys,homework'\n"),
+                                    ),
+                                    Theme(
+                                      data: Theme.of(context).copyWith(
+                                          inputDecorationTheme: const InputDecorationTheme(
+                                        labelStyle: TextStyle(color: Colors.grey),
+                                      )),
+                                      child: TextField(
+                                        controller: controller,
+                                        decoration: InputDecoration(
+                                          labelText: "Enter text to whitelist...",
+                                          enabledBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                            color: Colors.grey,
+                                          )),
+                                          focusedBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                            color: Theme.of(context).primaryColor,
+                                          )),
+                                        ),
+                                      ),
+                                    ),
+                                  ]),
+                                  onConfirm: () async {
+                                    if (controller.text.isEmpty) {
+                                      showSnackbar("Error", "Please enter text!");
+                                      return;
+                                    }
+                                    chat.toggleMute(false);
+                                    chat.muteType = "text_detection";
+                                    chat.muteArgs = controller.text;
+                                    Get.back();
+                                    chat.save();
+                                    if (mounted) setState(() {});
+                                    EventDispatcher().emit("refresh", null);
+                                  },
+                                );
+                              },
+                            ),
+                            ListTile(
+                              title: Text("Reset chat-specific settings", style: Theme.of(context).textTheme.bodyText1),
+                              subtitle:
+                                  Text("Delete your custom settings", style: Theme.of(context).textTheme.subtitle1),
+                              onTap: () async {
+                                Get.back();
+                                chat.toggleMute(false);
+                                chat.muteType = null;
+                                chat.muteArgs = null;
+                                chat.save();
+                                if (mounted) setState(() {});
+                                EventDispatcher().emit("refresh", null);
+                              },
+                            ),
+                          ]),
                         ),
                       ),
                       barrierDismissible: true,

@@ -216,7 +216,8 @@ class _ConversationTileState extends State<ConversationTile> {
   }
 
   Widget buildSubtitle() {
-    return Obx(() {
+    return Obx(
+      () {
         String latestText = widget.chat.latestMessage != null
             ? MessageHelper.getNotificationText(widget.chat.latestMessage!)
             : widget.chat.latestMessageText ?? "";
@@ -226,10 +227,10 @@ class _ConversationTileState extends State<ConversationTile> {
             SettingsManager().settings.generateFakeMessageContent.value;
 
         TextStyle style = Theme.of(context).textTheme.subtitle1!.apply(
-          color: Theme.of(context).textTheme.subtitle1!.color!.withOpacity(
-            0.85,
-          ),
-        );
+              color: Theme.of(context).textTheme.subtitle1!.color!.withOpacity(
+                    0.85,
+                  ),
+            );
 
         if (generateContent) {
           latestText = widget.chat.fakeLatestMessageText ?? "";
@@ -312,29 +313,30 @@ class _ConversationTileState extends State<ConversationTile> {
           overflow: TextOverflow.clip)
       : ConstrainedBox(
           constraints: BoxConstraints(maxWidth: 100.0),
-          child: Obx(() {
+          child: Obx(
+            () {
               Message message = widget.chat.latestMessageGetter;
               MessageMarkers? markers =
                   CurrentChat.getCurrentChat(widget.chat)?.messageMarkers.markers.value ?? null.obs.value;
-              Indicator show = shouldShow(
-                  message, markers?.myLastMessage, markers?.lastReadMessage, markers?.lastDeliveredMessage);
+              Indicator show =
+                  shouldShow(message, markers?.myLastMessage, markers?.lastReadMessage, markers?.lastDeliveredMessage);
               return Text(
                   message.error > 0
                       ? "Error"
                       : ((show == Indicator.READ
-                      ? "Read\n"
-                      : show == Indicator.DELIVERED
-                      ? "Delivered\n"
-                      : show == Indicator.SENT
-                      ? "Sent\n"
-                      : "") +
-                      buildDate(widget.chat.latestMessageDate)),
+                              ? "Read\n"
+                              : show == Indicator.DELIVERED
+                                  ? "Delivered\n"
+                                  : show == Indicator.SENT
+                                      ? "Sent\n"
+                                      : "") +
+                          buildDate(widget.chat.latestMessageDate)),
                   textAlign: TextAlign.right,
                   style: Theme.of(context).textTheme.subtitle2!.copyWith(
-                    color: message.error > 0
-                        ? Colors.red
-                        : Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
-                  ),
+                        color: message.error > 0
+                            ? Colors.red
+                            : Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
+                      ),
                   overflow: TextOverflow.clip);
             },
           ),
@@ -425,33 +427,36 @@ class _Cupertino extends StatelessWidget {
                           )
                         : null,
                   ),
-                  child: ListTile(
-                    dense: SettingsManager().settings.denseChatTiles.value,
-                    contentPadding: EdgeInsets.only(left: 0),
-                    minVerticalPadding: 10,
-                    title: parent.buildTitle(),
-                    subtitle: parent.widget.subtitle ?? parent.buildSubtitle(),
-                    leading: parent.buildLeading(),
-                    trailing: Container(
-                      padding: EdgeInsets.only(right: 8),
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: <Widget>[
-                            Container(
-                              padding: EdgeInsets.only(right: 3),
-                              child: parent._buildDate(),
-                            ),
-                            Icon(
-                              SettingsManager().settings.skin.value == Skins.iOS
-                                  ? CupertinoIcons.forward
-                                  : Icons.arrow_forward,
-                              color: Theme.of(context).textTheme.subtitle1!.color,
-                              size: 15,
-                            ),
-                          ],
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(),
+                    child: ListTile(
+                      dense: SettingsManager().settings.denseChatTiles.value,
+                      contentPadding: EdgeInsets.only(left: 0),
+                      minVerticalPadding: 10,
+                      title: parent.buildTitle(),
+                      subtitle: parent.widget.subtitle ?? parent.buildSubtitle(),
+                      leading: parent.buildLeading(),
+                      trailing: Container(
+                        padding: EdgeInsets.only(right: 8),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: <Widget>[
+                              Container(
+                                padding: EdgeInsets.only(right: 3),
+                                child: parent._buildDate(),
+                              ),
+                              Icon(
+                                SettingsManager().settings.skin.value == Skins.iOS
+                                    ? CupertinoIcons.forward
+                                    : Icons.arrow_forward,
+                                color: Theme.of(context).textTheme.subtitle1!.color,
+                                size: 15,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -483,8 +488,8 @@ class _Cupertino extends StatelessWidget {
                             ? Icon(
                                 CupertinoIcons.pin,
                                 size: 10,
-                                color: Colors
-                                    .yellow[AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ? 100 : 700],
+                                color:
+                                    Colors.yellow[AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ? 100 : 700],
                               )
                             : Container(),
                       ],

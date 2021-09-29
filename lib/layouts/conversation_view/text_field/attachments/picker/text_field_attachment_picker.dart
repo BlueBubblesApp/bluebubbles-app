@@ -81,10 +81,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
     if (!camera) {
       bool granted = (await Permission.camera.request()) == PermissionStatus.granted;
       if (!granted) {
-        showSnackbar(
-            "Error",
-            "Camera was denied"
-        );
+        showSnackbar("Error", "Camera was denied");
         return;
       }
     }
@@ -126,261 +123,265 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
                   getAttachments();
                 },
                 child: SingleChildScrollView(
-                  physics: AlwaysScrollableScrollPhysics(),
-                  child: SizedBox(
-                    height: 300,
-                    child: CustomScrollView(
-                      physics: ThemeSwitcher.getScrollPhysics(),
-                      scrollDirection: Axis.horizontal,
-                      slivers: <Widget>[
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: EdgeInsets.only(left: 5, right: 5, top: 5, bottom: 5),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: <Widget>[
-                                Flexible(
-                                  fit: FlexFit.loose,
-                                  child: ConstrainedBox(
-                                    constraints: BoxConstraints(
-                                      minWidth: 90,
-                                    ),
-                                    child: ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(10),
-                                        ),
-                                        primary: Theme.of(context).accentColor,
+                    physics: AlwaysScrollableScrollPhysics(),
+                    child: SizedBox(
+                      height: 300,
+                      child: CustomScrollView(
+                        physics: ThemeSwitcher.getScrollPhysics(),
+                        scrollDirection: Axis.horizontal,
+                        slivers: <Widget>[
+                          SliverToBoxAdapter(
+                            child: Padding(
+                              padding: EdgeInsets.only(left: 5, right: 5, top: 5, bottom: 5),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: <Widget>[
+                                  Flexible(
+                                    fit: FlexFit.loose,
+                                    child: ConstrainedBox(
+                                      constraints: BoxConstraints(
+                                        minWidth: 90,
                                       ),
-                                      onPressed: () async {
-                                        final res = await FilePicker.platform.pickFiles(withData: true, allowMultiple: true);
-                                        if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
+                                      child: ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          primary: Theme.of(context).accentColor,
+                                        ),
+                                        onPressed: () async {
+                                          final res =
+                                              await FilePicker.platform.pickFiles(withData: true, allowMultiple: true);
+                                          if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
 
-                                        for (pf.PlatformFile file in res.files) {
-                                          widget.onAddAttachment(PlatformFile(
-                                            path: file.path,
-                                            name: file.name,
-                                            bytes: file.bytes,
-                                            size: file.size
-                                          ));
-                                        }
-                                      },
-                                      child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: <Widget>[
-                                          Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: Icon(
-                                              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.folder_open : Icons.folder_open,
-                                              color: Theme.of(context).textTheme.bodyText1!.color,
+                                          for (pf.PlatformFile file in res.files) {
+                                            widget.onAddAttachment(PlatformFile(
+                                                path: file.path, name: file.name, bytes: file.bytes, size: file.size));
+                                          }
+                                        },
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: <Widget>[
+                                            Padding(
+                                              padding: const EdgeInsets.all(8.0),
+                                              child: Icon(
+                                                SettingsManager().settings.skin.value == Skins.iOS
+                                                    ? CupertinoIcons.folder_open
+                                                    : Icons.folder_open,
+                                                color: Theme.of(context).textTheme.bodyText1!.color,
+                                              ),
                                             ),
-                                          ),
-                                          Text(
-                                            "Files",
-                                            style: TextStyle(
-                                              color: Theme.of(context).textTheme.bodyText1!.color,
-                                              fontSize: 13,
+                                            Text(
+                                              "Files",
+                                              style: TextStyle(
+                                                color: Theme.of(context).textTheme.bodyText1!.color,
+                                                fontSize: 13,
+                                              ),
                                             ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Container(height: 10),
-                                Flexible(
-                                  fit: FlexFit.loose,
-                                  child: ConstrainedBox(
-                                    constraints: BoxConstraints(
-                                      minWidth: 90,
-                                    ),
-                                    child: ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(10),
+                                          ],
                                         ),
-                                        primary: Theme.of(context).accentColor,
-                                      ),
-                                      onPressed: () async {
-                                        showDialog(
-                                          context: context,
-                                          builder: (buildContext) => AlertDialog(
-                                            backgroundColor: Theme.of(context).accentColor,
-                                            title: Text(
-                                              "Send Current Location?",
-                                              style: Theme.of(context).textTheme.headline1,
-                                            ),
-                                            actions: <Widget>[
-                                              TextButton(
-                                                style: TextButton.styleFrom(
-                                                  backgroundColor: Colors.blue[600],
-                                                ),
-                                                child: Text(
-                                                  "Send",
-                                                  style: Theme.of(context).textTheme.bodyText1,
-                                                ),
-                                                onPressed: () async {
-                                                  Share.location(CurrentChat.of(context)!.chat);
-                                                  Navigator.of(context).pop();
-                                                },
-                                              ),
-                                              TextButton(
-                                                style: TextButton.styleFrom(
-                                                  backgroundColor: Colors.red,
-                                                ),
-                                                child: Text(
-                                                  "Cancel",
-                                                  style: Theme.of(context).textTheme.bodyText1,
-                                                ),
-                                                onPressed: () {
-                                                  Navigator.of(context).pop();
-                                                },
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                      },
-                                      child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: <Widget>[
-                                          Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: Icon(
-                                              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.location : Icons.location_on,
-                                              color: Theme.of(context).textTheme.bodyText1!.color,
-                                            ),
-                                          ),
-                                          Text(
-                                            "Location",
-                                            style: TextStyle(
-                                              color: Theme.of(context).textTheme.bodyText1!.color,
-                                              fontSize: 13,
-                                            ),
-                                          ),
-                                        ],
                                       ),
                                     ),
                                   ),
-                                ),
-                              ],
+                                  Container(height: 10),
+                                  Flexible(
+                                    fit: FlexFit.loose,
+                                    child: ConstrainedBox(
+                                      constraints: BoxConstraints(
+                                        minWidth: 90,
+                                      ),
+                                      child: ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          primary: Theme.of(context).accentColor,
+                                        ),
+                                        onPressed: () async {
+                                          showDialog(
+                                            context: context,
+                                            builder: (buildContext) => AlertDialog(
+                                              backgroundColor: Theme.of(context).accentColor,
+                                              title: Text(
+                                                "Send Current Location?",
+                                                style: Theme.of(context).textTheme.headline1,
+                                              ),
+                                              actions: <Widget>[
+                                                TextButton(
+                                                  style: TextButton.styleFrom(
+                                                    backgroundColor: Colors.blue[600],
+                                                  ),
+                                                  child: Text(
+                                                    "Send",
+                                                    style: Theme.of(context).textTheme.bodyText1,
+                                                  ),
+                                                  onPressed: () async {
+                                                    Share.location(CurrentChat.of(context)!.chat);
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                ),
+                                                TextButton(
+                                                  style: TextButton.styleFrom(
+                                                    backgroundColor: Colors.red,
+                                                  ),
+                                                  child: Text(
+                                                    "Cancel",
+                                                    style: Theme.of(context).textTheme.bodyText1,
+                                                  ),
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: <Widget>[
+                                            Padding(
+                                              padding: const EdgeInsets.all(8.0),
+                                              child: Icon(
+                                                SettingsManager().settings.skin.value == Skins.iOS
+                                                    ? CupertinoIcons.location
+                                                    : Icons.location_on,
+                                                color: Theme.of(context).textTheme.bodyText1!.color,
+                                              ),
+                                            ),
+                                            Text(
+                                              "Location",
+                                              style: TextStyle(
+                                                color: Theme.of(context).textTheme.bodyText1!.color,
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: EdgeInsets.only(left: 5, right: 10, top: 5, bottom: 5),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: <Widget>[
-                                Flexible(
-                                  fit: FlexFit.loose,
-                                  child: ConstrainedBox(
-                                    constraints: BoxConstraints(
-                                      minWidth: 90,
-                                    ),
-                                    child: ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(10),
-                                        ),
-                                        primary: Theme.of(context).accentColor,
+                          SliverToBoxAdapter(
+                            child: Padding(
+                              padding: EdgeInsets.only(left: 5, right: 10, top: 5, bottom: 5),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: <Widget>[
+                                  Flexible(
+                                    fit: FlexFit.loose,
+                                    child: ConstrainedBox(
+                                      constraints: BoxConstraints(
+                                        minWidth: 90,
                                       ),
-                                      onPressed: () async {
-                                        openFullCamera();
-                                      },
-                                      child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: <Widget>[
-                                          Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: Icon(
-                                              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.camera : Icons.photo_camera,
-                                              color: Theme.of(context).textTheme.bodyText1!.color,
-                                            ),
+                                      child: ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(10),
                                           ),
-                                          Text(
-                                            "Camera",
-                                            style: TextStyle(
-                                              color: Theme.of(context).textTheme.bodyText1!.color,
-                                              fontSize: 13,
+                                          primary: Theme.of(context).accentColor,
+                                        ),
+                                        onPressed: () async {
+                                          openFullCamera();
+                                        },
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: <Widget>[
+                                            Padding(
+                                              padding: const EdgeInsets.all(8.0),
+                                              child: Icon(
+                                                SettingsManager().settings.skin.value == Skins.iOS
+                                                    ? CupertinoIcons.camera
+                                                    : Icons.photo_camera,
+                                                color: Theme.of(context).textTheme.bodyText1!.color,
+                                              ),
                                             ),
-                                          ),
-                                        ],
+                                            Text(
+                                              "Camera",
+                                              style: TextStyle(
+                                                color: Theme.of(context).textTheme.bodyText1!.color,
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                                Container(height: 10),
-                                Flexible(
-                                  fit: FlexFit.loose,
-                                  child: ConstrainedBox(
-                                    constraints: BoxConstraints(
-                                      minWidth: 90,
-                                    ),
-                                    child: ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(10),
-                                        ),
-                                        primary: Theme.of(context).accentColor,
+                                  Container(height: 10),
+                                  Flexible(
+                                    fit: FlexFit.loose,
+                                    child: ConstrainedBox(
+                                      constraints: BoxConstraints(
+                                        minWidth: 90,
                                       ),
-                                      onPressed: () async {
-                                        openFullCamera(type: "video");
-                                      },
-                                      child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: <Widget>[
-                                          Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: Icon(
-                                              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.videocam : Icons.videocam,
-                                              color: Theme.of(context).textTheme.bodyText1!.color,
-                                            ),
+                                      child: ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(10),
                                           ),
-                                          Text(
-                                            "Video",
-                                            style: TextStyle(
-                                              color: Theme.of(context).textTheme.bodyText1!.color,
-                                              fontSize: 13,
+                                          primary: Theme.of(context).accentColor,
+                                        ),
+                                        onPressed: () async {
+                                          openFullCamera(type: "video");
+                                        },
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: <Widget>[
+                                            Padding(
+                                              padding: const EdgeInsets.all(8.0),
+                                              child: Icon(
+                                                SettingsManager().settings.skin.value == Skins.iOS
+                                                    ? CupertinoIcons.videocam
+                                                    : Icons.videocam,
+                                                color: Theme.of(context).textTheme.bodyText1!.color,
+                                              ),
                                             ),
-                                          ),
-                                        ],
+                                            Text(
+                                              "Video",
+                                              style: TextStyle(
+                                                color: Theme.of(context).textTheme.bodyText1!.color,
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                        SliverGrid(
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
+                          SliverGrid(
+                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                            ),
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                AssetEntity element = _images[index];
+                                return AttachmentPicked(
+                                  key: Key("attachmentPicked" + _images[index].id),
+                                  data: element,
+                                  onTap: () async {
+                                    dynamic file = await element.file;
+                                    widget.onAddAttachment(PlatformFile(
+                                      path: file.path,
+                                      name: file.path.split('/').last,
+                                      size: file.lengthSync(),
+                                      bytes: file.readAsBytesSync(),
+                                    ));
+                                  },
+                                );
+                              },
+                              childCount: _images.length,
+                            ),
                           ),
-                          delegate: SliverChildBuilderDelegate(
-                                (context, index) {
-                              AssetEntity element = _images[index];
-                              return AttachmentPicked(
-                                key: Key("attachmentPicked" + _images[index].id),
-                                data: element,
-                                onTap: () async {
-                                  dynamic file = await element.file;
-                                  widget.onAddAttachment(PlatformFile(
-                                    path: file.path,
-                                    name: file.path.split('/').last,
-                                    size: file.lengthSync(),
-                                    bytes: file.readAsBytesSync(),
-                                  ));
-                                },
-                              );
-                            },
-                            childCount: _images.length,
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                ),
+                        ],
+                      ),
+                    )),
               ),
               height: 300,
             )

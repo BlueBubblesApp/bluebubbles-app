@@ -43,11 +43,12 @@ class Store {
 }
 
 Future<Store> openStore(
-    {String? directory,
-      int? maxDBSizeInKB,
-      int? fileMode,
-      int? maxReaders,
-      bool queriesCaseSensitiveDefault = true,
-      String? macosApplicationGroup}) async => throw Exception('Unsupported Platform');
+        {String? directory,
+        int? maxDBSizeInKB,
+        int? fileMode,
+        int? maxReaders,
+        bool queriesCaseSensitiveDefault = true,
+        String? macosApplicationGroup}) async =>
+    throw Exception('Unsupported Platform');
 
 dynamic getObjectBoxModel() => throw Exception('Unsupported Platform');

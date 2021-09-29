@@ -13,7 +13,8 @@ class UpgradingDB extends StatelessWidget {
       home: AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle(
           systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
-          systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+          systemNavigationBarIconBrightness:
+              Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
           statusBarColor: Colors.transparent, // status bar color
         ),
         child: Scaffold(
@@ -34,7 +35,8 @@ class UpgradingDB extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(top: 20.0),
                   child: Center(
-                    child: Text("Please wait, this shouldn't take longer than 10 seconds...", style: TextStyle(color: Colors.white, fontSize: 10)),
+                    child: Text("Please wait, this shouldn't take longer than 10 seconds...",
+                        style: TextStyle(color: Colors.white, fontSize: 10)),
                   ),
                 ),
                 Padding(

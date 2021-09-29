@@ -1,18 +1,17 @@
 import 'dart:convert';
 
-import 'package:bluebubbles/repository/models/platform_file.dart';
-import 'package:flutter/foundation.dart';
-import 'package:universal_io/io.dart';
-
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:maps_launcher/maps_launcher.dart';
+import 'package:universal_io/io.dart';
 
 class LocationWidget extends StatefulWidget {
   LocationWidget({
@@ -95,7 +94,12 @@ class _LocationWidgetState extends State<LocationWidget> {
                                   height: 40.0,
                                   point: LatLng(location!.longitude!, location!.latitude!),
                                   builder: (ctx) => Container(
-                                    child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.location : Icons.pin_drop, color: Colors.red, size: 45),
+                                    child: Icon(
+                                        SettingsManager().settings.skin.value == Skins.iOS
+                                            ? CupertinoIcons.location
+                                            : Icons.pin_drop,
+                                        color: Colors.red,
+                                        size: 45),
                                   ),
                                 ),
                               ],

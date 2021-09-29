@@ -48,8 +48,7 @@ class BaseLogger extends GetxService {
     if (kIsWeb) {
       final bytes = utf8.encode(logs.join('\n'));
       final content = base64.encode(bytes);
-      html.AnchorElement(
-          href: "data:application/octet-stream;charset=utf-16le;base64,$content")
+      html.AnchorElement(href: "data:application/octet-stream;charset=utf-16le;base64,$content")
         ..setAttribute("download", logPath.split("/").last)
         ..click();
       return;
@@ -82,8 +81,11 @@ class BaseLogger extends GetxService {
   }
 
   void info(dynamic log, {String? tag}) => _log(LogLevel.INFO, log, tag: tag);
+
   void warn(dynamic log, {String? tag}) => _log(LogLevel.WARN, log, tag: tag);
+
   void debug(dynamic log, {String? tag}) => _log(LogLevel.DEBUG, log, tag: tag);
+
   void error(dynamic log, {String? tag}) => _log(LogLevel.ERROR, log, tag: tag);
 
   void _log(LogLevel level, dynamic log, {String name = "BlueBubblesApp", String? tag}) {

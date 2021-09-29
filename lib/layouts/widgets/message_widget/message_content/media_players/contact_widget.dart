@@ -1,10 +1,5 @@
 import 'dart:convert';
 
-import 'package:bluebubbles/repository/models/platform_file.dart';
-import 'package:flutter/foundation.dart';
-import 'package:universal_io/io.dart';
-import 'package:universal_html/html.dart' as html;
-
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
@@ -12,9 +7,13 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
+import 'package:universal_html/html.dart' as html;
+import 'package:universal_io/io.dart';
 
 class ContactWidget extends StatefulWidget {
   ContactWidget({
@@ -66,18 +65,14 @@ class _ContactWidgetState extends State<ContactWidget> {
             onTap: () async {
               if (kIsWeb || widget.file.path == null) {
                 final content = base64.encode(widget.file.bytes!);
-                html.AnchorElement(
-                    href: "data:application/octet-stream;charset=utf-16le;base64,$content")
+                html.AnchorElement(href: "data:application/octet-stream;charset=utf-16le;base64,$content")
                   ..setAttribute("download", widget.file.name)
                   ..click();
               } else {
                 MethodChannelInterface().invokeMethod(
                   "open_file",
                   {
-                    "path": "/attachments/" +
-                        widget.attachment.guid! +
-                        "/" +
-                        basename(widget.file.path!),
+                    "path": "/attachments/" + widget.attachment.guid! + "/" + basename(widget.file.path!),
                     "mimeType": "text/x-vcard",
                   },
                 );

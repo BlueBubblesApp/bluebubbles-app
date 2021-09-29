@@ -1,6 +1,4 @@
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:universal_io/io.dart';
-
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachment.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
@@ -8,6 +6,7 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:path/path.dart' as p;
+import 'package:universal_io/io.dart';
 
 class MessageAttachments extends StatelessWidget {
   MessageAttachments({
@@ -25,14 +24,10 @@ class MessageAttachments extends StatelessWidget {
     EdgeInsets padding = EdgeInsets.all(0.0);
     if (message!.hasReactions && message!.hasAttachments) {
       if (message!.isFromMe!) {
-        padding =
-            EdgeInsets.only(top: 15.0, bottom: (message!.hasAttachments) ? 2.0 : 10.0, left: 12.0, right: 0.0);
+        padding = EdgeInsets.only(top: 15.0, bottom: (message!.hasAttachments) ? 2.0 : 10.0, left: 12.0, right: 0.0);
       } else {
         padding = EdgeInsets.only(
-            top: showHandle! ? 18.0 : 15.0,
-            bottom: (message!.hasAttachments) ? 2.0 : 10.0,
-            left: 10.0,
-            right: 10.0);
+            top: showHandle! ? 18.0 : 15.0, bottom: (message!.hasAttachments) ? 2.0 : 10.0, left: 10.0, right: 10.0);
       }
     } else {
       if (showTail || !showHandle!) {

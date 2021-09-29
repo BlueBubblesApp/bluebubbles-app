@@ -283,7 +283,11 @@ class ChatBloc {
     // Reset chat lists
     List<Chat> newChats = [];
 
-    int batches = count == 0 ? 1 : (count < batchSize) ? batchSize : (count / batchSize).ceil();
+    int batches = count == 0
+        ? 1
+        : (count < batchSize)
+            ? batchSize
+            : (count / batchSize).ceil();
     for (int i = 0; i < batches; i++) {
       List<Chat> chats = [];
       if (kIsWeb) {
@@ -308,7 +312,8 @@ class ChatBloc {
           if (chat.latestMessageGetter.hasAttachments) {
             chat.latestMessageGetter.fetchAttachments();
           }
-          if (chat.latestMessage?.handle == null && chat.latestMessage?.handleId != null) chat.latestMessage!.handle = Handle.findOne(originalROWID: chat.latestMessage!.handleId);
+          if (chat.latestMessage?.handle == null && chat.latestMessage?.handleId != null)
+            chat.latestMessage!.handle = Handle.findOne(originalROWID: chat.latestMessage!.handleId);
           chat.latestMessageText = MessageHelper.getNotificationText(chat.latestMessageGetter);
           chat.fakeLatestMessageText = faker.lorem.words((chat.latestMessageText ?? "").split(" ").length).join(" ");
           chat.latestMessageDate = chat.latestMessageGetter.dateCreated;
@@ -366,18 +371,12 @@ class ChatBloc {
     final item = _chats.bigPinHelper(true)[oldIndex];
     if (newIndex > oldIndex) {
       newIndex = newIndex - 1;
-      _chats
-          .bigPinHelper(true)
-          .where((p0) => p0.pinIndex != null && p0.pinIndex! <= newIndex)
-          .forEach((element) {
+      _chats.bigPinHelper(true).where((p0) => p0.pinIndex != null && p0.pinIndex! <= newIndex).forEach((element) {
         element.pinIndex = element.pinIndex! - 1;
       });
       item.pinIndex = newIndex;
     } else {
-      _chats
-          .bigPinHelper(true)
-          .where((p0) => p0.pinIndex != null && p0.pinIndex! >= newIndex)
-          .forEach((element) {
+      _chats.bigPinHelper(true).where((p0) => p0.pinIndex != null && p0.pinIndex! >= newIndex).forEach((element) {
         element.pinIndex = element.pinIndex! + 1;
       });
       item.pinIndex = newIndex;

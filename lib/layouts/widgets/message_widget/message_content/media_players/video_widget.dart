@@ -1,10 +1,5 @@
 import 'dart:typed_data';
 
-import 'package:bluebubbles/repository/models/platform_file.dart';
-import 'package:flutter/foundation.dart';
-import 'package:universal_io/io.dart';
-import 'package:universal_html/html.dart' as html;
-
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
@@ -15,9 +10,13 @@ import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:universal_html/html.dart' as html;
+import 'package:universal_io/io.dart';
 import 'package:video_player/video_player.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
@@ -143,7 +142,9 @@ class VideoWidget extends StatelessWidget {
               curve: Curves.easeInOut,
               alignment: Alignment.center,
               duration: Duration(milliseconds: 250),
-              child: controller.controller != null ? Obx(() => buildPlayer(controller, context)) : buildPreview(controller, context),
+              child: controller.controller != null
+                  ? Obx(() => buildPlayer(controller, context))
+                  : buildPreview(controller, context),
             ),
           ),
         );
@@ -267,66 +268,66 @@ class VideoWidget extends StatelessWidget {
       );
 
   Widget buildPreview(VideoWidgetController controller, BuildContext context) => GestureDetector(
-    onTap: () async {
-      await controller.initializeController();
-      controller.controller!.setVolume(controller.muted.value ? 0.0 : 1.0);
-      controller.controller!.play();
-    },
-    child: Stack(
-      children: [
-        Container(
-          constraints: BoxConstraints(
-            maxWidth: context.width / 2,
-            maxHeight: context.height / 2,
-          ),
-          child: buildSwitcher(controller),
-        ),
-        Container(
-          decoration: BoxDecoration(
-            color: HexColor('26262a').withOpacity(0.5),
-            borderRadius: BorderRadius.circular(40),
-          ),
-          padding: EdgeInsets.all(10),
-          child: Icon(
-            Icons.play_arrow,
-            color: Colors.white,
-            size: 45,
-          ),
-        ),
-        Positioned.fill(
-          child: Align(
-            alignment: Alignment.bottomRight,
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 8.0, right: 8.0),
-              child: GestureDetector(
-                onTap: () {
-                  controller.muted.toggle();
-                },
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: HexColor('26262a').withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(40),
+        onTap: () async {
+          await controller.initializeController();
+          controller.controller!.setVolume(controller.muted.value ? 0.0 : 1.0);
+          controller.controller!.play();
+        },
+        child: Stack(
+          children: [
+            Container(
+              constraints: BoxConstraints(
+                maxWidth: context.width / 2,
+                maxHeight: context.height / 2,
+              ),
+              child: buildSwitcher(controller),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                color: HexColor('26262a').withOpacity(0.5),
+                borderRadius: BorderRadius.circular(40),
+              ),
+              padding: EdgeInsets.all(10),
+              child: Icon(
+                Icons.play_arrow,
+                color: Colors.white,
+                size: 45,
+              ),
+            ),
+            Positioned.fill(
+              child: Align(
+                alignment: Alignment.bottomRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0, right: 8.0),
+                  child: GestureDetector(
+                    onTap: () {
+                      controller.muted.toggle();
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: HexColor('26262a').withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(40),
+                      ),
+                      padding: EdgeInsets.all(5),
+                      child: Obx(() => Icon(
+                            controller.muted.value ? Icons.volume_mute : Icons.volume_up,
+                            color: Colors.white,
+                            size: 15,
+                          )),
+                    ),
                   ),
-                  padding: EdgeInsets.all(5),
-                  child: Obx(() => Icon(
-                    controller.muted.value ? Icons.volume_mute : Icons.volume_up,
-                    color: Colors.white,
-                    size: 15,
-                  )),
                 ),
               ),
             ),
-          ),
+          ],
+          alignment: Alignment.center,
         ),
-      ],
-      alignment: Alignment.center,
-    ),
-  );
+      );
 
   Widget buildSwitcher(VideoWidgetController controller) => AnimatedSwitcher(
-    duration: Duration(milliseconds: 150),
-    child: controller.thumbnail != null ? Image.memory(controller.thumbnail!) : buildPlaceHolder(controller),
-  );
+        duration: Duration(milliseconds: 150),
+        child: controller.thumbnail != null ? Image.memory(controller.thumbnail!) : buildPlaceHolder(controller),
+      );
 
   Widget buildPlaceHolder(VideoWidgetController controller) {
     if (controller.attachment.hasValidSize) {

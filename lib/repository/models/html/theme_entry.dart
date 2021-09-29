@@ -7,7 +7,9 @@ class ThemeEntry {
   int? themeId;
   String? name;
   Color? color;
+
   String? get dbColor => color?.value.toRadixString(16);
+
   set dbColor(String? s) => s == null ? color = null : color = HexColor(s);
   bool? isFont;
   int? fontSize;

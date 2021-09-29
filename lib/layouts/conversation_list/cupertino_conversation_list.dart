@@ -1,7 +1,3 @@
-import 'package:bluebubbles/repository/models/platform_file.dart';
-import 'package:flutter/foundation.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:universal_io/io.dart';
 import 'dart:math';
 import 'dart:ui';
 
@@ -16,17 +12,21 @@ import 'package:bluebubbles/layouts/conversation_list/pinned_conversation_tile.d
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/search/search_view.dart';
 import 'package:bluebubbles/layouts/widgets/vertical_split_view.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/managers/theme_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:universal_io/io.dart';
 
 class CupertinoConversationList extends StatefulWidget {
   const CupertinoConversationList({Key? key, required this.parent}) : super(key: key);
@@ -105,40 +105,41 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                 ),
                 child: ClipRRect(
                   child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                    child: Obx(() => AnimatedCrossFade(
-                      crossFadeState: headerColor.value == Colors.transparent
-                          ? CrossFadeState.showFirst
-                          : CrossFadeState.showSecond,
-                      duration: Duration(milliseconds: 250),
-                      secondChild: AppBar(
-                        iconTheme: IconThemeData(color: context.theme.primaryColor),
-                        elevation: 0,
-                        backgroundColor: headerColor.value,
-                        centerTitle: true,
-                        brightness: brightness,
-                        title: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: <Widget>[
-                            Text(
-                              showArchived
-                                  ? "Archive"
-                                  : showUnknown
-                                  ? "Unknown Senders"
-                                  : "Messages",
-                              style: context.textTheme.bodyText1,
+                      filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                      child: Obx(
+                        () => AnimatedCrossFade(
+                          crossFadeState: headerColor.value == Colors.transparent
+                              ? CrossFadeState.showFirst
+                              : CrossFadeState.showSecond,
+                          duration: Duration(milliseconds: 250),
+                          secondChild: AppBar(
+                            iconTheme: IconThemeData(color: context.theme.primaryColor),
+                            elevation: 0,
+                            backgroundColor: headerColor.value,
+                            centerTitle: true,
+                            brightness: brightness,
+                            title: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: <Widget>[
+                                Text(
+                                  showArchived
+                                      ? "Archive"
+                                      : showUnknown
+                                          ? "Unknown Senders"
+                                          : "Messages",
+                                  style: context.textTheme.bodyText1,
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
+                          firstChild: AppBar(
+                            leading: Container(),
+                            elevation: 0,
+                            brightness: brightness,
+                            backgroundColor: context.theme.backgroundColor,
+                          ),
                         ),
-                      ),
-                      firstChild: AppBar(
-                        leading: Container(),
-                        elevation: 0,
-                        brightness: brightness,
-                        backgroundColor: context.theme.backgroundColor,
-                      ),
-                    ),
-                  )),
+                      )),
                 ),
               ),
         backgroundColor: context.theme.backgroundColor,
@@ -239,10 +240,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                                     if (!camera) {
                                       bool granted = (await Permission.camera.request()) == PermissionStatus.granted;
                                       if (!granted) {
-                                        showSnackbar(
-                                            "Error",
-                                            "Camera was denied"
-                                        );
+                                        showSnackbar("Error", "Camera was denied");
                                         return;
                                       }
                                     }
