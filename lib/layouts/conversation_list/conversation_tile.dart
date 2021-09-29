@@ -57,7 +57,8 @@ class ConversationTile extends StatefulWidget {
   _ConversationTileState createState() => _ConversationTileState();
 }
 
-class _ConversationTileState extends State<ConversationTile> with AutomaticKeepAliveClientMixin {
+class _ConversationTileState extends State<ConversationTile>
+    with AutomaticKeepAliveClientMixin {
   bool isFetching = false;
   Brightness? brightness;
   Color? previousBackgroundColor;
@@ -68,7 +69,8 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
 
   void loadBrightness() {
     Color now = Theme.of(context).backgroundColor;
-    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
+    bool themeChanged =
+        previousBackgroundColor == null || previousBackgroundColor != now;
     if (!themeChanged && gotBrightness) return;
 
     previousBackgroundColor = now;
@@ -81,7 +83,9 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
 
   bool get selected {
     if (widget.selected.isEmpty) return false;
-    return widget.selected.where((element) => widget.chat.guid == element.guid).isNotEmpty;
+    return widget.selected
+        .where((element) => widget.chat.guid == element.guid)
+        .isNotEmpty;
   }
 
   @override
@@ -119,7 +123,9 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
     await widget.chat.getTitle();
 
     // If the original data is different, update the state
-    if (ogTitle != widget.chat.title || ogParticipants.length != widget.chat.participants.length || forceUpdate) {
+    if (ogTitle != widget.chat.title ||
+        ogParticipants.length != widget.chat.participants.length ||
+        forceUpdate) {
       if (this.mounted) setState(() {});
     }
   }
@@ -162,7 +168,9 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
                 caption: widget.chat.isPinned! ? 'Unpin' : 'Pin',
                 color: Colors.yellow[800],
                 foregroundColor: Colors.white,
-                icon: widget.chat.isPinned! ? CupertinoIcons.pin_slash : CupertinoIcons.pin,
+                icon: widget.chat.isPinned!
+                    ? CupertinoIcons.pin_slash
+                    : CupertinoIcons.pin,
                 onTap: () {
                   widget.chat.togglePin(!widget.chat.isPinned!);
                   EventDispatcher().emit("refresh", null);
@@ -171,11 +179,16 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
               ),
           ],
           secondaryActions: <Widget>[
-            if (!widget.chat.isArchived! && SettingsManager().settings.iosShowAlert.value)
+            if (!widget.chat.isArchived! &&
+                SettingsManager().settings.iosShowAlert.value)
               IconSlideAction(
-                caption: widget.chat.muteType == "mute" ? 'Show Alerts' : 'Hide Alerts',
+                caption: widget.chat.muteType == "mute"
+                    ? 'Show Alerts'
+                    : 'Hide Alerts',
                 color: Colors.purple[700],
-                icon: widget.chat.muteType == "mute" ? CupertinoIcons.bell : CupertinoIcons.bell_slash,
+                icon: widget.chat.muteType == "mute"
+                    ? CupertinoIcons.bell
+                    : CupertinoIcons.bell_slash,
                 onTap: () {
                   widget.chat.toggleMute(widget.chat.muteType != "mute");
                   if (this.mounted) setState(() {});
@@ -193,20 +206,24 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
               ),
             if (SettingsManager().settings.iosShowMarkRead.value)
               IconSlideAction(
-                caption: widget.chat.hasUnreadMessage! ? 'Mark Read' : 'Mark Unread',
+                caption:
+                    widget.chat.hasUnreadMessage! ? 'Mark Read' : 'Mark Unread',
                 color: Colors.blue,
                 icon: widget.chat.hasUnreadMessage!
                     ? CupertinoIcons.person_crop_circle_badge_checkmark
                     : CupertinoIcons.person_crop_circle_badge_exclam,
                 onTap: () {
-                  ChatBloc().toggleChatUnread(widget.chat, !widget.chat.hasUnreadMessage!);
+                  ChatBloc().toggleChatUnread(
+                      widget.chat, !widget.chat.hasUnreadMessage!);
                 },
               ),
             if (SettingsManager().settings.iosShowArchive.value)
               IconSlideAction(
                 caption: widget.chat.isArchived! ? 'UnArchive' : 'Archive',
                 color: widget.chat.isArchived! ? Colors.blue : Colors.red,
-                icon: widget.chat.isArchived! ? CupertinoIcons.tray_arrow_up : CupertinoIcons.tray_arrow_down,
+                icon: widget.chat.isArchived!
+                    ? CupertinoIcons.tray_arrow_up
+                    : CupertinoIcons.tray_arrow_down,
                 onTap: () {
                   if (widget.chat.isArchived!) {
                     ChatBloc().unArchiveChat(widget.chat);
@@ -221,18 +238,22 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
   }
 
   Widget buildTitle() {
-    final hideInfo = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactInfo.value;
-    final generateNames =
-        SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeContactNames.value;
+    final hideInfo = SettingsManager().settings.redactedMode.value &&
+        SettingsManager().settings.hideContactInfo.value;
+    final generateNames = SettingsManager().settings.redactedMode.value &&
+        SettingsManager().settings.generateFakeContactNames.value;
 
     TextStyle? style = Theme.of(context).textTheme.bodyText1;
     String? title = widget.chat.title != null ? widget.chat.title : "";
 
     if (generateNames)
-      title = widget.chat.fakeParticipants.length == 1 ? widget.chat.fakeParticipants[0] : "Group Chat";
+      title = widget.chat.fakeParticipants.length == 1
+          ? widget.chat.fakeParticipants[0]
+          : "Group Chat";
     else if (hideInfo) style = style?.copyWith(color: Colors.transparent);
 
-    return TextOneLine(title ?? 'Fake Person', style: style, overflow: TextOverflow.ellipsis);
+    return TextOneLine(title ?? 'Fake Person',
+        style: style, overflow: TextOverflow.ellipsis);
   }
 
   Widget buildSubtitle() {
@@ -245,20 +266,23 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
         String latestText = snapshot.data ?? "";
         return Obx(
           () {
-            final hideContent =
-                SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value;
-            final generateContent = SettingsManager().settings.redactedMode.value &&
-                SettingsManager().settings.generateFakeMessageContent.value;
+            final hideContent = SettingsManager().settings.redactedMode.value &&
+                SettingsManager().settings.hideMessageContent.value;
+            final generateContent =
+                SettingsManager().settings.redactedMode.value &&
+                    SettingsManager().settings.generateFakeMessageContent.value;
 
             TextStyle style = Theme.of(context).textTheme.subtitle1!.apply(
-                  color: Theme.of(context).textTheme.subtitle1!.color!.withOpacity(
-                        0.85,
-                      ),
+                  color:
+                      Theme.of(context).textTheme.subtitle1!.color!.withOpacity(
+                            0.85,
+                          ),
                 );
 
             if (generateContent)
               latestText = widget.chat.fakeLatestMessageText ?? "";
-            else if (hideContent) style = style.copyWith(color: Colors.transparent);
+            else if (hideContent)
+              style = style.copyWith(color: Colors.transparent);
 
             return Text(
               latestText,
@@ -274,14 +298,16 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
 
   Widget buildLeading() {
     return StreamBuilder<Map<String, dynamic>>(
-        stream: CurrentChat.getCurrentChat(widget.chat)?.stream as Stream<Map<String, dynamic>>?,
+        stream: CurrentChat.getCurrentChat(widget.chat)?.stream
+            as Stream<Map<String, dynamic>>?,
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           if (snapshot.connectionState == ConnectionState.active &&
               snapshot.hasData &&
               snapshot.data["type"] == CurrentChatEvent.TypingStatus) {
             showTypingIndicator = snapshot.data["data"];
           }
-          double height = Theme.of(context).textTheme.subtitle1!.fontSize! * 1.25;
+          double height =
+              Theme.of(context).textTheme.subtitle1!.fontSize! * 1.25;
           return Stack(
             clipBehavior: Clip.none,
             children: <Widget>[
@@ -332,34 +358,46 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
       ? Text(buildDate(widget.chat.latestMessageDate),
           textAlign: TextAlign.right,
           style: Theme.of(context).textTheme.subtitle2!.copyWith(
-                color: Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
+                color: Theme.of(context)
+                    .textTheme
+                    .subtitle2!
+                    .color!
+                    .withOpacity(0.85),
               ),
           overflow: TextOverflow.clip)
       : ConstrainedBox(
           constraints: BoxConstraints(maxWidth: 100.0),
-          child: Obx(() {
+          child: Obx(
+            () {
               Message message = widget.chat.latestMessageGetter;
-              MessageMarkers? markers =
-                  CurrentChat.getCurrentChat(widget.chat)?.messageMarkers.markers.value ?? null.obs.value;
-              Indicator show = shouldShow(
-                  message, markers?.myLastMessage, markers?.lastReadMessage, markers?.lastDeliveredMessage);
+              MessageMarkers? markers = CurrentChat.getCurrentChat(widget.chat)
+                      ?.messageMarkers
+                      .markers
+                      .value ??
+                  null.obs.value;
+              Indicator show = shouldShow(message, markers?.myLastMessage,
+                  markers?.lastReadMessage, markers?.lastDeliveredMessage);
               return Text(
                   message.error > 0
                       ? "Error"
                       : ((show == Indicator.READ
-                      ? "Read\n"
-                      : show == Indicator.DELIVERED
-                      ? "Delivered\n"
-                      : show == Indicator.SENT
-                      ? "Sent\n"
-                      : "") +
-                      buildDate(widget.chat.latestMessageDate)),
+                              ? "Read\n"
+                              : show == Indicator.DELIVERED
+                                  ? "Delivered\n"
+                                  : show == Indicator.SENT
+                                      ? "Sent\n"
+                                      : "") +
+                          buildDate(widget.chat.latestMessageDate)),
                   textAlign: TextAlign.right,
                   style: Theme.of(context).textTheme.subtitle2!.copyWith(
-                    color: message.error > 0
-                        ? Colors.red
-                        : Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
-                  ),
+                        color: message.error > 0
+                            ? Colors.red
+                            : Theme.of(context)
+                                .textTheme
+                                .subtitle2!
+                                .color!
+                                .withOpacity(0.85),
+                      ),
                   overflow: TextOverflow.clip);
             },
           ),
@@ -409,7 +447,8 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
 }
 
 class _Cupertino extends StatefulWidget {
-  _Cupertino({Key? key, required this.parent, required this.parentProps}) : super(key: key);
+  _Cupertino({Key? key, required this.parent, required this.parentProps})
+      : super(key: key);
   final _ConversationTileState parent;
   final ConversationTile parentProps;
 
@@ -424,7 +463,9 @@ class __CupertinoState extends State<_Cupertino> {
   Widget build(BuildContext context) {
     return widget.parent.buildSlider(
       Material(
-        color: !isPressed ? Theme.of(context).backgroundColor : Theme.of(context).backgroundColor.lightenOrDarken(30),
+        color: !isPressed
+            ? Theme.of(context).backgroundColor
+            : Theme.of(context).backgroundColor.lightenOrDarken(30),
         child: GestureDetector(
           onTapDown: (details) {
             if (!this.mounted) return;
@@ -464,7 +505,8 @@ class __CupertinoState extends State<_Cupertino> {
           },
           onLongPress: () {
             HapticFeedback.mediumImpact();
-            ChatBloc().toggleChatUnread(widget.parent.widget.chat, !widget.parent.widget.chat.hasUnreadMessage!);
+            ChatBloc().toggleChatUnread(widget.parent.widget.chat,
+                !widget.parent.widget.chat.hasUnreadMessage!);
             if (this.mounted) setState(() {});
           },
           child: Stack(
@@ -473,44 +515,52 @@ class __CupertinoState extends State<_Cupertino> {
               Padding(
                 padding: const EdgeInsets.only(left: 20.0),
                 child: Obx(
-                  () => Container(
-                    decoration: BoxDecoration(
-                      border: (!SettingsManager().settings.hideDividers.value)
-                          ? Border(
-                              bottom: BorderSide(
-                                color: Theme.of(context).dividerColor,
-                                width: 0.5,
-                              ),
-                            )
-                          : null,
-                    ),
-                    child: ListTile(
-                      dense: SettingsManager().settings.denseChatTiles.value,
-                      contentPadding: EdgeInsets.only(left: 0),
-                      minVerticalPadding: 10,
-                      title: widget.parent.buildTitle(),
-                      subtitle: widget.parent.widget.subtitle ?? widget.parent.buildSubtitle(),
-                      leading: widget.parent.buildLeading(),
-                      trailing: Container(
-                        padding: EdgeInsets.only(right: 8),
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: <Widget>[
-                              Container(
-                                padding: EdgeInsets.only(right: 3),
-                                child: widget.parent._buildDate(),
-                              ),
-                              Icon(
-                                SettingsManager().settings.skin.value == Skins.iOS
-                                    ? CupertinoIcons.forward
-                                    : Icons.arrow_forward,
-                                color: Theme.of(context).textTheme.subtitle1!.color,
-                                size: 15,
-                              ),
-                            ],
+                  () => ConstrainedBox(
+                    constraints: BoxConstraints(),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: (!SettingsManager().settings.hideDividers.value)
+                            ? Border(
+                                bottom: BorderSide(
+                                  color: Theme.of(context).dividerColor,
+                                  width: 0.5,
+                                ),
+                              )
+                            : null,
+                      ),
+                      child: ListTile(
+                        dense: SettingsManager().settings.denseChatTiles.value,
+                        contentPadding: EdgeInsets.only(left: 0),
+                        minVerticalPadding: 10,
+                        title: widget.parent.buildTitle(),
+                        subtitle: widget.parent.widget.subtitle ??
+                            widget.parent.buildSubtitle(),
+                        leading: widget.parent.buildLeading(),
+                        trailing: Container(
+                          padding: EdgeInsets.only(right: 8),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: <Widget>[
+                                Container(
+                                  padding: EdgeInsets.only(right: 3),
+                                  child: widget.parent._buildDate(),
+                                ),
+                                Icon(
+                                  SettingsManager().settings.skin.value ==
+                                          Skins.iOS
+                                      ? CupertinoIcons.forward
+                                      : Icons.arrow_forward,
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .subtitle1!
+                                      .color,
+                                  size: 15,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -528,11 +578,14 @@ class __CupertinoState extends State<_Cupertino> {
                       Stack(
                         alignment: AlignmentDirectional.centerStart,
                         children: [
-                          (widget.parent.widget.chat.muteType != "mute" && widget.parent.widget.chat.hasUnreadMessage!)
+                          (widget.parent.widget.chat.muteType != "mute" &&
+                                  widget.parent.widget.chat.hasUnreadMessage!)
                               ? Container(
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(35),
-                                    color: Theme.of(context).primaryColor.withOpacity(0.8),
+                                    color: Theme.of(context)
+                                        .primaryColor
+                                        .withOpacity(0.8),
                                   ),
                                   width: 10,
                                   height: 10,
@@ -542,8 +595,11 @@ class __CupertinoState extends State<_Cupertino> {
                               ? Icon(
                                   CupertinoIcons.pin,
                                   size: 10,
-                                  color: Colors
-                                      .yellow[AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ? 100 : 700],
+                                  color: Colors.yellow[
+                                      AdaptiveTheme.of(context).mode ==
+                                              AdaptiveThemeMode.dark
+                                          ? 100
+                                          : 700],
                                 )
                               : Container(),
                         ],
@@ -552,8 +608,13 @@ class __CupertinoState extends State<_Cupertino> {
                           ? SvgPicture.asset(
                               "assets/icon/moon.svg",
                               color: widget.parentProps.chat.hasUnreadMessage!
-                                  ? Theme.of(context).primaryColor.withOpacity(0.8)
-                                  : Theme.of(context).textTheme.subtitle1!.color,
+                                  ? Theme.of(context)
+                                      .primaryColor
+                                      .withOpacity(0.8)
+                                  : Theme.of(context)
+                                      .textTheme
+                                      .subtitle1!
+                                      .color,
                               width: 10,
                               height: 10,
                             )
@@ -571,14 +632,17 @@ class __CupertinoState extends State<_Cupertino> {
 }
 
 class _Material extends StatelessWidget {
-  const _Material({Key? key, required this.parent, required this.parentProps}) : super(key: key);
+  const _Material({Key? key, required this.parent, required this.parentProps})
+      : super(key: key);
   final _ConversationTileState parent;
   final ConversationTile parentProps;
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: parent.selected ? Theme.of(context).primaryColor.withAlpha(120) : Theme.of(context).backgroundColor,
+      color: parent.selected
+          ? Theme.of(context).primaryColor.withAlpha(120)
+          : Theme.of(context).backgroundColor,
       child: GestureDetector(
         onSecondaryTapUp: (details) async {
           if (kIsWeb) {
@@ -649,12 +713,15 @@ class _Material extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: <Widget>[
-                        if (parent.widget.chat.isPinned!) Icon(Icons.star, size: 15, color: Colors.yellow),
+                        if (parent.widget.chat.isPinned!)
+                          Icon(Icons.star, size: 15, color: Colors.yellow),
                         if (parent.widget.chat.muteType == "mute")
                           Icon(
                             Icons.notifications_off,
                             color: parent.widget.chat.hasUnreadMessage!
-                                ? Theme.of(context).primaryColor.withOpacity(0.8)
+                                ? Theme.of(context)
+                                    .primaryColor
+                                    .withOpacity(0.8)
                                 : Theme.of(context).textTheme.subtitle1!.color,
                             size: 15,
                           ),
@@ -676,7 +743,8 @@ class _Material extends StatelessWidget {
 }
 
 class _Samsung extends StatelessWidget {
-  const _Samsung({Key? key, required this.parent, required this.parentProps}) : super(key: key);
+  const _Samsung({Key? key, required this.parent, required this.parentProps})
+      : super(key: key);
   final _ConversationTileState parent;
   final ConversationTile parentProps;
 
@@ -757,7 +825,8 @@ class _Samsung extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: <Widget>[
-                        if (parent.widget.chat.isPinned!) Icon(Icons.star, size: 15, color: Colors.yellow),
+                        if (parent.widget.chat.isPinned!)
+                          Icon(Icons.star, size: 15, color: Colors.yellow),
                         if (parent.widget.chat.muteType == "mute")
                           Icon(
                             Icons.notifications_off,

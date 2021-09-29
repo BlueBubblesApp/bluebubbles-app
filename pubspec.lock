@@ -1229,9 +1229,11 @@ packages:
   quick_notify:
     dependency: "direct main"
     description:
-      name: quick_notify
-      url: "https://pub.dartlang.org"
-    source: hosted
+      path: "."
+      ref: "74307269623865560026ce8b47aae9cea9bd24d8"
+      resolved-ref: "74307269623865560026ce8b47aae9cea9bd24d8"
+      url: "https://github.com/jjoelj/quick_notify"
+    source: git
     version: "0.1.0+2"
   quiver:
     dependency: transitive
