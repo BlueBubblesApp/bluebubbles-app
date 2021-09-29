@@ -23,8 +23,8 @@ class DeliveredReceipt extends StatefulWidget {
 
 class _DeliveredReceiptState extends State<DeliveredReceipt> with TickerProviderStateMixin {
   bool shouldShow(Message? myLastMessage, Message? lastReadMessage, Message? lastDeliveredMessage) {
-    // If we have no delivered date, don't show anything
-    if (widget.message.dateDelivered == null) return false;
+    // If we have no sent date, don't show anything
+    if (widget.message.dateCreated == null) return false;
 
     if (CurrentChat.of(context) != null) {
       lastReadMessage ??= CurrentChat.of(context)?.messageMarkers.lastReadMessage;
@@ -48,6 +48,14 @@ class _DeliveredReceiptState extends State<DeliveredReceipt> with TickerProvider
       return true;
     }
 
+    // If the message is the same as the last sent message, we want to show it
+    if (!widget.showDeliveredReceipt &&
+        widget.message.dateCreated != null &&
+        myLastMessage != null &&
+        widget.message.guid == myLastMessage.guid) {
+      return true;
+    }
+
     // This is logic so that we can have both a read receipt on an older message
     // As well as a delivered receipt on the newest message
     // if (!widget.showDeliveredReceipt! &&
@@ -66,11 +74,15 @@ class _DeliveredReceiptState extends State<DeliveredReceipt> with TickerProvider
   }
 
   String getText() {
-    String text = "Delivered";
-    if (widget.message.dateRead != null) {
+    String text = "Sent";
+    if (!(widget.message.isFromMe ?? false)) {
+      text = "Received " + buildDate(widget.message.dateCreated);
+    } else if (widget.message.dateRead != null) {
       text = "Read " + buildDate(widget.message.dateRead);
     } else if (SettingsManager().settings.showDeliveryTimestamps.value && widget.message.dateDelivered != null) {
       text = "Delivered " + buildDate(widget.message.dateDelivered);
+    } else if (SettingsManager().settings.showDeliveryTimestamps.value && widget.message.dateCreated != null) {
+      text = "Sent " + buildDate(widget.message.dateCreated);
     }
 
     return text;
