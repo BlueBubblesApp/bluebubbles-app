@@ -87,10 +87,12 @@ class _ConversationDetailsState extends State<ConversationDetails> {
   void fetchAttachments() {
     if (kIsWeb) {
       attachmentsForChat = CurrentChat.activeChat?.chatAttachments ?? [];
+      if (attachmentsForChat.length > 25) attachmentsForChat = attachmentsForChat.sublist(0, 25);
       if (mounted) setState(() {});
       return;
     }
     attachmentsForChat = Chat.getAttachments(chat);
+    if (attachmentsForChat.length > 25) attachmentsForChat = attachmentsForChat.sublist(0, 25);
     if (mounted) setState(() {});
   }
 
@@ -564,7 +566,6 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     ),
                     child: AttachmentDetailsCard(
                       attachment: attachmentsForChat[index],
-                      allAttachments: attachmentsForChat.reversed.toList(),
                     ),
                   );
                 },

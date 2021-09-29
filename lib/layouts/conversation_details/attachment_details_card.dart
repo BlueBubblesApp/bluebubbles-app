@@ -21,15 +21,14 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 
 class AttachmentDetailsCard extends StatefulWidget {
-  AttachmentDetailsCard({Key? key, required this.attachment, required this.allAttachments}) : super(key: key);
+  AttachmentDetailsCard({Key? key, required this.attachment}) : super(key: key);
   final Attachment attachment;
-  final List<Attachment> allAttachments;
 
   @override
   _AttachmentDetailsCardState createState() => _AttachmentDetailsCardState();
 }
 
-class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
+class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with AutomaticKeepAliveClientMixin {
   Uint8List? previewImage;
   double aspectRatio = 4 / 3;
   late PlatformFile attachmentFile;
@@ -107,6 +106,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     Attachment attachment = widget.attachment;
     final bool hideAttachments =
         SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideAttachments.value;
@@ -289,4 +289,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> {
       );
     }
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }
