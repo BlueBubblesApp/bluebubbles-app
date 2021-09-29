@@ -176,11 +176,7 @@ class SetupBloc {
               List<dynamic> messages = await SocketManager().getChatMessages(params)!;
               addOutput("Received ${messages.length} messages for chat, '${chat.chatIdentifier}'!", SetupOutputType.LOG);
               if (!skipEmptyChats || (skipEmptyChats && messages.isNotEmpty)) {
-                chat.save();
-
-                // Re-match the handles with the contacts
-                await ContactManager().matchHandles();
-
+                chat = chat.save();
                 await syncChat(chat, messages);
                 addOutput("Finished syncing chat, '${chat.chatIdentifier}'", SetupOutputType.LOG);
               } else {
@@ -213,6 +209,7 @@ class SetupBloc {
       addOutput("Failed to sync chats!", SetupOutputType.ERROR);
       addOutput("Error: ${ex.toString()}", SetupOutputType.ERROR);
     } finally {
+      await ContactManager().matchHandles();
       finishSetup();
     }
 

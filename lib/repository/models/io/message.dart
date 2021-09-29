@@ -301,6 +301,8 @@ class Message {
       return map;
     }
 
+    if (messages.isEmpty) return {};
+
     return store.runInTransaction(TxMode.read, () {
       final messageIds = messages.where((element) => element?.id != null).map((e) => e!.id!).toList();
       final amJoinQuery = amJoinBox.query(AttachmentMessageJoin_.messageId.oneOf(messageIds)).build();
@@ -544,44 +546,51 @@ class Message {
     }
   }
 
-  Map<String, dynamic> toMap() => {
-        "ROWID": id,
-        "originalROWID": originalROWID,
-        "guid": guid,
-        "handleId": handleId,
-        "otherHandle": otherHandle,
-        "text": sanitizeString(text),
-        "subject": subject,
-        "country": country,
-        "_error": _error.value,
-        "dateCreated": (dateCreated == null) ? null : dateCreated!.millisecondsSinceEpoch,
-        "dateRead": (dateRead == null) ? null : dateRead!.millisecondsSinceEpoch,
-        "dateDelivered": (dateDelivered == null) ? null : dateDelivered!.millisecondsSinceEpoch,
-        "isFromMe": isFromMe! ? 1 : 0,
-        "isDelayed": isDelayed! ? 1 : 0,
-        "isAutoReply": isAutoReply! ? 1 : 0,
-        "isSystemMessage": isSystemMessage! ? 1 : 0,
-        "isServiceMessage": isServiceMessage! ? 1 : 0,
-        "isForward": isForward! ? 1 : 0,
-        "isArchived": isArchived! ? 1 : 0,
-        "hasDdResults": hasDdResults! ? 1 : 0,
-        "cacheRoomnames": cacheRoomnames,
-        "isAudioMessage": isAudioMessage! ? 1 : 0,
-        "datePlayed": (datePlayed == null) ? null : datePlayed!.millisecondsSinceEpoch,
-        "itemType": itemType,
-        "groupTitle": groupTitle,
-        "groupActionType": groupActionType,
-        "isExpired": isExpired! ? 1 : 0,
-        "balloonBundleId": balloonBundleId,
-        "associatedMessageGuid": associatedMessageGuid,
-        "associatedMessageType": associatedMessageType,
-        "expressiveSendStyleId": expressiveSendStyleId,
-        "timeExpressiveSendStyleId":
-            (timeExpressiveSendStyleId == null) ? null : timeExpressiveSendStyleId!.millisecondsSinceEpoch,
-        "handle": (handle != null) ? handle!.toMap() : null,
-        "hasAttachments": hasAttachments ? 1 : 0,
-        "hasReactions": hasReactions ? 1 : 0,
-        "dateDeleted": (dateDeleted == null) ? null : dateDeleted!.millisecondsSinceEpoch,
-        "metadata": jsonEncode(metadata),
-      };
+  Map<String, dynamic> toMap({bool includeObjects = false}) {
+     final map = {
+       "ROWID": id,
+       "originalROWID": originalROWID,
+       "guid": guid,
+       "handleId": handleId,
+       "otherHandle": otherHandle,
+       "text": sanitizeString(text),
+       "subject": subject,
+       "country": country,
+       "_error": _error.value,
+       "dateCreated": (dateCreated == null) ? null : dateCreated!.millisecondsSinceEpoch,
+       "dateRead": (dateRead == null) ? null : dateRead!.millisecondsSinceEpoch,
+       "dateDelivered": (dateDelivered == null) ? null : dateDelivered!.millisecondsSinceEpoch,
+       "isFromMe": isFromMe! ? 1 : 0,
+       "isDelayed": isDelayed! ? 1 : 0,
+       "isAutoReply": isAutoReply! ? 1 : 0,
+       "isSystemMessage": isSystemMessage! ? 1 : 0,
+       "isServiceMessage": isServiceMessage! ? 1 : 0,
+       "isForward": isForward! ? 1 : 0,
+       "isArchived": isArchived! ? 1 : 0,
+       "hasDdResults": hasDdResults! ? 1 : 0,
+       "cacheRoomnames": cacheRoomnames,
+       "isAudioMessage": isAudioMessage! ? 1 : 0,
+       "datePlayed": (datePlayed == null) ? null : datePlayed!.millisecondsSinceEpoch,
+       "itemType": itemType,
+       "groupTitle": groupTitle,
+       "groupActionType": groupActionType,
+       "isExpired": isExpired! ? 1 : 0,
+       "balloonBundleId": balloonBundleId,
+       "associatedMessageGuid": associatedMessageGuid,
+       "associatedMessageType": associatedMessageType,
+       "expressiveSendStyleId": expressiveSendStyleId,
+       "timeExpressiveSendStyleId":
+       (timeExpressiveSendStyleId == null) ? null : timeExpressiveSendStyleId!.millisecondsSinceEpoch,
+       "handle": (handle != null) ? handle!.toMap() : null,
+       "hasAttachments": hasAttachments ? 1 : 0,
+       "hasReactions": hasReactions ? 1 : 0,
+       "dateDeleted": (dateDeleted == null) ? null : dateDeleted!.millisecondsSinceEpoch,
+       "metadata": jsonEncode(metadata),
+     };
+     if (includeObjects) {
+       map['attachments'] = (attachments ?? []).map((e) => e!.toMap()).toList();
+       map['handle'] = handle?.toMap();
+     }
+     return map;
+  }
 }

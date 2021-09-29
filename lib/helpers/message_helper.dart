@@ -43,7 +43,7 @@ class MessageHelper {
     if (chat?.guid != null) {
       chats[chat!.guid!] = chat;
       if (chat.id == null) {
-        chat.save();
+        chat = chat.save();
       }
     }
 
@@ -88,13 +88,6 @@ class MessageHelper {
         }
       } else {
         message = existing;
-      }
-
-      // Create the attachments
-      List<dynamic> attachments = item['attachments'];
-      for (Map<String, dynamic> attachmentItem in attachments) {
-        Attachment file = Attachment.fromMap(attachmentItem);
-        file.save(message);
       }
 
       // Add message to the "master list"

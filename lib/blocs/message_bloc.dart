@@ -197,7 +197,7 @@ class MessageBloc {
     _isGettingMore = true;
 
     // Fetch messages
-    List<Message> messages = Chat.getMessages(_currentChat!);
+    List<Message> messages = Chat.getMessages(_currentChat!, getDetails: true);
 
     if (isNullOrEmpty(messages)!) {
       _allMessages = {};

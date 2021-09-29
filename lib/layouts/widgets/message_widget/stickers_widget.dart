@@ -35,9 +35,9 @@ class _StickersWidgetState extends State<StickersWidget> {
     });
   }
 
-  void loadStickers() {
+  void loadStickers() async {
     // For each message, load the sticker for it
-    final map = Message.fetchAttachmentsByMessages(widget.messages);
+    final map = Message.fetchAttachmentsByMessages(widget.messages.where((element) => element.associatedMessageType == "sticker").toList());
     for (Message msg in widget.messages) {
       // If the message type isn't a sticker, skip it
       if (msg.associatedMessageType != "sticker") continue;
@@ -52,11 +52,11 @@ class _StickersWidgetState extends State<StickersWidget> {
         String pathName = AttachmentHelper.getAttachmentPath(attachment);
 
         // Check if the attachment exists
-        if (FileSystemEntity.typeSync(pathName) == FileSystemEntityType.notFound) {
+        if (await FileSystemEntity.type(pathName) == FileSystemEntityType.notFound) {
           // Download the attachment and when complete, re-render the UI
-          Get.put(AttachmentDownloadController(attachment: attachment, onComplete: () {
+          Get.put(AttachmentDownloadController(attachment: attachment, onComplete: () async {
             // Make sure it downloaded correctly
-            if (FileSystemEntity.typeSync(pathName) == FileSystemEntityType.notFound) {
+            if (await FileSystemEntity.type(pathName) == FileSystemEntityType.notFound) {
               // Add the attachment as a sticker, and re-render the UI
               stickers.add(attachment);
               if (mounted) setState(() {});
