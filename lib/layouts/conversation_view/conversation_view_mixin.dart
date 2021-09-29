@@ -82,9 +82,6 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     NotificationManager().switchChat(chat);
 
     fetchParticipants();
-    ContactManager().stream.listen((List<String?> addresses) async {
-      fetchParticipants();
-    });
 
     newMessages = ChatBloc()
         .chats
@@ -132,14 +129,14 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     });
   }
 
-  void setNewChatData({forceUpdate = false}) async {
+  void setNewChatData({forceUpdate = false}) {
     // Save the current participant list and get the latest
     List<Handle> ogParticipants = widget.chat!.participants;
     widget.chat!.getParticipants();
 
     // Save the current title and generate the new one
     String? ogTitle = widget.chat!.title;
-    await widget.chat!.getTitle();
+    widget.chat!.getTitle();
 
     // If the original data is different, update the state
     if (ogTitle != widget.chat!.title || ogParticipants.length != widget.chat!.participants.length || forceUpdate) {
@@ -156,7 +153,6 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     currentChat = CurrentChat.getCurrentChat(chat);
     currentChat!.init();
     currentChat!.updateChatAttachments();
-    if (mounted) setState(() {});
     currentChat!.stream.listen((event) {
       if (mounted) setState(() {});
     });
@@ -770,7 +766,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       await ChatBloc().refreshChats();
     }
 
-    Future<void> setChats(List<Chat> newChats) async {
+    void setChats(List<Chat> newChats) {
       conversations = newChats;
       for (int i = 0; i < conversations.length; i++) {
         if (isNullOrEmpty(conversations[i].participants)!) {
@@ -781,7 +777,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       filterContacts();
     }
 
-    ever(ChatBloc().chats, (List<Chat> chats) async {
+    ever(ChatBloc().chats, (List<Chat> chats) {
       if (chats.isEmpty) return;
 
       // Make sure the contact count changed, otherwise, don't set the chats
@@ -789,13 +785,13 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       previousContactCount = chats.length;
 
       // Update and filter the chats
-      await setChats(chats);
+      setChats(chats);
     });
 
     // When the chat request is finished, set the chats
     if (ChatBloc().chatRequest != null) {
       await ChatBloc().chatRequest!.future;
-      await setChats(ChatBloc().chats);
+      setChats(ChatBloc().chats);
     }
   }
 
@@ -1014,7 +1010,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         for (Handle e in item.chat?.participants ?? []) {
           UniqueContact contact = UniqueContact(
               address: e.address,
-              displayName: ContactManager().getCachedContactSync(e.address)?.displayName ?? await formatPhoneNumber(e));
+              displayName: ContactManager().getCachedContact(address: e.address)?.displayName ?? await formatPhoneNumber(e));
           selected.add(contact);
         }
 

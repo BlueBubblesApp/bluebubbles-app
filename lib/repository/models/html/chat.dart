@@ -37,7 +37,7 @@ Future<String> getFullChatTitle(Chat _chat) async {
     List<String> titles = [];
     for (int i = 0; i < chat.participants.length; i++) {
       // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
-      String? name = await ContactManager().getContactTitle(chat.participants[i]);
+      String? name = ContactManager().getContactTitle(chat.participants[i]);
 
       if (chat.participants.length > 1 && !name!.isPhoneNumber) {
         name = name.trim().split(" ")[0];
@@ -159,7 +159,7 @@ class Chat {
           : false,
       latestMessage: message,
       // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
-      latestMessageText: json.containsKey("latestMessageText") ? json["latestMessageText"] : message != null ? MessageHelper.getNotificationTextSync(message) : null,
+      latestMessageText: json.containsKey("latestMessageText") ? json["latestMessageText"] : message != null ? MessageHelper.getNotificationText(message) : null,
       fakeLatestMessageText: json.containsKey("latestMessageText")
           ? faker.lorem.words((json["latestMessageText"] ?? "").split(" ").length).join(" ")
           : null,
@@ -293,7 +293,7 @@ class Chat {
     if (isNewer && checkForMessageText) {
       latestMessage = message;
       // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
-      latestMessageText = await MessageHelper.getNotificationText(message);
+      latestMessageText = MessageHelper.getNotificationText(message);
       fakeLatestMessageText = faker.lorem.words((latestMessageText ?? "").split(" ").length).join(" ");
       latestMessageDate = message.dateCreated;
     }

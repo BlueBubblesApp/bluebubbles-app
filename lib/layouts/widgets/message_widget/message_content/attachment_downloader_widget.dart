@@ -4,7 +4,7 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-class AttachmentDownloaderWidget extends StatefulWidget {
+class AttachmentDownloaderWidget extends StatelessWidget {
   AttachmentDownloaderWidget({
     Key? key,
     required this.placeHolder,
@@ -16,31 +16,26 @@ class AttachmentDownloaderWidget extends StatefulWidget {
   final Attachment attachment;
 
   @override
-  _AttachmentDownloaderWidgetState createState() => _AttachmentDownloaderWidgetState();
-}
-
-class _AttachmentDownloaderWidgetState extends State<AttachmentDownloaderWidget> {
-  @override
   Widget build(BuildContext context) {
     return Stack(
       alignment: Alignment.center,
       children: <Widget>[
-        widget.placeHolder,
+        placeHolder,
         CupertinoButton(
           padding: EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 10),
-          onPressed: widget.onPressed,
+          onPressed: onPressed,
           color: Colors.transparent,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               Text(
-                widget.attachment.getFriendlySize(),
+                attachment.getFriendlySize(),
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.cloud_download : Icons.cloud_download, size: 28.0),
-              (widget.attachment.mimeType != null)
+              (attachment.mimeType != null)
                   ? Text(
-                      widget.attachment.mimeType!,
+                      attachment.mimeType!,
                       style: Theme.of(context).textTheme.bodyText1,
                     )
                   : Container()

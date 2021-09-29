@@ -1,6 +1,7 @@
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:flutter/foundation.dart';
+import 'package:get/get.dart';
 import './chat.dart';
 
 @Entity()
@@ -10,7 +11,9 @@ class Handle {
   @Unique()
   String address;
   String? country;
-  String? color;
+  final RxnString _color = RxnString();
+  String? get color => _color.value;
+  set color(String? val) => _color.value = val;
   String? defaultPhone;
   String? uncanonicalizedId;
 
@@ -19,10 +22,12 @@ class Handle {
     this.originalROWID,
     this.address = "",
     this.country,
-    this.color,
+    String? handleColor,
     this.defaultPhone,
     this.uncanonicalizedId,
-  });
+  }) {
+    color = handleColor;
+  }
 
   factory Handle.fromMap(Map<String, dynamic> json) {
     var data = Handle(
@@ -30,7 +35,7 @@ class Handle {
       originalROWID: json.containsKey("originalROWID") ? json["originalROWID"] : null,
       address: json["address"],
       country: json.containsKey("country") ? json["country"] : null,
-      color: json.containsKey("color") ? json["color"] : null,
+      handleColor: json.containsKey("color") ? json["color"] : null,
       defaultPhone: json['defaultPhone'],
       uncanonicalizedId: json.containsKey("uncanonicalizedId") ? json["uncanonicalizedId"] : null,
     );
@@ -49,7 +54,7 @@ class Handle {
         id = existing.id;
       }
       try {
-        handleBox.put(this);
+        id = handleBox.put(this);
       } on UniqueViolationException catch (_) {}
     });
     return this;
@@ -91,8 +96,12 @@ class Handle {
   static List<Chat> getChats(Handle handle) {
     if (kIsWeb) return [];
     return store.runInTransaction(TxMode.read, () {
-      final chatIds = chJoinBox.getAll().where((element) => element.handleId == handle.id).map((e) => e.chatId);
-      final chats = chatBox.getAll().where((element) => chatIds.contains(element.id)).toList();
+      final chatIdQuery = chJoinBox.query(ChatHandleJoin_.handleId.equals(handle.id!)).build();
+      final chatIds = chatIdQuery.property(ChatHandleJoin_.chatId).find();
+      chatIdQuery.close();
+      final chatQuery = chatBox.query(Chat_.id.oneOf(chatIds)).build();
+      final chats = chatQuery.find();
+      chatQuery.close();
       return chats;
     });
   }

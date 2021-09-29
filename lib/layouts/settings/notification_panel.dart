@@ -423,10 +423,7 @@ class ChatListState extends State<ChatList> {
                                     subtitle: Text("Mute certain individuals in this chat", style: Theme.of(context).textTheme.subtitle1),
                                     onTap: () async {
                                       Get.back();
-                                      List<Future<String?>> names = chat.participants.map((e) async =>
-                                      await ContactManager().getContactTitle(e)).toList();
-                                      Future<List<String?>> futureList = Future.wait(names);
-                                      List<String?> result = await futureList;
+                                      List<String?> names = chat.participants.map((e) => ContactManager().getContactTitle(e)).toList();
                                       List<String> existing = chat.muteArgs?.split(",") ?? [];
                                       Get.defaultDialog(
                                           title: "Mute Individuals",
@@ -474,7 +471,7 @@ class ChatListState extends State<ChatList> {
                                                                       });
                                                                     },
                                                                     activeColor: Theme.of(context).primaryColor,
-                                                                    title: Text(result[index] ?? chat.participants[index].address, style: Theme.of(context).textTheme.headline1),
+                                                                    title: Text(names[index] ?? chat.participants[index].address, style: Theme.of(context).textTheme.headline1),
                                                                 ),
                                                               );
                                                             },

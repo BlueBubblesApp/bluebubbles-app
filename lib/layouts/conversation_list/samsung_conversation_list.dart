@@ -237,8 +237,8 @@ class _SamsungState extends State<SamsungConversationList> {
                 title: Row(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    ...widget.parent.getHeaderTextWidgets(size: 20),
-                    ...widget.parent.getConnectionIndicatorWidgets(),
+                    widget.parent.getHeaderTextWidget(size: 20),
+                    widget.parent.getConnectionIndicatorWidget(),
                     widget.parent.getSyncIndicatorWidget(),
                   ],
                 ),

@@ -393,7 +393,7 @@ class MethodChannelInterface {
       openedChat.getParticipants();
 
       // Make sure that the title is set
-      await openedChat.getTitle();
+      openedChat.getTitle();
 
       // Clear all notifications for this chat
       NotificationManager().switchChat(openedChat);

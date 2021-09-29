@@ -13,6 +13,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_popup_holder.
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/helpers/darty.dart';
@@ -53,34 +54,23 @@ class ReceivedMessage extends StatefulWidget {
 
 class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMixin {
   bool checkedHandle = false;
+  late String contactTitle;
   final Rx<Skins> skin = Rx<Skins>(SettingsManager().settings.skin.value);
   late final spanFuture = MessageWidgetMixin.buildMessageSpansAsync(context, widget.message, colors: widget.message.handle?.color != null ? getBubbleColors() : null);
 
   @override
   initState() {
     super.initState();
-    initMessageState(widget.message, widget.showHandle).then((value) => {if (mounted) setState(() {})});
+    contactTitle = ContactManager().getContactTitle(widget.message.handle) ?? "";
 
-    // We need this here, or else messages without an avatar may not change.
-    // Even if it fits the criteria
-    ContactManager().colorStream.listen((event) {
-      if (!event.containsKey(widget.message.handle?.address)) return;
+    EventDispatcher().stream.listen((Map<String, dynamic> event) {
+      if (!event.containsKey("type")) return;
 
-      Color? color = event[widget.message.handle?.address];
-      if (color == null) {
-        widget.message.handle!.color = null;
-      } else {
-        widget.message.handle!.color = color.value.toRadixString(16);
+      if (event["type"] == 'refresh-avatar' && event["data"][0] == widget.message.handle?.address && mounted) {
+        widget.message.handle?.color = event['data'][1];
+        setState(() {});
       }
-
-      if (mounted) setState(() {});
     });
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    didChangeMessageDependencies(widget.message, widget.showHandle);
   }
 
   List<Color> getBubbleColors() {
@@ -101,12 +91,6 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
       }
     }
     return bubbleColors;
-  }
-
-  Future<void> didChangeMessageDependencies(Message message, bool? showHandle) async {
-    await getContactTitle(message, showHandle);
-    // await fetchAvatar(message);
-    if (mounted) setState(() {});
   }
 
   /// Builds the message bubble with teh tail (if applicable)
@@ -163,10 +147,10 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
       alignment: AlignmentDirectional.bottomStart,
       children: [
         if (widget.showTail && skin.value == Skins.iOS)
-          MessageTail(
+          Obx(() => MessageTail(
             isFromMe: false,
             color: getBubbleColors()[0],
-          ),
+          )),
         Container(
           margin: EdgeInsets.only(
             top: widget.message
@@ -219,19 +203,12 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
           ),
           child: FutureBuilder<List<InlineSpan>>(
               future: spanFuture,
+              initialData: MessageWidgetMixin.buildMessageSpans(context, widget.message,
+                colors: widget.message.handle?.color != null ? getBubbleColors() : null),
               builder: (context, snapshot) {
-                if (snapshot.data != null) {
-                  return RichText(
-                    text: TextSpan(
-                      children: snapshot.data!,
-                      style: Theme.of(context).textTheme.bodyText2,
-                    ),
-                  );
-                }
                 return RichText(
                   text: TextSpan(
-                    children: MessageWidgetMixin.buildMessageSpans(context, widget.message,
-                        colors: widget.message.handle?.color != null ? getBubbleColors() : null),
+                    children: snapshot.data!,
                     style: Theme.of(context).textTheme.bodyText2,
                   ),
                 );
@@ -270,7 +247,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
           padding: EdgeInsets.only(left: 15.0, top: 5.0, bottom: widget.message
               .getReactions().isNotEmpty ? 0.0 : 3.0),
           child: Text(
-            getContactName(context, contactTitle, widget.message.handle!.address),
+            getContactName(context, contactTitle, widget.message.handle?.address),
             style: Theme
                 .of(context)
                 .textTheme
@@ -287,8 +264,8 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     if (widget.message
         .getRealAttachments().isNotEmpty) {
       messageColumn.add(
-        addStickersToWidget(
-          message: addReactionsToWidget(
+        MessageWidgetMixin.addStickersToWidget(
+          message: MessageWidgetMixin.addReactionsToWidget(
               messageWidget: widget.attachmentsWidget,
               reactions: widget.reactionsWidget,
               message: widget.message,
@@ -329,8 +306,8 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     // Fourth, let's add any reactions or stickers to the widget
     if (message != null) {
       messageColumn.add(
-        addStickersToWidget(
-          message: addReactionsToWidget(
+        MessageWidgetMixin.addStickersToWidget(
+          message: MessageWidgetMixin.addReactionsToWidget(
               messageWidget: message,
               reactions: widget.reactionsWidget,
               message: widget.message,

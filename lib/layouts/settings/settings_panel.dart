@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:bluebubbles/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:file_picker/file_picker.dart';
@@ -1058,8 +1059,10 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                     DBProvider.deleteDB();
                                     await SettingsManager().resetConnection();
                                     SettingsManager().settings.finishedSetup.value = false;
-                                    SocketManager().finishedSetup.sink.add(false);
-                                    Navigator.of(context).popUntil((route) => route.isFirst);
+                                    Get.offAll(() => WillPopScope(
+                                      onWillPop: () async => false,
+                                      child: SetupView(),
+                                    ), duration: Duration.zero, transition: Transition.noTransition);
                                     SettingsManager().settings = Settings();
                                     SettingsManager().settings.save();
                                     SettingsManager().fcmData = null;

@@ -20,43 +20,27 @@ class ContactManager {
   factory ContactManager() {
     return _manager;
   }
-
   static final ContactManager _manager = ContactManager._internal();
   static final tag = 'ContactManager';
-
-  final StreamController<List<String>> _stream = StreamController.broadcast();
-
-  final StreamController<Map<String, Color?>> _colorStream = StreamController.broadcast();
-
-  Stream<Map<String, Color?>> get colorStream => _colorStream.stream;
-
-  StreamController<Map<String, Color?>> get colorStreamObject => _colorStream;
-
-  Stream<List<String>> get stream => _stream.stream;
-
   ContactManager._internal();
 
   List<Contact> contacts = [];
   bool hasFetchedContacts = false;
   Map<String, Contact?> handleToContact = {};
   Map<String, String?> handleToFakeName = {};
-  Map<String, ContactAvatarWidgetState> contactWidgetStates = {};
+  Map<String, String> handleToFormattedAddress = {};
 
   // We need these so we don't have threads fetching at the same time
   Completer<bool>? getContactsFuture;
   Completer? getAvatarsFuture;
   int lastRefresh = 0;
 
-  Future<Contact?> getCachedContact(Handle? handle) async {
-    if (handle == null) return null;
-    if (contacts.isEmpty) await getContacts();
-    if (!handleToContact.containsKey(handle.address)) return null;
-    return handleToContact[handle.address];
-  }
-
-  Contact? getCachedContactSync(String address) {
-    if (!handleToContact.containsKey(address)) return null;
-    return handleToContact[address];
+  Contact? getCachedContact({Handle? handle, String? address}) {
+    if (handle != null) {
+      return handleToContact[handle.address];
+    } else {
+      return handleToContact[address];
+    }
   }
 
   Future<bool> canAccessContacts() async {
@@ -185,16 +169,11 @@ class ContactManager {
       Contact? contactMatch;
 
       try {
-        contactMatch = await getContact(handle);
+        contactMatch = getContact(handle);
+        handleToFormattedAddress[handle.address] = await formatPhoneNumber(handle.address);
         handleToContact[handle.address] = contactMatch;
       } catch (ex) {
         Logger.error('Failed to match handle for address, "${handle.address}": ${ex.toString()}', tag: tag);
-      }
-
-      // If we have a match, add it to the mapping, then break out
-      // of the loop so we don't "over-process" more than we need
-      if (contactMatch != null) {
-        _stream.sink.add([handle.address]);
       }
     }
 
@@ -220,11 +199,8 @@ class ContactManager {
       FastContacts.getContactImage(contact!.id).then((avatar) {
         if (avatar == null) return;
 
-        contact.avatar = avatar;
+        contact.avatar.value = avatar;
         handleToContact[address] = contact;
-
-        // Add the handle to the stream to update the subscribers
-        _stream.sink.add([address]);
       });
     }
 
@@ -232,22 +208,12 @@ class ContactManager {
     getAvatarsFuture!.complete();
   }
 
-  Future<Contact?> getContact(Handle handle, {bool fetchAvatar = false}) async {
+  Contact? getContact(Handle handle) {
     Contact? contact;
-
-    // Get a list of comparable options
-    List<String> opts = await getCompareOpts(handle);
     bool isEmailAddr = handle.address.isEmail;
     String? lastDigits = handle.address.length < 4
         ? handle.address.numericOnly()
         : handle.address.substring(handle.address.length - 4, handle.address.length).numericOnly();
-
-    // If the contact list is null, get the contacts
-    try {
-      if (!hasFetchedContacts && contacts.isEmpty) await getContacts();
-    } catch (ex) {
-      return null;
-    }
 
     for (Contact c in contacts) {
       // Get a phone number match
@@ -256,7 +222,7 @@ class ContactManager {
           String compStr = item.replaceAll(" ", "").trim().numericOnly();
 
           if (!compStr.endsWith(lastDigits)) continue;
-          if (sameAddress(opts, compStr)) {
+          if (sameAddress([handle.address.replaceAll(" ", "").trim().numericOnly()], compStr)) {
             contact = c;
             break;
           }
@@ -277,12 +243,6 @@ class ContactManager {
       if (contact != null) break;
     }
 
-    if (fetchAvatar && !kIsDesktop && !kIsWeb) {
-      Uint8List? avatar =
-          await FastContacts.getContactImage(contact!.id);
-      contact.avatar = avatar;
-    }
-
     return contact;
   }
 
@@ -290,9 +250,8 @@ class ContactManager {
     return await FastContacts.getContactImage(id);
   }
 
-  Future<String?> getContactTitle(Handle? handle) async {
+  String? getContactTitle(Handle? handle) {
     if (handle == null) return "You";
-    if (contacts.isEmpty) await getContacts();
 
     String? address = handle.address;
     if (handleToContact.containsKey(address) && handleToContact[address] != null) {
@@ -300,7 +259,7 @@ class ContactManager {
     }
 
     try {
-      Contact? contact = await getContact(handle);
+      Contact? contact = getContact(handle);
       if (contact != null) return contact.displayName;
     } catch (ex) {
       Logger.error('Failed to getContact() in getContactTitle(), for address, "$address": ${ex.toString()}', tag: tag);
@@ -310,7 +269,7 @@ class ContactManager {
       String contactTitle = address;
       bool isEmailAddr = contactTitle.isEmail;
       if (contactTitle == address && !isEmailAddr) {
-        return await formatPhoneNumber(handle);
+        return handleToFormattedAddress[handle.address] ?? handle.address;
       }
 
       // If it's an email and starts with "e:", strip it out
@@ -325,18 +284,5 @@ class ContactManager {
     }
 
     return address;
-  }
-
-  ContactAvatarWidgetState getState(String key) {
-    if (contactWidgetStates.containsKey(key)) {
-      return contactWidgetStates[key]!;
-    }
-    contactWidgetStates[key] = ContactAvatarWidgetState();
-    return contactWidgetStates[key]!;
-  }
-
-  dispose() {
-    _stream.close();
-    _colorStream.close();
   }
 }

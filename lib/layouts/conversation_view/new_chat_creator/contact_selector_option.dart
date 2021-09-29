@@ -28,7 +28,7 @@ class ContactSelectorOption extends StatelessWidget {
 
     List<String> formatted = [];
     for (var item in item.chat!.participants) {
-      String? contact = ContactManager().getCachedContactSync(item.address)?.displayName;
+      String? contact = ContactManager().getCachedContact(address: item.address)?.displayName;
       contact ??= await formatPhoneNumber(item);
 
       formatted.add(contact);

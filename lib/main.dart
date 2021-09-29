@@ -2,7 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/layouts/setup/upgrading_db.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/repository/models/objectbox.dart';
 import 'package:collection/collection.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
@@ -43,7 +45,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart' hide Message;
 import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 import 'package:firebase_dart/firebase_dart.dart';
-//ignore: implementation_imports
 import 'package:firebase_dart/src/auth/utils.dart' as fdu;
 import 'package:get/get.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -55,7 +56,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:window_manager/window_manager.dart';
-import 'package:bluebubbles/repository/models/objectbox.dart';
 
 // final SentryClient _sentry = SentryClient(
 //     dsn:
@@ -75,7 +75,7 @@ bool get isInDebugMode {
 
 FlutterLocalNotificationsPlugin? flutterLocalNotificationsPlugin;
 late SharedPreferences prefs;
-late FirebaseApp app;
+late final FirebaseApp app;
 late final Store store;
 late final Box<Attachment> attachmentBox;
 late final Box<Chat> chatBox;
@@ -90,7 +90,8 @@ late final Box<ChatHandleJoin> chJoinBox;
 late final Box<ChatMessageJoin> cmJoinBox;
 late final Box<ThemeValueJoin> tvJoinBox;
 
-Future<void> _reportError(dynamic error, dynamic stackTrace) async {
+
+Future<Null> _reportError(dynamic error, dynamic stackTrace) async {
   // Print the exception to the console.
   Logger.error('Caught error: $error');
   Logger.error(stackTrace.toString());
@@ -109,7 +110,7 @@ class MyHttpOverrides extends HttpOverrides {
   }
 }
 
-Future<void> main() async {
+Future<Null> main() async {
   HttpOverrides.global = MyHttpOverrides();
 
   // This captures errors reported by the Flutter framework.
@@ -221,9 +222,9 @@ Future<void> main() async {
   }
 
   if (exception == null) {
-    runZonedGuarded<void>(() {
-      ThemeObject light = ThemeObject.getLightTheme();
-      ThemeObject dark = ThemeObject.getDarkTheme();
+    runZonedGuarded<Future<Null>>(() async {
+      ThemeObject light = await ThemeObject.getLightTheme();
+      ThemeObject dark = await ThemeObject.getDarkTheme();
 
       runApp(Main(
         lightTheme: light.themeData,
@@ -279,7 +280,7 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
         /// Hide the debug banner in debug mode
         debugShowCheckedModeBanner: false,
 
-        title: 'BlueBubbles ${kIsWeb ? "(Beta)" : ""}',
+        title: 'BlueBubbles',
 
         /// Set the light theme from the [AdaptiveTheme]
         theme: theme.copyWith(appBarTheme: theme.appBarTheme.copyWith(elevation: 0.0)),
@@ -423,7 +424,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
     // Get the saved settings from the settings manager after the first frame
     SchedulerBinding.instance!.addPostFrameCallback((_) async {
-      await SettingsManager().getSavedSettings(context: context);
+      await SettingsManager().getSavedSettings();
 
       if (SettingsManager().settings.colorsFromMedia.value) {
         try {
@@ -556,38 +557,30 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       ),
       child: Scaffold(
         backgroundColor: Colors.black,
-        // The stream builder connects to the [SocketManager] to check if the app has finished the setup or not
-        body: StreamBuilder(
-          stream: SocketManager().finishedSetup.stream,
-          builder: (BuildContext context, AsyncSnapshot<bool?> snapshot) {
-            if (snapshot.hasData) {
-              // If the app has already gone through setup, show the convo list
-              // Otherwise show the setup
-              if (snapshot.data!) {
-                SystemChrome.setPreferredOrientations([
-                  DeviceOrientation.landscapeRight,
-                  DeviceOrientation.landscapeLeft,
-                  DeviceOrientation.portraitUp,
-                  DeviceOrientation.portraitDown,
-                ]);
-                if (!serverCompatible && kIsWeb) {
-                  return FailureToStart(otherTitle: "Server version too low, please upgrade!", e: "Required Server Version: v0.2.0",);
-                }
-                return ConversationList(
-                  showArchivedChats: false,
-                  showUnknownSenders: false,
-                );
-              } else {
-                SystemChrome.setPreferredOrientations([
-                  DeviceOrientation.portraitUp,
-                ]);
-                return WillPopScope(
-                  onWillPop: () async => false,
-                  child: SetupView(),
-                );
+        body: Builder(
+          builder: (BuildContext context) {
+            if (SettingsManager().settings.finishedSetup.value) {
+              SystemChrome.setPreferredOrientations([
+                DeviceOrientation.landscapeRight,
+                DeviceOrientation.landscapeLeft,
+                DeviceOrientation.portraitUp,
+                DeviceOrientation.portraitDown,
+              ]);
+              if (!serverCompatible && kIsWeb) {
+                return FailureToStart(otherTitle: "Server version too low, please upgrade!", e: "Required Server Version: v0.2.0",);
               }
+              return ConversationList(
+                showArchivedChats: false,
+                showUnknownSenders: false,
+              );
             } else {
-              return Container();
+              SystemChrome.setPreferredOrientations([
+                DeviceOrientation.portraitUp,
+              ]);
+              return WillPopScope(
+                onWillPop: () async => false,
+                child: SetupView(),
+              );
             }
           },
         ),

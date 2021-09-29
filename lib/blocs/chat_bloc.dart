@@ -78,11 +78,10 @@ class ChatBloc {
       await chatRequest!.future;
     }
 
+    if (ContactManager().contacts.isEmpty) await ContactManager().getContacts();
+
     chatRequest = Completer<void>();
     Logger.info("Fetching chats (${force ? 'forced' : 'normal'})...", tag: "ChatBloc");
-
-    // Get the contacts in case we haven't
-    if (ContactManager().contacts.isEmpty) await ContactManager().getContacts();
 
     _messageSubscription ??= setupMessageListener();
 
@@ -147,7 +146,7 @@ class ChatBloc {
     if (!shouldUpdate) return;
 
     if (isNullOrEmpty(chat.title)!) {
-      await chat.getTitle();
+      chat.getTitle();
     }
 
     // If the current chat isn't found in the bloc, let's insert it at the correct position
@@ -216,11 +215,11 @@ class ChatBloc {
   Future<void> updateShareTarget(Chat chat) async {
     Uint8List? icon;
     Contact? contact =
-        chat.participants.length == 1 ? await ContactManager().getCachedContact(chat.participants.first) : null;
+        chat.participants.length == 1 ? ContactManager().getCachedContact(handle: chat.participants.first) : null;
     try {
       // If there is a contact specified, we can use it's avatar
-      if (contact != null && contact.avatar != null && contact.avatar!.isNotEmpty) {
-        icon = contact.avatar;
+      if (contact != null && contact.avatar.value != null && contact.avatar.value!.isNotEmpty) {
+        icon = contact.avatar.value;
         // Otherwise if there isn't, we use the [defaultAvatar]
       } else {
         // If [defaultAvatar] is not loaded, load it from assets
@@ -237,7 +236,7 @@ class ChatBloc {
 
     // If we don't have a title, try to get it
     if (isNullOrEmpty(chat.title)!) {
-      await chat.getTitle();
+      chat.getTitle();
     }
 
     // If we still don't have a title, bye felicia
@@ -261,7 +260,7 @@ class ChatBloc {
       Chat updatedChat = event.event["chat"];
 
       // Update the tile values for the chat (basically just the title)
-      await initTileValsForChat(updatedChat);
+      initTileValsForChat(updatedChat);
 
       // Insert/move the chat to the correct position
       await updateChatPosition(updatedChat);
@@ -296,7 +295,7 @@ class ChatBloc {
 
       for (Chat chat in chats) {
         newChats.add(chat);
-        await initTileValsForChat(chat);
+        initTileValsForChat(chat);
         if (isNullOrEmpty(chat.participants)!) {
           chat.getParticipants();
         }
@@ -310,10 +309,9 @@ class ChatBloc {
             chat.latestMessageGetter.fetchAttachments();
           }
           if (chat.latestMessage?.handle == null && chat.latestMessage?.handleId != null) chat.latestMessage!.handle = Handle.findOne(originalROWID: chat.latestMessage!.handleId);
-          chat.latestMessageText = await MessageHelper.getNotificationText(chat.latestMessageGetter);
+          chat.latestMessageText = MessageHelper.getNotificationText(chat.latestMessageGetter);
           chat.fakeLatestMessageText = faker.lorem.words((chat.latestMessageText ?? "").split(" ").length).join(" ");
           chat.latestMessageDate = chat.latestMessageGetter.dateCreated;
-          await ContactManager().matchHandles();
         }
       }
 
@@ -326,7 +324,7 @@ class ChatBloc {
         loadedChatBatch.value = true;
       }
     }
-
+    await ContactManager().matchHandles();
     Logger.info("Finished fetching chats (${_chats.length}).", tag: "ChatBloc");
     await updateAllShareTargets();
 
@@ -337,9 +335,9 @@ class ChatBloc {
 
   /// Get the values for the chat, specifically the title
   /// @param chat to initialize
-  Future<void> initTileValsForChat(Chat chat) async {
+  void initTileValsForChat(Chat chat) {
     if (chat.title == null) {
-      await chat.getTitle();
+      chat.getTitle();
     }
     AttachmentInfoBloc().initChat(chat);
   }
@@ -408,7 +406,7 @@ class ChatBloc {
       Chat _chat = _chats[i];
       if (_chat.guid == chat.guid) {
         _chats[i] = chat;
-        await initTileValsForChat(chats[i]);
+        initTileValsForChat(chats[i]);
       }
     }
     for (int i = 0; i < _chats.length; i++) {

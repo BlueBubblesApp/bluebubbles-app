@@ -33,6 +33,10 @@ export 'package:bluebubbles/repository/models/platform_file.dart';
 import 'dart:typed_data';
 
 import 'package:fast_contacts/fast_contacts.dart';
+import 'package:get/get.dart';
+import 'package:image_size_getter/image_size_getter.dart';
+import 'package:image_size_getter/src/utils/file_utils.dart';
+import 'package:universal_io/io.dart';
 
 class Contact {
   Contact({
@@ -41,15 +45,17 @@ class Contact {
     this.phones = const [],
     this.emails = const [],
     this.structuredName,
-    this.avatar,
-  });
+    Uint8List? avatarBytes,
+  }) {
+    avatar.value = avatarBytes;
+  }
 
   String id;
   String displayName;
   List<String> phones;
   List<String> emails;
   StructuredName? structuredName;
-  Uint8List? avatar;
+  final Rxn<Uint8List> avatar = Rxn<Uint8List>();
 
   Map<String, dynamic> toMap() {
     return {
@@ -74,5 +80,47 @@ class Contact {
       phones: map['phones'].cast<String>(),
       emails: map['emails'].cast<String>(),
     );
+  }
+}
+
+class AsyncFileInput extends AsyncImageInput {
+  final File file;
+
+  AsyncFileInput(this.file);
+
+  @override
+  Future<List<int>> getRange(int start, int end) async {
+    final utils = FileUtils(file);
+    return await utils.getRange(start, end);
+  }
+
+  @override
+  Future<int> get length async => await file.length();
+
+  @override
+  Future<bool> exists() async {
+    return await file.exists();
+  }
+}
+
+class AsyncMemoryInput extends AsyncImageInput {
+  final Uint8List bytes;
+  const AsyncMemoryInput(this.bytes);
+
+  factory AsyncMemoryInput.byteBuffer(ByteBuffer buffer) {
+    return AsyncMemoryInput(buffer.asUint8List());
+  }
+
+  @override
+  Future<List<int>> getRange(int start, int end) async {
+    return bytes.sublist(start, end);
+  }
+
+  @override
+  Future<int> get length async => bytes.length;
+
+  @override
+  Future<bool> exists() async {
+    return bytes.isNotEmpty;
   }
 }

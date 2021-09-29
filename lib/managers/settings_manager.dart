@@ -66,7 +66,7 @@ class SettingsManager {
   ///
   /// @param [context] is an optional parameter to be used for setting the adaptive theme based on the settings.
   /// Setting to null will prevent the theme from being set and will be set to null in the background isolate
-  Future<void> getSavedSettings({bool headless = false, BuildContext? context}) async {
+  Future<void> getSavedSettings({bool headless = false}) async {
     settings = Settings.getSettings();
 
     fcmData = FCMData.getFCM();
@@ -76,13 +76,10 @@ class SettingsManager {
       theme.fetchData();
     }
 
-    // // If [context] is null, then we can't set the theme, and we shouldn't anyway
-    loadTheme(context);
-
     try {
       // Set the [displayMode] to that saved in settings
       if (!kIsWeb && !kIsDesktop) {
-        await FlutterDisplayMode.setPreferredMode(await settings.getDisplayMode());
+        FlutterDisplayMode.setPreferredMode(await settings.getDisplayMode());
       }
     } catch (_) {}
 
@@ -90,7 +87,6 @@ class SettingsManager {
     if (!settings.finishedSetup.value) {
       DBProvider.deleteDB();
     }
-    SocketManager().finishedSetup.sink.add(settings.finishedSetup.value);
 
     // If we aren't running in the background, then we should auto start the socket and authorize fcm just in case we haven't
     if (!headless) {

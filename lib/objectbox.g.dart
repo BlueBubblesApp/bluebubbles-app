@@ -1126,12 +1126,12 @@ ModelDefinition getObjectBoxModel() {
                   const fb.StringReader().vTableGet(buffer, rootOffset, 8, ''),
               country: const fb.StringReader()
                   .vTableGetNullable(buffer, rootOffset, 10),
-              color: const fb.StringReader()
-                  .vTableGetNullable(buffer, rootOffset, 12),
               defaultPhone: const fb.StringReader()
                   .vTableGetNullable(buffer, rootOffset, 14),
               uncanonicalizedId: const fb.StringReader()
-                  .vTableGetNullable(buffer, rootOffset, 16));
+                  .vTableGetNullable(buffer, rootOffset, 16))
+            ..color = const fb.StringReader()
+                .vTableGetNullable(buffer, rootOffset, 12);
 
           return object;
         }),

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/objectbox.g.dart';
@@ -25,20 +26,21 @@ import 'package:metadata_fetch/metadata_fetch.dart';
 import 'handle.dart';
 import 'message.dart';
 
-Future<String> getFullChatTitle(Chat _chat) async {
+String getFullChatTitle(Chat _chat) {
   String? title = "";
   if (isNullOrEmpty(_chat.displayName)!) {
     Chat chat = _chat.getParticipants();
 
-    // If there are no participants, try to get them from the server
+    //todo - do we really need this here?
+    /*// If there are no participants, try to get them from the server
     if (chat.participants.isEmpty) {
       await ActionHandler.handleChat(chat: chat);
       chat = chat.getParticipants();
-    }
+    }*/
 
     List<String> titles = [];
     for (int i = 0; i < chat.participants.length; i++) {
-      String? name = await ContactManager().getContactTitle(chat.participants[i]);
+      String? name = ContactManager().getContactTitle(chat.participants[i]);
 
       if (chat.participants.length > 1 && !name!.isPhoneNumber) {
         name = name.trim().split(" ")[0];
@@ -66,6 +68,120 @@ Future<String> getFullChatTitle(Chat _chat) async {
   }
 
   return title!;
+}
+
+Future<List<Message>> messagesIsolate(List<dynamic> stuff) async {
+  int chatId = stuff[0];
+  int offset = stuff[1];
+  int limit = stuff[2];
+  bool includeDeleted = stuff[3];
+  String? storeRef = stuff[4];
+  final store = Store.fromReference(getObjectBoxModel(), base64.decode(storeRef!).buffer.asByteData());
+  final handleBox = store.box<Handle>();
+  final messageBox = store.box<Message>();
+  final attachmentBox = store.box<Attachment>();
+  final cmJoinBox = store.box<ChatMessageJoin>();
+  final amJoinBox = store.box<AttachmentMessageJoin>();
+  return store.runInTransaction(TxMode.read, () {
+    // fetch messages
+    final messageIds = cmJoinBox.getAll().where((element) => element.chatId == chatId).map((e) => e.messageId).toList();
+    final query = (messageBox.query(Message_.id.oneOf(messageIds)
+        .and(includeDeleted ? Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull()) : Message_.dateDeleted.isNull()))
+      ..order(Message_.dateCreated, flags: Order.descending)).build();
+    query
+      ..limit = limit
+      ..offset = offset;
+    final messages = query.find();
+    query.close();
+    // fetch and match handles
+    final handles = handleBox.getMany(messages.map((e) => e.handleId ?? 0).toList()..removeWhere((element) => element == 0));
+    for (int i = 0; i < messages.length; i++) {
+      Message message = messages[i];
+      if (handles.isNotEmpty && message.handleId != 0) {
+        Handle? handle = handles.firstWhereOrNull((e) => e?.id == message.handleId);
+        if (handle == null) {
+          messages.remove(message);
+          i--;
+        } else {
+          message.handle = handle;
+        }
+      }
+    }
+    // fetch attachments and reactions
+    final amJoinQuery = amJoinBox.query(AttachmentMessageJoin_.messageId.oneOf(messageIds)).build();
+    final amJoinValues = amJoinQuery.find();
+    final attachmentIds = amJoinValues.map((e) => e.attachmentId).toSet().toList();
+    amJoinQuery.close();
+    final attachments = attachmentBox.getMany(attachmentIds, growableResult: true)..removeWhere((element) => element == null);
+    final messageGuids = messages.map((e) => e.guid!).toList();
+    final associatedMessagesQuery = (messageBox.query(Message_.associatedMessageGuid.oneOf(messageGuids))..order(Message_.originalROWID)).build();
+    List<Message> associatedMessages = associatedMessagesQuery.find();
+    associatedMessagesQuery.close();
+    associatedMessages = MessageHelper.normalizedAssociatedMessages(associatedMessages);
+    for (Message m in messages) {
+      final attachmentIdsForMessage = amJoinValues.where((element) => element.messageId == m.id).map((e) => e.attachmentId).toList();
+      m.attachments = attachments.where((element) => attachmentIdsForMessage.contains(element!.id)).toList();
+      m.associatedMessages = associatedMessages.where((e) => e.associatedMessageGuid == m.guid).toList();
+    }
+    return messages;
+  });
+}
+
+Future<void> addMessagesIsolate(List<dynamic> stuff) async {
+  Message message = Message.fromMap(stuff[0]);
+  Chat chat = Chat.fromMap(stuff[1]);
+  String? storeRef = stuff[2];
+  final store = Store.fromReference(getObjectBoxModel(), base64.decode(storeRef!).buffer.asByteData());
+  final chatBox = store.box<Chat>();
+  final handleBox = store.box<Handle>();
+  final attachmentBox = store.box<Attachment>();
+  final cmJoinBox = store.box<ChatMessageJoin>();
+  final chJoinBox = store.box<ChatHandleJoin>();
+  final amJoinBox = store.box<AttachmentMessageJoin>();
+  store.runInTransaction(TxMode.write, () {
+    for (Attachment? attachment in message.attachments ?? []) {
+      final query = attachmentBox.query(Attachment_.guid.equals(attachment!.guid!)).build();
+      query.limit = 1;
+      final existing = query.findFirst();
+      query.close();
+      if (existing != null) {
+        attachment.id = existing.id;
+      }
+      try {
+        attachmentBox.put(attachment);
+        if (attachment.id != null && message.id != null) {
+          amJoinBox.put(AttachmentMessageJoin(attachmentId: attachment.id!, messageId: message.id!));
+        }
+      } on UniqueViolationException catch (_) {}
+    }
+    final query = chatBox.query(Chat_.guid.equals(chat.guid!)).build();
+    final existing = query.findFirst();
+    query.close();
+    chat.id = existing?.id ?? chat.id;
+    try {
+      chat.id = chatBox.put(chat);
+    } on UniqueViolationException catch (_) {}
+    for (Handle participant in chat.participants) {
+      final query = handleBox.query(Handle_.address.equals(participant.address)).build();
+      query.limit = 1;
+      final existing = query.findFirst();
+      query.close();
+      if (existing != null) {
+        participant.id = existing.id;
+      }
+      try {
+        participant.id = handleBox.put(participant);
+      } on UniqueViolationException catch (_) {}
+      if (participant.id == null) continue;
+      try {
+        chJoinBox.put(ChatHandleJoin(chatId: chat.id!, handleId: participant.id!));
+      } catch (_) {}
+    }
+    chat._deduplicateParticipants();
+    try {
+      cmJoinBox.put(ChatMessageJoin(chatId: chat.id!, messageId: message.id!));
+    } catch (_) {}
+  });
 }
 
 @Entity()
@@ -161,7 +277,7 @@ class Chat {
               : ((json['hasUnreadMessage'] == 1) ? true : false)
           : false,
       latestMessage: message,
-      latestMessageText: json.containsKey("latestMessageText") ? json["latestMessageText"] : message != null ? MessageHelper.getNotificationTextSync(message) : null,
+      latestMessageText: json.containsKey("latestMessageText") ? json["latestMessageText"] : message != null ? MessageHelper.getNotificationText(message) : null,
       fakeLatestMessageText: json.containsKey("latestMessageText")
           ? faker.lorem.words((json["latestMessageText"] ?? "").split(" ").length).join(" ")
           : null,
@@ -187,7 +303,7 @@ class Chat {
       Chat? existing = Chat.findOne(guid: guid);
       id = existing?.id ?? id;
       try {
-        chatBox.put(this);
+        id = chatBox.put(this);
       } on UniqueViolationException catch (_) {}
       // Save participants to the chat
       for (int i = 0; i < participants.length; i++) {
@@ -207,8 +323,8 @@ class Chat {
     return this;
   }
 
-  Future<String?> getTitle() async {
-    title = await getFullChatTitle(this);
+  String? getTitle() {
+    title = getFullChatTitle(this);
     return title;
   }
 
@@ -295,79 +411,6 @@ class Chat {
   }
 
   Future<Chat> addMessage(Message message, {bool changeUnreadStatus = true, bool checkForMessageText = true}) async {
-    //final Database? db = await DBProvider.db.database;
-
-    // Save the message
-    Message? existing = Message.findOne(guid: message.guid);
-    Message? newMessage;
-
-    try {
-      newMessage = message.save();
-    } catch (ex, stacktrace) {
-      newMessage = Message.findOne(guid: message.guid);
-      if (newMessage == null) {
-        Logger.error(ex.toString());
-        Logger.error(stacktrace.toString());
-      }
-    }
-    bool isNewer = false;
-
-    // If the message was saved correctly, update this chat's latestMessage info,
-    // but only if the incoming message's date is newer
-    if ((newMessage!.id != null || kIsWeb) && checkForMessageText) {
-      if (latestMessageDate == null) {
-        isNewer = true;
-      } else if (latestMessageDate!.millisecondsSinceEpoch < message.dateCreated!.millisecondsSinceEpoch) {
-        isNewer = true;
-      }
-    }
-
-    if (isNewer && checkForMessageText) {
-      latestMessage = message;
-      latestMessageText = await MessageHelper.getNotificationText(message);
-      fakeLatestMessageText = faker.lorem.words((latestMessageText ?? "").split(" ").length).join(" ");
-      latestMessageDate = message.dateCreated;
-    }
-
-    // Save any attachments
-    for (Attachment? attachment in message.attachments ?? []) {
-      attachment!.save(newMessage);
-    }
-
-    // Save the chat.
-    // This will update the latestMessage info as well as update some
-    // other fields that we want to "mimic" from the server
-    save();
-
-    try {
-      // Add the relationship
-      cmJoinBox.put(ChatMessageJoin(chatId: id!, messageId: message.id!));
-    } catch (ex) {
-      // Don't do anything if it already exists
-    }
-
-    // If the incoming message was newer than the "last" one, set the unread status accordingly
-    if (checkForMessageText && changeUnreadStatus && isNewer && existing == null) {
-      // If the message is from me, mark it unread
-      // If the message is not from the same chat as the current chat, mark unread
-      if (message.isFromMe!) {
-        toggleHasUnread(false);
-      } else if (!CurrentChat.isActive(guid!)) {
-        toggleHasUnread(true);
-      }
-    }
-
-    if (checkForMessageText) {
-      // Update the chat position
-      ChatBloc().updateChatPosition(this);
-    }
-
-    // If the message is for adding or removing participants,
-    // we need to ensure that all of the chat participants are correct by syncing with the server
-    if (isParticipantEvent(message) && checkForMessageText) {
-      serverSyncParticipants();
-    }
-
     // If this is a message preview and we don't already have metadata for this, get it
     if (message.fullText.replaceAll("\n", " ").hasUrl && !MetadataHelper.mapIsNotEmpty(message.metadata)) {
       MetadataHelper.fetchMetadata(message).then((Metadata? meta) async {
@@ -389,9 +432,52 @@ class Chat {
             message.metadata!["image"] = newFile.path;
           }
         }
-
-        message.save();
       });
+    }
+
+    // Save the message
+    Message newMessage = message.save();
+    bool isNewer = false;
+
+    // If the message was saved correctly, update this chat's latestMessage info,
+    // but only if the incoming message's date is newer
+    if ((newMessage.id != null || kIsWeb) && checkForMessageText) {
+      if (latestMessageDate == null) {
+        isNewer = true;
+      } else if (latestMessageDate!.millisecondsSinceEpoch < message.dateCreated!.millisecondsSinceEpoch) {
+        isNewer = true;
+      }
+    }
+
+    if (isNewer && checkForMessageText) {
+      latestMessage = message;
+      latestMessageText = MessageHelper.getNotificationText(message);
+      fakeLatestMessageText = faker.lorem.words((latestMessageText ?? "").split(" ").length).join(" ");
+      latestMessageDate = message.dateCreated;
+    }
+
+    await compute(addMessagesIsolate, [newMessage.toMap(includeObjects: true), toMap(), prefs.getString("objectbox-reference")]);
+
+    // If the incoming message was newer than the "last" one, set the unread status accordingly
+    if (checkForMessageText && changeUnreadStatus && isNewer && Message.findOne(guid: message.guid) == null) {
+      // If the message is from me, mark it unread
+      // If the message is not from the same chat as the current chat, mark unread
+      if (message.isFromMe!) {
+        toggleHasUnread(false);
+      } else if (!CurrentChat.isActive(guid!)) {
+        toggleHasUnread(true);
+      }
+    }
+
+    if (checkForMessageText) {
+      // Update the chat position
+      ChatBloc().updateChatPosition(this);
+    }
+
+    // If the message is for adding or removing participants,
+    // we need to ensure that all of the chat participants are correct by syncing with the server
+    if (isParticipantEvent(message) && checkForMessageText) {
+      serverSyncParticipants();
     }
 
     // Return the current chat instance (with updated vals)
@@ -440,27 +526,26 @@ class Chat {
     return chatBox.count();
   }
 
-  static List<Attachment> getAttachments(Chat chat, {int offset = 0, int limit = 25}) {
+  static List<Attachment> getAttachments(Chat chat) {
     if (kIsWeb || chat.id == null) return [];
     return store.runInTransaction(TxMode.read, () {
-      final amJoinValues = amJoinBox.getAll();
-      final cmJoinValues = cmJoinBox.getAll().where((element) => element.chatId == chat.id).map((e) => e.messageId).toList();
-      final query2 = (messageBox.query(Message_.id.oneOf(cmJoinValues))..order(Message_.dateCreated, flags: Order.descending)).build();
+      final cmJoinQuery = cmJoinBox.query(ChatMessageJoin_.chatId.equals(chat.id!)).build();
+      final cmJoinValues = cmJoinQuery.property(ChatMessageJoin_.messageId).find();
+      cmJoinQuery.close();
+      final amJoinQuery = amJoinBox.query(AttachmentMessageJoin_.messageId.oneOf(cmJoinValues)).build();
+      final amJoinValues = amJoinQuery.find();
+      amJoinQuery.close();
+      final attachmentIds = amJoinValues.map((e) => e.attachmentId).toList();
+      final messageIds = amJoinValues.map((e) => e.messageId).toList();
+      final query2 = (messageBox.query(Message_.id.oneOf(messageIds))..order(Message_.dateCreated, flags: Order.descending)).build();
       final messages = query2.find();
-      final attachmentIds = amJoinValues.where((element) => cmJoinValues.contains(element.messageId)).map((e) => e.attachmentId).toList();
       final query = attachmentBox.query(Attachment_.id.oneOf(attachmentIds)).build();
-      query
-        ..limit = limit
-        ..offset = offset;
       final attachments = query.find()..removeWhere((element) => element.mimeType == null);
       final actualAttachments = <Attachment>[];
       for (Message m in messages) {
-        m.attachments = m.fetchAttachments();
-        for (Attachment a in attachments) {
-          if (m.attachments?.map((e) => e!.guid).contains(a.guid) ?? false) {
-            actualAttachments.add(a);
-          }
-        }
+        final attachmentIdsForMessage = amJoinValues.where((element) => element.messageId == m.id).map((e) => e.attachmentId).toList();
+        m.attachments = attachments.where((element) => attachmentIdsForMessage.contains(element.id)).toList();
+        actualAttachments.addAll((m.attachments ?? []).map((e) => e!));
       }
       if (actualAttachments.isNotEmpty) {
         final guids = actualAttachments.map((e) => e.guid).toSet();
@@ -471,10 +556,12 @@ class Chat {
     });
   }
 
-  static List<Message> getMessages(Chat chat, {int offset = 0, int limit = 25, bool includeDeleted = false}) {
+  static List<Message> getMessages(Chat chat, {int offset = 0, int limit = 25, bool includeDeleted = false, bool getDetails = false}) {
     if (kIsWeb || chat.id == null) return [];
     return store.runInTransaction(TxMode.read, () {
-      final messageIds = cmJoinBox.getAll().where((element) => element.chatId == chat.id).map((e) => e.messageId).toList();
+      final messageIdQuery = cmJoinBox.query(ChatMessageJoin_.chatId.equals(chat.id!)).build();
+      final messageIds = messageIdQuery.property(ChatMessageJoin_.messageId).find();
+      messageIdQuery.close();
       final query = (messageBox.query(Message_.id.oneOf(messageIds)
           .and(includeDeleted ? Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull()) : Message_.dateDeleted.isNull()))
         ..order(Message_.dateCreated, flags: Order.descending)).build();
@@ -496,14 +583,40 @@ class Chat {
           }
         }
       }
+      // fetch attachments and reactions if requested
+      if (getDetails) {
+        final amJoinQuery = amJoinBox.query(AttachmentMessageJoin_.messageId.oneOf(messageIds)).build();
+        final amJoinValues = amJoinQuery.find();
+        final attachmentIds = amJoinValues.map((e) => e.attachmentId).toSet().toList();
+        amJoinQuery.close();
+        final attachments = attachmentBox.getMany(attachmentIds, growableResult: true)..removeWhere((element) => element == null);
+        final messageGuids = messages.map((e) => e.guid!).toList();
+        final associatedMessagesQuery = (messageBox.query(Message_.associatedMessageGuid.oneOf(messageGuids))..order(Message_.originalROWID)).build();
+        List<Message> associatedMessages = associatedMessagesQuery.find();
+        associatedMessagesQuery.close();
+        associatedMessages = MessageHelper.normalizedAssociatedMessages(associatedMessages);
+        for (Message m in messages) {
+          final attachmentIdsForMessage = amJoinValues.where((element) => element.messageId == m.id).map((e) => e.attachmentId).toList();
+          m.attachments = attachments.where((element) => attachmentIdsForMessage.contains(element!.id)).toList();
+          m.associatedMessages = associatedMessages.where((e) => e.associatedMessageGuid == m.guid).toList();
+        }
+      }
       return messages;
     });
+  }
+
+  static Future<List<Message>> getMessagesAsync(Chat chat, {int offset = 0, int limit = 25, bool includeDeleted = false}) async {
+    if (kIsWeb || chat.id == null) return [];
+
+    return await compute(messagesIsolate, [chat.id, offset, limit, includeDeleted, prefs.getString("objectbox-reference")]);
   }
 
   Chat getParticipants() {
     if (kIsWeb || id == null) return this;
     store.runInTransaction(TxMode.read, () {
-      final handleIds = chJoinBox.getAll().where((element) => element.chatId == id).map((e) => e.handleId);
+      final handleIdQuery = chJoinBox.query(ChatHandleJoin_.chatId.equals(id!)).build();
+      final handleIds = handleIdQuery.property(ChatHandleJoin_.handleId).find();
+      handleIdQuery.close();
       final handles = handleBox.getMany(handleIds.toList(), growableResult: true)..retainWhere((e) => e != null);
       final nonNullHandles = List<Handle>.from(handles);
       participants = nonNullHandles;
@@ -520,7 +633,7 @@ class Chat {
       return this;
     }
     // Save participant and add to list
-    participant.save();
+    participant = participant.save();
     if (participant.id == null) return this;
 
     try {
@@ -629,8 +742,12 @@ class Chat {
   void clearTranscript() {
     if (kIsWeb) return;
     store.runInTransaction(TxMode.write, () {
-      final messageIds = cmJoinBox.getAll().where((element) => element.chatId == id!).map((e) => e.messageId);
-      final messages = messageBox.getAll().where((element) => messageIds.contains(element.id)).toList();
+      final messageIdQuery = cmJoinBox.query(ChatMessageJoin_.chatId.equals(id!)).build();
+      final messageIds = messageIdQuery.property(ChatMessageJoin_.messageId).find();
+      messageIdQuery.close();
+      final messagesQuery = messageBox.query(Message_.id.oneOf(messageIds)).build();
+      final messages = messagesQuery.find();
+      messagesQuery.close();
       for (Message element in messages) {
         element.dateDeleted = DateTime.now().toUtc();
       }
@@ -678,11 +795,11 @@ class Chat {
         "muteArgs": muteArgs,
         "isPinned": isPinned! ? 1 : 0,
         "displayName": displayName,
-        "participants": participants.map((item) => item.toMap()),
+        "participants": participants.map((item) => item.toMap()).toList(),
         "hasUnreadMessage": hasUnreadMessage! ? 1 : 0,
         "latestMessageDate": latestMessageDate != null ? latestMessageDate!.millisecondsSinceEpoch : 0,
         "latestMessageText": latestMessageText,
-        "_customAvatarPath": _customAvatarPath,
+        "_customAvatarPath": _customAvatarPath.value,
         "_pinIndex": _pinIndex.value,
       };
 }

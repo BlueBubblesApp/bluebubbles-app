@@ -27,7 +27,7 @@ class LocationWidget extends StatefulWidget {
   _LocationWidgetState createState() => _LocationWidgetState();
 }
 
-class _LocationWidgetState extends State<LocationWidget> with AutomaticKeepAliveClientMixin {
+class _LocationWidgetState extends State<LocationWidget> {
   AppleLocation? location;
 
   @override
@@ -36,7 +36,7 @@ class _LocationWidgetState extends State<LocationWidget> with AutomaticKeepAlive
     loadLocation();
   }
 
-  void loadLocation() {
+  void loadLocation() async {
     // If we already have location data, don't load it again
     if (location != null) return;
     String _location;
@@ -44,7 +44,7 @@ class _LocationWidgetState extends State<LocationWidget> with AutomaticKeepAlive
     if (kIsWeb || widget.file.path == null) {
       _location = utf8.decode(widget.file.bytes!);
     } else {
-      _location = File(widget.file.path!).readAsStringSync();
+      _location = await File(widget.file.path!).readAsString();
     }
     location = AttachmentHelper.parseAppleLocation(_location);
 
@@ -61,8 +61,6 @@ class _LocationWidgetState extends State<LocationWidget> with AutomaticKeepAlive
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
-
     if (location != null &&
         location!.longitude != null &&
         location!.longitude!.abs() < 90 &&
@@ -120,7 +118,4 @@ class _LocationWidgetState extends State<LocationWidget> with AutomaticKeepAlive
       );
     }
   }
-
-  @override
-  bool get wantKeepAlive => true;
 }

@@ -54,7 +54,6 @@ class SocketManager {
   List<String> processedGUIDS = <String>[];
 
   SetupBloc setup = SetupBloc();
-  StreamController<bool?> finishedSetup = StreamController<bool?>();
   bool isAuthingFcm = false;
 
   //Socket io
@@ -686,8 +685,6 @@ class SocketManager {
   }
 
   void toggleSetupFinished(bool isFinished, {bool applyToDb = true}) {
-    finishedSetup.sink.add(isFinished);
-
     if (SettingsManager().settings.finishedSetup.value != isFinished) {
       SettingsManager().settings.finishedSetup.value = isFinished;
       SettingsManager().saveSettings(SettingsManager().settings);
@@ -723,7 +720,6 @@ class SocketManager {
   dispose() {
     _attachmentSenderCompleter.close();
     _socketProcessUpdater.close();
-    finishedSetup.close();
   }
 
   Future<void> refreshConnection({bool connectToSocket = true}) async {

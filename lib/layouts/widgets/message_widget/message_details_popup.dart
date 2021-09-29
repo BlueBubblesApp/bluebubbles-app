@@ -94,11 +94,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
         });
       }
     });
-  }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
     SchedulerBinding.instance!.addPostFrameCallback((_) {
       if (mounted) {
         setState(() {
@@ -122,7 +118,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
 
     reactionWidgets = [];
     for (Message reaction in reactionMessages) {
-      reaction.getHandle();
+      reaction.handle ??= reaction.getHandle();
       if (reaction.isFromMe!) {
         selfReaction = reaction.associatedMessageType;
         currentlySelectedReaction = selfReaction;
@@ -415,10 +411,9 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             splashColor: Colors.transparent,
             highlightColor: Colors.transparent,
             onTap: () async {
-              bool shouldShowSnackbar = (await SettingsManager().getMacOSVersion())! >= 11;
               Handle? handle = widget.message.handle;
               String? address = handle?.address ?? "";
-              Contact? contact = ContactManager().getCachedContactSync(address);
+              Contact? contact = ContactManager().getCachedContact(address: address);
               UniqueContact uniqueContact;
               if (contact == null) {
                 uniqueContact = UniqueContact(address: address, displayName: (await formatPhoneNumber(handle)));
@@ -432,7 +427,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                     return ConversationView(
                       isCreator: true,
                       selected: [uniqueContact],
-                      showSnackbar: shouldShowSnackbar,
                     );
                   },
                 ),
@@ -453,8 +447,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
       Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () async {
-            bool shouldShowSnackbar = (await SettingsManager().getMacOSVersion())! >= 11;
+          onTap: () {
             Navigator.of(context).pop();
             Navigator.pushReplacement(
               context,
@@ -474,7 +467,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                     isCreator: true,
                     existingText: widget.message.text,
                     existingAttachments: existingAttachments,
-                    showSnackbar: shouldShowSnackbar,
                   );
                 },
               ),

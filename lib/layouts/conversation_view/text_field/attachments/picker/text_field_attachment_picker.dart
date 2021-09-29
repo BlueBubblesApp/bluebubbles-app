@@ -41,7 +41,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
     getAttachments();
     // If the app is reopened, then update the attachments
     LifeCycleManager().stream.listen((event) async {
-      if (event && widget.visible) getAttachments();
+      if (event) getAttachments();
     });
 
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
@@ -59,9 +59,9 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
     if (!mounted) return;
     List<AssetPathEntity> list = await PhotoManager.getAssetPathList(onlyAll: true);
     if (list.isNotEmpty) {
-      List<AssetEntity> images = await list.first.getAssetListRange(start: 0, end: 60);
+      List<AssetEntity> images = await list.first.getAssetListRange(start: 0, end: 24);
       _images = images;
-      if (DateTime.now().toLocal().isWithin(images.first.modifiedDateTime, minutes: 10)) {
+      if (DateTime.now().toLocal().isWithin(images.first.modifiedDateTime, minutes: 2)) {
         dynamic file = await images.first.file;
         EventDispatcher().emit('add-custom-smartreply', {
           "path": file.path,
@@ -71,7 +71,6 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
         });
       }
     }
-
     if (mounted) setState(() {});
   }
 

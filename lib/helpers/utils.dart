@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:universal_io/io.dart';
 import 'dart:math';
@@ -314,18 +315,18 @@ String uriToFilename(String? uri, String? mimeType) {
   return (ext != null && ext.isNotEmpty) ? '$filename.$ext' : filename;
 }
 
-Future<String> getGroupEventText(Message message) async {
+String getGroupEventText(Message message) {
   String text = "Unknown group event";
   String? handle = "You";
   if (!message.isFromMe! && message.handleId != null && message.handle != null) {
-    handle = await ContactManager().getContactTitle(message.handle);
+    handle = ContactManager().getContactTitle(message.handle);
   }
 
   String? other = "someone";
   if (message.otherHandle != null && [1, 2].contains(message.itemType)) {
     Handle? item = Handle.findOne(originalROWID: message.otherHandle);
     if (item != null) {
-      other = await ContactManager().getContactTitle(item);
+      other = ContactManager().getContactTitle(item);
     }
   }
 
@@ -351,10 +352,10 @@ Future<String> getGroupEventText(Message message) async {
   return text;
 }
 
-Future<MemoryImage?> loadAvatar(Chat chat, Handle? handle) async {
+MemoryImage? loadAvatar(Chat chat, Handle? handle) {
   // Get the contact
-  Contact? contact = await ContactManager().getCachedContact(handle);
-  Uint8List? avatar = contact?.avatar;
+  Contact? contact = ContactManager().getCachedContact(handle: handle);
+  Uint8List? avatar = contact?.avatar.value;
   if (isNullOrEmpty(avatar)!) return null;
 
   // Set the contact image
@@ -641,6 +642,87 @@ Future<PlayerStatus> getControllerStatus(VideoPlayerController controller) async
 
   return PlayerStatus.NONE;
 }
+
+Future<bool> rebuild(State s) async {
+  if (!s.mounted) return false;
+
+  // if there's a current frame,
+  if (SchedulerBinding.instance!.schedulerPhase != SchedulerPhase.idle) {
+    // wait for the end of that frame.
+    await SchedulerBinding.instance!.endOfFrame;
+    if (!s.mounted) return false;
+  }
+
+  s.setState(() {});
+  return true;
+}
+
+final Uint8List kTransparentImage = Uint8List.fromList(<int>[
+  0x89,
+  0x50,
+  0x4E,
+  0x47,
+  0x0D,
+  0x0A,
+  0x1A,
+  0x0A,
+  0x00,
+  0x00,
+  0x00,
+  0x0D,
+  0x49,
+  0x48,
+  0x44,
+  0x52,
+  0x00,
+  0x00,
+  0x00,
+  0x01,
+  0x00,
+  0x00,
+  0x00,
+  0x01,
+  0x08,
+  0x06,
+  0x00,
+  0x00,
+  0x00,
+  0x1F,
+  0x15,
+  0xC4,
+  0x89,
+  0x00,
+  0x00,
+  0x00,
+  0x0A,
+  0x49,
+  0x44,
+  0x41,
+  0x54,
+  0x78,
+  0x9C,
+  0x63,
+  0x00,
+  0x01,
+  0x00,
+  0x00,
+  0x05,
+  0x00,
+  0x01,
+  0x0D,
+  0x0A,
+  0x2D,
+  0xB4,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x49,
+  0x45,
+  0x4E,
+  0x44,
+  0xAE,
+]);
 
 extension PlatformSpecificCapitalize on String {
   String get psCapitalize {

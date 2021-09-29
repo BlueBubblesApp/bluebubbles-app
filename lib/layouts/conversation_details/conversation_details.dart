@@ -157,9 +157,9 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                 child: TextField(
                                   cursorColor: Theme.of(context).primaryColor,
                                   readOnly: !chat.isGroup() || redactedMode,
-                                  onSubmitted: (String newName) async {
+                                  onSubmitted: (String newName) {
                                     widget.chat.changeName(newName);
-                                    await widget.chat.getTitle();
+                                    widget.chat.getTitle();
                                     setState(() {
                                       showNameField = newName.isNotEmpty;
                                     });

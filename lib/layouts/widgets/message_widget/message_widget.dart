@@ -50,15 +50,14 @@ class MessageWidget extends StatefulWidget {
   _MessageState createState() => _MessageState();
 }
 
-class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMixin {
+class _MessageState extends State<MessageWidget> {
   bool showTail = true;
   Completer<void>? attachmentsRequest;
   int lastRequestCount = -1;
   int attachmentCount = 0;
   int associatedCount = 0;
-  bool handledInit = false;
   CurrentChat? currentChat;
-  StreamSubscription<NewMessageEvent>? subscription;
+  late StreamSubscription<NewMessageEvent> subscription;
   late Message _message;
   Message? _newerMessage;
   Message? _olderMessage;
@@ -66,23 +65,18 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
   @override
   void initState() {
     super.initState();
+    currentChat = CurrentChat.of(context);
+    _message = widget.message;
+    _newerMessage = widget.newerMessage;
+    _olderMessage = widget.olderMessage;
     init();
   }
 
   void init() {
-    currentChat = CurrentChat.of(context);
-    if (handledInit) return;
-    handledInit = true;
-    _message = widget.message;
-    _newerMessage = widget.newerMessage;
-    _olderMessage = widget.olderMessage;
-
-    checkHandle();
-    fetchAssociatedMessages();
-    fetchAttachments();
-
-    // If we already are listening to the stream, no need to do it again
-    if (subscription != null) return;
+    if (!_message.hasReactions && _message.getReactions().isNotEmpty) {
+      _message.hasReactions = true;
+      _message.save();
+    }
 
     // Listen for new messages
     subscription = NewMessageManager().stream.listen((data) {
@@ -143,21 +137,12 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
 
   @override
   void dispose() {
-    subscription?.cancel();
+    subscription.cancel();
     super.dispose();
   }
 
-  void checkHandle() {
-    // Checks ordered in a specific way to ever so slightly reduce processing
-    if (_message.isFromMe!) return;
-    if (_message.handle != null) return;
-
-    try {
-      _message.getHandle();
-    } catch (_) {}
-  }
-
   void fetchAssociatedMessages({bool forceReload = false}) {
+    associatedCount = _message.associatedMessages.length;
     try {
       _message.fetchAssociatedMessages(bloc: widget.bloc);
     } catch (_) {}
@@ -176,8 +161,6 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
         _message.hasReactions = true;
         _message.save();
       }
-
-      if (mounted && forceReload) setState(() {});
     }
   }
 
@@ -193,19 +176,6 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
       _message.fetchAttachments(currentChat: currentChat);
     } catch (ex) {
       return attachmentsRequest!.completeError(ex);
-    }
-
-    // If this is a URL preview and we don't have attachments, we need to get them
-    List<Attachment?> nullAttachments = _message.getPreviewAttachments();
-    if (_message.fullText.replaceAll("\n", " ").hasUrl && nullAttachments.isEmpty) {
-      if (lastRequestCount != nullAttachments.length) {
-        lastRequestCount = nullAttachments.length;
-
-        List<dynamic> msgs = (await SocketManager().getAttachments(currentChat!.chat.guid!, _message.guid!)) ?? [];
-        for (var msg in msgs) {
-          await ActionHandler.handleMessage(msg, forceProcess: true);
-        }
-      }
     }
 
     bool hasChanges = false;
@@ -224,7 +194,6 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
 
     if (_newerMessage != null) {
       if (_newerMessage!.isGroupEvent()) {
@@ -278,6 +247,7 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
         shouldFadeIn: currentChat?.sentMessages.firstWhereOrNull((e) => e?.guid == _message.guid) != null,
         showHero: widget.showHero,
         showDeliveredReceipt: widget.isFirstSentMessage,
+        context: context,
       );
     } else {
       message = ReceivedMessage(
@@ -304,7 +274,4 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
       ],
     );
   }
-
-  @override
-  bool get wantKeepAlive => true;
 }

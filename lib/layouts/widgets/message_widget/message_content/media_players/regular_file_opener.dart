@@ -12,7 +12,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 
-class RegularFileOpener extends StatefulWidget {
+class RegularFileOpener extends StatelessWidget {
   RegularFileOpener({
     Key? key,
     required this.attachment,
@@ -22,21 +22,16 @@ class RegularFileOpener extends StatefulWidget {
   final PlatformFile file;
 
   @override
-  _RegularFileOpenerState createState() => _RegularFileOpenerState();
-}
-
-class _RegularFileOpenerState extends State<RegularFileOpener> {
-  @override
   Widget build(BuildContext context) {
-    IconData fileIcon = AttachmentHelper.getIcon(widget.attachment.mimeType ?? "");
+    IconData fileIcon = AttachmentHelper.getIcon(attachment.mimeType ?? "");
 
     return GestureDetector(
       onTap: () async {
-        if (kIsWeb || widget.file.path == null) {
-          final content = base64.encode(widget.file.bytes!);
+        if (kIsWeb || file.path == null) {
+          final content = base64.encode(file.bytes!);
           html.AnchorElement(
               href: "data:application/octet-stream;charset=utf-16le;base64,$content")
-            ..setAttribute("download", widget.file.name)
+            ..setAttribute("download", file.name)
             ..click();
         } else {
           try {
@@ -44,10 +39,10 @@ class _RegularFileOpenerState extends State<RegularFileOpener> {
               "open_file",
               {
                 "path": "/attachments/" +
-                    widget.attachment.guid! +
+                    attachment.guid! +
                     "/" +
-                    basename(widget.file.path!),
-                "mimeType": widget.attachment.mimeType,
+                    basename(file.path!),
+                "mimeType": attachment.mimeType,
               },
             );
           } catch (ex) {
@@ -68,7 +63,7 @@ class _RegularFileOpenerState extends State<RegularFileOpener> {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               Text(
-                widget.file.name,
+                file.name,
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -82,7 +77,7 @@ class _RegularFileOpenerState extends State<RegularFileOpener> {
                 ),
               ),
               Text(
-                widget.attachment.mimeType!,
+                attachment.mimeType!,
                 style: Theme.of(context).textTheme.bodyText2,
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,

@@ -125,6 +125,9 @@ class SetupBloc {
     });
 
     try {
+      addOutput("Getting contacts...", SetupOutputType.LOG);
+      await ContactManager().getContacts(force: true);
+      addOutput("Received contacts list. Size: ${ContactManager().contacts.length}", SetupOutputType.LOG);
       addOutput("Getting Chats...", SetupOutputType.LOG);
       List<Chat> chats = await SocketManager().getChats({"withLastMessage": kIsWeb});
 
@@ -151,14 +154,8 @@ class SetupBloc {
             addOutput("Finished syncing chat, '${chat.chatIdentifier}'", SetupOutputType.LOG);
           }
           _currentIndex += 1;
-          _progress = ((_currentIndex / chats.length) * 100).clamp(0, 99);
+          _progress = (_currentIndex / chats.length) * 100;
         }
-        addOutput("Fetching contacts from server...", SetupOutputType.LOG);
-        await ContactManager().getContacts(force: true);
-        addOutput("Received contacts list. Size: ${ContactManager().contacts.length}", SetupOutputType.LOG);
-        addOutput("Matching contacts to chats...", SetupOutputType.LOG);
-        await ContactManager().matchHandles();
-        _progress = 100;
         finishSetup();
         startIncrementalSync(settings);
         return;
@@ -179,11 +176,7 @@ class SetupBloc {
               List<dynamic> messages = await SocketManager().getChatMessages(params)!;
               addOutput("Received ${messages.length} messages for chat, '${chat.chatIdentifier}'!", SetupOutputType.LOG);
               if (!skipEmptyChats || (skipEmptyChats && messages.isNotEmpty)) {
-                chat.save();
-
-                // Re-match the handles with the contacts
-                await ContactManager().matchHandles();
-
+                chat = chat.save();
                 await syncChat(chat, messages);
                 addOutput("Finished syncing chat, '${chat.chatIdentifier}'", SetupOutputType.LOG);
               } else {
@@ -216,6 +209,7 @@ class SetupBloc {
       addOutput("Failed to sync chats!", SetupOutputType.ERROR);
       addOutput("Error: ${ex.toString()}", SetupOutputType.ERROR);
     } finally {
+      await ContactManager().matchHandles();
       finishSetup();
     }
 
@@ -245,8 +239,6 @@ class SetupBloc {
     Settings _settingsCopy = SettingsManager().settings;
     _settingsCopy.finishedSetup.value = true;
     await SettingsManager().saveSettings(_settingsCopy);
-
-    if (!kIsWeb) ContactManager().contacts = [];
     if (!kIsWeb) await ContactManager().getContacts(force: true);
     if (!kIsWeb) await ChatBloc().refreshChats(force: true);
     await SocketManager().authFCM(force: true);

@@ -197,7 +197,7 @@ class MessageBloc {
     _isGettingMore = true;
 
     // Fetch messages
-    List<Message> messages = Chat.getMessages(_currentChat!);
+    List<Message> messages = Chat.getMessages(_currentChat!, getDetails: true);
 
     if (isNullOrEmpty(messages)!) {
       _allMessages = {};
@@ -275,7 +275,7 @@ class MessageBloc {
       int count = 0;
 
       // Should we check locally first?
-      if (checkLocal) messages = Chat.getMessages(currChat, offset: offset + reactionCnt);
+      if (checkLocal) messages = await Chat.getMessagesAsync(currChat, offset: offset + reactionCnt);
 
       // Fetch messages from the socket
       count = messages.length;
@@ -298,7 +298,7 @@ class MessageBloc {
             // If the handle is empty, load it
             for (Message msg in messages) {
               if (msg.isFromMe! || msg.handle != null) continue;
-              msg.getHandle();
+              msg.handle = msg.getHandle();
             }
           }
         } catch (ex) {
@@ -321,7 +321,7 @@ class MessageBloc {
 
       if (currentChat != null) {
         List<Message> messagesWithAttachment = messages.where((element) => element.hasAttachments).toList();
-        currentChat.preloadMessageAttachments(specificMessages: messagesWithAttachment);
+        await currentChat.preloadMessageAttachmentsAsync(specificMessages: messagesWithAttachment);
       }
 
       emitLoaded();

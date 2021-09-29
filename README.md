@@ -1,6 +1,6 @@
-# BlueBubbles Android App
+# BlueBubbles Clients
 
-BlueBubbles is an open-source and cross-platform ecosystem of apps aimed to bring iMessage to Android, Windows, Linux, and more! With BlueBubbles, you'll be able to send messages, media, and much more to your friends and family.
+BlueBubbles is an open-source and cross-platform ecosystem of apps aimed to bring iMessage to Android, Windows, Linux, and the Web! With BlueBubbles, you'll be able to send messages, media, and much more to your friends and family.
 
 **Please note that BlueBubbles requires a Mac and an Apple ID to function! A macOS VM on Windows or Linux can suffice as well.
 
@@ -14,6 +14,7 @@ Key Features:
 - Robust theming engine
 - Choose between an iOS or Android-style interface
 - Lots of customizations and options to personalize your experience
+- Full cross-platform support - message across Android, Linux, Windows, the Web, and even macOS!
 
 Private API Features:
 
@@ -22,6 +23,21 @@ Private API Features:
 - Send read receipts
 
 **Private API Features are not enabled by default and require extra configurations. Details can be found in the settings page of the app.**
+
+Screenshots:
+
+<table>
+  <tr>
+    <td align="center">Chat List</td>
+     <td align="center">Message View</td>
+     <td align="center">Private API Features</td>
+  </tr>
+  <tr>
+    <td><img src="https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/tanay/object-box-with-rewrite/screenshots/Samsung%20Galaxy%20S10%2B%20Prism%20Black%20-%20imessage_framed.png" width=270 height=583></td>
+    <td><img src="https://github.com/BlueBubblesApp/bluebubbles-app/blob/tanay/object-box-with-rewrite/screenshots/Samsung%20Galaxy%20S10+%20Prism%20Black%20-%20messaging_framed.png?raw=true" width=270 height=583></td>
+    <td><img src="https://github.com/BlueBubblesApp/bluebubbles-app/blob/tanay/object-box-with-rewrite/screenshots/Samsung%20Galaxy%20S10+%20Prism%20Black%20-%20privateAPI_framed.png?raw=true" width=270 height=583></td>
+  </tr>
+ </table>
 
 If you need help setting up the app, have any issues or feature requests, or just want to come hang out, feel free to join our Discord, linked below! We hope you enjoy using the app!
 
@@ -36,7 +52,7 @@ If you need help setting up the app, have any issues or feature requests, or jus
 
 ## Getting Started
 
-All Android builds can be found in [here](https://github.com/BlueBubblesApp/BlueBubbles-Android-App/releases).
+All Client builds can be found in [here](https://github.com/BlueBubblesApp/blueBubbles-app/releases).
 
 All Server builds can be found in [here](https://github.com/BlueBubblesApp/BlueBubbles-Server/releases).
 

@@ -275,17 +275,19 @@ class AttachmentHelper {
         tag: attachment.guid);
   }
 
-  static Future<Uint8List?> getVideoThumbnail(String filePath) async {
+  static Future<Uint8List?> getVideoThumbnail(String filePath, {bool useCachedFile = true}) async {
     File cachedFile = File("$filePath.thumbnail");
-    if (cachedFile.existsSync()) {
-      return cachedFile.readAsBytes();
+    if (useCachedFile) {
+      if (cachedFile.existsSync()) {
+        return cachedFile.readAsBytes();
+      }
     }
     Uint8List? thumbnail = await VideoThumbnail.thumbnailData(
       video: filePath,
       imageFormat: ImageFormat.JPEG,
       quality: SettingsManager().compressionQuality,
     );
-    if (thumbnail != null) {
+    if (useCachedFile && thumbnail != null) {
       cachedFile.writeAsBytes(thumbnail);
     }
     return thumbnail;
@@ -295,10 +297,10 @@ class AttachmentHelper {
     try {
       if (!kIsWeb) {
         dynamic file = File(filePath);
-        isg.Size size = isg.ImageSizeGetter.getSize(FileInput(file));
+        isg.Size size = await isg.AsyncImageSizeGetter.getSize(AsyncFileInput(file));
         return Size(size.width.toDouble(), size.height.toDouble());
       } else {
-        isg.Size size = isg.ImageSizeGetter.getSize(isg.MemoryInput(bytes!));
+        isg.Size size = await isg.AsyncImageSizeGetter.getSize(AsyncMemoryInput(bytes!));
         return Size(size.width.toDouble(), size.height.toDouble());
       }
     } catch (ex) {
@@ -317,12 +319,12 @@ class AttachmentHelper {
       }
 
       if (width == 0 || height == 0) {
-        return AttachmentHelper.getImageSizingFallback(filePath, bytes: bytes);
+        return await AttachmentHelper.getImageSizingFallback(filePath, bytes: bytes);
       }
 
       return Size(width, height);
     } catch (_) {
-      return AttachmentHelper.getImageSizingFallback(filePath, bytes: bytes);
+      return await AttachmentHelper.getImageSizingFallback(filePath, bytes: bytes);
     }
   }
 
@@ -336,7 +338,7 @@ class AttachmentHelper {
     return tempAssets.absolute.path;
   }
 
-  static File tryCopyTempFile(File oldFile) {
+  static Future<File> tryCopyTempFile(File oldFile) async {
     // Pull the filename from the Uri. If we can't, just return the original file
     String? ogFilename = getFilenameFromUri(oldFile.absolute.path);
     if (ogFilename == null) return oldFile;
@@ -348,7 +350,7 @@ class AttachmentHelper {
     if (oldFile.absolute.path == newPath) return oldFile;
 
     // Otherwise, copy the file to the new path
-    return oldFile.copySync(newPath);
+    return await oldFile.copy(newPath);
   }
 
   static Future<Uint8List?> compressAttachment(Attachment attachment, String filePath,
@@ -369,12 +371,12 @@ class AttachmentHelper {
 
     // If we don't get the actual path, it's a dummy "attachment" and we need to copy it locally
     if (!getActualPath) {
-      originalFile = tryCopyTempFile(originalFile);
+      originalFile = await tryCopyTempFile(originalFile);
       filePath = originalFile.absolute.path;
     }
 
     // Get dimensions and preview images
-    Uint8List previewData = originalFile.readAsBytesSync();
+    Uint8List previewData = await originalFile.readAsBytes();
     if (attachment.mimeType == "image/gif") {
       try {
         Size size = getGifDimensions(previewData);
