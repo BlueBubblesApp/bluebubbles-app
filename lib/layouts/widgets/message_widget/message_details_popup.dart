@@ -231,7 +231,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
 
   Widget buildReactionMenu() {
     double reactionIconSize =
-        ((8.5 / 10 * min(CustomNavigator.width(context), context.height)) / (ReactionTypes.toList().length).toDouble());
+        ((8.5 / 10 * min(context.isTablet ? max(CustomNavigator.width(context) / 2, 400) : CustomNavigator.width(context), context.height)) / (ReactionTypes.toList().length).toDouble());
     double maxMenuWidth = (ReactionTypes.toList().length * reactionIconSize).toDouble();
     double menuHeight = (reactionIconSize).toDouble();
     double topPadding = -20;
