@@ -226,10 +226,11 @@ class AttachmentHelper {
   }
 
   static IconData getIcon(String mimeType) {
-    if (mimeType.isEmpty)
+    if (mimeType.isEmpty) {
       return SettingsManager().settings.skin.value == Skins.iOS
           ? CupertinoIcons.arrow_up_right_square
           : Icons.open_in_new;
+    }
     if (mimeType == "application/pdf") {
       return SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.doc_on_doc : Icons.picture_as_pdf;
     } else if (mimeType == "application/zip") {

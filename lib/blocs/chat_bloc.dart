@@ -312,8 +312,9 @@ class ChatBloc {
           if (chat.latestMessageGetter.hasAttachments) {
             chat.latestMessageGetter.fetchAttachments();
           }
-          if (chat.latestMessage?.handle == null && chat.latestMessage?.handleId != null)
+          if (chat.latestMessage?.handle == null && chat.latestMessage?.handleId != null) {
             chat.latestMessage!.handle = Handle.findOne(originalROWID: chat.latestMessage!.handleId);
+          }
           chat.latestMessageText = MessageHelper.getNotificationText(chat.latestMessageGetter);
           chat.fakeLatestMessageText = faker.lorem.words((chat.latestMessageText ?? "").split(" ").length).join(" ");
           chat.latestMessageDate = chat.latestMessageGetter.dateCreated;
