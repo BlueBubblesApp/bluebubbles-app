@@ -187,7 +187,7 @@ class NotificationManager {
           contact.avatar.value = await ContactManager().getAvatar(contact.id);
         }
         // If [defaultAvatar] is not loaded, load it from assets
-        if ((contact?.avatar == null || contact!.avatar.value!.isEmpty) && defaultAvatar == null) {
+        if ((contact?.avatar.value == null || contact!.avatar.value!.isEmpty) && defaultAvatar == null) {
           ByteData file = await loadAsset("assets/images/person64.png");
           defaultAvatar = file.buffer.asUint8List();
         }
