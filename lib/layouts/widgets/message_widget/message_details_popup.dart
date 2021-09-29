@@ -1,21 +1,15 @@
 import 'dart:async';
-import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:bluebubbles/managers/life_cycle_manager.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
-import 'package:flutter/foundation.dart';
 import 'dart:math';
 import 'dart:ui';
-import 'package:bluebubbles/helpers/logger.dart';
-import 'package:bluebubbles/helpers/metadata_helper.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
-import 'package:bluebubbles/managers/notification_manager.dart';
-import 'package:collection/collection.dart';
 
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/darty.dart';
+import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/helpers/metadata_helper.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/themes.dart';
@@ -28,11 +22,17 @@ import 'package:bluebubbles/layouts/widgets/message_widget/reaction_detail_widge
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
+import 'package:bluebubbles/managers/life_cycle_manager.dart';
+import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
+import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/helpers/darty.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart' as cupertino;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
@@ -232,7 +232,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   }
 
   Widget buildReactionMenu() {
-    double reactionIconSize = ((8.5 / 10 * min(CustomNavigator.width(context), context.height)) / (ReactionTypes.toList().length).toDouble());
+    double reactionIconSize =
+        ((8.5 / 10 * min(context.isTablet ? max(CustomNavigator.width(context) / 2, 400) : CustomNavigator.width(context), context.height)) / (ReactionTypes.toList().length).toDouble());
     double maxMenuWidth = (ReactionTypes.toList().length * reactionIconSize).toDouble();
     double menuHeight = (reactionIconSize).toDouble();
     double topPadding = -20;
