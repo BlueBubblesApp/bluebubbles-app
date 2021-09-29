@@ -57,6 +57,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
 
   Future<void> getAttachments() async {
     if (!mounted) return;
+    if (kIsDesktop) return;
     List<AssetPathEntity> list = await PhotoManager.getAssetPathList(onlyAll: true);
     if (list.isNotEmpty) {
       List<AssetEntity> images = await list.first.getAssetListRange(start: 0, end: 24);
