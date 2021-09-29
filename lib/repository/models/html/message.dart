@@ -238,6 +238,18 @@ class Message {
     return attachments;
   }
 
+  static Map<String, List<Attachment?>> fetchAttachmentsByMessages(List<Message?> messages, {CurrentChat? currentChat}) {
+    final Map<String, List<Attachment?>> map = {};
+    map.addEntries(messages.map((e) => MapEntry(e!.guid!, e.attachments ?? [])));
+    return map;
+  }
+
+  static Future<Map<String, List<Attachment?>>> fetchAttachmentsByMessagesAsync(List<Message?> messages, {CurrentChat? currentChat}) async {
+    final Map<String, List<Attachment?>> map = {};
+    map.addEntries(messages.map((e) => MapEntry(e!.guid!, e.attachments ?? [])));
+    return map;
+  }
+
   static Chat? getChat(Message message) {
     return null;
   }

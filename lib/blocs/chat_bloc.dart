@@ -99,14 +99,14 @@ class ChatBloc {
     DateTime? lastMsgDate = Message.lastMessageDate();
 
     // If there is no last message, don't do anything
-    if (lastMsgDate == null) {
+    if (!kIsWeb && lastMsgDate == null) {
       Logger.debug("No last message date found! Not doing anything...", tag: 'ChatBloc-Resume');
       return;
     }
 
     // If the last message date is >= the last fetch, let's refetch
-    int lastMs = lastMsgDate.millisecondsSinceEpoch;
-    if (lastMs >= lastFetch) {
+    int? lastMs = lastMsgDate?.millisecondsSinceEpoch;
+    if (kIsWeb || lastMs! >= lastFetch) {
       Logger.info('New messages detected! Refreshing the ChatBloc', tag: 'ChatBloc-Resume');
       Logger.debug("$lastMs >= $lastFetch", tag: 'ChatBloc-Resume');
       await refreshChats();

@@ -74,7 +74,7 @@ class Contact {
 }
 
 class AsyncFileInput extends AsyncImageInput {
-  final File file;
+  final dynamic file;
 
   AsyncFileInput(this.file);
 
