@@ -160,7 +160,7 @@ class _AvatarCropState extends State<AvatarCrop> {
                     primary: Theme.of(context).backgroundColor,
                   ),
                   onPressed: () async {
-                    final res = await FilePicker.platform.pickFiles(withData: true, type: FileType.image);
+                    final res = await FilePicker.platform.pickFiles(withData: true, type: FileType.custom, allowedExtensions: ['png', 'jpg', 'jpeg']);
                     if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
 
                     if (res.files.first.name.endsWith("gif")) {
