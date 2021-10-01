@@ -168,7 +168,7 @@ Future<List<Message>> addMessagesIsolate(List<dynamic> stuff) async {
 }
 
 Future<List<Chat>> getChatsIsolate(String storeRef) async {
-  store = Store.fromReference(getObjectBoxModel(), base64.decode(storeRef!).buffer.asByteData());
+  store = Store.fromReference(getObjectBoxModel(), base64.decode(storeRef).buffer.asByteData());
   attachmentBox = store.box<Attachment>();
   chatBox = store.box<Chat>();
   handleBox = store.box<Handle>();
@@ -189,6 +189,8 @@ Future<List<Chat>> getChatsIsolate(String storeRef) async {
     for (Chat c in chats) {
       final eligibleHandles = chJoins.where((element) => element.chatId == c.id).map((e) => e.handleId);
       c.participants = nonNullHandles.where((element) => eligibleHandles.contains(element.id)).toList();
+      c._deduplicateParticipants();
+      c.fakeParticipants = c.participants.map((p) => ContactManager().handleToFakeName[p.address] ?? "Unknown").toList();
     }
     return chats;
   });
