@@ -93,7 +93,7 @@ class _ConversationTileState extends State<ConversationTile> {
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
       if (!event.containsKey("type")) return;
 
-      if (event["type"] == 'update-highlight' && mounted) {
+      if (event["type"] == 'update-highlight' && mounted && (kIsWeb || kIsDesktop)) {
         if (event['data'] == widget.chat.guid) {
           setState(() {
             shouldHighlight = true;
@@ -405,7 +405,7 @@ class _Cupertino extends StatelessWidget {
   Widget build(BuildContext context) {
     return parent.buildSlider(
       Material(
-        color: parent.shouldHighlight ? Theme.of(context).primaryColor.withAlpha(120) : Theme.of(context).backgroundColor,
+        color: parent.shouldHighlight && (kIsWeb || kIsDesktop) ? Theme.of(context).primaryColor.withAlpha(120) : Theme.of(context).backgroundColor,
         borderRadius: BorderRadius.circular(parent.shouldHighlight ? 5 : 0),
         child: GestureDetector(
           onTapUp: (details) {
@@ -543,7 +543,7 @@ class _Material extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: parent.shouldHighlight ? Theme.of(context).backgroundColor.lightenOrDarken(20) : parent.selected ? Theme.of(context).primaryColor.withAlpha(120) : Theme.of(context).backgroundColor,
+      color: parent.shouldHighlight && (kIsWeb || kIsDesktop) ? Theme.of(context).backgroundColor.lightenOrDarken(20) : parent.selected ? Theme.of(context).primaryColor.withAlpha(120) : Theme.of(context).backgroundColor,
       child: GestureDetector(
         onSecondaryTapUp: (details) async {
           if (kIsWeb) {
@@ -652,7 +652,7 @@ class _Samsung extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: parent.shouldHighlight ? Theme.of(context).backgroundColor.lightenOrDarken(20) : parent.selected ? Theme.of(context).primaryColor.withAlpha(120) : Colors.transparent,
+      color: parent.shouldHighlight && (kIsWeb || kIsDesktop) ? Theme.of(context).backgroundColor.lightenOrDarken(20) : parent.selected ? Theme.of(context).primaryColor.withAlpha(120) : Colors.transparent,
       child: GestureDetector(
         onSecondaryTapUp: (details) async {
           if (kIsWeb) {

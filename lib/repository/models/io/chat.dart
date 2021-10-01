@@ -167,8 +167,8 @@ Future<List<Message>> addMessagesIsolate(List<dynamic> stuff) async {
   });
 }
 
-Future<List<Chat>> getChatsIsolate(String storeRef) async {
-  store = Store.fromReference(getObjectBoxModel(), base64.decode(storeRef).buffer.asByteData());
+Future<List<Chat>> getChatsIsolate(List<dynamic> stuff) async {
+  store = Store.fromReference(getObjectBoxModel(), base64.decode(stuff[2]).buffer.asByteData());
   attachmentBox = store.box<Attachment>();
   chatBox = store.box<Chat>();
   handleBox = store.box<Handle>();
@@ -178,6 +178,9 @@ Future<List<Chat>> getChatsIsolate(String storeRef) async {
   cmJoinBox = store.box<ChatMessageJoin>();
   return store.runInTransaction(TxMode.read, () {
     final query = (chatBox.query()..order(Chat_.isPinned, flags: Order.descending)..order(Chat_.latestMessageDate, flags: Order.descending)).build();
+    query
+      ..limit = stuff[0]
+      ..offset = stuff[1];
     final chats = query.find();
     query.close();
     final handleIdQuery = chJoinBox.query(ChatHandleJoin_.chatId.oneOf(chats.map((e) => e.id!).toList())).build();
@@ -830,10 +833,10 @@ class Chat {
     return null;
   }
 
-  static Future<List<Chat>> getChats() async {
+  static Future<List<Chat>> getChats({int limit = 15, int offset = 0}) async {
     if (kIsWeb) throw Exception("Use socket to get chats on Web!");
 
-    return await compute(getChatsIsolate, prefs.getString("objectbox-reference")!);
+    return await compute(getChatsIsolate, [limit, offset, prefs.getString("objectbox-reference")!]);
   }
 
   bool isGroup() {

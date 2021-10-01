@@ -197,6 +197,7 @@ class MessageBloc {
     _isGettingMore = true;
 
     // Fetch messages
+    // todo use async version?
     List<Message> messages = Chat.getMessages(_currentChat!, getDetails: true);
 
     if (isNullOrEmpty(messages)!) {

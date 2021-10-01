@@ -140,7 +140,7 @@ class SentMessageHelper {
                       builder: (context, snapshot) {
                         return RichText(
                           text: TextSpan(
-                            children: snapshot.data!,
+                            children: snapshot.data ?? MessageWidgetMixin.buildMessageSpans(context, message),
                             style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
                           ),
                         );
