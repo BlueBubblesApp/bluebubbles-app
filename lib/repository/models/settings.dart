@@ -61,6 +61,7 @@ class Settings {
   final RxString globalTextDetection = "".obs;
   final RxBool filterUnknownSenders = false.obs;
   final RxBool tabletMode = true.obs;
+  final RxBool highlightSelectedChat = true.obs;
 
   // final RxString emojiFontFamily;
 
@@ -278,6 +279,8 @@ class Settings {
         settings.filterUnknownSenders.value = entry.value;
       } else if (entry.name == "tabletMode") {
         settings.tabletMode.value = entry.value;
+      } else if (entry.name == "highlightSelectedChat") {
+        settings.highlightSelectedChat.value = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -387,6 +390,7 @@ class Settings {
       'globalTextDetection': globalTextDetection.value,
       'filterUnknownSenders': filterUnknownSenders.value,
       'tabletMode': tabletMode.value,
+      'highlightSelectedChat': highlightSelectedChat.value,
       'enablePrivateAPI': enablePrivateAPI.value,
       'privateSendTypingIndicators': privateSendTypingIndicators.value,
       'privateMarkChatAsRead': privateMarkChatAsRead.value,
@@ -442,7 +446,6 @@ class Settings {
     SettingsManager().settings.hideTextPreviews.value = map['hideTextPreviews'] ?? false;
     SettingsManager().settings.showIncrementalSync.value = map['showIncrementalSync'] ?? false;
     SettingsManager().settings.lowMemoryMode.value = map['lowMemoryMode'] ?? false;
-    SettingsManager().settings.lastIncrementalSync.value = map['lastIncrementalSync'] ?? 0;
     SettingsManager().settings.refreshRate.value = map['refreshRate'] ?? 0;
     SettingsManager().settings.colorfulAvatars.value = map['colorfulAvatars'] ?? false;
     SettingsManager().settings.colorfulBubbles.value = map['colorfulBubbles'] ?? false;
@@ -481,6 +484,7 @@ class Settings {
     SettingsManager().settings.globalTextDetection.value = map['globalTextDetection'] ?? "";
     SettingsManager().settings.filterUnknownSenders.value = map['filterUnknownSenders'] ?? false;
     SettingsManager().settings.tabletMode.value = map['tabletMode'] ?? true;
+    SettingsManager().settings.highlightSelectedChat.value = map['highlightSelectedChat'] ?? true;
     SettingsManager().settings.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     SettingsManager().settings.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
     SettingsManager().settings.privateMarkChatAsRead.value = map['privateMarkChatAsRead'] ?? false;
@@ -576,6 +580,7 @@ class Settings {
     s.globalTextDetection.value = map['globalTextDetection'] ?? "";
     s.filterUnknownSenders.value = map['filterUnknownSenders'] ?? false;
     s.tabletMode.value = map['tabletMode'] ?? true;
+    s.highlightSelectedChat.value = map['highlightSelectedChat'] ?? true;
     s.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     s.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
     s.privateMarkChatAsRead.value = map['privateMarkChatAsRead'] ?? false;

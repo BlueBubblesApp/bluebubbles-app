@@ -94,7 +94,9 @@ class _ConversationTileState extends State<ConversationTile> {
       if (!event.containsKey("type")) return;
 
       if (event["type"] == 'update-highlight' && mounted) {
-        if (event['data'] == widget.chat.guid) {
+        if ((kIsDesktop || kIsWeb) &&
+            SettingsManager().settings.highlightSelectedChat.value &&
+            event['data'] == widget.chat.guid) {
           setState(() {
             shouldHighlight = true;
           });
@@ -234,7 +236,8 @@ class _ConversationTileState extends State<ConversationTile> {
   }
 
   Widget buildSubtitle() {
-    return Obx(() {
+    return Obx(
+      () {
         String latestText = widget.chat.latestMessage != null
             ? MessageHelper.getNotificationText(widget.chat.latestMessage!)
             : widget.chat.latestMessageText ?? "";
@@ -244,10 +247,10 @@ class _ConversationTileState extends State<ConversationTile> {
             SettingsManager().settings.generateFakeMessageContent.value;
 
         TextStyle style = Theme.of(context).textTheme.subtitle1!.apply(
-          color: Theme.of(context).textTheme.subtitle1!.color!.withOpacity(
-            0.85,
-          ),
-        );
+              color: Theme.of(context).textTheme.subtitle1!.color!.withOpacity(
+                    0.85,
+                  ),
+            );
 
         if (generateContent) {
           latestText = widget.chat.fakeLatestMessageText ?? "";
@@ -330,29 +333,30 @@ class _ConversationTileState extends State<ConversationTile> {
           overflow: TextOverflow.clip)
       : ConstrainedBox(
           constraints: BoxConstraints(maxWidth: 100.0),
-          child: Obx(() {
+          child: Obx(
+            () {
               Message message = widget.chat.latestMessageGetter;
               MessageMarkers? markers =
                   CurrentChat.getCurrentChat(widget.chat)?.messageMarkers.markers.value ?? null.obs.value;
-              Indicator show = shouldShow(
-                  message, markers?.myLastMessage, markers?.lastReadMessage, markers?.lastDeliveredMessage);
+              Indicator show =
+                  shouldShow(message, markers?.myLastMessage, markers?.lastReadMessage, markers?.lastDeliveredMessage);
               return Text(
                   message.error > 0
                       ? "Error"
                       : ((show == Indicator.READ
-                      ? "Read\n"
-                      : show == Indicator.DELIVERED
-                      ? "Delivered\n"
-                      : show == Indicator.SENT
-                      ? "Sent\n"
-                      : "") +
-                      buildDate(widget.chat.latestMessageDate)),
+                              ? "Read\n"
+                              : show == Indicator.DELIVERED
+                                  ? "Delivered\n"
+                                  : show == Indicator.SENT
+                                      ? "Sent\n"
+                                      : "") +
+                          buildDate(widget.chat.latestMessageDate)),
                   textAlign: TextAlign.right,
                   style: Theme.of(context).textTheme.subtitle2!.copyWith(
-                    color: message.error > 0
-                        ? Colors.red
-                        : Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
-                  ),
+                        color: message.error > 0
+                            ? Colors.red
+                            : Theme.of(context).textTheme.subtitle2!.color!.withOpacity(0.85),
+                      ),
                   overflow: TextOverflow.clip);
             },
           ),
@@ -406,7 +410,8 @@ class _Cupertino extends StatelessWidget {
     print(CurrentChat.activeChat?.chat.guid);
     return parent.buildSlider(
       Material(
-        color: parent.shouldHighlight ? Theme.of(context).primaryColor.withAlpha(120) : Theme.of(context).backgroundColor,
+        color:
+            parent.shouldHighlight ? Theme.of(context).primaryColor.withAlpha(120) : Theme.of(context).backgroundColor,
         borderRadius: BorderRadius.circular(parent.shouldHighlight ? 5 : 0),
         child: GestureDetector(
           onTapUp: (details) {
@@ -416,7 +421,9 @@ class _Cupertino extends StatelessWidget {
             if (kIsWeb) {
               (await html.document.onContextMenu.first).preventDefault();
             }
-            parent.shouldHighlight = true;
+            if ((kIsDesktop || kIsWeb) && SettingsManager().settings.highlightSelectedChat.value) {
+              parent.shouldHighlight = true;
+            }
             parent.update();
             await showConversationTileMenu(
               context,
@@ -544,7 +551,11 @@ class _Material extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: parent.shouldHighlight ? Theme.of(context).backgroundColor.lightenOrDarken(20) : parent.selected ? Theme.of(context).primaryColor.withAlpha(120) : Theme.of(context).backgroundColor,
+      color: parent.shouldHighlight
+          ? Theme.of(context).backgroundColor.lightenOrDarken(20)
+          : parent.selected
+              ? Theme.of(context).primaryColor.withAlpha(120)
+              : Theme.of(context).backgroundColor,
       child: GestureDetector(
         onSecondaryTapUp: (details) async {
           if (kIsWeb) {
@@ -653,7 +664,11 @@ class _Samsung extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: parent.shouldHighlight ? Theme.of(context).backgroundColor.lightenOrDarken(20) : parent.selected ? Theme.of(context).primaryColor.withAlpha(120) : Colors.transparent,
+      color: parent.shouldHighlight
+          ? Theme.of(context).backgroundColor.lightenOrDarken(20)
+          : parent.selected
+              ? Theme.of(context).primaryColor.withAlpha(120)
+              : Colors.transparent,
       child: GestureDetector(
         onSecondaryTapUp: (details) async {
           if (kIsWeb) {

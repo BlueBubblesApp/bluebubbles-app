@@ -1,7 +1,3 @@
-import 'package:bluebubbles/repository/models/platform_file.dart';
-import 'package:flutter/foundation.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:universal_io/io.dart';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -14,16 +10,20 @@ import 'package:bluebubbles/layouts/conversation_list/conversation_tile.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/search/search_view.dart';
 import 'package:bluebubbles/layouts/widgets/vertical_split_view.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:universal_io/io.dart';
 
 class SamsungConversationList extends StatefulWidget {
   SamsungConversationList({Key? key, required this.parent}) : super(key: key);
@@ -638,9 +638,9 @@ class _SamsungState extends State<SamsungConversationList> {
                           return Obx(() {
                             if (SettingsManager().settings.swipableConversationTiles.value) {
                               return Dismissible(
-                                background: Obx(
+                                background: (kIsDesktop || kIsWeb) ? null : Obx(
                                         () => slideRightBackground(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index])),
-                                secondaryBackground: Obx(
+                                secondaryBackground: (kIsDesktop || kIsWeb) ? null : Obx(
                                         () => slideLeftBackground(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index])),
                                 // Each Dismissible must contain a Key. Keys allow Flutter to
                                 // uniquely identify widgets.

@@ -8,6 +8,8 @@ import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -175,6 +177,24 @@ class ChatListPanel extends StatelessWidget {
                       iosSubtitle: iosSubtitle,
                       materialSubtitle: materialSubtitle,
                       text: "Appearance"),
+                  if (kIsDesktop || kIsWeb)
+                    Obx(
+                      () => SettingsSwitch(
+                        onChanged: (bool val) {
+                          SettingsManager().settings.highlightSelectedChat.value = val;
+                          saveSettings();
+                          if (val) {
+                            EventDispatcher().emit('update-highlight', CurrentChat.activeChat != null ? CurrentChat.activeChat!.chat.guid : '');
+                          } else {
+                            EventDispatcher().emit('update-highlight', '');
+                          }
+                        },
+                        initialVal: SettingsManager().settings.highlightSelectedChat.value,
+                        title: 'Highlight selected chat',
+                        backgroundColor: tileColor,
+                        subtitle: "Highlights currently selected chat in chat list",
+                      ),
+                    ),
                   Obx(() {
                     if (SettingsManager().settings.skin.value != Skins.Samsung) {
                       return SettingsSwitch(
