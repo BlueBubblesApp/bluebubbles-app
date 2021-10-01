@@ -132,6 +132,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
 
     WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
       widgetsBuilt = true;
+      EventDispatcher().emit("update-highlight", widget.chat!.guid);
     });
 
     if (widget.initComplete != null) widget.initComplete!();

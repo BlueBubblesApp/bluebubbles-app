@@ -75,7 +75,7 @@ class MessageHelper {
       if (msgChat == null) continue;
 
       Message? existing = Message.findOne(guid: message.guid);
-      if (chat == null) {
+      if (chat == null || kIsWeb) {
         await msgChat.addMessage(
           message,
           changeUnreadStatus: notifyForNewMessage,
@@ -94,7 +94,7 @@ class MessageHelper {
       }
 
       // Add message to the "master list"
-      if (chat == null) _messages.add(message);
+      if (chat == null || kIsWeb) _messages.add(message);
 
       // Every 50 messages synced, who a message
       index += 1;
@@ -105,7 +105,7 @@ class MessageHelper {
       }
     }
 
-    if (chat != null) {
+    if (chat != null && !kIsWeb) {
       final msgs = await chat.bulkAddMessages(
         messagesList,
         changeUnreadStatus: notifyForNewMessage,

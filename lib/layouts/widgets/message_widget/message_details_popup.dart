@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:math';
@@ -424,6 +425,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                 context,
                 cupertino.CupertinoPageRoute(
                   builder: (BuildContext context) {
+                    EventDispatcher().emit("update-highlight", null);
                     return ConversationView(
                       isCreator: true,
                       selected: [uniqueContact],
@@ -463,6 +465,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                           size: attachment.totalBytes!,
                         )).toList();
                   }
+                  EventDispatcher().emit("update-highlight", null);
                   return ConversationView(
                     isCreator: true,
                     existingText: widget.message.text,

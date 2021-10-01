@@ -263,6 +263,7 @@ class _SamsungState extends State<SamsungConversationList> {
                   (SettingsManager().settings.moveChatCreatorToHeader.value && !showArchived && !showUnknown
                       ? GestureDetector(
                     onTap: () {
+                      EventDispatcher().emit("update-highlight", null);
                       CustomNavigator.pushAndRemoveUntil(
                         context,
                         ConversationView(

@@ -265,6 +265,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                   (SettingsManager().settings.moveChatCreatorToHeader.value && !showArchived && !showUnknown)
                       ? GestureDetector(
                     onTap: () {
+                      EventDispatcher().emit("update-highlight", null);
                       CustomNavigator.pushAndRemoveUntil(
                         context,
                         ConversationView(

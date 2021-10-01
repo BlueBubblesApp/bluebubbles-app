@@ -80,6 +80,7 @@ class ConversationListState extends State<ConversationList> {
   }
 
   void openNewChatCreator({List<PlatformFile>? existing}) {
+    EventDispatcher().emit("update-highlight", null);
     CustomNavigator.pushAndRemoveUntil(
       context,
       ConversationView(
