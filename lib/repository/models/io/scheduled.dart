@@ -23,7 +23,7 @@ class ScheduledMessage {
 
   ScheduledMessage save() {
     if (kIsWeb) return this;
-    scheduledBox.put(this);
+    id = scheduledBox.put(this);
     return this;
   }
 

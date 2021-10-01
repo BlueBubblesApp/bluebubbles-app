@@ -128,9 +128,6 @@ class VideoWidget extends StatelessWidget {
               controller.isVisible = false;
               controller.controller?.pause();
               controller.showPlayPauseOverlay.value = true;
-              if (SettingsManager().settings.lowMemoryMode.value) {
-                CurrentChat.of(context)?.clearImageData(attachment);
-              }
             } else if (!controller.isVisible) {
               controller.isVisible = true;
             }

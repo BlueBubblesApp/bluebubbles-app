@@ -59,6 +59,7 @@ class ConversationTile extends StatefulWidget {
 class _ConversationTileState extends State<ConversationTile> {
   // Typing indicator
   bool showTypingIndicator = false;
+  Color? backgroundColor;
 
   bool get selected {
     if (widget.selected.isEmpty) return false;
@@ -389,7 +390,8 @@ class _Cupertino extends StatelessWidget {
   Widget build(BuildContext context) {
     return parent.buildSlider(
       Material(
-        color: Theme.of(context).backgroundColor,
+        color: parent.backgroundColor ?? Theme.of(context).backgroundColor,
+        borderRadius: BorderRadius.circular(parent.backgroundColor != null ? 5 : 0),
         child: GestureDetector(
           onTapUp: (details) {
             parent.onTapUp(details);
@@ -398,13 +400,17 @@ class _Cupertino extends StatelessWidget {
             if (kIsWeb) {
               (await html.document.onContextMenu.first).preventDefault();
             }
-            showConversationTileMenu(
+            parent.backgroundColor = Theme.of(context).primaryColor;
+            parent.update();
+            await showConversationTileMenu(
               context,
               this,
               parent.widget.chat,
               details.globalPosition,
               context.textTheme,
             );
+            parent.backgroundColor = null;
+            parent.update();
           },
           onLongPress: () {
             HapticFeedback.mediumImpact();

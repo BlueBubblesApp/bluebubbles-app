@@ -39,9 +39,7 @@ class ImageWidgetController extends GetxController {
     // initGate prevents this from running more than once
     // Especially if the compression takes a while
     if (!runForcefully && data.value != null) return;
-
-    // Try to get the image data from the "cache"
-    Uint8List? tmpData = CurrentChat.of(context)?.getImageData(attachment);
+    Uint8List? tmpData;
     if (tmpData == null) {
       // If it's an image, compress the image when loading it
       if (kIsWeb || file.path == null) {
@@ -63,8 +61,7 @@ class ImageWidgetController extends GetxController {
         tmpData = await File(file.path!).readAsBytes();
       }
 
-      if (tmpData == null || CurrentChat.activeChat == null) return;
-      CurrentChat.activeChat?.saveImageData(tmpData, attachment);
+      if (tmpData == null) return;
       if (!(attachment.mimeType?.endsWith("heic") ?? false)) {
         await precacheImage(MemoryImage(tmpData), context, size: attachment.width == null ? null : Size.fromWidth(attachment.width! / 2));
       }
@@ -97,7 +94,6 @@ class ImageWidget extends StatelessWidget {
           if (!SettingsManager().settings.lowMemoryMode.value) return;
           if (info.visibleFraction == 0 && controller.visible && !controller.navigated) {
             controller.visible = false;
-            CurrentChat.of(context)?.clearImageData(controller.attachment);
             controller.update();
           } else if (!controller.visible) {
             controller.visible = true;

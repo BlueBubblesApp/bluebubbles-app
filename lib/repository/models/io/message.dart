@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
@@ -251,10 +252,53 @@ class Message {
      }
 
      try {
-       messageBox.put(this);
+       id = messageBox.put(this);
      } on UniqueViolationException catch (_) {}
     });
     return this;
+  }
+
+  static List<Message> bulkSave(List<Message> messages) {
+    store.runInTransaction(TxMode.write, () {
+      List<Message> existingMessages = Message.find(cond: Message_.guid.oneOf(messages.map((e) => e.guid!).toList()));
+      for (Message m in messages) {
+        final existingMessage = existingMessages.firstWhereOrNull((e) => e.guid == m.guid);
+        if (existingMessage != null) {
+          m.id = existingMessage.id;
+        }
+      }
+      final ids = messageBox.putMany(messages);
+      for (int i = 0; i < messages.length; i++) {
+        messages[i].id = ids[i];
+      }
+      List<Message> associatedMessages = Message.find(cond: Message_.guid.oneOf(messages.map((e) => e.associatedMessageGuid ?? "").toList()));
+      List<Message> originalMessages = Message.find(cond: Message_.associatedMessageGuid.oneOf(messages.map((e) => e.guid!).toList()));
+      final handles = Handle.bulkSave(messages.where((e) => e.handle != null).map((e) => e.handle!).toList());
+      for (Message m in messages) {
+        if (m.associatedMessageType != null && m.associatedMessageGuid != null) {
+          final associatedMessageList = associatedMessages.where((e) => e.guid == m.associatedMessageGuid);
+          for (Message am in associatedMessageList) {
+            am.hasReactions = true;
+          }
+        } else if (!m.hasReactions) {
+          final originalMessage = originalMessages.firstWhereOrNull((e) => e.associatedMessageGuid == m.guid);
+          if (originalMessage != null) {
+            m.hasReactions = true;
+          }
+        }
+        final existingHandle = handles.firstWhereOrNull((e) => e.address == m.handle?.address);
+        if (existingHandle != null) {
+          m.handleId = existingHandle.id;
+        }
+      }
+      try {
+        final ids = messageBox.putMany(messages..addAll(associatedMessages));
+        for (int i = 0; i < messages.length; i++) {
+          messages[i].id = ids[i];
+        }
+      } on UniqueViolationException catch (_) {}
+    });
+    return messages;
   }
 
   static Future<Message?> replaceMessage(String? oldGuid, Message? newMessage,

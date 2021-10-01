@@ -173,8 +173,6 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                   child: CupertinoButton(
                     padding: EdgeInsets.symmetric(horizontal: 5),
                     onPressed: () async {
-                      CurrentChat.of(context)?.clearImageData(widget.attachment);
-
                       showSnackbar('In Progress', 'Redownloading attachment. Please wait...');
                       AttachmentHelper.redownloadAttachment(widget.attachment, onComplete: () {
                         initBytes();

@@ -49,7 +49,9 @@ class MessageHelper {
 
     // Iterate over each message to parse it
     int index = 0;
-    for (dynamic item in messages) {
+    List<Message> messagesList = messages.map((e) => Message.fromMap(e)).toList();
+
+    for (Message message in messagesList) {
       if (onProgress != null) {
         onProgress(_messages.length, messages.length);
       }
@@ -57,7 +59,7 @@ class MessageHelper {
       // Pull the chats out of the message, if there isnt a default
       Chat? msgChat = chat;
       if (msgChat == null) {
-        List<Chat> msgChats = parseChats(item);
+        List<Chat> msgChats = parseChats(message.toMap());
         msgChat = msgChats.isNotEmpty ? msgChats.first : null;
 
         // If there is a cached chat, get it. Otherwise, save the new one
@@ -72,13 +74,14 @@ class MessageHelper {
       // If we can't get a chat from the data, skip the message
       if (msgChat == null) continue;
 
-      Message message = Message.fromMap(item);
       Message? existing = Message.findOne(guid: message.guid);
-      await msgChat.addMessage(
-        message,
-        changeUnreadStatus: notifyForNewMessage,
-        checkForMessageText: checkForLatestMessageText,
-      );
+      if (chat == null) {
+        await msgChat.addMessage(
+          message,
+          changeUnreadStatus: notifyForNewMessage,
+          checkForMessageText: checkForLatestMessageText,
+        );
+      }
 
       if (existing == null) {
         if (isIncremental && !notificationMessages.containsValue(msgChat.guid)) {
@@ -91,7 +94,7 @@ class MessageHelper {
       }
 
       // Add message to the "master list"
-      _messages.add(message);
+      if (chat == null) _messages.add(message);
 
       // Every 50 messages synced, who a message
       index += 1;
@@ -102,7 +105,14 @@ class MessageHelper {
       }
     }
 
-    //ChatBloc().chats.add(chat!);
+    if (chat != null) {
+      final msgs = await chat.bulkAddMessages(
+        messagesList,
+        changeUnreadStatus: notifyForNewMessage,
+        checkForMessageText: checkForLatestMessageText,
+      );
+      _messages.addAll(msgs);
+    }
 
     if (notifyForNewMessage || notifyMessageManager) {
       notificationMessages.forEach((message, value) async {
@@ -184,7 +194,7 @@ class MessageHelper {
   static List<Chat> parseChats(Map<String, dynamic> data) {
     List<Chat> chats = [];
 
-    if (data.containsKey("chats") && data["chats"] != null || data["chats"].length > 0) {
+    if (data.containsKey("chats") && data["chats"] != null && data["chats"].length > 0) {
       for (int i = 0; i < data["chats"].length; i++) {
         Chat chat = Chat.fromMap(data["chats"][i]);
         chats.add(chat);

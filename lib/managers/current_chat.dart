@@ -33,7 +33,6 @@ class CurrentChat {
 
   Chat chat;
 
-  Map<String, Uint8List> imageData = {};
   Map<String, Metadata> urlPreviews = {};
   Map<String, VideoPlayerController> currentPlayingVideo = {};
   Map<String, Tuple2<ChewieAudioController, VideoPlayerController>> audioPlayers = {};
@@ -150,7 +149,6 @@ class CurrentChat {
   void init() {
     dispose();
 
-    imageData = {};
     currentPlayingVideo = {};
     audioPlayers = {};
     urlPreviews = {};
@@ -201,10 +199,7 @@ class CurrentChat {
     messageAttachments[message.guid!] = message.attachments ?? [];
 
     String? newAttachmentGuid = message.attachments!.first!.guid;
-    if (imageData.containsKey(oldGuid)) {
-      Uint8List data = imageData.remove(oldGuid)!;
-      imageData[newAttachmentGuid!] = data;
-    } else if (currentPlayingVideo.containsKey(oldGuid)) {
+    if (currentPlayingVideo.containsKey(oldGuid)) {
       VideoPlayerController data = currentPlayingVideo.remove(oldGuid)!;
       currentPlayingVideo[newAttachmentGuid!] = data;
     } else if (audioPlayers.containsKey(oldGuid)) {
@@ -215,20 +210,6 @@ class CurrentChat {
       urlPreviews[newAttachmentGuid!] = data;
     }
     return message.attachments;
-  }
-
-  Uint8List? getImageData(Attachment attachment) {
-    if (!imageData.containsKey(attachment.guid)) return null;
-    return imageData[attachment.guid];
-  }
-
-  void saveImageData(Uint8List data, Attachment attachment) {
-    imageData[attachment.guid!] = data;
-  }
-
-  void clearImageData(Attachment attachment) {
-    if (!imageData.containsKey(attachment.guid)) return;
-    imageData.remove(attachment.guid);
   }
 
   void preloadMessageAttachments({List<Message?>? specificMessages}) {
@@ -306,7 +287,6 @@ class CurrentChat {
 
     _timeStampOffset = 0;
     showScrollDown.value = false;
-    imageData = {};
     currentPlayingVideo = {};
     audioPlayers = {};
     urlPreviews = {};

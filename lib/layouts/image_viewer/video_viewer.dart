@@ -213,8 +213,6 @@ class _VideoViewerState extends State<VideoViewer> {
                     padding: EdgeInsets.symmetric(horizontal: 5),
                     onPressed: () async {
                       isReloading.value = true;
-                      CurrentChat.of(context)?.clearImageData(widget.attachment);
-
                       showSnackbar('In Progress', 'Redownloading attachment. Please wait...');
                       AttachmentHelper.redownloadAttachment(widget.attachment, onComplete: () async {
                         controller.dispose();
