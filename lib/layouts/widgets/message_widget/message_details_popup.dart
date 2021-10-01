@@ -1,15 +1,20 @@
 import 'dart:async';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:math';
 import 'dart:ui';
+import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/helpers/metadata_helper.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
+import 'package:bluebubbles/managers/method_channel_interface.dart';
+import 'package:bluebubbles/managers/notification_manager.dart';
+import 'package:collection/collection.dart';
 
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/darty.dart';
-import 'package:bluebubbles/helpers/logger.dart';
-import 'package:bluebubbles/helpers/metadata_helper.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/themes.dart';
@@ -22,15 +27,11 @@ import 'package:bluebubbles/layouts/widgets/message_widget/reaction_detail_widge
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
-import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
-import 'package:collection/collection.dart';
+import 'package:bluebubbles/helpers/darty.dart';
 import 'package:flutter/cupertino.dart' as cupertino;
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
@@ -230,8 +231,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   }
 
   Widget buildReactionMenu() {
-    double reactionIconSize =
-        ((8.5 / 10 * min(context.isTablet ? max(CustomNavigator.width(context) / 2, 400) : CustomNavigator.width(context), context.height)) / (ReactionTypes.toList().length).toDouble());
+    double reactionIconSize = ((8.5 / 10 * min(CustomNavigator.width(context), context.height)) / (ReactionTypes.toList().length).toDouble());
     double maxMenuWidth = (ReactionTypes.toList().length * reactionIconSize).toDouble();
     double menuHeight = (reactionIconSize).toDouble();
     double topPadding = -20;
@@ -241,8 +241,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
     double topOffset = (messageTopOffset - menuHeight).toDouble().clamp(topMinimum, context.height - 120 - menuHeight);
     bool shiftRight = currentChat!.chat.isGroup() || SettingsManager().settings.alwaysShowAvatars.value;
     double leftOffset =
-        (widget.message.isFromMe! ? CustomNavigator.width(context) - maxMenuWidth - 25 : 25 + (shiftRight ? 20 : 0))
-            .toDouble();
+        (widget.message.isFromMe! ? CustomNavigator.width(context) - maxMenuWidth - 25 : 25 + (shiftRight ? 20 : 0)).toDouble();
     Color iconColor = Colors.white;
 
     if (Theme.of(context).accentColor.computeLuminance() >= 0.179) {
@@ -358,9 +357,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               trailing: Icon(
-                SettingsManager().settings.skin.value == Skins.iOS
-                    ? cupertino.CupertinoIcons.arrow_up_right_square
-                    : Icons.open_in_new,
+                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.arrow_up_right_square : Icons.open_in_new,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
@@ -383,9 +380,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               trailing: Icon(
-                SettingsManager().settings.skin.value == Skins.iOS
-                    ? cupertino.CupertinoIcons.macwindow
-                    : Icons.open_in_browser,
+                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.macwindow : Icons.open_in_browser,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
@@ -396,8 +391,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
           color: Colors.transparent,
           child: InkWell(
             onTap: () async {
-              await launch(
-                  widget.message.attachments!.first!.webUrl! + "?guid=${SettingsManager().settings.guidAuthKey}");
+              await launch(widget.message.attachments!.first!.webUrl! + "?guid=${SettingsManager().settings.guidAuthKey}");
             },
             child: ListTile(
               title: Text(
@@ -405,9 +399,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               trailing: Icon(
-                SettingsManager().settings.skin.value == Skins.iOS
-                    ? cupertino.CupertinoIcons.macwindow
-                    : Icons.open_in_browser,
+                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.macwindow : Icons.open_in_browser,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
@@ -433,6 +425,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                 context,
                 cupertino.CupertinoPageRoute(
                   builder: (BuildContext context) {
+                    EventDispatcher().emit("update-highlight", null);
                     return ConversationView(
                       isCreator: true,
                       selected: [uniqueContact],
@@ -447,9 +440,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               trailing: Icon(
-                SettingsManager().settings.skin.value == Skins.iOS
-                    ? cupertino.CupertinoIcons.chat_bubble
-                    : Icons.message,
+                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.chat_bubble : Icons.message,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
@@ -466,15 +457,15 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                 builder: (BuildContext context) {
                   List<PlatformFile> existingAttachments = [];
                   if (!widget.message.isUrlPreview()) {
-                    existingAttachments = widget.message.attachments!
-                        .map((attachment) => PlatformFile(
-                              name: attachment!.transferName!,
-                              path: kIsWeb ? null : attachment.getPath(),
-                              bytes: attachment.bytes,
-                              size: attachment.totalBytes!,
-                            ))
-                        .toList();
+                    existingAttachments =
+                        widget.message.attachments!.map((attachment) => PlatformFile(
+                          name: attachment!.transferName!,
+                          path: kIsWeb ? null : attachment.getPath(),
+                          bytes: attachment.bytes,
+                          size: attachment.totalBytes!,
+                        )).toList();
                   }
+                  EventDispatcher().emit("update-highlight", null);
                   return ConversationView(
                     isCreator: true,
                     existingText: widget.message.text,
@@ -528,9 +519,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             child: ListTile(
               title: Text("Copy", style: Theme.of(context).textTheme.bodyText1),
               trailing: Icon(
-                SettingsManager().settings.skin.value == Skins.iOS
-                    ? cupertino.CupertinoIcons.doc_on_clipboard
-                    : Icons.content_copy,
+                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.doc_on_clipboard : Icons.content_copy,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
@@ -593,9 +582,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               trailing: Icon(
-                SettingsManager().settings.skin.value == Skins.iOS
-                    ? cupertino.CupertinoIcons.doc_on_clipboard
-                    : Icons.content_copy,
+                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.doc_on_clipboard : Icons.content_copy,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
@@ -647,9 +634,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                 style: Theme.of(context).textTheme.bodyText1,
               ),
               trailing: Icon(
-                SettingsManager().settings.skin.value == Skins.iOS
-                    ? cupertino.CupertinoIcons.cloud_download
-                    : Icons.file_download,
+                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.cloud_download : Icons.file_download,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),
@@ -783,9 +768,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                     child: ListTile(
                       title: Text("More...", style: Theme.of(context).textTheme.bodyText1),
                       trailing: Icon(
-                        SettingsManager().settings.skin.value == Skins.iOS
-                            ? cupertino.CupertinoIcons.ellipsis
-                            : Icons.more_vert,
+                        SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.ellipsis : Icons.more_vert,
                         color: Theme.of(context).textTheme.bodyText1!.color,
                       ),
                     ),
@@ -805,8 +788,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
     double topOffset = (messageTopOffset + widget.childSize!.height).toDouble().clamp(topMinimum, upperLimit);
     bool shiftRight = currentChat!.chat.isGroup() || SettingsManager().settings.alwaysShowAvatars.value;
     double leftOffset =
-        (widget.message.isFromMe! ? CustomNavigator.width(context) - maxMenuWidth - 15 : 15 + (shiftRight ? 35 : 0))
-            .toDouble();
+        (widget.message.isFromMe! ? CustomNavigator.width(context) - maxMenuWidth - 15 : 15 + (shiftRight ? 35 : 0)).toDouble();
     return Positioned(
       top: topOffset + 5,
       left: leftOffset,

@@ -4,6 +4,7 @@ import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/indicator.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
@@ -59,7 +60,7 @@ class ConversationTile extends StatefulWidget {
 class _ConversationTileState extends State<ConversationTile> {
   // Typing indicator
   bool showTypingIndicator = false;
-  Color? backgroundColor;
+  bool shouldHighlight = false;
 
   bool get selected {
     if (widget.selected.isEmpty) return false;
@@ -87,6 +88,22 @@ class _ConversationTileState extends State<ConversationTile> {
       }
 
       setNewChatData(forceUpdate: true);
+    });
+
+    EventDispatcher().stream.listen((Map<String, dynamic> event) {
+      if (!event.containsKey("type")) return;
+
+      if (event["type"] == 'update-highlight' && mounted) {
+        if (event['data'] == widget.chat.guid) {
+          setState(() {
+            shouldHighlight = true;
+          });
+        } else if (shouldHighlight = true) {
+          setState(() {
+            shouldHighlight = false;
+          });
+        }
+      }
     });
   }
 
@@ -123,7 +140,6 @@ class _ConversationTileState extends State<ConversationTile> {
         (route) => route.isFirst,
       );
     }
-    Future.delayed(Duration(milliseconds: 500), () => update());
   }
 
   void onTapUpBypass() {
@@ -352,7 +368,6 @@ class _ConversationTileState extends State<ConversationTile> {
       ),
       (route) => route.isFirst,
     );
-    Future.delayed(Duration(milliseconds: 500), () => update());
   }
 
   void onSelect() {
@@ -388,10 +403,11 @@ class _Cupertino extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print(CurrentChat.activeChat?.chat.guid);
     return parent.buildSlider(
       Material(
-        color: parent.backgroundColor ?? Theme.of(context).backgroundColor,
-        borderRadius: BorderRadius.circular(parent.backgroundColor != null ? 5 : 0),
+        color: parent.shouldHighlight ? Theme.of(context).primaryColor.withAlpha(120) : Theme.of(context).backgroundColor,
+        borderRadius: BorderRadius.circular(parent.shouldHighlight ? 5 : 0),
         child: GestureDetector(
           onTapUp: (details) {
             parent.onTapUp(details);
@@ -400,7 +416,7 @@ class _Cupertino extends StatelessWidget {
             if (kIsWeb) {
               (await html.document.onContextMenu.first).preventDefault();
             }
-            parent.backgroundColor = Theme.of(context).primaryColor;
+            parent.shouldHighlight = true;
             parent.update();
             await showConversationTileMenu(
               context,
@@ -409,7 +425,7 @@ class _Cupertino extends StatelessWidget {
               details.globalPosition,
               context.textTheme,
             );
-            parent.backgroundColor = null;
+            parent.shouldHighlight = false;
             parent.update();
           },
           onLongPress: () {
@@ -528,19 +544,23 @@ class _Material extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: parent.selected ? Theme.of(context).primaryColor.withAlpha(120) : Theme.of(context).backgroundColor,
+      color: parent.shouldHighlight ? Theme.of(context).backgroundColor.lightenOrDarken(20) : parent.selected ? Theme.of(context).primaryColor.withAlpha(120) : Theme.of(context).backgroundColor,
       child: GestureDetector(
         onSecondaryTapUp: (details) async {
           if (kIsWeb) {
             (await html.document.onContextMenu.first).preventDefault();
           }
-          showConversationTileMenu(
+          parent.shouldHighlight = true;
+          parent.update();
+          await showConversationTileMenu(
             context,
-            parent,
+            this,
             parent.widget.chat,
             details.globalPosition,
             context.textTheme,
           );
+          parent.shouldHighlight = false;
+          parent.update();
         },
         child: InkWell(
           onTap: () {
@@ -633,19 +653,23 @@ class _Samsung extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.transparent,
+      color: parent.shouldHighlight ? Theme.of(context).backgroundColor.lightenOrDarken(20) : parent.selected ? Theme.of(context).primaryColor.withAlpha(120) : Colors.transparent,
       child: GestureDetector(
         onSecondaryTapUp: (details) async {
           if (kIsWeb) {
             (await html.document.onContextMenu.first).preventDefault();
           }
-          showConversationTileMenu(
+          parent.shouldHighlight = true;
+          parent.update();
+          await showConversationTileMenu(
             context,
-            parent,
+            this,
             parent.widget.chat,
             details.globalPosition,
             context.textTheme,
           );
+          parent.shouldHighlight = false;
+          parent.update();
         },
         child: InkWell(
           hoverColor: Colors.red,

@@ -369,6 +369,10 @@ class Chat {
     return this;
   }
 
+  Future<List<Message>> bulkAddMessages(List<Message> messages, {bool changeUnreadStatus = true, bool checkForMessageText = true}) async {
+    return [];
+  }
+
   void serverSyncParticipants() {
     // Send message to server to get the participants
     SocketManager().sendMessage("get-participants", {"identifier": guid}, (response) {

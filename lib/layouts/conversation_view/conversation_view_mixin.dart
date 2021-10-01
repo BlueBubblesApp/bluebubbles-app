@@ -538,6 +538,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
               mainAxisAlignment: cupertino.MainAxisAlignment.start,
               children: [
                 buildBackButton(context, callback: () async {
+                  EventDispatcher().emit("update-highlight", null);
                   await SystemChannels.textInput.invokeMethod('TextInput.hide');
                 }),
                 if (ChatBloc().unreads.value > 0)
@@ -1062,7 +1063,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
               style: Theme.of(context).textTheme.headline2,
             ),
           ),
-          leading: buildBackButton(context, iconSize: 20),
+          leading: buildBackButton(context, iconSize: 20, callback: () => EventDispatcher().emit("update-highlight", null)),
         ),
       );
 }
