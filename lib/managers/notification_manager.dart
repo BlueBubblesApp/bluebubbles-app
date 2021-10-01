@@ -245,7 +245,7 @@ class NotificationManager {
     }
     if (kIsDesktop) {
       Logger.info("Sending desktop notification");
-      QuickNotify.notify(title: chatTitle, content: messageText);
+      QuickNotify.notify(title: chatIsGroup ? "$chatTitle: contactName" : chatTitle, content: messageText);
       return;
     }
     await MethodChannelInterface().platform.invokeMethod("new-message-notification", {
