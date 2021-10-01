@@ -103,7 +103,7 @@ dependencies:
   quick_notify:
     git:
       url: https://github.com/jjoelj/quick_notify
-      ref: 74307269623865560026ce8b47aae9cea9bd24d8
+      ref: 41030fb6468e7990b230bb08e42fd99928d6fd64
   qr_flutter: ^4.0.0
   window_manager: ^0.0.4
   objectbox: ^1.2.0
