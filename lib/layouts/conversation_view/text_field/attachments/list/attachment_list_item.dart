@@ -27,21 +27,20 @@ class AttachmentListItem extends StatefulWidget {
 
 class _AttachmentListItemState extends State<AttachmentListItem> {
   Uint8List? preview;
-  String? mimeType;
+  String mimeType = "Unknown File Type";
 
   @override
   void initState() {
     super.initState();
-    mimeType = mime(widget.file.name);
     loadPreview();
   }
 
   Future<void> loadPreview() async {
-    String? mimeType = mime(widget.file.name);
-    if (mimeType != null && mimeType.startsWith("video/") && widget.file.path != null) {
+    mimeType = mime(widget.file.name) ?? "Unknown File Type";
+    if (mimeType.startsWith("video/") && widget.file.path != null) {
       preview = await AttachmentHelper.getVideoThumbnail(widget.file.path!);
       if (this.mounted) setState(() {});
-    } else if (mimeType == null || mimeType.startsWith("image/")) {
+    } else if (mimeType.startsWith("image/")) {
       // Compress the file, using a dummy attachment object
       preview = widget.file.bytes;
       if (this.mounted) setState(() {});
@@ -69,7 +68,8 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
             if (mimeType == null) return;
             if (!this.mounted) return;
 
-            Attachment fakeAttachment = new Attachment(transferName: widget.file.name, mimeType: mimeType, bytes: widget.file.bytes);
+            Attachment fakeAttachment =
+                new Attachment(transferName: widget.file.path, mimeType: mimeType, bytes: widget.file.bytes);
             await Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (context) => AttachmentFullscreenViewer(
@@ -98,7 +98,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
           ),
       ]);
     } else {
-      if (mimeType == null || mimeType!.startsWith("video/") || mimeType!.startsWith("image/")) {
+      if (mimeType.startsWith("video/") || mimeType.startsWith("image/")) {
         // If the preview is null and the mimetype is video or image,
         // then that means that we are in the process of loading things
         return Container(
@@ -122,7 +122,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                AttachmentHelper.getIcon(mimeType ?? ""),
+                AttachmentHelper.getIcon(mimeType),
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
               Align(
@@ -152,7 +152,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
       child: Stack(
         children: <Widget>[
           getThumbnail(),
-          if (mimeType != null && mimeType!.startsWith("video/"))
+          if (mimeType.startsWith("video/"))
             Align(
               alignment: Alignment.bottomRight,
               child: Icon(
