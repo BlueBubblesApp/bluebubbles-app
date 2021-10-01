@@ -175,41 +175,54 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
           return _buildAttachmentWidget();
         }
 
-        return Stack(
-          alignment: Alignment.center,
-          children: <Widget>[
-            buildPlaceHolder(widget),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Center(
-                      child: Container(
-                        height: 40,
-                        width: 40,
-                        child: CircleProgressBar(
-                          value: content.progress.value?.toDouble() ?? 0,
-                          backgroundColor: Colors.grey,
-                          foregroundColor: Colors.white,
+        return Container(
+          width: 200,
+          height: 150,
+          child: Stack(
+            alignment: Alignment.center,
+            children: <Widget>[
+              buildPlaceHolder(widget),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Center(
+                        child: Container(
+                          height: 40,
+                          width: 40,
+                          child: CircleProgressBar(
+                            value: content.progress.value?.toDouble() ?? 0,
+                            backgroundColor: Colors.grey,
+                            foregroundColor: Colors.white,
+                          ),
                         ),
                       ),
-                    ),
-                    ((content as AttachmentDownloadController).attachment.mimeType != null)
-                        ? Container(height: 5.0)
-                        : Container(),
-                    (content.attachment.mimeType != null)
-                        ? Text(
-                            content.attachment.mimeType,
-                            style: Theme.of(context).textTheme.bodyText1,
+                      ((content as AttachmentDownloadController).attachment.mimeType != null)
+                          ? Container(height: 5.0)
+                          : Container(),
+                      (content.attachment.mimeType != null)
+                          ? Container(
+                              width: 200,
+                              height: 150,
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Text(
+                                    content.attachment.mimeType,
+                                    style: Theme.of(context).textTheme.bodyText1,
+                                    maxLines: 3,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                              ),
                           )
-                        : Container()
-                  ],
-                ),
-              ],
-            ),
-          ],
+                          : Container()
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
         );
       });
     } else {
