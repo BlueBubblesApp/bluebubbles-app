@@ -74,10 +74,10 @@ Widget buildImagePlaceholder(BuildContext context, Attachment attachment, Widget
           child: Container(width: width, height: height, color: Theme.of(context).accentColor, child: child)));
 }
 
-void showConversationTileMenu(context, _this, chat, tapPosition, textTheme) {
+Future<void> showConversationTileMenu(context, _this, chat, tapPosition, textTheme) async {
   bool ios = SettingsManager().settings.skin.value == Skins.iOS;
   HapticFeedback.mediumImpact();
-  showMenu(
+  await showMenu(
     color: Theme.of(context).accentColor,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(ios ? 10 : 0)),
     context: context,

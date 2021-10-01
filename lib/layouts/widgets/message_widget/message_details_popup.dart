@@ -607,7 +607,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
           child: InkWell(
             onTap: () {
               for (Attachment? element in widget.message.attachments!) {
-                CurrentChat.of(context)?.clearImageData(element!);
                 AttachmentHelper.redownloadAttachment(element!);
               }
               setState(() {});

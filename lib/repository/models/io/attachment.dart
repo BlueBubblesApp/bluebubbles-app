@@ -4,6 +4,7 @@ import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/repository/models/io/join_tables.dart';
 import 'package:bluebubbles/repository/models/io/message.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
@@ -130,13 +131,36 @@ class Attachment {
         id = existing.id;
       }
       try {
-        attachmentBox.put(this);
+        id = attachmentBox.put(this);
         if (id != null && message?.id != null) {
           amJoinBox.put(AttachmentMessageJoin(attachmentId: id!, messageId: message!.id!));
         }
       } on UniqueViolationException catch (_) {}
     });
     return this;
+  }
+
+  static void bulkSave(Map<Message, List<Attachment>> map) {
+    return store.runInTransaction(TxMode.write, () {
+      final attachments = map.values.expand((element) => element).toList();
+      List<Attachment> existingAttachments = Attachment.find(cond: Attachment_.guid.oneOf(attachments.map((e) => e.guid!).toList()));
+      for (Attachment a in attachments) {
+        final existing = existingAttachments.firstWhereOrNull((e) => e.guid == a.guid);
+        if (existing != null) {
+          a.id = existing.id;
+        }
+      }
+      try {
+        final ids = attachmentBox.putMany(attachments);
+        for (int i = 0; i < attachments.length; i++) {
+          attachments[i].id = ids[i];
+        }
+        amJoinBox.putMany(map.entries.map(
+            (e) => e.value.map(
+                    (e2) => AttachmentMessageJoin(attachmentId: e2.id ?? 0, messageId: e.key.id ?? 0)))
+        .expand((element) => element).toList()..removeWhere((element) => element.attachmentId == 0 || element.messageId == 0));
+      } on UniqueViolationException catch (_) {}
+    });
   }
 
   /// replaces a temporary attachment with the new one from the server
@@ -160,7 +184,7 @@ class Attachment {
     existing.blurhash = newAttachment.blurhash;
     existing.bytes = newAttachment.bytes;
     existing.webUrl = newAttachment.webUrl;
-    attachmentBox.put(existing);
+    existing.save(null);
     // change the directory path
     String appDocPath = SettingsManager().appDocDir.path;
     String pathName = "$appDocPath/attachments/$oldGuid";
@@ -182,6 +206,11 @@ class Attachment {
     final result = query.findFirst();
     query.close();
     return result;
+  }
+
+  static List<Attachment> find({Condition<Attachment>? cond}) {
+    final query = attachmentBox.query(cond).build();
+    return query.find();
   }
 
   /// clear the attachment DB

@@ -1,8 +1,8 @@
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/objectbox.g.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
-import 'package:get/get.dart';
-
+import 'package:get/get.dart' hide Condition;
 import './chat.dart';
 
 @Entity()
@@ -13,9 +13,7 @@ class Handle {
   String address;
   String? country;
   final RxnString _color = RxnString();
-
   String? get color => _color.value;
-
   set color(String? val) => _color.value = val;
   String? defaultPhone;
   String? uncanonicalizedId;
@@ -63,6 +61,26 @@ class Handle {
     return this;
   }
 
+  static List<Handle> bulkSave(List<Handle> handles) {
+    store.runInTransaction(TxMode.write, () {
+      List<Handle> existingHandles = Handle.find(cond: Handle_.address.oneOf(handles.map((e) => e.address).toList()));
+
+      for (Handle h in handles) {
+        final existing = existingHandles.firstWhereOrNull((e) => e.address == h.address);
+        if (existing != null) {
+          h.id = existing.id;
+        }
+      }
+      try {
+        final ids = handleBox.putMany(handles);
+        for (int i = 0; i < handles.length; i++) {
+          handles[i].id = ids[i];
+        }
+      } on UniqueViolationException catch (_) {}
+    });
+    return handles;
+  }
+
   Handle updateColor(String? newColor) {
     color = newColor;
     save();
@@ -92,8 +110,9 @@ class Handle {
     }
   }
 
-  static List<Handle> find() {
-    return handleBox.getAll();
+  static List<Handle> find({Condition<Handle>? cond}) {
+    final query = handleBox.query(cond).build();
+    return query.find();
   }
 
   static List<Chat> getChats(Handle handle) {
