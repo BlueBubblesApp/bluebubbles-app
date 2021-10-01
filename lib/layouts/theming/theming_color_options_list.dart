@@ -252,7 +252,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                       allThemes.removeWhere((element) => element == currentTheme);
                       currentTheme!.delete();
                       currentTheme =
-                          widget.isDarkMode ? ThemeObject.getDarkTheme() : ThemeObject.getLightTheme();
+                          widget.isDarkMode ? revertToPreviousDarkTheme() : revertToPreviousLightTheme();
                       allThemes = ThemeObject.getThemes();
                       if (widget.isDarkMode) {
                         SettingsManager().saveSelectedTheme(context, selectedDarkTheme: currentTheme);
