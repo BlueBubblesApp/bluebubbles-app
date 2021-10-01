@@ -407,7 +407,6 @@ class _Cupertino extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print(CurrentChat.activeChat?.chat.guid);
     return parent.buildSlider(
       Material(
         color:

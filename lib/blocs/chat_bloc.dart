@@ -283,20 +283,7 @@ class ChatBloc {
     // Reset chat lists
     List<Chat> newChats = [];
 
-    int batches = count == 0
-        ? 1
-        : (count < batchSize)
-            ? batchSize
-            : (count / batchSize).ceil();
-    for (int i = 0; i < batches; i++) {
-      List<Chat> chats = [];
-      if (kIsWeb) {
-        chats = await SocketManager().getChats({"withLastMessage": true, "limit": batchSize, "offset": i * batchSize});
-      } else {
-        chats = Chat.getChats(limit: batchSize, offset: i * batchSize);
-      }
-      if (chats.isEmpty) break;
-
+    void iterateChats(List<Chat> chats, {int i = 0}) {
       for (Chat chat in chats) {
         newChats.add(chat);
         initTileValsForChat(chat);
@@ -312,9 +299,7 @@ class ChatBloc {
           if (chat.latestMessageGetter.hasAttachments) {
             chat.latestMessageGetter.fetchAttachments();
           }
-          if (chat.latestMessage?.handle == null && chat.latestMessage?.handleId != null) {
-            chat.latestMessage!.handle = Handle.findOne(originalROWID: chat.latestMessage!.handleId);
-          }
+          if (chat.latestMessage?.handle == null && chat.latestMessage?.handleId != null) chat.latestMessage!.handle = Handle.findOne(originalROWID: chat.latestMessage!.handleId);
           chat.latestMessageText = MessageHelper.getNotificationText(chat.latestMessageGetter);
           chat.fakeLatestMessageText = faker.lorem.words((chat.latestMessageText ?? "").split(" ").length).join(" ");
           chat.latestMessageDate = chat.latestMessageGetter.dateCreated;
@@ -329,6 +314,20 @@ class ChatBloc {
       if (i == 0) {
         loadedChatBatch.value = true;
       }
+    }
+
+    if (kIsWeb) {
+      int batches = count == 0 ? 1 : (count < batchSize) ? batchSize : (count / batchSize).ceil();
+      for (int i = 0; i < batches; i++) {
+        List<Chat> chats = [];
+        chats = await SocketManager().getChats({"withLastMessage": true, "limit": batchSize, "offset": i * batchSize});
+        if (chats.isEmpty) break;
+
+        iterateChats(chats, i: i);
+      }
+    } else {
+      final chats = await Chat.getChats();
+      iterateChats(chats);
     }
     await ContactManager().matchHandles();
     Logger.info("Finished fetching chats (${_chats.length}).", tag: "ChatBloc");
@@ -372,12 +371,18 @@ class ChatBloc {
     final item = _chats.bigPinHelper(true)[oldIndex];
     if (newIndex > oldIndex) {
       newIndex = newIndex - 1;
-      _chats.bigPinHelper(true).where((p0) => p0.pinIndex != null && p0.pinIndex! <= newIndex).forEach((element) {
+      _chats
+          .bigPinHelper(true)
+          .where((p0) => p0.pinIndex != null && p0.pinIndex! <= newIndex)
+          .forEach((element) {
         element.pinIndex = element.pinIndex! - 1;
       });
       item.pinIndex = newIndex;
     } else {
-      _chats.bigPinHelper(true).where((p0) => p0.pinIndex != null && p0.pinIndex! >= newIndex).forEach((element) {
+      _chats
+          .bigPinHelper(true)
+          .where((p0) => p0.pinIndex != null && p0.pinIndex! >= newIndex)
+          .forEach((element) {
         element.pinIndex = element.pinIndex! + 1;
       });
       item.pinIndex = newIndex;

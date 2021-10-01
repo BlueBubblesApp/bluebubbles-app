@@ -343,6 +343,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           ),
           preferredSize: Size.fromHeight(0.5),
         ),
+        leading: buildBackButton(context, callback: () => EventDispatcher().emit("update-highlight", null)),
+        automaticallyImplyLeading: false,
         backgroundColor: backgroundColor,
         actionsIconTheme: IconThemeData(color: Theme.of(context).primaryColor),
         iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
@@ -528,6 +530,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         ),
         leading: GestureDetector(
           onTap: () {
+            EventDispatcher().emit("update-highlight", null);
             Navigator.of(context).pop();
           },
           behavior: HitTestBehavior.translucent,
