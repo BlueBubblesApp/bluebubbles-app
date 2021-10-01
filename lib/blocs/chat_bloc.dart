@@ -283,16 +283,7 @@ class ChatBloc {
     // Reset chat lists
     List<Chat> newChats = [];
 
-    int batches = count == 0 ? 1 : (count < batchSize) ? batchSize : (count / batchSize).ceil();
-    for (int i = 0; i < batches; i++) {
-      List<Chat> chats = [];
-      if (kIsWeb) {
-        chats = await SocketManager().getChats({"withLastMessage": true, "limit": batchSize, "offset": i * batchSize});
-      } else {
-        chats = Chat.getChats(limit: batchSize, offset: i * batchSize);
-      }
-      if (chats.isEmpty) break;
-
+    void iterateChats(List<Chat> chats, {int i = 0}) {
       for (Chat chat in chats) {
         newChats.add(chat);
         initTileValsForChat(chat);
@@ -323,6 +314,20 @@ class ChatBloc {
       if (i == 0) {
         loadedChatBatch.value = true;
       }
+    }
+
+    if (kIsWeb) {
+      int batches = count == 0 ? 1 : (count < batchSize) ? batchSize : (count / batchSize).ceil();
+      for (int i = 0; i < batches; i++) {
+        List<Chat> chats = [];
+        chats = await SocketManager().getChats({"withLastMessage": true, "limit": batchSize, "offset": i * batchSize});
+        if (chats.isEmpty) break;
+
+        iterateChats(chats, i: i);
+      }
+    } else {
+      final chats = await Chat.getChats();
+      iterateChats(chats);
     }
     await ContactManager().matchHandles();
     Logger.info("Finished fetching chats (${_chats.length}).", tag: "ChatBloc");

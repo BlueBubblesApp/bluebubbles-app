@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';
@@ -332,9 +333,11 @@ class AboutPanel extends StatelessWidget {
                       showDialog<void>(
                         context: context,
                         builder: (BuildContext context) {
-                          return FutureBuilder(
+                          return FutureBuilder<PackageInfo>(
                               future: PackageInfo.fromPlatform(),
-                              builder: (BuildContext context, AsyncSnapshot snapshot) {
+                              builder: (BuildContext context, AsyncSnapshot<PackageInfo> snapshot) {
+                                print(snapshot.data?.buildNumber);
+
                                 return AlertDialog(
                                   contentPadding: EdgeInsets.only(
                                     top: 24,
@@ -375,12 +378,12 @@ class AboutPanel extends StatelessWidget {
                                                   ),
                                                   Text(
                                                       "Version Number: " +
-                                                          (snapshot.hasData ? snapshot.data.version : "N/A"),
+                                                          (snapshot.hasData ? snapshot.data!.version : "N/A"),
                                                       style: context.textTheme.subtitle1!),
                                                   Text(
                                                       "Version Code: " +
                                                           (snapshot.hasData
-                                                              ? snapshot.data.buildNumber.toString().lastChars(4)
+                                                              ? snapshot.data!.buildNumber.lastChars(min(4, snapshot.data!.buildNumber.length))
                                                               : "N/A"),
                                                       style: context.textTheme.subtitle1!),
                                                 ],
@@ -400,7 +403,7 @@ class AboutPanel extends StatelessWidget {
                                             data: context.theme,
                                             child: LicensePage(
                                               applicationName: "BlueBubbles",
-                                              applicationVersion: snapshot.hasData ? snapshot.data.version : "",
+                                              applicationVersion: snapshot.hasData ? snapshot.data!.version : "",
                                               applicationIcon: Image.asset(
                                                 "assets/icon/icon.png",
                                                 width: 30,

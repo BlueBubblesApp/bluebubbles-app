@@ -29,7 +29,10 @@ import 'message.dart';
 String getFullChatTitle(Chat _chat) {
   String? title = "";
   if (isNullOrEmpty(_chat.displayName)!) {
-    Chat chat = _chat.getParticipants();
+    Chat chat = _chat;
+    if (isNullOrEmpty(chat.participants)!) {
+      chat = _chat.getParticipants();
+    }
 
     //todo - do we really need this here?
     /*// If there are no participants, try to get them from the server
@@ -161,6 +164,33 @@ Future<List<Message>> addMessagesIsolate(List<dynamic> stuff) async {
       m.associatedMessages = associatedMessages.where((e) => e.associatedMessageGuid == m.guid).toList();
     }
     return newMessages;
+  });
+}
+
+Future<List<Chat>> getChatsIsolate(String storeRef) async {
+  store = Store.fromReference(getObjectBoxModel(), base64.decode(storeRef!).buffer.asByteData());
+  attachmentBox = store.box<Attachment>();
+  chatBox = store.box<Chat>();
+  handleBox = store.box<Handle>();
+  messageBox = store.box<Message>();
+  amJoinBox = store.box<AttachmentMessageJoin>();
+  chJoinBox = store.box<ChatHandleJoin>();
+  cmJoinBox = store.box<ChatMessageJoin>();
+  return store.runInTransaction(TxMode.read, () {
+    final query = (chatBox.query()..order(Chat_.isPinned, flags: Order.descending)..order(Chat_.latestMessageDate, flags: Order.descending)).build();
+    final chats = query.find();
+    query.close();
+    final handleIdQuery = chJoinBox.query(ChatHandleJoin_.chatId.oneOf(chats.map((e) => e.id!).toList())).build();
+    final chJoins = handleIdQuery.find();
+    final handleIds = handleIdQuery.property(ChatHandleJoin_.handleId).find();
+    handleIdQuery.close();
+    final handles = handleBox.getMany(handleIds.toList(), growableResult: true)..retainWhere((e) => e != null);
+    final nonNullHandles = List<Handle>.from(handles);
+    for (Chat c in chats) {
+      final eligibleHandles = chJoins.where((element) => element.chatId == c.id).map((e) => e.handleId);
+      c.participants = nonNullHandles.where((element) => eligibleHandles.contains(element.id)).toList();
+    }
+    return chats;
   });
 }
 
@@ -798,15 +828,10 @@ class Chat {
     return null;
   }
 
-  static List<Chat> getChats({int limit = 15, int offset = 0}) {
+  static Future<List<Chat>> getChats() async {
     if (kIsWeb) throw Exception("Use socket to get chats on Web!");
-    final query = (chatBox.query()..order(Chat_.isPinned, flags: Order.descending)..order(Chat_.latestMessageDate, flags: Order.descending)).build();
-    query
-      ..limit = limit
-      ..offset = offset;
-    final chats = query.find();
-    query.close();
-    return chats;
+
+    return await compute(getChatsIsolate, prefs.getString("objectbox-reference")!);
   }
 
   bool isGroup() {
