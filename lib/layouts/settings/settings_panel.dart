@@ -1546,7 +1546,7 @@ class SettingsSlider extends StatelessWidget {
         tileColor: backgroundColor,
         leading: leading,
         trailing: Text(value),
-        title: SettingsManager().settings.skin.value == Skins.iOS
+        title: SettingsManager().settings.skin.value == Skins.iOS && !kIsDesktop
             ? CupertinoSlider(
                 activeColor: Theme.of(context).primaryColor,
                 value: startingVal,

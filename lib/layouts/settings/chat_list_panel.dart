@@ -280,7 +280,7 @@ class ChatListPanel extends StatelessWidget {
                       return SettingsSlider(
                         min: 2,
                         max: 4,
-                        divisions: 3,
+                        divisions: 2,
                         update: (double val) {
                           SettingsManager().settings.pinRowsPortrait.value = val.toInt();
                           saveSettings();
