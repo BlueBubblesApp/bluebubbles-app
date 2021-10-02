@@ -73,7 +73,46 @@ String getFullChatTitle(Chat _chat) {
   return title!;
 }
 
-Future<List<Message>> messagesIsolate(List<dynamic> stuff) async {
+Future<List<Attachment>> getAttachmentsIsolate(List<dynamic> stuff) async {
+  int chatId = stuff[0];
+  String? storeRef = stuff[1];
+  store = Store.fromReference(getObjectBoxModel(), base64.decode(storeRef!).buffer.asByteData());
+  attachmentBox = store.box<Attachment>();
+  chatBox = store.box<Chat>();
+  handleBox = store.box<Handle>();
+  messageBox = store.box<Message>();
+  amJoinBox = store.box<AttachmentMessageJoin>();
+  chJoinBox = store.box<ChatHandleJoin>();
+  cmJoinBox = store.box<ChatMessageJoin>();
+  return store.runInTransaction(TxMode.read, () {
+    final cmJoinQuery = cmJoinBox.query(ChatMessageJoin_.chatId.equals(chatId)).build();
+    final cmJoinValues = cmJoinQuery.property(ChatMessageJoin_.messageId).find();
+    cmJoinQuery.close();
+    final amJoinQuery = amJoinBox.query(AttachmentMessageJoin_.messageId.oneOf(cmJoinValues)).build();
+    final amJoinValues = amJoinQuery.find();
+    amJoinQuery.close();
+    final attachmentIds = amJoinValues.map((e) => e.attachmentId).toList();
+    final messageIds = amJoinValues.map((e) => e.messageId).toList();
+    final query2 = (messageBox.query(Message_.id.oneOf(messageIds))..order(Message_.dateCreated, flags: Order.descending)).build();
+    final messages = query2.find();
+    final query = attachmentBox.query(Attachment_.id.oneOf(attachmentIds)).build();
+    final attachments = query.find()..removeWhere((element) => element.mimeType == null);
+    final actualAttachments = <Attachment>[];
+    for (Message m in messages) {
+      final attachmentIdsForMessage = amJoinValues.where((element) => element.messageId == m.id).map((e) => e.attachmentId).toList();
+      m.attachments = attachments.where((element) => attachmentIdsForMessage.contains(element.id)).toList();
+      actualAttachments.addAll((m.attachments ?? []).map((e) => e!));
+    }
+    if (actualAttachments.isNotEmpty) {
+      final guids = actualAttachments.map((e) => e.guid).toSet();
+      actualAttachments.retainWhere((element) => guids.remove(element.guid));
+    }
+    query.close();
+    return actualAttachments;
+  });
+}
+
+Future<List<Message>> getMessagesIsolate(List<dynamic> stuff) async {
   int chatId = stuff[0];
   int offset = stuff[1];
   int limit = stuff[2];
@@ -635,34 +674,10 @@ class Chat {
     return chatBox.count();
   }
 
-  static List<Attachment> getAttachments(Chat chat) {
-    if (kIsWeb || chat.id == null) return [];
-    return store.runInTransaction(TxMode.read, () {
-      final cmJoinQuery = cmJoinBox.query(ChatMessageJoin_.chatId.equals(chat.id!)).build();
-      final cmJoinValues = cmJoinQuery.property(ChatMessageJoin_.messageId).find();
-      cmJoinQuery.close();
-      final amJoinQuery = amJoinBox.query(AttachmentMessageJoin_.messageId.oneOf(cmJoinValues)).build();
-      final amJoinValues = amJoinQuery.find();
-      amJoinQuery.close();
-      final attachmentIds = amJoinValues.map((e) => e.attachmentId).toList();
-      final messageIds = amJoinValues.map((e) => e.messageId).toList();
-      final query2 = (messageBox.query(Message_.id.oneOf(messageIds))..order(Message_.dateCreated, flags: Order.descending)).build();
-      final messages = query2.find();
-      final query = attachmentBox.query(Attachment_.id.oneOf(attachmentIds)).build();
-      final attachments = query.find()..removeWhere((element) => element.mimeType == null);
-      final actualAttachments = <Attachment>[];
-      for (Message m in messages) {
-        final attachmentIdsForMessage = amJoinValues.where((element) => element.messageId == m.id).map((e) => e.attachmentId).toList();
-        m.attachments = attachments.where((element) => attachmentIdsForMessage.contains(element.id)).toList();
-        actualAttachments.addAll((m.attachments ?? []).map((e) => e!));
-      }
-      if (actualAttachments.isNotEmpty) {
-        final guids = actualAttachments.map((e) => e.guid).toSet();
-        actualAttachments.retainWhere((element) => guids.remove(element.guid));
-      }
-      query.close();
-      return actualAttachments;
-    });
+  Future<List<Attachment>> getAttachmentsAsync() async {
+    if (kIsWeb || id == null) return [];
+
+    return await compute(getAttachmentsIsolate, [id!, prefs.getString("objectbox-reference")]);
   }
 
   static List<Message> getMessages(Chat chat, {int offset = 0, int limit = 25, bool includeDeleted = false, bool getDetails = false}) {
@@ -717,7 +732,7 @@ class Chat {
   static Future<List<Message>> getMessagesAsync(Chat chat, {int offset = 0, int limit = 25, bool includeDeleted = false}) async {
     if (kIsWeb || chat.id == null) return [];
 
-    return await compute(messagesIsolate, [chat.id, offset, limit, includeDeleted, prefs.getString("objectbox-reference")]);
+    return await compute(getMessagesIsolate, [chat.id, offset, limit, includeDeleted, prefs.getString("objectbox-reference")]);
   }
 
   Chat getParticipants() {

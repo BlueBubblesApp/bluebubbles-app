@@ -149,11 +149,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     SocketManager().removeChatNotification(chat!);
   }
 
-  void initCurrentChat(Chat chat) {
+  void initCurrentChat(Chat chat) async {
     currentChat = CurrentChat.getCurrentChat(chat);
     currentChat!.init();
-    // todo make async version
-    currentChat!.updateChatAttachments();
+    await currentChat!.updateChatAttachments();
     currentChat!.stream.listen((event) {
       if (mounted) setState(() {});
     });

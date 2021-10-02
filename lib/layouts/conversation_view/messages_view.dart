@@ -256,7 +256,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
       currentChat!.getAttachmentsForMessage(event.message);
 
       if (event.message!.hasAttachments) {
-        currentChat!.updateChatAttachments();
+        await currentChat!.updateChatAttachments();
         if (mounted) await rebuild(this);
       }
 

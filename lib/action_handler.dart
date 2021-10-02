@@ -37,8 +37,7 @@ class ActionHandler {
   /// ```dart
   /// sendMessage(chatObject, 'Hello world!')
   /// ```
-  static Future<void> sendMessage(Chat chat, String text,
-      {MessageBloc? messageBloc, List<Attachment> attachments = const []}) async {
+  static Future<void> sendMessage(Chat chat, String text, {List<Attachment> attachments = const []}) async {
     if (isNullOrEmpty(text, trimString: true)!) return;
 
     if ((await SettingsManager().getMacOSVersion() ?? 10) < 11) {
