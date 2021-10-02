@@ -21,7 +21,7 @@ class AttachmentPicked extends StatefulWidget {
 
 class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepAliveClientMixin {
   Uint8List? image;
-  late String path;
+  String? path;
 
   @override
   void initState() {
@@ -31,7 +31,7 @@ class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepA
 
   Future<void> load() async {
     path = (await widget.data.file)!.path;
-    final file = File(path);
+    final file = File(path!);
     if (widget.data.mimeType != null && widget.data.mimeType!.startsWith("video/")) {
       image = await AttachmentHelper.getVideoThumbnail(file.path, useCachedFile: false);
       if (mounted) setState(() {});

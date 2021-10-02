@@ -527,13 +527,17 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
               right: 5,
               curve: Curves.easeIn,
               onEnd: () {
-                setState(() {
-                  tween = Tween<double>(begin: 1, end: 0);
-                  controller = CustomAnimationControl.stop;
-                  message = null;
-                  existingText = "";
-                  existingAttachments = [];
-                });
+                if (message != null) {
+                  setState(() {
+                    tween = Tween<double>(begin: 1, end: 0);
+                    controller = CustomAnimationControl.stop;
+                    message = null;
+                    isCreator = false;
+                    wasCreator = true;
+                    existingText = "";
+                    existingAttachments = [];
+                  });
+                }
               },
               child: Visibility(
                 visible: message != null,

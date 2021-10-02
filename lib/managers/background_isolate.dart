@@ -88,14 +88,9 @@ callbackHandler() async {
       }
     }
   }
-  debugPrint("Init settings");
   await SettingsManager().init();
-  debugPrint("Get saved settings");
   await SettingsManager().getSavedSettings(headless: true);
-  debugPrint("Get contacts");
   await ContactManager().getContacts(headless: true);
-  debugPrint("Init methodchannel");
   MethodChannelInterface().init(customChannel: _backgroundChannel);
-  debugPrint("Refresh connection");
   await SocketManager().refreshConnection(connectToSocket: false);
 }
