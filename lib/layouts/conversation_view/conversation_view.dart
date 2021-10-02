@@ -531,8 +531,6 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                   tween = Tween<double>(begin: 1, end: 0);
                   controller = CustomAnimationControl.stop;
                   message = null;
-                  isCreator = false;
-                  wasCreator = true;
                   existingText = "";
                   existingAttachments = [];
                 });
