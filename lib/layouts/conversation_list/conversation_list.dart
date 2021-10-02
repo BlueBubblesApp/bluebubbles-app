@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:bluebubbles/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';

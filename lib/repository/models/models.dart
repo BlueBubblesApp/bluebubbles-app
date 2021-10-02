@@ -35,8 +35,8 @@ import 'dart:typed_data';
 import 'package:fast_contacts/fast_contacts.dart';
 import 'package:get/get.dart';
 import 'package:image_size_getter/image_size_getter.dart';
+//ignore: implementation_imports
 import 'package:image_size_getter/src/utils/file_utils.dart';
-import 'package:universal_io/io.dart';
 
 class Contact {
   Contact({

@@ -7,7 +7,6 @@ import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:chewie/chewie.dart';
 import 'package:get/get.dart';

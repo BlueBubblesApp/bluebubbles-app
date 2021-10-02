@@ -8,7 +8,6 @@ import 'package:bluebubbles/repository/models/io/join_tables.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
-import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
@@ -73,7 +72,9 @@ String getFullChatTitle(Chat _chat) {
   return title!;
 }
 
+/// Async method to get attachments from objectbox
 Future<List<Attachment>> getAttachmentsIsolate(List<dynamic> stuff) async {
+  /// Pull args from input and create new instances of store and boxes
   int chatId = stuff[0];
   String? storeRef = stuff[1];
   store = Store.fromReference(getObjectBoxModel(), base64.decode(storeRef!).buffer.asByteData());
@@ -85,34 +86,45 @@ Future<List<Attachment>> getAttachmentsIsolate(List<dynamic> stuff) async {
   chJoinBox = store.box<ChatHandleJoin>();
   cmJoinBox = store.box<ChatMessageJoin>();
   return store.runInTransaction(TxMode.read, () {
+    /// Get the [ChatMessageJoin] objects matching the [chatId], and then find
+    /// the message IDs
     final cmJoinQuery = cmJoinBox.query(ChatMessageJoin_.chatId.equals(chatId)).build();
     final cmJoinValues = cmJoinQuery.property(ChatMessageJoin_.messageId).find();
     cmJoinQuery.close();
+    /// Get the [AttachmentMessageJoin] objects matching the message IDs, and then find
+    /// the attachment IDs
     final amJoinQuery = amJoinBox.query(AttachmentMessageJoin_.messageId.oneOf(cmJoinValues)).build();
     final amJoinValues = amJoinQuery.find();
     amJoinQuery.close();
     final attachmentIds = amJoinValues.map((e) => e.attachmentId).toList();
     final messageIds = amJoinValues.map((e) => e.messageId).toList();
+    /// Query the [messageBox] for all the message IDs and order by date
+    /// descending
     final query2 = (messageBox.query(Message_.id.oneOf(messageIds))..order(Message_.dateCreated, flags: Order.descending)).build();
     final messages = query2.find();
-    final query = attachmentBox.query(Attachment_.id.oneOf(attachmentIds)).build();
-    final attachments = query.find()..removeWhere((element) => element.mimeType == null);
+    query2.close();
+    /// Query the [attachmentBox] for all the attachment IDs and remove where
+    /// [mimeType] is null
+    final attachments = attachmentBox.getMany(attachmentIds)..removeWhere((element) => element == null || element.mimeType == null);
     final actualAttachments = <Attachment>[];
+    /// Match the attachments to their messages
     for (Message m in messages) {
       final attachmentIdsForMessage = amJoinValues.where((element) => element.messageId == m.id).map((e) => e.attachmentId).toList();
-      m.attachments = attachments.where((element) => attachmentIdsForMessage.contains(element.id)).toList();
+      m.attachments = attachments.where((element) => attachmentIdsForMessage.contains(element!.id)).toList();
       actualAttachments.addAll((m.attachments ?? []).map((e) => e!));
     }
+    /// Remove duplicate attachments from the list, just in case
     if (actualAttachments.isNotEmpty) {
       final guids = actualAttachments.map((e) => e.guid).toSet();
       actualAttachments.retainWhere((element) => guids.remove(element.guid));
     }
-    query.close();
     return actualAttachments;
   });
 }
 
+/// Async method to get messages from objectbox
 Future<List<Message>> getMessagesIsolate(List<dynamic> stuff) async {
+  /// Pull args from input and create new instances of store and boxes
   int chatId = stuff[0];
   int offset = stuff[1];
   int limit = stuff[2];
@@ -125,8 +137,12 @@ Future<List<Message>> getMessagesIsolate(List<dynamic> stuff) async {
   final cmJoinBox = store.box<ChatMessageJoin>();
   final amJoinBox = store.box<AttachmentMessageJoin>();
   return store.runInTransaction(TxMode.read, () {
-    // fetch messages
-    final messageIds = cmJoinBox.getAll().where((element) => element.chatId == chatId).map((e) => e.messageId).toList();
+    /// Get the message IDs for the chat by querying the [cmJoinBox]
+    final cmJoinQuery = cmJoinBox.query(ChatMessageJoin_.chatId.equals(chatId)).build();
+    final messageIds = cmJoinQuery.property(ChatMessageJoin_.messageId).find();
+    cmJoinQuery.close();
+    /// Query [messsageBox] for the messages, including deleted when necessary
+    /// and ordering in descending order
     final query = (messageBox.query(Message_.id.oneOf(messageIds)
         .and(includeDeleted ? Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull()) : Message_.dateDeleted.isNull()))
       ..order(Message_.dateCreated, flags: Order.descending)).build();
@@ -135,7 +151,7 @@ Future<List<Message>> getMessagesIsolate(List<dynamic> stuff) async {
       ..offset = offset;
     final messages = query.find();
     query.close();
-    // fetch and match handles
+    /// Fetch and match handles
     final handles = handleBox.getMany(messages.map((e) => e.handleId ?? 0).toList()..removeWhere((element) => element == 0));
     for (int i = 0; i < messages.length; i++) {
       Message message = messages[i];
@@ -149,7 +165,7 @@ Future<List<Message>> getMessagesIsolate(List<dynamic> stuff) async {
         }
       }
     }
-    // fetch attachments and reactions
+    // Fetch attachments and reactions
     final amJoinQuery = amJoinBox.query(AttachmentMessageJoin_.messageId.oneOf(messageIds)).build();
     final amJoinValues = amJoinQuery.find();
     final attachmentIds = amJoinValues.map((e) => e.attachmentId).toSet().toList();
@@ -169,7 +185,9 @@ Future<List<Message>> getMessagesIsolate(List<dynamic> stuff) async {
   });
 }
 
+/// Async method to get messages from objectbox
 Future<List<Message>> addMessagesIsolate(List<dynamic> stuff) async {
+  /// Pull args from input and create new instances of store and boxes
   List<Message> messages = stuff[0].map((e) => Message.fromMap(e)).toList().cast<Message>();
   String? storeRef = stuff[1];
   store = Store.fromReference(getObjectBoxModel(), base64.decode(storeRef!).buffer.asByteData());
@@ -180,23 +198,30 @@ Future<List<Message>> addMessagesIsolate(List<dynamic> stuff) async {
   amJoinBox = store.box<AttachmentMessageJoin>();
   chJoinBox = store.box<ChatHandleJoin>();
   cmJoinBox = store.box<ChatMessageJoin>();
+  /// Save the new messages and their attachments in a write transaction
   final newMessages = store.runInTransaction(TxMode.write, () {
     List<Message> newMessages = Message.bulkSave(messages);
     Attachment.bulkSave(Map.fromIterables(newMessages, newMessages.map((e) => (e.attachments ?? []).map((e) => e!).toList())));
     return newMessages;
   });
+  /// fetch attachments and reactions in a read transaction
   return store.runInTransaction(TxMode.read, () {
-    // fetch attachments and reactions
+    /// Query the [amJoinBox] for the attachment IDs matching the message IDs
     final amJoinQuery = amJoinBox.query(AttachmentMessageJoin_.messageId.oneOf(newMessages.map((e) => e.id!).toList())).build();
     final amJoinValues = amJoinQuery.find();
     final attachmentIds = amJoinValues.map((e) => e.attachmentId).toSet().toList();
     amJoinQuery.close();
+    /// Query the [attachmentBox] for all the attachment IDs
     final attachments = attachmentBox.getMany(attachmentIds, growableResult: true)..removeWhere((element) => element == null);
     final messageGuids = newMessages.map((e) => e.guid!).toList();
+    /// Query the [messageBox] for associated messages (reactions) matching the
+    /// message IDs
     final associatedMessagesQuery = (messageBox.query(Message_.associatedMessageGuid.oneOf(messageGuids))..order(Message_.originalROWID)).build();
     List<Message> associatedMessages = associatedMessagesQuery.find();
     associatedMessagesQuery.close();
     associatedMessages = MessageHelper.normalizedAssociatedMessages(associatedMessages);
+    /// Assign the relevant attachments and associated messages to the original
+    /// messages
     for (Message m in newMessages) {
       final attachmentIdsForMessage = amJoinValues.where((element) => element.messageId == m.id).map((e) => e.attachmentId).toList();
       m.attachments = attachments.where((element) => attachmentIdsForMessage.contains(element!.id)).toList();
@@ -206,7 +231,9 @@ Future<List<Message>> addMessagesIsolate(List<dynamic> stuff) async {
   });
 }
 
+/// Async method to get chats from objectbox
 Future<List<Chat>> getChatsIsolate(List<dynamic> stuff) async {
+  /// Pull args from input and create new instances of store and boxes
   store = Store.fromReference(getObjectBoxModel(), base64.decode(stuff[2]).buffer.asByteData());
   attachmentBox = store.box<Attachment>();
   chatBox = store.box<Chat>();
@@ -216,18 +243,24 @@ Future<List<Chat>> getChatsIsolate(List<dynamic> stuff) async {
   chJoinBox = store.box<ChatHandleJoin>();
   cmJoinBox = store.box<ChatMessageJoin>();
   return store.runInTransaction(TxMode.read, () {
+    /// Query the [chatBox] for chats with limit and offset, prioritize pinned
+    /// chats and order by latest message date
     final query = (chatBox.query()..order(Chat_.isPinned, flags: Order.descending)..order(Chat_.latestMessageDate, flags: Order.descending)).build();
     query
       ..limit = stuff[0]
       ..offset = stuff[1];
     final chats = query.find();
     query.close();
+    /// Query the [chJoinBox] to get the handle IDs associated with the chats
     final handleIdQuery = chJoinBox.query(ChatHandleJoin_.chatId.oneOf(chats.map((e) => e.id!).toList())).build();
     final chJoins = handleIdQuery.find();
     final handleIds = handleIdQuery.property(ChatHandleJoin_.handleId).find();
     handleIdQuery.close();
+    /// Get the handles themselves
     final handles = handleBox.getMany(handleIds.toList(), growableResult: true)..retainWhere((e) => e != null);
     final nonNullHandles = List<Handle>.from(handles);
+    /// Assign the handles to the chats, deduplicate, and get fake participants
+    /// for redacted mode
     for (Chat c in chats) {
       final eligibleHandles = chJoins.where((element) => element.chatId == c.id).map((e) => e.handleId);
       c.participants = nonNullHandles.where((element) => eligibleHandles.contains(element.id)).toList();
@@ -351,11 +384,14 @@ class Chat {
     return data;
   }
 
+  /// Save a chat to the DB
   Chat save() {
     if (kIsWeb) return this;
     store.runInTransaction(TxMode.write, () {
+      /// Find an existing, and update the ID to the existing ID if necessary
       Chat? existing = Chat.findOne(guid: guid);
       id = existing?.id ?? id;
+      /// Save the chat and add the participants
       try {
         id = chatBox.put(this);
       } on UniqueViolationException catch (_) {}
@@ -367,6 +403,7 @@ class Chat {
     return this;
   }
 
+  /// Change a chat's display name
   Chat changeName(String? name) {
     if (kIsWeb) {
       displayName = name;
@@ -377,20 +414,25 @@ class Chat {
     return this;
   }
 
+  /// Get a chat's title
   String? getTitle() {
     title = getFullChatTitle(this);
     return title;
   }
 
+  /// Get the latest message date as text
   String getDateText() {
     return buildDate(latestMessageDate);
   }
 
+  /// Return whether or not the notification should be muted
   bool shouldMuteNotification(Message? message) {
+    /// Filter unknown senders & sender doesn't have a contact, then don't notify
     if (SettingsManager().settings.filterUnknownSenders.value
         && participants.length == 1
         && ContactManager().handleToContact[participants[0].address] == null) {
       return true;
+    /// Check if global text detection is on and notify accordingly
     } else if (SettingsManager().settings.globalTextDetection.value.isNotEmpty) {
       List<String> text = SettingsManager().settings.globalTextDetection.value.split(",");
       for (String s in text) {
@@ -399,11 +441,14 @@ class Chat {
         }
       }
       return true;
+    /// Check if muted
     } else if (muteType == "mute") {
       return true;
+    /// Check if the sender is muted
     } else if (muteType == "mute_individuals") {
       List<String> individuals = muteArgs!.split(",");
       return individuals.contains(message?.handle?.address ?? "");
+    /// Check if the chat is temporarily muted
     } else if (muteType == "temporary_mute") {
       DateTime time = DateTime.parse(muteArgs!);
       bool shouldMute = DateTime.now().toLocal().difference(time).inSeconds.isNegative;
@@ -414,6 +459,7 @@ class Chat {
         save();
       }
       return shouldMute;
+    /// Check if the chat has specific text detection and notify accordingly
     } else if (muteType == "text_detection") {
       List<String> text = muteArgs!.split(",");
       for (String s in text) {
@@ -423,14 +469,18 @@ class Chat {
       }
       return true;
     }
+    /// If reaction and notify reactions off, then don't notify, otherwise notify
     return !SettingsManager().settings.notifyReactions.value &&
         ReactionTypes.toList().contains(message?.associatedMessageType ?? "");
   }
 
+  /// Delete a chat locally
   static void deleteChat(Chat chat) {
     if (kIsWeb) return;
     List<Message> messages = Chat.getMessages(chat);
     store.runInTransaction(TxMode.write, () {
+      /// Remove all references of chat - from chatBox, messageBox,
+      /// chJoinBox, and cmJoinBox
       chatBox.remove(chat.id!);
       messageBox.removeMany(messages.map((e) => e.id!).toList());
       final query = chJoinBox.query(ChatHandleJoin_.chatId.equals(chat.id!)).build();
@@ -564,6 +614,8 @@ class Chat {
     return this;
   }
 
+  /// Add a lot of messages for the single chat to avoid running [addMessage]
+  /// in a loop
   Future<List<Message>> bulkAddMessages(List<Message> messages, {bool changeUnreadStatus = true, bool checkForMessageText = true}) async {
     for (Message m in messages) {
       // If this is a message preview and we don't already have metadata for this, get it
@@ -680,6 +732,8 @@ class Chat {
     return await compute(getAttachmentsIsolate, [id!, prefs.getString("objectbox-reference")]);
   }
 
+  /// Gets messages synchronously - DO NOT use in performance-sensitive areas,
+  /// otherwise prefer [getMessagesAsync]
   static List<Message> getMessages(Chat chat, {int offset = 0, int limit = 25, bool includeDeleted = false, bool getDetails = false}) {
     if (kIsWeb || chat.id == null) return [];
     return store.runInTransaction(TxMode.read, () {
@@ -729,6 +783,7 @@ class Chat {
     });
   }
 
+  /// Fetch messages asynchronously
   static Future<List<Message>> getMessagesAsync(Chat chat, {int offset = 0, int limit = 25, bool includeDeleted = false}) async {
     if (kIsWeb || chat.id == null) return [];
 
@@ -738,13 +793,16 @@ class Chat {
   Chat getParticipants() {
     if (kIsWeb || id == null) return this;
     store.runInTransaction(TxMode.read, () {
+      /// Query the [chJoinBox] for matching handles
       final handleIdQuery = chJoinBox.query(ChatHandleJoin_.chatId.equals(id!)).build();
       final handleIds = handleIdQuery.property(ChatHandleJoin_.handleId).find();
       handleIdQuery.close();
+      /// Find the handles themselves
       final handles = handleBox.getMany(handleIds.toList(), growableResult: true)..retainWhere((e) => e != null);
       final nonNullHandles = List<Handle>.from(handles);
       participants = nonNullHandles;
     });
+    /// Deduplicate and generate fake participants for redacted mode
     _deduplicateParticipants();
     fakeParticipants = participants.map((p) => ContactManager().handleToFakeName[p.address] ?? "Unknown").toList();
     return this;
@@ -823,6 +881,7 @@ class Chat {
     return this;
   }
 
+  /// Finds a chat - only use this method on Flutter Web!!!
   static Future<Chat?> findOneWeb({String? guid, String? chatIdentifier}) async {
     await ChatBloc().chatRequest!.future;
     if (guid != null) {
@@ -833,6 +892,8 @@ class Chat {
     return null;
   }
 
+  /// Finds a chat - DO NOT use this method on Flutter Web!! Prefer [findOneWeb]
+  /// instead!!
   static Chat? findOne({String? guid, String? chatIdentifier}) {
     if (guid != null) {
       final query = chatBox.query(Chat_.guid.equals(guid)).build();
@@ -864,13 +925,12 @@ class Chat {
       final messageIdQuery = cmJoinBox.query(ChatMessageJoin_.chatId.equals(id!)).build();
       final messageIds = messageIdQuery.property(ChatMessageJoin_.messageId).find();
       messageIdQuery.close();
-      final messagesQuery = messageBox.query(Message_.id.oneOf(messageIds)).build();
-      final messages = messagesQuery.find();
-      messagesQuery.close();
-      for (Message element in messages) {
+      final messages = messageBox.getMany(messageIds)..removeWhere((e) => e == null);
+      final nonNullMessages = List<Message>.from(messages);
+      for (Message element in nonNullMessages) {
         element.dateDeleted = DateTime.now().toUtc();
       }
-      messageBox.putMany(messages);
+      messageBox.putMany(nonNullMessages);
     });
   }
 

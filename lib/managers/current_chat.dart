@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/message_marker.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -220,7 +219,7 @@ class CurrentChat {
 
   Future<void> preloadMessageAttachmentsAsync({List<Message?>? specificMessages}) async {
     List<Message?> messages =
-        specificMessages ?? Chat.getMessages(chat, limit: 25);
+        specificMessages ?? await Chat.getMessagesAsync(chat, limit: 25);
     messageAttachments = await Message.fetchAttachmentsByMessagesAsync(messages);
   }
 
