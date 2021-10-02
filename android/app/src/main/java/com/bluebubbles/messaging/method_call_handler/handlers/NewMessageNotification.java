@@ -75,6 +75,7 @@ public class NewMessageNotification implements Handler {
 
         // Message stuff
         String messageText = (String) call.argument("messageText");
+        String messageGuid = (String) call.argument("messageGuid");
         Long messageDate = (Long) call.argument("messageDate");
         Boolean messageIsFromMe = (Boolean) call.argument("messageIsFromMe");
 
@@ -86,15 +87,25 @@ public class NewMessageNotification implements Handler {
         // Find any notifications that already exist for the chat
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
         Notification existingNotification = null;
-        int existingNotificationId = notificationId;
+        Integer existingNotificationId = notificationId;
+        Boolean shouldReturn = false;
         for (StatusBarNotification notification : notificationManager.getActiveNotifications()) {
             String existingChatGuid = notification.getNotification().extras.getString("chatGuid");
             if (existingChatGuid == null) continue;
             if (existingChatGuid.equals(chatGuid)) {
                 existingNotification = notification.getNotification();
                 existingNotificationId = notification.getId();
+                String existingMessageGuid = notification.getNotification().extras.getString("messageGuid");
+                if (existingMessageGuid != null && existingMessageGuid.equals(messageGuid)) {
+                    shouldReturn = true;
+                }
                 break;
             }
+        }
+
+        // if a notif with the same message guid exists, don't post a new one
+        if (shouldReturn == true) {
+            return;
         }
 
         // Build a "Person" for the sender
@@ -157,6 +168,7 @@ public class NewMessageNotification implements Handler {
         // Create a bundle with some extra information in it
         Bundle extras = new Bundle();
         extras.putCharSequence("chatGuid", chatGuid);
+        extras.putCharSequence("messageGuid", messageGuid);
 
         // Create intent for opening the conversation in the app
         PendingIntent openIntent = PendingIntent.getActivity(
@@ -165,6 +177,7 @@ public class NewMessageNotification implements Handler {
             new Intent(context, MainActivity.class)
                 .putExtra("id", existingNotificationId)
                 .putExtra("chatGuid", chatGuid)
+                .putExtra("messageGuid", messageGuid)
                 .putExtra("bubble", false)
                 .setType("NotificationOpen"),
             Intent.FILL_IN_ACTION);
@@ -187,6 +200,7 @@ public class NewMessageNotification implements Handler {
                 new Intent(context, ReplyReceiver.class)
                         .putExtra("id", existingNotificationId)
                         .putExtra("chatGuid", chatGuid)
+                        .putExtra("messageGuid", messageGuid)
                         .putExtra("bubble", false)
                         .setType("swipeAway"),
                 PendingIntent.FLAG_UPDATE_CURRENT);
@@ -198,6 +212,7 @@ public class NewMessageNotification implements Handler {
             new Intent(context, ReplyReceiver.class)
                 .putExtra("id", existingNotificationId)
                 .putExtra("chatGuid", chatGuid)
+                .putExtra("messageGuid", messageGuid)
                 .putExtra("bubble", false)
                 .setType("markAsRead"),
             PendingIntent.FLAG_UPDATE_CURRENT);
@@ -206,6 +221,7 @@ public class NewMessageNotification implements Handler {
         Intent intent = new Intent(context, ReplyReceiver.class)
             .putExtra("id", existingNotificationId)
             .putExtra("chatGuid", chatGuid)
+            .putExtra("messageGuid", messageGuid)
             .putExtra("channelName", channelName)
             .putExtra("channelID", channelId)
             .putExtra("bubble", false)
