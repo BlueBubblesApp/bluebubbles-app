@@ -218,7 +218,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     if (!isNullOrEmpty(event.messages)!) {
       event.messages = event.messages.where((element) => element.dateDeleted == null).toList();
     }
-
+    int originalMessageLength = _messages.length;
     if (event.type == MessageBlocEventType.insert && mounted) {
       if (LifeCycleManager().isAlive && !event.outGoing) {
         NotificationManager().switchChat(CurrentChat.of(context)?.chat);
@@ -257,7 +257,6 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
 
       if (event.message!.hasAttachments) {
         await currentChat!.updateChatAttachments();
-        if (mounted) await rebuild(this);
       }
 
       if (isNewMessage && showSmartReplies) {
@@ -271,7 +270,6 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
         }
       }
     } else {
-      int originalMessageLength = _messages.length;
       _messages = event.messages;
       /*for (Message message in _messages) {
         currentChat?.getAttachmentsForMessage(message);
@@ -327,8 +325,12 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
             }
           }
         }
+      } else {
+        await rebuild(this);
       }
     }
+
+    if (originalMessageLength == 0) await rebuild(this);
   }
 
   /// All message update events are handled within the message widgets, to prevent top level setstates

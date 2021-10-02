@@ -42,13 +42,9 @@ callbackHandler() async {
     final sqlitePath = join(documentsDirectory.path, "chat.db");
 
     Future<void> initStore({bool saveThemes = false}) async {
-      if (prefs.getString("objectbox-reference") == null) {
-        debugPrint("Opening ObjectBox from Path");
-        store = await openStore(directory: (await getApplicationDocumentsDirectory()).path + '/objectbox');
-      } else {
-        debugPrint("Opening ObjectBox from Reference");
-        store = Store.fromReference(getObjectBoxModel(), base64.decode(prefs.getString("objectbox-reference")!).buffer.asByteData());
-      }
+      debugPrint("Opening ObjectBox store from path");
+      store = await openStore(directory: (await getApplicationDocumentsDirectory()).path + '/objectbox');
+      debugPrint("Opening boxes");
       attachmentBox = store.box<Attachment>();
       chatBox = store.box<Chat>();
       fcmDataBox = store.box<FCMData>();
@@ -92,9 +88,14 @@ callbackHandler() async {
       }
     }
   }
+  debugPrint("Init settings");
   await SettingsManager().init();
+  debugPrint("Get saved settings");
   await SettingsManager().getSavedSettings(headless: true);
+  debugPrint("Get contacts");
   await ContactManager().getContacts(headless: true);
+  debugPrint("Init methodchannel");
   MethodChannelInterface().init(customChannel: _backgroundChannel);
+  debugPrint("Refresh connection");
   await SocketManager().refreshConnection(connectToSocket: false);
 }
