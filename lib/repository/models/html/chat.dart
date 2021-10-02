@@ -407,10 +407,14 @@ class Chat {
   }
 
   static int? count() {
-    return 0;
+    return null;
   }
 
   static List<Attachment> getAttachments(Chat chat, {int offset = 0, int limit = 25}) {
+    return [];
+  }
+
+  Future<List<Attachment>> getAttachmentsAsync() async {
     return [];
   }
 

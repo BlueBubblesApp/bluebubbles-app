@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -156,7 +157,7 @@ class ContactManager {
 
   Future<void> matchHandles() async {
     // Match handles to contacts
-    List<Handle> handles = Handle.find();
+    List<Handle> handles = kIsWeb ? ChatBloc().cachedHandles : Handle.find();
     for (Handle handle in handles) {
       // If we already have a "match", skip
       if (handleToContact.containsKey(handle.address)) {
@@ -167,8 +168,8 @@ class ContactManager {
       Contact? contactMatch;
 
       try {
-        contactMatch = getContact(handle);
         handleToFormattedAddress[handle.address] = await formatPhoneNumber(handle.address);
+        contactMatch = getContact(handle);
         handleToContact[handle.address] = contactMatch;
       } catch (ex) {
         Logger.error('Failed to match handle for address, "${handle.address}": ${ex.toString()}', tag: tag);
@@ -218,9 +219,11 @@ class ContactManager {
       if (!isEmailAddr) {
         for (String item in c.phones) {
           String compStr = item.replaceAll(" ", "").trim().numericOnly();
-
+          String? formattedAddress = handleToFormattedAddress[handle.address];
           if (!compStr.endsWith(lastDigits)) continue;
-          if (sameAddress([handle.address.replaceAll(" ", "").trim().numericOnly()], compStr)) {
+          List<String> compareOpts = [handle.address.replaceAll(" ", "").trim().numericOnly()];
+          if (formattedAddress != null) compareOpts.add(formattedAddress.replaceAll(" ", "").trim().numericOnly());
+          if (sameAddress(compareOpts, compStr)) {
             contact = c;
             break;
           }
@@ -230,7 +233,7 @@ class ContactManager {
       // Get an email match
       if (isEmailAddr) {
         for (String item in c.emails) {
-          if (item == handle.address) {
+          if (item.replaceAll(" ", "").trim() == handle.address.replaceAll(" ", "").trim()) {
             contact = c;
             break;
           }

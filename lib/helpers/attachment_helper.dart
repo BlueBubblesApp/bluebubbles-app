@@ -376,11 +376,12 @@ class AttachmentHelper {
 
     // Handle getting heic images
     if (attachment.mimeType == 'image/heic') {
-      originalFile = await FlutterNativeImage.compressImage(
+      dynamic file = await FlutterNativeImage.compressImage(
         filePath,
         percentage: 100,
         quality: qualityOverride ?? SettingsManager().compressionQuality
       );
+      originalFile = file;
     }
 
     Uint8List previewData = await originalFile.readAsBytes();

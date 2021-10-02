@@ -124,6 +124,9 @@ bool sameAddress(List<String?> options, String? compared) {
     if (opt == compared) {
       match = true;
       break;
+    } else if (opt != null && compared!.endsWith(opt) && opt.length >= 9) {
+      match = true;
+      break;
     }
 
     if (opt!.isEmail && !compared!.isEmail) continue;
