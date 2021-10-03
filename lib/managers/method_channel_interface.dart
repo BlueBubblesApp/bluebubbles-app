@@ -1,5 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:bluebubbles/managers/life_cycle_manager.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
+import 'package:flutter/foundation.dart';
+import 'package:universal_io/io.dart';
 import 'dart:isolate';
 import 'dart:math';
 import 'dart:ui';
@@ -7,8 +11,8 @@ import 'dart:ui';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
-import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
+import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
@@ -22,15 +26,12 @@ import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:simple_animations/simple_animations.dart';
-import 'package:universal_io/io.dart';
 
 /// [MethodChannelInterface] is a manager used to talk to native code via a flutter MethodChannel
 ///
@@ -136,9 +137,9 @@ class MethodChannelInterface {
 
         return Future.value("");
       case "ChatOpen":
-        Logger.info("Opening Chat with GUID: ${call.arguments}");
-        openChat(call.arguments);
-
+        Logger.info("Opening Chat with GUID: ${call.arguments['guid']}, bubble: ${call.arguments['bubble']}");
+        LifeCycleManager().isBubble = call.arguments['bubble'] == "true";
+        openChat(call.arguments['guid']);
         return Future.value("");
       case "socket-error-open":
         Get.toNamed("/settings/server-management-panel");
@@ -235,14 +236,14 @@ class MethodChannelInterface {
 
         // Go to the new chat creator with all of these attachments to select a chat in case it wasn't a direct share
         CustomNavigator.pushAndRemoveUntil(
-          Get.context!,
-          ConversationView(
-            existingAttachments: attachments,
-            isCreator: true,
-            // onTapGoToChat: true,
-          ),
-          (route) => route.isFirst,
-        );
+              Get.context!,
+              ConversationView(
+                existingAttachments: attachments,
+                isCreator: true,
+                // onTapGoToChat: true,
+              ),
+              (route) => route.isFirst,
+            );
         return Future.value("");
 
       case "shareText":
@@ -272,13 +273,13 @@ class MethodChannelInterface {
         }
         // Navigate to the new chat creator with the specified text
         CustomNavigator.pushAndRemoveUntil(
-          Get.context!,
-          ConversationView(
-            existingText: text,
-            isCreator: true,
-          ),
-          (route) => route.isFirst,
-        );
+              Get.context!,
+              ConversationView(
+                existingText: text,
+                isCreator: true,
+              ),
+              (route) => route.isFirst,
+            );
 
         return Future.value("");
       case "alarm-wake":
@@ -315,8 +316,7 @@ class MethodChannelInterface {
           lightBgEntry.color = lightBg;
           if (ThemeObject.inDarkMode(Get.context!)) {
             if (primaryPercent != 0.5 && darkBgPercent != 0.5) {
-              double difference = min((primaryPercent / (primaryPercent + darkBgPercent)),
-                  1 - (primaryPercent / (primaryPercent + darkBgPercent)));
+              double difference = min((primaryPercent / (primaryPercent + darkBgPercent)), 1 - (primaryPercent / (primaryPercent + darkBgPercent)));
               Tween color1 = Tween<double>(begin: 0, end: difference);
               Tween color2 = Tween<double>(begin: 1 - difference, end: 1);
               ConversationViewMixin.gradientTween.value = MultiTween<String>()
@@ -329,8 +329,7 @@ class MethodChannelInterface {
             }
           } else {
             if (primaryPercent != 0.5 && lightBgPercent != 0.5) {
-              double difference = min((primaryPercent / (primaryPercent + lightBgPercent)),
-                  1 - (primaryPercent / (primaryPercent + lightBgPercent)));
+              double difference = min((primaryPercent / (primaryPercent + lightBgPercent)), 1 - (primaryPercent / (primaryPercent + lightBgPercent)));
               Tween color1 = Tween<double>(begin: 0.0, end: difference);
               Tween color2 = Tween<double>(begin: 1.0 - difference, end: 1.0);
               ConversationViewMixin.gradientTween.value = MultiTween<String>()
@@ -342,8 +341,7 @@ class MethodChannelInterface {
                 ..add("color2", Tween<double>(begin: 0.8, end: 1.0));
             }
           }
-          SettingsManager()
-              .saveSelectedTheme(Get.context!, selectedLightTheme: lightTheme, selectedDarkTheme: darkTheme);
+          SettingsManager().saveSelectedTheme(Get.context!, selectedLightTheme: lightTheme, selectedDarkTheme: darkTheme);
           isRunning = false;
         }
         return Future.value("");
@@ -404,14 +402,14 @@ class MethodChannelInterface {
       // if (!CurrentChat.isActive(openedChat.guid))
       // Actually navigate to the chat page
       CustomNavigator.pushAndRemoveUntil(
-        Get.context!,
-        ConversationView(
-          chat: openedChat,
-          existingAttachments: existingAttachments,
-          existingText: existingText,
-        ),
-        (route) => route.isFirst,
-      );
+          Get.context!,
+          ConversationView(
+            chat: openedChat,
+            existingAttachments: existingAttachments,
+            existingText: existingText,
+          ),
+          (route) => route.isFirst,
+        );
 
       // We have a delay, because the first [switchChat] does not work.
       // Because we are pushing AND removing until it is the first route,

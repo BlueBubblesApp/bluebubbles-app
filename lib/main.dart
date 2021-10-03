@@ -501,8 +501,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         MethodChannelInterface().invokeMethod("get-starting-intent").then((value) {
           if (!SettingsManager().settings.finishedSetup.value) return;
           if (value != null) {
-            // Open that chat
-            MethodChannelInterface().openChat(value.toString());
+            LifeCycleManager().isBubble = value['bubble'] == "true";
+            MethodChannelInterface().openChat(value['guid'].toString());
           }
         });
       }

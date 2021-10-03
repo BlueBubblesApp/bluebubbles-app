@@ -105,7 +105,7 @@ Future<List<Attachment>> getAttachmentsIsolate(List<dynamic> stuff) async {
     query2.close();
     /// Query the [attachmentBox] for all the attachment IDs and remove where
     /// [mimeType] is null
-    final attachments = attachmentBox.getMany(attachmentIds)..removeWhere((element) => element == null || element.mimeType == null);
+    final attachments = attachmentBox.getMany(attachmentIds, growableResult: true)..removeWhere((element) => element == null || element.mimeType == null);
     final actualAttachments = <Attachment>[];
     /// Match the attachments to their messages
     for (Message m in messages) {
@@ -925,7 +925,7 @@ class Chat {
       final messageIdQuery = cmJoinBox.query(ChatMessageJoin_.chatId.equals(id!)).build();
       final messageIds = messageIdQuery.property(ChatMessageJoin_.messageId).find();
       messageIdQuery.close();
-      final messages = messageBox.getMany(messageIds)..removeWhere((e) => e == null);
+      final messages = messageBox.getMany(messageIds, growableResult: true)..removeWhere((e) => e == null);
       final nonNullMessages = List<Message>.from(messages);
       for (Message element in nonNullMessages) {
         element.dateDeleted = DateTime.now().toUtc();

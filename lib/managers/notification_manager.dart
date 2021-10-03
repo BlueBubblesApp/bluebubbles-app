@@ -80,7 +80,9 @@ class NotificationManager {
       }
     }
     ChatBloc().updateUnreads();
-    MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
+    if (!LifeCycleManager().isBubble) {
+      MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
+    }
   }
 
   /// Creates notification channel for android

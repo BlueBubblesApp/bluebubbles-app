@@ -178,7 +178,7 @@ public class NewMessageNotification implements Handler {
                 .putExtra("id", existingNotificationId)
                 .putExtra("chatGuid", chatGuid)
                 .putExtra("messageGuid", messageGuid)
-                .putExtra("bubble", false)
+                .putExtra("bubble", "false")
                 .setType("NotificationOpen"),
             Intent.FILL_IN_ACTION);
 
@@ -189,7 +189,7 @@ public class NewMessageNotification implements Handler {
                 new Intent(context, MainActivity.class)
                         .putExtra("id", existingNotificationId)
                         .putExtra("chatGuid", -1)
-                        .putExtra("bubble", false)
+                        .putExtra("bubble", "false")
                         .setType("NotificationOpen"),
                 Intent.FILL_IN_ACTION);
 
@@ -201,7 +201,7 @@ public class NewMessageNotification implements Handler {
                         .putExtra("id", existingNotificationId)
                         .putExtra("chatGuid", chatGuid)
                         .putExtra("messageGuid", messageGuid)
-                        .putExtra("bubble", false)
+                        .putExtra("bubble", "false")
                         .setType("swipeAway"),
                 PendingIntent.FLAG_UPDATE_CURRENT);
 
@@ -213,7 +213,7 @@ public class NewMessageNotification implements Handler {
                 .putExtra("id", existingNotificationId)
                 .putExtra("chatGuid", chatGuid)
                 .putExtra("messageGuid", messageGuid)
-                .putExtra("bubble", false)
+                .putExtra("bubble", "false")
                 .setType("markAsRead"),
             PendingIntent.FLAG_UPDATE_CURRENT);
 
@@ -224,7 +224,7 @@ public class NewMessageNotification implements Handler {
             .putExtra("messageGuid", messageGuid)
             .putExtra("channelName", channelName)
             .putExtra("channelID", channelId)
-            .putExtra("bubble", false)
+            .putExtra("bubble", "false")
             .setType("reply");
 
         // Create the dismiss action (mark as read)
@@ -307,32 +307,34 @@ public class NewMessageNotification implements Handler {
         }
 
         // Add bubble intent handler
-        // if (Build.VERSION.SDK_INT >= 30) {
-        //     PendingIntent bubbleIntent = PendingIntent.getActivity(
-        //         context,
-        //         existingNotificationId,
-        //         new Intent(context, MainActivity.class)
-        //             .putExtra("id", existingNotificationId)
-        //             .putExtra("chatGuid", chatGuid)
-        //             .putExtra("bubble", true)
-        //             .setType("NotificationOpen"),
-        //         PendingIntent.FLAG_UPDATE_CURRENT);
+         if (Build.VERSION.SDK_INT >= 30) {
+             PendingIntent bubbleIntent = PendingIntent.getActivity(
+                 context,
+                 existingNotificationId,
+                 new Intent(context, MainActivity.class)
+                     .putExtra("id", existingNotificationId)
+                     .putExtra("chatGuid", chatGuid)
+                     .putExtra("bubble", "true")
+                     .setType("NotificationOpen"),
+                 PendingIntent.FLAG_UPDATE_CURRENT);
 
-        //     NotificationCompat.BubbleMetadata.Builder bubbleMetadataBuilder = new NotificationCompat.BubbleMetadata.Builder()
-        //         .setIntent(bubbleIntent)
-        //         .setDesiredHeight(600);
+             NotificationCompat.BubbleMetadata.Builder bubbleMetadataBuilder = new NotificationCompat.BubbleMetadata.Builder()
+                 .setIntent(bubbleIntent)
+                 .setDesiredHeight(600)
+                 .setAutoExpandBubble(false)
+                 .setSuppressNotification(true);
 
-        //     // Set the icon to a user or group or fallback to the BB icon
-        //     if (groupIcon != null) {
-        //         bubbleMetadataBuilder.setIcon(groupIcon);
-        //     } else if (senderIcon != null) {
-        //         bubbleMetadataBuilder.setIcon(senderIcon);
-        //     } else {
-        //         bubbleMetadataBuilder.setIcon(IconCompat.createWithResource(context, R.mipmap.ic_stat_icon));
-        //     }
+             // Set the icon to a user or group or fallback to the BB icon
+             if (groupIcon != null) {
+                 bubbleMetadataBuilder.setIcon(groupIcon);
+             } else if (senderIcon != null) {
+                 bubbleMetadataBuilder.setIcon(senderIcon);
+             } else {
+                 bubbleMetadataBuilder.setIcon(IconCompat.createWithResource(context, R.mipmap.ic_stat_icon));
+             }
 
-        //     notificationBuilder.setBubbleMetadata(bubbleMetadataBuilder.build());
-        // }
+             notificationBuilder.setBubbleMetadata(bubbleMetadataBuilder.build());
+         }
 
         Log.d(TAG, "Creating notification for chat: " + chatGuid + " - With ID: " + existingNotificationId);
         NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(context);

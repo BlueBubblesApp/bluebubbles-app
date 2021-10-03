@@ -20,6 +20,7 @@ import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
+import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -343,7 +344,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           ),
           preferredSize: Size.fromHeight(0.5),
         ),
-        leading: buildBackButton(context, callback: () => EventDispatcher().emit("update-highlight", null)),
+        leading: buildBackButton(context, callback: () {
+          if (LifeCycleManager().isBubble) SystemNavigator.pop();
+          EventDispatcher().emit("update-highlight", null);
+        }),
         automaticallyImplyLeading: false,
         backgroundColor: backgroundColor,
         actionsIconTheme: IconThemeData(color: Theme.of(context).primaryColor),
@@ -530,6 +534,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         ),
         leading: GestureDetector(
           onTap: () {
+            if (LifeCycleManager().isBubble) SystemNavigator.pop();
             EventDispatcher().emit("update-highlight", null);
             Navigator.of(context).pop();
           },
@@ -541,6 +546,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
               mainAxisAlignment: cupertino.MainAxisAlignment.start,
               children: [
                 buildBackButton(context, callback: () async {
+                  if (LifeCycleManager().isBubble) SystemNavigator.pop();
                   EventDispatcher().emit("update-highlight", null);
                   await SystemChannels.textInput.invokeMethod('TextInput.hide');
                 }),
@@ -1066,7 +1072,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
               style: Theme.of(context).textTheme.headline2,
             ),
           ),
-          leading: buildBackButton(context, iconSize: 20, callback: () => EventDispatcher().emit("update-highlight", null)),
+          leading: buildBackButton(context, iconSize: 20, callback: () {
+            if (LifeCycleManager().isBubble) SystemNavigator.pop();
+            EventDispatcher().emit("update-highlight", null);
+          }),
         ),
       );
 }
