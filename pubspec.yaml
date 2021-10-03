@@ -109,6 +109,7 @@ dependencies:
   objectbox: ^1.2.0
   objectbox_flutter_libs: any
   js: ^0.6.3
+  bitsdojo_window: ^0.1.1+1
 
 dependency_overrides:
   rxdart: ^0.27.2

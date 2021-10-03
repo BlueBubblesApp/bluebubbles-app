@@ -22,6 +22,7 @@ import 'package:bluebubbles/layouts/settings/server_management_panel.dart';
 import 'package:bluebubbles/layouts/settings/theme_panel.dart';
 import 'package:bluebubbles/layouts/settings/troubleshoot_panel.dart';
 import 'package:bluebubbles/layouts/setup/setup_view.dart';
+import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/custom_cupertino_text_field.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
@@ -1068,7 +1069,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                     Get.offAll(
                                         () => WillPopScope(
                                               onWillPop: () async => false,
-                                              child: SetupView(),
+                                              child: TitleBarWrapper(child: SetupView()),
                                             ),
                                         duration: Duration.zero,
                                         transition: Transition.noTransition);
@@ -1196,7 +1197,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
   }
 
   Widget buildForDevice() {
-    bool showAltLayout = SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape);
+    bool showAltLayout = (SettingsManager().settings.tabletMode.value || kIsDesktop) && (!context.isPhone || context.isLandscape);
     Widget settingsList = buildSettingsList();
     if (showAltLayout) {
       return buildForLandscape(context, settingsList);

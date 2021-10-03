@@ -20,6 +20,8 @@ import 'package:quick_notify/quick_notify.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:universal_html/html.dart' as uh;
 
+import 'life_cycle_manager.dart';
+
 /// [NotificationManager] holds data relating to the current chat, and manages things such as
 class NotificationManager {
   factory NotificationManager() {

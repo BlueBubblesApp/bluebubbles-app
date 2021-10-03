@@ -174,7 +174,7 @@ class _SamsungState extends State<SamsungConversationList> {
     if (ChatBloc().chatRequest != null
         && prefs.getString('lastOpenedChat') != null
         && (!context.isPhone || context.isLandscape)
-        && SettingsManager().settings.tabletMode.value
+        && (SettingsManager().settings.tabletMode.value || kIsDesktop)
         && CurrentChat.activeChat?.chat.guid != prefs.getString('lastOpenedChat')) {
       await ChatBloc().chatRequest!.future;
       CustomNavigator.pushAndRemoveUntil(
@@ -839,7 +839,7 @@ class _SamsungState extends State<SamsungConversationList> {
   }
 
   Widget buildForDevice() {
-    bool showAltLayout = SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape);
+    bool showAltLayout = (SettingsManager().settings.tabletMode.value || kIsDesktop) && (!context.isPhone || context.isLandscape);
     Widget chatList = buildChatList();
     if (showAltLayout && !widget.parent.widget.showUnknownSenders && !widget.parent.widget.showArchivedChats) {
       return buildForLandscape(context, chatList);

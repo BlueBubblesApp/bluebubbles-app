@@ -4,6 +4,7 @@ import 'dart:isolate';
 import 'dart:ui';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/logger.dart';
@@ -16,6 +17,7 @@ import 'package:bluebubbles/layouts/setup/failure_to_start.dart';
 import 'package:bluebubbles/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/layouts/setup/upgrading_db.dart';
 import 'package:bluebubbles/layouts/testing_mode.dart';
+import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/managers/background_isolate.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
@@ -214,6 +216,12 @@ Future<Null> main() async {
     if (kIsDesktop) {
       await WindowManager.instance.setTitle('BlueBubbles (Beta)');
       WindowManager.instance.addListener(DesktopWindowListener());
+      doWhenWindowReady(() {
+        appWindow.minSize = Size(900, 600);
+        appWindow.alignment = Alignment.center;
+        appWindow.title = 'BlueBubbles (Beta)';
+        appWindow.show();
+      });
     }
   } catch (e) {
     exception = e;
@@ -581,7 +589,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
               ]);
               return WillPopScope(
                 onWillPop: () async => false,
-                child: SetupView(),
+                child: TitleBarWrapper(child: SetupView()),
               );
             }
           },

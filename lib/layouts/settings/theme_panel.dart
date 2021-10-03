@@ -215,16 +215,17 @@ class ThemePanel extends GetView<ThemePanelController> {
                         child: SettingsDivider(color: headerColor),
                       ),
                     ),
-                    Obx(() => SettingsSwitch(
-                          onChanged: (bool val) {
-                            controller._settingsCopy.tabletMode.value = val;
-                            saveSettings();
-                          },
-                          initialVal: controller._settingsCopy.tabletMode.value,
-                          title: "Tablet Mode",
-                          backgroundColor: tileColor,
-                          subtitle: "Enables tablet mode (split view) depending on screen width",
-                        )),
+                    if (!kIsDesktop)
+                      Obx(() => SettingsSwitch(
+                            onChanged: (bool val) {
+                              controller._settingsCopy.tabletMode.value = val;
+                              saveSettings();
+                            },
+                            initialVal: controller._settingsCopy.tabletMode.value,
+                            title: "Tablet Mode",
+                            backgroundColor: tileColor,
+                            subtitle: "Enables tablet mode (split view) depending on screen width",
+                          )),
                     SettingsHeader(
                         headerColor: headerColor,
                         tileColor: tileColor,

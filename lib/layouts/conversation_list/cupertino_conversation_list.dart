@@ -58,7 +58,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
     if (ChatBloc().chatRequest != null &&
         prefs.getString('lastOpenedChat') != null &&
         (!context.isPhone || context.isLandscape) &&
-        SettingsManager().settings.tabletMode.value &&
+        (SettingsManager().settings.tabletMode.value || kIsDesktop) &&
         CurrentChat.activeChat?.chat.guid != prefs.getString('lastOpenedChat')) {
       await ChatBloc().chatRequest!.future;
       CustomNavigator.pushAndRemoveUntil(
@@ -542,7 +542,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
   }
 
   Widget buildForDevice(BuildContext context) {
-    bool showAltLayout = SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape);
+    bool showAltLayout = (SettingsManager().settings.tabletMode.value || kIsDesktop) && (!context.isPhone || context.isLandscape);
     Widget chatList = buildChatList(context, showAltLayout);
     if (showAltLayout && !widget.parent.widget.showUnknownSenders && !widget.parent.widget.showArchivedChats) {
       return buildForLandscape(context, chatList);
