@@ -1,22 +1,24 @@
 import 'dart:async';
 import 'dart:convert';
+
 import 'package:bluebubbles/blocs/message_bloc.dart';
+import 'package:bluebubbles/helpers/darty.dart';
+import 'package:bluebubbles/helpers/message_helper.dart';
+import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/repository/models/io/attachment.dart';
 import 'package:bluebubbles/repository/models/io/join_tables.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
 import 'package:collection/collection.dart';
 import 'package:crypto/crypto.dart' as crypto;
-import 'package:bluebubbles/helpers/message_helper.dart';
-import 'package:bluebubbles/helpers/darty.dart';
-import 'package:bluebubbles/helpers/reaction.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
-import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart' hide Condition;
 import 'package:metadata_fetch/metadata_fetch.dart';
+
 import 'chat.dart';
 import 'handle.dart';
 
@@ -308,6 +310,11 @@ class Message {
           m.handleId = existingHandle.id;
         }
       }
+      associatedMessages.removeWhere((message) {
+        Message? _message = messages.firstWhereOrNull((e) => e.guid == message.guid);
+        _message?.hasReactions = message.hasReactions;
+        return _message != null;
+      });
       try {
         /// Update the original messages and associated messages
         final ids = messageBox.putMany(messages..addAll(associatedMessages));
