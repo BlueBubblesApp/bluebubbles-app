@@ -131,7 +131,7 @@ class Handle {
       final chatIds = chatIdQuery.property(ChatHandleJoin_.chatId).find();
       chatIdQuery.close();
       /// Find the chats themselves
-      final chats = chatBox.getMany(chatIds)..removeWhere((e) => e == null);
+      final chats = chatBox.getMany(chatIds, growableResult: true)..removeWhere((e) => e == null);
       final nonNullChats = List<Chat>.from(chats);
       return nonNullChats;
     });
