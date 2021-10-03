@@ -47,7 +47,7 @@ class ConversationListState extends State<ConversationList> {
   @override
   void initState() {
     super.initState();
-    if (!widget.showUnknownSenders) {
+    if (kIsDesktop && !widget.showUnknownSenders) {
       ChatBloc().refreshChats();
     }
 
