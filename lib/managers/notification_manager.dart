@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
+import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:quick_notify/quick_notify.dart';
 import 'package:universal_html/html.dart' as uh;
 
@@ -79,7 +80,9 @@ class NotificationManager {
       }
     }
     ChatBloc().updateUnreads();
-    MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
+    if (!LifeCycleManager().isBubble) {
+      MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
+    }
   }
 
   /// Creates notification channel for android

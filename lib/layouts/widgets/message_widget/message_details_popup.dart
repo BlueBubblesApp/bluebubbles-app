@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
+import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:math';
@@ -335,7 +336,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
     double maxHeight = context.height - topMinimum - widget.childSize!.height;
 
     List<Widget> allActions = [
-      if (widget.currentChat!.chat.isGroup() && !widget.message.isFromMe! && dmChat != null)
+      if (widget.currentChat!.chat.isGroup() && !widget.message.isFromMe! && dmChat != null && !LifeCycleManager().isBubble)
         Material(
           color: Colors.transparent,
           child: InkWell(
@@ -405,7 +406,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             ),
           ),
         ),
-      if (widget.currentChat!.chat.isGroup() && !widget.message.isFromMe! && dmChat == null)
+      if (widget.currentChat!.chat.isGroup() && !widget.message.isFromMe! && dmChat == null && !LifeCycleManager().isBubble)
         Material(
           color: Colors.transparent,
           child: InkWell(
@@ -446,47 +447,48 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             ),
           ),
         ),
-      Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            Navigator.of(context).pop();
-            Navigator.pushReplacement(
-              context,
-              cupertino.CupertinoPageRoute(
-                builder: (BuildContext context) {
-                  List<PlatformFile> existingAttachments = [];
-                  if (!widget.message.isUrlPreview()) {
-                    existingAttachments =
-                        widget.message.attachments!.map((attachment) => PlatformFile(
-                          name: attachment!.transferName!,
-                          path: kIsWeb ? null : attachment.getPath(),
-                          bytes: attachment.bytes,
-                          size: attachment.totalBytes!,
-                        )).toList();
-                  }
-                  EventDispatcher().emit("update-highlight", null);
-                  return ConversationView(
-                    isCreator: true,
-                    existingText: widget.message.text,
-                    existingAttachments: existingAttachments,
-                  );
-                },
+      if (!LifeCycleManager().isBubble)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              Navigator.of(context).pop();
+              Navigator.pushReplacement(
+                context,
+                cupertino.CupertinoPageRoute(
+                  builder: (BuildContext context) {
+                    List<PlatformFile> existingAttachments = [];
+                    if (!widget.message.isUrlPreview()) {
+                      existingAttachments =
+                          widget.message.attachments!.map((attachment) => PlatformFile(
+                            name: attachment!.transferName!,
+                            path: kIsWeb ? null : attachment.getPath(),
+                            bytes: attachment.bytes,
+                            size: attachment.totalBytes!,
+                          )).toList();
+                    }
+                    EventDispatcher().emit("update-highlight", null);
+                    return ConversationView(
+                      isCreator: true,
+                      existingText: widget.message.text,
+                      existingAttachments: existingAttachments,
+                    );
+                  },
+                ),
+              );
+            },
+            child: ListTile(
+              title: Text(
+                "Forward",
+                style: Theme.of(context).textTheme.bodyText1,
               ),
-            );
-          },
-          child: ListTile(
-            title: Text(
-              "Forward",
-              style: Theme.of(context).textTheme.bodyText1,
-            ),
-            trailing: Icon(
-              SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.arrow_right : Icons.forward,
-              color: Theme.of(context).textTheme.bodyText1!.color,
+              trailing: Icon(
+                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.arrow_right : Icons.forward,
+                color: Theme.of(context).textTheme.bodyText1!.color,
+              ),
             ),
           ),
         ),
-      ),
       Material(
         color: Colors.transparent,
         child: InkWell(

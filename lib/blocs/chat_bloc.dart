@@ -7,6 +7,7 @@ import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/attachment_info_bloc.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
@@ -184,7 +185,9 @@ class ChatBloc {
       chat.toggleHasUnread(false);
 
       // Remove from notification shade
-      MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
+      if (!LifeCycleManager().isBubble) {
+        MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
+      }
     }
 
     // Update their position in the chat list
@@ -197,7 +200,9 @@ class ChatBloc {
     chat.toggleHasUnread(isUnread);
 
     // Remove from notification shade
-    MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
+    if (!LifeCycleManager().isBubble) {
+      MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
+    }
 
     updateChatPosition(chat);
   }

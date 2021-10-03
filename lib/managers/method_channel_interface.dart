@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
@@ -136,9 +137,9 @@ class MethodChannelInterface {
 
         return Future.value("");
       case "ChatOpen":
-        Logger.info("Opening Chat with GUID: ${call.arguments}");
-        openChat(call.arguments);
-
+        Logger.info("Opening Chat with GUID: ${call.arguments['guid']}, bubble: ${call.arguments['bubble']}");
+        LifeCycleManager().isBubble = call.arguments['bubble'] == "true";
+        openChat(call.arguments['guid']);
         return Future.value("");
       case "socket-error-open":
         Get.toNamed("/settings/server-management-panel");
