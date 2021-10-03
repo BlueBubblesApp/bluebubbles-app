@@ -321,7 +321,7 @@ class SocketManager {
         // If there are no chats, try to find it in the DB via the message
         Chat? chat;
         if (isNullOrEmpty(data["chats"])!) {
-          chat = Message.getChat(message);
+          chat = message.getChat();
         } else {
           chat = Chat.fromMap(data['chats'][0]);
         }

@@ -60,6 +60,7 @@ class TestingMode extends GetView<TestingModeController> {
                           defaultAvatar,
                           "Tester",
                           defaultAvatar,
+                          randomString(9),
                           "Testing #${Random().nextInt(9998)}",
                           DateTime.now(),
                           false,

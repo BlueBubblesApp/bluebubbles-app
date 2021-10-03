@@ -131,7 +131,7 @@ class Attachment {
   static void flush() {}
 
   String getFriendlySize({decimals = 2}) {
-    double size = (totalBytes! / 1024000.0);
+    double size = ((totalBytes ?? 0) / 1024000.0);
     String postfix = "MB";
     if (size < 1) {
       size = size * 1024;

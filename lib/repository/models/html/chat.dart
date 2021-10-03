@@ -1,27 +1,25 @@
 import 'dart:async';
-
-import 'package:bluebubbles/action_handler.dart';
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/darty.dart';
+import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/repository/models/html/attachment.dart';
+import 'package:bluebubbles/repository/models/html/handle.dart';
+import 'package:bluebubbles/repository/models/html/message.dart';
+import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
+import 'package:universal_io/io.dart';
+import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/metadata_helper.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
-import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/html/attachment.dart';
-import 'package:bluebubbles/repository/models/html/handle.dart';
-import 'package:bluebubbles/repository/models/html/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
-import 'package:collection/collection.dart';
-import 'package:faker/faker.dart';
-import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:faker/faker.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
-import 'package:universal_io/io.dart';
 
 String getFullChatTitle(Chat _chat) {
   String? title = "";
@@ -90,14 +88,10 @@ class Chat {
   List<String> fakeParticipants = [];
   Message? latestMessage;
   final RxnString _customAvatarPath = RxnString();
-
   String? get customAvatarPath => _customAvatarPath.value;
-
   set customAvatarPath(String? s) => _customAvatarPath.value = s;
   final RxnInt _pinIndex = RxnInt();
-
   int? get pinIndex => _pinIndex.value;
-
   set pinIndex(int? i) => _pinIndex.value = i;
 
   Chat({
@@ -204,9 +198,9 @@ class Chat {
   }
 
   bool shouldMuteNotification(Message? message) {
-    if (SettingsManager().settings.filterUnknownSenders.value &&
-        participants.length == 1 &&
-        ContactManager().handleToContact[participants[0].address] == null) {
+    if (SettingsManager().settings.filterUnknownSenders.value
+        && participants.length == 1
+        && ContactManager().handleToContact[participants[0].address] == null) {
       return true;
     } else if (SettingsManager().settings.globalTextDetection.value.isNotEmpty) {
       List<String> text = SettingsManager().settings.globalTextDetection.value.split(",");
@@ -385,12 +379,14 @@ class Chat {
         getParticipants();
 
         // We want to determine all the participants that exist in the response that are not already in our locally saved chat (AKA all the new participants)
-        List<Handle> newParticipants =
-            handles.where((a) => (participants.where((b) => b.address == a.address).toList().isEmpty)).toList();
+        List<Handle> newParticipants = handles
+            .where((a) => (participants.where((b) => b.address == a.address).toList().isEmpty))
+            .toList();
 
         // We want to determine all the participants that exist in the locally saved chat that are not in the response (AKA all the removed participants)
-        List<Handle> removedParticipants =
-            participants.where((a) => (handles.where((b) => b.address == a.address).toList().isEmpty)).toList();
+        List<Handle> removedParticipants = participants
+            .where((a) => (handles.where((b) => b.address == a.address).toList().isEmpty))
+            .toList();
 
         // Add all participants that are missing from our local db
         for (Handle newParticipant in newParticipants) {
@@ -411,10 +407,14 @@ class Chat {
   }
 
   static int? count() {
-    return 0;
+    return null;
   }
 
   static List<Attachment> getAttachments(Chat chat, {int offset = 0, int limit = 25}) {
+    return [];
+  }
+
+  Future<List<Attachment>> getAttachmentsAsync() async {
     return [];
   }
 
@@ -515,8 +515,7 @@ class Chat {
   }
 
   static int sort(Chat? a, Chat? b) {
-    if (a!._pinIndex.value != null && b!._pinIndex.value != null)
-      return a._pinIndex.value!.compareTo(b._pinIndex.value!);
+    if (a!._pinIndex.value != null && b!._pinIndex.value != null) return a._pinIndex.value!.compareTo(b._pinIndex.value!);
     if (b!._pinIndex.value != null) return 1;
     if (a._pinIndex.value != null) return -1;
     if (!a.isPinned! && b.isPinned!) return 1;

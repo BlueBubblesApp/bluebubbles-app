@@ -53,12 +53,17 @@ class Attachment {
     this.webUrl,
   });
 
+  /// Attachment exists on disk. Always returns false on Web.
+  ///
+  /// Avoid calling this method from intensive tasks as it is a synchronous read.
   bool get existsOnDisk {
     if (kIsWeb) return false;
     File attachment = File(AttachmentHelper.getAttachmentPath(this));
     return attachment.existsSync();
   }
 
+  /// Get the orientation of the photo by parsing its metadata. If no metadata,
+  /// 'portrait' is returned.
   String get orientation {
     String orientation = 'portrait'; // Default
     if (metadata == null) return orientation;
@@ -77,6 +82,7 @@ class Attachment {
     return orientation;
   }
 
+  /// Convert JSON to [Attachment]
   factory Attachment.fromMap(Map<String, dynamic> json) {
     String? mimeType = json["mimeType"];
     if ((json.containsKey("uti") && json["uti"] == "com.apple.coreaudio_format") ||
@@ -120,17 +126,20 @@ class Attachment {
     return data;
   }
 
-  /// save a new attachment or update an existing attachment on disk
+  /// Save a new attachment or update an existing attachment on disk
   /// [message] is used to create a link between the attachment and message,
   /// when provided
   Attachment save(Message? message) {
     if (kIsWeb) return this;
     store.runInTransaction(TxMode.write, () {
+      /// Find an existing attachment and update the attachment ID if applicable
       Attachment? existing = Attachment.findOne(guid!);
       if (existing != null) {
         id = existing.id;
       }
       try {
+        /// store the attachment and add the link between the message and
+        /// attachment
         id = attachmentBox.put(this);
         if (id != null && message?.id != null) {
           amJoinBox.put(AttachmentMessageJoin(attachmentId: id!, messageId: message!.id!));
@@ -140,10 +149,15 @@ class Attachment {
     return this;
   }
 
+  /// Save many attachments at once. [map] is used to establish a link between
+  /// the message and its attachments.
   static void bulkSave(Map<Message, List<Attachment>> map) {
     return store.runInTransaction(TxMode.write, () {
+      /// convert List<List<Attachment>> into just List<Attachment> (flatten it)
       final attachments = map.values.expand((element) => element).toList();
+      /// find existing attachments
       List<Attachment> existingAttachments = Attachment.find(cond: Attachment_.guid.oneOf(attachments.map((e) => e.guid!).toList()));
+      /// map existing attachment IDs to the attachments to save, if applicable
       for (Attachment a in attachments) {
         final existing = existingAttachments.firstWhereOrNull((e) => e.guid == a.guid);
         if (existing != null) {
@@ -151,10 +165,13 @@ class Attachment {
         }
       }
       try {
+        /// store the attachments and update their ids
         final ids = attachmentBox.putMany(attachments);
         for (int i = 0; i < attachments.length; i++) {
           attachments[i].id = ids[i];
         }
+        /// convert the map of messages and lists into an [AttachmentMessageJoin]
+        /// with some fancy list operations
         amJoinBox.putMany(map.entries.map(
             (e) => e.value.map(
                     (e2) => AttachmentMessageJoin(attachmentId: e2.id ?? 0, messageId: e.key.id ?? 0)))
@@ -208,6 +225,8 @@ class Attachment {
     return result;
   }
 
+  /// Find all attachments matching a specified condition, or all attachments
+  /// if no condition is provided
   static List<Attachment> find({Condition<Attachment>? cond}) {
     final query = attachmentBox.query(cond).build();
     return query.find();
@@ -221,7 +240,7 @@ class Attachment {
   }
 
   String getFriendlySize({decimals = 2}) {
-    double size = (totalBytes! / 1024000.0);
+    double size = ((totalBytes ?? 0) / 1024000.0);
     String postfix = "MB";
     if (size < 1) {
       size = size * 1024;

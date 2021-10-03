@@ -194,7 +194,8 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
               builder: (context, snapshot) {
                 return RichText(
                   text: TextSpan(
-                    children: snapshot.data!,
+                    children: snapshot.data ?? MessageWidgetMixin.buildMessageSpans(context, widget.message,
+                        colors: widget.message.handle?.color != null ? getBubbleColors() : null),
                     style: Theme.of(context).textTheme.bodyText2,
                   ),
                 );

@@ -1,3 +1,9 @@
+import 'package:bluebubbles/layouts/setup/setup_view.dart';
+import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/repository/models/settings.dart';
+import 'package:flutter/foundation.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:universal_io/io.dart';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -12,21 +18,15 @@ import 'package:bluebubbles/layouts/conversation_list/material_conversation_list
 import 'package:bluebubbles/layouts/conversation_list/samsung_conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/settings/settings_panel.dart';
-import 'package:bluebubbles/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:universal_io/io.dart';
 
 class ConversationList extends StatefulWidget {
   ConversationList({Key? key, required this.showArchivedChats, required this.showUnknownSenders}) : super(key: key);
@@ -46,10 +46,6 @@ class ConversationListState extends State<ConversationList> {
   @override
   void initState() {
     super.initState();
-    if (!widget.showUnknownSenders) {
-      ChatBloc().refreshChats();
-    }
-
     SystemChannels.textInput.invokeMethod('TextInput.hide').catchError((e) {
       Logger.error("Error caught while hiding keyboard: ${e.toString()}");
     });
@@ -70,13 +66,7 @@ class ConversationListState extends State<ConversationList> {
 
     return Padding(
       padding: const EdgeInsets.only(right: 10.0),
-      child: Text(
-          widget.showArchivedChats
-              ? "Archive"
-              : widget.showUnknownSenders
-                  ? "Unknown Senders"
-                  : "Messages",
-          style: style),
+      child: Text(widget.showArchivedChats ? "Archive" : widget.showUnknownSenders ? "Unknown Senders" : "Messages", style: style),
     );
   }
 
@@ -108,11 +98,12 @@ class ConversationListState extends State<ConversationList> {
               ChatBloc().markAllAsRead();
             } else if (value == 1) {
               CustomNavigator.pushLeft(
-                  context,
-                  ConversationList(
-                    showArchivedChats: true,
-                    showUnknownSenders: false,
-                  ));
+                context,
+                ConversationList(
+                  showArchivedChats: true,
+                  showUnknownSenders: false,
+                )
+              );
             } else if (value == 2) {
               Navigator.of(context).push(
                 ThemeSwitcher.buildPageRoute(
@@ -123,11 +114,12 @@ class ConversationListState extends State<ConversationList> {
               );
             } else if (value == 3) {
               CustomNavigator.pushLeft(
-                  context,
-                  ConversationList(
-                    showArchivedChats: false,
-                    showUnknownSenders: true,
-                  ));
+                context,
+                ConversationList(
+                  showArchivedChats: false,
+                  showUnknownSenders: true,
+                )
+              );
             } else if (value == 4) {
               showDialog(
                 barrierDismissible: false,
@@ -145,13 +137,10 @@ class ConversationListState extends State<ConversationList> {
                         onPressed: () async {
                           await SettingsManager().resetConnection();
                           SettingsManager().settings.finishedSetup.value = false;
-                          Get.offAll(
-                              () => WillPopScope(
-                                    onWillPop: () async => false,
-                                    child: SetupView(),
-                                  ),
-                              duration: Duration.zero,
-                              transition: Transition.noTransition);
+                          Get.offAll(() => WillPopScope(
+                            onWillPop: () async => false,
+                            child: SetupView(),
+                          ), duration: Duration.zero, transition: Transition.noTransition);
                           SettingsManager().settings = Settings();
                           SettingsManager().settings.save();
                           SettingsManager().fcmData = null;
@@ -203,11 +192,12 @@ class ConversationListState extends State<ConversationList> {
               ),
               if (kIsWeb)
                 PopupMenuItem(
-                    value: 4,
-                    child: Text(
-                      'Logout',
-                      style: context.textTheme.bodyText1,
-                    ))
+                  value: 4,
+                  child: Text(
+                    'Logout',
+                    style: context.textTheme.bodyText1,
+                  )
+                )
             ];
           },
           child: ThemeSwitcher(
@@ -250,7 +240,7 @@ class ConversationListState extends State<ConversationList> {
             ),
             child: FloatingActionButton(
               child: Icon(
-                SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.camera : Icons.photo_camera,
+                  SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.camera : Icons.photo_camera,
                 size: 20,
               ),
               onPressed: () async {
@@ -258,7 +248,10 @@ class ConversationListState extends State<ConversationList> {
                 if (!camera) {
                   bool granted = (await Permission.camera.request()) == PermissionStatus.granted;
                   if (!granted) {
-                    showSnackbar("Error", "Camera was denied");
+                    showSnackbar(
+                        "Error",
+                        "Camera was denied"
+                    );
                     return;
                   }
                 }
@@ -278,14 +271,12 @@ class ConversationListState extends State<ConversationList> {
                   return;
                 }
 
-                openNewChatCreator(existing: [
-                  PlatformFile(
-                    name: file.path.split("/").last,
-                    path: file.path,
-                    bytes: file.readAsBytesSync(),
-                    size: file.lengthSync(),
-                  )
-                ]);
+                openNewChatCreator(existing: [PlatformFile(
+                  name: file.path.split("/").last,
+                  path: file.path,
+                  bytes: file.readAsBytesSync(),
+                  size: file.lengthSync(),
+                )]);
               },
               heroTag: null,
             ),
@@ -296,8 +287,7 @@ class ConversationListState extends State<ConversationList> {
           ),
         FloatingActionButton(
             backgroundColor: context.theme.primaryColor,
-            child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.pencil : Icons.message,
-                color: Colors.white, size: 25),
+            child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.pencil : Icons.message, color: Colors.white, size: 25),
             onPressed: openNewChatCreator),
       ],
     );
@@ -307,9 +297,9 @@ class ConversationListState extends State<ConversationList> {
     if (!SettingsManager().settings.showConnectionIndicator.value) return Container();
 
     return Obx(() => Padding(
-          padding: const EdgeInsets.only(right: 10.0),
-          child: getIndicatorIcon(SocketManager().state.value, size: 12),
-        ));
+      padding: const EdgeInsets.only(right: 10.0),
+      child: getIndicatorIcon(SocketManager().state.value, size: 12),
+    ));
   }
 
   @override

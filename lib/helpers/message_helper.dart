@@ -52,7 +52,7 @@ class MessageHelper {
     int index = 0;
     List<Message> messagesList = messages.map((e) => Message.fromMap(e)).toList();
 
-    for (Message message in messagesList) {
+    for (dynamic item in messages) {
       if (onProgress != null) {
         onProgress(_messages.length, messages.length);
       }
@@ -60,7 +60,7 @@ class MessageHelper {
       // Pull the chats out of the message, if there isnt a default
       Chat? msgChat = chat;
       if (msgChat == null) {
-        List<Chat> msgChats = parseChats(message.toMap());
+        List<Chat> msgChats = parseChats(item);
         msgChat = msgChats.isNotEmpty ? msgChats.first : null;
 
         // If there is a cached chat, get it. Otherwise, save the new one
@@ -75,6 +75,7 @@ class MessageHelper {
       // If we can't get a chat from the data, skip the message
       if (msgChat == null) continue;
 
+      Message message = Message.fromMap(item);
       Message? existing = Message.findOne(guid: message.guid);
       if (chat == null || kIsWeb) {
         await msgChat.addMessage(

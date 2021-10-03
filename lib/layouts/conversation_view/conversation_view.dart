@@ -281,15 +281,6 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       if (isDifferentChat) {
         initCurrentChat(chat!);
       }
-
-      bool isDifferentBloc = messageBloc == null || messageBloc?.currentChat?.guid != chat!.guid;
-
-      // Fetch messages
-      if (isDifferentBloc) {
-        // Init the states
-        messageBloc = initMessageBloc();
-        messageBloc!.getMessages();
-      }
       if (worker == null) {
         initListener();
       }
@@ -315,8 +306,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         );
       }
     } else if (chat != null) {
-      // We include messageBloc here because the bloc listener may not be instantiated yet
-      ActionHandler.sendMessage(chat!, text, messageBloc: messageBloc);
+      ActionHandler.sendMessage(chat!, text);
     }
 
     return true;
@@ -537,15 +527,17 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
               right: 5,
               curve: Curves.easeIn,
               onEnd: () {
-                setState(() {
-                  tween = Tween<double>(begin: 1, end: 0);
-                  controller = CustomAnimationControl.stop;
-                  message = null;
-                  isCreator = false;
-                  wasCreator = true;
-                  existingText = "";
-                  existingAttachments = [];
-                });
+                if (message != null) {
+                  setState(() {
+                    tween = Tween<double>(begin: 1, end: 0);
+                    controller = CustomAnimationControl.stop;
+                    message = null;
+                    isCreator = false;
+                    wasCreator = true;
+                    existingText = "";
+                    existingAttachments = [];
+                  });
+                }
               },
               child: Visibility(
                 visible: message != null,

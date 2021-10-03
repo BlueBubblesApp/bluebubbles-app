@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
-import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/attachment_sender.dart';
@@ -36,8 +35,7 @@ class ActionHandler {
   /// ```dart
   /// sendMessage(chatObject, 'Hello world!')
   /// ```
-  static Future<void> sendMessage(Chat chat, String text,
-      {MessageBloc? messageBloc, List<Attachment> attachments = const []}) async {
+  static Future<void> sendMessage(Chat chat, String text, {List<Attachment> attachments = const []}) async {
     if (isNullOrEmpty(text, trimString: true)!) return;
 
     if ((await SettingsManager().getMacOSVersion() ?? 10) < 11) {
@@ -262,7 +260,7 @@ class ActionHandler {
     if (message.error == 0) return;
 
     // Get message's chat
-    Chat? chat = Message.getChat(message);
+    Chat? chat = message.getChat();
     if (chat == null) throw ("Could not find chat!");
 
     message.fetchAttachments();
@@ -355,7 +353,7 @@ class ActionHandler {
 
     Chat? chat;
     if (data["chats"] == null && updatedMessage.id != null) {
-      chat = Message.getChat(updatedMessage);
+      chat = updatedMessage.getChat();
     } else if (data["chats"] != null) {
       chat = Chat.fromMap(data["chats"][0]);
     }

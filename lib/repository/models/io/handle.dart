@@ -47,6 +47,8 @@ class Handle {
     return data;
   }
 
+  /// Save a single handle - prefer [bulkSave] for multiple handles rather
+  /// than iterating through them
   Handle save() {
     if (kIsWeb) return this;
     store.runInTransaction(TxMode.write, () {
@@ -61,10 +63,12 @@ class Handle {
     return this;
   }
 
+  /// Save a list of handles
   static List<Handle> bulkSave(List<Handle> handles) {
     store.runInTransaction(TxMode.write, () {
+      /// Find a list of existing handles
       List<Handle> existingHandles = Handle.find(cond: Handle_.address.oneOf(handles.map((e) => e.address).toList()));
-
+      /// Match existing to the handles to save, where possible
       for (Handle h in handles) {
         final existing = existingHandles.firstWhereOrNull((e) => e.address == h.address);
         if (existing != null) {
@@ -72,6 +76,7 @@ class Handle {
         }
       }
       try {
+        /// Save the handles and update their IDs
         final ids = handleBox.putMany(handles);
         for (int i = 0; i < handles.length; i++) {
           handles[i].id = ids[i];
@@ -110,21 +115,25 @@ class Handle {
     }
   }
 
+  /// Find a list of handles by the specified condition, or return all handles
+  /// when no condition is specified
   static List<Handle> find({Condition<Handle>? cond}) {
     final query = handleBox.query(cond).build();
     return query.find();
   }
 
-  static List<Chat> getChats(Handle handle) {
+  /// Find chats associated with the specified handle
+  List<Chat> getChats() {
     if (kIsWeb) return [];
     return store.runInTransaction(TxMode.read, () {
-      final chatIdQuery = chJoinBox.query(ChatHandleJoin_.handleId.equals(handle.id!)).build();
+      /// Find the chat IDs associated with the handle
+      final chatIdQuery = chJoinBox.query(ChatHandleJoin_.handleId.equals(id!)).build();
       final chatIds = chatIdQuery.property(ChatHandleJoin_.chatId).find();
       chatIdQuery.close();
-      final chatQuery = chatBox.query(Chat_.id.oneOf(chatIds)).build();
-      final chats = chatQuery.find();
-      chatQuery.close();
-      return chats;
+      /// Find the chats themselves
+      final chats = chatBox.getMany(chatIds)..removeWhere((e) => e == null);
+      final nonNullChats = List<Chat>.from(chats);
+      return nonNullChats;
     });
   }
 

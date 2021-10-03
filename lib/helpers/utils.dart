@@ -124,6 +124,9 @@ bool sameAddress(List<String?> options, String? compared) {
     if (opt == compared) {
       match = true;
       break;
+    } else if (opt != null && compared!.endsWith(opt) && opt.length >= 9) {
+      match = true;
+      break;
     }
 
     if (opt!.isEmail && !compared!.isEmail) continue;
@@ -643,6 +646,8 @@ Future<PlayerStatus> getControllerStatus(VideoPlayerController controller) async
   return PlayerStatus.NONE;
 }
 
+/// Helps prevent "setState cannot be called while the widget tree is building"
+/// error by checking if setState can actually be called
 Future<bool> rebuild(State s) async {
   if (!s.mounted) return false;
 
@@ -653,6 +658,7 @@ Future<bool> rebuild(State s) async {
     if (!s.mounted) return false;
   }
 
+  // ignore protected member use error - that's the whole point of this function
   s.setState(() {});
   return true;
 }

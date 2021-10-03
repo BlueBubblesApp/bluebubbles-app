@@ -191,13 +191,13 @@ class MessageBloc {
     event.value = mbEvent;
   }
 
-  Map<String, Message> getMessages() {
+  Future<Map<String, Message>> getMessages() async {
     // If we are already fetching, return empty
     if (_isGettingMore || !_canLoadMore) return {};
     _isGettingMore = true;
 
     // Fetch messages
-    List<Message> messages = Chat.getMessages(_currentChat!, getDetails: true);
+    List<Message> messages = await Chat.getMessagesAsync(_currentChat!);
 
     if (isNullOrEmpty(messages)!) {
       _allMessages = {};
@@ -340,12 +340,12 @@ class MessageBloc {
     return completer.future;
   }
 
-  void refresh() {
+  Future<void> refresh() async {
     _allMessages = {};
     _reactionMessages.clear();
     _reactions = 0;
 
-    getMessages();
+    await getMessages();
   }
 
   void dispose() {

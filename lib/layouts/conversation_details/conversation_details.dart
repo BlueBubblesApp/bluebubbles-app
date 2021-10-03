@@ -3,7 +3,6 @@ import 'dart:ui';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/conversation_details/attachment_details_card.dart';
@@ -60,38 +59,29 @@ class _ConversationDetailsState extends State<ConversationDetails> {
   void initState() {
     super.initState();
     chat = widget.chat;
+    readOnly = !(chat.participants.length > 1);
     controller = TextEditingController(text: chat.displayName);
     showNameField = chat.displayName?.isNotEmpty ?? false;
-
     fetchAttachments();
+
     ever(ChatBloc().chats, (List<Chat> chats) async {
       Chat? _chat = chats.firstWhereOrNull((e) => e.guid == widget.chat.guid);
       if (_chat == null) return;
       _chat.getParticipants();
       chat = _chat;
+      readOnly = !(chat.participants.length > 1);
       if (mounted) setState(() {});
     });
   }
 
-  @override
-  void didChangeDependencies() async {
-    super.didChangeDependencies();
-
-    chat.getParticipants();
-    readOnly = !(chat.participants.length > 1);
-
-    Logger.info("Updated readonly $readOnly");
-    if (mounted) setState(() {});
-  }
-
-  void fetchAttachments() {
+  void fetchAttachments() async {
     if (kIsWeb) {
       attachmentsForChat = CurrentChat.activeChat?.chatAttachments ?? [];
       if (attachmentsForChat.length > 25) attachmentsForChat = attachmentsForChat.sublist(0, 25);
       if (mounted) setState(() {});
       return;
     }
-    attachmentsForChat = Chat.getAttachments(chat);
+    attachmentsForChat = await chat.getAttachmentsAsync();
     if (attachmentsForChat.length > 25) attachmentsForChat = attachmentsForChat.sublist(0, 25);
     if (mounted) setState(() {});
   }

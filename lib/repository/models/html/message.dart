@@ -250,7 +250,7 @@ class Message {
     return map;
   }
 
-  static Chat? getChat(Message message) {
+  Chat? getChat() {
     return null;
   }
 

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:developer';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
@@ -21,17 +20,21 @@ import 'package:metadata_fetch/metadata_fetch.dart';
 import 'chat.dart';
 import 'handle.dart';
 
+/// Async method to fetch attachments;
 Future<Map<String, List<Attachment?>>> fetchAttachmentsIsolate(List<dynamic> stuff) async {
+  /// Pull args from input and create new instances of store and boxes
   List<int> messageIds = stuff[0];
   List<String> guids = stuff[1];
   String? storeRef = stuff[2];
-  Map<String, List<Attachment?>> map = {};
+  final Map<String, List<Attachment?>> map = {};
   final store = Store.fromReference(getObjectBoxModel(), base64.decode(storeRef!).buffer.asByteData());
   final amJoinBox = store.box<AttachmentMessageJoin>();
   return store.runInTransaction(TxMode.read, () {
+    /// Query the [amJoinBox] for relevant attachment IDs
     final amJoinQuery = amJoinBox.query(AttachmentMessageJoin_.messageId.oneOf(messageIds)).build();
     final amJoins = amJoinQuery.find();
     amJoinQuery.close();
+    /// Add the attachments to the map with some clever list operations
     map.addEntries(guids.mapIndexed(
             (index, e) => MapEntry(e, attachmentBox.getMany(amJoins.where(
                 (e2) => e2.messageId == messageIds[index]).map(
@@ -225,6 +228,8 @@ class Message {
     return data;
   }
 
+  /// Save a single message - prefer [bulkSave] for multiple messages rather
+  /// than iterating through them
   Message save() {
     if (kIsWeb) return this;
     store.runInTransaction(TxMode.write, () {
@@ -238,6 +243,8 @@ class Message {
        handle!.save();
        handleId = handle!.id;
      }
+     // Save associated messages or the original message (depending on whether
+     // this message is a reaction or regular message
      if (associatedMessageType != null && associatedMessageGuid != null) {
        Message? associatedMessage = Message.findOne(guid: associatedMessageGuid);
        if (associatedMessage != null) {
@@ -258,8 +265,11 @@ class Message {
     return this;
   }
 
+  /// Save a list of messages
   static List<Message> bulkSave(List<Message> messages) {
     store.runInTransaction(TxMode.write, () {
+      /// Find existing messages and match them to the messages to save, where
+      /// possible
       List<Message> existingMessages = Message.find(cond: Message_.guid.oneOf(messages.map((e) => e.guid!).toList()));
       for (Message m in messages) {
         final existingMessage = existingMessages.firstWhereOrNull((e) => e.guid == m.guid);
@@ -267,13 +277,20 @@ class Message {
           m.id = existingMessage.id;
         }
       }
+      /// Save the messages and update their IDs
+      /// We do this first because we might want these same messages to show up
+      /// in the next queries
       final ids = messageBox.putMany(messages);
       for (int i = 0; i < messages.length; i++) {
         messages[i].id = ids[i];
       }
+      /// Find associated messages or original messages
       List<Message> associatedMessages = Message.find(cond: Message_.guid.oneOf(messages.map((e) => e.associatedMessageGuid ?? "").toList()));
       List<Message> originalMessages = Message.find(cond: Message_.associatedMessageGuid.oneOf(messages.map((e) => e.guid!).toList()));
+      /// Save handles
       final handles = Handle.bulkSave(messages.where((e) => e.handle != null).map((e) => e.handle!).toList());
+      /// Iterate thru messages and update the associated message or the original
+      /// message, and update original message handle data
       for (Message m in messages) {
         if (m.associatedMessageType != null && m.associatedMessageGuid != null) {
           final associatedMessageList = associatedMessages.where((e) => e.guid == m.associatedMessageGuid);
@@ -292,6 +309,7 @@ class Message {
         }
       }
       try {
+        /// Update the original messages and associated messages
         final ids = messageBox.putMany(messages..addAll(associatedMessages));
         for (int i = 0; i < messages.length; i++) {
           messages[i].id = ids[i];
@@ -301,6 +319,7 @@ class Message {
     return messages;
   }
 
+  /// Replace a temp message with the message from the server
   static Future<Message?> replaceMessage(String? oldGuid, Message? newMessage,
       {bool awaitNewMessageEvent = true, Chat? chat}) async {
     Message? existing = Message.findOne(guid: oldGuid);
@@ -333,6 +352,10 @@ class Message {
     return this;
   }
 
+  /// Fetch attachments with a bulk list of messages. Returns a map with the
+  /// message guid as key and a list of attachments as the value. DO NOT use this
+  /// method in performance-sensitive areas, prefer using
+  /// [fetchAttachmentsByMessagesAsync]
   static Map<String, List<Attachment?>> fetchAttachmentsByMessages(List<Message?> messages, {CurrentChat? currentChat}) {
     final Map<String, List<Attachment?>> map = {};
     if (kIsWeb) {
@@ -340,6 +363,7 @@ class Message {
       return map;
     }
 
+    /// If we have a [CurrentChat] just return the attachments stored in it
     if (currentChat != null) {
       map.addEntries(messages.map((e) => MapEntry(e!.guid!, currentChat.getAttachmentsForMessage(e) ?? [])));
       return map;
@@ -348,10 +372,13 @@ class Message {
     if (messages.isEmpty) return {};
 
     return store.runInTransaction(TxMode.read, () {
+      /// Find eligible message IDs and then find [AttachmentMessageJoin]s
+      /// matching those message IDs
       final messageIds = messages.where((element) => element?.id != null).map((e) => e!.id!).toList();
       final amJoinQuery = amJoinBox.query(AttachmentMessageJoin_.messageId.oneOf(messageIds)).build();
       final amJoins = amJoinQuery.find();
       amJoinQuery.close();
+      /// Add the attachments with some fancy list operations
       map.addEntries(messages.map(
           (e) => MapEntry(e!.guid!, attachmentBox.getMany(amJoins.where(
               (e2) => e2.messageId == e.id).map(
@@ -360,6 +387,7 @@ class Message {
     });
   }
 
+  /// Fetch message attachments for a list of messages, but async
   static Future<Map<String, List<Attachment?>>> fetchAttachmentsByMessagesAsync(List<Message?> messages, {CurrentChat? currentChat}) async {
     final Map<String, List<Attachment?>> map = {};
     if (kIsWeb) {
@@ -375,6 +403,8 @@ class Message {
     return await compute(fetchAttachmentsIsolate, [messages.map((e) => e!.id!).toList(), messages.map((e) => e!.guid!).toList(), prefs.getString("objectbox-reference")]);
   }
 
+  /// Fetch attachments for a single message. Prefer using [fetchAttachmentsByMessages]
+  /// or [fetchAttachmentsByMessagesAsync] when working with a list of messages.
   List<Attachment?>? fetchAttachments({CurrentChat? currentChat}) {
     if (kIsWeb || (hasAttachments && attachments != null && attachments!.isNotEmpty)) {
       return attachments;
@@ -388,25 +418,32 @@ class Message {
 
     if (id == null) return [];
     return store.runInTransaction(TxMode.read, () {
+      /// Find attachment IDs matching the provided message ID
       final attachmentIdQuery = amJoinBox.query(AttachmentMessageJoin_.messageId.equals(id!)).build();
       final attachmentIds = attachmentIdQuery.property(AttachmentMessageJoin_.attachmentId).find().toSet().toList();
       attachmentIdQuery.close();
+      /// Find the attachments themselves
       final attachments = attachmentBox.getMany(attachmentIds, growableResult: true);
       this.attachments = attachments;
       return attachments;
     });
   }
 
-  static Chat? getChat(Message message) {
+  /// Get the chat associated with the message
+  Chat? getChat() {
     if (kIsWeb) return null;
     return store.runInTransaction(TxMode.read, () {
-      final chatIdQuery = cmJoinBox.query(ChatMessageJoin_.messageId.equals(message.id!)).build();
-      final chatId = chatIdQuery.property(ChatMessageJoin_.chatId).find().first;
+      /// Find the chatID, then find the chat itself
+      final chatIdQuery = cmJoinBox.query(ChatMessageJoin_.messageId.equals(id!)).build();
+      /// Note: don't use [findFirst()] here because it errors out sometimes
+      final chatId = chatIdQuery.property(ChatMessageJoin_.chatId).find().firstOrNull;
       chatIdQuery.close();
+      if (chatId == null) return null;
       return chatBox.get(chatId);
     });
   }
 
+  /// Fetch reactions
   Message fetchAssociatedMessages({MessageBloc? bloc}) {
     if (associatedMessages.isNotEmpty &&
         associatedMessages.length == 1 &&
@@ -446,6 +483,7 @@ class Message {
     return null;
   }
 
+  /// Find the date of the latest message in the DB
   static DateTime? lastMessageDate() {
     if (kIsWeb) return null;
     final query = (messageBox.query()..order(Message_.dateCreated, flags: Order.descending)).build();
@@ -455,11 +493,14 @@ class Message {
     return messages.isEmpty ? null : messages.first.dateCreated;
   }
 
+  /// Find a list of messages by the specified condition, or return all messages
+  /// when no condition is specified
   static List<Message> find({Condition<Message>? cond}) {
     final query = messageBox.query(cond).build();
     return query.find();
   }
 
+  /// Delete a message and remove all instances of that message in the DB
   static void delete(String guid) {
     if (kIsWeb) return;
     store.runInTransaction(TxMode.write, () {
@@ -549,6 +590,7 @@ class Message {
     guid = "temp-$hashed";
   }
 
+  /// Find how many messages exist in the DB for a chat
   static int? countForChat(Chat? chat) {
     if (kIsWeb || chat == null || chat.id == null) return 0;
     final chatIdQuery = cmJoinBox.query(ChatMessageJoin_.chatId.equals(chat.id!)).build();

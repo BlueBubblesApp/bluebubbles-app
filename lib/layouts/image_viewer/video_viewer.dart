@@ -1,24 +1,23 @@
 import 'dart:async';
+import 'package:bluebubbles/repository/models/platform_file.dart';
+import 'package:flutter/foundation.dart';
+import 'package:universal_io/io.dart';
+import 'package:universal_html/html.dart' as html;
 import 'dart:ui';
 
-import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:chewie/chewie.dart';
+import 'package:get/get.dart';
+import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
-import 'package:chewie/chewie.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
-import 'package:universal_html/html.dart' as html;
-import 'package:universal_io/io.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoViewer extends StatefulWidget {
@@ -347,8 +346,8 @@ class _VideoViewerState extends State<VideoViewer> {
                                   .iconTheme
                                   .copyWith(color: Theme.of(context).textTheme.bodyText1?.color)),
                           child: Chewie(
-                            controller: chewieController!,
-                          ),
+                                  controller: chewieController!,
+                                ),
                         ),
                       ),
                     );

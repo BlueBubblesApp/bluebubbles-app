@@ -2,26 +2,25 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
-import 'package:faker/faker.dart';
 import 'package:fast_contacts/fast_contacts.dart' hide Contact;
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:faker/faker.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class ContactManager {
   factory ContactManager() {
     return _manager;
   }
-
   static final ContactManager _manager = ContactManager._internal();
   static final tag = 'ContactManager';
-
   ContactManager._internal();
 
   List<Contact> contacts = [];
@@ -99,15 +98,13 @@ class ContactManager {
     // Fetch the current list of contacts
     Logger.info("Fetching contacts", tag: tag);
     if (!kIsWeb && !kIsDesktop) {
-      contacts = (await FastContacts.allContacts)
-          .map((e) => Contact(
-                displayName: e.displayName,
-                emails: e.emails,
-                phones: e.phones,
-                structuredName: e.structuredName,
-                id: e.id,
-              ))
-          .toList();
+      contacts = (await FastContacts.allContacts).map((e) => Contact(
+        displayName: e.displayName,
+        emails: e.emails,
+        phones: e.phones,
+        structuredName: e.structuredName,
+        id: e.id,
+      )).toList();
     } else {
       try {
         contacts.clear();
@@ -128,13 +125,13 @@ class ContactManager {
         try {
           if (contacts.isEmpty) {
             var response = await api.contacts();
-            for (Map<String, dynamic> map in response.data['data']) {
+            for (Map<String, dynamic> map in response.data['data']){
               ContactManager().contacts.add(Contact(
-                    id: randomString(8),
-                    displayName: map['firstName'] + " " + map['lastName'],
-                    emails: (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList(),
-                    phones: (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList(),
-                  ));
+                id: randomString(8),
+                displayName: map['firstName'] + " " + map['lastName'],
+                emails: (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList(),
+                phones: (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList(),
+              ));
             }
           }
         } catch (e, s) {
@@ -160,7 +157,7 @@ class ContactManager {
 
   Future<void> matchHandles() async {
     // Match handles to contacts
-    List<Handle> handles = Handle.find();
+    List<Handle> handles = kIsWeb ? ChatBloc().cachedHandles : Handle.find();
     for (Handle handle in handles) {
       // If we already have a "match", skip
       if (handleToContact.containsKey(handle.address)) {
@@ -171,8 +168,8 @@ class ContactManager {
       Contact? contactMatch;
 
       try {
-        contactMatch = getContact(handle);
         handleToFormattedAddress[handle.address] = await formatPhoneNumber(handle.address);
+        contactMatch = getContact(handle);
         handleToContact[handle.address] = contactMatch;
       } catch (ex) {
         Logger.error('Failed to match handle for address, "${handle.address}": ${ex.toString()}', tag: tag);
@@ -222,9 +219,11 @@ class ContactManager {
       if (!isEmailAddr) {
         for (String item in c.phones) {
           String compStr = item.replaceAll(" ", "").trim().numericOnly();
-
+          String? formattedAddress = handleToFormattedAddress[handle.address];
           if (!compStr.endsWith(lastDigits)) continue;
-          if (sameAddress([handle.address.replaceAll(" ", "").trim().numericOnly()], compStr)) {
+          List<String> compareOpts = [handle.address.replaceAll(" ", "").trim().numericOnly()];
+          if (formattedAddress != null) compareOpts.add(formattedAddress.replaceAll(" ", "").trim().numericOnly());
+          if (sameAddress(compareOpts, compStr)) {
             contact = c;
             break;
           }
@@ -234,7 +233,7 @@ class ContactManager {
       // Get an email match
       if (isEmailAddr) {
         for (String item in c.emails) {
-          if (item == handle.address) {
+          if (item.replaceAll(" ", "").trim() == handle.address.replaceAll(" ", "").trim()) {
             contact = c;
             break;
           }

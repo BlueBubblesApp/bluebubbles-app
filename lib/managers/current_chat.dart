@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/message_marker.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -213,12 +212,14 @@ class CurrentChat {
   }
 
   void preloadMessageAttachments({List<Message?>? specificMessages}) {
-    List<Message?> messages = specificMessages ?? Chat.getMessages(chat, limit: 25);
+    List<Message?> messages =
+        specificMessages ?? Chat.getMessages(chat, limit: 25);
     messageAttachments = Message.fetchAttachmentsByMessages(messages);
   }
 
   Future<void> preloadMessageAttachmentsAsync({List<Message?>? specificMessages}) async {
-    List<Message?> messages = specificMessages ?? Chat.getMessages(chat, limit: 25);
+    List<Message?> messages =
+        specificMessages ?? await Chat.getMessagesAsync(chat, limit: 25);
     messageAttachments = await Message.fetchAttachmentsByMessagesAsync(messages);
   }
 
@@ -245,8 +246,8 @@ class CurrentChat {
   }
 
   /// Retrieve all of the attachments associated with a chat
-  void updateChatAttachments() {
-    chatAttachments = Chat.getAttachments(chat);
+  Future<void> updateChatAttachments() async {
+    chatAttachments = await chat.getAttachmentsAsync();
   }
 
   void changeCurrentPlayingVideo(Map<String, VideoPlayerController> video) {
