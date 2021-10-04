@@ -241,6 +241,9 @@ class Message {
      }
 
      // Save the participant & set the handle ID to the new participant
+     if (handle == null && id == null) {
+       handle = Handle.findOne(originalROWID: handleId);
+     }
      if (handle != null) {
        handle!.save();
        handleId = handle!.id;
