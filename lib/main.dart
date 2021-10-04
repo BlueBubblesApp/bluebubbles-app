@@ -128,6 +128,7 @@ Future<Null> main() async {
 
   WidgetsFlutterBinding.ensureInitialized();
   dynamic exception;
+  dynamic stacktrace;
   try {
     prefs = await SharedPreferences.getInstance();
     if (!kIsWeb) {
@@ -223,8 +224,9 @@ Future<Null> main() async {
         appWindow.show();
       });
     }
-  } catch (e) {
+  } catch (e, s) {
     exception = e;
+    stacktrace = s;
   }
 
   if (exception == null) {
@@ -243,7 +245,7 @@ Future<Null> main() async {
     });
   } else {
     runApp(FailureToStart(e: exception));
-    throw Exception(exception);
+    throw Exception(exception + stacktrace);
   }
 }
 
