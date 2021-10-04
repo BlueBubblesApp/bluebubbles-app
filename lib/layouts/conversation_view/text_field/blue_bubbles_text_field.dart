@@ -605,23 +605,19 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         return KeyEventResult.handled;
                       }
                       if (data.keyCode == 8 && event.isControlPressed) {
-                        // Delete bad character (code 127)
                         String text = controller!.text;
-                        text = text.characters.where((char) => char.codeUnits[0] != 127).join();
                         TextSelection selection = controller!.selection;
                         TextPosition base = selection.base;
                         int startPos = base.offset;
-                        controller!.text = text;
-                        controller!.selection = TextSelection.fromPosition(TextPosition(offset: startPos - 1));
 
-                        if (text.isEmpty) return KeyEventResult.ignored;
+                        if (text.isEmpty) return KeyEventResult.handled;
 
                         // Get the word
                         List<String> words = text.trimRight().split(RegExp("[ \n]"));
                         RegExp punctuation = RegExp("[!\"#\$%&'()*+,-./:;<=>?@[\\]^_`{|}~]");
                         int trailing = text.length - text.trimRight().length;
                         List<int> counts = words.map((word) => word.length).toList();
-                        int end = startPos - 1 - trailing;
+                        int end = startPos - trailing;
                         int start = 0;
                         if (punctuation.hasMatch(text.characters.toList()[end - 1])) {
                           start = end - 1;
@@ -638,9 +634,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         end += trailing; // Account for trimming
                         start = max(0, start); // Make sure it's not negative
                         text = text.substring(0, start) + text.substring(end);
-                        controller!.text = text; // Set the text
-                        controller!.selection =
-                            TextSelection.fromPosition(TextPosition(offset: start)); // Set the position
+                        controller!.value = TextEditingValue(text: text, selection: TextSelection.fromPosition(TextPosition(offset: start)));
                         return KeyEventResult.handled;
                       }
                       return KeyEventResult.ignored;
@@ -663,24 +657,23 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         return KeyEventResult.handled;
                       }
                       if (data.keyCode == 8 && event.isControlPressed) {
-                        // Delete bad character (code 127)
                         String text = controller!.text;
-                        text = text.characters.where((char) => char.codeUnits[0] != 127).join();
                         TextSelection selection = controller!.selection;
                         TextPosition base = selection.base;
                         int startPos = base.offset;
-                        controller!.text = text;
-                        controller!.selection = TextSelection.fromPosition(TextPosition(offset: startPos - 1));
 
-                        // Check if at end of a word
-                        if (startPos - 1 == text.length || text.characters.toList()[startPos - 1].isBlank!) {
-                          // Get the word
-                          int trailing = text.length - text.trimRight().length;
-                          List<String> words = text.trimRight().split(" ");
-                          print(words);
-                          List<int> counts = words.map((word) => word.length).toList();
-                          int end = startPos - 1 - trailing;
-                          int start = 0;
+                        if (text.isEmpty) return KeyEventResult.handled;
+
+                        // Get the word
+                        List<String> words = text.trimRight().split(RegExp("[ \n]"));
+                        RegExp punctuation = RegExp("[!\"#\$%&'()*+,-./:;<=>?@[\\]^_`{|}~]");
+                        int trailing = text.length - text.trimRight().length;
+                        List<int> counts = words.map((word) => word.length).toList();
+                        int end = startPos - trailing;
+                        int start = 0;
+                        if (punctuation.hasMatch(text.characters.toList()[end - 1])) {
+                          start = end - 1;
+                        } else {
                           for (int i = 0; i < counts.length; i++) {
                             int count = counts[i];
                             if (start + count < end) {
@@ -689,15 +682,11 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                               break;
                             }
                           }
-                          end += trailing; // Account for trimming
-                          start -= 1; // Remove the space after the previous word
-                          start = max(0, start); // Make sure it's not negative
-                          text = text.substring(0, start) + text.substring(end);
-                          // Set the text
-                          controller!.text = text;
-                          // Set the position
-                          controller!.selection = TextSelection.fromPosition(TextPosition(offset: start));
                         }
+                        end += trailing; // Account for trimming
+                        start = max(0, start); // Make sure it's not negative
+                        text = text.substring(0, start) + text.substring(end);
+                        controller!.value = TextEditingValue(text: text, selection: TextSelection.fromPosition(TextPosition(offset: start)));
                         return KeyEventResult.handled;
                       }
                       return KeyEventResult.ignored;
