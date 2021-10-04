@@ -71,7 +71,6 @@ String getFullChatTitle(Chat _chat) {
     title = _chat.displayName;
   }
 
-  print(title);
   return title!;
 }
 
