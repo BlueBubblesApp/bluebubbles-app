@@ -350,6 +350,13 @@ class Message {
     }
 
     newMessage!.id = existing.id;
+
+    newMessage.handleId = existing.handleId;
+    newMessage.handle = Handle.findOne(originalROWID: newMessage.handleId);
+    newMessage.hasAttachments = existing.hasAttachments;
+    newMessage.hasReactions = existing.hasReactions;
+    newMessage.metadata = existing.metadata;
+
     messageBox.put(newMessage);
 
     return newMessage;
