@@ -22,8 +22,8 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:dio_http/dio_http.dart';
-import 'package:file_picker/file_picker.dart' hide PlatformFile;
 import 'package:file_picker/file_picker.dart' as pf;
+import 'package:file_picker/file_picker.dart' hide PlatformFile;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -593,17 +593,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 child: Focus(
                   focusNode: FocusNode(),
                   onKey: (focus, event) {
-                    if (event is! RawKeyDownEvent) return KeyEventResult.ignored;
-                    Logger.info(
-                        "Got key label ${event.data.keyLabel}, physical key ${event.data.physicalKey.toString()}, logical key ${event.data.logicalKey.toString()}",
-                        tag: "RawKeyboardListener");
-                    if (event.data is RawKeyEventDataWindows) {
+                    if (event is RawKeyUpEvent && event.data is RawKeyEventDataWindows) {
                       var data = event.data as RawKeyEventDataWindows;
-                      if (data.keyCode == 13 && !event.isShiftPressed) {
-                        sendMessage();
-                        focusNode!.requestFocus();
-                        return KeyEventResult.handled;
-                      }
                       if (data.keyCode == 8 && event.isControlPressed) {
                         String text = controller!.text;
                         TextSelection selection = controller!.selection;
@@ -636,6 +627,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         text = text.substring(0, start) + text.substring(end);
                         controller!.value = TextEditingValue(text: text, selection: TextSelection.fromPosition(TextPosition(offset: start)));
                         return KeyEventResult.handled;
+                      }
+                      if (data.keyCode == 8 && event.isControlPressed) {
+                        return KeyEventResult.ignored;
                       }
                       return KeyEventResult.ignored;
                     }
@@ -656,39 +650,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         focusNode!.requestFocus();
                         return KeyEventResult.handled;
                       }
-                      if (data.keyCode == 8 && event.isControlPressed) {
-                        String text = controller!.text;
-                        TextSelection selection = controller!.selection;
-                        TextPosition base = selection.base;
-                        int startPos = base.offset;
-
-                        if (text.isEmpty) return KeyEventResult.handled;
-
-                        // Get the word
-                        List<String> words = text.trimRight().split(RegExp("[ \n]"));
-                        RegExp punctuation = RegExp("[!\"#\$%&'()*+,-./:;<=>?@[\\]^_`{|}~]");
-                        int trailing = text.length - text.trimRight().length;
-                        List<int> counts = words.map((word) => word.length).toList();
-                        int end = startPos - trailing;
-                        int start = 0;
-                        if (punctuation.hasMatch(text.characters.toList()[end - 1])) {
-                          start = end - 1;
-                        } else {
-                          for (int i = 0; i < counts.length; i++) {
-                            int count = counts[i];
-                            if (start + count < end) {
-                              start += count + (i == counts.length - 1 ? 0 : 1);
-                            } else {
-                              break;
-                            }
-                          }
-                        }
-                        end += trailing; // Account for trimming
-                        start = max(0, start); // Make sure it's not negative
-                        text = text.substring(0, start) + text.substring(end);
-                        controller!.value = TextEditingValue(text: text, selection: TextSelection.fromPosition(TextPosition(offset: start)));
-                        return KeyEventResult.handled;
-                      }
+                      // if (data.keyCode == 8 && event.isControlPressed) {
+                      //   // TODO figure out if mac already supports this
+                      //   return KeyEventResult.handled;
+                      // }
                       return KeyEventResult.ignored;
                     }
                     if (event.data is RawKeyEventDataWeb) {
