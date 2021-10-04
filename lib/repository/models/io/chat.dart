@@ -1,27 +1,29 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/main.dart';
-import 'package:bluebubbles/objectbox.g.dart';
-import 'package:bluebubbles/repository/models/io/attachment.dart';
-import 'package:bluebubbles/repository/models/io/join_tables.dart';
-import 'package:collection/collection.dart';
-import 'package:flutter/foundation.dart';
-import 'package:universal_io/io.dart';
+
 import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/helpers/darty.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/metadata_helper.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
+import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/objectbox.g.dart';
+import 'package:bluebubbles/repository/models/io/attachment.dart';
+import 'package:bluebubbles/repository/models/io/join_tables.dart';
 import 'package:bluebubbles/socket_manager.dart';
-import 'package:bluebubbles/helpers/darty.dart';
-import 'package:get/get.dart';
+import 'package:collection/collection.dart';
 import 'package:faker/faker.dart';
+import 'package:flutter/foundation.dart';
+import 'package:get/get.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
+import 'package:universal_io/io.dart';
+
 import 'handle.dart';
 import 'message.dart';
 
@@ -69,6 +71,7 @@ String getFullChatTitle(Chat _chat) {
     title = _chat.displayName;
   }
 
+  print(title);
   return title!;
 }
 
