@@ -200,6 +200,7 @@ class ThemePanel extends GetView<ThemePanelController> {
                             ChatBloc().refreshChats();
                             saveSettings();
                             controller.update();
+                            EventDispatcher().emit('refresh', null);
                           },
                           options: Skins.values.where((item) => item != Skins.Samsung).toList(),
                           textProcessing: (val) => val.toString().split(".").last,

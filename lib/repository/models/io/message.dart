@@ -241,7 +241,7 @@ class Message {
      }
 
      // Save the participant & set the handle ID to the new participant
-     if (handle == null && id == null) {
+     if (handle == null && id == null && handleId != null) {
        handle = Handle.findOne(originalROWID: handleId);
      }
      if (handle != null) {
@@ -496,7 +496,7 @@ class Message {
   /// Find the date of the latest message in the DB
   static DateTime? lastMessageDate() {
     if (kIsWeb) return null;
-    final query = (messageBox.query()..order(Message_.dateCreated, flags: Order.descending)).build();
+    final query = (messageBox.query()..order(Message_.dateCreated, flags: Order.descending)..order(Message_.originalROWID, flags: Order.descending)).build();
     query.limit = 1;
     final messages = query.find();
     query.close();

@@ -102,7 +102,7 @@ Future<List<Attachment>> getAttachmentsIsolate(List<dynamic> stuff) async {
     final messageIds = amJoinValues.map((e) => e.messageId).toList();
     /// Query the [messageBox] for all the message IDs and order by date
     /// descending
-    final query2 = (messageBox.query(Message_.id.oneOf(messageIds))..order(Message_.dateCreated, flags: Order.descending)).build();
+    final query2 = (messageBox.query(Message_.id.oneOf(messageIds))..order(Message_.dateCreated, flags: Order.descending)..order(Message_.originalROWID, flags: Order.descending)).build();
     final messages = query2.find();
     query2.close();
     /// Query the [attachmentBox] for all the attachment IDs and remove where
@@ -147,7 +147,7 @@ Future<List<Message>> getMessagesIsolate(List<dynamic> stuff) async {
     /// and ordering in descending order
     final query = (messageBox.query(Message_.id.oneOf(messageIds)
         .and(includeDeleted ? Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull()) : Message_.dateDeleted.isNull()))
-      ..order(Message_.dateCreated, flags: Order.descending)).build();
+      ..order(Message_.dateCreated, flags: Order.descending)..order(Message_.originalROWID, flags: Order.descending)).build();
     query
       ..limit = limit
       ..offset = offset;
@@ -558,7 +558,7 @@ class Chat {
 
     // If the message was saved correctly, update this chat's latestMessage info,
     // but only if the incoming message's date is newer
-    if ((newMessage!.id != null || kIsWeb) && checkForMessageText) {
+    if ((newMessage?.id != null || kIsWeb) && checkForMessageText) {
       if (latestMessageDate == null) {
         isNewer = true;
       } else if (latestMessageDate!.millisecondsSinceEpoch < message.dateCreated!.millisecondsSinceEpoch) {
@@ -744,7 +744,7 @@ class Chat {
       messageIdQuery.close();
       final query = (messageBox.query(Message_.id.oneOf(messageIds)
           .and(includeDeleted ? Message_.dateDeleted.isNull().or(Message_.dateDeleted.notNull()) : Message_.dateDeleted.isNull()))
-        ..order(Message_.dateCreated, flags: Order.descending)).build();
+        ..order(Message_.dateCreated, flags: Order.descending)..order(Message_.originalROWID, flags: Order.descending)).build();
       query
         ..limit = limit
         ..offset = offset;
