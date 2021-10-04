@@ -204,35 +204,35 @@ class DBProvider {
       cmJoinBox.removeAll();
       tvJoinBox.removeAll();
       store.runInTransaction(TxMode.write, () {
-        final chats = tableData[0].map((e) => Chat.fromMap(e)).toList()..sort((a, b) => a.id!.compareTo(b.id!));
+        final chats = tableData[0].map((e) => Chat.fromMap(e)).toList();
         final existingChatIds = chats.map((e) => e.id!).toList();
         for (Chat element in chats) {
           element.id = null;
         }
         final newChatIds = chatBox.putMany(chats);
         chats.clear();
-        final handles = tableData[1].map((e) => Handle.fromMap(e)).toList()..sort((a, b) => a.id!.compareTo(b.id!));
+        final handles = tableData[1].map((e) => Handle.fromMap(e)).toList();
         final existingHandleIds = handles.map((e) => e.id!).toList();
         for (Handle element in handles) {
           element.id = null;
         }
         final newHandleIds = handleBox.putMany(handles);
         handles.clear();
-        final messages = tableData[2].map((e) => Message.fromMap(e)).toList()..sort((a, b) => a.id!.compareTo(b.id!));
+        final messages = tableData[2].map((e) => Message.fromMap(e)).toList();
         final existingMessageIds = messages.map((e) => e.id!).toList();
         for (Message element in messages) {
           element.id = null;
         }
         final newMessageIds = messageBox.putMany(messages);
         messages.clear();
-        final attachments = tableData[3].map((e) => Attachment.fromMap(e)).toList()..sort((a, b) => a.id!.compareTo(b.id!));
+        final attachments = tableData[3].map((e) => Attachment.fromMap(e)).toList();
         final existingAttachmentIds = attachments.map((e) => e.id!).toList();
         for (Attachment element in attachments) {
           element.id = null;
         }
         final newAttachmentIds = attachmentBox.putMany(attachments);
         attachments.clear();
-        List<ChatHandleJoin> chJoins = tableData[4].map((e) => ChatHandleJoin.fromMap(e)).toList()..sort((a, b) => a.id!.compareTo(b.id!));
+        List<ChatHandleJoin> chJoins = tableData[4].map((e) => ChatHandleJoin.fromMap(e)).toList();
         existingChatIds.forEachIndexed((index, i) {
           final joins = chJoins.where((e) => e.chatId == i);
           joins.map((element) => element..chatId = newChatIds[index]);
@@ -243,7 +243,7 @@ class DBProvider {
         });
         chJoinBox.putMany(chJoins);
         chJoins.clear();
-        List<ChatMessageJoin> cmJoins = tableData[5].map((e) => ChatMessageJoin.fromMap(e)).toList()..sort((a, b) => a.id!.compareTo(b.id!));
+        List<ChatMessageJoin> cmJoins = tableData[5].map((e) => ChatMessageJoin.fromMap(e)).toList();
         existingChatIds.forEachIndexed((index, i) {
           final joins = cmJoins.where((e) => e.chatId == i);
           joins.map((element) => element..chatId = newChatIds[index]);
@@ -254,7 +254,7 @@ class DBProvider {
         });
         cmJoinBox.putMany(cmJoins);
         cmJoins.clear();
-        List<AttachmentMessageJoin> amJoins = tableData[6].map((e) => AttachmentMessageJoin.fromMap(e)).toList()..sort((a, b) => a.id!.compareTo(b.id!));
+        List<AttachmentMessageJoin> amJoins = tableData[6].map((e) => AttachmentMessageJoin.fromMap(e)).toList();
         existingAttachmentIds.forEachIndexed((index, i) {
           final joins = amJoins.where((e) => e.attachmentId == i);
           joins.map((element) => element..attachmentId = newAttachmentIds[index]);
@@ -265,21 +265,21 @@ class DBProvider {
         });
         amJoinBox.putMany(amJoins);
         amJoins.clear();
-        final themeObjects = tableData[7].map((e) => ThemeObject.fromMap(e)).toList()..sort((a, b) => a.id!.compareTo(b.id!));
+        final themeObjects = tableData[7].map((e) => ThemeObject.fromMap(e)).toList();
         final existingThemeObjectIds = themeObjects.map((e) => e.id!).toList();
         for (ThemeObject element in themeObjects) {
           element.id = null;
         }
         final newThemeObjectIds = themeObjectBox.putMany(themeObjects);
         themeObjects.clear();
-        final themeEntries = tableData[8].map((e) => ThemeEntry.fromMap(e)).toList()..sort((a, b) => a.id!.compareTo(b.id!));
+        final themeEntries = tableData[8].map((e) => ThemeEntry.fromMap(e)).toList();
         final existingThemeEntryIds = themeEntries.map((e) => e.id!).toList();
         for (ThemeEntry element in themeEntries) {
           element.id = null;
         }
         final newThemeEntryIds = themeEntryBox.putMany(themeEntries);
         themeEntries.clear();
-        List<ThemeValueJoin> tvJoins = tableData[9].map((e) => ThemeValueJoin.fromMap(e)).toList()..sort((a, b) => a.id!.compareTo(b.id!));
+        List<ThemeValueJoin> tvJoins = tableData[9].map((e) => ThemeValueJoin.fromMap(e)).toList();
         existingThemeObjectIds.forEachIndexed((index, i) {
           final joins = tvJoins.where((e) => e.themeId == i);
           joins.map((e) => e.themeId = newThemeObjectIds[index]);
