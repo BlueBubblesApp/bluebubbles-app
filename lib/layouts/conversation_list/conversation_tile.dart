@@ -223,7 +223,7 @@ class _ConversationTileState extends State<ConversationTile> {
         SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeContactNames.value;
 
     TextStyle? style = Theme.of(context).textTheme.bodyText1;
-    widget.chat.getTitle();
+    if (widget.chat.title == null || kIsWeb || kIsDesktop) widget.chat.getTitle();
     String? title = widget.chat.title ?? "Fake Person";
 
     if (generateNames) {

@@ -132,8 +132,8 @@ Future<Null> main() async {
   try {
     prefs = await SharedPreferences.getInstance();
     if (!kIsWeb) {
-      //ignore: unnecessary_cast, we need this as a workaround
       Directory documentsDirectory =
+          //ignore: unnecessary_cast, we need this as a workaround
           (kIsDesktop ? await getApplicationSupportDirectory() : await getApplicationDocumentsDirectory()) as Directory;
       final objectBoxDirectory = Directory(documentsDirectory.path + '/objectbox/');
       final sqlitePath = join(documentsDirectory.path, "chat.db");
@@ -183,37 +183,8 @@ Future<Null> main() async {
         }
       }
     }
-    FirebaseDart.setup(
-      platform: fdu.Platform.web(
-        currentUrl: Uri.base.toString(),
-        isMobile: false,
-        isOnline: true,
-      ),
-    );
-    var options = FirebaseOptions(
-        appId: 'my_app_id',
-        apiKey: 'apiKey',
-        projectId: 'my_project',
-        messagingSenderId: 'ignore',
-        authDomain: 'my_project.firebaseapp.com');
-    app = await Firebase.initializeApp(options: options);
-    await initializeDateFormatting('fr_FR', null);
     await SettingsManager().init();
     await SettingsManager().getSavedSettings(headless: true);
-    Get.put(AttachmentDownloadService());
-    if (!kIsWeb && !kIsDesktop) {
-      flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-      const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('ic_stat_icon');
-      final InitializationSettings initializationSettings =
-          InitializationSettings(android: initializationSettingsAndroid);
-      await flutterLocalNotificationsPlugin!.initialize(initializationSettings);
-      tz.initializeTimeZones();
-      tz.setLocalLocation(tz.getLocation(await FlutterNativeTimezone.getLocalTimezone()));
-      if (!await GoogleMlKit.nlp.entityModelManager().isModelDownloaded(EntityExtractorOptions.ENGLISH)) {
-        GoogleMlKit.nlp.entityModelManager().downloadModel(EntityExtractorOptions.ENGLISH, isWifiRequired: false);
-      }
-      await FlutterLibphonenumber().init();
-    }
     if (kIsDesktop) {
       await WindowManager.instance.setTitle('BlueBubbles (Beta)');
       WindowManager.instance.addListener(DesktopWindowListener());
@@ -230,19 +201,12 @@ Future<Null> main() async {
   }
 
   if (exception == null) {
-    runZonedGuarded<Future<Null>>(() async {
-      ThemeObject light = await ThemeObject.getLightTheme();
-      ThemeObject dark = await ThemeObject.getDarkTheme();
-
-      runApp(Main(
-        lightTheme: light.themeData,
-        darkTheme: dark.themeData,
-      ));
-    }, (Object error, StackTrace stackTrace) async {
-      // Whenever an error occurs, call the `_reportError` function. This sends
-      // Dart errors to the dev console or Sentry depending on the environment.
-      await _reportError(error, stackTrace);
-    });
+    ThemeObject light = ThemeObject.getLightTheme();
+    ThemeObject dark = ThemeObject.getDarkTheme();
+    runApp(Main(
+      lightTheme: light.themeData,
+      darkTheme: dark.themeData,
+    ));
   } else {
     runApp(FailureToStart(e: exception));
     throw Exception(exception + stacktrace);
@@ -433,6 +397,35 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
     // Get the saved settings from the settings manager after the first frame
     SchedulerBinding.instance!.addPostFrameCallback((_) async {
+      FirebaseDart.setup(
+        platform: fdu.Platform.web(
+          currentUrl: Uri.base.toString(),
+          isMobile: false,
+          isOnline: true,
+        ),
+      );
+      var options = FirebaseOptions(
+          appId: 'my_app_id',
+          apiKey: 'apiKey',
+          projectId: 'my_project',
+          messagingSenderId: 'ignore',
+          authDomain: 'my_project.firebaseapp.com');
+      app = await Firebase.initializeApp(options: options);
+      await initializeDateFormatting('fr_FR', null);
+      Get.put(AttachmentDownloadService());
+      if (!kIsWeb && !kIsDesktop) {
+        flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+        const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('ic_stat_icon');
+        final InitializationSettings initializationSettings =
+        InitializationSettings(android: initializationSettingsAndroid);
+        await flutterLocalNotificationsPlugin!.initialize(initializationSettings);
+        tz.initializeTimeZones();
+        tz.setLocalLocation(tz.getLocation(await FlutterNativeTimezone.getLocalTimezone()));
+        if (!await GoogleMlKit.nlp.entityModelManager().isModelDownloaded(EntityExtractorOptions.ENGLISH)) {
+          GoogleMlKit.nlp.entityModelManager().downloadModel(EntityExtractorOptions.ENGLISH, isWifiRequired: false);
+        }
+        await FlutterLibphonenumber().init();
+      }
       await SettingsManager().getSavedSettings();
 
       if (SettingsManager().settings.colorsFromMedia.value) {

@@ -7,6 +7,7 @@ import 'package:bluebubbles/helpers/message_marker.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/socket_singletons.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/pinned_tile_text_bubble.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
@@ -106,7 +107,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
         SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeContactNames.value;
 
     TextStyle? style = context.textTheme.subtitle1!.apply(fontSizeFactor: 0.85);
-    if (widget.chat.title == null) widget.chat.getTitle();
+    if (widget.chat.title == null || kIsWeb || kIsDesktop) widget.chat.getTitle();
     String title = widget.chat.title ?? "Fake Person";
 
     if (generateNames) {
