@@ -129,7 +129,7 @@ bool sameAddress(List<String?> options, String? compared) {
     } else if (compared.endsWith(opt) && opt.length >= 9) {
       match = true;
       break;
-    } else if (kIsDesktop && opt.endsWith(compared) && compared.length >= 9) {
+    } else if (opt.endsWith(compared) && compared.length >= 9) {
       match = true;
       break;
     }
