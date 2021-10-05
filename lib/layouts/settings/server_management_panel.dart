@@ -889,7 +889,7 @@ class _SyncDialogState extends State<SyncDialog> {
     if (lookback == null) return;
 
     DateTime now = DateTime.now().toUtc().subtract(lookback!);
-    SocketManager().fetchMessages(null, after: now.millisecondsSinceEpoch)!.then((dynamic messages) {
+    SocketManager().fetchMessages(null, after: now.millisecondsSinceEpoch, limit: 1000)!.then((dynamic messages) {
       if (mounted) {
         setState(() {
           message = "Adding ${messages.length} messages...";
