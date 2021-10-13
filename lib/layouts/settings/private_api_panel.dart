@@ -291,17 +291,6 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                           return SizedBox.shrink();
                       }),
                     ],
-                  Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
-                  Container(
-                    height: 30,
-                    decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
-                      color: headerColor,
-                      border: Border(
-                          top: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
-                      ),
-                    ) : null,
-                  ),
-                      ]
                   )
                 ],
             ],
