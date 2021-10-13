@@ -1,5 +1,5 @@
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:get/get.dart';

@@ -14,7 +14,7 @@ packages:
       name: _fe_analyzer_shared
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "25.0.0"
+    version: "22.0.0"
   adaptive_theme:
     dependency: "direct main"
     description:
@@ -28,7 +28,7 @@ packages:
       name: analyzer
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.2.0"
+    version: "1.7.1"
   ansicolor:
     dependency: transitive
     description:
@@ -72,7 +72,7 @@ packages:
       name: async
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.8.1"
+    version: "2.6.1"
   battery_optimization:
     dependency: "direct main"
     description:
@@ -172,7 +172,7 @@ packages:
       name: charcode
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.3.1"
+    version: "1.2.0"
   checked_yaml:
     dependency: transitive
     description:
@@ -480,7 +480,7 @@ packages:
       name: flutter_dropzone
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.0.1"
+    version: "2.1.0"
   flutter_dropzone_platform_interface:
     dependency: transitive
     description:
@@ -494,7 +494,7 @@ packages:
       name: flutter_dropzone_web
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.0.4"
+    version: "2.1.1"
   flutter_keyboard_visibility:
     dependency: "direct main"
     description:
@@ -523,6 +523,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.9.2"
+  flutter_lints:
+    dependency: "direct dev"
+    description:
+      name: flutter_lints
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.4"
   flutter_local_notifications:
     dependency: "direct main"
     description:
@@ -813,6 +820,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.2.0+1"
+  lints:
+    dependency: transitive
+    description:
+      name: lints
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.1"
   lists:
     dependency: transitive
     description:
@@ -889,7 +903,7 @@ packages:
       name: meta
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.7.0"
+    version: "1.3.0"
   metadata_fetch:
     dependency: "direct main"
     description:
@@ -1545,21 +1559,21 @@ packages:
       name: test
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.17.10"
+    version: "1.16.8"
   test_api:
     dependency: transitive
     description:
       name: test_api
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.4.2"
+    version: "0.3.0"
   test_core:
     dependency: transitive
     description:
       name: test_core
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.4.0"
+    version: "0.3.19"
   timezone:
     dependency: transitive
     description:
@@ -1784,15 +1798,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.2.9"
-  window_size:
+  window_manager:
     dependency: "direct main"
     description:
-      path: "plugins\\window_size"
-      ref: fd519be1e8398c6b6c2062c2447bac960a71bc02
-      resolved-ref: fd519be1e8398c6b6c2062c2447bac960a71bc02
-      url: "git://github.com/google/flutter-desktop-embedding.git"
-    source: git
-    version: "0.1.0"
+      name: window_manager
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.0.4"
   wkt_parser:
     dependency: transitive
     description:

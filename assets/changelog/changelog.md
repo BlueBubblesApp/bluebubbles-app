@@ -2,6 +2,40 @@
 
 Below are the last few BlueBubbles App release changelogs
 
+## v1.6.0
+
+**NOTE**: Please update your BlueBubbles Server to v0.2.0 for extended capabilities! If you want to try out BlueBubbles Web/Desktop, v0.2.0 is _required_!
+
+## Changes
+
+### The Big Stuff
+
+* Introducing BlueBubbles for Web (BlueBubbles Server v0.2.0 required)!
+  - https://bluebubbles.app/web
+  - https://bluebubbles.app/web/beta (if you'd like to try out beta features)
+  - BlueBubbles Desktop (new) is still in beta. If you'd like to try it out, join our Discord server!
+* Fixes empty notification summary (again)
+* Delivery/Read indicators for chats
+  - Pinned will show an icon, unpinned will show text above the last message date
+* Fixes issues with the incorrect last message displaying in the chat list
+
+### The Nitty Gritty
+
+#### New Features
+* Adds address, phone number, and email detection within a message
+* You can now generate a QR Code on your Android Device to screenshot & save
+  - The QRCode will only be valid until your server URL changes (never if Dynamic DNS)
+* Additional information is now shown in the Connection & Server Management settings page
+* Ability to check for Server updates directly from your Android/Web client
+* Icons in the iOS theme are now more iOS-y
+* Ability to export contacts to your BlueBubbles server so that other clients (Web & Desktop) can use them
+
+#### Bug Fixes
+* Fixes layout issues with Smart Replies
+* Fixes duplicate message issue when sending a message with a link (separated by a new line)
+* Fixes issues sharing .txt files to BlueBubbles
+* Tons of other small fixes and cross-platform enhancements
+
 ## v1.5.0
 
 ## Changes

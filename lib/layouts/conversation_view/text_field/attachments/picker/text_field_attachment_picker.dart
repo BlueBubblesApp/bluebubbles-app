@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
+import 'package:file_picker/file_picker.dart' hide PlatformFile;
+import 'package:file_picker/file_picker.dart' as pf;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:universal_io/io.dart';
 
@@ -153,8 +155,13 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
                                         final res = await FilePicker.platform.pickFiles(withData: true, allowMultiple: true);
                                         if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
 
-                                        for (dynamic file in res.files) {
-                                          widget.onAddAttachment(file);
+                                        for (pf.PlatformFile file in res.files) {
+                                          widget.onAddAttachment(PlatformFile(
+                                            path: file.path,
+                                            name: file.name,
+                                            bytes: file.bytes,
+                                            size: file.size
+                                          ));
                                         }
                                       },
                                       child: Column(

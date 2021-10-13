@@ -269,7 +269,7 @@ class NotificationPanel extends StatelessWidget {
                                   child: SettingsDivider(color: headerColor),
                                 ),
                               ),
-                              if (!kIsWeb)
+                              /*if (!kIsWeb)
                                 Obx(() {
                                   if (SettingsManager().settings.skin.value == Skins.iOS)
                                     return Container(
@@ -304,7 +304,7 @@ class NotificationPanel extends StatelessWidget {
                                     padding: const EdgeInsets.only(left: 65.0),
                                     child: SettingsDivider(color: headerColor),
                                   ),
-                                ),
+                                ),*/
                               SettingsTile(
                                 title: "Text Detection",
                                 onTap: () async {

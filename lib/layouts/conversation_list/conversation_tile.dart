@@ -24,7 +24,7 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -250,7 +250,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
       initialData: widget.chat.latestMessageText,
       future: widget.chat.latestMessage != null
           ? MessageHelper.getNotificationText(widget.chat.latestMessage!)
-          : Future.value(widget.chat.latestMessageText),
+          : Future.value(widget.chat.latestMessageText ?? ""),
       builder: (BuildContext context, AsyncSnapshot snapshot) {
         String latestText = snapshot.data ?? "";
         return Obx(

@@ -148,7 +148,7 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
                                       file.delete();
                                       ChatBloc().chats[index].customAvatarPath.value = null;
                                       ChatBloc().chats[index].save();
-                                      Navigator.of(context).pop();
+                                      Get.back();
                                     }),
                                 TextButton(
                                     child: Text("Set New",

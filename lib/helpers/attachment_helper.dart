@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:file_picker/file_picker.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:universal_io/io.dart';
@@ -174,6 +174,7 @@ class AttachmentHelper {
           href: "data:application/octet-stream;charset=utf-16le;base64,$content")
         ..setAttribute("download", file.name)
         ..click();
+      return;
     }
     if (kIsDesktop) {
       String downloadsPath = (await getDownloadsDirectory())!.path;
@@ -199,7 +200,11 @@ class AttachmentHelper {
       return showDeniedSnackbar("BlueBubbles does not have the required permissions!");
     }
 
-    await ImageGallerySaver.saveFile(file.path);
+    if (file.path == null) {
+      return showDeniedSnackbar();
+    }
+
+    await ImageGallerySaver.saveFile(file.path!);
     showSnackbar('Success', 'Saved attachment!');
   }
 
@@ -237,7 +242,7 @@ class AttachmentHelper {
       return Get.find<AttachmentDownloadController>(tag: attachment.guid);
     } else if (!kIsWeb && (FileSystemEntity.typeSync(pathName) != FileSystemEntityType.notFound ||
         attachment.guid == "redacted-mode-demo-attachment" ||
-        attachment.guid!.contains("theme-selector"))) {
+        (attachment.guid != null && attachment.guid!.contains("theme-selector")))) {
       return PlatformFile(
         name: attachment.transferName!,
         path: pathName,
@@ -399,7 +404,15 @@ class AttachmentHelper {
       filePath = originalFile.absolute.path;
     }
 
-    // Get dimensions and preview images
+    // Handle getting heic images
+    if (attachment.mimeType == 'image/heic') {
+      originalFile = await FlutterNativeImage.compressImage(
+        filePath,
+        percentage: 100,
+        quality: qualityOverride ?? SettingsManager().compressionQuality
+      );
+    }
+
     Uint8List previewData = originalFile.readAsBytesSync();
     if (attachment.mimeType == "image/gif") {
       try {
