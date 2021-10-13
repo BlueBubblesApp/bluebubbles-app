@@ -951,7 +951,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   ),
                 ),
               ),
-            ),
+            )),
             if (SettingsManager().settings.skin.value == Skins.iOS) buildSendButton(),
           ],
         ),
