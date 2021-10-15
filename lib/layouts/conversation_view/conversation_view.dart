@@ -101,8 +101,6 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   void initState() {
     super.initState();
 
-    getAdjustBackground();
-
     selected = widget.selected.isEmpty ? [] : widget.selected;
     existingAttachments = widget.existingAttachments.isEmpty ? [] : widget.existingAttachments;
     existingText = widget.existingText;
@@ -173,13 +171,13 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   }
 
   void getAdjustBackground() {
-    var lightTheme = ThemeObject.getLightTheme();
-    var darkTheme = ThemeObject.getDarkTheme();
+    var lightTheme = ThemeObject.getLightTheme(fetchData: false);
+    var darkTheme = ThemeObject.getDarkTheme(fetchData: false);
     if ((lightTheme.gradientBg && !ThemeObject.inDarkMode(Get.context!)) ||
         (darkTheme.gradientBg && ThemeObject.inDarkMode(Get.context!))) {
-      adjustBackground.value = true;
+      if (adjustBackground.value != true) adjustBackground.value = true;
     } else {
-      adjustBackground.value = false;
+      if (adjustBackground.value != false) adjustBackground.value = false;
     }
   }
 
@@ -395,7 +393,6 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
     if (messageBloc == null && !widget.isCreator) {
       messageBloc = initMessageBloc();
-      messageBloc!.getMessages();
     }
 
     Widget textField = BlueBubblesTextField(

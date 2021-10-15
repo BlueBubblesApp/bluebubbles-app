@@ -6,6 +6,7 @@ import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/repository/models/io/theme_entry.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -117,26 +118,30 @@ class ThemeObject {
     });
   }
 
-  static ThemeObject getLightTheme() {
-    List<ThemeObject> res = ThemeObject.getThemes();
-    List<ThemeObject> themes = res.where((element) => element.selectedLightTheme).toList();
-    if (themes.isEmpty) {
+  static ThemeObject getLightTheme({bool fetchData = true}) {
+    final query = themeObjectBox.query(ThemeObject_.selectedLightTheme.equals(true)).build();
+    query.limit = 1;
+    final result = query.find().firstOrNull;
+    if (result == null) {
       return Themes.themes[1];
     }
-    ThemeObject theme = themes.first;
-    theme.fetchData();
-    return theme;
+    if (fetchData) {
+      result.fetchData();
+    }
+    return result;
   }
 
-  static ThemeObject getDarkTheme() {
-    List<ThemeObject> res = ThemeObject.getThemes();
-    List<ThemeObject> themes = res.where((element) => element.selectedDarkTheme).toList();
-    if (themes.isEmpty) {
+  static ThemeObject getDarkTheme({bool fetchData = true}) {
+    final query = themeObjectBox.query(ThemeObject_.selectedDarkTheme.equals(true)).build();
+    query.limit = 1;
+    final result = query.find().firstOrNull;
+    if (result == null) {
       return Themes.themes[0];
     }
-    ThemeObject theme = themes.first;
-    theme.fetchData();
-    return theme;
+    if (fetchData) {
+      result.fetchData();
+    }
+    return result;
   }
 
   static void setSelectedTheme({int? light, int? dark}) {
