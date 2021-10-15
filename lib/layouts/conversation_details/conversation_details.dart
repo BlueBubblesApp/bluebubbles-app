@@ -19,6 +19,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_improved_scrolling/flutter_improved_scrolling.dart';
 import 'package:get/get.dart';
 import 'package:universal_io/io.dart';
 
@@ -86,6 +87,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
     if (mounted) setState(() {});
   }
 
+  final scrollController = ScrollController();
+
   @override
   Widget build(BuildContext context) {
     final bool redactedMode = SettingsManager().settings.redactedMode.value;
@@ -128,92 +131,131 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                 ),
               )) as PreferredSizeWidget?,
         extendBodyBehindAppBar: SettingsManager().settings.skin.value == Skins.iOS ? true : false,
-        body: CustomScrollView(
-          physics: ThemeSwitcher.getScrollPhysics(),
-          slivers: <Widget>[
-            if (SettingsManager().settings.skin.value == Skins.iOS)
-              SliverToBoxAdapter(
-                child: Container(
-                  height: 100,
+        body: ImprovedScrolling(
+          enableMMBScrolling: true,
+          enableKeyboardScrolling: true,
+          mmbScrollConfig: MMBScrollConfig(
+            customScrollCursor: DefaultCustomScrollCursor(
+              cursorColor: context.textTheme.subtitle1!.color!,
+              backgroundColor: Colors.white,
+              borderColor: context.textTheme.headline1!.color!,
+            ),
+          ),
+          scrollController: scrollController,
+          child: CustomScrollView(
+            controller: scrollController,
+            physics: ThemeSwitcher.getScrollPhysics(),
+            slivers: <Widget>[
+              if (SettingsManager().settings.skin.value == Skins.iOS)
+                SliverToBoxAdapter(
+                  child: Container(
+                    height: 100,
+                  ),
                 ),
-              ),
-            SliverToBoxAdapter(
-              child: readOnly
-                  ? Container()
-                  : showGroupNameInfo
-                      ? Row(
-                          children: [
-                            Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.only(left: 16.0, right: 8.0, bottom: 8.0),
-                                child: TextField(
-                                  cursorColor: Theme.of(context).primaryColor,
-                                  readOnly: !chat.isGroup() || redactedMode,
-                                  onSubmitted: (String newName) {
-                                    widget.chat.changeName(newName);
-                                    widget.chat.getTitle();
-                                    setState(() {
-                                      showNameField = newName.isNotEmpty;
-                                    });
-                                    ChatBloc().updateChat(chat);
-                                  },
-                                  controller: controller,
-                                  style: Theme.of(context).textTheme.bodyText1,
-                                  autofocus: false,
-                                  autocorrect: false,
-                                  decoration: InputDecoration(
-                                      labelText: chat.displayName!.isEmpty ? "SET NAME" : "NAME",
-                                      labelStyle: TextStyle(color: Theme.of(context).primaryColor),
-                                      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey))),
+              SliverToBoxAdapter(
+                child: readOnly
+                    ? Container()
+                    : showGroupNameInfo
+                        ? Row(
+                            children: [
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 16.0, right: 8.0, bottom: 8.0),
+                                  child: TextField(
+                                    cursorColor: Theme.of(context).primaryColor,
+                                    readOnly: !chat.isGroup() || redactedMode,
+                                    onSubmitted: (String newName) {
+                                      widget.chat.changeName(newName);
+                                      widget.chat.getTitle();
+                                      setState(() {
+                                        showNameField = newName.isNotEmpty;
+                                      });
+                                      ChatBloc().updateChat(chat);
+                                    },
+                                    controller: controller,
+                                    style: Theme.of(context).textTheme.bodyText1,
+                                    autofocus: false,
+                                    autocorrect: false,
+                                    decoration: InputDecoration(
+                                        labelText: chat.displayName!.isEmpty ? "SET NAME" : "NAME",
+                                        labelStyle: TextStyle(color: Theme.of(context).primaryColor),
+                                        enabledBorder:
+                                            UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey))),
+                                  ),
                                 ),
                               ),
-                            ),
-                            if (showGroupNameInfo && chat.displayName!.isNotEmpty)
-                              Container(
-                                  padding: EdgeInsets.only(right: 10),
-                                  child: GestureDetector(
-                                      onTap: () {
-                                        showDialog(
-                                          context: context,
-                                          builder: (BuildContext context) {
-                                            return AlertDialog(
-                                                backgroundColor: Theme.of(context).accentColor,
-                                                title: Text("Group Naming",
-                                                    style:
-                                                        TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
-                                                content: Column(
-                                                  mainAxisAlignment: MainAxisAlignment.center,
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                        "Changing the group name will only change it locally for you. It will not change the group name on any of your other devices, or for other members of the chat.",
-                                                        style: Theme.of(context).textTheme.bodyText1),
-                                                  ],
-                                                ),
-                                                actions: <Widget>[
-                                                  TextButton(
-                                                      child: Text("OK",
-                                                          style: Theme.of(context)
-                                                              .textTheme
-                                                              .subtitle1!
-                                                              .apply(color: Theme.of(context).primaryColor)),
-                                                      onPressed: () {
-                                                        Navigator.of(context).pop();
-                                                      }),
-                                                ]);
-                                          },
-                                        );
-                                      },
-                                      child: Icon(
-                                        SettingsManager().settings.skin.value == Skins.iOS
-                                            ? CupertinoIcons.info
-                                            : Icons.info_outline,
-                                        color: Theme.of(context).primaryColor,
-                                      ))),
-                            if (chat.displayName!.isEmpty)
-                              Padding(
-                                padding: const EdgeInsets.only(left: 8.0, right: 16.0, bottom: 8.0),
+                              if (showGroupNameInfo && chat.displayName!.isNotEmpty)
+                                Container(
+                                    padding: EdgeInsets.only(right: 10),
+                                    child: GestureDetector(
+                                        onTap: () {
+                                          showDialog(
+                                            context: context,
+                                            builder: (BuildContext context) {
+                                              return AlertDialog(
+                                                  backgroundColor: Theme.of(context).accentColor,
+                                                  title: Text("Group Naming",
+                                                      style: TextStyle(
+                                                          color: Theme.of(context).textTheme.bodyText1!.color)),
+                                                  content: Column(
+                                                    mainAxisAlignment: MainAxisAlignment.center,
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                          "Changing the group name will only change it locally for you. It will not change the group name on any of your other devices, or for other members of the chat.",
+                                                          style: Theme.of(context).textTheme.bodyText1),
+                                                    ],
+                                                  ),
+                                                  actions: <Widget>[
+                                                    TextButton(
+                                                        child: Text("OK",
+                                                            style: Theme.of(context)
+                                                                .textTheme
+                                                                .subtitle1!
+                                                                .apply(color: Theme.of(context).primaryColor)),
+                                                        onPressed: () {
+                                                          Navigator.of(context).pop();
+                                                        }),
+                                                  ]);
+                                            },
+                                          );
+                                        },
+                                        child: Icon(
+                                          SettingsManager().settings.skin.value == Skins.iOS
+                                              ? CupertinoIcons.info
+                                              : Icons.info_outline,
+                                          color: Theme.of(context).primaryColor,
+                                        ))),
+                              if (chat.displayName!.isEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 8.0, right: 16.0, bottom: 8.0),
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      primary: Theme.of(context).accentColor,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(18),
+                                      ),
+                                    ),
+                                    onPressed: () async {
+                                      setState(() {
+                                        showNameField = false;
+                                      });
+                                    },
+                                    child: Text(
+                                      "CANCEL",
+                                      style: TextStyle(
+                                        color: Theme.of(context).textTheme.bodyText1!.color,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          )
+                        : !hideInfo
+                            ? Padding(
+                                padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 8.0),
                                 child: ElevatedButton(
                                   style: ElevatedButton.styleFrom(
                                     primary: Theme.of(context).accentColor,
@@ -223,57 +265,157 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                   ),
                                   onPressed: () async {
                                     setState(() {
-                                      showNameField = false;
+                                      showNameField = true;
                                     });
                                   },
                                   child: Text(
-                                    "CANCEL",
+                                    "ADD NAME",
                                     style: TextStyle(
                                       color: Theme.of(context).textTheme.bodyText1!.color,
                                       fontSize: 13,
                                     ),
                                   ),
-                                ),
-                              ),
-                          ],
-                        )
-                      : !hideInfo
-                          ? Padding(
-                              padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 8.0),
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  primary: Theme.of(context).accentColor,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(18),
-                                  ),
-                                ),
-                                onPressed: () async {
-                                  setState(() {
-                                    showNameField = true;
-                                  });
-                                },
-                                child: Text(
-                                  "ADD NAME",
-                                  style: TextStyle(
-                                    color: Theme.of(context).textTheme.bodyText1!.color,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ))
-                          : Container(),
-            ),
-            SliverList(
-              delegate: SliverChildBuilderDelegate((context, index) {
-                if (index >= participants.length && shouldShowMore) {
-                  return ListTile(
-                    onTap: () {
-                      if (!mounted) return;
-                      setState(() {
-                        showMore = !showMore;
-                      });
+                                ))
+                            : Container(),
+              ),
+              SliverList(
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  if (index >= participants.length && shouldShowMore) {
+                    return ListTile(
+                      onTap: () {
+                        if (!mounted) return;
+                        setState(() {
+                          showMore = !showMore;
+                        });
+                      },
+                      leading: Text(
+                        showMore ? "Show less" : "Show more",
+                        style: TextStyle(
+                          color: Theme.of(context).primaryColor,
+                        ),
+                      ),
+                      trailing: Padding(
+                        padding: EdgeInsets.only(right: 15),
+                        child: Icon(
+                          SettingsManager().settings.skin.value == Skins.iOS
+                              ? CupertinoIcons.ellipsis
+                              : Icons.more_horiz,
+                          color: Theme.of(context).primaryColor,
+                        ),
+                      ),
+                    );
+                  }
+
+                  if (index >= chat.participants.length) return Container();
+
+                  return ContactTile(
+                    key: Key(chat.participants[index].address),
+                    handle: chat.participants[index],
+                    chat: chat,
+                    updateChat: (Chat newChat) {
+                      chat = newChat;
+                      if (mounted) setState(() {});
                     },
+                    canBeRemoved: chat.participants.length > 1,
+                  );
+                }, childCount: participants.length + 1),
+              ),
+              SliverPadding(
+                padding: EdgeInsets.symmetric(vertical: 20),
+              ),
+              if (!kIsWeb)
+                SliverToBoxAdapter(
+                  child: InkWell(
+                    onTap: () async {
+                      if (chat.customAvatarPath != null) {
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                                backgroundColor: Theme.of(context).accentColor,
+                                title: Text("Custom Avatar",
+                                    style: TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
+                                content: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                        "You have already set a custom avatar for this chat. What would you like to do?",
+                                        style: Theme.of(context).textTheme.bodyText1),
+                                  ],
+                                ),
+                                actions: <Widget>[
+                                  TextButton(
+                                      child: Text("Cancel",
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .subtitle1!
+                                              .apply(color: Theme.of(context).primaryColor)),
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                      }),
+                                  TextButton(
+                                      child: Text("Reset",
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .subtitle1!
+                                              .apply(color: Theme.of(context).primaryColor)),
+                                      onPressed: () {
+                                        File file = File(chat.customAvatarPath!);
+                                        file.delete();
+                                        chat.customAvatarPath = null;
+                                        chat.save();
+                                        Get.back();
+                                      }),
+                                  TextButton(
+                                      child: Text("Set New",
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .subtitle1!
+                                              .apply(color: Theme.of(context).primaryColor)),
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                        Get.to(() => AvatarCrop(chat: chat));
+                                      }),
+                                ]);
+                          },
+                        );
+                      } else {
+                        Get.to(() => AvatarCrop(chat: chat));
+                      }
+                    },
+                    child: ListTile(
+                      leading: Text(
+                        "Change chat avatar",
+                        style: TextStyle(
+                          color: Theme.of(context).primaryColor,
+                        ),
+                      ),
+                      trailing: Padding(
+                        padding: EdgeInsets.only(right: 15),
+                        child: Icon(
+                          SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.person : Icons.person,
+                          color: Theme.of(context).primaryColor,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              SliverToBoxAdapter(
+                child: InkWell(
+                  onTap: () async {
+                    await showDialog(
+                      context: context,
+                      builder: (context) =>
+                          SyncDialog(chat: chat, withOffset: true, initialMessage: "Fetching messages...", limit: 100),
+                    );
+
+                    fetchAttachments();
+                  },
+                  child: ListTile(
                     leading: Text(
-                      showMore ? "Show less" : "Show more",
+                      "Fetch more messages",
                       style: TextStyle(
                         color: Theme.of(context).primaryColor,
                       ),
@@ -281,299 +423,177 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     trailing: Padding(
                       padding: EdgeInsets.only(right: 15),
                       child: Icon(
-                        SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.ellipsis : Icons.more_horiz,
+                        SettingsManager().settings.skin.value == Skins.iOS
+                            ? CupertinoIcons.cloud_download
+                            : Icons.file_download,
                         color: Theme.of(context).primaryColor,
                       ),
                     ),
-                  );
-                }
-
-                if (index >= chat.participants.length) return Container();
-
-                return ContactTile(
-                  key: Key(chat.participants[index].address),
-                  handle: chat.participants[index],
-                  chat: chat,
-                  updateChat: (Chat newChat) {
-                    chat = newChat;
-                    if (mounted) setState(() {});
-                  },
-                  canBeRemoved: chat.participants.length > 1,
-                );
-              }, childCount: participants.length + 1),
-            ),
-            SliverPadding(
-              padding: EdgeInsets.symmetric(vertical: 20),
-            ),
-            if (!kIsWeb)
+                  ),
+                ),
+              ),
               SliverToBoxAdapter(
                 child: InkWell(
                   onTap: () async {
-                    if (chat.customAvatarPath != null) {
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                              backgroundColor: Theme.of(context).accentColor,
-                              title: Text("Custom Avatar",
-                                  style: TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
-                              content: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text("You have already set a custom avatar for this chat. What would you like to do?",
-                                      style: Theme.of(context).textTheme.bodyText1),
-                                ],
-                              ),
-                              actions: <Widget>[
-                                TextButton(
-                                    child: Text("Cancel",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .subtitle1!
-                                            .apply(color: Theme.of(context).primaryColor)),
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                    }),
-                                TextButton(
-                                    child: Text("Reset",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .subtitle1!
-                                            .apply(color: Theme.of(context).primaryColor)),
-                                    onPressed: () {
-                                      File file = File(chat.customAvatarPath!);
-                                      file.delete();
-                                      chat.customAvatarPath = null;
-                                      chat.save();
-                                      Get.back();
-                                    }),
-                                TextButton(
-                                    child: Text("Set New",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .subtitle1!
-                                            .apply(color: Theme.of(context).primaryColor)),
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                      Get.to(() => AvatarCrop(chat: chat));
-                                    }),
-                              ]);
-                        },
-                      );
-                    } else {
-                      Get.to(() => AvatarCrop(chat: chat));
+                    showDialog(
+                      context: context,
+                      builder: (context) => SyncDialog(chat: chat, initialMessage: "Syncing messages...", limit: 25),
+                    );
+                  },
+                  child: ListTile(
+                    leading: Text(
+                      "Sync last 25 messages",
+                      style: TextStyle(
+                        color: Theme.of(context).primaryColor,
+                      ),
+                    ),
+                    trailing: Padding(
+                      padding: EdgeInsets.only(right: 15),
+                      child: Icon(
+                        SettingsManager().settings.skin.value == Skins.iOS
+                            ? CupertinoIcons.arrow_counterclockwise
+                            : Icons.replay,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              SliverToBoxAdapter(
+                  child: ListTile(
+                      leading: Text("Pin Conversation",
+                          style: TextStyle(
+                            color: Theme.of(context).primaryColor,
+                          )),
+                      trailing: Switch(
+                          value: widget.chat.isPinned!,
+                          activeColor: Theme.of(context).primaryColor,
+                          activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
+                          inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
+                          inactiveThumbColor: Theme.of(context).accentColor,
+                          onChanged: (value) {
+                            widget.chat.togglePin(!widget.chat.isPinned!);
+                            EventDispatcher().emit("refresh", null);
+                            if (mounted) setState(() {});
+                          }))),
+              SliverToBoxAdapter(
+                  child: ListTile(
+                      leading: Text("Mute Conversation",
+                          style: TextStyle(
+                            color: Theme.of(context).primaryColor,
+                          )),
+                      trailing: Switch(
+                          value: widget.chat.muteType == "mute",
+                          activeColor: Theme.of(context).primaryColor,
+                          activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
+                          inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
+                          inactiveThumbColor: Theme.of(context).accentColor,
+                          onChanged: (value) {
+                            widget.chat.toggleMute(value);
+                            EventDispatcher().emit("refresh", null);
+
+                            if (mounted) setState(() {});
+                          }))),
+              SliverToBoxAdapter(
+                  child: ListTile(
+                      leading: Text("Archive Conversation",
+                          style: TextStyle(
+                            color: Theme.of(context).primaryColor,
+                          )),
+                      trailing: Switch(
+                          value: widget.chat.isArchived!,
+                          activeColor: Theme.of(context).primaryColor,
+                          activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
+                          inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
+                          inactiveThumbColor: Theme.of(context).accentColor,
+                          onChanged: (value) {
+                            if (value) {
+                              ChatBloc().archiveChat(widget.chat);
+                            } else {
+                              ChatBloc().unArchiveChat(widget.chat);
+                            }
+
+                            EventDispatcher().emit("refresh", null);
+                            if (mounted) setState(() {});
+                          }))),
+              SliverToBoxAdapter(
+                child: InkWell(
+                  onTap: () {
+                    if (mounted) {
+                      setState(() {
+                        isClearing = true;
+                      });
+                    }
+
+                    try {
+                      widget.chat.clearTranscript();
+                      EventDispatcher().emit("refresh-messagebloc", {"chatGuid": widget.chat.guid});
+                      if (mounted) {
+                        setState(() {
+                          isClearing = false;
+                          isCleared = true;
+                        });
+                      }
+                    } catch (ex) {
+                      if (mounted) {
+                        setState(() {
+                          isClearing = false;
+                          isCleared = false;
+                        });
+                      }
                     }
                   },
                   child: ListTile(
                     leading: Text(
-                      "Change chat avatar",
+                      "Clear Transcript (Local Only)",
                       style: TextStyle(
                         color: Theme.of(context).primaryColor,
                       ),
                     ),
                     trailing: Padding(
                       padding: EdgeInsets.only(right: 15),
-                      child: Icon(
-                        SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.person : Icons.person,
-                        color: Theme.of(context).primaryColor,
+                      child: (isClearing)
+                          ? CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                            )
+                          : (isCleared)
+                              ? Icon(
+                                  SettingsManager().settings.skin.value == Skins.iOS
+                                      ? CupertinoIcons.checkmark
+                                      : Icons.done,
+                                  color: Theme.of(context).primaryColor,
+                                )
+                              : Icon(
+                                  SettingsManager().settings.skin.value == Skins.iOS
+                                      ? CupertinoIcons.trash
+                                      : Icons.delete_forever,
+                                  color: Theme.of(context).primaryColor,
+                                ),
+                    ),
+                  ),
+                ),
+              ),
+              SliverGrid(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  (context, int index) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Theme.of(context).backgroundColor, width: 3),
                       ),
-                    ),
-                  ),
+                      child: AttachmentDetailsCard(
+                        attachment: attachmentsForChat[index],
+                      ),
+                    );
+                  },
+                  childCount: attachmentsForChat.length,
                 ),
               ),
-            SliverToBoxAdapter(
-              child: InkWell(
-                onTap: () async {
-                  await showDialog(
-                    context: context,
-                    builder: (context) =>
-                        SyncDialog(chat: chat, withOffset: true, initialMessage: "Fetching messages...", limit: 100),
-                  );
-
-                  fetchAttachments();
-                },
-                child: ListTile(
-                  leading: Text(
-                    "Fetch more messages",
-                    style: TextStyle(
-                      color: Theme.of(context).primaryColor,
-                    ),
-                  ),
-                  trailing: Padding(
-                    padding: EdgeInsets.only(right: 15),
-                    child: Icon(
-                      SettingsManager().settings.skin.value == Skins.iOS
-                          ? CupertinoIcons.cloud_download
-                          : Icons.file_download,
-                      color: Theme.of(context).primaryColor,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: InkWell(
-                onTap: () async {
-                  showDialog(
-                    context: context,
-                    builder: (context) => SyncDialog(chat: chat, initialMessage: "Syncing messages...", limit: 25),
-                  );
-                },
-                child: ListTile(
-                  leading: Text(
-                    "Sync last 25 messages",
-                    style: TextStyle(
-                      color: Theme.of(context).primaryColor,
-                    ),
-                  ),
-                  trailing: Padding(
-                    padding: EdgeInsets.only(right: 15),
-                    child: Icon(
-                      SettingsManager().settings.skin.value == Skins.iOS
-                          ? CupertinoIcons.arrow_counterclockwise
-                          : Icons.replay,
-                      color: Theme.of(context).primaryColor,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-                child: ListTile(
-                    leading: Text("Pin Conversation",
-                        style: TextStyle(
-                          color: Theme.of(context).primaryColor,
-                        )),
-                    trailing: Switch(
-                        value: widget.chat.isPinned!,
-                        activeColor: Theme.of(context).primaryColor,
-                        activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
-                        inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
-                        inactiveThumbColor: Theme.of(context).accentColor,
-                        onChanged: (value) {
-                          widget.chat.togglePin(!widget.chat.isPinned!);
-                          EventDispatcher().emit("refresh", null);
-                          if (mounted) setState(() {});
-                        }))),
-            SliverToBoxAdapter(
-                child: ListTile(
-                    leading: Text("Mute Conversation",
-                        style: TextStyle(
-                          color: Theme.of(context).primaryColor,
-                        )),
-                    trailing: Switch(
-                        value: widget.chat.muteType == "mute",
-                        activeColor: Theme.of(context).primaryColor,
-                        activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
-                        inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
-                        inactiveThumbColor: Theme.of(context).accentColor,
-                        onChanged: (value) {
-                          widget.chat.toggleMute(value);
-                          EventDispatcher().emit("refresh", null);
-
-                          if (mounted) setState(() {});
-                        }))),
-            SliverToBoxAdapter(
-                child: ListTile(
-                    leading: Text("Archive Conversation",
-                        style: TextStyle(
-                          color: Theme.of(context).primaryColor,
-                        )),
-                    trailing: Switch(
-                        value: widget.chat.isArchived!,
-                        activeColor: Theme.of(context).primaryColor,
-                        activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
-                        inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
-                        inactiveThumbColor: Theme.of(context).accentColor,
-                        onChanged: (value) {
-                          if (value) {
-                            ChatBloc().archiveChat(widget.chat);
-                          } else {
-                            ChatBloc().unArchiveChat(widget.chat);
-                          }
-
-                          EventDispatcher().emit("refresh", null);
-                          if (mounted) setState(() {});
-                        }))),
-            SliverToBoxAdapter(
-              child: InkWell(
-                onTap: () {
-                  if (mounted) {
-                    setState(() {
-                      isClearing = true;
-                    });
-                  }
-
-                  try {
-                    widget.chat.clearTranscript();
-                    EventDispatcher().emit("refresh-messagebloc", {"chatGuid": widget.chat.guid});
-                    if (mounted) {
-                      setState(() {
-                        isClearing = false;
-                        isCleared = true;
-                      });
-                    }
-                  } catch (ex) {
-                    if (mounted) {
-                      setState(() {
-                        isClearing = false;
-                        isCleared = false;
-                      });
-                    }
-                  }
-                },
-                child: ListTile(
-                  leading: Text(
-                    "Clear Transcript (Local Only)",
-                    style: TextStyle(
-                      color: Theme.of(context).primaryColor,
-                    ),
-                  ),
-                  trailing: Padding(
-                    padding: EdgeInsets.only(right: 15),
-                    child: (isClearing)
-                        ? CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
-                          )
-                        : (isCleared)
-                            ? Icon(
-                                SettingsManager().settings.skin.value == Skins.iOS
-                                    ? CupertinoIcons.checkmark
-                                    : Icons.done,
-                                color: Theme.of(context).primaryColor,
-                              )
-                            : Icon(
-                                SettingsManager().settings.skin.value == Skins.iOS
-                                    ? CupertinoIcons.trash
-                                    : Icons.delete_forever,
-                                color: Theme.of(context).primaryColor,
-                              ),
-                  ),
-                ),
-              ),
-            ),
-            SliverGrid(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-              ),
-              delegate: SliverChildBuilderDelegate(
-                (context, int index) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Theme.of(context).backgroundColor, width: 3),
-                    ),
-                    child: AttachmentDetailsCard(
-                      attachment: attachmentsForChat[index],
-                    ),
-                  );
-                },
-                childCount: attachmentsForChat.length,
-              ),
-            ),
-            SliverToBoxAdapter(child: Container(height: 50))
-          ],
+              SliverToBoxAdapter(child: Container(height: 50))
+            ],
+          ),
         ),
       ),
     );

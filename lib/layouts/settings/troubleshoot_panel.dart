@@ -13,9 +13,12 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_improved_scrolling/flutter_improved_scrolling.dart';
 import 'package:get/get.dart';
 
 class TroubleshootPanel extends StatelessWidget {
+  final scrollController = ScrollController();
+
   @override
   Widget build(BuildContext context) {
     final iosSubtitle =
@@ -65,70 +68,85 @@ class TroubleshootPanel extends StatelessWidget {
             ),
           ),
         ),
-        body: CustomScrollView(
-          physics: ThemeSwitcher.getScrollPhysics(),
-          slivers: <Widget>[
-            SliverList(
-              delegate: SliverChildListDelegate(
-                <Widget>[
-                  Container(
-                      height: SettingsManager().settings.skin.value == Skins.iOS ? 30 : 40,
-                      alignment: Alignment.bottomLeft,
+        body: ImprovedScrolling(
+          enableMMBScrolling: true,
+          enableKeyboardScrolling: true,
+          mmbScrollConfig: MMBScrollConfig(
+            customScrollCursor: DefaultCustomScrollCursor(
+              cursorColor: context.textTheme.subtitle1!.color!,
+              backgroundColor: Colors.white,
+              borderColor: context.textTheme.headline1!.color!,
+            ),
+          ),
+          scrollController: scrollController,
+          child: CustomScrollView(
+            controller: scrollController,
+            physics: ThemeSwitcher.getScrollPhysics(),
+            slivers: <Widget>[
+              SliverList(
+                delegate: SliverChildListDelegate(
+                  <Widget>[
+                    Container(
+                        height: SettingsManager().settings.skin.value == Skins.iOS ? 30 : 40,
+                        alignment: Alignment.bottomLeft,
+                        decoration: SettingsManager().settings.skin.value == Skins.iOS
+                            ? BoxDecoration(
+                                color: headerColor,
+                                border: Border(
+                                    bottom: BorderSide(
+                                        color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
+                              )
+                            : BoxDecoration(
+                                color: tileColor,
+                              ),
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0, left: 15),
+                          child: Text("Logging".psCapitalize,
+                              style:
+                                  SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
+                        )),
+                    Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
+                    Obx(() => SettingsTile(
+                          backgroundColor: tileColor,
+                          onTap: () async {
+                            if (Logger.saveLogs.value) {
+                              await Logger.stopSavingLogs();
+                              Logger.saveLogs.value = false;
+                            } else {
+                              Logger.startSavingLogs();
+                            }
+                          },
+                          leading: SettingsLeadingIcon(
+                            iosIcon: CupertinoIcons.pencil_ellipsis_rectangle,
+                            materialIcon: Icons.history_edu,
+                          ),
+                          title: "${Logger.saveLogs.value ? "End" : "Start"} Logging",
+                          subtitle: Logger.saveLogs.value
+                              ? "Logging started, tap here to end and save"
+                              : "Create a bug report for developers to analyze",
+                        )),
+                    Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
+                    Container(
+                      height: 30,
                       decoration: SettingsManager().settings.skin.value == Skins.iOS
                           ? BoxDecoration(
                               color: headerColor,
                               border: Border(
-                                  bottom: BorderSide(
+                                  top: BorderSide(
                                       color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
                             )
-                          : BoxDecoration(
-                              color: tileColor,
-                            ),
-                      child: Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0, left: 15),
-                        child: Text("Logging".psCapitalize,
-                            style: SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
-                      )),
-                  Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
-                  Obx(() => SettingsTile(
-                        backgroundColor: tileColor,
-                        onTap: () async {
-                          if (Logger.saveLogs.value) {
-                            await Logger.stopSavingLogs();
-                            Logger.saveLogs.value = false;
-                          } else {
-                            Logger.startSavingLogs();
-                          }
-                        },
-                        leading: SettingsLeadingIcon(
-                          iosIcon: CupertinoIcons.pencil_ellipsis_rectangle,
-                          materialIcon: Icons.history_edu,
-                        ),
-                        title: "${Logger.saveLogs.value ? "End" : "Start"} Logging",
-                        subtitle: Logger.saveLogs.value
-                            ? "Logging started, tap here to end and save"
-                            : "Create a bug report for developers to analyze",
-                      )),
-                  Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
-                  Container(
-                    height: 30,
-                    decoration: SettingsManager().settings.skin.value == Skins.iOS
-                        ? BoxDecoration(
-                            color: headerColor,
-                            border: Border(
-                                top: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
-                          )
-                        : null,
-                  ),
-                ],
+                          : null,
+                    ),
+                  ],
+                ),
               ),
-            ),
-            SliverList(
-              delegate: SliverChildListDelegate(
-                <Widget>[],
-              ),
-            )
-          ],
+              SliverList(
+                delegate: SliverChildListDelegate(
+                  <Widget>[],
+                ),
+              )
+            ],
+          ),
         ),
       ),
     );

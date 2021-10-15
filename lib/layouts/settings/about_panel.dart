@@ -14,6 +14,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_improved_scrolling/flutter_improved_scrolling.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
@@ -43,6 +44,8 @@ class AboutPanel extends StatelessWidget {
       tileColor = headerColor;
     }
 
+    final scrollController = ScrollController();
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: headerColor, // navigation bar color
@@ -70,387 +73,403 @@ class AboutPanel extends StatelessWidget {
             ),
           ),
         ),
-        body: CustomScrollView(
-          physics: ThemeSwitcher.getScrollPhysics(),
-          slivers: <Widget>[
-            SliverList(
-              delegate: SliverChildListDelegate(
-                <Widget>[
-                  Container(
-                      height: SettingsManager().settings.skin.value == Skins.iOS ? 30 : 40,
-                      alignment: Alignment.bottomLeft,
-                      decoration: SettingsManager().settings.skin.value == Skins.iOS
-                          ? BoxDecoration(
-                              color: headerColor,
-                              border: Border(
-                                  bottom: BorderSide(
-                                      color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
-                            )
-                          : BoxDecoration(
-                              color: tileColor,
-                            ),
+        body: ImprovedScrolling(
+          enableMMBScrolling: true,
+          enableKeyboardScrolling: true,
+          mmbScrollConfig: MMBScrollConfig(
+            customScrollCursor: DefaultCustomScrollCursor(
+              cursorColor: context.textTheme.subtitle1!.color!,
+              backgroundColor: Colors.white,
+              borderColor: context.textTheme.headline1!.color!,
+            ),
+          ),
+          scrollController: scrollController,
+          child: CustomScrollView(
+            controller: scrollController,
+            physics: ThemeSwitcher.getScrollPhysics(),
+            slivers: <Widget>[
+              SliverList(
+                delegate: SliverChildListDelegate(
+                  <Widget>[
+                    Container(
+                        height: SettingsManager().settings.skin.value == Skins.iOS ? 30 : 40,
+                        alignment: Alignment.bottomLeft,
+                        decoration: SettingsManager().settings.skin.value == Skins.iOS
+                            ? BoxDecoration(
+                                color: headerColor,
+                                border: Border(
+                                    bottom: BorderSide(
+                                        color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
+                              )
+                            : BoxDecoration(
+                                color: tileColor,
+                              ),
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0, left: 15),
+                          child: Text("Links".psCapitalize,
+                              style:
+                                  SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
+                        )),
+                    Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
+                    SettingsTile(
+                      backgroundColor: tileColor,
+                      title: "Support Us",
+                      onTap: () async {
+                        await launch("https://bluebubbles.app/donate/");
+                      },
+                      leading: SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.money_dollar_circle,
+                        materialIcon: Icons.attach_money,
+                      ),
+                    ),
+                    Container(
+                      color: tileColor,
                       child: Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0, left: 15),
-                        child: Text("Links".psCapitalize,
-                            style: SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
-                      )),
-                  Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
-                  SettingsTile(
-                    backgroundColor: tileColor,
-                    title: "Support Us",
-                    onTap: () async {
-                      await launch("https://bluebubbles.app/donate/");
-                    },
-                    leading: SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.money_dollar_circle,
-                      materialIcon: Icons.attach_money,
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
                     ),
-                  ),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
+                    SettingsTile(
+                      backgroundColor: tileColor,
+                      title: "Website",
+                      onTap: () async {
+                        await launch("https://bluebubbles.app/");
+                      },
+                      leading: SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.globe,
+                        materialIcon: Icons.language,
+                      ),
                     ),
-                  ),
-                  SettingsTile(
-                    backgroundColor: tileColor,
-                    title: "Website",
-                    onTap: () async {
-                      await launch("https://bluebubbles.app/");
-                    },
-                    leading: SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.globe,
-                      materialIcon: Icons.language,
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
                     ),
-                  ),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
+                    SettingsTile(
+                      backgroundColor: tileColor,
+                      title: "Source Code",
+                      onTap: () async {
+                        await launch("https://github.com/BlueBubblesApp");
+                      },
+                      leading: SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.chevron_left_slash_chevron_right,
+                        materialIcon: Icons.code,
+                      ),
                     ),
-                  ),
-                  SettingsTile(
-                    backgroundColor: tileColor,
-                    title: "Source Code",
-                    onTap: () async {
-                      await launch("https://github.com/BlueBubblesApp");
-                    },
-                    leading: SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.chevron_left_slash_chevron_right,
-                      materialIcon: Icons.code,
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
                     ),
-                  ),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
+                    SettingsTile(
+                      backgroundColor: tileColor,
+                      title: "Join Our Discord",
+                      onTap: () async {
+                        await launch("https://discord.gg/hbx7EhNFjp");
+                      },
+                      leading: SvgPicture.asset(
+                        "assets/icon/discord.svg",
+                        color: HexColor("#7289DA"),
+                        alignment: Alignment.centerRight,
+                        width: 32,
+                      ),
                     ),
-                  ),
-                  SettingsTile(
-                    backgroundColor: tileColor,
-                    title: "Join Our Discord",
-                    onTap: () async {
-                      await launch("https://discord.gg/hbx7EhNFjp");
-                    },
-                    leading: SvgPicture.asset(
-                      "assets/icon/discord.svg",
-                      color: HexColor("#7289DA"),
-                      alignment: Alignment.centerRight,
-                      width: 32,
-                    ),
-                  ),
-                  SettingsHeader(
-                      headerColor: headerColor,
-                      tileColor: tileColor,
-                      iosSubtitle: iosSubtitle,
-                      materialSubtitle: materialSubtitle,
-                      text: "Info"),
-                  SettingsTile(
-                    backgroundColor: tileColor,
-                    title: "Changelog",
-                    onTap: () async {
-                      String changelog =
-                          await DefaultAssetBundle.of(context).loadString('assets/changelog/changelog.md');
-                      Navigator.of(context).push(
-                        ThemeSwitcher.buildPageRoute(
-                          builder: (context) => Scaffold(
-                            body: Markdown(
-                              data: changelog,
-                              physics: AlwaysScrollableScrollPhysics(
-                                parent: BouncingScrollPhysics(),
-                              ),
-                              styleSheet: MarkdownStyleSheet.fromTheme(
-                                Theme.of(context)
-                                  ..textTheme.copyWith(
-                                    headline1: TextStyle(
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                              ).copyWith(
-                                h1: Theme.of(context)
-                                    .textTheme
-                                    .headline1!
-                                    .copyWith(fontSize: 20, fontWeight: FontWeight.bold),
-                                h2: Theme.of(context)
-                                    .textTheme
-                                    .headline2!
-                                    .copyWith(fontSize: 18, fontWeight: FontWeight.bold),
-                                h3: Theme.of(context).textTheme.headline3!.copyWith(
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.bold,
-                                      color: Theme.of(context).textTheme.headline1?.color,
-                                    ),
-                              ),
-                            ),
-                            backgroundColor: Theme.of(context).backgroundColor,
-                            appBar: CupertinoNavigationBar(
-                              backgroundColor: Theme.of(context).accentColor,
-                              middle: Text(
-                                "Changelog",
-                                style: Theme.of(context).textTheme.headline1,
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                    leading: SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.doc_plaintext,
-                      materialIcon: Icons.article,
-                    ),
-                  ),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
-                    ),
-                  ),
-                  SettingsTile(
-                    backgroundColor: tileColor,
-                    title: "Developers",
-                    onTap: () {
-                      showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: Text(
-                            "Developers! Developers!",
-                            style: Theme.of(context).textTheme.headline1,
-                            textAlign: TextAlign.center,
-                          ),
-                          backgroundColor: Theme.of(context).accentColor,
-                          content: SizedBox(
-                            width: CustomNavigator.width(context) * 3 / 5,
-                            height: context.height * 1 / 9,
-                            child: ListView(
-                              physics: AlwaysScrollableScrollPhysics(
-                                parent: BouncingScrollPhysics(),
-                              ),
-                              children: [
-                                Container(
-                                  alignment: Alignment.center,
-                                  padding: EdgeInsets.all(8),
-                                  child: RichText(
-                                    text: TextSpan(
-                                        text: "Zach",
-                                        style: TextStyle(decoration: TextDecoration.underline, color: Colors.blue),
-                                        recognizer: TapGestureRecognizer()
-                                          ..onTap = () async {
-                                            await launch("https://github.com/zlshames");
-                                          }),
-                                  ),
+                    SettingsHeader(
+                        headerColor: headerColor,
+                        tileColor: tileColor,
+                        iosSubtitle: iosSubtitle,
+                        materialSubtitle: materialSubtitle,
+                        text: "Info"),
+                    SettingsTile(
+                      backgroundColor: tileColor,
+                      title: "Changelog",
+                      onTap: () async {
+                        String changelog =
+                            await DefaultAssetBundle.of(context).loadString('assets/changelog/changelog.md');
+                        Navigator.of(context).push(
+                          ThemeSwitcher.buildPageRoute(
+                            builder: (context) => Scaffold(
+                              body: Markdown(
+                                data: changelog,
+                                physics: AlwaysScrollableScrollPhysics(
+                                  parent: BouncingScrollPhysics(),
                                 ),
-                                Container(
-                                  alignment: Alignment.center,
-                                  padding: EdgeInsets.all(8),
-                                  child: RichText(
-                                    text: TextSpan(
-                                        text: "Tanay",
-                                        style: TextStyle(decoration: TextDecoration.underline, color: Colors.blue),
-                                        recognizer: TapGestureRecognizer()
-                                          ..onTap = () async {
-                                            await launch("https://github.com/tneotia");
-                                          }),
-                                  ),
-                                ),
-                                Container(
-                                  alignment: Alignment.center,
-                                  padding: EdgeInsets.all(8),
-                                  child: RichText(
-                                    text: TextSpan(
-                                        text: "Joel",
-                                        style: TextStyle(decoration: TextDecoration.underline, color: Colors.blue),
-                                        recognizer: TapGestureRecognizer()
-                                          ..onTap = () async {
-                                            await launch("https://github.com/jjoelj");
-                                          }),
-                                  ),
-                                ),
-                                Container(
-                                  alignment: Alignment.center,
-                                  padding: EdgeInsets.all(8),
-                                  child: Text(
-                                    "Maxwell",
-                                    style: Theme.of(context).textTheme.bodyText1,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          actions: [
-                            TextButton(
-                              child: Text(
-                                "Close",
-                                style: Theme.of(context).textTheme.bodyText1!.copyWith(
-                                      color: Theme.of(context).primaryColor,
-                                    ),
-                              ),
-                              onPressed: () => Navigator.of(context).pop(),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                    leading: SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.person_alt,
-                      materialIcon: Icons.person,
-                    ),
-                  ),
-                  Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
-                    ),
-                  ),
-                  SettingsTile(
-                    backgroundColor: tileColor,
-                    title: "About",
-                    onTap: () {
-                      showDialog<void>(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return FutureBuilder<PackageInfo>(
-                              future: PackageInfo.fromPlatform(),
-                              builder: (BuildContext context, AsyncSnapshot<PackageInfo> snapshot) {
-                                print(snapshot.data?.buildNumber);
-
-                                return AlertDialog(
-                                  contentPadding: EdgeInsets.only(
-                                    top: 24,
-                                    left: 24,
-                                    right: 24,
-                                  ),
-                                  elevation: 10.0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(
-                                      10.0,
-                                    ),
-                                  ),
-                                  scrollable: true,
-                                  backgroundColor: context.theme.accentColor,
-                                  content: ListBody(
-                                    children: <Widget>[
-                                      Row(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: <Widget>[
-                                          IconTheme(
-                                            data: Theme.of(context).iconTheme,
-                                            child: Image.asset(
-                                              "assets/icon/icon.png",
-                                              width: 30,
-                                              height: 30,
-                                            ),
-                                          ),
-                                          Expanded(
-                                            child: Padding(
-                                              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                                              child: ListBody(
-                                                children: <Widget>[
-                                                  Text(
-                                                    "BlueBubbles",
-                                                    style: context.textTheme.headline2!.copyWith(
-                                                      fontSize: 24,
-                                                    ),
-                                                  ),
-                                                  Text(
-                                                      "Version Number: " +
-                                                          (snapshot.hasData ? snapshot.data!.version : "N/A"),
-                                                      style: context.textTheme.subtitle1!),
-                                                  Text(
-                                                      "Version Code: " +
-                                                          (snapshot.hasData
-                                                              ? snapshot.data!.buildNumber.lastChars(min(4, snapshot.data!.buildNumber.length))
-                                                              : "N/A"),
-                                                      style: context.textTheme.subtitle1!),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                        ],
+                                styleSheet: MarkdownStyleSheet.fromTheme(
+                                  Theme.of(context)
+                                    ..textTheme.copyWith(
+                                      headline1: TextStyle(
+                                        color: Colors.white,
                                       ),
-                                    ],
+                                    ),
+                                ).copyWith(
+                                  h1: Theme.of(context)
+                                      .textTheme
+                                      .headline1!
+                                      .copyWith(fontSize: 20, fontWeight: FontWeight.bold),
+                                  h2: Theme.of(context)
+                                      .textTheme
+                                      .headline2!
+                                      .copyWith(fontSize: 18, fontWeight: FontWeight.bold),
+                                  h3: Theme.of(context).textTheme.headline3!.copyWith(
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.bold,
+                                        color: Theme.of(context).textTheme.headline1?.color,
+                                      ),
+                                ),
+                              ),
+                              backgroundColor: Theme.of(context).backgroundColor,
+                              appBar: CupertinoNavigationBar(
+                                backgroundColor: Theme.of(context).accentColor,
+                                middle: Text(
+                                  "Changelog",
+                                  style: Theme.of(context).textTheme.headline1,
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                      leading: SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.doc_plaintext,
+                        materialIcon: Icons.article,
+                      ),
+                    ),
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
+                    ),
+                    SettingsTile(
+                      backgroundColor: tileColor,
+                      title: "Developers",
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: Text(
+                              "Developers! Developers!",
+                              style: Theme.of(context).textTheme.headline1,
+                              textAlign: TextAlign.center,
+                            ),
+                            backgroundColor: Theme.of(context).accentColor,
+                            content: SizedBox(
+                              width: CustomNavigator.width(context) * 3 / 5,
+                              height: context.height * 1 / 9,
+                              child: ListView(
+                                physics: AlwaysScrollableScrollPhysics(
+                                  parent: BouncingScrollPhysics(),
+                                ),
+                                children: [
+                                  Container(
+                                    alignment: Alignment.center,
+                                    padding: EdgeInsets.all(8),
+                                    child: RichText(
+                                      text: TextSpan(
+                                          text: "Zach",
+                                          style: TextStyle(decoration: TextDecoration.underline, color: Colors.blue),
+                                          recognizer: TapGestureRecognizer()
+                                            ..onTap = () async {
+                                              await launch("https://github.com/zlshames");
+                                            }),
+                                    ),
                                   ),
-                                  actions: <Widget>[
-                                    TextButton(
-                                      child: Text(MaterialLocalizations.of(context).viewLicensesButtonLabel),
-                                      onPressed: () {
-                                        Navigator.of(context).push(MaterialPageRoute<void>(
-                                          builder: (BuildContext context) => Theme(
-                                            data: context.theme,
-                                            child: LicensePage(
-                                              applicationName: "BlueBubbles",
-                                              applicationVersion: snapshot.hasData ? snapshot.data!.version : "",
-                                              applicationIcon: Image.asset(
+                                  Container(
+                                    alignment: Alignment.center,
+                                    padding: EdgeInsets.all(8),
+                                    child: RichText(
+                                      text: TextSpan(
+                                          text: "Tanay",
+                                          style: TextStyle(decoration: TextDecoration.underline, color: Colors.blue),
+                                          recognizer: TapGestureRecognizer()
+                                            ..onTap = () async {
+                                              await launch("https://github.com/tneotia");
+                                            }),
+                                    ),
+                                  ),
+                                  Container(
+                                    alignment: Alignment.center,
+                                    padding: EdgeInsets.all(8),
+                                    child: RichText(
+                                      text: TextSpan(
+                                          text: "Joel",
+                                          style: TextStyle(decoration: TextDecoration.underline, color: Colors.blue),
+                                          recognizer: TapGestureRecognizer()
+                                            ..onTap = () async {
+                                              await launch("https://github.com/jjoelj");
+                                            }),
+                                    ),
+                                  ),
+                                  Container(
+                                    alignment: Alignment.center,
+                                    padding: EdgeInsets.all(8),
+                                    child: Text(
+                                      "Maxwell",
+                                      style: Theme.of(context).textTheme.bodyText1,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            actions: [
+                              TextButton(
+                                child: Text(
+                                  "Close",
+                                  style: Theme.of(context).textTheme.bodyText1!.copyWith(
+                                        color: Theme.of(context).primaryColor,
+                                      ),
+                                ),
+                                onPressed: () => Navigator.of(context).pop(),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      leading: SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.person_alt,
+                        materialIcon: Icons.person,
+                      ),
+                    ),
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
+                    ),
+                    SettingsTile(
+                      backgroundColor: tileColor,
+                      title: "About",
+                      onTap: () {
+                        showDialog<void>(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return FutureBuilder<PackageInfo>(
+                                future: PackageInfo.fromPlatform(),
+                                builder: (BuildContext context, AsyncSnapshot<PackageInfo> snapshot) {
+                                  print(snapshot.data?.buildNumber);
+
+                                  return AlertDialog(
+                                    contentPadding: EdgeInsets.only(
+                                      top: 24,
+                                      left: 24,
+                                      right: 24,
+                                    ),
+                                    elevation: 10.0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        10.0,
+                                      ),
+                                    ),
+                                    scrollable: true,
+                                    backgroundColor: context.theme.accentColor,
+                                    content: ListBody(
+                                      children: <Widget>[
+                                        Row(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: <Widget>[
+                                            IconTheme(
+                                              data: Theme.of(context).iconTheme,
+                                              child: Image.asset(
                                                 "assets/icon/icon.png",
                                                 width: 30,
                                                 height: 30,
                                               ),
                                             ),
-                                          ),
-                                        ));
-                                      },
+                                            Expanded(
+                                              child: Padding(
+                                                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                                                child: ListBody(
+                                                  children: <Widget>[
+                                                    Text(
+                                                      "BlueBubbles",
+                                                      style: context.textTheme.headline2!.copyWith(
+                                                        fontSize: 24,
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                        "Version Number: " +
+                                                            (snapshot.hasData ? snapshot.data!.version : "N/A"),
+                                                        style: context.textTheme.subtitle1!),
+                                                    Text(
+                                                        "Version Code: " +
+                                                            (snapshot.hasData
+                                                                ? snapshot.data!.buildNumber.lastChars(
+                                                                    min(4, snapshot.data!.buildNumber.length))
+                                                                : "N/A"),
+                                                        style: context.textTheme.subtitle1!),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
                                     ),
-                                    TextButton(
-                                      child: Text(MaterialLocalizations.of(context).closeButtonLabel),
-                                      onPressed: () {
-                                        Navigator.pop(context);
-                                      },
-                                    ),
-                                  ],
-                                );
-                              });
-                        },
-                      );
-                    },
-                    leading: SettingsLeadingIcon(
-                      iosIcon: CupertinoIcons.info_circle,
-                      materialIcon: Icons.info,
+                                    actions: <Widget>[
+                                      TextButton(
+                                        child: Text(MaterialLocalizations.of(context).viewLicensesButtonLabel),
+                                        onPressed: () {
+                                          Navigator.of(context).push(MaterialPageRoute<void>(
+                                            builder: (BuildContext context) => Theme(
+                                              data: context.theme,
+                                              child: LicensePage(
+                                                applicationName: "BlueBubbles",
+                                                applicationVersion: snapshot.hasData ? snapshot.data!.version : "",
+                                                applicationIcon: Image.asset(
+                                                  "assets/icon/icon.png",
+                                                  width: 30,
+                                                  height: 30,
+                                                ),
+                                              ),
+                                            ),
+                                          ));
+                                        },
+                                      ),
+                                      TextButton(
+                                        child: Text(MaterialLocalizations.of(context).closeButtonLabel),
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                        },
+                                      ),
+                                    ],
+                                  );
+                                });
+                          },
+                        );
+                      },
+                      leading: SettingsLeadingIcon(
+                        iosIcon: CupertinoIcons.info_circle,
+                        materialIcon: Icons.info,
+                      ),
                     ),
-                  ),
-                  Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
-                  Container(
-                    height: 30,
-                    decoration: SettingsManager().settings.skin.value == Skins.iOS
-                        ? BoxDecoration(
-                            color: headerColor,
-                            border: Border(
-                                top: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
-                          )
-                        : null,
-                  ),
-                ],
+                    Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
+                    Container(
+                      height: 30,
+                      decoration: SettingsManager().settings.skin.value == Skins.iOS
+                          ? BoxDecoration(
+                              color: headerColor,
+                              border: Border(
+                                  top: BorderSide(
+                                      color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
+                            )
+                          : null,
+                    ),
+                  ],
+                ),
               ),
-            ),
-            SliverList(
-              delegate: SliverChildListDelegate(
-                <Widget>[],
-              ),
-            )
-          ],
+              SliverList(
+                delegate: SliverChildListDelegate(
+                  <Widget>[],
+                ),
+              )
+            ],
+          ),
         ),
       ),
     );

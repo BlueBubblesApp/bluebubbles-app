@@ -364,6 +364,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.5.6"
+  desktop_drop:
+    dependency: "direct main"
+    description:
+      name: desktop_drop
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.1.0"
   device_info_plus:
     dependency: "direct main"
     description:
@@ -530,6 +537,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.1.1"
+  flutter_improved_scrolling:
+    dependency: "direct main"
+    description:
+      name: flutter_improved_scrolling
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.0.3"
   flutter_keyboard_visibility:
     dependency: "direct main"
     description:
@@ -1618,6 +1632,15 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "3.0.0"
+  system_tray:
+    dependency: "direct main"
+    description:
+      path: "."
+      ref: f6818b8388029d8bdfb35531c1597517859a5b14
+      resolved-ref: f6818b8388029d8bdfb35531c1597517859a5b14
+      url: "https://github.com/antler119/system_tray"
+    source: git
+    version: "0.0.7"
   term_glyph:
     dependency: transitive
     description:

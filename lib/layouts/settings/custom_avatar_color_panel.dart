@@ -14,6 +14,7 @@ import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_improved_scrolling/flutter_improved_scrolling.dart';
 import 'package:get/get.dart';
 
 class CustomAvatarColorPanelBinding implements Bindings {
@@ -68,6 +69,8 @@ class CustomAvatarColorPanelController extends GetxController {
 class CustomAvatarColorPanel extends GetView<CustomAvatarColorPanelController> {
   @override
   Widget build(BuildContext context) {
+    final scrollController = ScrollController();
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
@@ -96,33 +99,46 @@ class CustomAvatarColorPanel extends GetView<CustomAvatarColorPanelController> {
             ),
           ),
         ),
-        body: CustomScrollView(
-          physics: AlwaysScrollableScrollPhysics(
-            parent: CustomBouncingScrollPhysics(),
+        body: ImprovedScrolling(
+          enableMMBScrolling: true,
+          enableKeyboardScrolling: true,
+          mmbScrollConfig: MMBScrollConfig(
+            customScrollCursor: DefaultCustomScrollCursor(
+              cursorColor: context.textTheme.subtitle1!.color!,
+              backgroundColor: Colors.white,
+              borderColor: context.textTheme.headline1!.color!,
+            ),
           ),
-          slivers: <Widget>[
-            Obx(() => SliverList(
-                  delegate: SliverChildListDelegate(
-                    <Widget>[
-                      Container(padding: EdgeInsets.only(top: 5.0)),
-                      if (controller.handleWidgets.isEmpty)
-                        Container(
-                            padding: EdgeInsets.all(30),
-                            child: Text(
-                              "No avatars have been customized! To get started, turn on colorful avatars and tap an avatar in the conversation details page.",
-                              style: Theme.of(context).textTheme.subtitle1?.copyWith(height: 1.5),
-                              textAlign: TextAlign.center,
-                            )),
-                      for (Widget handleWidget in controller.handleWidgets) handleWidget
-                    ],
-                  ),
-                )),
-            SliverList(
-              delegate: SliverChildListDelegate(
-                <Widget>[],
-              ),
-            )
-          ],
+          scrollController: scrollController,
+          child: CustomScrollView(
+            controller: scrollController,
+            physics: AlwaysScrollableScrollPhysics(
+              parent: CustomBouncingScrollPhysics(),
+            ),
+            slivers: <Widget>[
+              Obx(() => SliverList(
+                    delegate: SliverChildListDelegate(
+                      <Widget>[
+                        Container(padding: EdgeInsets.only(top: 5.0)),
+                        if (controller.handleWidgets.isEmpty)
+                          Container(
+                              padding: EdgeInsets.all(30),
+                              child: Text(
+                                "No avatars have been customized! To get started, turn on colorful avatars and tap an avatar in the conversation details page.",
+                                style: Theme.of(context).textTheme.subtitle1?.copyWith(height: 1.5),
+                                textAlign: TextAlign.center,
+                              )),
+                        for (Widget handleWidget in controller.handleWidgets) handleWidget
+                      ],
+                    ),
+                  )),
+              SliverList(
+                delegate: SliverChildListDelegate(
+                  <Widget>[],
+                ),
+              )
+            ],
+          ),
         ),
       ),
     );

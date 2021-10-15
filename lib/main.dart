@@ -45,12 +45,14 @@ import 'package:get/get.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:path/path.dart' show join;
+import 'package:path/path.dart' show join, joinAll, dirname;
+import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:secure_application/secure_application.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:system_tray/system_tray.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:universal_html/html.dart' as html;
@@ -209,7 +211,7 @@ Future<Null> main() async {
     ));
   } else {
     runApp(FailureToStart(e: exception));
-    throw Exception(exception + stacktrace);
+    throw Exception("$exception $stacktrace");
   }
 }
 
@@ -351,6 +353,10 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   void initState() {
     super.initState();
 
+    if (kIsDesktop) {
+      initSystemTray();
+    }
+
     // we want to refresh the page rather than loading a new instance of [Home]
     // to avoid errors
     if (LifeCycleManager().isAlive && kIsWeb) {
@@ -415,9 +421,10 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       Get.put(AttachmentDownloadService());
       if (!kIsWeb && !kIsDesktop) {
         flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-        const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('ic_stat_icon');
+        const AndroidInitializationSettings initializationSettingsAndroid =
+            AndroidInitializationSettings('ic_stat_icon');
         final InitializationSettings initializationSettings =
-        InitializationSettings(android: initializationSettingsAndroid);
+            InitializationSettings(android: initializationSettingsAndroid);
         await flutterLocalNotificationsPlugin!.initialize(initializationSettings);
         tz.initializeTimeZones();
         tz.setLocalLocation(tz.getLocation(await FlutterNativeTimezone.getLocalTimezone()));
@@ -592,4 +599,51 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       ),
     );
   }
+}
+
+Future<void> initSystemTray() async {
+  final _systemTray = SystemTray();
+  String path;
+  if (Platform.isWindows) {
+    path = p.joinAll([p.dirname(Platform.resolvedExecutable), 'data/flutter_assets/assets/icon', 'icon.ico']);
+  } else if (Platform.isMacOS) {
+    path = p.joinAll(['AppIcon']);
+  } else {
+    path = p.joinAll([p.dirname(Platform.resolvedExecutable), 'data/flutter_assets/assets/icon', 'icon.png']);
+  }
+
+  // We first init the systray menu and then add the menu entries
+  await _systemTray.initSystemTray("BlueBubbles", iconPath: path, toolTip: "BlueBubbles (Beta)");
+
+  await _systemTray.setContextMenu(
+    [
+      MenuItem(
+        label: 'Open App',
+        onClicked: () {
+            appWindow.show();
+        },
+      ),
+      MenuItem(
+        label: 'Hide App',
+        onClicked: () {
+          appWindow.hide();
+        },
+      ),
+      MenuItem(
+        label: 'Close App',
+        onClicked: () {
+          appWindow.close();
+        },
+      ),
+    ],
+  );
+
+  // handle system tray event
+  _systemTray.registerSystemTrayEventHandler((eventName) {
+    switch (eventName) {
+      case 'leftMouseUp':
+        appWindow.show();
+        break;
+    }
+  });
 }

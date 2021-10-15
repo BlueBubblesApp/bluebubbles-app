@@ -59,7 +59,7 @@ class WindowButtons extends StatelessWidget {
         children: [
           MinimizeWindowButton(colors: buttonColors),
           MaximizeWindowButton(colors: buttonColors),
-          CloseWindowButton(colors: closeButtonColors),
+          CloseWindowButton(colors: closeButtonColors, onPressed: () => appWindow.hide()),
         ],
     );
   }

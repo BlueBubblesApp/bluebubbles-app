@@ -9,6 +9,8 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_improved_scrolling/flutter_improved_scrolling.dart';
+import 'package:get/get_utils/src/extensions/context_extensions.dart';
 import 'package:intl/intl.dart';
 
 class SchedulingPanel extends StatefulWidget {
@@ -70,6 +72,8 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
     Iterable<ScheduledMessage> upcoming = scheduled.where((item) => now.millisecondsSinceEpoch <= item.epochTime!);
     Iterable<ScheduledMessage> old = scheduled.where((item) => now.millisecondsSinceEpoch > item.epochTime!);
 
+    final scrollController = ScrollController();
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
@@ -99,7 +103,19 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
             ),
           ),
         ),
-        body: CustomScrollView(
+        body: ImprovedScrolling(
+        enableMMBScrolling: true,
+    enableKeyboardScrolling: true,
+    mmbScrollConfig: MMBScrollConfig(
+    customScrollCursor: DefaultCustomScrollCursor(
+    cursorColor: context.textTheme.subtitle1!.color!,
+    backgroundColor: Colors.white,
+    borderColor: context.textTheme.headline1!.color!,
+    ),
+    ),
+    scrollController: scrollController,
+    child: CustomScrollView(
+    controller: scrollController,
           physics: ThemeSwitcher.getScrollPhysics(),
           slivers: <Widget>[
             SliverList(
@@ -178,7 +194,7 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
               ),
             );
           },
-        ),
+        ),),
       ),
     );
   }

@@ -3,6 +3,7 @@ import 'package:bluebubbles/objectbox.g.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart' hide Condition;
+
 import './chat.dart';
 
 @Entity()
@@ -106,13 +107,14 @@ class Handle {
       final result = query.findFirst();
       query.close();
       return result;
-    } else {
-      final query = handleBox.query(Handle_.address.equals(address!)).build();
+    } else if (address != null) {
+      final query = handleBox.query(Handle_.address.equals(address)).build();
       query.limit = 1;
       final result = query.findFirst();
       query.close();
       return result;
     }
+    return null;
   }
 
   /// Find a list of handles by the specified condition, or return all handles

@@ -12,6 +12,7 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_improved_scrolling/flutter_improved_scrolling.dart';
 import 'package:get/get.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:secure_application/secure_application.dart';
@@ -38,6 +39,8 @@ class MiscPanel extends StatelessWidget {
     if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
       tileColor = headerColor;
     }
+
+    final scrollController = ScrollController();
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
@@ -66,7 +69,19 @@ class MiscPanel extends StatelessWidget {
             ),
           ),
         ),
-        body: CustomScrollView(
+        body: ImprovedScrolling(
+    enableMMBScrolling: true,
+    enableKeyboardScrolling: true,
+    mmbScrollConfig: MMBScrollConfig(
+    customScrollCursor: DefaultCustomScrollCursor(
+    cursorColor: context.textTheme.subtitle1!.color!,
+    backgroundColor: Colors.white,
+    borderColor: context.textTheme.headline1!.color!,
+    ),
+    ),
+    scrollController: scrollController,
+    child: CustomScrollView(
+    controller: scrollController,
           physics: ThemeSwitcher.getScrollPhysics(),
           slivers: <Widget>[
             SliverList(
@@ -403,7 +418,7 @@ class MiscPanel extends StatelessWidget {
             )
           ],
         ),
-      ),
+      ),),
     );
   }
 

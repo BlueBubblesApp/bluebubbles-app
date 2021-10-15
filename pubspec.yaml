@@ -110,6 +110,12 @@ dependencies:
   objectbox_flutter_libs: any
   js: ^0.6.3
   bitsdojo_window: ^0.1.1+1
+  system_tray:
+    git:
+      url: https://github.com/antler119/system_tray
+      ref: f6818b8388029d8bdfb35531c1597517859a5b14
+  flutter_improved_scrolling: ^0.0.3
+  desktop_drop: ^0.1.0
 
 dependency_overrides:
   rxdart: ^0.27.2
@@ -176,6 +182,7 @@ flutter:
     - assets/images/person64.png
     - assets/icon/icon.png
     - assets/changelog/changelog.md
+    - assets/icon/icon.ico
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
   # For details regarding adding assets from package dependencies, see
@@ -204,7 +211,7 @@ msix_config:
   display_name: BlueBubbles
   publisher_display_name: BlueBubbles Development Team
   identity_name: com.bluebubbles.app
-  msix_version: 1.0.0.8
+  msix_version: 1.0.0.9
   publisher: CN=BlueBubbles, O=BlueBubbles, C=US
   vs_generated_images_folder_path: windows/icons
   icons_background_color: transparent

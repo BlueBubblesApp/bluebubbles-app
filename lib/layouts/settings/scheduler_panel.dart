@@ -12,6 +12,8 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_improved_scrolling/flutter_improved_scrolling.dart';
+import 'package:get/get_utils/src/extensions/context_extensions.dart';
 
 List<List<dynamic>> timeOptions = [
   [300, "5 Minutes"],
@@ -92,6 +94,8 @@ class _SchedulePanelState extends State<SchedulePanel> {
 
   @override
   Widget build(BuildContext context) {
+    final scrollController = ScrollController();
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
@@ -120,119 +124,132 @@ class _SchedulePanelState extends State<SchedulePanel> {
             ),
           ),
         ),
-        body: CustomScrollView(
-          physics: ThemeSwitcher.getScrollPhysics(),
-          slivers: <Widget>[
-            SliverList(
-              delegate: SliverChildListDelegate(
-                <Widget>[
-                  Container(padding: EdgeInsets.only(top: 5.0)),
-                  // Show a top tile
-                  (_chat != null)
-                      ? SettingsTile(
-                          title: "Selected chat",
-                          subtitle: title,
-                          trailing: Icon(Icons.timer, color: Theme.of(context).primaryColor.withAlpha(200)),
-                        )
-                      : SettingsTile(
-                          title: "Select a chat to schedule a message for",
-                          subtitle: 'Tap here',
-                          trailing: Icon(Icons.chat_bubble, color: Theme.of(context).primaryColor.withAlpha(200)),
-                          onTap: () async {
-                            Navigator.of(context).push(
-                              ThemeSwitcher.buildPageRoute(
-                                builder: (context) => ConversationView(
-                                  isCreator: true,
-                                  customHeading: "Select a chat",
-                                  type: ChatSelectorTypes.onlyExisting,
-                                  onSelect: (List<UniqueContact> selection) {
-                                    Navigator.of(context).pop();
-                                    if (selection.isNotEmpty && selection[0].isChat && mounted) {
-                                      setState(() {
-                                        setChat(selection[0].chat);
-                                        errors = [];
-                                      });
-                                    } else {
-                                      Logger.error("Error");
-                                    }
-                                  },
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                  SettingsTextField(title: "Enter a message", controller: messageController),
-                  SettingsOptions<List<dynamic>>(
-                    initial: timeOptions.first,
-                    subtitle: getTimeText(context),
-                    onChanged: (val) async {
-                      if (val == null) return;
-                      scheduleSeconds = val[0];
-
-                      if (val[0] == -1) {
-                        messageDate = await showDatePicker(
-                            context: context,
-                            initialDate: DateTime.now(),
-                            firstDate: DateTime.now(),
-                            lastDate: DateTime.now().add(Duration(days: 365)));
-                        messageTime = await showTimePicker(context: context, initialTime: TimeOfDay.now());
-                      }
-
-                      if (mounted) {
-                        setState(() {
-                          errors = [];
-                        });
-                      }
-                    },
-                    options: timeOptions,
-                    textProcessing: (val) => val[1],
-                    title: "When should we send it?",
-                  ),
-                  Center(
-                      child: Text(
-                    isNullOrEmpty(errors)! ? "" : errors.join("\n"),
-                    style: Theme.of(context).textTheme.bodyText1!.apply(color: Colors.red[300]),
-                    textAlign: TextAlign.center,
-                  ))
-                ],
-              ),
+        body: ImprovedScrolling(
+          enableMMBScrolling: true,
+          enableKeyboardScrolling: true,
+          mmbScrollConfig: MMBScrollConfig(
+            customScrollCursor: DefaultCustomScrollCursor(
+              cursorColor: context.textTheme.subtitle1!.color!,
+              backgroundColor: Colors.white,
+              borderColor: context.textTheme.headline1!.color!,
             ),
-            SliverList(
-              delegate: SliverChildListDelegate(
-                <Widget>[],
+          ),
+          scrollController: scrollController,
+          child: CustomScrollView(
+            controller: scrollController,
+            physics: ThemeSwitcher.getScrollPhysics(),
+            slivers: <Widget>[
+              SliverList(
+                delegate: SliverChildListDelegate(
+                  <Widget>[
+                    Container(padding: EdgeInsets.only(top: 5.0)),
+                    // Show a top tile
+                    (_chat != null)
+                        ? SettingsTile(
+                            title: "Selected chat",
+                            subtitle: title,
+                            trailing: Icon(Icons.timer, color: Theme.of(context).primaryColor.withAlpha(200)),
+                          )
+                        : SettingsTile(
+                            title: "Select a chat to schedule a message for",
+                            subtitle: 'Tap here',
+                            trailing: Icon(Icons.chat_bubble, color: Theme.of(context).primaryColor.withAlpha(200)),
+                            onTap: () async {
+                              Navigator.of(context).push(
+                                ThemeSwitcher.buildPageRoute(
+                                  builder: (context) => ConversationView(
+                                    isCreator: true,
+                                    customHeading: "Select a chat",
+                                    type: ChatSelectorTypes.onlyExisting,
+                                    onSelect: (List<UniqueContact> selection) {
+                                      Navigator.of(context).pop();
+                                      if (selection.isNotEmpty && selection[0].isChat && mounted) {
+                                        setState(() {
+                                          setChat(selection[0].chat);
+                                          errors = [];
+                                        });
+                                      } else {
+                                        Logger.error("Error");
+                                      }
+                                    },
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                    SettingsTextField(title: "Enter a message", controller: messageController),
+                    SettingsOptions<List<dynamic>>(
+                      initial: timeOptions.first,
+                      subtitle: getTimeText(context),
+                      onChanged: (val) async {
+                        if (val == null) return;
+                        scheduleSeconds = val[0];
+
+                        if (val[0] == -1) {
+                          messageDate = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime.now(),
+                              lastDate: DateTime.now().add(Duration(days: 365)));
+                          messageTime = await showTimePicker(context: context, initialTime: TimeOfDay.now());
+                        }
+
+                        if (mounted) {
+                          setState(() {
+                            errors = [];
+                          });
+                        }
+                      },
+                      options: timeOptions,
+                      textProcessing: (val) => val[1],
+                      title: "When should we send it?",
+                    ),
+                    Center(
+                        child: Text(
+                      isNullOrEmpty(errors)! ? "" : errors.join("\n"),
+                      style: Theme.of(context).textTheme.bodyText1!.apply(color: Colors.red[300]),
+                      textAlign: TextAlign.center,
+                    ))
+                  ],
+                ),
               ),
-            )
-          ],
-        ),
-        floatingActionButton: FloatingActionButton(
-          backgroundColor: Theme.of(context).primaryColor,
-          child: Icon(Icons.done, color: Colors.white, size: 25),
-          onPressed: () async {
-            errors = [];
-            if (_chat == null) errors.add("Please select a chat!");
-            if (scheduleSeconds == -1 && (messageDate == null || messageTime == null)) {
-              errors.add("Please set a date and time!");
-            }
-            if (messageController.text.isEmpty) errors.add("Please enter a message!");
-
-            if (errors.isNotEmpty && mounted) {
-              setState(() {});
-            } else {
-              DateTime occurs;
-              if (scheduleSeconds == -1) {
-                occurs = DateTime(
-                    messageDate!.year, messageDate!.month, messageDate!.day, messageTime!.hour, messageTime!.minute);
-              } else {
-                occurs = DateTime.now().add(Duration(seconds: scheduleSeconds!));
+              SliverList(
+                delegate: SliverChildListDelegate(
+                  <Widget>[],
+                ),
+              )
+            ],
+          ),
+          floatingActionButton: FloatingActionButton(
+            backgroundColor: Theme.of(context).primaryColor,
+            child: Icon(Icons.done, color: Colors.white, size: 25),
+            onPressed: () async {
+              errors = [];
+              if (_chat == null) errors.add("Please select a chat!");
+              if (scheduleSeconds == -1 && (messageDate == null || messageTime == null)) {
+                errors.add("Please set a date and time!");
               }
+              if (messageController.text.isEmpty) errors.add("Please enter a message!");
 
-              ScheduledMessage scheduled = ScheduledMessage(
-                  chatGuid: _chat!.guid, message: messageController.text, epochTime: occurs.millisecondsSinceEpoch);
+              if (errors.isNotEmpty && mounted) {
+                setState(() {});
+              } else {
+                DateTime occurs;
+                if (scheduleSeconds == -1) {
+                  occurs = DateTime(
+                      messageDate!.year, messageDate!.month, messageDate!.day, messageTime!.hour, messageTime!.minute);
+                } else {
+                  occurs = DateTime.now().add(Duration(seconds: scheduleSeconds!));
+                }
 
-              scheduled.save();
-              Navigator.of(context).pop();
-            }
-          },
+                ScheduledMessage scheduled = ScheduledMessage(
+                    chatGuid: _chat!.guid, message: messageController.text, epochTime: occurs.millisecondsSinceEpoch);
+
+                scheduled.save();
+                Navigator.of(context).pop();
+              }
+            },
+          ),
         ),
       ),
     );
