@@ -250,7 +250,7 @@ class ApiService extends GetxService {
   /// temporary guid to avoid duplicate messages being sent, [message] is the
   /// body of the message. Optionally provide [method] to send via private API,
   /// [effectId] to send with an effect, or [subject] to send with a subject.
-  Future<Response> sendMessage(String chatGuid, String tempGuid, String message, {String? method, String? effectId, String? subject, CancelToken? cancelToken}) async {
+  Future<Response> sendMessage(String chatGuid, String tempGuid, String message, {String? method, String? effectId, String? subject, String? selectedMessageGuid, CancelToken? cancelToken}) async {
     return await dio.post(
         "$origin/message/text",
         queryParameters: buildQueryParams(),
@@ -261,6 +261,7 @@ class ApiService extends GetxService {
           "method": method,
           "effectId": effectId,
           "subject": subject,
+          "selectedMessageGuid": selectedMessageGuid,
         },
         cancelToken: cancelToken
     );
@@ -278,7 +279,7 @@ class ApiService extends GetxService {
       "name": fileName,
     });
     return await dio.post(
-      "$origin/message/text",
+      "$origin/message/attachment",
       queryParameters: buildQueryParams(),
       cancelToken: cancelToken,
       data: formData,
@@ -298,22 +299,6 @@ class ApiService extends GetxService {
           "selectedMessageText": selectedMessageText,
           "selectedMessageGuid": selectedMessageGuid,
           "reaction": reaction,
-        },
-        cancelToken: cancelToken
-    );
-  }
-
-  /// Send a reaction. [chatGuid] specifies the chat, [selectedMessageGuid]
-  /// is the guid of the message being replied to, and [message] is the reply
-  /// itself.
-  Future<Response> sendReply(String chatGuid, String selectedMessageGuid, String message, {CancelToken? cancelToken}) async {
-    return await dio.post(
-        "$origin/message/reply",
-        queryParameters: buildQueryParams(),
-        data: {
-          "chatGuid": chatGuid,
-          "selectedMessageGuid": selectedMessageGuid,
-          "mnessage": message,
         },
         cancelToken: cancelToken
     );

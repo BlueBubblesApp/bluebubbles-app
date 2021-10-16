@@ -19,7 +19,7 @@ class OutgoingQueue extends QueueManager {
       case "send-message":
         {
           Map<String, dynamic> params = item.item;
-          await ActionHandler.sendMessageHelper(params["chat"], params["message"], replyGuid: params['replyGuid'], replyText: params['replyText']);
+          await ActionHandler.sendMessageHelper(params["chat"], params["message"]);
           break;
         }
       case "send-attachment":

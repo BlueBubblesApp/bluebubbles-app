@@ -45,7 +45,7 @@ class DBProvider {
 
   static Database? _database;
   static String _path = "";
-  static int currentVersion = 14;
+  static int currentVersion = 15;
 
   /// Contains list of functions to invoke when going from a previous to the current database verison
   /// The previous version is always [key - 1], for example for key 2, it will be the upgrade scheme from version 1 to version 2
@@ -125,6 +125,12 @@ class DBProvider {
           Settings s = await Settings.getSettingsOld(db);
           s.save();
           db.execute("DELETE FROM config");
+        }),
+    new DBUpgradeItem(
+        addedInVersion: 15,
+        upgrade: (Database db) {
+          db.execute("ALTER TABLE message ADD COLUMN threadOriginatorGuid TEXT DEFAULT NULL;");
+          db.execute("ALTER TABLE message ADD COLUMN threadOriginatorPart TEXT DEFAULT NULL;");
         }),
   ];
 

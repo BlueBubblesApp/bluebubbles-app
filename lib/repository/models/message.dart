@@ -68,6 +68,8 @@ class Message {
   bool hasReactions;
   DateTime? dateDeleted;
   Map<String, dynamic>? metadata;
+  String? threadOriginatorGuid;
+  String? threadOriginatorPart;
 
   List<Attachment?>? attachments = [];
   List<Message> associatedMessages = [];
@@ -112,7 +114,9 @@ class Message {
       this.attachments = const [],
       this.associatedMessages = const [],
       this.dateDeleted,
-      this.metadata}) {
+      this.metadata,
+      this.threadOriginatorGuid,
+      this.threadOriginatorPart}) {
     if (error2 != null) error.value = error2;
   }
 
@@ -204,6 +208,8 @@ class Message {
       hasReactions: json.containsKey('hasReactions') ? ((json['hasReactions'] == 1) ? true : false) : false,
       dateDeleted: json.containsKey("dateDeleted") ? parseDate(json["dateDeleted"]) : null,
       metadata: metadata is String ? null : metadata,
+      threadOriginatorGuid: json['threadOriginatorGuid'],
+      threadOriginatorPart: json['threadOriginatorPart'],
     );
 
     // Adds fallback getter for the ID
@@ -682,5 +688,7 @@ class Message {
         "hasReactions": hasReactions ? 1 : 0,
         "dateDeleted": (dateDeleted == null) ? null : dateDeleted!.millisecondsSinceEpoch,
         "metadata": jsonEncode(metadata),
+        "threadOriginatorGuid": threadOriginatorGuid,
+        "threadOriginatorPart": threadOriginatorPart,
       };
 }

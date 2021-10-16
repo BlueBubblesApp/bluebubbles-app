@@ -267,7 +267,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     super.dispose();
   }
 
-  Future<bool> send(List<PlatformFile> attachments, String text, String subject, String? replyGuid, String? replyText) async {
+  Future<bool> send(List<PlatformFile> attachments, String text, String subject, String? replyGuid) async {
     bool isDifferentChat = currentChat == null || currentChat?.chat.guid != chat?.guid;
 
     if (isCreator!) {
@@ -324,7 +324,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       }
     } else if (chat != null) {
       // We include messageBloc here because the bloc listener may not be instantiated yet
-      ActionHandler.sendMessage(chat!, text, messageBloc: messageBloc, subject: subject, replyGuid: replyGuid, replyText: replyText);
+      ActionHandler.sendMessage(chat!, text, messageBloc: messageBloc, subject: subject, replyGuid: replyGuid);
     }
 
     return true;

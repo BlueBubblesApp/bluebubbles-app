@@ -43,7 +43,7 @@ class BlueBubblesTextField extends StatefulWidget {
   final String? existingText;
   final bool? isCreator;
   final bool wasCreator;
-  final Future<bool> Function(List<PlatformFile> attachments, String text, String subject, String? replyToGuid, String? replyToTest) onSend;
+  final Future<bool> Function(List<PlatformFile> attachments, String text, String subject, String? replyToGuid) onSend;
 
   BlueBubblesTextField({
     Key? key,
@@ -373,7 +373,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 if (thisChat == null) {
                   this.addAttachments([file]);
                 } else {
-                  await widget.onSend([file], "", "", null, null);
+                  await widget.onSend([file], "", "", null);
                   if (!kIsWeb) this.disposeAudioFile(originalContext, file);
                 }
 
@@ -1400,7 +1400,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       return;
     }
 
-    if (await widget.onSend(pickedImages, controller!.text, subjectController!.text, replyToMessage?.guid, replyToMessage?.text)) {
+    if (await widget.onSend(pickedImages, controller!.text, subjectController!.text, replyToMessage?.guid)) {
       controller!.text = "";
       subjectController!.text = "";
       replyToMessage = null;

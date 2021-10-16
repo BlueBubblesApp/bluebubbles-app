@@ -43,7 +43,7 @@ class ActionHandler {
   /// sendMessage(chatObject, 'Hello world!')
   /// ```
   static Future<void> sendMessage(Chat chat, String text,
-      {MessageBloc? messageBloc, List<Attachment> attachments = const [], String? subject, String? replyGuid, String? replyText}) async {
+      {MessageBloc? messageBloc, List<Attachment> attachments = const [], String? subject, String? replyGuid}) async {
     if (isNullOrEmpty(text, trimString: true)! && isNullOrEmpty(subject ?? "", trimString: true)!) return;
 
     if ((await SettingsManager().getMacOSVersion() ?? 10) < 11) {
@@ -82,6 +82,7 @@ class ActionHandler {
         subject: subject,
         dateCreated: DateTime.now(),
         hasAttachments: attachments.length > 0 ? true : false,
+        threadOriginatorGuid: replyGuid,
       );
 
       // Generate a Temp GUID
@@ -95,6 +96,7 @@ class ActionHandler {
           text: secondaryText.trim(),
           dateCreated: DateTime.now(),
           hasAttachments: false,
+          threadOriginatorGuid: replyGuid,
         );
 
         // Generate a Temp GUID
@@ -117,7 +119,7 @@ class ActionHandler {
         chat.addMessage(message);
 
         // Create params for the queue item
-        Map<String, dynamic> params = {"chat": chat, "message": message, "replyGuid": replyGuid, "replyText": replyText};
+        Map<String, dynamic> params = {"chat": chat, "message": message};
 
         // Add the message send to the queue
         await OutgoingQueue().add(new QueueItem(event: "send-message", item: params));
@@ -129,6 +131,7 @@ class ActionHandler {
         subject: subject,
         dateCreated: DateTime.now(),
         hasAttachments: attachments.length > 0 ? true : false,
+        threadOriginatorGuid: replyGuid,
       );
 
       // Generate a Temp GUID
@@ -147,14 +150,14 @@ class ActionHandler {
       chat.addMessage(message);
 
       // Create params for the queue item
-      Map<String, dynamic> params = {"chat": chat, "message": message, "replyGuid": replyGuid, "replyText": replyText};
+      Map<String, dynamic> params = {"chat": chat, "message": message};
 
       // Add the message send to the queue
       await OutgoingQueue().add(new QueueItem(event: "send-message", item: params));
     }
   }
 
-  static Future<void> sendMessageHelper(Chat chat, Message message, {String? replyGuid, String? replyText}) async {
+  static Future<void> sendMessageHelper(Chat chat, Message message) async {
     Completer<void> completer = new Completer<void>();
     Map<String, dynamic> params = new Map();
     params["guid"] = chat.guid;
@@ -162,41 +165,8 @@ class ActionHandler {
     params["tempGuid"] = message.guid;
 
     VoidCallback sendSocketMessage = () {
-      if (message.subject?.isNotEmpty ?? false) {
-        api.sendMessage(chat.guid!, message.guid!, message.text!, subject: message.subject, method: "private-api").then((response) async {
-          String? tempGuid = message.guid;
-          // If there is an error, replace the temp value with an error
-          if (response.statusCode != 200) {
-            message.guid = message.guid!.replaceAll("temp", "error-${response.data['error']['message']}");
-            message.error.value =
-            response.statusCode == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
-
-            await Message.replaceMessage(tempGuid, message);
-            NewMessageManager().updateMessage(chat, tempGuid!, message);
-          } else {
-            Message newMessage = Message.fromMap(response.data['data']);
-            await Message.replaceMessage(tempGuid, newMessage, chat: chat);
-            List<dynamic> attachments = response.data.containsKey("attachments") ? response.data['attachments'] : [];
-            newMessage.attachments = [];
-            for (dynamic attachmentItem in attachments) {
-              Attachment file = Attachment.fromMap(attachmentItem);
-
-              try {
-                await Attachment.replaceAttachment(tempGuid, file);
-              } catch (ex) {
-                Logger.warn("Attachment's Old GUID doesn't exist. Skipping");
-              }
-              newMessage.attachments!.add(file);
-            }
-            Logger.info("Message match: [${response.data["text"]}] - ${response.data["guid"]} - ${response.data["tempGuid"]}", tag: "MessageStatus");
-
-            NewMessageManager().updateMessage(chat, tempGuid!, newMessage);
-          }
-
-          completer.complete();
-        });
-      } else if (replyGuid != null) {
-        api.sendReply(chat.guid!, replyGuid, message.text!).then((response) async {
+      if ((message.subject?.isNotEmpty ?? false) || message.threadOriginatorGuid != null) {
+        api.sendMessage(chat.guid!, message.guid!, message.text!, subject: message.subject, method: "private-api", selectedMessageGuid: message.threadOriginatorGuid).then((response) async {
           String? tempGuid = message.guid;
           // If there is an error, replace the temp value with an error
           if (response.statusCode != 200) {
