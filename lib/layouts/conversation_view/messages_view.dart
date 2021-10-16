@@ -1,13 +1,12 @@
 import 'dart:async';
-import 'dart:ui';
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/conversation_view/text_field/blue_bubbles_text_field.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/new_message_loader.dart';
@@ -601,8 +600,8 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                   ),
                 ),
               ),
-              IgnorePointer(
-                child: Positioned.fill(
+              Positioned.fill(
+                child: IgnorePointer(
                   child: Container(
                     color: dragging.value ? Colors.blue.withAlpha(50) : Colors.transparent,
                   ),
