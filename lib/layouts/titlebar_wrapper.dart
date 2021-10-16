@@ -56,11 +56,11 @@ class WindowButtons extends StatelessWidget {
         iconNormal: context.theme.primaryColor,
         iconMouseOver: Colors.white);
     return Row(
-        children: [
-          MinimizeWindowButton(colors: buttonColors),
-          MaximizeWindowButton(colors: buttonColors),
-          CloseWindowButton(colors: closeButtonColors, onPressed: () => appWindow.hide()),
-        ],
+      children: [
+        MinimizeWindowButton(colors: buttonColors),
+        MaximizeWindowButton(colors: buttonColors),
+        CloseWindowButton(colors: closeButtonColors, onPressed: () => appWindow.hide()),
+      ],
     );
   }
 }

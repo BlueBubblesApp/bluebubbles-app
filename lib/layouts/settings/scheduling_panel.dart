@@ -104,55 +104,29 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
           ),
         ),
         body: ImprovedScrolling(
-        enableMMBScrolling: true,
-    enableKeyboardScrolling: true,
-    mmbScrollConfig: MMBScrollConfig(
-    customScrollCursor: DefaultCustomScrollCursor(
-    cursorColor: context.textTheme.subtitle1!.color!,
-    backgroundColor: Colors.white,
-    borderColor: context.textTheme.headline1!.color!,
-    ),
-    ),
-    scrollController: scrollController,
-    child: CustomScrollView(
-    controller: scrollController,
-          physics: ThemeSwitcher.getScrollPhysics(),
-          slivers: <Widget>[
-            SliverList(
-              delegate: SliverChildListDelegate(
-                <Widget>[
-                  Padding(
-                      padding: EdgeInsets.fromLTRB(25.0, 25.0, 25.0, 0.0),
-                      child: Text("Upcoming Messages", style: Theme.of(context).textTheme.headline1)),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 25.0, vertical: 25.0),
-                    child: (upcoming.isNotEmpty)
-                        ? Container(
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Theme.of(context).accentColor,
-                                width: 1,
-                              ),
-                              borderRadius: BorderRadius.all(Radius.circular(10)),
-                            ),
-                            child: Table(
-                                columnWidths: {
-                                  0: FractionColumnWidth(.6),
-                                  1: FractionColumnWidth(.4),
-                                },
-                                border: TableBorder.symmetric(
-                                  inside: BorderSide(width: 1, color: Theme.of(context).accentColor),
-                                ),
-                                children: _buildRows(upcoming)))
-                        : Text("No upcoming messages to send",
-                            textAlign: TextAlign.left, style: Theme.of(context).textTheme.subtitle1),
-                  ),
-                  Padding(
-                      padding: EdgeInsets.fromLTRB(25.0, 25.0, 25.0, 0.0),
-                      child: Text("Past Messages", style: Theme.of(context).textTheme.headline1)),
-                  Padding(
+          enableMMBScrolling: true,
+          enableKeyboardScrolling: true,
+          mmbScrollConfig: MMBScrollConfig(
+            customScrollCursor: DefaultCustomScrollCursor(
+              cursorColor: context.textTheme.subtitle1!.color!,
+              backgroundColor: Colors.white,
+              borderColor: context.textTheme.headline1!.color!,
+            ),
+          ),
+          scrollController: scrollController,
+          child: CustomScrollView(
+            controller: scrollController,
+            physics: ThemeSwitcher.getScrollPhysics(),
+            slivers: <Widget>[
+              SliverList(
+                delegate: SliverChildListDelegate(
+                  <Widget>[
+                    Padding(
+                        padding: EdgeInsets.fromLTRB(25.0, 25.0, 25.0, 0.0),
+                        child: Text("Upcoming Messages", style: Theme.of(context).textTheme.headline1)),
+                    Padding(
                       padding: EdgeInsets.symmetric(horizontal: 25.0, vertical: 25.0),
-                      child: (old.isNotEmpty)
+                      child: (upcoming.isNotEmpty)
                           ? Container(
                               decoration: BoxDecoration(
                                 border: Border.all(
@@ -169,18 +143,45 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
                                   border: TableBorder.symmetric(
                                     inside: BorderSide(width: 1, color: Theme.of(context).accentColor),
                                   ),
-                                  children: _buildRows(old)))
-                          : Text("No scheduled messages have been sent",
-                              textAlign: TextAlign.left, style: Theme.of(context).textTheme.subtitle1)),
-                ],
+                                  children: _buildRows(upcoming)))
+                          : Text("No upcoming messages to send",
+                              textAlign: TextAlign.left, style: Theme.of(context).textTheme.subtitle1),
+                    ),
+                    Padding(
+                        padding: EdgeInsets.fromLTRB(25.0, 25.0, 25.0, 0.0),
+                        child: Text("Past Messages", style: Theme.of(context).textTheme.headline1)),
+                    Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 25.0, vertical: 25.0),
+                        child: (old.isNotEmpty)
+                            ? Container(
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: Theme.of(context).accentColor,
+                                    width: 1,
+                                  ),
+                                  borderRadius: BorderRadius.all(Radius.circular(10)),
+                                ),
+                                child: Table(
+                                    columnWidths: {
+                                      0: FractionColumnWidth(.6),
+                                      1: FractionColumnWidth(.4),
+                                    },
+                                    border: TableBorder.symmetric(
+                                      inside: BorderSide(width: 1, color: Theme.of(context).accentColor),
+                                    ),
+                                    children: _buildRows(old)))
+                            : Text("No scheduled messages have been sent",
+                                textAlign: TextAlign.left, style: Theme.of(context).textTheme.subtitle1)),
+                  ],
+                ),
               ),
-            ),
-            SliverList(
-              delegate: SliverChildListDelegate(
-                <Widget>[],
-              ),
-            )
-          ],
+              SliverList(
+                delegate: SliverChildListDelegate(
+                  <Widget>[],
+                ),
+              )
+            ],
+          ),
         ),
         floatingActionButton: FloatingActionButton(
           backgroundColor: Theme.of(context).primaryColor,
@@ -194,7 +195,7 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
               ),
             );
           },
-        ),),
+        ),
       ),
     );
   }

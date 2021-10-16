@@ -22,8 +22,8 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:dio_http/dio_http.dart';
-import 'package:file_picker/file_picker.dart' as pf;
 import 'package:file_picker/file_picker.dart' hide PlatformFile;
+import 'package:file_picker/file_picker.dart' as pf;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -597,18 +597,21 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       var data = event.data as RawKeyEventDataWindows;
                       if (data.keyCode == 8 && event.isControlPressed) {
                         String text = controller!.text;
+                        text = text.characters.where((char) => char.codeUnits[0] != 127).join();
                         TextSelection selection = controller!.selection;
                         TextPosition base = selection.base;
                         int startPos = base.offset;
+                        controller!.text = text;
+                        controller!.selection = TextSelection.fromPosition(TextPosition(offset: startPos - 1));
 
-                        if (text.isEmpty) return KeyEventResult.handled;
+                        if (text.isEmpty) return KeyEventResult.ignored;
 
                         // Get the word
                         List<String> words = text.trimRight().split(RegExp("[ \n]"));
                         RegExp punctuation = RegExp("[!\"#\$%&'()*+,-./:;<=>?@[\\]^_`{|}~]");
                         int trailing = text.length - text.trimRight().length;
                         List<int> counts = words.map((word) => word.length).toList();
-                        int end = startPos - trailing;
+                        int end = startPos - 1 - trailing;
                         int start = 0;
                         if (punctuation.hasMatch(text.characters.toList()[end - 1])) {
                           start = end - 1;
@@ -625,7 +628,20 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         end += trailing; // Account for trimming
                         start = max(0, start); // Make sure it's not negative
                         text = text.substring(0, start) + text.substring(end);
-                        controller!.value = TextEditingValue(text: text, selection: TextSelection.fromPosition(TextPosition(offset: start)));
+                        controller!.value = TextEditingValue(
+                            text: text, selection: TextSelection.fromPosition(TextPosition(offset: start)));
+                        return KeyEventResult.handled;
+                      }
+                    }
+                    if (event is! RawKeyDownEvent) return KeyEventResult.ignored;
+                    Logger.info(
+                        "Got key label ${event.data.keyLabel}, physical key ${event.data.physicalKey.toString()}, logical key ${event.data.logicalKey.toString()}",
+                        tag: "RawKeyboardListener");
+                    if (event.data is RawKeyEventDataWindows) {
+                      var data = event.data as RawKeyEventDataWindows;
+                      if (data.keyCode == 13 && !event.isShiftPressed) {
+                        sendMessage();
+                        focusNode!.requestFocus();
                         return KeyEventResult.handled;
                       }
                       if (data.keyCode == 8 && event.isControlPressed) {
@@ -749,7 +765,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                           : "BlueBubbles",
                       padding: EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
                       placeholderStyle: Theme.of(context).textTheme.subtitle1,
-                      autofocus: (SettingsManager().settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop) && !widget.isCreator!,
+                      autofocus: (SettingsManager().settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop) &&
+                          !widget.isCreator!,
                       decoration: BoxDecoration(
                         color: Theme.of(context).backgroundColor,
                         border: Border.all(
@@ -768,7 +785,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       textInputAction: SettingsManager().settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
                           ? TextInputAction.send
                           : TextInputAction.newline,
-                      autofocus: (SettingsManager().settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop) && !widget.isCreator!,
+                      autofocus: (SettingsManager().settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop) &&
+                          !widget.isCreator!,
                       cursorColor: Theme.of(context).primaryColor,
                       key: _searchFormKey,
                       onSubmitted: (String value) {
@@ -834,7 +852,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       textInputAction: SettingsManager().settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
                           ? TextInputAction.send
                           : TextInputAction.newline,
-                      autofocus: (SettingsManager().settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop) && !widget.isCreator!,
+                      autofocus: (SettingsManager().settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop) &&
+                          !widget.isCreator!,
                       cursorColor: Theme.of(context).primaryColor,
                       key: _searchFormKey,
                       onSubmitted: (String value) {

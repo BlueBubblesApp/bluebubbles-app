@@ -265,7 +265,7 @@ Future<List<Chat>> getChatsIsolate(List<dynamic> stuff) async {
     /// for redacted mode
     for (Chat c in chats) {
       final eligibleHandles = chJoins.where((element) => element.chatId == c.id).map((e) => e.handleId);
-      c.participants = nonNullHandles.where((element) => eligibleHandles.contains(element.id)).toList();
+      c.participants = eligibleHandles.map((element) => nonNullHandles.firstWhereOrNull((e) => e.id == element)).where((e) => e != null).map((e) => e!).toList();
       c._deduplicateParticipants();
       c.fakeParticipants = c.participants.map((p) => ContactManager().handleToFakeName[p.address] ?? "Unknown").toList();
     }

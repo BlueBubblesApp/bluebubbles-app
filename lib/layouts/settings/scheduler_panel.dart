@@ -219,7 +219,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
                 ),
               )
             ],
-          ),
+          ),),
           floatingActionButton: FloatingActionButton(
             backgroundColor: Theme.of(context).primaryColor,
             child: Icon(Icons.done, color: Colors.white, size: 25),
@@ -251,7 +251,6 @@ class _SchedulePanelState extends State<SchedulePanel> {
             },
           ),
         ),
-      ),
     );
   }
 }

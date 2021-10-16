@@ -115,7 +115,7 @@ dependencies:
       url: https://github.com/antler119/system_tray
       ref: f6818b8388029d8bdfb35531c1597517859a5b14
   flutter_improved_scrolling: ^0.0.3
-  desktop_drop: ^0.1.0
+  desktop_drop: ^0.1.1
 
 dependency_overrides:
   rxdart: ^0.27.2
