@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
@@ -427,6 +428,26 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
               ),
               trailing: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.macwindow : Icons.open_in_browser,
+                color: Theme.of(context).textTheme.bodyText1!.color,
+              ),
+            ),
+          ),
+        ),
+      if (SettingsManager().settings.enablePrivateAPI.value)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () async {
+              Get.back();
+              EventDispatcher().emit("focus-keyboard", widget.message);
+            },
+            child: ListTile(
+              title: Text(
+                "Reply",
+                style: Theme.of(context).textTheme.bodyText1,
+              ),
+              trailing: Icon(
+                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.reply : Icons.reply,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),

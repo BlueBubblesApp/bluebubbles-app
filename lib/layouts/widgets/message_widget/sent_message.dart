@@ -329,7 +329,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
     if (widget.message.balloonBundleId != null &&
         widget.message.balloonBundleId != 'com.apple.messages.URLBalloonProvider') {
       message = BalloonBundleWidget(message: widget.message);
-    } else if (!isEmptyString(widget.message.text)) {
+    } else if (!isEmptyString(widget.message.text) || !isEmptyString(widget.message.subject ?? "")) {
       message = SentMessageHelper.buildMessageWithTail(
           context, widget.message, widget.showTail, widget.message.hasReactions, widget.message.bigEmoji ?? false, spanFuture,
           olderMessage: widget.olderMessage);

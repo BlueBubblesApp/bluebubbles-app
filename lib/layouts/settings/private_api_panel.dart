@@ -7,6 +7,8 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/socket_manager.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -24,11 +26,21 @@ class PrivateAPIPanelBinding extends Bindings {
 
 class PrivateAPIPanelController extends GetxController {
   late Settings _settingsCopy;
+  final RxnInt serverVersionCode = RxnInt();
 
   @override
   void onInit() {
     super.onInit();
     _settingsCopy = SettingsManager().settings;
+    SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
+      final String? serverVersion = res['data']['server_version'];
+      serverVersionCode.value = serverVersion?.split(".").mapIndexed((index, e) {
+        if (index == 0) return int.parse(e) * 100;
+        if (index == 1) return int.parse(e) * 21;
+        return int.parse(e);
+      }).sum;
+      print(serverVersionCode);
+    });
   }
 
   void saveSettings() async {
@@ -256,6 +268,19 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                           );
                         else
                           return SizedBox.shrink();
+                      }),
+                      Obx(() {
+                        if ((controller.serverVersionCode.value ?? 0) >= 63)
+                          return SettingsSwitch(
+                            onChanged: (bool val) {
+                              controller._settingsCopy.privateSubjectLine.value = val;
+                              saveSettings();
+                            },
+                            initialVal: controller._settingsCopy.privateSubjectLine.value,
+                            title: "Send Subject Lines",
+                            backgroundColor: tileColor,
+                          );
+                        else return SizedBox.shrink();
                       }),
                     ],
                   )

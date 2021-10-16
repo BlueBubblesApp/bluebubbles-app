@@ -209,12 +209,20 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
             ),
             maxLines: 1,
           ).createRenderObject(context);
+          final renderParagraph2 = RichText(
+            text: TextSpan(
+              text: event.message!.subject ?? "",
+              style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
+            ),
+            maxLines: 1,
+          ).createRenderObject(context);
           final size = renderParagraph.getDryLayout(constraints);
-          if (!(event.message?.hasAttachments ?? false) && !(event.message?.text?.isEmpty ?? false)) {
+          final size2 = renderParagraph2.getDryLayout(constraints);
+          if (!(event.message?.hasAttachments ?? false) && (!(event.message?.text?.isEmpty ?? true) || !(event.message?.subject?.isEmpty ?? true))) {
             setState(() {
               tween = Tween<double>(
                   begin: CustomNavigator.width(context) - 30,
-                  end: min(size.width + 68, CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE + 40));
+                  end: min(max(size.width, size2.width) + 68, CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE + 40));
               controller = CustomAnimationControl.play;
               message = event.message;
             });
@@ -259,7 +267,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     super.dispose();
   }
 
-  Future<bool> send(List<PlatformFile> attachments, String text) async {
+  Future<bool> send(List<PlatformFile> attachments, String text, String subject, String? replyGuid, String? replyText) async {
     bool isDifferentChat = currentChat == null || currentChat?.chat.guid != chat?.guid;
 
     if (isCreator!) {
@@ -316,7 +324,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       }
     } else if (chat != null) {
       // We include messageBloc here because the bloc listener may not be instantiated yet
-      ActionHandler.sendMessage(chat!, text, messageBloc: messageBloc);
+      ActionHandler.sendMessage(chat!, text, messageBloc: messageBloc, subject: subject, replyGuid: replyGuid, replyText: replyText);
     }
 
     return true;
@@ -603,16 +611,16 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                                   message?.isBigEmoji() ?? false,
                                   MessageWidgetMixin.buildMessageSpansAsync(context, message),
                                   currentChat: currentChat,
-                                  customWidth: (message?.hasAttachments ?? false) && (message?.text?.isEmpty ?? true)
+                                  customWidth: (message?.hasAttachments ?? false) && (message?.text?.isEmpty ?? true) && (message?.subject?.isEmpty ?? true)
                                       ? null
                                       : value,
-                                  customColor: (message?.hasAttachments ?? false) && (message?.text?.isEmpty ?? true)
+                                  customColor: (message?.hasAttachments ?? false) && (message?.text?.isEmpty ?? true) && (message?.subject?.isEmpty ?? true)
                                       ? Colors.transparent
                                       : null,
                                   customContent: child,
                                 );
                               },
-                              child: (message?.hasAttachments ?? false) && (message?.text?.isEmpty ?? true)
+                              child: (message?.hasAttachments ?? false) && (message?.text?.isEmpty ?? true) && (message?.subject?.isEmpty ?? true)
                                   ? MessageAttachments(
                                       message: message,
                                       showTail: true,

@@ -69,6 +69,7 @@ class Settings {
   final RxBool privateSendTypingIndicators = false.obs;
   final RxBool privateMarkChatAsRead = false.obs;
   final RxBool privateManualMarkAsRead = false.obs;
+  final RxBool privateSubjectLine = false.obs;
 
   // Redacted Mode Settings
   final RxBool redactedMode = false.obs;
@@ -200,6 +201,8 @@ class Settings {
         settings.privateMarkChatAsRead.value = entry.value;
       } else if (entry.name == "privateManualMarkAsRead") {
         settings.privateManualMarkAsRead.value = entry.value;
+      } else if (entry.name == "privateSubjectLine") {
+        settings.privateSubjectLine.value = entry.value;
       } else if (entry.name == "showSyncIndicator") {
         settings.showSyncIndicator.value = entry.value;
       } else if (entry.name == "showDeliveryTimestamps") {
@@ -391,6 +394,7 @@ class Settings {
       'privateSendTypingIndicators': this.privateSendTypingIndicators.value,
       'privateMarkChatAsRead': this.privateMarkChatAsRead.value,
       'privateManualMarkAsRead': this.privateManualMarkAsRead.value,
+      'privateSubjectLine': this.privateSubjectLine.value,
       'redactedMode': this.redactedMode.value,
       'hideMessageContent': this.hideMessageContent.value,
       'hideReactions': this.hideReactions.value,
@@ -483,6 +487,7 @@ class Settings {
     SettingsManager().settings.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
     SettingsManager().settings.privateMarkChatAsRead.value = map['privateMarkChatAsRead'] ?? false;
     SettingsManager().settings.privateManualMarkAsRead.value = map['privateManualMarkAsRead'] ?? false;
+    SettingsManager().settings.privateSubjectLine.value = map['privateSubjectLine'] ?? false;
     SettingsManager().settings.redactedMode.value = map['redactedMode'] ?? false;
     SettingsManager().settings.hideMessageContent.value = map['hideMessageContent'] ?? true;
     SettingsManager().settings.hideReactions.value = map['hideReactions'] ?? false;
@@ -571,6 +576,7 @@ class Settings {
     s.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
     s.privateMarkChatAsRead.value = map['privateMarkChatAsRead'] ?? false;
     s.privateManualMarkAsRead.value = map['privateManualMarkAsRead'] ?? false;
+    s.privateSubjectLine.value = map['privateSubjectLine'] ?? false;
     s.redactedMode.value = map['redactedMode'] ?? false;
     s.hideMessageContent.value = map['hideMessageContent'] ?? true;
     s.hideReactions.value = map['hideReactions'] ?? false;

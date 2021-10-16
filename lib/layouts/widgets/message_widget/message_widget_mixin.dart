@@ -68,7 +68,7 @@ abstract class MessageWidgetMixin {
     final bool hideContent = (message?.guid?.contains("theme-selector") ?? false) ||
         (SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value && !generateContent);
 
-    if (message != null && !isEmptyString(message.text)) {
+    if (message != null && (!isEmptyString(message.text) || !isEmptyString(message.subject))) {
       RegExp exp = new RegExp(
           r'((https?://)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9/()@:%_.~#?&=*\[\]]*)\b');
       List<RegExpMatch> matches = exp.allMatches(message.text!).toList();
@@ -189,7 +189,7 @@ abstract class MessageWidgetMixin {
     final bool hideContent = (message?.guid?.contains("theme-selector") ?? false) ||
         (SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value && !generateContent);
 
-    if (message != null && !isEmptyString(message.text)) {
+    if (message != null && (!isEmptyString(message.text) || !isEmptyString(message.subject))) {
       RegExp exp = new RegExp(
           r'((https?://)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9/()@:%_.~#?&=*\[\]]*)\b');
       List<RegExpMatch> matches = exp.allMatches(message.text!).toList();
