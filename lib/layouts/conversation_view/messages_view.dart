@@ -407,6 +407,9 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
           onDragEntered: (details) {
             dragging.value = true;
           },
+          onDragExited: (details) {
+            dragging.value = false;
+          },
           onDragDone: (details) {
             List<Uri> uris = details.urls;
             List<String> paths = uris.map((uri) => uri.pathSegments.join("/")).toList();
