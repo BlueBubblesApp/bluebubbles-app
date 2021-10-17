@@ -430,8 +430,19 @@ class Message {
     }
     if (kIsWeb) {
       associatedMessages = bloc?.reactionMessages.values.where((element) => element.associatedMessageGuid == guid).toList() ?? [];
+      if (threadOriginatorGuid != null) {
+        final threadOriginator = bloc?.messages.values.firstWhereOrNull((e) => e.guid == threadOriginatorGuid);
+        if (threadOriginator != null) associatedMessages.add(threadOriginator);
+        if (!guid!.startsWith("temp")) bloc?.threadOriginators[guid!] = threadOriginatorGuid!;
+      }
     } else {
       associatedMessages = await Message.find({"associatedMessageGuid": this.guid});
+      if (threadOriginatorGuid != null) {
+        final threadOriginator = await Message.findOne({"guid": this.threadOriginatorGuid});
+        threadOriginator?.handle = await Handle.findOne({"ROWID": threadOriginator.handleId});
+        if (threadOriginator != null) associatedMessages.add(threadOriginator);
+        if (!guid!.startsWith("temp")) bloc?.threadOriginators[guid!] = threadOriginatorGuid!;
+      }
     }
     associatedMessages.sort((a, b) => a.originalROWID!.compareTo(b.originalROWID!));
     if (!kIsWeb) associatedMessages = MessageHelper.normalizedAssociatedMessages(associatedMessages);

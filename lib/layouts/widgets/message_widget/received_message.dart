@@ -1,3 +1,6 @@
+import 'dart:math';
+
+import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
@@ -10,21 +13,28 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_tail.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_time_stamp.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_popup_holder.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/helpers/darty.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 class ReceivedMessage extends StatefulWidget {
   final bool showTail;
   final Message message;
+  final Message? olderOlderMessage;
   final Message? olderMessage;
   final Message? newerMessage;
   final bool showHandle;
+  final MessageBloc? messageBloc;
+  final bool hasTimestampAbove;
+  final bool showReplies;
 
   // Sub-widgets
   final Widget stickersWidget;
@@ -35,10 +45,14 @@ class ReceivedMessage extends StatefulWidget {
   ReceivedMessage({
     Key? key,
     required this.showTail,
+    required this.olderOlderMessage,
     required this.olderMessage,
     required this.newerMessage,
     required this.message,
     required this.showHandle,
+    required this.messageBloc,
+    required this.hasTimestampAbove,
+    required this.showReplies,
 
     // Sub-widgets
     required this.stickersWidget,
@@ -54,7 +68,7 @@ class ReceivedMessage extends StatefulWidget {
 class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMixin {
   bool checkedHandle = false;
   final Rx<Skins> skin = Rx<Skins>(SettingsManager().settings.skin.value);
-  late final spanFuture = MessageWidgetMixin.buildMessageSpansAsync(context, widget.message, colors: widget.message.handle?.color != null ? getBubbleColors() : null);
+  late final spanFuture = MessageWidgetMixin.buildMessageSpansAsync(context, widget.message, colors: widget.message.handle?.color != null ? getBubbleColors(widget.message) : null);
 
   @override
   initState() {
@@ -83,20 +97,20 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     didChangeMessageDependencies(widget.message, widget.showHandle);
   }
 
-  List<Color> getBubbleColors() {
-    List<Color> bubbleColors = [Theme
+  List<Color> getBubbleColors(Message message) {
+    List<Color> bubbleColors = message.isFromMe ?? false ? [Colors.blue, Colors.blue] : [Theme
         .of(context)
         .accentColor, Theme
         .of(context)
         .accentColor
     ];
-    if (SettingsManager().settings.colorfulBubbles.value) {
-      if (widget.message.handle?.color == null) {
-        bubbleColors = toColorGradient(widget.message.handle?.address);
+    if (SettingsManager().settings.colorfulBubbles.value && !message.isFromMe!) {
+      if (message.handle?.color == null) {
+        bubbleColors = toColorGradient(message.handle?.address);
       } else {
         bubbleColors = [
-          HexColor(widget.message.handle!.color!),
-          HexColor(widget.message.handle!.color!).lightenAmount(0.02),
+          HexColor(message.handle!.color!),
+          HexColor(message.handle!.color!).lightenAmount(0.02),
         ];
       }
     }
@@ -167,7 +181,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
         if (widget.showTail && skin.value == Skins.iOS)
           MessageTail(
             isFromMe: false,
-            color: getBubbleColors()[0],
+            color: getBubbleColors(widget.message)[0],
           ),
         Container(
           margin: EdgeInsets.only(
@@ -217,7 +231,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
             gradient: LinearGradient(
               begin: AlignmentDirectional.bottomCenter,
               end: AlignmentDirectional.topCenter,
-              colors: getBubbleColors(),
+              colors: getBubbleColors(widget.message),
             ),
           ),
           child: FutureBuilder<List<InlineSpan>>(
@@ -234,7 +248,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                 return RichText(
                   text: TextSpan(
                     children: MessageWidgetMixin.buildMessageSpans(context, widget.message,
-                        colors: widget.message.handle?.color != null ? getBubbleColors() : null),
+                        colors: widget.message.handle?.color != null ? getBubbleColors(widget.message) : null),
                     style: Theme.of(context).textTheme.bodyText2,
                   ),
                 );
@@ -252,6 +266,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     }
     // The column that holds all the "messages"
     List<Widget> messageColumn = [];
+    final msg = widget.message.associatedMessages.firstWhereOrNull((e) => e.guid == widget.message.threadOriginatorGuid);
 
     // First, add the message sender (if applicable)
     bool isGroup = CurrentChat
@@ -333,19 +348,91 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
 
     // Fourth, let's add any reactions or stickers to the widget
     if (message != null) {
-      messageColumn.add(
-        addStickersToWidget(
-          message: addReactionsToWidget(
-              messageWidget: message,
-              reactions: widget.reactionsWidget,
-              message: widget.message,
-              shouldShow: widget.message
-                  .getRealAttachments()
-                  .isEmpty),
-          stickers: widget.stickersWidget,
-          isFromMe: widget.message.isFromMe!,
-        ),
-      );
+      if (widget.showReplies && msg != null && ((widget.olderOlderMessage?.threadOriginatorGuid == widget.olderMessage?.threadOriginatorGuid && (msg.isFromMe ?? false)) || widget.message.threadOriginatorGuid != widget.olderMessage?.threadOriginatorGuid)) {
+        final constraints = BoxConstraints(
+          maxWidth: CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE - 30,
+          minHeight: Theme.of(context).textTheme.bodyText2!.fontSize!,
+        );
+        final renderParagraph = RichText(
+          text: TextSpan(
+            text: msg.fullText,
+            style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
+          ),
+        ).createRenderObject(context);
+        final renderParagraph2 = RichText(
+          text: TextSpan(
+            text: widget.message.fullText,
+            style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
+          ),
+        ).createRenderObject(context);
+        Size size = renderParagraph.getDryLayout(constraints);
+        final size2 = renderParagraph2.getDryLayout(constraints);
+        final diff = CustomNavigator.width(context) - size.width - size2.width;
+        if (size.width > CustomNavigator.width(context) - CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE - 30) {
+          size = Size(CustomNavigator.width(context) - CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE - 30 - 35, size.height);
+        }
+        messageColumn.add(
+          Container(
+            width: CustomNavigator.width(context) - 45,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                addStickersToWidget(
+                  message: addReactionsToWidget(
+                      messageWidget: message,
+                      reactions: widget.reactionsWidget,
+                      message: widget.message,
+                      shouldShow: widget.message
+                          .getRealAttachments()
+                          .isEmpty),
+                  stickers: widget.stickersWidget,
+                  isFromMe: widget.message.isFromMe!,
+                ),
+                Padding(
+                  padding: EdgeInsets.only(right: 17.5),
+                  child: Container(
+                      width: (size.width + 35 + (diff > 200 ? diff * 0.3 : 0)) / 2,
+                      height: (size2.height + 15) / 2,
+                      child: CustomPaint(
+                        painter:  msg.isFromMe! ? LinePainter(
+                            context,
+                            widget.newerMessage?.threadOriginatorGuid == widget.message.threadOriginatorGuid,
+                            size2,
+                            widget.olderMessage?.threadOriginatorGuid == widget.message.threadOriginatorGuid
+                                && widget.hasTimestampAbove,
+                            addedSender,
+                        ) : LinePainterNotFromMe(
+                            context,
+                            widget.newerMessage?.threadOriginatorGuid == widget.message.threadOriginatorGuid,
+                            size,
+                            size2,
+                            widget.olderMessage?.threadOriginatorGuid == widget.message.threadOriginatorGuid
+                                && widget.hasTimestampAbove,
+                          addedSender
+                        ),
+                      )
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      } else {
+        messageColumn.add(
+          addStickersToWidget(
+            message: addReactionsToWidget(
+                messageWidget: message,
+                reactions: widget.reactionsWidget,
+                message: widget.message,
+                shouldShow: widget.message
+                    .getRealAttachments()
+                    .isEmpty),
+            stickers: widget.stickersWidget,
+            isFromMe: widget.message.isFromMe!,
+          ),
+        );
+      }
     }
 
     List<Widget> messagePopupColumn = List<Widget>.from(messageColumn);
@@ -461,12 +548,284 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
               olderMessage: widget.olderMessage,
               newerMessage: widget.newerMessage,
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                if (widget.showReplies && widget.message.threadOriginatorGuid != null && widget.olderMessage?.threadOriginatorGuid != widget.message.threadOriginatorGuid && msg != null && widget.olderMessage?.guid != msg.guid)
+                  GestureDetector(
+                    onTap: () {
+                      List<Message> _messages = [];
+                      if (widget.message.threadOriginatorGuid != null) {
+                        _messages = widget.messageBloc?.messages.values.where((e) => e.threadOriginatorGuid == widget.message.threadOriginatorGuid || e.guid == widget.message.threadOriginatorGuid).toList() ?? [];
+                      } else {
+                        _messages = widget.messageBloc?.messages.values.where((e) => e.threadOriginatorGuid == widget.message.guid || e.guid == widget.message.guid).toList() ?? [];
+                      }
+                      _messages.sort((a, b) => a.id!.compareTo(b.id!));
+                      _messages.sort((a, b) => a.dateCreated!.compareTo(b.dateCreated!));
+                      Navigator.push(
+                        context,
+                        PageRouteBuilder(
+                          settings: RouteSettings(arguments: {"hideTail": true}),
+                          transitionDuration: Duration(milliseconds: 150),
+                          pageBuilder: (context, animation, secondaryAnimation) {
+                            return FadeTransition(
+                                opacity: animation,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    Get.back();
+                                  },
+                                  child: AbsorbPointer(
+                                    absorbing: true,
+                                    child: AnnotatedRegion<SystemUiOverlayStyle>(
+                                      value: SystemUiOverlayStyle(
+                                        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+                                        systemNavigationBarIconBrightness:
+                                        Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+                                        statusBarColor: Colors.transparent, // status bar color
+                                      ),
+                                      child: Scaffold(
+                                        backgroundColor: context.theme.backgroundColor,
+                                        body: SafeArea(
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                            child: CustomScrollView(
+                                                slivers: [
+                                                  SliverList(
+                                                    delegate: SliverChildBuilderDelegate(
+                                                          (context, index) {
+                                                        Message? olderMessage;
+                                                        Message? newerMessage;
+                                                        if (index + 1 >= 0 && index + 1 < _messages.length) {
+                                                          olderMessage = _messages[index + 1];
+                                                        }
+                                                        if (index - 1 >= 0 && index - 1 < _messages.length) {
+                                                          newerMessage = _messages[index - 1];
+                                                        }
+
+                                                        return Padding(
+                                                            padding: EdgeInsets.only(left: 5.0, right: 5.0),
+                                                            child: MessageWidget(
+                                                              key: Key(_messages[index].guid!),
+                                                              message: _messages[index],
+                                                              olderOlderMessage: null,
+                                                              olderMessage: null,
+                                                              newerMessage: null,
+                                                              showHandle: true,
+                                                              isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages[index].guid,
+                                                              showHero: false,
+                                                              showReplies: false,
+                                                              bloc: widget.messageBloc!,
+                                                            ));
+                                                      },
+                                                      childCount: _messages.length,
+                                                    ),
+                                                  ),
+                                                ]
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                )
+                            );
+                          },
+                          fullscreenDialog: true,
+                          opaque: false,
+                        ),
+                      );
+                    },
+                    child: Container(
+                      width: CustomNavigator.width(context) - 10,
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          mainAxisAlignment: msg.isFromMe ?? false ? MainAxisAlignment.end : MainAxisAlignment.start,
+                          children: [
+                            if ((CurrentChat.of(context)?.chat.isGroup() ?? false) && !msg.isFromMe!)
+                              Padding(
+                                padding: EdgeInsets.only(top: 5),
+                                child: ContactAvatarWidget(
+                                  handle: msg.handle,
+                                  size: 25,
+                                  fontSize: 10,
+                                  borderThickness: 0.1,
+                                ),
+                              ),
+                            Stack(
+                              alignment: AlignmentDirectional.bottomStart,
+                              children: [
+                                if (skin.value == Skins.iOS)
+                                  MessageTail(
+                                    isFromMe: false,
+                                    color: getBubbleColors(msg)[0],
+                                    isReply: true,
+                                  ),
+                                Container(
+                                  margin: EdgeInsets.only(
+                                    left: 6,
+                                    right: 10,
+                                  ),
+                                  constraints: BoxConstraints(
+                                    maxWidth: CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE - 30,
+                                  ),
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: 8,
+                                    horizontal: 14,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: getBubbleColors(msg)[0]),
+                                    borderRadius: skin.value == Skins.iOS
+                                        ? BorderRadius.only(
+                                      bottomLeft: Radius.circular(17),
+                                      bottomRight: Radius.circular(20),
+                                      topLeft: Radius.circular(20),
+                                      topRight: Radius.circular(20),
+                                    )
+                                        : (skin.value == Skins.Material)
+                                        ? BorderRadius.only(
+                                      topLeft: Radius.circular(20),
+                                      topRight: Radius.circular(20),
+                                      bottomRight: Radius.circular(20),
+                                      bottomLeft: Radius.circular(20),
+                                    )
+                                        : (skin.value == Skins.Samsung)
+                                        ? BorderRadius.only(
+                                      topLeft: Radius.circular(17.5),
+                                      topRight: Radius.circular(17.5),
+                                      bottomRight: Radius.circular(17.5),
+                                      bottomLeft: Radius.circular(17.5),
+                                    )
+                                        : null,
+                                  ),
+                                  child: FutureBuilder<List<InlineSpan>>(
+                                      future: MessageWidgetMixin.buildMessageSpansAsync(context, msg, colorOverride: getBubbleColors(msg)[0].lightenOrDarken(30)),
+                                      builder: (context, snapshot) {
+                                        if (snapshot.data != null) {
+                                          return RichText(
+                                            text: TextSpan(
+                                              children: snapshot.data!,
+                                            ),
+                                          );
+                                        }
+                                        return RichText(
+                                          text: TextSpan(
+                                            children: MessageWidgetMixin.buildMessageSpans(context, msg,
+                                                colorOverride: getBubbleColors(msg)[0].lightenOrDarken(30)),
+                                          ),
+                                        );
+                                      }
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.start,
                   crossAxisAlignment: skin.value == Skins.Samsung ? CrossAxisAlignment.start : CrossAxisAlignment.end,
                   children: msgRow,
                 ),
+                Obx(() {
+                  final list = widget.messageBloc?.threadOriginators.values.where((e) => e == widget.message.guid) ?? [];
+                  if (list.isNotEmpty) {
+                    return GestureDetector(
+                      onTap: () {
+                        List<Message> _messages = [];
+                        if (widget.message.threadOriginatorGuid != null) {
+                          _messages = widget.messageBloc?.messages.values.where((e) => e.threadOriginatorGuid == widget.message.threadOriginatorGuid || e.guid == widget.message.threadOriginatorGuid).toList() ?? [];
+                        } else {
+                          _messages = widget.messageBloc?.messages.values.where((e) => e.threadOriginatorGuid == widget.message.guid || e.guid == widget.message.guid).toList() ?? [];
+                        }
+                        _messages.sort((a, b) => a.id == null || b.id == null ? -1 : a.id!.compareTo(b.id!));
+                        _messages.sort((a, b) => a.dateCreated!.compareTo(b.dateCreated!));
+                        Navigator.push(
+                          context,
+                          PageRouteBuilder(
+                            settings: RouteSettings(arguments: {"hideTail": true}),
+                            transitionDuration: Duration(milliseconds: 150),
+                            pageBuilder: (context, animation, secondaryAnimation) {
+                              return FadeTransition(
+                                  opacity: animation,
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      Get.back();
+                                    },
+                                    child: AbsorbPointer(
+                                      absorbing: true,
+                                      child: AnnotatedRegion<SystemUiOverlayStyle>(
+                                        value: SystemUiOverlayStyle(
+                                          systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+                                          systemNavigationBarIconBrightness:
+                                          Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+                                          statusBarColor: Colors.transparent, // status bar color
+                                        ),
+                                        child: Scaffold(
+                                          backgroundColor: context.theme.backgroundColor,
+                                          body: SafeArea(
+                                            child: Padding(
+                                              padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                              child: CustomScrollView(
+                                                  slivers: [
+                                                    SliverList(
+                                                      delegate: SliverChildBuilderDelegate(
+                                                            (context, index) {
+                                                          Message? olderMessage;
+                                                          Message? newerMessage;
+                                                          if (index + 1 >= 0 && index + 1 < _messages.length) {
+                                                            olderMessage = _messages[index + 1];
+                                                          }
+                                                          if (index - 1 >= 0 && index - 1 < _messages.length) {
+                                                            newerMessage = _messages[index - 1];
+                                                          }
+
+                                                          return Padding(
+                                                              padding: EdgeInsets.only(left: 5.0, right: 5.0),
+                                                              child: MessageWidget(
+                                                                key: Key(_messages[index].guid!),
+                                                                message: _messages[index],
+                                                                olderOlderMessage: null,
+                                                                olderMessage: null,
+                                                                newerMessage: null,
+                                                                showHandle: true,
+                                                                isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages[index].guid,
+                                                                showHero: false,
+                                                                showReplies: false,
+                                                                bloc: widget.messageBloc!,
+                                                              ));
+                                                        },
+                                                        childCount: _messages.length,
+                                                      ),
+                                                    ),
+                                                  ]
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                              );
+                            },
+                            fullscreenDialog: true,
+                            opaque: false,
+                          ),
+                        );
+                      },
+                      child: Padding(
+                        padding: EdgeInsets.only(left: addedAvatar ? 50 : 18, right: 8.0, top: 2, bottom: 4),
+                        child: Text(
+                          "${list.length} repl${list.length > 1 ? "ies" : "y"}",
+                          style: Theme.of(context).textTheme.subtitle2!.copyWith(fontWeight: FontWeight.bold, color: Colors.blue),
+                        ),
+                      ),
+                    );
+                  } else {
+                    return Container();
+                  }
+                }),
                 // Add the timestamp for the samsung theme
                 if (skin.value == Skins.Samsung &&
                     widget.message.dateCreated != null &&
@@ -497,5 +856,87 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
         ],
       ),
     );
+  }
+}
+
+class LinePainter extends CustomPainter {
+  final BuildContext context;
+  final bool messageBelowHasSameReply;
+  final Size bubbleSize;
+  final bool extendPastTimestamp;
+  final bool addedSender;
+
+  LinePainter(this.context, this.messageBelowHasSameReply, this.bubbleSize, this.extendPastTimestamp, this.addedSender);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    var paint = Paint();
+    paint.color = context.theme.dividerColor;
+    paint.style = PaintingStyle.stroke;
+    paint.strokeWidth = 3;
+
+    var path = Path();
+
+    path.moveTo(size.width / 2, -(extendPastTimestamp ? 40 : 0) - (addedSender ? 25 : 0));
+    path.lineTo(size.width / 2, messageBelowHasSameReply ? size.height + bubbleSize.height / 2 + 22 : size.height / 2);
+    path.addArc(Rect.fromCenter(
+      center: Offset(size.width / 2 - size.height / 2, size.height / 2),
+      height: size.height,
+      width: size.height,
+    ), 0, pi / 2);
+    path.moveTo(size.width / 2 - size.height / 2, size.height);
+    path.lineTo(0, size.height);
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) {
+    return true;
+  }
+}
+
+class LinePainterNotFromMe extends CustomPainter {
+  final BuildContext context;
+  final bool messageBelowHasSameReply;
+  final Size replySize;
+  final Size bubbleSize;
+  final bool extendPastTimestamp;
+  final bool addedSender;
+
+  LinePainterNotFromMe(this.context, this.messageBelowHasSameReply, this.replySize, this.bubbleSize, this.extendPastTimestamp, this.addedSender);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    var paint = Paint();
+    paint.color = context.theme.dividerColor;
+    paint.style = PaintingStyle.stroke;
+    paint.strokeWidth = 3;
+
+    var path = Path();
+
+    path.moveTo(0, -replySize.height / 2 - 10 - (extendPastTimestamp ? 40 : 0) - (addedSender ? 25 : 0));
+    path.lineTo(size.width - size.height / 2, -replySize.height / 2 - 10 - (extendPastTimestamp ? 40 : 0) - (addedSender ? 25 : 0));
+    path.addArc(Rect.fromCenter(
+      center: Offset(size.width - size.height / 2, -replySize.height / 2 - 10 - (extendPastTimestamp ? 40 : 0) - (addedSender ? 25 : 0) + size.height / 2),
+      height: size.height,
+      width: size.height,
+    ), 3 * pi / 2, pi / 2);
+    path.moveTo(size.width, -replySize.height / 2 - 10 - (extendPastTimestamp ? 40 : 0) - (addedSender ? 25 : 0) + size.height / 2);
+    path.lineTo(size.width, messageBelowHasSameReply ? size.height + bubbleSize.height / 2 + 25 : size.height / 2);
+    path.addArc(Rect.fromCenter(
+      center: Offset(size.width - size.height / 2, size.height / 2),
+      height: size.height,
+      width: size.height,
+    ), 0, pi / 2);
+    path.moveTo(size.width - size.height / 2, size.height);
+    path.lineTo(0, size.height);
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) {
+    return true;
   }
 }

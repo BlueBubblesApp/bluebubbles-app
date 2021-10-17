@@ -447,8 +447,12 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                 ? SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
+                        Message? olderOlderMessage;
                         Message? olderMessage;
                         Message? newerMessage;
+                        if (index + 2 >= 0 && index + 2 < _messages.length) {
+                          olderOlderMessage = _messages[index + 2];
+                        }
                         if (index + 1 >= 0 && index + 1 < _messages.length) {
                           olderMessage = _messages[index + 1];
                         }
@@ -461,11 +465,13 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                             child: MessageWidget(
                               key: Key(_messages[index].guid!),
                               message: _messages[index],
+                              olderOlderMessage: olderOlderMessage,
                               olderMessage: olderMessage,
                               newerMessage: newerMessage,
                               showHandle: widget.showHandle,
                               isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages[index].guid,
                               showHero: false,
+                              showReplies: true,
                               onUpdate: (event) => onUpdateMessage(event),
                               bloc: widget.messageBloc!,
                             ));
@@ -492,8 +498,12 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                             return Container();
                           }
 
+                          Message? olderOlderMessage;
                           Message? olderMessage;
                           Message? newerMessage;
+                          if (index + 2 >= 0 && index + 2 < _messages.length) {
+                            olderOlderMessage = _messages[index + 2];
+                          }
                           if (index + 1 >= 0 && index + 1 < _messages.length) {
                             olderMessage = _messages[index + 1];
                           }
@@ -509,11 +519,13 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                               child: MessageWidget(
                                 key: Key(_messages[index].guid!),
                                 message: _messages[index],
+                                olderOlderMessage: olderOlderMessage,
                                 olderMessage: olderMessage,
                                 newerMessage: newerMessage,
                                 showHandle: widget.showHandle,
                                 isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages[index].guid,
                                 showHero: fullAnimation,
+                                showReplies: true,
                                 onUpdate: (event) => onUpdateMessage(event),
                                 bloc: widget.messageBloc!,
                               ));

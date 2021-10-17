@@ -60,7 +60,7 @@ abstract class MessageWidgetMixin {
     );
   }
 
-  static List<InlineSpan> buildMessageSpans(BuildContext context, Message? message, {List<Color>? colors: const []}) {
+  static List<InlineSpan> buildMessageSpans(BuildContext context, Message? message, {List<Color>? colors: const [], Color? colorOverride}) {
     List<InlineSpan> textSpans = <InlineSpan>[];
 
     final bool generateContent =
@@ -103,7 +103,7 @@ abstract class MessageWidgetMixin {
       } else {
         textStyle = textStyle!.apply(color: hideContent ? Colors.transparent : Theme.of(context).primaryColor.computeLuminance() > 0.8 ? Colors.black : Colors.white);
       }
-
+      if (colorOverride != null && !hideContent) textStyle = textStyle!.apply(color: colorOverride);
       if (!isNullOrEmpty(message.subject)!) {
         TextStyle _textStyle = message.isFromMe!
             ? textStyle!.apply(color: Colors.white, fontWeightDelta: 2)
@@ -111,6 +111,7 @@ abstract class MessageWidgetMixin {
         if (hideContent) {
           _textStyle = _textStyle.apply(color: Colors.transparent);
         }
+        if (colorOverride != null && !hideContent) _textStyle = _textStyle.apply(color: colorOverride);
         textSpans.add(
           TextSpan(
             text: "${message.subject}\n",
@@ -181,7 +182,7 @@ abstract class MessageWidgetMixin {
     return textSpans;
   }
 
-  static Future<List<InlineSpan>> buildMessageSpansAsync(BuildContext context, Message? message, {List<Color>? colors: const []}) async {
+  static Future<List<InlineSpan>> buildMessageSpansAsync(BuildContext context, Message? message, {List<Color>? colors: const [], Color? colorOverride}) async {
     List<InlineSpan> textSpans = <InlineSpan>[];
 
     final bool generateContent =
@@ -242,7 +243,7 @@ abstract class MessageWidgetMixin {
       } else {
         textStyle = textStyle!.apply(color: hideContent ? Colors.transparent : Theme.of(context).primaryColor.computeLuminance() > 0.8 ? Colors.black : Colors.white);
       }
-
+      if (colorOverride != null && !hideContent) textStyle = textStyle!.apply(color: colorOverride);
       if (!isNullOrEmpty(message.subject)!) {
         TextStyle _textStyle = message.isFromMe!
             ? textStyle!.apply(color: Colors.white, fontWeightDelta: 2)
@@ -250,6 +251,7 @@ abstract class MessageWidgetMixin {
         if (hideContent) {
           _textStyle = _textStyle.apply(color: Colors.transparent);
         }
+        if (colorOverride != null && !hideContent) _textStyle = _textStyle.apply(color: colorOverride);
         textSpans.add(
           TextSpan(
             text: "${message.subject}\n",
