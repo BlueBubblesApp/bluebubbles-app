@@ -1,3 +1,4 @@
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
@@ -309,13 +310,105 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     chat = newChat;
                     if (this.mounted) setState(() {});
                   },
-                  canBeRemoved: chat.participants.length > 1,
+                  canBeRemoved: chat.participants.length > 1 && SettingsManager().settings.enablePrivateAPI.value,
                 );
               }, childCount: participants.length + 1),
             ),
             SliverPadding(
-              padding: EdgeInsets.symmetric(vertical: 20),
+              padding: EdgeInsets.symmetric(vertical: 10),
             ),
+            if (SettingsManager().settings.enablePrivateAPI.value)
+              SliverToBoxAdapter(
+                child: Padding(
+                    padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 8.0),
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        primary: Theme.of(context).accentColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                      ),
+                      onPressed: () async {
+                        final TextEditingController participantController = TextEditingController();
+                        showDialog(
+                          context: context,
+                          builder: (_) {
+                            return AlertDialog(
+                              actions: [
+                                TextButton(
+                                  child: Text("OK"),
+                                  onPressed: () async {
+                                    if (participantController.text.isEmpty || (!participantController.text.isEmail && !participantController.text.isPhoneNumber)) {
+                                      showSnackbar("Error", "Enter a valid address!");
+                                      return;
+                                    }
+                                    showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return AlertDialog(
+                                            backgroundColor: Theme.of(context).accentColor,
+                                            title: Text(
+                                              "Adding ${participantController.text}...",
+                                              style: Theme.of(context).textTheme.bodyText1,
+                                            ),
+                                            content:
+                                            Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
+                                              Container(
+                                                // height: 70,
+                                                // color: Colors.black,
+                                                child: CircularProgressIndicator(
+                                                  valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                                                ),
+                                              ),
+                                            ]),
+                                          );
+                                        });
+                                    final response = await api.chatParticipant("add", chat.guid!, participantController.text);
+                                    if (response.statusCode == 200) {
+                                      Get.back();
+                                      Get.back();
+                                      showSnackbar("Notice", "Added ${participantController.text} successfully!");
+                                    } else {
+                                      Get.back();
+                                      showSnackbar("Error", "Failed to add ${participantController.text}!");
+                                    }
+                                  },
+                                ),
+                                TextButton(
+                                  child: Text("Cancel"),
+                                  onPressed: () => Get.back(),
+                                )
+                              ],
+                              content: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  TextField(
+                                    controller: participantController,
+                                    decoration: InputDecoration(
+                                      labelText: "Phone Number / Email",
+                                      border: OutlineInputBorder(),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              title: Text("Add Participant"),
+                            );
+                          }
+                        );
+                      },
+                      child: Text(
+                        "ADD PARTICIPANT",
+                        style: TextStyle(
+                          color: Theme.of(context).textTheme.bodyText1!.color,
+                          fontSize: 13,
+                        ),
+                      ),
+                    )),
+              ),
+            if (SettingsManager().settings.enablePrivateAPI.value)
+              SliverPadding(
+                padding: EdgeInsets.symmetric(vertical: 10),
+              ),
             if (!kIsWeb)
               SliverToBoxAdapter(
                 child: InkWell(

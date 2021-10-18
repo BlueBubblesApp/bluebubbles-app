@@ -302,33 +302,32 @@ class _ContactTileState extends State<ContactTile> {
                   showDialog(
                       context: context,
                       builder: (BuildContext context) {
-                        return BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                          child: SizedBox(
-                            height: 40,
-                            width: 40,
-                            child: CircularProgressIndicator(),
+                        return AlertDialog(
+                          backgroundColor: Theme.of(context).accentColor,
+                          title: Text(
+                            "Removing ${widget.handle.address}...",
+                            style: Theme.of(context).textTheme.bodyText1,
                           ),
+                          content:
+                          Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
+                            Container(
+                              // height: 70,
+                              // color: Colors.black,
+                              child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                              ),
+                            ),
+                          ]),
                         );
                       });
-
-                  Map<String, dynamic> params = new Map();
-                  params["identifier"] = widget.chat.guid;
-                  params["address"] = widget.handle.address;
-                  SocketManager().sendMessage("remove-participant", params, (response) async {
-                    Logger.info("Removed participant participant " + response.toString());
-
-                    if (response["status"] == 200) {
-                      Chat updatedChat = Chat.fromMap(response["data"]);
-                      await updatedChat.save();
-                      await ChatBloc().updateChatPosition(updatedChat);
-                      Chat chatWithParticipants = await updatedChat.getParticipants();
-
-                      Logger.info("Updating chat with ${chatWithParticipants.participants.length} participants");
-                      widget.updateChat(chatWithParticipants);
-                      Navigator.of(context).pop();
-                    }
-                  });
+                  final response = await api.chatParticipant("remove", widget.chat.guid!, widget.handle.address);
+                  if (response.statusCode == 200) {
+                    Get.back();
+                    showSnackbar("Notice", "Removed ${widget.handle.address} successfully!");
+                  } else {
+                    Get.back();
+                    showSnackbar("Error", "Failed to remove ${widget.handle.address}!");
+                  }
                 },
               ),
             ],
