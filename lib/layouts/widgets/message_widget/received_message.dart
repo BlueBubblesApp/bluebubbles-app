@@ -737,7 +737,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                       children: msgRow,
                     ),
                     Obx(() {
-                      final list = widget.messageBloc?.threadOriginators.values.where((e) => e == widget.message.guid) ?? [];
+                      final list = widget.messageBloc?.threadOriginators.values.where((e) => e == widget.message.guid) ?? [].obs.reversed;
                       if (list.isNotEmpty) {
                         return GestureDetector(
                           onTap: () {

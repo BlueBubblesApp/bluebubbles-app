@@ -1,4 +1,5 @@
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
@@ -100,6 +101,77 @@ class _ConversationDetailsState extends State<ConversationDetails> {
     });
   }
 
+  void showChangeName(String method) {
+    showDialog(
+        context: context,
+        builder: (_) {
+          return AlertDialog(
+            actions: [
+              TextButton(
+                child: Text("OK"),
+                onPressed: () async {
+                  if (method == "private-api") {
+                    showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            backgroundColor: Theme.of(context).accentColor,
+                            title: Text(
+                              controller.text.isEmpty ? "Removing name..." : "Changing name to ${controller.text}...",
+                              style: Theme.of(context).textTheme.bodyText1,
+                            ),
+                            content:
+                            Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
+                              Container(
+                                // height: 70,
+                                // color: Colors.black,
+                                child: CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                                ),
+                              ),
+                            ]),
+                          );
+                        });
+                    final response = await api.updateChat(chat.guid!, controller.text);
+                    if (response.statusCode == 200) {
+                      Get.back();
+                      Get.back();
+                      showSnackbar("Notice", "Updated name successfully!");
+                    } else {
+                      Get.back();
+                      showSnackbar("Error", "Failed to update name!");
+                    }
+                  } else {
+                    Get.back();
+                    await widget.chat.changeName(controller.text);
+                    await widget.chat.getTitle();
+                    ChatBloc().updateChat(chat);
+                  }
+                },
+              ),
+              TextButton(
+                child: Text("Cancel"),
+                onPressed: () => Get.back(),
+              )
+            ],
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: controller,
+                  decoration: InputDecoration(
+                    labelText: "Chat Name",
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+            title: Text("Change Name"),
+          );
+        }
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool redactedMode = SettingsManager().settings.redactedMode.value;
@@ -151,129 +223,108 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                   height: 100,
                 ),
               ),
-            SliverToBoxAdapter(
-              child: readOnly
-                  ? Container()
-                  : showGroupNameInfo
-                      ? Row(
-                          children: [
-                            Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.only(left: 16.0, right: 8.0, bottom: 8.0),
-                                child: TextField(
-                                  cursorColor: Theme.of(context).primaryColor,
-                                  readOnly: !chat.isGroup() || redactedMode,
-                                  onSubmitted: (String newName) async {
-                                    await widget.chat.changeName(newName);
-                                    await widget.chat.getTitle();
-                                    setState(() {
-                                      showNameField = newName.isNotEmpty;
-                                    });
-                                    ChatBloc().updateChat(chat);
-                                  },
-                                  controller: controller,
-                                  style: Theme.of(context).textTheme.bodyText1,
-                                  autofocus: false,
-                                  autocorrect: false,
-                                  decoration: InputDecoration(
-                                      labelText: chat.displayName!.isEmpty ? "SET NAME" : "NAME",
-                                      labelStyle: TextStyle(color: Theme.of(context).primaryColor),
-                                      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey))),
-                                ),
-                              ),
+            if (chat.isGroup())
+              SliverToBoxAdapter(
+                child: Center(
+                  child: ContactAvatarGroupWidget(
+                    chat: chat,
+                    size: 100,
+                    onTap: () {},
+                  ),
+                ),
+              ),
+            if (chat.isGroup() && (chat.displayName?.isNotEmpty ?? false) && !hideInfo)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Center(
+                    child: Text(
+                      controller.text,
+                      style: Theme.of(context).textTheme.bodyText1!.copyWith(fontWeight: FontWeight.bold),
+                      textScaleFactor: 1.75,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    )
+                  ),
+                ),
+              ),
+            if (chat.isGroup())
+              SliverToBoxAdapter(
+                child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        TextButton(
+                          child: Text("${(chat.displayName?.isNotEmpty ?? false) ? "Change" : "Add"} Name",
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyText1!
+                                  .apply(color: Theme.of(context).primaryColor), textScaleFactor: 1.15,),
+                            onPressed: () {
+                              if (!SettingsManager().settings.enablePrivateAPI.value) {
+                                showChangeName("local");
+                              } else {
+                                showChangeName("private-api");
+                              }
+                            },
+                            onLongPress: () {
+                              showChangeName("local");
+                            },
+                        ),
+                        Container(
+                          child: IconButton(
+                            icon: Icon(
+                              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.info : Icons.info_outline,
+                              size: 15,
+                              color: Theme.of(context).primaryColor,
                             ),
-                            if (showGroupNameInfo && chat.displayName!.isNotEmpty)
-                              Container(
-                                  padding: EdgeInsets.only(right: 10),
-                                  child: GestureDetector(
-                                      onTap: () {
-                                        showDialog(
-                                          context: context,
-                                          builder: (BuildContext context) {
-                                            return AlertDialog(
-                                                backgroundColor: Theme.of(context).accentColor,
-                                                title: new Text("Group Naming",
-                                                    style:
-                                                        TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
-                                                content: Column(
-                                                  mainAxisAlignment: MainAxisAlignment.center,
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                        "Changing the group name will only change it locally for you. It will not change the group name on any of your other devices, or for other members of the chat.",
-                                                        style: Theme.of(context).textTheme.bodyText1),
-                                                  ],
-                                                ),
-                                                actions: <Widget>[
-                                                  TextButton(
-                                                      child: Text("OK",
-                                                          style: Theme.of(context)
-                                                              .textTheme
-                                                              .subtitle1!
-                                                              .apply(color: Theme.of(context).primaryColor)),
-                                                      onPressed: () {
-                                                        Navigator.of(context).pop();
-                                                      }),
-                                                ]);
-                                          },
-                                        );
-                                      },
-                                      child: Icon(
-                                        SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.info : Icons.info_outline,
-                                        color: Theme.of(context).primaryColor,
-                                      ))),
-                            if (chat.displayName!.isEmpty)
-                              Padding(
-                                padding: const EdgeInsets.only(left: 8.0, right: 16.0, bottom: 8.0),
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    primary: Theme.of(context).accentColor,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(18),
-                                    ),
-                                  ),
-                                  onPressed: () async {
-                                    setState(() {
-                                      showNameField = false;
-                                    });
-                                  },
-                                  child: Text(
-                                    "CANCEL",
-                                    style: TextStyle(
-                                      color: Theme.of(context).textTheme.bodyText1!.color,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                          ],
-                        )
-                      : !hideInfo
-                          ? Padding(
-                              padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 8.0),
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  primary: Theme.of(context).accentColor,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(18),
-                                  ),
-                                ),
-                                onPressed: () async {
-                                  setState(() {
-                                    showNameField = true;
-                                  });
+                            padding: EdgeInsets.zero,
+                            iconSize: 15,
+                            constraints: BoxConstraints(maxWidth: 20, maxHeight: 20),
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                      backgroundColor: Theme.of(context).accentColor,
+                                      title: new Text("Group Naming",
+                                          style:
+                                          TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
+                                      content: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisSize: MainAxisSize.min,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          if (!SettingsManager().settings.enablePrivateAPI.value)
+                                            Text(
+                                                "You have Private API disabled, so changing the name here will only change it locally for you. You will not see these changes on other devices, and the other members of this chat will not see these changes.",
+                                                style: Theme.of(context).textTheme.bodyText1),
+                                          if (SettingsManager().settings.enablePrivateAPI.value)
+                                            Text(
+                                                "You have Private API enabled, so changing the name here will change the name for everyone in this chat. If you only want to change it locally, you can tap and hold the \"Change Name\" button.",
+                                                style: Theme.of(context).textTheme.bodyText1),
+                                        ],
+                                      ),
+                                      actions: <Widget>[
+                                        TextButton(
+                                            child: Text("OK",
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .subtitle1!
+                                                    .apply(color: Theme.of(context).primaryColor)),
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            }),
+                                      ]);
                                 },
-                                child: Text(
-                                  "ADD NAME",
-                                  style: TextStyle(
-                                    color: Theme.of(context).textTheme.bodyText1!.color,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ))
-                          : Container(),
-            ),
+                              );
+                            },
+                          ),
+                        )
+                      ],
+                    ),
+                ),
+              ),
             SliverList(
               delegate: SliverChildBuilderDelegate((context, index) {
                 if (index >= participants.length && shouldShowMore) {
