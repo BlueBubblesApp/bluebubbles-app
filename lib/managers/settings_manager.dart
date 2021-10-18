@@ -165,7 +165,7 @@ class SettingsManager {
     await this.saveSettings(temp);
   }
 
-  FutureOr<int?> getMacOSVersion() async {
+  Future<int?> getMacOSVersion() async {
     if (_macOSVersion == null) {
       var res = await SocketManager().sendMessage("get-server-metadata", {}, (_) {});
       _macOSVersion = int.tryParse(res['data']['os_version'].split(".")[0]);

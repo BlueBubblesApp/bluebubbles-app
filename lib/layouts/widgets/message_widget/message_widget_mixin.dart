@@ -2,6 +2,7 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/message.dart';
@@ -233,7 +234,10 @@ abstract class MessageWidgetMixin {
         linkIndexMatches.add(Tuple2("link", match.end));
       });
       if (!kIsWeb && !kIsDesktop) {
-        final List<EntityAnnotation> entities = await GoogleMlKit.nlp.entityExtractor(EntityExtractorOptions.ENGLISH).extractEntities(message.text!);
+        if (CurrentChat?.of(context)?.mlKitParsedText[message.guid!] == null) {
+          CurrentChat?.of(context)?.mlKitParsedText[message.guid!] = await GoogleMlKit.nlp.entityExtractor(EntityExtractorOptions.ENGLISH).extractEntities(message.text!);
+        }
+        final entities = CurrentChat?.of(context)?.mlKitParsedText[message.guid!] ?? [];
         entities.forEach((element) {
           if (element.entities.first is AddressEntity) {
             linkIndexMatches.add(Tuple2("map", element.start));

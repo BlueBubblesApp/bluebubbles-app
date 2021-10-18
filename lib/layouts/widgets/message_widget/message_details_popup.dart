@@ -77,6 +77,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   late double messageTopOffset;
   late double topMinimum;
   double? height;
+  bool isBigSur = true;
 
   @override
   void initState() {
@@ -93,10 +94,10 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
 
     fetchReactions();
 
-    // Animate showing the copy menu, slightly delayed
-    Future.delayed(Duration(milliseconds: 400), () {
+    SettingsManager().getMacOSVersion().then((val) {
       if (this.mounted)
         setState(() {
+          isBigSur = (val ?? 0) >= 11;
           showTools = true;
         });
     });
@@ -433,7 +434,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             ),
           ),
         ),
-      if (SettingsManager().settings.enablePrivateAPI.value)
+      if (SettingsManager().settings.enablePrivateAPI.value && isBigSur)
         Material(
           color: Colors.transparent,
           child: InkWell(

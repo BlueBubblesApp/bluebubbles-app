@@ -20,6 +20,7 @@ class LinePainter extends CustomPainter {
   final bool extendPastTimestampBelow;
   // if theres a sender text and we need a connecting line, account for its size
   final bool extendPastSender;
+  final double offset;
 
   LinePainter(
       this.context,
@@ -32,6 +33,7 @@ class LinePainter extends CustomPainter {
       this.extendPastTimestampAbove,
       this.extendPastTimestampBelow,
       this.extendPastSender,
+      this.offset,
   );
 
   @override
@@ -50,7 +52,7 @@ class LinePainter extends CustomPainter {
     if (lineType == LineType.meToMe) {
       // the upper portion can have a different width if the message is bigger
       // or smaller
-      final topMaxWidth = min(CustomNavigator.width(context) - upperSize.width - 125, 150).toDouble();
+      final topMaxWidth = min(CustomNavigator.width(context) - upperSize.width - 125, 150).toDouble() - offset;
       // if we are drawing to an originator bubble
       if (upperIsOriginator) {
         // draw the top line of the C
@@ -77,7 +79,7 @@ class LinePainter extends CustomPainter {
         // if we are just drawing a connecting line, it will look like an L
       } else if (connectUpper) {
         // draw the vertical part of the L
-        path.moveTo(0, -upperSize.height / 2 - 12 - (extendPastTimestampAbove ? 40 : 0));
+        path.moveTo(0, -upperSize.height * 2 / 3 - 12 - (extendPastTimestampAbove ? 40 : 0));
         path.lineTo(0, size.height / 2);
         // add a rounded corner
         path.addArc(Rect.fromCenter(
@@ -98,7 +100,7 @@ class LinePainter extends CustomPainter {
       // draws a flipped C shape, same general method as the above but with
       // slightly different coordinates
     } else if (lineType == LineType.otherToOther) {
-      final topMaxWidth = min(CustomNavigator.width(context) - upperSize.width - 125, 150).toDouble();
+      final topMaxWidth = min(CustomNavigator.width(context) - upperSize.width - 125, 150).toDouble() - offset;
       if (upperIsOriginator) {
         path.moveTo(size.width - topMaxWidth, -upperSize.height / 2 - 8 - (extendPastSender ? 20 : 0));
         path.lineTo(size.width - size.height / 2, -upperSize.height / 2 - 8 - (extendPastSender ? 20 : 0));

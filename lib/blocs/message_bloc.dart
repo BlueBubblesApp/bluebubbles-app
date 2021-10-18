@@ -178,6 +178,10 @@ class MessageBloc {
     }
   }
 
+  void addMessage(Message m) {
+    _allMessages[m.guid!] = m;
+  }
+
   LinkedHashMap<M, N> linkedHashMapInsert<M, N>(map, int index, M key, N value) {
     List<M> keys = map.keys.toList();
     List<N> values = map.values.toList();

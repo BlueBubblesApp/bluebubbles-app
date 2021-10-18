@@ -438,16 +438,21 @@ class Message {
     if (kIsWeb) {
       associatedMessages = bloc?.reactionMessages.values.where((element) => element.associatedMessageGuid == guid).toList() ?? [];
       if (threadOriginatorGuid != null) {
-        final threadOriginator = bloc?.messages.values.firstWhereOrNull((e) => e.guid == threadOriginatorGuid);
+        final existing = bloc?.messages.values.firstWhereOrNull((e) => e.guid == threadOriginatorGuid);
+        final threadOriginator = existing ?? await Message.findOne({"guid": this.threadOriginatorGuid});
+        threadOriginator?.handle ??= await Handle.findOne({"ROWID": threadOriginator.handleId});
         if (threadOriginator != null) associatedMessages.add(threadOriginator);
+        if (existing == null && threadOriginator != null) bloc?.addMessage(threadOriginator);
         if (!guid!.startsWith("temp")) bloc?.threadOriginators[guid!] = threadOriginatorGuid!;
       }
     } else {
       associatedMessages = await Message.find({"associatedMessageGuid": this.guid});
       if (threadOriginatorGuid != null) {
-        final threadOriginator = bloc?.messages.values.firstWhereOrNull((e) => e.guid == threadOriginatorGuid) ?? await Message.findOne({"guid": this.threadOriginatorGuid});
+        final existing = bloc?.messages.values.firstWhereOrNull((e) => e.guid == threadOriginatorGuid);
+        final threadOriginator = existing ?? await Message.findOne({"guid": this.threadOriginatorGuid});
         threadOriginator?.handle ??= await Handle.findOne({"ROWID": threadOriginator.handleId});
         if (threadOriginator != null) associatedMessages.add(threadOriginator);
+        if (existing == null && threadOriginator != null) bloc?.addMessage(threadOriginator);
         if (!guid!.startsWith("temp")) bloc?.threadOriginators[guid!] = threadOriginatorGuid!;
       }
     }
