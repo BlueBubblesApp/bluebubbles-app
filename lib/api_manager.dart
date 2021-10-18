@@ -536,6 +536,7 @@ class ApiInterceptor extends Interceptor {
     Logger.error("PATH: ${err.requestOptions.path}", tag: "ERROR[${err.response?.statusCode}]");
     print(err.error);
     print(err.requestOptions.contentType);
+    print(err.response?.data);
     return super.onError(err, handler);
   }
 }

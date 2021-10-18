@@ -1,4 +1,5 @@
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
@@ -68,6 +69,31 @@ abstract class MessageWidgetMixin {
     final bool hideContent = (message?.guid?.contains("theme-selector") ?? false) ||
         (SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value && !generateContent);
 
+    TextStyle? textStyle = Theme.of(context).textTheme.bodyText2;
+    if (!message!.isFromMe!) {
+      if (SettingsManager().settings.colorfulBubbles.value) {
+        if (!isNullOrEmpty(colors)!) {
+          bool dark = colors![0].computeLuminance() < 0.179;
+          if (!dark) {
+            textStyle = Theme.of(context)
+                .textTheme
+                .bodyText2!
+                .apply(color: hideContent ? Colors.transparent : colors[0].darkenAmount(0.35));
+          } else {
+            textStyle = Theme.of(context).textTheme.bodyText2;
+            if (hideContent) textStyle = textStyle!.apply(color: Colors.transparent);
+          }
+        } else {
+          textStyle = Theme.of(context).textTheme.bodyText2!.apply(
+              color: hideContent
+                  ? Colors.transparent
+                  : toColorGradient(message.handle?.address ?? "")[0].darkenAmount(0.35));
+        }
+      } else if (hideContent) textStyle = textStyle!.apply(color: Colors.transparent);
+    } else {
+      textStyle = textStyle!.apply(color: hideContent ? Colors.transparent : Theme.of(context).primaryColor.computeLuminance() > 0.8 ? Colors.black : Colors.white);
+    }
+    if (colorOverride != null && !hideContent) textStyle = textStyle!.apply(color: colorOverride);
     if (message != null && (!isEmptyString(message.text) || !isEmptyString(message.subject))) {
       RegExp exp = new RegExp(
           r'((https?://)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9/()@:%_.~#?&=*\[\]]*)\b');
@@ -78,32 +104,6 @@ abstract class MessageWidgetMixin {
         linkIndexMatches.add(match.start);
         linkIndexMatches.add(match.end);
       });
-
-      TextStyle? textStyle = Theme.of(context).textTheme.bodyText2;
-      if (!message.isFromMe!) {
-        if (SettingsManager().settings.colorfulBubbles.value) {
-          if (!isNullOrEmpty(colors)!) {
-            bool dark = colors![0].computeLuminance() < 0.179;
-            if (!dark) {
-              textStyle = Theme.of(context)
-                  .textTheme
-                  .bodyText2!
-                  .apply(color: hideContent ? Colors.transparent : colors[0].darkenAmount(0.35));
-            } else {
-              textStyle = Theme.of(context).textTheme.bodyText2;
-              if (hideContent) textStyle = textStyle!.apply(color: Colors.transparent);
-            }
-          } else {
-            textStyle = Theme.of(context).textTheme.bodyText2!.apply(
-                color: hideContent
-                    ? Colors.transparent
-                    : toColorGradient(message.handle?.address ?? "")[0].darkenAmount(0.35));
-          }
-        } else if (hideContent) textStyle = textStyle!.apply(color: Colors.transparent);
-      } else {
-        textStyle = textStyle!.apply(color: hideContent ? Colors.transparent : Theme.of(context).primaryColor.computeLuminance() > 0.8 ? Colors.black : Colors.white);
-      }
-      if (colorOverride != null && !hideContent) textStyle = textStyle!.apply(color: colorOverride);
       if (!isNullOrEmpty(message.subject)!) {
         TextStyle _textStyle = message.isFromMe!
             ? textStyle!.apply(color: Colors.white, fontWeightDelta: 2)
@@ -177,6 +177,13 @@ abstract class MessageWidgetMixin {
         String generatedText = faker.lorem.words(message.text!.split(" ").length).join(" ");
         return [TextSpan(text: generatedText, style: textStyle)];
       }
+    } else {
+      textSpans.add(
+        TextSpan(
+          text: MessageHelper.getNotificationTextSync(message),
+          style: textStyle,
+        ),
+      );
     }
 
     return textSpans;
@@ -190,6 +197,31 @@ abstract class MessageWidgetMixin {
     final bool hideContent = (message?.guid?.contains("theme-selector") ?? false) ||
         (SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value && !generateContent);
 
+    TextStyle? textStyle = Theme.of(context).textTheme.bodyText2;
+    if (!message!.isFromMe!) {
+      if (SettingsManager().settings.colorfulBubbles.value) {
+        if (!isNullOrEmpty(colors)!) {
+          bool dark = colors![0].computeLuminance() < 0.179;
+          if (!dark) {
+            textStyle = Theme.of(context)
+                .textTheme
+                .bodyText2!
+                .apply(color: hideContent ? Colors.transparent : colors[0].darkenAmount(0.35));
+          } else {
+            textStyle = Theme.of(context).textTheme.bodyText2;
+            if (hideContent) textStyle = textStyle!.apply(color: Colors.transparent);
+          }
+        } else {
+          textStyle = Theme.of(context).textTheme.bodyText2!.apply(
+              color: hideContent
+                  ? Colors.transparent
+                  : toColorGradient(message.handle?.address ?? "")[0].darkenAmount(0.35));
+        }
+      } else if (hideContent) textStyle = textStyle!.apply(color: Colors.transparent);
+    } else {
+      textStyle = textStyle!.apply(color: hideContent ? Colors.transparent : Theme.of(context).primaryColor.computeLuminance() > 0.8 ? Colors.black : Colors.white);
+    }
+    if (colorOverride != null && !hideContent) textStyle = textStyle!.apply(color: colorOverride);
     if (message != null && (!isEmptyString(message.text) || !isEmptyString(message.subject))) {
       RegExp exp = new RegExp(
           r'((https?://)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9/()@:%_.~#?&=*\[\]]*)\b');
@@ -218,32 +250,6 @@ abstract class MessageWidgetMixin {
           }
         });
       }
-
-      TextStyle? textStyle = Theme.of(context).textTheme.bodyText2;
-      if (!message.isFromMe!) {
-        if (SettingsManager().settings.colorfulBubbles.value) {
-          if (!isNullOrEmpty(colors)!) {
-            bool dark = colors![0].computeLuminance() < 0.179;
-            if (!dark) {
-              textStyle = Theme.of(context)
-                  .textTheme
-                  .bodyText2!
-                  .apply(color: hideContent ? Colors.transparent : colors[0].darkenAmount(0.35));
-            } else {
-              textStyle = Theme.of(context).textTheme.bodyText2;
-              if (hideContent) textStyle = textStyle!.apply(color: Colors.transparent);
-            }
-          } else {
-            textStyle = Theme.of(context).textTheme.bodyText2!.apply(
-                color: hideContent
-                    ? Colors.transparent
-                    : toColorGradient(message.handle?.address ?? "")[0].darkenAmount(0.35));
-          }
-        } else if (hideContent) textStyle = textStyle!.apply(color: Colors.transparent);
-      } else {
-        textStyle = textStyle!.apply(color: hideContent ? Colors.transparent : Theme.of(context).primaryColor.computeLuminance() > 0.8 ? Colors.black : Colors.white);
-      }
-      if (colorOverride != null && !hideContent) textStyle = textStyle!.apply(color: colorOverride);
       if (!isNullOrEmpty(message.subject)!) {
         TextStyle _textStyle = message.isFromMe!
             ? textStyle!.apply(color: Colors.white, fontWeightDelta: 2)
@@ -326,6 +332,13 @@ abstract class MessageWidgetMixin {
         String generatedText = faker.lorem.words(message.text!.split(" ").length).join(" ");
         return [TextSpan(text: generatedText, style: textStyle)];
       }
+    } else {
+      textSpans.add(
+        TextSpan(
+          text: MessageHelper.getNotificationTextSync(message),
+          style: textStyle,
+        ),
+      );
     }
 
     return textSpans;

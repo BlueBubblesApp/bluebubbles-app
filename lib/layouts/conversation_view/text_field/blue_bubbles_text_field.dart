@@ -204,7 +204,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         focusNode!.requestFocus();
         if (event['data'] != null) {
           replyToMessage = event['data'];
-          setState(() {});
+          if (mounted) setState(() {});
         }
       } else if (event["type"] == "text-field-update-attachments") {
         addSharedAttachments();
@@ -217,7 +217,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         }
       } else if (event["type"] == "focus-keyboard" && event["data"] != null) {
         replyToMessage = event['data'];
-        setState(() {});
+        if (mounted) setState(() {});
       }
     });
 
@@ -1400,7 +1400,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       return;
     }
 
-    if (await widget.onSend(pickedImages, controller!.text, subjectController!.text, replyToMessage?.guid)) {
+    if (await widget.onSend(pickedImages,
+        controller!.text,
+        subjectController!.text,
+        replyToMessage?.threadOriginatorGuid ?? replyToMessage?.guid)) {
       controller!.text = "";
       subjectController!.text = "";
       replyToMessage = null;

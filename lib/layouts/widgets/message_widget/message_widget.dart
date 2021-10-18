@@ -296,6 +296,10 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
       newerMessage: _message,
       message: _olderMessage ?? _message,
     );
+    final separator2 = MessageTimeStampSeparator(
+      newerMessage: _newerMessage,
+      message: _message,
+    );
 
     // Add the correct type of message to the message stack
     Widget message;
@@ -307,6 +311,7 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
         message: _message,
         messageBloc: widget.bloc,
         hasTimestampAbove: separator.buildTimeStamp().isNotEmpty,
+        hasTimestampBelow: separator2.buildTimeStamp().isNotEmpty,
         showReplies: widget.showReplies,
         urlPreviewWidget: urlPreviewWidget,
         stickersWidget: stickersWidget,
@@ -325,6 +330,7 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
         message: _message,
         messageBloc: widget.bloc,
         hasTimestampAbove: separator.buildTimeStamp().isNotEmpty,
+        hasTimestampBelow: separator2.buildTimeStamp().isNotEmpty,
         showReplies: widget.showReplies,
         showHandle: widget.showHandle,
         urlPreviewWidget: urlPreviewWidget,
@@ -337,10 +343,7 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
     return Column(
       children: [
         message,
-        MessageTimeStampSeparator(
-          newerMessage: _newerMessage,
-          message: _message,
-        )
+        separator2,
       ],
     );
   }

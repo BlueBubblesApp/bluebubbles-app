@@ -5,6 +5,7 @@ import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/layouts/setup/theme_selector/theme_selector.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/reply_line_painter.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/services.dart';
@@ -272,6 +273,7 @@ class SentMessage extends StatefulWidget {
   final bool showDeliveredReceipt;
   final MessageBloc? messageBloc;
   final bool hasTimestampAbove;
+  final bool hasTimestampBelow;
   final bool showReplies;
 
   // Sub-widgets
@@ -291,6 +293,7 @@ class SentMessage extends StatefulWidget {
     required this.shouldFadeIn,
     required this.messageBloc,
     required this.hasTimestampAbove,
+    required this.hasTimestampBelow,
     required this.showReplies,
 
     // Sub-widgets
@@ -307,6 +310,8 @@ class SentMessage extends StatefulWidget {
 class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin, MessageWidgetMixin {
   final Rx<Skins> skin = Rx<Skins>(SettingsManager().settings.skin.value);
   late final spanFuture = MessageWidgetMixin.buildMessageSpansAsync(context, widget.message);
+  Size? threadOriginatorSize;
+  Size? messageSize;
 
   @override
   void initState() {
@@ -315,7 +320,12 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
   }
 
   List<Color> getBubbleColors(Message message) {
-    List<Color> bubbleColors = message.isFromMe ?? false ? [Colors.blue, Colors.blue] : [Theme
+    List<Color> bubbleColors = message.isFromMe ?? false ? [Theme
+        .of(context)
+        .primaryColor, Theme
+        .of(context)
+        .primaryColor
+    ] : [Theme
         .of(context)
         .accentColor, Theme
         .of(context)
@@ -428,7 +438,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
               ),
             );
           },
-          child: Container(
+          child: SizedBox(
             width: CustomNavigator.width(context) - 10,
             child: Padding(
               padding: const EdgeInsets.only(bottom: 8.0),
@@ -438,7 +448,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
                 children: [
                   if ((CurrentChat.of(context)?.chat.isGroup() ?? false) && !msg.isFromMe!)
                     Padding(
-                      padding: EdgeInsets.only(top: 5),
+                      padding: EdgeInsets.only(top: 5, left: 6),
                       child: ContactAvatarWidget(
                         handle: msg.handle,
                         size: 25,
@@ -569,29 +579,18 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
 
     // Fourth, let's add any reactions or stickers to the widget
     if (message != null) {
-      if (widget.showReplies && msg != null && !(widget.olderMessage?.threadOriginatorGuid == widget.message.threadOriginatorGuid && (msg.isFromMe ?? false))) {
-        final constraints = BoxConstraints(
-          maxWidth: CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE - 30,
-          minHeight: Theme.of(context).textTheme.bodyText2!.fontSize!,
-        );
-        final renderParagraph = RichText(
-          text: TextSpan(
-            text: msg.fullText,
-            style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
-          ),
-        ).createRenderObject(context);
-        final renderParagraph2 = RichText(
-          text: TextSpan(
-            text: widget.message.fullText,
-            style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
-          ),
-        ).createRenderObject(context);
-        Size size = renderParagraph.getDryLayout(constraints);
-        final size2 = renderParagraph2.getDryLayout(constraints);
-        final diff = CustomNavigator.width(context) - size.width - size2.width;
-        if (size.width > CustomNavigator.width(context) - CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE - 30) {
-          size = Size(CustomNavigator.width(context) - CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE - 30 - 35, size.height);
+      // only draw the reply line if it will connect up or down
+      if (widget.showReplies
+          && msg != null
+          && (widget.message.shouldConnectLower(widget.olderMessage, widget.newerMessage, msg)
+              || widget.message.shouldConnectUpper(widget.olderMessage, msg))) {
+        // get the correct size for the message being replied to
+        if (widget.message.upperIsThreadOriginatorBubble(widget.olderMessage)) {
+          threadOriginatorSize ??= msg.getBubbleSize(context);
+        } else {
+          threadOriginatorSize ??= widget.olderMessage?.getBubbleSize(context);
         }
+        messageSize ??= widget.message.getBubbleSize(context);
         messageColumn.add(
           Container(
             width: CustomNavigator.width(context) - 10,
@@ -600,25 +599,30 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: EdgeInsets.only(left: (size.width + 35) / 2),
+                  padding: EdgeInsets.only(
+                      // add extra padding when showing contact avatars
+                      left: (CurrentChat.of(context)?.chat.isGroup() ?? false)
+                          || SettingsManager().settings.alwaysShowAvatars.value ? 75 : 40,
+                  ),
                   child: Container(
-                      width: (size.width + 35 + (diff > 200 ? diff * 0.3 : 0)) / 2,
-                      height: (size2.height + 15) / 2,
+                      // to make sure the bounds do not overflow, and so we
+                      // dont draw an ugly long line)
+                      width: min(CustomNavigator.width(context) - messageSize!.width - 150, CustomNavigator.width(context) / 3),
+                      height: messageSize!.height / 2,
                       child: CustomPaint(
-                        painter: !msg.isFromMe! ? LinePainter(
-                          context,
-                          widget.newerMessage?.threadOriginatorGuid == widget.message.threadOriginatorGuid,
-                          size2,
-                          widget.olderMessage?.threadOriginatorGuid == widget.message.threadOriginatorGuid
-                              && widget.hasTimestampAbove
-                          ) : LinePainterFromMe(
+                        painter: LinePainter(
                             context,
-                            widget.newerMessage?.threadOriginatorGuid == widget.message.threadOriginatorGuid,
-                            size,
-                            size2,
+                            widget.message,
+                            widget.olderMessage,
+                            widget.newerMessage,
+                            msg,
+                            threadOriginatorSize!,
+                            messageSize!,
                             widget.olderMessage?.threadOriginatorGuid == widget.message.threadOriginatorGuid
-                                && widget.hasTimestampAbove
-                          ),
+                                && widget.hasTimestampAbove,
+                            widget.hasTimestampBelow,
+                            false,
+                          )
                       )
                   ),
                 ),
@@ -743,7 +747,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
             child: Padding(
               padding: const EdgeInsets.only(left: 8.0, right: 18.0, top: 2, bottom: 4),
               child: Text(
-                "${list.length} repl${list.length > 1 ? "ies" : "y"}",
+                "${list.length} Repl${list.length > 1 ? "ies" : "y"}",
                 style: Theme.of(context).textTheme.subtitle2!.copyWith(fontWeight: FontWeight.bold, color: Colors.blue),
               ),
             ),
@@ -814,87 +818,5 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
           )
       ],
     );
-  }
-}
-
-class LinePainter extends CustomPainter {
-  final BuildContext context;
-  final bool messageBelowHasSameReply;
-  final Size bubbleSize;
-  final bool extendPastTimestamp;
-
-  LinePainter(this.context, this.messageBelowHasSameReply, this.bubbleSize, this.extendPastTimestamp);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    var paint = Paint();
-    paint.color = context.theme.dividerColor;
-    paint.style = PaintingStyle.stroke;
-    paint.strokeWidth = 3;
-
-    var path = Path();
-
-    if (extendPastTimestamp) {
-      path.moveTo(0, -40);
-    }
-    path.lineTo(0, messageBelowHasSameReply ? size.height + bubbleSize.height / 2 + 22 : size.height / 2);
-    path.addArc(Rect.fromCenter(
-      center: Offset(size.height / 2, size.height / 2),
-      height: size.height,
-      width: size.height,
-    ), pi / 2, pi / 2);
-    path.moveTo(size.height / 2, size.height);
-    path.lineTo(size.width, size.height);
-
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) {
-    return true;
-  }
-}
-
-class LinePainterFromMe extends CustomPainter {
-  final BuildContext context;
-  final bool messageBelowHasSameReply;
-  final Size replySize;
-  final Size bubbleSize;
-  final bool extendPastTimestamp;
-
-  LinePainterFromMe(this.context, this.messageBelowHasSameReply, this.replySize, this.bubbleSize, this.extendPastTimestamp);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    var paint = Paint();
-    paint.color = context.theme.dividerColor;
-    paint.style = PaintingStyle.stroke;
-    paint.strokeWidth = 3;
-
-    var path = Path();
-
-    path.moveTo(size.width, -replySize.height / 2 - 10 - (extendPastTimestamp ? 40 : 0));
-    path.lineTo(size.height / 2, -replySize.height / 2 - 10 - (extendPastTimestamp ? 40 : 0));
-    path.addArc(Rect.fromCenter(
-      center: Offset(size.height / 2, -replySize.height / 2 - 10 - (extendPastTimestamp ? 40 : 0) + size.height / 2),
-      height: size.height,
-      width: size.height,
-    ), pi, pi / 2);
-    path.moveTo(0, -replySize.height / 2 - 10 - (extendPastTimestamp ? 40 : 0) + size.height / 2);
-    path.lineTo(0, messageBelowHasSameReply ? size.height + bubbleSize.height / 2 + 25 : size.height / 2);
-    path.addArc(Rect.fromCenter(
-      center: Offset(size.height / 2, size.height / 2),
-      height: size.height,
-      width: size.height,
-    ), pi / 2, pi / 2);
-    path.moveTo(size.height / 2, size.height);
-    path.lineTo(size.width, size.height);
-
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) {
-    return true;
   }
 }

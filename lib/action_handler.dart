@@ -83,6 +83,7 @@ class ActionHandler {
         dateCreated: DateTime.now(),
         hasAttachments: attachments.length > 0 ? true : false,
         threadOriginatorGuid: replyGuid,
+        isFromMe: true,
       );
 
       // Generate a Temp GUID
@@ -97,6 +98,7 @@ class ActionHandler {
           dateCreated: DateTime.now(),
           hasAttachments: false,
           threadOriginatorGuid: replyGuid,
+          isFromMe: true,
         );
 
         // Generate a Temp GUID
@@ -132,6 +134,7 @@ class ActionHandler {
         dateCreated: DateTime.now(),
         hasAttachments: attachments.length > 0 ? true : false,
         threadOriginatorGuid: replyGuid,
+        isFromMe: true,
       );
 
       // Generate a Temp GUID
