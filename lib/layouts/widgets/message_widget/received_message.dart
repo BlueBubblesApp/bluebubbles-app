@@ -30,7 +30,6 @@ import 'package:get/get.dart';
 class ReceivedMessage extends StatefulWidget {
   final bool showTail;
   final Message message;
-  final Message? olderOlderMessage;
   final Message? olderMessage;
   final Message? newerMessage;
   final bool showHandle;
@@ -48,7 +47,6 @@ class ReceivedMessage extends StatefulWidget {
   ReceivedMessage({
     Key? key,
     required this.showTail,
-    required this.olderOlderMessage,
     required this.olderMessage,
     required this.newerMessage,
     required this.message,
@@ -588,7 +586,6 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                                                 child: MessageWidget(
                                                   key: Key(_messages[index].guid!),
                                                   message: _messages[index],
-                                                  olderOlderMessage: null,
                                                   olderMessage: null,
                                                   newerMessage: null,
                                                   showHandle: true,
@@ -789,7 +786,6 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                                                               child: MessageWidget(
                                                                 key: Key(_messages[index].guid!),
                                                                 message: _messages[index],
-                                                                olderOlderMessage: null,
                                                                 olderMessage: null,
                                                                 newerMessage: null,
                                                                 showHandle: true,

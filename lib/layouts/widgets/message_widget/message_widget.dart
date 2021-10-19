@@ -30,7 +30,6 @@ class MessageWidget extends StatefulWidget {
   MessageWidget({
     Key? key,
     required this.message,
-    required this.olderOlderMessage,
     required this.olderMessage,
     required this.newerMessage,
     required this.showHandle,
@@ -44,7 +43,6 @@ class MessageWidget extends StatefulWidget {
   final Message message;
   final Message? newerMessage;
   final Message? olderMessage;
-  final Message? olderOlderMessage;
   final bool showHandle;
   final bool isFirstSentMessage;
   final bool showHero;
@@ -324,7 +322,6 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
     } else {
       message = ReceivedMessage(
         showTail: showTail,
-        olderOlderMessage: widget.olderOlderMessage,
         olderMessage: widget.olderMessage,
         newerMessage: widget.newerMessage,
         message: _message,

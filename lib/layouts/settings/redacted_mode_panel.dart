@@ -71,7 +71,6 @@ class RedactedModePanel extends StatelessWidget {
                   child: MessageWidget(
                     newerMessage: null,
                     olderMessage: null,
-                    olderOlderMessage: null,
                     isFirstSentMessage: false,
                     showHandle: true,
                     showHero: false,

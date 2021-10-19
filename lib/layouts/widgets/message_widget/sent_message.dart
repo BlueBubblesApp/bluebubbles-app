@@ -407,7 +407,6 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
                                             child: MessageWidget(
                                               key: Key(_messages[index].guid!),
                                               message: _messages[index],
-                                              olderOlderMessage: null,
                                               olderMessage: null,
                                               newerMessage: null,
                                               showHandle: true,
@@ -724,7 +723,6 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
                                                 child: MessageWidget(
                                                   key: Key(_messages[index].guid!),
                                                   message: _messages[index],
-                                                  olderOlderMessage: null,
                                                   olderMessage: null,
                                                   newerMessage: null,
                                                   showHandle: true,

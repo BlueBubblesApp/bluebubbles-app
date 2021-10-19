@@ -465,7 +465,6 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                             child: MessageWidget(
                               key: Key(_messages[index].guid!),
                               message: _messages[index],
-                              olderOlderMessage: olderOlderMessage,
                               olderMessage: olderMessage,
                               newerMessage: newerMessage,
                               showHandle: widget.showHandle,
@@ -519,7 +518,6 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                               child: MessageWidget(
                                 key: Key(_messages[index].guid!),
                                 message: _messages[index],
-                                olderOlderMessage: olderOlderMessage,
                                 olderMessage: olderMessage,
                                 newerMessage: newerMessage,
                                 showHandle: widget.showHandle,
