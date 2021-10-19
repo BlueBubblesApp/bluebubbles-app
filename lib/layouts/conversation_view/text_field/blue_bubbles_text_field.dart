@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
@@ -19,6 +20,7 @@ import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
+import 'package:bluebubbles/repository/models/js.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:contacts_service/contacts_service.dart';
@@ -78,6 +80,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   int? sendCountdown;
   bool? stopSending;
   bool fileDragged = false;
+  int? previousKeyCode;
 
   final RxString placeholder = "BlueBubbles".obs;
   final RxBool isRecording = false.obs;
@@ -786,6 +789,26 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     focusNode!.requestFocus();
                     return KeyEventResult.handled;
                   }
+                  if ((data.physicalKey == PhysicalKeyboardKey.keyV || data.logicalKey == LogicalKeyboardKey.keyV)
+                      && (event.isControlPressed || previousKeyCode == 0x1700000000)) {
+                    getPastedImageWeb().then((value) {
+                      if (value != null) {
+                        var r = html.FileReader();
+                        r.readAsArrayBuffer(value);
+                        r.onLoadEnd.listen((e) {
+                          if (r.result != null && r.result is Uint8List) {
+                            Uint8List data = r.result as Uint8List;
+                            addAttachment(PlatformFile(
+                              name: randomString(8) + ".png",
+                              bytes: data,
+                              size: data.length,
+                            ));
+                          }
+                        });
+                      }
+                    });
+                  }
+                  previousKeyCode = data.logicalKey.keyId;
                   return KeyEventResult.ignored;
                 }
                 if (event.physicalKey == PhysicalKeyboardKey.enter &&

@@ -396,7 +396,7 @@ class AttachmentHelper {
       filePath = AttachmentHelper.getAttachmentPath(attachment);
     }
 
-    File originalFile = new File(filePath);
+    dynamic originalFile = new File(filePath);
 
     // If we don't get the actual path, it's a dummy "attachment" and we need to copy it locally
     if (!getActualPath) {
