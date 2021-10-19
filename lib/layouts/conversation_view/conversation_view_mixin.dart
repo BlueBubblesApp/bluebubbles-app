@@ -977,7 +977,43 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       existingChat = await Chat.findOne({"chatIdentifier": slugify(participants[0], delimiter: '')});
     }
 
-    if (existingChat == null) {
+    if (SettingsManager().settings.enablePrivateAPI.value && (await SettingsManager().getMacOSVersion() ?? 0) > 10 && existingChat == null) {
+      api.createChat(participants, null).then((response) async {
+        print(response.data);
+        if (response.statusCode != 200) {
+          Navigator.of(context).pop();
+          showDialog(
+              barrierDismissible: false,
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text(
+                    "Could not create",
+                  ),
+                  content: Text(
+                    "Reason: (${response.data["error"]["type"]}) -> ${response.data["error"]["message"]}",
+                  ),
+                  actions: [
+                    TextButton(
+                      child: Text(
+                        "Ok",
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    )
+                  ],
+                );
+              });
+          completer.complete(null);
+          return;
+        }
+
+        // If everything went well, let's add the chat to the bloc
+        Chat newChat = Chat.fromMap(response.data["data"]);
+        await returnChat(newChat);
+      });
+    } else if (existingChat == null) {
       SocketManager().sendMessage(
         "start-chat",
         params,
@@ -1089,6 +1125,50 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             ),
           ),
           leading: buildBackButton(context, iconSize: 20),
+          trailing: widget.showSnackbar ? IconButton(
+            icon: Icon(
+              SettingsManager().settings.skin.value == Skins.iOS ? Cupertino.CupertinoIcons.exclamationmark_circle : Icons.error_outline,
+              size: 20,
+              color: Theme.of(context).primaryColor,
+            ),
+            padding: EdgeInsets.zero,
+            iconSize: 20,
+            constraints: BoxConstraints(maxWidth: 20, maxHeight: 20),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                      backgroundColor: Theme.of(context).accentColor,
+                      title: new Text("Group Naming",
+                          style:
+                          TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
+                      content: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Support for creating group chats might be unreliable on MacOS 11 (Big Sur) and up due to limitations imposed by Apple. Enabling the Private API will fix this issue.',
+                            style: context.theme.textTheme.subtitle1,
+                          ),
+                        ],
+                      ),
+                      actions: <Widget>[
+                        TextButton(
+                            child: Text("OK",
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .subtitle1!
+                                    .apply(color: Theme.of(context).primaryColor)),
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            }),
+                      ]);
+                },
+              );
+            },
+          ) : null,
         ),
       );
 }

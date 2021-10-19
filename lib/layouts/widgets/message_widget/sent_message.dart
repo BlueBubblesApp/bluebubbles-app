@@ -605,9 +605,9 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
                 width: CustomNavigator.width(context) - 10 - offset,
                 padding: EdgeInsets.only(
                   // add extra padding when showing contact avatars
-                  left: ((CurrentChat.of(context)?.chat.isGroup() ?? false)
+                  left: max(((CurrentChat.of(context)?.chat.isGroup() ?? false)
                       || SettingsManager().settings.alwaysShowAvatars.value
-                      ? 75 : 40) - (width == 10 ? offset - (originalWidth - width) : 0),
+                      ? 75 : 40) - (width == 10 ? offset - (originalWidth - width) : 0), 0),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,

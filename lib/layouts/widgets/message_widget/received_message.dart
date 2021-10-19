@@ -141,10 +141,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
       return Padding(
         padding: EdgeInsets.only(
           left: CurrentChat
-              .of(context)!
-              .chat
-              .participants
-              .length > 1 ? 5.0 : 0.0,
+              .activeChat?.chat.isGroup() ?? false ? 5.0 : 0.0,
           right: (hasReactions) ? 15.0 : 0.0,
           top: widget.message
               .getReactions()

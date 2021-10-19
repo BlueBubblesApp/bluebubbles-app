@@ -164,13 +164,6 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
     initListener();
 
-    SchedulerBinding.instance!.addPostFrameCallback((_) {
-      if (widget.showSnackbar) {
-        showSnackbar('Warning',
-            'Support for creating chats is currently limited on MacOS 11 (Big Sur) and up due to limitations imposed by Apple');
-      }
-    });
-
     // Bind the lifecycle events
     WidgetsBinding.instance!.addObserver(this);
   }
@@ -588,13 +581,17 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                         right: 5,
                         curve: Curves.easeIn,
                         onEnd: () {
-                          setState(() {
-                            tween = Tween<double>(begin: 1, end: 0);
-                            controller = CustomAnimationControl.stop;
-                            message = null;
-                            this.existingText = "";
-                            this.existingAttachments = [];
-                          });
+                          if (message != null) {
+                            setState(() {
+                              tween = Tween<double>(begin: 1, end: 0);
+                              controller = CustomAnimationControl.stop;
+                              message = null;
+                              this.existingText = "";
+                              this.existingAttachments = [];
+                              isCreator = false;
+                              wasCreator = true;
+                            });
+                          }
                         },
                         child: Visibility(
                           visible: message != null,

@@ -178,6 +178,17 @@ class ApiService extends GetxService {
     );
   }
 
+  /// Create a chat with the specified [addresses]. Requires an initial [message]
+  /// to send.
+  Future<Response> createChat(List<String> addresses, String? message, {CancelToken? cancelToken}) async {
+    return await dio.post(
+        "$origin/chat/new",
+        queryParameters: buildQueryParams(),
+        data: {"addresses": addresses},
+        cancelToken: cancelToken
+    );
+  }
+
   /// Get the number of chats in the server iMessage DB
   Future<Response> chatCount({CancelToken? cancelToken}) async {
     return await dio.get(
