@@ -345,6 +345,8 @@ class DBProvider {
         "hasReactions INTEGER DEFAULT 0,"
         "metadata TEXT DEFAULT NULL,"
         "dateDeleted INTEGER DEFAULT NULL,"
+        "threadOriginatorGuid TEXT DEFAULT NULL,"
+        "threadOriginatorPart TEXT DEFAULT NULL,"
         "FOREIGN KEY(handleId) REFERENCES handle(ROWID)"
         ");");
   }

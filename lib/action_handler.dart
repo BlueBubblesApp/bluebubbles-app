@@ -89,7 +89,8 @@ class ActionHandler {
       // Generate a Temp GUID
       mainMsg.generateTempGuid();
 
-      if (mainMsg.text!.trim().length > 0) messages.add(mainMsg);
+      if (mainMsg.text!.trim().length > 0
+          || (mainMsg.subject?.trim().length ?? 0) > 0) messages.add(mainMsg);
 
       // If there is a link, build the link message
       if (shouldSplit) {
