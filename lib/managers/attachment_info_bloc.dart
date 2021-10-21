@@ -46,7 +46,7 @@ class AttachmentInfoBloc {
   }
 
   Future<CurrentChat> _initChat(Chat chat) async {
-    CurrentChat currentChat = new CurrentChat(chat);
+    CurrentChat currentChat = CurrentChat(chat);
     await currentChat.preloadMessageAttachments();
     return currentChat;
   }

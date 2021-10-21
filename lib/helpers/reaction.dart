@@ -87,7 +87,7 @@ class Reaction {
   }
 
   bool hasReactions() {
-    return messages.length > 0;
+    return messages.isNotEmpty;
   }
 
   void addMessage(Message message) {

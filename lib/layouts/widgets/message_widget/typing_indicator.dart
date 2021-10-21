@@ -1,4 +1,4 @@
-import 'dart:math' as Math;
+import 'dart:math' as math;
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
@@ -37,14 +37,14 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
 
     animation = Tween(
       begin: 0.0,
-      end: Math.pi,
+      end: math.pi,
     ).animate(_controller)
       ..addListener(() {
         setState(() {});
       });
 
     _controller.addStatusListener((state) {
-      if (state == AnimationStatus.completed && this.mounted) {
+      if (state == AnimationStatus.completed && mounted) {
         _controller.forward(from: 0.0);
       }
     });
@@ -139,7 +139,7 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
           return Container(
             decoration: BoxDecoration(
               color: context.theme.accentColor.lightenOrDarken(
-                  (Math.sin(animation.value + (index) * Math.pi / 4).abs() * 20).clamp(1, 20).toDouble()),
+                  (math.sin(animation.value + (index) * math.pi / 4).abs() * 20).clamp(1, 20).toDouble()),
               borderRadius: BorderRadius.circular(30),
             ),
             width: 10,

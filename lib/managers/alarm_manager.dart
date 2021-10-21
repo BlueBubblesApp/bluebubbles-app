@@ -23,7 +23,7 @@ class AlarmManager {
 
   /// Defines what to do when a specific alarm goes off
   /// @param [id] is the id of the alarm
-  Future<void> onReceiveAlarm(int id) async {
+  void onReceiveAlarm(int id) {
     Logger.info("Receive alarm $id", tag: "AlarmManager");
 
     // Keep this just in case the thread doesn't get closed automatically from the socket events sent

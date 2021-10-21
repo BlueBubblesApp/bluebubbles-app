@@ -1,6 +1,5 @@
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 import 'dart:ui';
@@ -182,7 +181,6 @@ class _ConversationDetailsState extends State<ConversationDetails> {
     final bool generateName = redactedMode && SettingsManager().settings.generateFakeContactNames.value;
     if (generateName) controller.text = "Group Chat";
 
-    final bool showGroupNameInfo = (showNameField && !hideInfo) || generateName;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
@@ -290,7 +288,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                 builder: (BuildContext context) {
                                   return AlertDialog(
                                       backgroundColor: Theme.of(context).accentColor,
-                                      title: new Text("Group Naming",
+                                      title: Text("Group Naming",
                                           style:
                                           TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
                                       content: Column(
@@ -473,7 +471,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                         builder: (BuildContext context) {
                           return AlertDialog(
                               backgroundColor: Theme.of(context).accentColor,
-                              title: new Text("Custom Avatar",
+                              title: Text("Custom Avatar",
                                   style: TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
                               content: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -501,7 +499,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                             .subtitle1!
                                             .apply(color: Theme.of(context).primaryColor)),
                                     onPressed: () {
-                                      File file = new File(chat.customAvatarPath.value!);
+                                      File file = File(chat.customAvatarPath.value!);
                                       file.delete();
                                       chat.customAvatarPath.value = null;
                                       chat.save();

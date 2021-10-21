@@ -13,7 +13,7 @@ class MessageTimeStampSeparator extends StatelessWidget {
   final Message? newerMessage;
   final Message message;
 
-  bool withinTimeThreshold(Message first, Message? second, {threshold: 5}) {
+  bool withinTimeThreshold(Message first, Message? second, {threshold = 5}) {
     if (second == null) return false;
     return second.dateCreated!.difference(first.dateCreated!).inMinutes.abs() > threshold;
   }

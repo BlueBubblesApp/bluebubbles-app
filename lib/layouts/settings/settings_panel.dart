@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
+import 'package:bluebubbles/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/repository/models/fcm_data.dart';
@@ -30,7 +31,6 @@ import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:collection/collection.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/misc_panel.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -1057,8 +1057,10 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                         await DBProvider.deleteDB();
                                         await SettingsManager().resetConnection();
                                         SettingsManager().settings.finishedSetup.value = false;
-                                        SocketManager().finishedSetup.sink.add(false);
-                                        Navigator.of(context).popUntil((route) => route.isFirst);
+                                        Get.offAll(() => WillPopScope(
+                                          onWillPop: () async => false,
+                                          child: SetupView(),
+                                        ), duration: Duration.zero, transition: Transition.noTransition);
                                         SettingsManager().settings = Settings();
                                         SettingsManager().settings.save();
                                         SettingsManager().fcmData = null;

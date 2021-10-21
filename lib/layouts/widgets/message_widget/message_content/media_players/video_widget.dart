@@ -1,8 +1,11 @@
+import 'dart:typed_data';
+
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 import 'package:universal_html/html.dart' as html;
 
+import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
@@ -25,9 +28,10 @@ class VideoWidgetController extends GetxController with SingleGetTickerProviderM
   bool isVisible = false;
   PlayerStatus status = PlayerStatus.NONE;
   bool hasListener = false;
-  late final VideoPlayerController controller;
-  final RxBool showPlayPauseOverlay = true.obs;
-  final RxBool muted = true.obs;
+  VideoPlayerController? controller;
+  Uint8List? thumbnail;
+  late final RxBool showPlayPauseOverlay;
+  final RxBool muted = SettingsManager().settings.startVideosMuted;
   final PlatformFile file;
   final Attachment attachment;
   final BuildContext context;
@@ -41,20 +45,19 @@ class VideoWidgetController extends GetxController with SingleGetTickerProviderM
   @override
   void onInit() {
     super.onInit();
-    muted.value = SettingsManager().settings.startVideosMuted.value;
-    Map<String, VideoPlayerController> controllers = CurrentChat.of(context)!.currentPlayingVideo;
-    showPlayPauseOverlay.value =
-        !controllers.containsKey(attachment.guid) || !controllers[attachment.guid]!.value.isPlaying;
+    Map<String, VideoPlayerController> controllers = CurrentChat.activeChat!.currentPlayingVideo;
+    showPlayPauseOverlay =
+        RxBool(!controllers.containsKey(attachment.guid) || !controllers[attachment.guid]!.value.isPlaying);
 
     if (controllers.containsKey(attachment.guid)) {
       controller = controllers[attachment.guid]!;
+      createListener(controller!);
     } else {
-      initializeController();
+      getThumbnail();
     }
-    createListener(controller);
   }
 
-  void initializeController() async {
+  Future<void> initializeController() async {
     PlatformFile file2 = file;
     if (kIsWeb || file2.path == null) {
       final blob = html.Blob([file2.bytes]);
@@ -62,10 +65,11 @@ class VideoWidgetController extends GetxController with SingleGetTickerProviderM
       controller = VideoPlayerController.network(url);
     } else {
       dynamic file = File(file2.path!);
-      controller = new VideoPlayerController.file(file);
+      controller = VideoPlayerController.file(file);
     }
-    await controller.initialize();
-    CurrentChat.of(context)!.changeCurrentPlayingVideo({attachment.guid!: controller});
+    await controller!.initialize();
+    createListener(controller!);
+    CurrentChat.activeChat?.changeCurrentPlayingVideo({attachment.guid!: controller!});
   }
 
   void createListener(VideoPlayerController controller) {
@@ -77,10 +81,10 @@ class VideoWidgetController extends GetxController with SingleGetTickerProviderM
 
       // If the status hasn't changed, don't do anything
       if (currentStatus == status) return;
-      this.status = currentStatus;
+      status = currentStatus;
 
       // If the status is ended, restart
-      if (this.status == PlayerStatus.ENDED) {
+      if (status == PlayerStatus.ENDED) {
         showPlayPauseOverlay.value = true;
         await controller.pause();
         await controller.seekTo(Duration());
@@ -88,6 +92,15 @@ class VideoWidgetController extends GetxController with SingleGetTickerProviderM
     });
 
     hasListener = true;
+  }
+
+  void getThumbnail() async {
+    if (!kIsWeb) {
+      thumbnail = await AttachmentHelper.getVideoThumbnail(file.path!);
+      if (thumbnail == null) return;
+      await precacheImage(MemoryImage(thumbnail!), context);
+      update();
+    }
   }
 }
 
@@ -113,11 +126,8 @@ class VideoWidget extends StatelessWidget {
           onVisibilityChanged: (info) {
             if (info.visibleFraction == 0 && controller.isVisible && !controller.navigated) {
               controller.isVisible = false;
-              controller.controller.pause();
+              controller.controller?.pause();
               controller.showPlayPauseOverlay.value = true;
-              if (SettingsManager().settings.lowMemoryMode.value) {
-                CurrentChat.of(context)?.clearImageData(attachment);
-              }
             } else if (!controller.isVisible) {
               controller.isVisible = true;
             }
@@ -130,7 +140,7 @@ class VideoWidget extends StatelessWidget {
               curve: Curves.easeInOut,
               alignment: Alignment.center,
               duration: Duration(milliseconds: 250),
-              child: Obx(() => buildPlayer(controller, context)),
+              child: controller.controller != null ? Obx(() => buildPlayer(controller, context)) : buildPreview(controller, context),
             ),
           ),
         );
@@ -139,117 +149,214 @@ class VideoWidget extends StatelessWidget {
   }
 
   Widget buildPlayer(VideoWidgetController controller, BuildContext context) => GestureDetector(
-        onTap: () async {
-          if (controller.controller.value.isPlaying) {
-            controller.controller.pause();
-            controller.showPlayPauseOverlay.value = true;
-          } else {
-            controller.navigated = true;
-            CurrentChat? currentChat = CurrentChat.of(context);
-            await Navigator.of(context).push(
-              ThemeSwitcher.buildPageRoute(
-                builder: (context) => AttachmentFullscreenViewer(
-                  currentChat: currentChat,
-                  attachment: attachment,
-                  showInteractions: true,
-                ),
-              ),
-            );
-            controller.navigated = false;
-          }
-        },
-        child: Container(
-          constraints: BoxConstraints(
-            maxWidth: CustomNavigator.width(context) / 2,
-            maxHeight: context.height / 2,
+    onTap: () async {
+      if (controller.controller!.value.isPlaying) {
+        controller.controller!.pause();
+        controller.showPlayPauseOverlay.value = true;
+      } else {
+        controller.navigated = true;
+        CurrentChat? currentChat = CurrentChat.of(context);
+        await Navigator.of(context).push(
+          ThemeSwitcher.buildPageRoute(
+            builder: (context) => AttachmentFullscreenViewer(
+              currentChat: currentChat,
+              attachment: attachment,
+              showInteractions: true,
+            ),
           ),
-          child: Hero(
-            tag: attachment.guid!,
-            child: Stack(
-              alignment: Alignment.center,
-              children: <Widget>[
-                AspectRatio(
-                  aspectRatio: controller.controller.value.aspectRatio,
-                  child: VideoPlayer(controller.controller),
-                ),
-                AnimatedOpacity(
-                  opacity: controller.showPlayPauseOverlay.value ? 1 : 0,
-                  duration: Duration(milliseconds: 250),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: HexColor('26262a').withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(40),
-                    ),
-                    padding: EdgeInsets.all(10),
-                    child: controller.controller.value.isPlaying
-                        ? GestureDetector(
-                            child: Icon(
-                              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.pause : Icons.pause,
-                              color: Colors.white,
-                              size: 45,
-                            ),
-                            onTap: () {
-                              controller.controller.pause();
-                              controller.showPlayPauseOverlay.value = true;
-                            },
-                          )
-                        : GestureDetector(
-                            child: Icon(
-                              SettingsManager().settings.skin.value == Skins.iOS
-                                  ? CupertinoIcons.play
-                                  : Icons.play_arrow,
-                              color: Colors.white,
-                              size: 45,
-                            ),
-                            onTap: () {
-                              controller.controller.play();
-                              controller.showPlayPauseOverlay.value = false;
-                            },
-                          ),
+        );
+        controller.navigated = false;
+      }
+    },
+    child: Container(
+      constraints: BoxConstraints(
+        maxWidth: CustomNavigator.width(context) / 2,
+        maxHeight: context.height / 2,
+      ),
+      child: Hero(
+        tag: attachment.guid!,
+        child: Stack(
+          alignment: Alignment.center,
+          children: <Widget>[
+            AspectRatio(
+              aspectRatio: controller.controller!.value.aspectRatio,
+              child: VideoPlayer(controller.controller!),
+            ),
+            AnimatedOpacity(
+              opacity: controller.showPlayPauseOverlay.value ? 1 : 0,
+              duration: Duration(milliseconds: 250),
+              child: Container(
+                  height: 75,
+                  width: 75,
+                  decoration: BoxDecoration(
+                    color: HexColor('26262a').withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(40),
                   ),
-                ),
-                Positioned.fill(
-                  child: Align(
-                    alignment: Alignment.bottomRight,
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0, right: 8.0),
-                      child: AnimatedOpacity(
-                        opacity: controller.showPlayPauseOverlay.value ? 1 : 0,
-                        duration: Duration(milliseconds: 250),
-                        child: AbsorbPointer(
-                          absorbing: !controller.showPlayPauseOverlay.value,
-                          child: GestureDetector(
-                            onTap: () {
-                              controller.muted.toggle();
-                              controller.controller.setVolume(controller.muted.value ? 0.0 : 1.0);
-                            },
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: HexColor('26262a').withOpacity(0.5),
-                                borderRadius: BorderRadius.circular(40),
-                              ),
-                              padding: EdgeInsets.all(5),
-                              child: Obx(() => Icon(
-                                    controller.muted.value
-                                        ? SettingsManager().settings.skin.value == Skins.iOS
-                                            ? CupertinoIcons.volume_mute
-                                            : Icons.volume_mute
-                                        : SettingsManager().settings.skin.value == Skins.iOS
-                                            ? CupertinoIcons.volume_up
-                                            : Icons.volume_up,
-                                    color: Colors.white,
-                                    size: 15,
-                                  )),
-                            ),
+                  padding: EdgeInsets.all(10),
+                  child: Padding(
+                    padding: EdgeInsets.only(left: SettingsManager().settings.skin.value == Skins.iOS && !controller.controller!.value.isPlaying ? 7 : 0,
+                        top: SettingsManager().settings.skin.value == Skins.iOS ? 3 : 0),
+                    child: controller.controller!.value.isPlaying ? GestureDetector(
+                      child: Icon(
+                        SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.pause : Icons.pause,
+                        color: Colors.white,
+                        size: 45,
+                      ),
+                      onTap: () {
+                        controller.controller!.pause();
+                        controller.showPlayPauseOverlay.value = true;
+                      },
+                    ) : GestureDetector(
+                      child: Icon(
+                        SettingsManager().settings.skin.value == Skins.iOS
+                            ? CupertinoIcons.play
+                            : Icons.play_arrow,
+                        color: Colors.white,
+                        size: 45,
+                      ),
+                      onTap: () {
+                        controller.controller!.play();
+                        controller.showPlayPauseOverlay.value = false;
+                      },
+                    ),
+                  )
+              ),
+            ),
+            Positioned.fill(
+              child: Align(
+                alignment: Alignment.bottomRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0, right: 8.0),
+                  child: AnimatedOpacity(
+                    opacity: controller.showPlayPauseOverlay.value ? 1 : 0,
+                    duration: Duration(milliseconds: 250),
+                    child: AbsorbPointer(
+                      absorbing: !controller.showPlayPauseOverlay.value,
+                      child: GestureDetector(
+                        onTap: () {
+                          controller.muted.toggle();
+                          controller.controller!.setVolume(controller.muted.value ? 0.0 : 1.0);
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: HexColor('26262a').withOpacity(0.5),
+                            borderRadius: BorderRadius.circular(40),
                           ),
+                          padding: EdgeInsets.all(5),
+                          child: Obx(() => Icon(
+                            controller.muted.value
+                                ? SettingsManager().settings.skin.value == Skins.iOS
+                                ? CupertinoIcons.volume_mute
+                                : Icons.volume_mute
+                                : SettingsManager().settings.skin.value == Skins.iOS
+                                ? CupertinoIcons.volume_up
+                                : Icons.volume_up,
+                            color: Colors.white,
+                            size: 15,
+                          )),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+
+  Widget buildPreview(VideoWidgetController controller, BuildContext context) => GestureDetector(
+    onTap: () async {
+      await controller.initializeController();
+      controller.controller!.setVolume(controller.muted.value ? 0.0 : 1.0);
+      controller.controller!.play();
+    },
+    child: Stack(
+      children: [
+        Container(
+          constraints: BoxConstraints(
+            maxWidth: context.width / 2,
+            maxHeight: context.height / 2,
+          ),
+          child: buildSwitcher(controller),
+        ),
+        Container(
+          height: 75,
+          width: 75,
+          decoration: BoxDecoration(
+            color: HexColor('26262a').withOpacity(0.5),
+            borderRadius: BorderRadius.circular(40),
+          ),
+          padding: EdgeInsets.all(10),
+          child: Padding(
+            padding: EdgeInsets.only(left: SettingsManager().settings.skin.value == Skins.iOS ? 7 : 0,
+                top: SettingsManager().settings.skin.value == Skins.iOS ? 3 : 0),
+            child: Icon(
+              SettingsManager().settings.skin.value == Skins.iOS
+                  ? CupertinoIcons.play
+                  : Icons.play_arrow,
+              color: Colors.white,
+              size: 45,
             ),
           ),
         ),
+        Positioned.fill(
+          child: Align(
+            alignment: Alignment.bottomRight,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 8.0, right: 8.0),
+              child: GestureDetector(
+                onTap: () {
+                  controller.muted.toggle();
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: HexColor('26262a').withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(40),
+                  ),
+                  padding: EdgeInsets.all(5),
+                  child: Obx(() => Icon(
+                    controller.muted.value
+                        ? SettingsManager().settings.skin.value == Skins.iOS
+                        ? CupertinoIcons.volume_mute
+                        : Icons.volume_mute
+                        : SettingsManager().settings.skin.value == Skins.iOS
+                        ? CupertinoIcons.volume_up
+                        : Icons.volume_up,
+                    color: Colors.white,
+                    size: 15,
+                  )),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+      alignment: Alignment.center,
+    ),
+  );
+
+  Widget buildSwitcher(VideoWidgetController controller) => AnimatedSwitcher(
+    duration: Duration(milliseconds: 150),
+    child: controller.thumbnail != null ? Image.memory(controller.thumbnail!) : buildPlaceHolder(controller),
+  );
+
+  Widget buildPlaceHolder(VideoWidgetController controller) {
+    if (controller.attachment.hasValidSize) {
+      return AspectRatio(
+        aspectRatio: controller.attachment.width!.toDouble() / controller.attachment.height!.toDouble(),
+        child: Container(
+          width: controller.attachment.width!.toDouble(),
+          height: controller.attachment.height!.toDouble(),
+        ),
       );
+    } else {
+      return Container(
+        width: 0,
+        height: 0,
+      );
+    }
+  }
 }

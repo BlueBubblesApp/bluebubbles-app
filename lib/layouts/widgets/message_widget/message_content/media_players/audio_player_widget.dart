@@ -13,8 +13,8 @@ import 'package:flutter/material.dart';
 import 'package:tuple/tuple.dart';
 import 'package:video_player/video_player.dart';
 
-class AudioPlayerWiget extends StatefulWidget {
-  AudioPlayerWiget({
+class AudioPlayerWidget extends StatefulWidget {
+  AudioPlayerWidget({
     Key? key,
     required this.file,
     required this.context,
@@ -28,15 +28,12 @@ class AudioPlayerWiget extends StatefulWidget {
   final bool isFromMe;
 
   @override
-  _AudioPlayerWigetState createState() => _AudioPlayerWigetState();
+  _AudioPlayerWidgetState createState() => _AudioPlayerWidgetState();
 }
 
-class _AudioPlayerWigetState extends State<AudioPlayerWiget> with AutomaticKeepAliveClientMixin {
+class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   late final ChewieAudioController controller;
   late final VideoPlayerController audioController;
-
-  @override
-  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -53,7 +50,7 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> with AutomaticKeepA
         audioController = VideoPlayerController.network(url);
       } else {
         dynamic file = File(widget.file.path!);
-        audioController = new VideoPlayerController.file(file);
+        audioController = VideoPlayerController.file(file);
       }
       controller = ChewieAudioController(
         videoPlayerController: audioController,
@@ -104,12 +101,11 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> with AutomaticKeepA
     if (!(ModalRoute.of(context)?.isCurrent ?? false)) {
       controller.pause();
     }
-    super.build(context);
     return Container(
       alignment: Alignment.center,
       color: Theme.of(context).accentColor,
       height: SettingsManager().settings.skin.value == Skins.iOS ? 75 : 48,
-      constraints: new BoxConstraints(maxWidth: maxWidth),
+      constraints: BoxConstraints(maxWidth: maxWidth),
       child: Theme(
         data: Theme.of(context).copyWith(
             platform: SettingsManager().settings.skin.value == Skins.iOS ? TargetPlatform.iOS : TargetPlatform.android,

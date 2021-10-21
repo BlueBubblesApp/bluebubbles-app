@@ -35,7 +35,7 @@ class MessageAttachment extends StatefulWidget {
 
 class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeepAliveClientMixin {
   Widget? attachmentWidget;
-  var content;
+  dynamic content;
 
   @override
   void initState() {
@@ -53,7 +53,7 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
 
     // If we can download it, do so
     if (await AttachmentHelper.canAutoDownload() && content is Attachment) {
-      if (this.mounted) {
+      if (mounted) {
         setState(() {
           content = Get.put(AttachmentDownloadController(attachment: content), tag: content.guid);
         });
@@ -111,7 +111,7 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
       } else if (mimeType == "audio" && !widget.attachment.mimeType!.contains("caf")) {
         return MediaFile(
           attachment: widget.attachment,
-          child: AudioPlayerWiget(file: content, context: context, width: 250, isFromMe: widget.isFromMe),
+          child: AudioPlayerWidget(file: content, context: context, width: 250, isFromMe: widget.isFromMe),
         );
       } else if (widget.attachment.mimeType == "text/x-vlocation" || widget.attachment.uti == 'public.vlocation') {
         return MediaFile(
@@ -146,7 +146,7 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
       return AttachmentDownloaderWidget(
         onPressed: () {
           content = Get.put(AttachmentDownloadController(attachment: content), tag: content.guid);
-          if (this.mounted) setState(() {});
+          if (mounted) setState(() {});
         },
         attachment: content,
         placeHolder: buildPlaceHolder(widget),
@@ -162,7 +162,7 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
           return AttachmentDownloaderWidget(
             onPressed: () {
               content = Get.put(AttachmentDownloadController(attachment: content), tag: content.guid);
-              if (this.mounted) setState(() {});
+              if (mounted) setState(() {});
             },
             attachment: content,
             placeHolder: buildPlaceHolder(widget),
@@ -175,41 +175,53 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
           return _buildAttachmentWidget();
         }
 
-        return Stack(
-          alignment: Alignment.center,
-          children: <Widget>[
-            buildPlaceHolder(widget),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Center(
-                      child: Container(
-                        height: 40,
-                        width: 40,
-                        child: CircleProgressBar(
-                          value: content.progress.value?.toDouble() ?? 0,
-                          backgroundColor: Colors.grey,
-                          foregroundColor: Colors.white,
+        return Container(
+          width: 200,
+          height: 150,
+          child: Stack(
+            alignment: Alignment.center,
+            children: <Widget>[
+              buildPlaceHolder(widget),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Center(
+                        child: Container(
+                          height: 40,
+                          width: 40,
+                          child: CircleProgressBar(
+                            value: content.progress.value?.toDouble() ?? 0,
+                            backgroundColor: Colors.grey,
+                            foregroundColor: Colors.white,
+                          ),
                         ),
                       ),
-                    ),
-                    ((content as AttachmentDownloadController).attachment.mimeType != null)
-                        ? Container(height: 5.0)
-                        : Container(),
-                    (content.attachment.mimeType != null)
-                        ? Text(
+                      ((content as AttachmentDownloadController).attachment.mimeType != null)
+                          ? Container(height: 5.0)
+                          : Container(),
+                      (content.attachment.mimeType != null) ? Container(
+                        width: 200,
+                        height: 150,
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
                             content.attachment.mimeType,
                             style: Theme.of(context).textTheme.bodyText1,
-                          )
-                        : Container()
-                  ],
-                ),
-              ],
-            ),
-          ],
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      )
+                          : Container()
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
         );
       });
     } else {

@@ -52,7 +52,7 @@ class SettingsManager {
 
   /// [init] is run at start and fetches both the [appDocDir] and sets the [settings] to a default value
   Future<void> init() async {
-    settings = new Settings();
+    settings = Settings();
     if (!kIsWeb) {
       //ignore: unnecessary_cast, we need this as a workaround
       appDocDir = (await getApplicationSupportDirectory()) as Directory;
@@ -72,7 +72,7 @@ class SettingsManager {
     settings = Settings.getSettings();
 
     fcmData = await FCMData.getFCM();
-    // await DBProvider.setupDefaultPresetThemes(await DBProvider.db.database);
+    if (headless) return;
     themes = await ThemeObject.getThemes();
     for (ThemeObject theme in themes) {
       await theme.fetchData();
@@ -86,20 +86,19 @@ class SettingsManager {
       if (!kIsWeb && !kIsDesktop) {
         await FlutterDisplayMode.setPreferredMode(await settings.getDisplayMode());
       }
-    } catch (e) {}
+    } catch (_) {}
 
     // Change the [finishedSetup] status to that of the settings
     if (!settings.finishedSetup.value) {
       await DBProvider.deleteDB();
     }
-    SocketManager().finishedSetup.sink.add(settings.finishedSetup.value);
 
     // If we aren't running in the background, then we should auto start the socket and authorize fcm just in case we haven't
     if (!headless) {
       try {
         SocketManager().startSocketIO();
         SocketManager().authFCM();
-      } catch (e) {}
+      } catch (_) {}
     }
   }
 
@@ -115,7 +114,7 @@ class SettingsManager {
       if (!kIsWeb && !kIsDesktop) {
         await FlutterDisplayMode.setPreferredMode(await settings.getDisplayMode());
       }
-    } catch (e) {}
+    } catch (_) {}
   }
 
   /// Updates the selected theme for the app
@@ -132,7 +131,7 @@ class SettingsManager {
   }) async {
     await selectedLightTheme?.save();
     await selectedDarkTheme?.save();
-    await ThemeObject.setSelectedTheme(light: selectedLightTheme?.id ?? null, dark: selectedDarkTheme?.id ?? null);
+    await ThemeObject.setSelectedTheme(light: selectedLightTheme?.id, dark: selectedDarkTheme?.id);
 
     ThemeData lightTheme = (await ThemeObject.getLightTheme()).themeData;
     ThemeData darkTheme = (await ThemeObject.getDarkTheme()).themeData;
@@ -157,12 +156,12 @@ class SettingsManager {
       SocketManager().socket!.disconnect();
     }
 
-    Settings temp = this.settings;
+    Settings temp = settings;
     temp.finishedSetup.value = false;
     temp.guidAuthKey.value = "";
     temp.serverAddress.value = "";
     temp.lastIncrementalSync.value = 0;
-    await this.saveSettings(temp);
+    await saveSettings(temp);
   }
 
   Future<int?> getMacOSVersion() async {

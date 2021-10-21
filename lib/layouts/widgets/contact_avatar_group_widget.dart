@@ -33,18 +33,18 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
     participants = widget.chat.participants.obs;
 
     participants.sort((a, b) {
-      bool avatarA = ContactManager().getCachedContactSync(a.address)?.avatar?.isNotEmpty ?? false;
-      bool avatarB = ContactManager().getCachedContactSync(b.address)?.avatar?.isNotEmpty ?? false;
+      bool avatarA = ContactManager().getCachedContact(address: a.address)?.avatar.value?.isNotEmpty ?? false;
+      bool avatarB = ContactManager().getCachedContact(address: b.address)?.avatar.value?.isNotEmpty ?? false;
       if (!avatarA && avatarB) return 1;
       if (avatarA && !avatarB) return -1;
       return 0;
     });
 
     for (Handle participant in participants) {
-      if (!(ContactManager().handleToContact[participant]?.avatar?.isNotEmpty ?? false)) {}
+      if (!(ContactManager().handleToContact[participant]?.avatar.value?.isNotEmpty ?? false)) {}
     }
 
-    if (participants.length == 0) {
+    if (participants.isEmpty) {
       return Container(
         width: widget.size,
         height: widget.size,

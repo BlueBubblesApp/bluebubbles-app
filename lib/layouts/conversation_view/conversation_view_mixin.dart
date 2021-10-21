@@ -13,7 +13,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_details/conversation_details.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/new_chat_creator/contact_selector_option.dart';
-import 'package:bluebubbles/layouts/widgets/CustomCupertinoNavBar.dart';
+import 'package:bluebubbles/layouts/widgets/custom_cupertino_nav_bar.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
@@ -29,7 +29,7 @@ import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
-import 'package:flutter/cupertino.dart' as Cupertino;
+import 'package:flutter/cupertino.dart' as cupertino;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -274,11 +274,11 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             child: SettingsManager().settings.skin.value == Skins.iOS
                 ? Theme(
                     data: ThemeData(
-                      cupertinoOverrideTheme: Cupertino.CupertinoThemeData(
+                      cupertinoOverrideTheme: cupertino.CupertinoThemeData(
                         brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
                       ),
                     ),
-                    child: Cupertino.CupertinoActivityIndicator(
+                    child: cupertino.CupertinoActivityIndicator(
                       radius: 12,
                     ),
                   )
@@ -294,7 +294,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           padding: EdgeInsets.only(right: SettingsManager().settings.colorblindMode.value ? 10.0 : 5.0),
           child: GestureDetector(
             child: Icon(
-              (markedAsRead) ? Cupertino.CupertinoIcons.check_mark_circled : Cupertino.CupertinoIcons.check_mark_circled_solid,
+              (markedAsRead) ? cupertino.CupertinoIcons.check_mark_circled : cupertino.CupertinoIcons.check_mark_circled_solid,
               color: (markedAsRead) ? HexColor('32CD32').withAlpha(200) : fontColor,
             ),
             onTap: markChatAsRead,
@@ -401,10 +401,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                   child: Icon(
                     (markedAsRead)
                         ? SettingsManager().settings.skin.value == Skins.iOS
-                        ? Cupertino.CupertinoIcons.check_mark_circled_solid
+                        ? cupertino.CupertinoIcons.check_mark_circled_solid
                         : Icons.check_circle
                         : SettingsManager().settings.skin.value == Skins.iOS
-                        ? Cupertino.CupertinoIcons.check_mark_circled
+                        ? cupertino.CupertinoIcons.check_mark_circled
                         : Icons.check_circle_outline,
                     color: (markedAsRead) ? HexColor('32CD32').withAlpha(200) : fontColor,
                   ),
@@ -436,7 +436,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             padding: const EdgeInsets.only(right: 8.0),
             child: GestureDetector(
               child: Icon(
-                SettingsManager().settings.skin.value == Skins.iOS ? Cupertino.CupertinoIcons.ellipsis : Icons.more_vert,
+                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.ellipsis : Icons.more_vert,
                 color: fontColor,
               ),
               onTap: openDetails,
@@ -573,8 +573,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           child: Container(
             width: 40 + (ChatBloc().unreads.value > 0 ? 25 : 0),
             child: Row(
-              mainAxisSize: Cupertino.MainAxisSize.min,
-              mainAxisAlignment: Cupertino.MainAxisAlignment.start,
+              mainAxisSize: cupertino.MainAxisSize.min,
+              mainAxisAlignment: cupertino.MainAxisAlignment.start,
               children: [
                 buildBackButton(context, callback: () async {
                   if (LifeCycleManager().isBubble) SystemNavigator.pop();
@@ -598,7 +598,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           ),
         ),
         middle: ListView(
-          physics: Cupertino.NeverScrollableScrollPhysics(),
+          physics: cupertino.NeverScrollableScrollPhysics(),
           padding: EdgeInsets.only(right: newMessages.isNotEmpty ? 10 : 0),
           children: <Widget>[
             Container(height: 10.0),
@@ -631,7 +631,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                           ),
                           child: RichText(
                             maxLines: 1,
-                            overflow: Cupertino.TextOverflow.ellipsis,
+                            overflow: cupertino.TextOverflow.ellipsis,
                             textAlign: TextAlign.center,
                             text: TextSpan(
                               style: Theme.of(context).textTheme.headline2,
@@ -1125,7 +1125,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
   Widget buildChatSelectorHeader() => PreferredSize(
         preferredSize: Size.fromHeight(40),
-        child: Cupertino.CupertinoNavigationBar(
+        child: cupertino.CupertinoNavigationBar(
           backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
           middle: Container(
             child: Text(
@@ -1136,7 +1136,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           leading: buildBackButton(context, iconSize: 20),
           trailing: shouldShowAlert ? IconButton(
             icon: Icon(
-              SettingsManager().settings.skin.value == Skins.iOS ? Cupertino.CupertinoIcons.exclamationmark_circle : Icons.error_outline,
+              SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.exclamationmark_circle : Icons.error_outline,
               size: 20,
               color: Theme.of(context).primaryColor,
             ),

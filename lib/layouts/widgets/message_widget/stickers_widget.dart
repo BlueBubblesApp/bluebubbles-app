@@ -36,7 +36,7 @@ class _StickersWidgetState extends State<StickersWidget> {
   }
 
   void toggleShow() {
-    if (!this.mounted) return;
+    if (!mounted) return;
     setState(() {
       _visible = !_visible;
     });
@@ -48,7 +48,7 @@ class _StickersWidgetState extends State<StickersWidget> {
       return;
     }
 
-    request = new Completer();
+    request = Completer();
 
     // For each message, load the sticker for it
     for (Message msg in widget.messages) {
@@ -65,14 +65,14 @@ class _StickersWidgetState extends State<StickersWidget> {
         String pathName = AttachmentHelper.getAttachmentPath(attachment);
 
         // Check if the attachment exists
-        if (FileSystemEntity.typeSync(pathName) == FileSystemEntityType.notFound) {
+        if (await FileSystemEntity.type(pathName) == FileSystemEntityType.notFound) {
           // Download the attachment and when complete, re-render the UI
-          Get.put(AttachmentDownloadController(attachment: attachment, onComplete: () {
+          Get.put(AttachmentDownloadController(attachment: attachment, onComplete: () async {
             // Make sure it downloaded correctly
-            if (FileSystemEntity.typeSync(pathName) == FileSystemEntityType.notFound) {
+            if (await FileSystemEntity.type(pathName) == FileSystemEntityType.notFound) {
               // Add the attachment as a sticker, and re-render the UI
               stickers.add(attachment);
-              if (this.mounted) setState(() {});
+              if (mounted) setState(() {});
             }
           }), tag: attachment.guid);
         } else {
@@ -82,7 +82,7 @@ class _StickersWidgetState extends State<StickersWidget> {
     }
 
     // Fulfill/Complete any outstanding requests
-    if (this.mounted) setState(() {});
+    if (mounted) setState(() {});
     request!.complete();
   }
 
@@ -100,7 +100,7 @@ class _StickersWidgetState extends State<StickersWidget> {
     return GestureDetector(
         onTap: toggleShow,
         child: Opacity(
-            key: new Key(this.stickers.first.guid!),
+            key: Key(this.stickers.first.guid!),
             opacity: _visible ? 1.0 : 0.25,
             child: Stack(children: stickers, alignment: Alignment.center)));
   }

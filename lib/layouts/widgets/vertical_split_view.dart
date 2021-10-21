@@ -46,7 +46,7 @@ class _VerticalSplitViewState extends State<VerticalSplitView> {
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
       if (!event.containsKey("type")) return;
 
-      if (event["type"] == 'split-refresh' && this.mounted) {
+      if (event["type"] == 'split-refresh' && mounted) {
         _ratio.value = prefs.getDouble('splitRatio') ?? _ratio.value;
         setState(() {});
       }
@@ -62,7 +62,7 @@ class _VerticalSplitViewState extends State<VerticalSplitView> {
     return LayoutBuilder(builder: (context, BoxConstraints constraints) {
       assert(_ratio <= 1);
       assert(_ratio >= 0);
-      if (_maxWidth == null) _maxWidth = constraints.maxWidth - widget.dividerWidth;
+      _maxWidth ??= constraints.maxWidth - widget.dividerWidth;
       if (_maxWidth != constraints.maxWidth) {
         _maxWidth = constraints.maxWidth - widget.dividerWidth;
       }
