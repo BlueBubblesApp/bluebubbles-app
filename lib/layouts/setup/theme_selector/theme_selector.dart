@@ -804,7 +804,7 @@ Widget buildConversationViewHeader(BuildContext context, Chat chat, ThemeData th
 
   // Build the stack
   List<Widget> avatars = [];
-  chat.participants.forEach((Handle participant) {
+  for (Handle participant in chat.participants) {
     avatars.add(
       Container(
         height: 42.0, // 2 px larger than the diameter
@@ -816,7 +816,7 @@ Widget buildConversationViewHeader(BuildContext context, Chat chat, ThemeData th
         ),
       ),
     );
-  });
+  }
 
   TextStyle? titleStyle = theme.textTheme.bodyText1;
 

@@ -9,7 +9,7 @@ import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/share.dart';
-import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
+import 'package:bluebubbles/layouts/image_viewer/attachment_fullscreen_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -44,7 +44,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
   @override
   void initState() {
     super.initState();
-    controller = new PhotoViewController();
+    controller = PhotoViewController();
   }
 
   @override
@@ -62,7 +62,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
     } else {
       bytes = await File(widget.file.path!).readAsBytes();
     }
-    if (this.mounted) setState(() {});
+    if (mounted) setState(() {});
   }
 
   @override
@@ -115,7 +115,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                         ])));
                       }
 
-                      if (metaWidgets.length == 0) {
+                      if (metaWidgets.isEmpty) {
                         metaWidgets.add(Text(
                           "No metadata available",
                           style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2),
@@ -183,7 +183,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                       });
 
                       bytes = null;
-                      if (this.mounted) setState(() {});
+                      if (mounted) setState(() {});
                     },
                     child: Icon(
                       SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.refresh : Icons.refresh,
@@ -245,7 +245,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
         backgroundColor: Colors.black,
         body: GestureDetector(
           onTap: () {
-            if (!this.mounted || !widget.showInteractions) return;
+            if (!mounted || !widget.showInteractions) return;
 
             setState(() {
               showOverlay = !showOverlay;
@@ -264,7 +264,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                       },
                       scaleStateChangedCallback: (scale) {
                         if (AttachmentFullscreenViewer.of(context) == null) return;
-                        if (this.mounted) {
+                        if (mounted) {
                           AttachmentFullscreenViewerState? state = AttachmentFullscreenViewer.of(context);
                           if (scale == PhotoViewScaleState.zoomedIn
                               || scale == PhotoViewScaleState.covering

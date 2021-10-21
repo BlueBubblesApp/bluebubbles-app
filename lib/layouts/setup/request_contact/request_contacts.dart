@@ -39,7 +39,7 @@ class _RequestContactsState extends State<RequestContacts> {
                 child: InkWell(
                   child: SizedBox(width: 60, height: 60, child: Icon(Icons.check, color: Colors.white)),
                   onTap: () async {
-                    if (!(await ContactManager().getContacts())) {
+                    if (!(await ContactManager().canAccessContacts())) {
                       bool result = await showDialog(
                         context: context,
                         builder: (context) => ContactPermissionWarningDialog(),

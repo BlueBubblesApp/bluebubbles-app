@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/layouts/setup/qr_scan/text_input_url.dart';
-import 'package:dio_http/dio_http.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:universal_io/io.dart';
@@ -11,7 +10,6 @@ import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/themes.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/setup/qr_code_scanner.dart';
 import 'package:bluebubbles/repository/models/fcm_data.dart';
@@ -202,16 +200,45 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                   }),
                   Obx(() => (controller.serverVersionCode.value ?? 0) >= 42  && controller.stats.isNotEmpty
                       ? SettingsDivider(thickness: 0.3) : SizedBox.shrink()),
-                  Obx(() => (controller.serverVersionCode.value ?? 0) >= 42  && controller.stats.isNotEmpty ? Container(
-                      color: tileColor,
-                      child: Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
-                        child: SelectableText.rich(
-                          TextSpan(
-                              children: controller.stats.entries.map((e) => TextSpan(text: "${e.key.capitalizeFirst!.replaceAll("Handles", "iMessage Numbers")}: ${e.value}${controller.stats.keys.last != e.key ? "\n\n" : ""}")).toList()
-                          ),
-                        ),
-                      )
+                  Obx(() => (controller.serverVersionCode.value ?? 0) >= 42  && controller.stats.isNotEmpty ? SettingsTile(
+                    title: "Show Stats",
+                    subtitle: "Show iMessage statistics",
+                    backgroundColor: tileColor,
+                    leading: SettingsLeadingIcon(
+                      iosIcon: CupertinoIcons.chart_bar_square,
+                      materialIcon: Icons.stacked_bar_chart,
+                    ),
+                    onTap: () {
+                      showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            content: Padding(
+                              padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
+                              child: SelectableText.rich(
+                                TextSpan(
+                                    children: controller.stats.entries.map((e) => TextSpan(text: "${e.key.capitalizeFirst!.replaceAll("Handles", "iMessage Numbers")}: ${e.value}${controller.stats.keys.last != e.key ? "\n\n" : ""}")).toList()
+                                ),
+                              ),
+                            ),
+                            title: Text("Stats"),
+                            actions: <Widget>[
+                              TextButton(
+                                child: Text("Dismiss"),
+                                onPressed: () {
+                                  Get.back();
+                                },
+                              ),
+                            ],
+                          )
+                      );
+                    },
+                  ) : SizedBox.shrink()),
+                  Obx(() => (controller.serverVersionCode.value ?? 0) >= 42  && controller.stats.isNotEmpty ?  Container(
+                    color: tileColor,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 65.0),
+                      child: SettingsDivider(color: headerColor),
+                    ),
                   ) : SizedBox.shrink()),
                   SettingsTile(
                     title: "Show QR Code",
@@ -247,6 +274,14 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                               ),
                             ),
                             title: Text("QR Code"),
+                            actions: <Widget>[
+                              TextButton(
+                                child: Text("Dismiss"),
+                                onPressed: () {
+                                  Get.back();
+                                },
+                              ),
+                            ],
                           )
                       );
                     },
@@ -379,7 +414,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                         );
                       },
                       onTap: () async {
-                        var fcmData;
+                        List<dynamic>? fcmData;
                         try {
                           fcmData = jsonDecode(
                             await Navigator.of(context).push(
@@ -481,7 +516,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
 
                         if (kIsDesktop) {
                           String downloadsPath = (await getDownloadsDirectory())!.path;
-                          File(join(downloadsPath, "main.log"))..writeAsStringSync(res['data']);
+                          File(join(downloadsPath, "main.log")).writeAsStringSync(res['data']);
                           return showSnackbar('Success', 'Saved logs to $downloadsPath!');
                         }
 
@@ -496,7 +531,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                         }
 
                         String appDocPath = SettingsManager().appDocDir.path;
-                        File logFile = new File("$appDocPath/attachments/main.log");
+                        File logFile = File("$appDocPath/attachments/main.log");
 
                         if (logFile.existsSync()) {
                           logFile.deleteSync();
@@ -542,9 +577,9 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                         controller.lastRestartMessages = now;
 
                         // Create a temporary functon so we can call it easily
-                        Function stopRestarting = () {
+                        void stopRestarting() {
                           controller.isRestartingMessages.value = false;
-                        };
+                        }
 
                         // Execute the restart
                         try {
@@ -578,7 +613,9 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                           child: SettingsDivider(color: headerColor),
                         ),
                       );
-                    } else return SizedBox.shrink();
+                    } else {
+                      return SizedBox.shrink();
+                    }
                   }),
                   Obx(() {
                     if (SettingsManager().settings.enablePrivateAPI.value
@@ -605,9 +642,9 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                             controller.lastRestartPrivateAPI = now;
 
                             // Create a temporary functon so we can call it easily
-                            Function stopRestarting = () {
+                            void stopRestarting() {
                               controller.isRestartingPrivateAPI.value = false;
-                            };
+                            }
 
                             // Execute the restart
                             try {
@@ -632,7 +669,9 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                                 strokeWidth: 3,
                                 valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
                               )));
-                    } else return SizedBox.shrink();
+                    } else {
+                      return SizedBox.shrink();
+                    }
                   }),
                   Container(
                     color: tileColor,
@@ -663,9 +702,9 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                         // Save the last time we restarted
                         controller.lastRestart = now;
 
-                        Function stopRestarting = () {
+                        void stopRestarting() {
                           controller.isRestarting.value = false;
-                        };
+                        }
 
                         // Perform the restart
                         try {
@@ -676,7 +715,7 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                         }
 
                         // After 5 seconds, remove the restarting message
-                        Future.delayed(new Duration(seconds: 5), () {
+                        Future.delayed(Duration(seconds: 5), () {
                           stopRestarting();
                         });
                       },
@@ -768,7 +807,7 @@ class _SyncDialogState extends State<SyncDialog> {
 
     DateTime now = DateTime.now().toUtc().subtract(lookback!);
     SocketManager().fetchMessages(null, after: now.millisecondsSinceEpoch)!.then((dynamic messages) {
-      if (this.mounted) {
+      if (mounted) {
         setState(() {
           message = "Adding ${messages.length} messages...";
         });
@@ -781,10 +820,11 @@ class _SyncDialogState extends State<SyncDialog> {
           this.progress = progress / length;
         }
 
-        if (this.mounted)
+        if (mounted) {
           setState(() {
             message = "Adding $progress of $length (${((this.progress ?? 0) * 100).floor().toInt()}%)";
           });
+        }
       }).then((List<Message> items) {
         onFinish(true, items.length);
       });
@@ -794,9 +834,9 @@ class _SyncDialogState extends State<SyncDialog> {
   }
 
   void onFinish([bool success = true, int? total]) {
-    if (!this.mounted) return;
+    if (!mounted) return;
 
-    this.progress = 100;
+    progress = 100;
     message = "Finished adding $total messages!";
     setState(() {});
   }
@@ -852,10 +892,10 @@ class _SyncDialogState extends State<SyncDialog> {
             child: Slider(
               value: lookback?.inDays.toDouble() ?? 1.0,
               onChanged: (double value) {
-                if (!this.mounted) return;
+                if (!mounted) return;
 
                 setState(() {
-                  lookback = new Duration(days: value.toInt());
+                  lookback = Duration(days: value.toInt());
                 });
               },
               label: lookback?.inDays.toString() ?? "1",
@@ -870,8 +910,8 @@ class _SyncDialogState extends State<SyncDialog> {
       actions = [
         TextButton(
           onPressed: () {
-            if (!this.mounted) return;
-            if (lookback == null) lookback = new Duration(days: 1);
+            if (!mounted) return;
+            lookback ??= Duration(days: 1);
             page = 1;
             message = "Fetching messages...";
             setState(() {});

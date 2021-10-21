@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 
 class FailedToScan extends StatelessWidget {
   const FailedToScan({Key? key, required this.exception, required this.title, this.showCopy = true}) : super(key: key);
-  final exception;
+  final dynamic exception;
   final String title;
   final bool showCopy;
 
@@ -38,7 +38,7 @@ class FailedToScan extends StatelessWidget {
               style: Theme.of(context).textTheme.bodyText1!.apply(color: Theme.of(context).primaryColor),
             ),
             onPressed: () {
-              Clipboard.setData(new ClipboardData(text: exception));
+              Clipboard.setData(ClipboardData(text: exception));
               Navigator.of(context).pop();
             },
           ),

@@ -265,15 +265,15 @@ class SettingsTile extends StatelessWidget {
     return Container(
       color: SettingsManager().settings.skin.value == Skins.Samsung ? null : backgroundColor,
       child: ListTile(
-        onLongPress: this.onLongPress as void Function()?,
+        onLongPress: onLongPress as void Function()?,
         tileColor: SettingsManager().settings.skin.value == Skins.Samsung ? null : backgroundColor,
-        onTap: this.onTap as void Function()?,
+        onTap: onTap as void Function()?,
         leading: leading,
         title: Text(
-          this.title!,
+          title!,
           style: Theme.of(context).textTheme.bodyText1,
         ),
-        trailing: this.trailing,
+        trailing: trailing,
         subtitle: subtitle != null
             ? Text(
           subtitle!,
@@ -313,15 +313,15 @@ class SettingsTextField extends StatelessWidget {
     return Material(
       color: Theme.of(context).backgroundColor,
       child: InkWell(
-        onTap: this.onTap as void Function()?,
+        onTap: onTap as void Function()?,
         child: Column(
           children: <Widget>[
             ListTile(
               title: Text(
-                this.title,
+                title,
                 style: Theme.of(context).textTheme.bodyText1,
               ),
-              trailing: this.trailing,
+              trailing: trailing,
               subtitle: Padding(
                 padding: EdgeInsets.only(top: 10.0),
                 child: CustomCupertinoTextField(
@@ -721,8 +721,8 @@ class SquircleBorder extends ShapeBorder {
   final double superRadius;
 
   const SquircleBorder({
-    this.side: BorderSide.none,
-    this.superRadius: 5.0,
+    this.side = BorderSide.none,
+    this.superRadius = 5.0,
   });
 
   @override
@@ -730,7 +730,7 @@ class SquircleBorder extends ShapeBorder {
 
   @override
   ShapeBorder scale(double t) {
-    return new SquircleBorder(
+    return SquircleBorder(
       side: side.scale(t),
       superRadius: superRadius * t,
     );
@@ -750,7 +750,7 @@ class SquircleBorder extends ShapeBorder {
     final c = rect.center;
     final dx = c.dx * (1.0 / superRadius);
     final dy = c.dy * (1.0 / superRadius);
-    return new Path()
+    return Path()
       ..moveTo(c.dx, 0.0)
       ..relativeCubicTo(c.dx - dx, 0.0, c.dx, dy, c.dx, c.dy)
       ..relativeCubicTo(0.0, c.dy - dy, -dx, c.dy, -c.dx, c.dy)
