@@ -479,6 +479,82 @@ class Chat {
     return this;
   }
 
+  /// Add a lot of messages for the single chat to avoid running [addMessage]
+  /// in a loop
+  Future<List<Message>> bulkAddMessages(List<Message> messages, {bool changeUnreadStatus = true, bool checkForMessageText = true}) async {
+    final Database? db = await DBProvider.db.database;
+
+    for (Message m in messages) {
+      // If this is a message preview and we don't already have metadata for this, get it
+      if (!m.fullText.replaceAll("\n", " ").hasUrl || MetadataHelper.mapIsNotEmpty(m.metadata)) continue;
+      Metadata? meta = await MetadataHelper.fetchMetadata(m);
+      if (!MetadataHelper.isNotEmpty(meta)) continue;
+
+      // Save the metadata to the object
+      m.metadata = meta!.toJson();
+
+      // If pre-caching is enabled, fetch the image and save it
+      if (SettingsManager().settings.preCachePreviewImages.value &&
+          m.metadata!.containsKey("image") &&
+          !isNullOrEmpty(m.metadata!["image"])!) {
+        // Save from URL
+        File? newFile = await saveImageFromUrl(m.guid!, m.metadata!["image"]);
+
+        // If we downloaded a file, set the new metadata path
+        if (newFile != null && newFile.existsSync()) {
+          m.metadata!["image"] = newFile.path;
+        }
+      }
+    }
+
+    // Save to DB
+    for (Message m in messages) {
+      try {
+        await m.save();
+        await db?.insert("chat_message_join", {"chatId": id, "messageId": m.id});
+      } catch (_) {}
+    }
+
+    Message? newer = messages
+        .where((e) => (latestMessageDate?.millisecondsSinceEpoch ?? 0) < e.dateCreated!.millisecondsSinceEpoch)
+        .sorted((a, b) => b.dateCreated!.compareTo(a.dateCreated!)).firstOrNull;
+
+    // If the incoming message was newer than the "last" one, set the unread status accordingly
+    if (checkForMessageText && changeUnreadStatus && newer != null) {
+      // If the message is from me, mark it unread
+      // If the message is not from the same chat as the current chat, mark unread
+      if (newer.isFromMe!) {
+        toggleHasUnread(false);
+      } else if (!CurrentChat.isActive(guid!)) {
+        toggleHasUnread(true);
+      }
+    }
+
+    if (checkForMessageText) {
+      // Update the chat position
+      ChatBloc().updateChatPosition(this);
+    }
+
+    // If the message is for adding or removing participants,
+    // we need to ensure that all of the chat participants are correct by syncing with the server
+    Message? participantEvent = messages.firstWhereOrNull((element) => isParticipantEvent(element));
+    if (participantEvent != null && checkForMessageText) {
+      serverSyncParticipants();
+    }
+
+    if (newer != null && checkForMessageText) {
+      latestMessage = newer;
+      latestMessageText = await MessageHelper.getNotificationText(newer);
+      fakeLatestMessageText = faker.lorem.words((latestMessageText ?? "").split(" ").length).join(" ");
+      latestMessageDate = newer.dateCreated;
+    }
+
+    save();
+
+    // Return the current chat instance (with updated vals)
+    return messages;
+  }
+
   void serverSyncParticipants() {
     // Send message to server to get the participants
     SocketManager().sendMessage("get-participants", {"identifier": this.guid}, (response) async {
