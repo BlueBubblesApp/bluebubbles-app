@@ -99,7 +99,10 @@ public class MainActivity extends FlutterFragmentActivity {
                     engine = new FlutterEngine(getApplicationContext());
                 }
                 Log.d("Notifications", "Opening Chat with GUID: " + startingChat);
-                new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("ChatOpen", intent.getExtras().getString("chatGuid"));
+                HashMap<String, Object> args = new HashMap<>();
+                args.put("guid", intent.getExtras().getString("chatGuid"));
+                args.put("bubble", intent.getExtras().getString("bubble"));
+                new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("ChatOpen", args);
             } else if (type.equals(SocketIssueWarning.TYPE)) {
                 new MethodChannel(engine.getDartExecutor().getBinaryMessenger(), CHANNEL).invokeMethod("socket-error-open", null);
             }
