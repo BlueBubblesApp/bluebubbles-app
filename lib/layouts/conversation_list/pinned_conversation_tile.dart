@@ -45,32 +45,13 @@ class PinnedConversationTile extends StatefulWidget {
   _PinnedConversationTileState createState() => _PinnedConversationTileState();
 }
 
-class _PinnedConversationTileState extends State<PinnedConversationTile> with AutomaticKeepAliveClientMixin {
-  bool isFetching = false;
-  Brightness? brightness;
-  Color? previousBackgroundColor;
-  bool gotBrightness = false;
-
+class _PinnedConversationTileState extends State<PinnedConversationTile> {
   // Typing indicator
   RxBool showTypingIndicator = false.obs;
-
-  void loadBrightness() {
-    Color now = context.theme.backgroundColor;
-    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
-    if (!themeChanged && gotBrightness) return;
-
-    previousBackgroundColor = now;
-
-    bool isDark = now.computeLuminance() < 0.179;
-    brightness = isDark ? Brightness.dark : Brightness.light;
-    gotBrightness = true;
-    if (this.mounted) setState(() {});
-  }
 
   @override
   void initState() {
     super.initState();
-    fetchParticipants();
     // Listen for changes in the group
     NewMessageManager().stream.listen((NewMessageEvent event) async {
       // Make sure we have the required data to qualify for this tile
@@ -88,11 +69,11 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
         Logger.error(ex.toString());
       }
 
-      this.setNewChatData(forceUpdate: true);
+      setNewChatData(forceUpdate: true);
     });
   }
 
-  void setNewChatData({forceUpdate: false}) async {
+  void setNewChatData({forceUpdate = false}) async {
     // Save the current participant list and get the latest
     List<Handle> ogParticipants = widget.chat.participants;
     await widget.chat.getParticipants();
@@ -103,23 +84,8 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
 
     // If the original data is different, update the state
     if (ogTitle != widget.chat.title || ogParticipants.length != widget.chat.participants.length || forceUpdate) {
-      if (this.mounted) setState(() {});
+      if (mounted) setState(() {});
     }
-  }
-
-  Future<void> fetchParticipants() async {
-    if (isFetching) return;
-    isFetching = true;
-
-    // If our chat does not have any participants, get them
-    if (isNullOrEmpty(widget.chat.participants)!) {
-      await widget.chat.getParticipants();
-      if (!isNullOrEmpty(widget.chat.participants)! && this.mounted) {
-        setState(() {});
-      }
-    }
-
-    isFetching = false;
   }
 
   void onTapUp(details) {
@@ -135,7 +101,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
   }
 
   void onTapUpBypass() {
-    this.onTapUp(TapUpDetails(kind: PointerDeviceKind.touch));
+    onTapUp(TapUpDetails(kind: PointerDeviceKind.touch));
   }
 
   Widget buildSubtitle() {
@@ -144,14 +110,17 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
         SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeContactNames.value;
 
     TextStyle? style = context.textTheme.subtitle1!.apply(fontSizeFactor: 0.85);
-    String? title = widget.chat.title != null ? widget.chat.title : "";
+    if (widget.chat.title == null) widget.chat.getTitle();
+    String title = widget.chat.title ?? "Fake Person";
 
-    if (generateNames)
-      title = widget.chat.fakeParticipants.length == 1 ? widget.chat.fakeParticipants[0] : "Group Chat";
-    else if (hideInfo) style = style.copyWith(color: Colors.transparent);
+    if (generateNames) {
+      title = (widget.chat.fakeParticipants.length == 1 ? widget.chat.fakeParticipants[0] : "Group Chat")!;
+    } else if (hideInfo) {
+      style = style.copyWith(color: Colors.transparent);
+    }
 
     return Text(
-      title!,
+      title,
       style: style,
       overflow: TextOverflow.ellipsis,
       textAlign: TextAlign.center,
@@ -173,7 +142,6 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
 
     late Offset _tapPosition;
 
@@ -244,7 +212,7 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> with Au
                                 chat: widget.chat,
                                 size: maxWidth,
                                 editable: false,
-                                onTap: this.onTapUpBypass,
+                                onTap: onTapUpBypass,
                               ),
                               if (widget.chat.muteType != "mute" && (widget.chat.hasUnreadMessage ?? false))
                                 Positioned(

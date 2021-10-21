@@ -223,7 +223,7 @@ class ChatBloc {
   Future<void> updateShareTarget(Chat chat) async {
     Uint8List? icon;
     Contact? contact =
-        chat.participants.length == 1 ? await ContactManager().getCachedContact(chat.participants.first) : null;
+        chat.participants.length == 1 ? ContactManager().getCachedContact(handle: chat.participants.first) : null;
     try {
       // If there is a contact specified, we can use it's avatar
       if (contact != null && contact.avatar.value != null && contact.avatar.value!.isNotEmpty) {

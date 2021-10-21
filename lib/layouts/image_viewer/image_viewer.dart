@@ -56,7 +56,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
   Future<void> initBytes() async {
     if (kIsWeb || widget.file.path == null) {
       bytes = widget.file.bytes;
-    } else if (widget.attachment.mimeType == "image/heic") {
+    } else if (widget.attachment.mimeType == "image/heic" || widget.attachment.mimeType == "image/heif") {
       bytes =
           await AttachmentHelper.compressAttachment(widget.attachment, widget.file.path!, qualityOverride: 100);
     } else {

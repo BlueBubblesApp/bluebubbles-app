@@ -40,7 +40,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
   bool openedChatAlready = false;
 
   bool hasPinnedChat() {
-    for (var i = 0; i < ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).unknownSendersHelper(widget.parent.widget.showUnknownSenders).length; i++) {
+    for (int i = 0; i < ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).unknownSendersHelper(widget.parent.widget.showUnknownSenders).length; i++) {
       if (ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).unknownSendersHelper(widget.parent.widget.showUnknownSenders)[i].isPinned!) {
         widget.parent.hasPinnedChats = true;
         return true;
@@ -53,7 +53,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
 
   bool hasNormalChats() {
     int counter = 0;
-    for (var i = 0; i < ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).unknownSendersHelper(widget.parent.widget.showUnknownSenders).length; i++) {
+    for (int i = 0; i < ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).unknownSendersHelper(widget.parent.widget.showUnknownSenders).length; i++) {
       if (ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).unknownSendersHelper(widget.parent.widget.showUnknownSenders)[i].isPinned!) {
         counter++;
       } else {}
@@ -209,8 +209,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
   Widget buildChatList() {
     bool showArchived = widget.parent.widget.showArchivedChats;
     bool showUnknown = widget.parent.widget.showUnknownSenders;
-    return Obx(
-          () => WillPopScope(
+    return Obx(() => WillPopScope(
         onWillPop: () async {
           if (selected.isNotEmpty) {
             selected = [];
@@ -224,8 +223,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
             preferredSize: Size.fromHeight(60),
             child: AnimatedSwitcher(
               duration: Duration(milliseconds: 500),
-              child: selected.isEmpty
-                  ? AppBar(
+              child: selected.isEmpty ? AppBar(
                 iconTheme: IconThemeData(color: context.theme.primaryColor),
                 brightness: ThemeData.estimateBrightnessForColor(context.theme.backgroundColor),
                 bottom: PreferredSize(
@@ -239,8 +237,8 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                   mainAxisAlignment: MainAxisAlignment.start,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    ...widget.parent.getHeaderTextWidgets(size: 20),
-                    ...widget.parent.getConnectionIndicatorWidgets(),
+                    widget.parent.getHeaderTextWidget(size: 20),
+                    widget.parent.getConnectionIndicatorWidget(),
                     widget.parent.getSyncIndicatorWidget(),
                   ],
                 ),
@@ -265,6 +263,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                   (SettingsManager().settings.moveChatCreatorToHeader.value && !showArchived && !showUnknown)
                       ? GestureDetector(
                     onTap: () {
+                      EventDispatcher().emit("update-highlight", null);
                       CustomNavigator.pushAndRemoveUntil(
                         context,
                         ConversationView(
@@ -301,7 +300,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
 
                       String appDocPath = SettingsManager().appDocDir.path;
                       String ext = ".png";
-                      File file = new File("$appDocPath/attachments/" + randomString(16) + ext);
+                      File file = File("$appDocPath/attachments/" + randomString(16) + ext);
                       await file.create(recursive: true);
 
                       // Take the picture after opening the camera
@@ -356,11 +355,11 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                             .contains(selected.where((element) => element.hasUnreadMessage!).length))
                           GestureDetector(
                             onTap: () {
-                              selected.forEach((element) async {
-                                await element.toggleHasUnread(!element.hasUnreadMessage!);
-                              });
+                              for (Chat element in selected) {
+                                element.toggleHasUnread(!element.hasUnreadMessage!);
+                              }
                               selected = [];
-                              if (this.mounted) setState(() {});
+                              if (mounted) setState(() {});
                             },
                             child: Padding(
                               padding: const EdgeInsets.all(8.0),
@@ -374,11 +373,11 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                             .contains(selected.where((element) => element.muteType == "mute").length))
                           GestureDetector(
                             onTap: () {
-                              selected.forEach((element) async {
-                                await element.toggleMute(element.muteType != "mute");
-                              });
+                              for (Chat element in selected) {
+                                element.toggleMute(element.muteType != "mute");
+                              }
                               selected = [];
-                              if (this.mounted) setState(() {});
+                              if (mounted) setState(() {});
                             },
                             child: Padding(
                               padding: const EdgeInsets.all(8.0),
@@ -394,11 +393,11 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                             .contains(selected.where((element) => element.isPinned!).length))
                           GestureDetector(
                             onTap: () {
-                              selected.forEach((element) {
+                              for (Chat element in selected) {
                                 element.togglePin(!element.isPinned!);
-                              });
+                              }
                               selected = [];
-                              if (this.mounted) setState(() {});
+                              if (mounted) setState(() {});
                             },
                             child: Padding(
                               padding: const EdgeInsets.all(8.0),
@@ -410,15 +409,15 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                           ),
                         GestureDetector(
                           onTap: () {
-                            selected.forEach((element) {
+                            for (Chat element in selected) {
                               if (element.isArchived!) {
                                 ChatBloc().unArchiveChat(element);
                               } else {
                                 ChatBloc().archiveChat(element);
                               }
-                            });
+                            }
                             selected = [];
-                            if (this.mounted) setState(() {});
+                            if (mounted) setState(() {});
                           },
                           child: Padding(
                             padding: const EdgeInsets.all(8.0),
@@ -431,12 +430,12 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                         if (selected[0].isArchived!)
                           GestureDetector(
                             onTap: () {
-                              selected.forEach((element) {
+                              for (Chat element in selected) {
                                 ChatBloc().deleteChat(element);
                                 Chat.deleteChat(element);
-                              });
+                              }
                               selected = [];
-                              if (this.mounted) setState(() {});
+                              if (mounted) setState(() {});
                             },
                             child: Padding(
                               padding: const EdgeInsets.all(8.0),
@@ -509,12 +508,12 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                                     .archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]
                                     .togglePin(!ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isPinned!);
                                 EventDispatcher().emit("refresh", null);
-                                if (this.mounted) setState(() {});
+                                if (mounted) setState(() {});
                               } else if (SettingsManager().settings.materialLeftAction.value ==
                                   MaterialSwipeAction.alerts) {
                                 await ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].toggleMute(
                                     ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].muteType != "mute");
-                                if (this.mounted) setState(() {});
+                                if (mounted) setState(() {});
                               } else if (SettingsManager().settings.materialLeftAction.value ==
                                   MaterialSwipeAction.delete) {
                                 ChatBloc().deleteChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
@@ -537,12 +536,12 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                                     .archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]
                                     .togglePin(!ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isPinned!);
                                 EventDispatcher().emit("refresh", null);
-                                if (this.mounted) setState(() {});
+                                if (mounted) setState(() {});
                               } else if (SettingsManager().settings.materialRightAction.value ==
                                   MaterialSwipeAction.alerts) {
                                 await ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].toggleMute(
                                     ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].muteType != "mute");
-                                if (this.mounted) setState(() {});
+                                if (mounted) setState(() {});
                               } else if (SettingsManager().settings.materialRightAction.value ==
                                   MaterialSwipeAction.delete) {
                                 ChatBloc().deleteChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);

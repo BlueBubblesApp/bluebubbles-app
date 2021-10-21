@@ -370,9 +370,9 @@ Future<String> getGroupEventText(Message message) async {
   return text;
 }
 
-Future<MemoryImage?> loadAvatar(Chat chat, Handle? handle) async {
+MemoryImage? loadAvatar(Chat chat, Handle? handle) {
   // Get the contact
-  Contact? contact = await ContactManager().getCachedContact(handle);
+  Contact? contact = ContactManager().getCachedContact(handle: handle);
   Uint8List? avatar = contact?.avatar.value;
   if (isNullOrEmpty(avatar)!) return null;
 
