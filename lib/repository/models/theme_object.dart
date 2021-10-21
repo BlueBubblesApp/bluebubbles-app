@@ -32,7 +32,7 @@ class ThemeObject {
     this.data,
   });
   factory ThemeObject.fromData(ThemeData data, String name, {bool gradientBg = false}) {
-    ThemeObject object = new ThemeObject(
+    ThemeObject object = ThemeObject(
       data: data.copyWith(),
       name: name,
       gradientBg: gradientBg,
@@ -54,7 +54,7 @@ class ThemeObject {
     );
   }
 
-  bool get isPreset => this.name == "OLED Dark" || this.name == "Bright White" || this.name == "Nord Theme" || this.name == "Music Theme (Light)" || this.name == "Music Theme (Dark)";
+  bool get isPreset => name == "OLED Dark" || name == "Bright White" || name == "Nord Theme" || name == "Music Theme (Light)" || name == "Music Theme (Dark)";
 
   List<ThemeEntry> toEntries() => [
         ThemeEntry.fromStyle(ThemeColors.Headline1, data!.textTheme.headline1!),
@@ -70,33 +70,33 @@ class ThemeObject {
       ];
 
   Future<ThemeObject> save({bool updateIfAbsent = true}) async {
-    assert(this.data != null);
+    assert(data != null);
     final Database? db = await DBProvider.db.database;
 
     if (entries.isEmpty) {
-      entries = this.toEntries();
+      entries = toEntries();
     }
 
-    ThemeObject? existing = await ThemeObject.findOne({"name": this.name});
+    ThemeObject? existing = await ThemeObject.findOne({"name": name});
     if (existing != null) {
-      this.id = existing.id;
+      id = existing.id;
     }
 
     // If it already exists, update it
     if (existing == null) {
       // Remove the ID from the map for inserting
-      var map = this.toMap();
+      var map = toMap();
       if (map.containsKey("ROWID")) {
         map.remove("ROWID");
       }
 
-      this.id = (await db?.insert("themes", map)) ?? id;
+      id = (await db?.insert("themes", map)) ?? id;
     } else if (updateIfAbsent) {
-      await this.update();
+      await update();
     }
 
-    if (this.isPreset && !this.name!.contains("Music")) return this;
-    for (ThemeEntry entry in this.entries) {
+    if (isPreset && !name!.contains("Music")) return this;
+    for (ThemeEntry entry in entries) {
       await entry.save(this);
     }
 
@@ -104,37 +104,37 @@ class ThemeObject {
   }
 
   Future<void> delete() async {
-    if (this.isPreset) return;
+    if (isPreset) return;
     final Database? db = await DBProvider.db.database;
 
-    if (this.id == null) await this.save(updateIfAbsent: false);
-    await this.fetchData();
-    for (ThemeEntry entry in this.entries) {
+    if (id == null) await save(updateIfAbsent: false);
+    await fetchData();
+    for (ThemeEntry entry in entries) {
       await db?.delete("theme_values", where: "ROWID = ?", whereArgs: [entry.id]);
     }
-    await db?.delete("theme_value_join", where: "themeId = ?", whereArgs: [this.id]);
-    await db?.delete("themes", where: "ROWID = ?", whereArgs: [this.id]);
+    await db?.delete("theme_value_join", where: "themeId = ?", whereArgs: [id]);
+    await db?.delete("themes", where: "ROWID = ?", whereArgs: [id]);
   }
 
   Future<ThemeObject> update() async {
     final Database? db = await DBProvider.db.database;
 
     // If it already exists, update it
-    if (this.id != null) {
+    if (id != null) {
       await db?.update(
           "themes",
           {
-            "name": this.name,
-            "selectedLightTheme": this.selectedLightTheme ? 1 : 0,
-            "selectedDarkTheme": this.selectedDarkTheme ? 1 : 0,
-            "gradientBg": this.gradientBg ? 1 : 0,
-            "previousLightTheme": this.previousLightTheme ? 1 : 0,
-            "previousDarkTheme": this.previousDarkTheme ? 1 : 0,
+            "name": name,
+            "selectedLightTheme": selectedLightTheme ? 1 : 0,
+            "selectedDarkTheme": selectedDarkTheme ? 1 : 0,
+            "gradientBg": gradientBg ? 1 : 0,
+            "previousLightTheme": previousLightTheme ? 1 : 0,
+            "previousDarkTheme": previousDarkTheme ? 1 : 0,
           },
           where: "ROWID = ?",
-          whereArgs: [this.id]);
+          whereArgs: [id]);
     } else {
-      await this.save(updateIfAbsent: false);
+      await save(updateIfAbsent: false);
     }
 
     return this;
@@ -180,9 +180,13 @@ class ThemeObject {
     final Database? db = await DBProvider.db.database;
     if (db == null) return null;
     List<String> whereParams = [];
-    filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
+    for (var filter in filters.keys) {
+      whereParams.add('$filter = ?');
+    }
     List<dynamic> whereArgs = [];
-    filters.values.forEach((filter) => whereArgs.add(filter));
+    for (var filter in filters.values) {
+      whereArgs.add(filter);
+    }
     var res = await db.query("themes", where: whereParams.join(" AND "), whereArgs: whereArgs, limit: 1);
 
     if (res.isEmpty) {
@@ -204,18 +208,18 @@ class ThemeObject {
   Future<List<ThemeEntry>> fetchData() async {
     if (isPreset && !name!.contains("Music")) {
       if (name == "OLED Dark") {
-        this.data = oledDarkTheme;
+        data = oledDarkTheme;
       } else if (name == "Bright White") {
-        this.data = whiteLightTheme;
+        data = whiteLightTheme;
       } else if (name == "Nord Theme") {
-        this.data = nordDarkTheme;
+        data = nordDarkTheme;
       }
 
-      this.entries = this.toEntries();
-      return this.entries;
+      entries = toEntries();
+      return entries;
     }
     final Database? db = await DBProvider.db.database;
-    if (db == null) return this.entries;
+    if (db == null) return entries;
     var res = await db.rawQuery(
         "SELECT"
         " theme_values.ROWID as ROWID,"
@@ -227,31 +231,31 @@ class ThemeObject {
         " JOIN theme_value_join AS tvj ON themes.ROWID = tvj.themeId"
         " JOIN theme_values ON theme_values.ROWID = tvj.themeValueId"
         " WHERE themes.ROWID = ?;",
-        [this.id]);
+        [id]);
     if (name == "Music Theme (Light)" && res.isEmpty) {
       data = whiteLightTheme;
-      entries = this.toEntries();
+      entries = toEntries();
     } else if (name == "Music Theme (Dark)" && res.isEmpty) {
       data = oledDarkTheme;
-      entries = this.toEntries();
+      entries = toEntries();
     } else if (res.isNotEmpty) {
-      this.entries = res.map((t) => ThemeEntry.fromMap(t)).toList();
-      this.data = themeData;
+      entries = res.map((t) => ThemeEntry.fromMap(t)).toList();
+      data = themeData;
     } else {
-      this.entries = [];
-      this.data = themeData;
+      entries = [];
+      data = themeData;
     }
-    return this.entries;
+    return entries;
   }
 
   Map<String, dynamic> toMap() => {
-        "ROWID": this.id,
-        "name": this.name,
-        "selectedLightTheme": this.selectedLightTheme ? 1 : 0,
-        "selectedDarkTheme": this.selectedDarkTheme ? 1 : 0,
-        "gradientBg": this.gradientBg ? 1 : 0,
-        "previousLightTheme": this.previousLightTheme ? 1 : 0,
-        "previousDarkTheme": this.previousDarkTheme ? 1 : 0,
+        "ROWID": id,
+        "name": name,
+        "selectedLightTheme": selectedLightTheme ? 1 : 0,
+        "selectedDarkTheme": selectedDarkTheme ? 1 : 0,
+        "gradientBg": gradientBg ? 1 : 0,
+        "previousLightTheme": previousLightTheme ? 1 : 0,
+        "previousDarkTheme": previousDarkTheme ? 1 : 0,
       };
 
   ThemeData get themeData {

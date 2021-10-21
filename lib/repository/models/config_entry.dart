@@ -52,59 +52,63 @@ class ConfigEntry<T> {
   }
 
   Future<ConfigEntry> save(String table, {bool updateIfAbsent = true, Database? database}) async {
-    final Database? db = database != null ? database : await DBProvider.db.database;
+    final Database? db = database ?? await DBProvider.db.database;
 
     // Try to find an existing ConfigEntry before saving it
-    ConfigEntry? existing = await ConfigEntry.findOne(table, {"name": this.name}, database: database);
+    ConfigEntry? existing = await ConfigEntry.findOne(table, {"name": name}, database: database);
     if (existing != null) {
-      this.id = existing.id;
+      id = existing.id;
     }
 
     // If it already exists, update it
     if (existing == null) {
       // Remove the ID from the map for inserting
-      var map = this.toMap();
+      var map = toMap();
       map.remove("ROWID");
       try {
-        this.id = await db!.insert(table, map);
+        id = await db!.insert(table, map);
       } catch (e) {
-        this.id = null;
+        id = null;
       }
     } else if (updateIfAbsent) {
-      await this.update(table, database: database);
+      await update(table, database: database);
     }
 
     return this;
   }
 
   Future<ConfigEntry> update(String table, {Database? database}) async {
-    final Database? db = database != null ? database : await DBProvider.db.database;
+    final Database? db = database ?? await DBProvider.db.database;
 
     // If it already exists, update it
-    if (this.id != null) {
+    if (id != null) {
       await db!.update(
           table,
           {
-            "name": this.name,
+            "name": name,
             "value": DBConverter.getString(value),
             "type": DBConverter.getStringType(type),
           },
           where: "ROWID = ?",
-          whereArgs: [this.id]);
+          whereArgs: [id]);
     } else {
-      await this.save(table, updateIfAbsent: false, database: database);
+      await save(table, updateIfAbsent: false, database: database);
     }
 
     return this;
   }
 
   static Future<ConfigEntry?> findOne(String table, Map<String, dynamic> filters, {Database? database}) async {
-    final Database? db = database != null ? database : await DBProvider.db.database;
+    final Database? db = database ?? await DBProvider.db.database;
     if (db == null) return null;
     List<String> whereParams = [];
-    filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
+    for (var filter in filters.keys) {
+      whereParams.add('$filter = ?');
+    }
     List<dynamic> whereArgs = [];
-    filters.values.forEach((filter) => whereArgs.add(filter));
+    for (var filter in filters.values) {
+      whereArgs.add(filter);
+    }
     var res = await db.query(table, where: whereParams.join(" AND "), whereArgs: whereArgs, limit: 1);
 
     if (res.isEmpty) {
