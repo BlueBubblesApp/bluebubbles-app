@@ -74,9 +74,11 @@ class RedactedModePanel extends StatelessWidget {
                     isFirstSentMessage: false,
                     showHandle: true,
                     showHero: false,
+                    showReplies: false,
                     message: Message(
                       guid: "redacted-mode-demo",
                       dateDelivered: DateTime.now().toLocal(),
+                      dateCreated: DateTime.now().toLocal(),
                       isFromMe: false,
                       hasReactions: true,
                       hasAttachments: true,
@@ -87,6 +89,7 @@ class RedactedModePanel extends StatelessWidget {
                       ),
                       associatedMessages: [
                         Message(
+                          dateCreated: DateTime.now().toLocal(),
                           guid: "redacted-mode-demo",
                           text: "Jane Doe liked a message you sent",
                           associatedMessageType: "like",

@@ -649,6 +649,8 @@ class Chat {
         " message.hasReactions AS hasReactions,"
         " message.metadata AS metadata,"
         " message.hasDdResults AS hasDdResults,"
+        " message.threadOriginatorGuid AS threadOriginatorGuid,"
+        " message.threadOriginatorPart AS threadOriginatorPart,"
         " handle.ROWID AS handleId,"
         " handle.originalROWID AS handleOriginalROWID,"
         " handle.address AS handleAddress,"

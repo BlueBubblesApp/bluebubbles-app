@@ -244,7 +244,7 @@ class MessageHelper {
       return "Interactive: ${MessageHelper.getInteractiveText(message)}";
     }
 
-    if (isNullOrEmpty(message.text, trimString: true)! && !message.hasAttachments) {
+    if (isNullOrEmpty(message.fullText, trimString: true)! && !message.hasAttachments) {
       return "";
     }
 
@@ -290,7 +290,7 @@ class MessageHelper {
       return "$output: ${attachmentStr.join(attachmentStr.length == 2 ? " & " : ", ")}";
     } else {
       // It's all other message types
-      return message.text ?? "";
+      return message.fullText;
     }
   }
 
@@ -304,7 +304,7 @@ class MessageHelper {
       return "Interactive: ${MessageHelper.getInteractiveText(message)}";
     }
 
-    if (isNullOrEmpty(message.text, trimString: true)! && !message.hasAttachments) {
+    if (isNullOrEmpty(message.fullText, trimString: true)! && !message.hasAttachments) {
       return "Empty message";
     }
 
@@ -361,7 +361,7 @@ class MessageHelper {
       return "$sender ${message.text}";
     } else {
       // It's all other message types
-      return message.text ?? "Unknown Message";
+      return message.fullText;
     }
   }
 

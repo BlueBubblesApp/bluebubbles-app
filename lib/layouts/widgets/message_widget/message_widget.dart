@@ -35,6 +35,7 @@ class MessageWidget extends StatefulWidget {
     required this.showHandle,
     required this.isFirstSentMessage,
     required this.showHero,
+    required this.showReplies,
     this.onUpdate,
     this.bloc,
   }) : super(key: key);
@@ -45,6 +46,7 @@ class MessageWidget extends StatefulWidget {
   final bool showHandle;
   final bool isFirstSentMessage;
   final bool showHero;
+  final bool showReplies;
   final Message? Function(NewMessageEvent event)? onUpdate;
   final MessageBloc? bloc;
 
@@ -288,6 +290,14 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
         StickersWidget(key: new Key("stickers-${associatedCount.toString()}"), messages: _message.associatedMessages);
     ReactionsWidget reactionsWidget = ReactionsWidget(
         key: new Key("reactions-${associatedCount.toString()}"), associatedMessages: _message.associatedMessages);
+    final separator = MessageTimeStampSeparator(
+      newerMessage: _message,
+      message: _olderMessage ?? _message,
+    );
+    final separator2 = MessageTimeStampSeparator(
+      newerMessage: _newerMessage,
+      message: _message,
+    );
 
     // Add the correct type of message to the message stack
     Widget message;
@@ -297,6 +307,10 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
         olderMessage: widget.olderMessage,
         newerMessage: widget.newerMessage,
         message: _message,
+        messageBloc: widget.bloc,
+        hasTimestampAbove: separator.buildTimeStamp().isNotEmpty,
+        hasTimestampBelow: separator2.buildTimeStamp().isNotEmpty,
+        showReplies: widget.showReplies,
         urlPreviewWidget: urlPreviewWidget,
         stickersWidget: stickersWidget,
         attachmentsWidget: widgetAttachments,
@@ -311,6 +325,10 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
         olderMessage: widget.olderMessage,
         newerMessage: widget.newerMessage,
         message: _message,
+        messageBloc: widget.bloc,
+        hasTimestampAbove: separator.buildTimeStamp().isNotEmpty,
+        hasTimestampBelow: separator2.buildTimeStamp().isNotEmpty,
+        showReplies: widget.showReplies,
         showHandle: widget.showHandle,
         urlPreviewWidget: urlPreviewWidget,
         stickersWidget: stickersWidget,
@@ -322,10 +340,7 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
     return Column(
       children: [
         message,
-        MessageTimeStampSeparator(
-          newerMessage: _newerMessage,
-          message: _message,
-        )
+        separator2,
       ],
     );
   }

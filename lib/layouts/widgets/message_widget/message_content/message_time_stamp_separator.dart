@@ -18,7 +18,7 @@ class MessageTimeStampSeparator extends StatelessWidget {
     return second.dateCreated!.difference(first.dateCreated!).inMinutes.abs() > threshold;
   }
 
-  Map<String, String> _buildTimeStamp() {
+  Map<String, String> buildTimeStamp() {
     if (SettingsManager().settings.skin.value == Skins.Samsung
         && newerMessage != null &&
         (!isEmptyString(message.fullText) || message.hasAttachments) &&
@@ -39,7 +39,7 @@ class MessageTimeStampSeparator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Map<String, String> timeStamp = _buildTimeStamp();
+    Map<String, String> timeStamp = buildTimeStamp();
 
     return timeStamp.isNotEmpty
         ? Padding(

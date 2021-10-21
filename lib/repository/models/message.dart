@@ -1,6 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
+import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:collection/src/iterable_extensions.dart';
 import 'package:crypto/crypto.dart' as crypto;
 
@@ -11,6 +15,7 @@ import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:sqflite/sqflite.dart';
@@ -29,6 +34,8 @@ String messageToJson(Message data) {
   final dyn = data.toMap();
   return json.encode(dyn);
 }
+
+enum LineType {meToMe, otherToMe, meToOther, otherToOther}
 
 class Message {
   int? id;
@@ -68,6 +75,8 @@ class Message {
   bool hasReactions;
   DateTime? dateDeleted;
   Map<String, dynamic>? metadata;
+  String? threadOriginatorGuid;
+  String? threadOriginatorPart;
 
   List<Attachment?>? attachments = [];
   List<Message> associatedMessages = [];
@@ -112,7 +121,9 @@ class Message {
       this.attachments = const [],
       this.associatedMessages = const [],
       this.dateDeleted,
-      this.metadata}) {
+      this.metadata,
+      this.threadOriginatorGuid,
+      this.threadOriginatorPart}) {
     if (error2 != null) error.value = error2;
   }
 
@@ -204,6 +215,8 @@ class Message {
       hasReactions: json.containsKey('hasReactions') ? ((json['hasReactions'] == 1) ? true : false) : false,
       dateDeleted: json.containsKey("dateDeleted") ? parseDate(json["dateDeleted"]) : null,
       metadata: metadata is String ? null : metadata,
+      threadOriginatorGuid: json['threadOriginatorGuid'],
+      threadOriginatorPart: json['threadOriginatorPart'],
     );
 
     // Adds fallback getter for the ID
@@ -424,8 +437,24 @@ class Message {
     }
     if (kIsWeb) {
       associatedMessages = bloc?.reactionMessages.values.where((element) => element.associatedMessageGuid == guid).toList() ?? [];
+      if (threadOriginatorGuid != null) {
+        final existing = bloc?.messages.values.firstWhereOrNull((e) => e.guid == threadOriginatorGuid);
+        final threadOriginator = existing ?? await Message.findOne({"guid": this.threadOriginatorGuid});
+        threadOriginator?.handle ??= await Handle.findOne({"ROWID": threadOriginator.handleId});
+        if (threadOriginator != null) associatedMessages.add(threadOriginator);
+        if (existing == null && threadOriginator != null) bloc?.addMessage(threadOriginator);
+        if (!guid!.startsWith("temp")) bloc?.threadOriginators[guid!] = threadOriginatorGuid!;
+      }
     } else {
       associatedMessages = await Message.find({"associatedMessageGuid": this.guid});
+      if (threadOriginatorGuid != null) {
+        final existing = bloc?.messages.values.firstWhereOrNull((e) => e.guid == threadOriginatorGuid);
+        final threadOriginator = existing ?? await Message.findOne({"guid": this.threadOriginatorGuid});
+        threadOriginator?.handle ??= await Handle.findOne({"ROWID": threadOriginator.handleId});
+        if (threadOriginator != null) associatedMessages.add(threadOriginator);
+        if (existing == null && threadOriginator != null) bloc?.addMessage(threadOriginator);
+        if (!guid!.startsWith("temp")) bloc?.threadOriginators[guid!] = threadOriginatorGuid!;
+      }
     }
     associatedMessages.sort((a, b) => a.originalROWID!.compareTo(b.originalROWID!));
     if (!kIsWeb) associatedMessages = MessageHelper.normalizedAssociatedMessages(associatedMessages);
@@ -643,6 +672,105 @@ class Message {
     }
   }
 
+  /// Get what shape the reply line should be
+  LineType getLineType(Message? olderMessage, Message threadOriginator) {
+    if (olderMessage?.threadOriginatorGuid != threadOriginatorGuid) olderMessage = threadOriginator;
+    if (isFromMe! && (olderMessage?.isFromMe ?? false)) {
+      return LineType.meToMe;
+    } else if (!isFromMe! && (olderMessage?.isFromMe ?? false)) {
+      return LineType.meToOther;
+    } else if (isFromMe! && !(olderMessage?.isFromMe ?? false)) {
+      return LineType.otherToMe;
+    } else {
+      return LineType.otherToOther;
+    }
+  }
+
+  /// Get whether the reply line from the message should connect to the message below
+  bool shouldConnectLower(Message? olderMessage, Message? newerMessage, Message threadOriginator) {
+    // if theres no newer message or it isn't part of the thread, don't connect
+    if (newerMessage == null || newerMessage.threadOriginatorGuid != threadOriginatorGuid) return false;
+    // if the line is from me to other or from other to other, don't connect lower.
+    // we only want lines ending at messages to me to connect downwards (this
+    // helps simplify some things and prevent rendering mistakes)
+    if (getLineType(olderMessage, threadOriginator) == LineType.meToOther || getLineType(olderMessage, threadOriginator) == LineType.otherToOther) return false;
+    // if the lower message isn't from me, then draw the connecting line
+    // (if the message is from me, that message will draw a connecting line up
+    // rather than this message drawing one downwards).
+    return isFromMe != newerMessage.isFromMe;
+  }
+
+  /// Get whether the reply line from the message should connect to the message above
+  bool shouldConnectUpper(Message? olderMessage, Message threadOriginator) {
+    // if theres no older message, or it isn't a part of the thread (make sure
+    // to check that it isn't actually an outlined bubble representing the
+    // thread originator), don't connect
+    if (olderMessage == null || (olderMessage.threadOriginatorGuid != threadOriginatorGuid && !upperIsThreadOriginatorBubble(olderMessage))) return false;
+    // if the older message is the outlined bubble, or the originator is from
+    // someone else and the message is from me, then draw the connecting line
+    // (the second condition might be redundant / unnecessary but I left it in
+    // just in case)
+    if (upperIsThreadOriginatorBubble(olderMessage) || (!threadOriginator.isFromMe! && isFromMe!) || getLineType(olderMessage, threadOriginator) == LineType.meToMe  || getLineType(olderMessage, threadOriginator) == LineType.otherToMe) return true;
+    // if the upper message is from me, then draw the connecting line
+    // (if the message is not from me, that message will draw a connecting line
+    // down rather than this message drawing one upwards).
+    return isFromMe == olderMessage.isFromMe;
+  }
+
+  /// Get whether the upper bubble is actually the thread originator as the
+  /// outlined bubble
+  bool upperIsThreadOriginatorBubble(Message? olderMessage) {
+    return olderMessage?.threadOriginatorGuid != threadOriginatorGuid;
+  }
+
+  /// Calculate the size of the message bubble by calculating text size or
+  /// attachment size
+  Size getBubbleSize(BuildContext context, {double? maxWidthOverride, double? minHeightOverride, String? textOverride}) {
+    // cache this value because the calculation can be expensive
+    if (ChatBloc().cachedMessageBubbleSizes[guid!] != null) return ChatBloc().cachedMessageBubbleSizes[guid!]!;
+    // if attachment, then grab width / height
+    if (fullText.isEmpty && (attachments ?? []).isNotEmpty) {
+      return Size(attachments!
+          .map((e) => e!.width)
+          .fold(0, (p, e) => max(p, (e ?? CustomNavigator.width(context) / 2).toDouble()) + 28),
+        attachments!
+          .map((e) => e!.height)
+          .fold(0, (p, e) => max(p, (e ?? CustomNavigator.width(context) / 2).toDouble())));
+    }
+    // initialize constraints for text rendering
+    final constraints = BoxConstraints(
+      maxWidth: maxWidthOverride ?? CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE - 30,
+      minHeight: minHeightOverride ?? Theme.of(context).textTheme.bodyText2!.fontSize!,
+    );
+    final renderParagraph = RichText(
+      text: TextSpan(
+        text: textOverride ?? fullText,
+        style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
+      ),
+    ).createRenderObject(context);
+    // get the text size
+    Size size = renderParagraph.getDryLayout(constraints);
+    // if the text is shorter than the full width, add 28 to account for the
+    // container margins
+    if (size.height < Theme.of(context).textTheme.bodyText2!.fontSize! * 2
+        || (subject != null && size.height < Theme.of(context).textTheme.bodyText2!.fontSize! * 3)) {
+      size = Size(size.width + 28, size.height);
+    }
+    // if we have a URL preview, extend to the full width
+    if (isUrlPreview()) {
+      size = Size(CustomNavigator.width(context) * 2 / 3 - 30, size.height);
+    }
+    // if we have reactions, account for the extra height they add
+    if (hasReactions) {
+      size = Size(size.width, size.height + 25);
+    }
+    // add 16 to the height to account for container margins
+    size = Size(size.width, size.height + 16);
+    // cache the value
+    ChatBloc().cachedMessageBubbleSizes[guid!] = size;
+    return size;
+  }
+
   Map<String, dynamic> toMap() => {
         "ROWID": id,
         "originalROWID": originalROWID,
@@ -682,5 +810,7 @@ class Message {
         "hasReactions": hasReactions ? 1 : 0,
         "dateDeleted": (dateDeleted == null) ? null : dateDeleted!.millisecondsSinceEpoch,
         "metadata": jsonEncode(metadata),
+        "threadOriginatorGuid": threadOriginatorGuid,
+        "threadOriginatorPart": threadOriginatorPart,
       };
 }

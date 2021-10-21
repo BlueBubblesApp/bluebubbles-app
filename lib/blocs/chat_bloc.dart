@@ -39,6 +39,8 @@ class ChatBloc {
 
   final List<Handle> cachedHandles = [];
 
+  final Map<String, Size> cachedMessageBubbleSizes = {};
+
   void updateUnreads() {
     _unreads.value = chats.where((element) => element.hasUnreadMessage ?? false).map((e) => e.guid).toList().length;
   }

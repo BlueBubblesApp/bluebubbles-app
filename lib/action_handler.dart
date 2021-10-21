@@ -43,8 +43,8 @@ class ActionHandler {
   /// sendMessage(chatObject, 'Hello world!')
   /// ```
   static Future<void> sendMessage(Chat chat, String text,
-      {MessageBloc? messageBloc, List<Attachment> attachments = const []}) async {
-    if (isNullOrEmpty(text, trimString: true)!) return;
+      {MessageBloc? messageBloc, List<Attachment> attachments = const [], String? subject, String? replyGuid}) async {
+    if (isNullOrEmpty(text, trimString: true)! && isNullOrEmpty(subject ?? "", trimString: true)!) return;
 
     if ((await SettingsManager().getMacOSVersion() ?? 10) < 11) {
       List<Message> messages = <Message>[];
@@ -79,14 +79,18 @@ class ActionHandler {
 
       Message mainMsg = Message(
         text: mainText.trim(),
+        subject: subject,
         dateCreated: DateTime.now(),
         hasAttachments: attachments.length > 0 ? true : false,
+        threadOriginatorGuid: replyGuid,
+        isFromMe: true,
       );
 
       // Generate a Temp GUID
       mainMsg.generateTempGuid();
 
-      if (mainMsg.text!.trim().length > 0) messages.add(mainMsg);
+      if (mainMsg.text!.trim().length > 0
+          || (mainMsg.subject?.trim().length ?? 0) > 0) messages.add(mainMsg);
 
       // If there is a link, build the link message
       if (shouldSplit) {
@@ -94,6 +98,8 @@ class ActionHandler {
           text: secondaryText.trim(),
           dateCreated: DateTime.now(),
           hasAttachments: false,
+          threadOriginatorGuid: replyGuid,
+          isFromMe: true,
         );
 
         // Generate a Temp GUID
@@ -125,8 +131,11 @@ class ActionHandler {
       // Create the main message
       Message message = Message(
         text: text.trim(),
+        subject: subject,
         dateCreated: DateTime.now(),
         hasAttachments: attachments.length > 0 ? true : false,
+        threadOriginatorGuid: replyGuid,
+        isFromMe: true,
       );
 
       // Generate a Temp GUID
@@ -160,21 +169,56 @@ class ActionHandler {
     params["tempGuid"] = message.guid;
 
     VoidCallback sendSocketMessage = () {
-      SocketManager().sendMessage("send-message", params, (response) async {
-        String? tempGuid = message.guid;
+      if ((message.subject?.isNotEmpty ?? false) || message.threadOriginatorGuid != null) {
+        api.sendMessage(chat.guid!, message.guid!, message.text!, subject: message.subject, method: "private-api", selectedMessageGuid: message.threadOriginatorGuid).then((response) async {
+          String? tempGuid = message.guid;
+          // If there is an error, replace the temp value with an error
+          if (response.statusCode != 200) {
+            message.guid = message.guid!.replaceAll("temp", "error-${response.data['error']['message']}");
+            message.error.value =
+            response.statusCode == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
 
-        // If there is an error, replace the temp value with an error
-        if (response['status'] != 200) {
-          message.guid = message.guid!.replaceAll("temp", "error-${response['error']['message']}");
-          message.error.value =
-              response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
+            await Message.replaceMessage(tempGuid, message);
+            NewMessageManager().updateMessage(chat, tempGuid!, message);
+          } else {
+            Message newMessage = Message.fromMap(response.data['data']);
+            await Message.replaceMessage(tempGuid, newMessage, chat: chat);
+            List<dynamic> attachments = response.data.containsKey("attachments") ? response.data['attachments'] : [];
+            newMessage.attachments = [];
+            for (dynamic attachmentItem in attachments) {
+              Attachment file = Attachment.fromMap(attachmentItem);
 
-          await Message.replaceMessage(tempGuid, message);
-          NewMessageManager().updateMessage(chat, tempGuid!, message);
-        }
+              try {
+                await Attachment.replaceAttachment(tempGuid, file);
+              } catch (ex) {
+                Logger.warn("Attachment's Old GUID doesn't exist. Skipping");
+              }
+              newMessage.attachments!.add(file);
+            }
+            Logger.info("Message match: [${response.data["text"]}] - ${response.data["guid"]} - ${response.data["tempGuid"]}", tag: "MessageStatus");
 
-        completer.complete();
-      });
+            NewMessageManager().updateMessage(chat, tempGuid!, newMessage);
+          }
+
+          completer.complete();
+        });
+      } else {
+        SocketManager().sendMessage("send-message", params, (response) async {
+          String? tempGuid = message.guid;
+
+          // If there is an error, replace the temp value with an error
+          if (response['status'] != 200) {
+            message.guid = message.guid!.replaceAll("temp", "error-${response['error']['message']}");
+            message.error.value =
+            response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
+
+            await Message.replaceMessage(tempGuid, message);
+            NewMessageManager().updateMessage(chat, tempGuid!, message);
+          }
+
+          completer.complete();
+        });
+      }
     };
 
     bool isConnected = kIsWeb;
