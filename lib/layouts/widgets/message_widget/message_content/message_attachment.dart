@@ -204,7 +204,6 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
                           : Container(),
                       (content.attachment.mimeType != null) ? Container(
                         width: 200,
-                        height: 150,
                         child: Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Text(

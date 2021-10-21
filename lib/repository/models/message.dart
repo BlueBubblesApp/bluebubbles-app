@@ -78,7 +78,7 @@ class Message {
   String? threadOriginatorGuid;
   String? threadOriginatorPart;
 
-  List<Attachment?>? attachments = [];
+  List<Attachment?> attachments = [];
   List<Message> associatedMessages = [];
   bool? bigEmoji;
 
@@ -363,13 +363,13 @@ class Message {
   }
 
   Future<List<Attachment?>?> fetchAttachments({CurrentChat? currentChat}) async {
-    if (hasAttachments && attachments != null && attachments!.isNotEmpty) {
+    if (hasAttachments && attachments.isNotEmpty) {
       return attachments;
     }
 
     if (currentChat != null) {
       attachments = currentChat.getAttachmentsForMessage(this);
-      if (attachments!.isNotEmpty) return attachments;
+      if (attachments.isNotEmpty) return attachments;
     }
 
     final Database? db = await DBProvider.db.database;
@@ -604,11 +604,11 @@ class Message {
   }
 
   List<Attachment?> getRealAttachments() {
-    return attachments!.where((item) => item!.mimeType != null).toList();
+    return attachments.where((item) => item!.mimeType != null).toList();
   }
 
   List<Attachment?> getPreviewAttachments() {
-    return attachments!.where((item) => item!.mimeType == null).toList();
+    return attachments.where((item) => item!.mimeType == null).toList();
   }
 
   List<Message> getReactions() {
@@ -740,11 +740,11 @@ class Message {
     // cache this value because the calculation can be expensive
     if (ChatBloc().cachedMessageBubbleSizes[guid!] != null) return ChatBloc().cachedMessageBubbleSizes[guid!]!;
     // if attachment, then grab width / height
-    if (fullText.isEmpty && (attachments ?? []).isNotEmpty) {
-      return Size(attachments!
+    if (fullText.isEmpty && attachments.isNotEmpty) {
+      return Size(attachments
           .map((e) => e!.width)
           .fold(0, (p, e) => max(p, (e ?? CustomNavigator.width(context) / 2).toDouble()) + 28),
-        attachments!
+        attachments
           .map((e) => e!.height)
           .fold(0, (p, e) => max(p, (e ?? CustomNavigator.width(context) / 2).toDouble())));
     }

@@ -219,10 +219,10 @@ abstract class MessageWidgetMixin {
         linkIndexMatches.add(Tuple2("link", match.end));
       }
       if (!kIsWeb && !kIsDesktop) {
-        if (CurrentChat?.activeChat?.mlKitParsedText[message.guid!] == null) {
-          CurrentChat?.activeChat?.mlKitParsedText[message.guid!] = await GoogleMlKit.nlp.entityExtractor(EntityExtractorOptions.ENGLISH).extractEntities(message.text!);
+        if (CurrentChat.activeChat?.mlKitParsedText[message.guid!] == null) {
+          CurrentChat.activeChat?.mlKitParsedText[message.guid!] = await GoogleMlKit.nlp.entityExtractor(EntityExtractorOptions.ENGLISH).extractEntities(message.text!);
         }
-        final entities = CurrentChat?.activeChat?.mlKitParsedText[message.guid!] ?? [];
+        final entities = CurrentChat.activeChat?.mlKitParsedText[message.guid!] ?? [];
         for (EntityAnnotation element in entities) {
           if (element.entities.first is AddressEntity) {
             linkIndexMatches.add(Tuple2("map", element.start));

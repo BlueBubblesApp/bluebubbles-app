@@ -978,7 +978,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                               : "BlueBubbles",
                           padding: EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
                           placeholderStyle: Theme.of(context).textTheme.subtitle1,
-                          autofocus: SettingsManager().settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop && !widget.isCreator!,
+                          autofocus: (SettingsManager().settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop) && !widget.isCreator!,
                           decoration: BoxDecoration(
                             color: Theme.of(context).backgroundColor,
                             border: SettingsManager().settings.privateSubjectLine.value ? null : Border.all(
@@ -1103,7 +1103,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       textInputAction: SettingsManager().settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
                           ? TextInputAction.send
                           : TextInputAction.newline,
-                      autofocus: SettingsManager().settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop && !widget.isCreator!,
+                      autofocus: (SettingsManager().settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop) && !widget.isCreator!,
                       cursorColor: Theme.of(context).primaryColor,
                       key: _searchFormKey,
                       onSubmitted: (String value) {
@@ -1284,7 +1284,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       textInputAction: SettingsManager().settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
                           ? TextInputAction.send
                           : TextInputAction.newline,
-                      autofocus: SettingsManager().settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop && !widget.isCreator!,
+                      autofocus: (SettingsManager().settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop) && !widget.isCreator!,
                       cursorColor: Theme.of(context).primaryColor,
                       key: _searchFormKey,
                       onSubmitted: (String value) {

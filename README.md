@@ -7,9 +7,9 @@ BlueBubbles is an open-source and cross-platform ecosystem of apps aimed to brin
 Key Features:
 
 - Send & receive texts, media, and location
-- View tapbacks, reactions, and stickers
-- Create new chats (macOS 11+ has limited support while macOS 10 has full support)
-- View read/delivered timestamps
+- View tapbacks, reactions, stickers, and read/delivered timestamps
+- Create new chats
+- View replies (requires MacOS 11+)
 - Mute or archive conversations
 - Robust theming engine
 - Choose between an iOS or Android-style interface
@@ -18,9 +18,11 @@ Key Features:
 
 Private API Features:
 
-- Send tapbacks
-- See typing indicators
-- Send read receipts
+- See and send typing indicators
+- Send tapbacks, read receipts, subject messages, messages with effects, and replies (replies require MacOS 11+)
+- Mark chats read on the server Mac
+- Rename group chats
+- Add and remove participants from group chats
 
 **Private API Features are not enabled by default and require extra configurations. Details can be found in the settings page of the app.**
 
@@ -34,8 +36,8 @@ Screenshots:
   </tr>
   <tr>
     <td><img src="https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/tanay/object-box-with-rewrite/screenshots/Samsung%20Galaxy%20S10%2B%20Prism%20Black%20-%20imessage_framed.png" width=270 height=583></td>
-    <td><img src="https://github.com/BlueBubblesApp/bluebubbles-app/blob/tanay/object-box-with-rewrite/screenshots/Samsung%20Galaxy%20S10+%20Prism%20Black%20-%20messaging_framed.png?raw=true" width=270 height=583></td>
-    <td><img src="https://github.com/BlueBubblesApp/bluebubbles-app/blob/tanay/object-box-with-rewrite/screenshots/Samsung%20Galaxy%20S10+%20Prism%20Black%20-%20privateAPI_framed.png?raw=true" width=270 height=583></td>
+    <td><img src="https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/tanay/object-box-with-rewrite/screenshots/Samsung%20Galaxy%20S10+%20Prism%20Black%20-%20messaging_framed.png" width=270 height=583></td>
+    <td><img src="https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/tanay/object-box-with-rewrite/screenshots/Samsung%20Galaxy%20S10+%20Prism%20Black%20-%20privateAPI_framed.png" width=270 height=583></td>
   </tr>
  </table>
 

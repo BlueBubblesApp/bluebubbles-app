@@ -409,7 +409,7 @@ class Chat {
     }
 
     // Save any attachments
-    for (Attachment? attachment in message.attachments ?? []) {
+    for (Attachment? attachment in message.attachments) {
       await attachment!.save(newMessage);
     }
 
@@ -509,6 +509,9 @@ class Chat {
     for (Message m in messages) {
       try {
         await m.save();
+        for (Attachment? attachment in m.attachments) {
+          await attachment!.save(m);
+        }
         await db?.insert("chat_message_join", {"chatId": id, "messageId": m.id});
       } catch (_) {}
     }

@@ -346,8 +346,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
 
   bool get showDownload =>
       widget.message.hasAttachments &&
-      widget.message.attachments!.where((element) => element!.mimeStart != null).isNotEmpty &&
-      widget.message.attachments!.where((element) => AttachmentHelper.getContent(element!) is PlatformFile).isNotEmpty;
+      widget.message.attachments.where((element) => element!.mimeStart != null).isNotEmpty &&
+      widget.message.attachments.where((element) => AttachmentHelper.getContent(element!) is PlatformFile).isNotEmpty;
 
   bool get isSent => !widget.message.guid!.startsWith('temp') && !widget.message.guid!.startsWith('error');
 
@@ -416,12 +416,12 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             ),
           ),
         ),
-      if (showDownload && kIsWeb && widget.message.attachments!.first?.webUrl != null)
+      if (showDownload && kIsWeb && widget.message.attachments.first?.webUrl != null)
         Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: () async {
-              await launch(widget.message.attachments!.first!.webUrl! + "?guid=${SettingsManager().settings.guidAuthKey}");
+              await launch(widget.message.attachments.first!.webUrl! + "?guid=${SettingsManager().settings.guidAuthKey}");
             },
             child: ListTile(
               title: Text(
@@ -509,7 +509,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                     List<PlatformFile> existingAttachments = [];
                     if (!widget.message.isUrlPreview()) {
                       existingAttachments =
-                          widget.message.attachments!.map((attachment) => PlatformFile(
+                          widget.message.attachments.map((attachment) => PlatformFile(
                             name: attachment!.transferName!,
                             path: kIsWeb ? null : attachment.getPath(),
                             bytes: attachment.bytes,
@@ -644,7 +644,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
           color: Colors.transparent,
           child: InkWell(
             onTap: () {
-              for (Attachment? element in widget.message.attachments!) {
+              for (Attachment? element in widget.message.attachments) {
                 CurrentChat.of(context)?.clearImageData(element!);
                 AttachmentHelper.redownloadAttachment(element!);
               }
@@ -669,7 +669,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
           child: InkWell(
             onTap: () async {
               try {
-                for (Attachment? element in widget.message.attachments!) {
+                for (Attachment? element in widget.message.attachments) {
                   dynamic content = AttachmentHelper.getContent(element!);
                   if (content is PlatformFile) {
                     await AttachmentHelper.saveToGallery(context, content);
@@ -698,7 +698,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
           child: InkWell(
             onTap: () {
               if (widget.message.hasAttachments && !widget.message.isUrlPreview() && !kIsWeb && !kIsDesktop) {
-                for (Attachment? element in widget.message.attachments!) {
+                for (Attachment? element in widget.message.attachments) {
                   Share.file(
                     "${element!.mimeType!.split("/")[0].capitalizeFirst} shared from BlueBubbles: ${element.transferName}",
                     element.getPath(),

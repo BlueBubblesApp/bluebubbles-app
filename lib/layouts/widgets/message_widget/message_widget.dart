@@ -213,8 +213,8 @@ class _MessageState extends State<MessageWidget> {
     }
 
     bool hasChanges = false;
-    if (_message.attachments!.length != attachmentCount || forceReload) {
-      attachmentCount = _message.attachments!.length;
+    if (_message.attachments.length != attachmentCount || forceReload) {
+      attachmentCount = _message.attachments.length;
       hasChanges = true;
     }
 

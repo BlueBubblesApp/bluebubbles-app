@@ -63,9 +63,9 @@ class _ConversationDetailsState extends State<ConversationDetails> {
   @override
   void initState() {
     super.initState();
+    chat = widget.chat;
     readOnly = !(chat.participants.length > 1);
     controller = TextEditingController(text: chat.displayName);
-    chat = widget.chat;
     showNameField = chat.displayName?.isNotEmpty ?? false;
 
     fetchAttachments();

@@ -253,12 +253,12 @@ class MessageHelper {
     List<RegExpMatch> matches = parseLinks(message.text!);
 
     // If there are attachments, return the number of attachments
-    int aCount = (message.attachments ?? []).length;
+    int aCount = (message.attachments).length;
     if (message.hasAttachments && matches.isEmpty) {
       // Build the attachment output by counting the attachments
       String output = "Attachment${aCount > 1 ? "s" : ""}";
       Map<String, int> counts = {};
-      for (Attachment? attachment in message.attachments ?? []) {
+      for (Attachment? attachment in message.attachments) {
         String? mime = attachment!.mimeType;
         String key;
         if (mime == null) {
@@ -313,12 +313,12 @@ class MessageHelper {
     List<RegExpMatch> matches = parseLinks(message.text!);
 
     // If there are attachments, return the number of attachments
-    int aCount = (message.attachments ?? []).length;
+    int aCount = message.attachments.length;
     if (message.hasAttachments && matches.isEmpty) {
       // Build the attachment output by counting the attachments
       String output = "Attachment${aCount > 1 ? "s" : ""}";
       Map<String, int> counts = {};
-      for (Attachment? attachment in message.attachments ?? []) {
+      for (Attachment? attachment in message.attachments) {
         String? mime = attachment!.mimeType;
         String key;
         if (mime == null) {

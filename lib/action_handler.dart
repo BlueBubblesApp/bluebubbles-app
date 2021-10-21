@@ -190,7 +190,7 @@ class ActionHandler {
               } catch (ex) {
                 Logger.warn("Attachment's Old GUID doesn't exist. Skipping");
               }
-              newMessage.attachments!.add(file);
+              newMessage.attachments.add(file);
             }
             Logger.info("Message match: [${response.data["text"]}] - ${response.data["guid"]} - ${response.data["tempGuid"]}", tag: "MessageStatus");
 
@@ -322,10 +322,10 @@ class ActionHandler {
     if (chat == null) throw ("Could not find chat!");
 
     await message.fetchAttachments();
-    for (int i = 0; i < message.attachments!.length; i++) {
+    for (int i = 0; i < message.attachments.length; i++) {
       String appDocPath = SettingsManager().appDocDir.path;
       String pathName =
-          "$appDocPath/attachments/${message.attachments![i]!.guid}/${message.attachments![i]!.transferName}";
+          "$appDocPath/attachments/${message.attachments[i]!.guid}/${message.attachments[i]!.transferName}";
       File file = File(pathName);
 
       OutgoingQueue().add(
@@ -339,14 +339,14 @@ class ActionHandler {
               bytes: file.readAsBytesSync(),
             ),
             chat,
-            i == message.attachments!.length - 1 ? message.text ?? "" : "",
+            i == message.attachments.length - 1 ? message.text ?? "" : "",
           ),
         ),
       );
     }
 
     // If we sent attachments, return because we finished sending
-    if (message.attachments!.isNotEmpty) return;
+    if (message.attachments.isNotEmpty) return;
 
     // Generate the temp GUID for the message to be used
     message.generateTempGuid();
@@ -514,7 +514,7 @@ class ActionHandler {
           } catch (ex) {
             Logger.warn("Attachment's Old GUID doesn't exist. Skipping");
           }
-          message.attachments!.add(file);
+          message.attachments.add(file);
         }
         Logger.info("Message match: [${data["text"]}] - ${data["guid"]} - ${data["tempGuid"]}", tag: "MessageStatus");
 

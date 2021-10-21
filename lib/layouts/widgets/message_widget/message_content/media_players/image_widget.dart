@@ -48,7 +48,8 @@ class ImageWidgetController extends GetxController {
         if (attachment.guid != "redacted-mode-demo-attachment") {
           tmpData = file.bytes;
         } else {
-          tmpData = Uint8List.view((await rootBundle.load(attachment.transferName!)).buffer);
+          data.value = Uint8List.view((await rootBundle.load(attachment.transferName!)).buffer);
+          return;
         }
       } else if (AttachmentHelper.canCompress(attachment) &&
           attachment.guid != "redacted-mode-demo-attachment" &&
@@ -57,10 +58,10 @@ class ImageWidgetController extends GetxController {
         // All other attachments can be held in memory as bytes
       } else {
         if (attachment.guid == "redacted-mode-demo-attachment" || attachment.guid!.contains("theme-selector")) {
-          tmpData = (await rootBundle.load(file.path!)).buffer.asUint8List();
+          data.value = (await rootBundle.load(file.path!)).buffer.asUint8List();
           return;
         }
-        data.value = await File(file.path!).readAsBytes();
+        tmpData = await File(file.path!).readAsBytes();
       }
 
       if (tmpData == null || CurrentChat.of(context) == null) return;

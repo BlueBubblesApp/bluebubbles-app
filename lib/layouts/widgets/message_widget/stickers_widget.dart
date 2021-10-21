@@ -57,7 +57,7 @@ class _StickersWidgetState extends State<StickersWidget> {
 
       // Get the associated attachments
       await msg.fetchAttachments();
-      for (Attachment? attachment in msg.attachments!) {
+      for (Attachment? attachment in msg.attachments) {
         // If we've already loaded it, don't try again
         if (loaded.contains(attachment!.guid)) continue;
 

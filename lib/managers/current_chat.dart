@@ -179,17 +179,17 @@ class CurrentChat {
 
   /// Fetch and store all of the attachments for a [message]
   /// @param [message] the message you want to fetch for
-  List<Attachment?>? getAttachmentsForMessage(Message? message) {
+  List<Attachment?> getAttachmentsForMessage(Message? message) {
     // If we have already disposed, do nothing
     if (!messageAttachments.containsKey(message!.guid)) {
       preloadMessageAttachments(specificMessages: [message]);
-      return messageAttachments[message.guid];
+      return messageAttachments[message.guid] ?? [];
     }
     if (messageAttachments[message.guid] != null && messageAttachments[message.guid]!.isNotEmpty) {
       final guids = messageAttachments[message.guid]!.map((e) => e!.guid).toSet();
       messageAttachments[message.guid]!.retainWhere((element) => guids.remove(element!.guid));
     }
-    return messageAttachments[message.guid];
+    return messageAttachments[message.guid] ?? [];
   }
 
   List<Attachment?>? updateExistingAttachments(NewMessageEvent event) {
@@ -197,12 +197,12 @@ class CurrentChat {
     String? oldGuid = event.event["oldGuid"];
     if (!messageAttachments.containsKey(oldGuid)) return [];
     Message message = event.event["message"];
-    if (message.attachments!.isEmpty) return [];
+    if (message.attachments.isEmpty) return [];
 
     messageAttachments.remove(oldGuid);
-    messageAttachments[message.guid!] = message.attachments ?? [];
+    messageAttachments[message.guid!] = message.attachments;
 
-    String? newAttachmentGuid = message.attachments!.first!.guid;
+    String? newAttachmentGuid = message.attachments.first!.guid;
     if (imageData.containsKey(oldGuid)) {
       Uint8List data = imageData.remove(oldGuid)!;
       imageData[newAttachmentGuid!] = data;
