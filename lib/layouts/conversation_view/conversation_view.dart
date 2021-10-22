@@ -36,8 +36,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:get/get.dart';
+import 'package:keyboard_attachable/keyboard_attachable.dart';
 import 'package:simple_animations/simple_animations.dart';
 import 'package:slugify/slugify.dart';
 
@@ -143,13 +143,16 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       }
     });
 
-    KeyboardVisibilityController().onChange.listen((bool visible) async {
-      await Future.delayed(Duration(milliseconds: 500));
-      final textFieldSize = (key.currentContext?.findRenderObject() as RenderBox?)?.size.height;
-      if (mounted) {
-        setState(() {
-          offset = (textFieldSize ?? 0) > 300 ? 300 : 0;
-        });
+    EventDispatcher().stream.listen((event) async {
+      if (!event.containsKey("type")) return;
+      if (event["type"] == "update-offset") {
+        await Future.delayed(Duration(milliseconds: 500));
+        final textFieldSize = (key.currentContext?.findRenderObject() as RenderBox?)?.size.height;
+        if (mounted) {
+          setState(() {
+            offset = (textFieldSize ?? 0) > 300 ? 300 : 0;
+          });
+        }
       }
     });
 
@@ -513,7 +516,31 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                       : buildChatSelectorBody(),
                 ),
               ),
-              if (widget.onSelect == null)
+            ]),
+          ]),
+        ),
+      ],
+    );
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarIconBrightness:
+            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+        statusBarColor: Colors.transparent, // status bar color
+      ),
+      child: Scaffold(
+        backgroundColor: Theme.of(context).backgroundColor,
+        extendBodyBehindAppBar: !isCreator!,
+        appBar: !isCreator!
+            ? buildConversationViewHeader() as PreferredSizeWidget?
+            : buildChatSelectorHeader() as PreferredSizeWidget?,
+        resizeToAvoidBottomInset: false,
+        body: FooterLayout(
+          footer: widget.onSelect == null ? KeyboardAttachable(
+            child: Stack(
+              alignment: Alignment.bottomCenter,
+              children: [
                 Obx(() {
                   if (SettingsManager().settings.swipeToCloseKeyboard.value ||
                       SettingsManager().settings.swipeToOpenKeyboard.value) {
@@ -533,102 +560,89 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                   }
                   return textField;
                 }),
-            ]),
-            AnimatedPositioned(
-              duration: Duration(milliseconds: 300),
-              bottom: message != null ? 62 + offset : 10 + offset,
-              right: 5,
-              curve: Curves.easeIn,
-              onEnd: () {
-                if (message != null) {
-                  setState(() {
-                    tween = Tween<double>(begin: 1, end: 0);
-                    controller = CustomAnimationControl.stop;
-                    message = null;
-                    existingText = "";
-                    existingAttachments = [];
-                    isCreator = false;
-                    wasCreator = true;
-                  });
-                }
-              },
-              child: Visibility(
-                visible: message != null,
-                child: CustomAnimation<double>(
-                    control: controller,
-                    tween: tween,
-                    duration: Duration(milliseconds: 200),
-                    builder: (context, child, value) {
-                      return SentMessageHelper.buildMessageWithTail(
-                        context,
-                        message,
-                        true,
-                        false,
-                        message?.isBigEmoji() ?? false,
-                        MessageWidgetMixin.buildMessageSpansAsync(context, message),
-                        currentChat: currentChat,
-                        customWidth: (message?.hasAttachments ?? false) && (message?.text?.isEmpty ?? true) && (message?.subject?.isEmpty ?? true)
-                            ? null
-                            : value,
-                        customColor: (message?.hasAttachments ?? false) && (message?.text?.isEmpty ?? true) && (message?.subject?.isEmpty ?? true)
-                            ? Colors.transparent
-                            : null,
-                        customContent: child,
-                      );
-                    },
-                    child: (message?.hasAttachments ?? false) && (message?.text?.isEmpty ?? true) && (message?.subject?.isEmpty ?? true)
-                        ? MessageAttachments(
-                      message: message,
-                      showTail: true,
-                      showHandle: false,
-                    )
-                        : null),
-              ),
+                AnimatedPositioned(
+                  duration: Duration(milliseconds: 300),
+                  bottom: message != null ? 62 + offset : 10 + offset,
+                  right: 5,
+                  curve: Curves.easeIn,
+                  onEnd: () {
+                    if (message != null) {
+                      setState(() {
+                        tween = Tween<double>(begin: 1, end: 0);
+                        controller = CustomAnimationControl.stop;
+                        message = null;
+                        existingText = "";
+                        existingAttachments = [];
+                        isCreator = false;
+                        wasCreator = true;
+                      });
+                      EventDispatcher().emit("focus-keyboard", null);
+                    }
+                  },
+                  child: Visibility(
+                    visible: message != null,
+                    child: CustomAnimation<double>(
+                        control: controller,
+                        tween: tween,
+                        duration: Duration(milliseconds: 200),
+                        builder: (context, child, value) {
+                          return SentMessageHelper.buildMessageWithTail(
+                            context,
+                            message,
+                            true,
+                            false,
+                            message?.isBigEmoji() ?? false,
+                            MessageWidgetMixin.buildMessageSpansAsync(context, message),
+                            currentChat: currentChat,
+                            customWidth: (message?.hasAttachments ?? false) && (message?.text?.isEmpty ?? true) && (message?.subject?.isEmpty ?? true)
+                                ? null
+                                : value,
+                            customColor: (message?.hasAttachments ?? false) && (message?.text?.isEmpty ?? true) && (message?.subject?.isEmpty ?? true)
+                                ? Colors.transparent
+                                : null,
+                            customContent: child,
+                          );
+                        },
+                        child: (message?.hasAttachments ?? false) && (message?.text?.isEmpty ?? true) && (message?.subject?.isEmpty ?? true)
+                            ? MessageAttachments(
+                          message: message,
+                          showTail: true,
+                          showHandle: false,
+                        )
+                            : null),
+                  ),
+                ),
+              ],
             ),
-          ]),
+          ) : Container(),
+          child: Obx(() => adjustBackground.value ? MirrorAnimation<MultiTweenValues<String>>(
+                tween: ConversationViewMixin.gradientTween.value,
+                curve: Curves.fastOutSlowIn,
+                duration: Duration(seconds: 3),
+                builder: (context, child, anim) {
+                  return Container(
+                    decoration: (searchQuery.isEmpty || !isCreator!) && chat != null && adjustBackground.value
+                        ? BoxDecoration(
+                            gradient: LinearGradient(begin: Alignment.topRight, end: Alignment.bottomLeft, stops: [
+                            anim.get("color1"),
+                            anim.get("color2")
+                          ], colors: [
+                            AdaptiveTheme.of(context).mode == AdaptiveThemeMode.light
+                                ? Theme.of(context).primaryColor.lightenPercent(20)
+                                : Theme.of(context).primaryColor.darkenPercent(20),
+                            Theme.of(context).backgroundColor
+                          ]))
+                        : null,
+                    child: child,
+                  );
+                },
+                child: child,
+              ) : child),
         ),
-      ],
-    );
-
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
-        systemNavigationBarIconBrightness:
-            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
-        statusBarColor: Colors.transparent, // status bar color
-      ),
-      child: Scaffold(
-        backgroundColor: Theme.of(context).backgroundColor,
-        extendBodyBehindAppBar: !isCreator!,
-        appBar: !isCreator!
-            ? buildConversationViewHeader() as PreferredSizeWidget?
-            : buildChatSelectorHeader() as PreferredSizeWidget?,
-        body: Obx(() => adjustBackground.value ? MirrorAnimation<MultiTweenValues<String>>(
-              tween: ConversationViewMixin.gradientTween.value,
-              curve: Curves.fastOutSlowIn,
-              duration: Duration(seconds: 3),
-              builder: (context, child, anim) {
-                return Container(
-                  decoration: (searchQuery.isEmpty || !isCreator!) && chat != null && adjustBackground.value
-                      ? BoxDecoration(
-                          gradient: LinearGradient(begin: Alignment.topRight, end: Alignment.bottomLeft, stops: [
-                          anim.get("color1"),
-                          anim.get("color2")
-                        ], colors: [
-                          AdaptiveTheme.of(context).mode == AdaptiveThemeMode.light
-                              ? Theme.of(context).primaryColor.lightenPercent(20)
-                              : Theme.of(context).primaryColor.darkenPercent(20),
-                          Theme.of(context).backgroundColor
-                        ]))
-                      : null,
-                  child: child,
-                );
-              },
-              child: child,
-            ) : child),
         floatingActionButton: AnimatedOpacity(
             duration: Duration(milliseconds: 250), opacity: 1, curve: Curves.easeInOut, child: buildFAB()),
       ),
     );
   }
 }
+

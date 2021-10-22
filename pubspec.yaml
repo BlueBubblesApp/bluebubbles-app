@@ -104,9 +104,11 @@ dependencies:
   qr_flutter: ^4.0.0
   window_manager: ^0.0.4
   js: ^0.6.3
+  keyboard_attachable: '2.0.0' # pinned to 2.0.0 to prevent exceptions
 
 dependency_overrides:
   rxdart: ^0.27.2
+  keyboard_attachable: '2.0.0'
 
 dev_dependencies:
   build_runner: ^2.1.1
