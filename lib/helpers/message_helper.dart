@@ -244,7 +244,7 @@ class MessageHelper {
       return "Interactive: ${MessageHelper.getInteractiveText(message)}";
     }
 
-    if (isNullOrEmpty(message.text, trimString: true)! && !message.hasAttachments) {
+    if (isNullOrEmpty(message.fullText, trimString: true)! && !message.hasAttachments) {
       return "Empty message";
     }
 
@@ -295,7 +295,7 @@ class MessageHelper {
       return "$sender ${message.text}";
     } else {
       // It's all other message types
-      return message.text ?? "Unknown Message";
+      return message.fullText;
     }
   }
 

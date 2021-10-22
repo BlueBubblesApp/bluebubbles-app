@@ -204,8 +204,16 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
             ),
             maxLines: 1,
           ).createRenderObject(context);
+          final renderParagraph2 = RichText(
+            text: TextSpan(
+              text: event.message!.subject ?? "",
+              style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
+            ),
+            maxLines: 1,
+          ).createRenderObject(context);
           final size = renderParagraph.getDryLayout(constraints);
-          if (!(event.message?.hasAttachments ?? false) && !(event.message?.text?.isEmpty ?? false)) {
+          final size2 = renderParagraph2.getDryLayout(constraints);
+          if (!(event.message?.hasAttachments ?? false) && (!(event.message?.text?.isEmpty ?? true) || !(event.message?.subject?.isEmpty ?? true))) {
             setState(() {
               tween = Tween<double>(
                   begin: CustomNavigator.width(context) - 30,
@@ -253,7 +261,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     super.dispose();
   }
 
-  Future<bool> send(List<PlatformFile> attachments, String text) async {
+  Future<bool> send(List<PlatformFile> attachments, String text, String subject, String? replyGuid) async {
     bool isDifferentChat = currentChat == null || currentChat?.chat.guid != chat?.guid;
 
     if (isCreator!) {
@@ -278,6 +286,15 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       // If the current chat is null, set it
       if (isDifferentChat) {
         initCurrentChat(chat!);
+      }
+
+      bool isDifferentBloc = messageBloc == null || messageBloc?.currentChat?.guid != chat!.guid;
+
+      // Fetch messages
+      if (isDifferentBloc) {
+        // Init the states
+        messageBloc = initMessageBloc();
+        messageBloc!.getMessages();
       }
       if (worker == null) {
         initListener();
@@ -304,7 +321,8 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         );
       }
     } else if (chat != null) {
-      ActionHandler.sendMessage(chat!, text);
+      // We include messageBloc here because the bloc listener may not be instantiated yet
+      ActionHandler.sendMessage(chat!, text, messageBloc: messageBloc, subject: subject, replyGuid: replyGuid);
     }
 
     return true;

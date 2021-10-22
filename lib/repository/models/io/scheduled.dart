@@ -1,6 +1,7 @@
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:flutter/foundation.dart';
+import 'package:objectbox/objectbox.dart';
 
 @Entity()
 class ScheduledMessage {

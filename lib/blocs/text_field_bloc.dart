@@ -24,6 +24,7 @@ class TextFieldBloc {
     } else {
       _textFields[chatGuid] = TextFieldData();
       _textFields[chatGuid]!.controller = TextEditingController();
+      _textFields[chatGuid]!.subjectController = TextEditingController();
       return _textFields[chatGuid];
     }
   }
@@ -32,5 +33,6 @@ class TextFieldBloc {
 /// [TextFieldData] holds a TextEditingController and a list of strings that link to attachments
 class TextFieldData {
   late TextEditingController controller;
+  late TextEditingController subjectController;
   List<PlatformFile> attachments = [];
 }

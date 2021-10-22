@@ -33,6 +33,7 @@ class MessageWidget extends StatefulWidget {
     required this.showHandle,
     required this.isFirstSentMessage,
     required this.showHero,
+    required this.showReplies,
     this.onUpdate,
     this.bloc,
   }) : super(key: key);
@@ -43,6 +44,7 @@ class MessageWidget extends StatefulWidget {
   final bool showHandle;
   final bool isFirstSentMessage;
   final bool showHero;
+  final bool showReplies;
   final Message? Function(NewMessageEvent event)? onUpdate;
   final MessageBloc? bloc;
 
@@ -50,14 +52,17 @@ class MessageWidget extends StatefulWidget {
   _MessageState createState() => _MessageState();
 }
 
-class _MessageState extends State<MessageWidget> {
+class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMixin {
   bool showTail = true;
+  Completer<void>? associatedMessageRequest;
   Completer<void>? attachmentsRequest;
+  Completer<void>? handleRequest;
   int lastRequestCount = -1;
   int attachmentCount = 0;
   int associatedCount = 0;
+  bool handledInit = false;
   CurrentChat? currentChat;
-  late StreamSubscription<NewMessageEvent> subscription;
+  StreamSubscription<NewMessageEvent>? subscription;
   late Message _message;
   Message? _newerMessage;
   Message? _olderMessage;
@@ -65,18 +70,29 @@ class _MessageState extends State<MessageWidget> {
   @override
   void initState() {
     super.initState();
-    currentChat = CurrentChat.of(context);
-    _message = widget.message;
-    _newerMessage = widget.newerMessage;
-    _olderMessage = widget.olderMessage;
+    init();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
     init();
   }
 
   void init() {
-    if (!_message.hasReactions && _message.getReactions().isNotEmpty) {
-      _message.hasReactions = true;
-      _message.save();
-    }
+    currentChat = CurrentChat.of(context);
+    if (handledInit) return;
+    handledInit = true;
+    _message = widget.message;
+    _newerMessage = widget.newerMessage;
+    _olderMessage = widget.olderMessage;
+
+    checkHandle();
+    fetchAssociatedMessages();
+    fetchAttachments();
+
+    // If we already are listening to the stream, no need to do it again
+    if (subscription != null) return;
 
     // Listen for new messages
     subscription = NewMessageManager().stream.listen((data) {
@@ -147,11 +163,37 @@ class _MessageState extends State<MessageWidget> {
 
   @override
   void dispose() {
-    subscription.cancel();
+    subscription?.cancel();
     super.dispose();
   }
 
-  void fetchAssociatedMessages({bool forceReload = false}) {
+  Future<void> checkHandle() async {
+    // If we've already started, return the request
+    if (handleRequest != null) return handleRequest!.future;
+    handleRequest = Completer();
+
+    // Checks ordered in a specific way to ever so slightly reduce processing
+    if (_message.isFromMe!) return handleRequest!.complete();
+    if (_message.handle != null) return handleRequest!.complete();
+
+    try {
+      Handle? handle = _message.getHandle();
+      if (mounted && handle != null) {
+        setState(() {});
+      }
+    } catch (ex) {
+      handleRequest!.completeError(ex);
+    }
+  }
+
+  Future<void> fetchAssociatedMessages({bool forceReload = false}) async {
+
+    // If there is already a request being made, return that request
+    if (!forceReload && associatedMessageRequest != null) return associatedMessageRequest!.future;
+
+    // Create a new request and get the messages
+    associatedMessageRequest = Completer();
+
     associatedCount = _message.associatedMessages.length;
     try {
       _message.fetchAssociatedMessages(bloc: widget.bloc);
@@ -172,6 +214,8 @@ class _MessageState extends State<MessageWidget> {
         _message.save();
       }
     }
+
+    associatedMessageRequest!.complete();
   }
 
   Future<void> fetchAttachments({bool forceReload = false}) async {
@@ -241,54 +285,71 @@ class _MessageState extends State<MessageWidget> {
     ReactionsWidget reactionsWidget = ReactionsWidget(
         key: Key("reactions-${associatedCount.toString()}"), associatedMessages: _message.associatedMessages);
 
+    final separator = MessageTimeStampSeparator(
+      newerMessage: _message,
+      message: _olderMessage ?? _message,
+    );
+    final separator2 = MessageTimeStampSeparator(
+      newerMessage: _newerMessage,
+      message: _message,
+    );
+
     // Add the correct type of message to the message stack
-
     RxBool tapped = false.obs;
-    return Obx(() {
-      Widget message;
-      if (_message.isFromMe!) {
-        message = SentMessage(
-          showTail: showTail,
-          olderMessage: widget.olderMessage,
-          newerMessage: widget.newerMessage,
-          message: _message,
-          urlPreviewWidget: urlPreviewWidget,
-          stickersWidget: stickersWidget,
-          attachmentsWidget: widgetAttachments,
-          reactionsWidget: reactionsWidget,
-          shouldFadeIn: currentChat?.sentMessages.firstWhereOrNull((e) => e?.guid == _message.guid) != null,
-          showHero: widget.showHero,
-          showDeliveredReceipt: widget.isFirstSentMessage || tapped.value,
-          context: context,
-        );
-      } else {
-        message = ReceivedMessage(
-          showTail: showTail,
-          olderMessage: widget.olderMessage,
-          newerMessage: widget.newerMessage,
-          message: _message,
-          showHandle: widget.showHandle,
-          urlPreviewWidget: urlPreviewWidget,
-          stickersWidget: stickersWidget,
-          attachmentsWidget: widgetAttachments,
-          reactionsWidget: reactionsWidget,
-          showTimeStamp: tapped.value,
-        );
-      }
+    return Obx(
+      () {
+        Widget message;
+        bool _tapped = tapped.value;
+        if (_message.isFromMe!) {
+          message = SentMessage(
+            showTail: showTail,
+            olderMessage: widget.olderMessage,
+            newerMessage: widget.newerMessage,
+            message: _message,
+            messageBloc: widget.bloc,
+            hasTimestampAbove: separator.buildTimeStamp().isNotEmpty,
+            hasTimestampBelow: separator2.buildTimeStamp().isNotEmpty,
+            showReplies: widget.showReplies,
+            urlPreviewWidget: urlPreviewWidget,
+            stickersWidget: stickersWidget,
+            attachmentsWidget: widgetAttachments,
+            reactionsWidget: reactionsWidget,
+            shouldFadeIn: currentChat?.sentMessages.firstWhereOrNull((e) => e?.guid == _message.guid) != null,
+            showHero: widget.showHero,
+            showDeliveredReceipt: widget.isFirstSentMessage || _tapped,
+          );
+        } else {
+          message = ReceivedMessage(
+            showTail: showTail,
+            olderMessage: widget.olderMessage,
+            newerMessage: widget.newerMessage,
+            message: _message,
+            messageBloc: widget.bloc,
+            hasTimestampAbove: separator.buildTimeStamp().isNotEmpty,
+            hasTimestampBelow: separator2.buildTimeStamp().isNotEmpty,
+            showReplies: widget.showReplies,
+            showHandle: widget.showHandle,
+            urlPreviewWidget: urlPreviewWidget,
+            stickersWidget: stickersWidget,
+            attachmentsWidget: widgetAttachments,
+            reactionsWidget: reactionsWidget,
+            showTimeStamp: _tapped,
+          );
+        }
 
-      return GestureDetector(
-        onTap: kIsDesktop || kIsWeb ? () => tapped.value = !tapped.value : null,
-        child: Column(
-          children: [
-            message,
-            if (SettingsManager().settings.skin.value != Skins.Samsung)
-              MessageTimeStampSeparator(
-                newerMessage: _newerMessage,
-                message: _message,
-              )
-          ],
-        ),
-      );
-    });
+        return GestureDetector(
+          onTap: kIsDesktop || kIsWeb ? () => _tapped = !_tapped : null,
+          child: Column(
+            children: [
+              message,
+              separator2,
+            ],
+          ),
+        );
+      },
+    );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }

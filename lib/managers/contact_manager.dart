@@ -9,10 +9,10 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
+import 'package:faker/faker.dart';
 import 'package:fast_contacts/fast_contacts.dart' hide Contact;
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
-import 'package:faker/faker.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class ContactManager {
@@ -132,7 +132,7 @@ class ContactManager {
             for (Map<String, dynamic> map in response.data['data']) {
               ContactManager().contacts.add(Contact(
                     id: randomString(8),
-                    displayName: map['firstName'] + " " + map['lastName'],
+                    displayName: [map['firstName'], map['lastName']].where((e) => e != null).toList().join(" "),
                     emails: (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList(),
                     phones: (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList(),
                   ));

@@ -5,6 +5,7 @@ import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/repository/models/config_entry.dart';
 import 'package:firebase_dart/firebase_dart.dart';
 import 'package:flutter/foundation.dart';
+import 'package:objectbox/objectbox.dart';
 
 @Entity()
 class FCMData {

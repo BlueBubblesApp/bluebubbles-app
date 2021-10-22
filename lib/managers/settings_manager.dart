@@ -1,18 +1,18 @@
 import 'dart:async';
-import 'package:bluebubbles/helpers/utils.dart';
-import 'package:flutter/foundation.dart';
-import 'package:universal_io/io.dart';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:universal_io/io.dart';
 
 /// [SettingsManager] is responsible for making the current settings accessible to other managers and for saving new settings
 ///
@@ -158,7 +158,7 @@ class SettingsManager {
     await saveSettings(temp);
   }
 
-  FutureOr<int?> getMacOSVersion() async {
+  Future<int?> getMacOSVersion() async {
     if (_macOSVersion == null) {
       var res = await SocketManager().sendMessage("get-server-metadata", {}, (_) {});
       _macOSVersion = int.tryParse(res['data']['os_version'].split(".")[0]);

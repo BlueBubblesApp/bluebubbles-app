@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:typed_data';
+import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/logger.dart';
@@ -33,6 +34,8 @@ class ChatBloc {
   final RxBool loadedChatBatch = false.obs;
 
   final List<Handle> cachedHandles = [];
+
+  final Map<String, Size> cachedMessageBubbleSizes = {};
 
   void updateUnreads() {
     _unreads.value = chats.where((element) => element.hasUnreadMessage ?? false).map((e) => e.guid).toList().length;

@@ -66,12 +66,14 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   bool showTools = false;
   String? selfReaction;
   String? currentlySelectedReaction;
+  Completer? fetchRequest;
   CurrentChat? currentChat;
   Chat? dmChat;
 
   late double messageTopOffset;
   late double topMinimum;
   double? height;
+  bool isBigSur = true;
 
   @override
   void initState() {
@@ -88,10 +90,10 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
 
     fetchReactions();
 
-    // Animate showing the copy menu, slightly delayed
-    Future.delayed(Duration(milliseconds: 400), () {
+    SettingsManager().getMacOSVersion().then((val) {
       if (mounted) {
         setState(() {
+          isBigSur = (val ?? 0) >= 11;
           showTools = true;
         });
       }
@@ -402,6 +404,26 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
               ),
               trailing: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.macwindow : Icons.open_in_browser,
+                color: Theme.of(context).textTheme.bodyText1!.color,
+              ),
+            ),
+          ),
+        ),
+      if (SettingsManager().settings.enablePrivateAPI.value && isBigSur)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () async {
+              EventDispatcher().emit("focus-keyboard", widget.message);
+              Navigator.of(context).pop();
+            },
+            child: ListTile(
+              title: Text(
+                "Reply",
+                style: Theme.of(context).textTheme.bodyText1,
+              ),
+              trailing: Icon(
+                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.reply : Icons.reply,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),

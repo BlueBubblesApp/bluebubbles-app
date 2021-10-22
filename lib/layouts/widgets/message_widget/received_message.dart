@@ -1,3 +1,7 @@
+import 'dart:math';
+import 'dart:ui';
+
+import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/darty.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
@@ -11,14 +15,18 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_tail.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_time_stamp.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_popup_holder.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/reply_line_painter.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:collection/src/iterable_extensions.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import 'message_content/delivered_receipt.dart';
@@ -29,6 +37,10 @@ class ReceivedMessage extends StatefulWidget {
   final Message? olderMessage;
   final Message? newerMessage;
   final bool showHandle;
+  final MessageBloc? messageBloc;
+  final bool hasTimestampAbove;
+  final bool hasTimestampBelow;
+  final bool showReplies;
 
   // Sub-widgets
   final Widget stickersWidget;
@@ -45,6 +57,10 @@ class ReceivedMessage extends StatefulWidget {
     required this.newerMessage,
     required this.message,
     required this.showHandle,
+    required this.messageBloc,
+    required this.hasTimestampAbove,
+    required this.hasTimestampBelow,
+    required this.showReplies,
 
     // Sub-widgets
     required this.stickersWidget,
@@ -64,10 +80,15 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
   final Rx<Skins> skin = Rx<Skins>(SettingsManager().settings.skin.value);
   late final spanFuture = MessageWidgetMixin.buildMessageSpansAsync(context, widget.message,
       colors: widget.message.handle?.color != null ? getBubbleColors() : null);
+  Size? threadOriginatorSize;
+  Size? messageSize;
+  bool showReplies = false;
 
   @override
   initState() {
     super.initState();
+    showReplies = widget.showReplies;
+    initMessageState(widget.message, widget.showHandle).then((value) => {if (this.mounted) setState(() {})});
     contactTitle = ContactManager().getContactTitle(widget.message.handle) ?? "";
 
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
@@ -81,7 +102,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
   }
 
   List<Color> getBubbleColors() {
-    List<Color> bubbleColors = [Theme.of(context).accentColor, Theme.of(context).accentColor];
+    List<Color> bubbleColors = [context.theme.accentColor, context.theme.accentColor];
     if (SettingsManager().settings.colorfulBubbles.value) {
       if (widget.message.handle?.color == null) {
         bubbleColors = toColorGradient(widget.message.handle?.address);
@@ -194,8 +215,9 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
               builder: (context, snapshot) {
                 return RichText(
                   text: TextSpan(
-                    children: snapshot.data ?? MessageWidgetMixin.buildMessageSpans(context, widget.message,
-                        colors: widget.message.handle?.color != null ? getBubbleColors() : null),
+                    children: snapshot.data ??
+                        MessageWidgetMixin.buildMessageSpans(context, widget.message,
+                            colors: widget.message.handle?.color != null ? getBubbleColors() : null),
                     style: Theme.of(context).textTheme.bodyText2,
                   ),
                 );
@@ -212,6 +234,8 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     }
     // The column that holds all the "messages"
     List<Widget> messageColumn = [];
+    final msg =
+        widget.message.associatedMessages.firstWhereOrNull((e) => e.guid == widget.message.threadOriginatorGuid);
 
     // First, add the message sender (if applicable)
     bool isGroup = CurrentChat.of(context)?.chat.isGroup() ?? false;
@@ -281,17 +305,88 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
 
     // Fourth, let's add any reactions or stickers to the widget
     if (message != null) {
-      messageColumn.add(
-        MessageWidgetMixin.addStickersToWidget(
-          message: MessageWidgetMixin.addReactionsToWidget(
-              messageWidget: message,
-              reactions: widget.reactionsWidget,
-              message: widget.message,
-              shouldShow: widget.message.getRealAttachments().isEmpty),
-          stickers: widget.stickersWidget,
-          isFromMe: widget.message.isFromMe!,
-        ),
-      );
+      // only show the line if it is going to either connect up or down
+      if (showReplies &&
+          msg != null &&
+          (widget.message.shouldConnectLower(widget.olderMessage, widget.newerMessage, msg) ||
+              widget.message.shouldConnectUpper(widget.olderMessage, msg))) {
+        // get the correct size for the message being replied to
+        if (widget.message.upperIsThreadOriginatorBubble(widget.olderMessage)) {
+          threadOriginatorSize ??= msg.getBubbleSize(context);
+        } else {
+          threadOriginatorSize ??= widget.olderMessage?.getBubbleSize(context);
+        }
+        messageSize ??= widget.message.getBubbleSize(context);
+        messageColumn.add(
+          StreamBuilder<double>(
+              stream: CurrentChat.of(context)?.timeStampOffsetStream.stream,
+              builder: (context, snapshot) {
+                final offset = (-(snapshot.data ?? 0)).clamp(0, 70).toDouble();
+                final originalWidth = max(
+                    min(CustomNavigator.width(context) - messageSize!.width - 125, CustomNavigator.width(context) / 3),
+                    10);
+                final width = max(
+                    min(CustomNavigator.width(context) - messageSize!.width - 125, CustomNavigator.width(context) / 3) -
+                        offset,
+                    10);
+                return AnimatedContainer(
+                  duration: Duration(milliseconds: offset == 0 ? 150 : 0),
+                  width: CustomNavigator.width(context) - 45 - offset,
+                  padding: EdgeInsets.only(right: max(30 - (width == 10 ? offset - (originalWidth - width) : 0), 0)),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      MessageWidgetMixin.addStickersToWidget(
+                        message: MessageWidgetMixin.addReactionsToWidget(
+                            messageWidget: message!,
+                            reactions: widget.reactionsWidget,
+                            message: widget.message,
+                            shouldShow: widget.message.getRealAttachments().isEmpty),
+                        stickers: widget.stickersWidget,
+                        isFromMe: widget.message.isFromMe!,
+                      ),
+                      AnimatedContainer(
+                        duration: Duration(milliseconds: offset == 0 ? 150 : 0),
+                        // to make sure the bounds do not overflow, and so we
+                        // dont draw an ugly long line)
+                        width: width.toDouble(),
+                        height: messageSize!.height / 2,
+                        child: CustomPaint(
+                          painter: LinePainter(
+                            context,
+                            widget.message,
+                            widget.olderMessage,
+                            widget.newerMessage,
+                            msg,
+                            threadOriginatorSize!,
+                            messageSize!,
+                            widget.olderMessage?.threadOriginatorGuid == widget.message.threadOriginatorGuid &&
+                                widget.hasTimestampAbove,
+                            widget.hasTimestampBelow,
+                            addedSender,
+                            offset,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+        );
+      } else {
+        messageColumn.add(
+          MessageWidgetMixin.addStickersToWidget(
+            message: MessageWidgetMixin.addReactionsToWidget(
+                messageWidget: message,
+                reactions: widget.reactionsWidget,
+                message: widget.message,
+                shouldShow: widget.message.getRealAttachments().isEmpty),
+            stickers: widget.stickersWidget,
+            isFromMe: widget.message.isFromMe!,
+          ),
+        );
+      }
     }
 
     if (widget.showTimeStamp) {
@@ -398,59 +493,359 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     );
 
     // Finally, create a container row so we can have the swipe timestamp
-    return Padding(
-      // Add padding when we are showing the avatar
-      padding: EdgeInsets.only(
-          top: (skin.value != Skins.iOS && widget.message.isFromMe == widget.olderMessage?.isFromMe) ? 3.0 : 0.0,
-          left: (!widget.showTail && (showSender || skin.value == Skins.Samsung)) ? 35.0 : 0.0,
-          bottom: (widget.showTail && skin.value == Skins.iOS) ? 10.0 : 0.0),
-      child: Row(
-        mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: (skin.value == Skins.iOS || skin.value == Skins.Material)
-            ? MainAxisAlignment.spaceBetween
-            : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          MessagePopupHolder(
-            message: widget.message,
-            olderMessage: widget.olderMessage,
-            newerMessage: widget.newerMessage,
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: msgRow,
+    return Column(
+      children: [
+        if (showReplies &&
+            widget.message.threadOriginatorGuid != null &&
+            widget.olderMessage?.threadOriginatorGuid != widget.message.threadOriginatorGuid &&
+            msg != null &&
+            widget.olderMessage?.guid != msg.guid)
+          GestureDetector(
+            onTap: () {
+              List<Message> _messages = [];
+              if (widget.message.threadOriginatorGuid != null) {
+                _messages = widget.messageBloc?.messages.values
+                        .where((e) =>
+                            e.threadOriginatorGuid == widget.message.threadOriginatorGuid ||
+                            e.guid == widget.message.threadOriginatorGuid)
+                        .toList() ??
+                    [];
+              } else {
+                _messages = widget.messageBloc?.messages.values
+                        .where((e) => e.threadOriginatorGuid == widget.message.guid || e.guid == widget.message.guid)
+                        .toList() ??
+                    [];
+              }
+              _messages.sort((a, b) => a.id!.compareTo(b.id!));
+              _messages.sort((a, b) => a.dateCreated!.compareTo(b.dateCreated!));
+              final controller = ScrollController();
+              Navigator.push(
+                context,
+                PageRouteBuilder(
+                  settings: RouteSettings(arguments: {"hideTail": true}),
+                  transitionDuration: Duration(milliseconds: 150),
+                  pageBuilder: (context, animation, secondaryAnimation) {
+                    Future.delayed(Duration.zero, () => controller.jumpTo(controller.position.maxScrollExtent));
+                    return FadeTransition(
+                        opacity: animation,
+                        child: GestureDetector(
+                          onTap: () {
+                            Get.back();
+                          },
+                          child: AnnotatedRegion<SystemUiOverlayStyle>(
+                            value: SystemUiOverlayStyle(
+                              systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+                              systemNavigationBarIconBrightness:
+                                  Theme.of(context).backgroundColor.computeLuminance() > 0.5
+                                      ? Brightness.dark
+                                      : Brightness.light,
+                              statusBarColor: Colors.transparent, // status bar color
+                            ),
+                            child: Scaffold(
+                              backgroundColor: Colors.transparent,
+                              body: BackdropFilter(
+                                filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                                child: SafeArea(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                    child: Center(
+                                      child: ListView.builder(
+                                        shrinkWrap: true,
+                                        controller: controller,
+                                        itemBuilder: (context, index) {
+                                          return AbsorbPointer(
+                                            absorbing: true,
+                                            child: Padding(
+                                                padding: EdgeInsets.only(left: 5.0, right: 5.0),
+                                                child: MessageWidget(
+                                                  key: Key(_messages[index].guid!),
+                                                  message: _messages[index],
+                                                  olderMessage: null,
+                                                  newerMessage: null,
+                                                  showHandle: true,
+                                                  isFirstSentMessage:
+                                                      widget.messageBloc!.firstSentMessage == _messages[index].guid,
+                                                  showHero: false,
+                                                  showReplies: false,
+                                                  bloc: widget.messageBloc!,
+                                                )),
+                                          );
+                                        },
+                                        itemCount: _messages.length,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ));
+                  },
+                  fullscreenDialog: true,
+                  opaque: false,
+                ),
+              );
+            },
+            child: Container(
+              width: CustomNavigator.width(context) - 10,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisAlignment: msg.isFromMe ?? false ? MainAxisAlignment.end : MainAxisAlignment.start,
+                  children: [
+                    if ((CurrentChat.of(context)?.chat.isGroup() ?? false) && !msg.isFromMe!)
+                      Padding(
+                        padding: EdgeInsets.only(top: 5),
+                        child: ContactAvatarWidget(
+                          handle: msg.handle,
+                          size: 25,
+                          fontSize: 10,
+                          borderThickness: 0.1,
+                        ),
+                      ),
+                    Stack(
+                      alignment: AlignmentDirectional.bottomStart,
+                      children: [
+                        if (skin.value == Skins.iOS)
+                          Obx(() => MessageTail(
+                                isFromMe: false,
+                                color: getBubbleColors()[0],
+                                isReply: true,
+                              )),
+                        Container(
+                          margin: EdgeInsets.only(
+                            left: 6,
+                            right: 10,
+                          ),
+                          constraints: BoxConstraints(
+                            maxWidth: CustomNavigator.width(context) * MessageWidgetMixin.maxSize - 30,
+                          ),
+                          padding: EdgeInsets.symmetric(
+                            vertical: 8,
+                            horizontal: 14,
+                          ),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: getBubbleColors()[0]),
+                            borderRadius: skin.value == Skins.iOS
+                                ? BorderRadius.only(
+                                    bottomLeft: Radius.circular(17),
+                                    bottomRight: Radius.circular(20),
+                                    topLeft: Radius.circular(20),
+                                    topRight: Radius.circular(20),
+                                  )
+                                : (skin.value == Skins.Material)
+                                    ? BorderRadius.only(
+                                        topLeft: Radius.circular(20),
+                                        topRight: Radius.circular(20),
+                                        bottomRight: Radius.circular(20),
+                                        bottomLeft: Radius.circular(20),
+                                      )
+                                    : (skin.value == Skins.Samsung)
+                                        ? BorderRadius.only(
+                                            topLeft: Radius.circular(17.5),
+                                            topRight: Radius.circular(17.5),
+                                            bottomRight: Radius.circular(17.5),
+                                            bottomLeft: Radius.circular(17.5),
+                                          )
+                                        : null,
+                          ),
+                          child: FutureBuilder<List<InlineSpan>>(
+                              future: MessageWidgetMixin.buildMessageSpansAsync(context, msg,
+                                  colorOverride: getBubbleColors()[0].lightenOrDarken(30)),
+                              initialData: MessageWidgetMixin.buildMessageSpans(context, msg,
+                                  colorOverride: getBubbleColors()[0].lightenOrDarken(30)),
+                              builder: (context, snapshot) {
+                                return RichText(
+                                  text: TextSpan(
+                                    children: snapshot.data ??
+                                        MessageWidgetMixin.buildMessageSpans(context, msg,
+                                            colorOverride: getBubbleColors()[0].lightenOrDarken(30)),
+                                  ),
+                                );
+                              }),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-              // Add the timestamp for the samsung theme
-              if (skin.value == Skins.Samsung &&
-                  widget.message.dateCreated != null &&
-                  (widget.newerMessage?.dateCreated == null ||
-                      widget.message.isFromMe != widget.newerMessage?.isFromMe ||
-                      widget.message.handleId != widget.newerMessage?.handleId ||
-                      !widget.message.dateCreated!.isWithin(widget.newerMessage!.dateCreated!, minutes: 5)))
-                Padding(
-                  padding: EdgeInsets.only(top: 5, left: (isGroup) ? 60 : 20),
-                  child: MessageTimeStamp(
-                    message: widget.message,
-                    singleLine: true,
-                    useYesterday: true,
-                  ),
-                )
-            ]),
-            popupChild: Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: msgPopupRow,
             ),
           ),
-          if (!kIsDesktop && !kIsWeb && skin.value != Skins.Samsung && widget.message.guid != widget.olderMessage?.guid)
-            MessageTimeStamp(
-              message: widget.message,
-            )
-        ],
-      ),
+        Padding(
+          // Add padding when we are showing the avatar
+          padding: EdgeInsets.only(
+              top: (skin.value != Skins.iOS && widget.message.isFromMe == widget.olderMessage?.isFromMe) ? 3.0 : 0.0,
+              left: (!widget.showTail && (showSender || skin.value == Skins.Samsung)) ? 35.0 : 0.0,
+              bottom: (widget.showTail && skin.value == Skins.iOS) ? 10.0 : 0.0),
+          child: Row(
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: (skin.value == Skins.iOS || skin.value == Skins.Material)
+                ? MainAxisAlignment.spaceBetween
+                : MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              MessagePopupHolder(
+                message: widget.message,
+                olderMessage: widget.olderMessage,
+                newerMessage: widget.newerMessage,
+                popupPushed: (pushed) {
+                  if (mounted) {
+                    setState(() {
+                      showReplies = !pushed;
+                    });
+                  }
+                },
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: msgRow,
+                  ),
+                  Obx(() {
+                    final list = widget.messageBloc?.threadOriginators.values.where((e) => e == widget.message.guid) ??
+                        [].obs.reversed;
+                    if (list.isNotEmpty) {
+                      return GestureDetector(
+                        onTap: () {
+                          List<Message> _messages = [];
+                          if (widget.message.threadOriginatorGuid != null) {
+                            _messages = widget.messageBloc?.messages.values
+                                    .where((e) =>
+                                        e.threadOriginatorGuid == widget.message.threadOriginatorGuid ||
+                                        e.guid == widget.message.threadOriginatorGuid)
+                                    .toList() ??
+                                [];
+                          } else {
+                            _messages = widget.messageBloc?.messages.values
+                                    .where((e) =>
+                                        e.threadOriginatorGuid == widget.message.guid || e.guid == widget.message.guid)
+                                    .toList() ??
+                                [];
+                          }
+                          _messages.sort((a, b) => a.id == null || b.id == null ? -1 : a.id!.compareTo(b.id!));
+                          _messages.sort((a, b) => a.dateCreated!.compareTo(b.dateCreated!));
+                          final controller = ScrollController();
+                          Navigator.push(
+                            context,
+                            PageRouteBuilder(
+                              settings: RouteSettings(arguments: {"hideTail": true}),
+                              transitionDuration: Duration(milliseconds: 150),
+                              pageBuilder: (context, animation, secondaryAnimation) {
+                                Future.delayed(
+                                    Duration.zero, () => controller.jumpTo(controller.position.maxScrollExtent));
+                                return FadeTransition(
+                                    opacity: animation,
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        Get.back();
+                                      },
+                                      child: AnnotatedRegion<SystemUiOverlayStyle>(
+                                        value: SystemUiOverlayStyle(
+                                          systemNavigationBarColor:
+                                              Theme.of(context).backgroundColor, // navigation bar color
+                                          systemNavigationBarIconBrightness:
+                                              Theme.of(context).backgroundColor.computeLuminance() > 0.5
+                                                  ? Brightness.dark
+                                                  : Brightness.light,
+                                          statusBarColor: Colors.transparent, // status bar color
+                                        ),
+                                        child: Scaffold(
+                                          backgroundColor: Colors.transparent,
+                                          body: BackdropFilter(
+                                            filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                                            child: SafeArea(
+                                              child: Padding(
+                                                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                                child: Center(
+                                                  child: ListView.builder(
+                                                    shrinkWrap: true,
+                                                    controller: controller,
+                                                    itemBuilder: (context, index) {
+                                                      return AbsorbPointer(
+                                                        absorbing: true,
+                                                        child: Padding(
+                                                            padding: EdgeInsets.only(left: 5.0, right: 5.0),
+                                                            child: MessageWidget(
+                                                              key: Key(_messages[index].guid!),
+                                                              message: _messages[index],
+                                                              olderMessage: null,
+                                                              newerMessage: null,
+                                                              showHandle: true,
+                                                              isFirstSentMessage:
+                                                                  widget.messageBloc!.firstSentMessage ==
+                                                                      _messages[index].guid,
+                                                              showHero: false,
+                                                              showReplies: false,
+                                                              bloc: widget.messageBloc!,
+                                                            )),
+                                                      );
+                                                    },
+                                                    itemCount: _messages.length,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ));
+                              },
+                              fullscreenDialog: true,
+                              opaque: false,
+                            ),
+                          );
+                        },
+                        child: Padding(
+                          padding: EdgeInsets.only(left: addedAvatar ? 50 : 18, right: 8.0, top: 2, bottom: 4),
+                          child: Text(
+                            "${list.length} Repl${list.length > 1 ? "ies" : "y"}",
+                            style: Theme.of(context)
+                                .textTheme
+                                .subtitle2!
+                                .copyWith(fontWeight: FontWeight.bold, color: Colors.blue),
+                          ),
+                        ),
+                      );
+                    } else {
+                      return Container();
+                    }
+                  }),
+                  // Add the timestamp for the samsung theme
+                  if (skin.value == Skins.Samsung &&
+                      widget.message.dateCreated != null &&
+                      (widget.newerMessage?.dateCreated == null ||
+                          widget.message.isFromMe != widget.newerMessage?.isFromMe ||
+                          widget.message.handleId != widget.newerMessage?.handleId ||
+                          !widget.message.dateCreated!.isWithin(widget.newerMessage!.dateCreated!, minutes: 5)))
+                    Padding(
+                      padding: EdgeInsets.only(top: 5, left: (isGroup) ? 60 : 20),
+                      child: MessageTimeStamp(
+                        message: widget.message,
+                        singleLine: true,
+                        useYesterday: true,
+                      ),
+                    )
+                ]),
+                popupChild: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: msgPopupRow,
+                ),
+              ),
+              if (!kIsDesktop &&
+                  !kIsWeb &&
+                  skin.value != Skins.Samsung &&
+                  widget.message.guid != widget.olderMessage?.guid)
+                MessageTimeStamp(
+                  message: widget.message,
+                )
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

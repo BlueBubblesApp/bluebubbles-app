@@ -19,6 +19,7 @@ class MessagePopupHolder extends StatefulWidget {
   final Message message;
   final Message? olderMessage;
   final Message? newerMessage;
+  final Function(bool) popupPushed;
 
   MessagePopupHolder({
     Key? key,
@@ -27,6 +28,7 @@ class MessagePopupHolder extends StatefulWidget {
     required this.message,
     required this.olderMessage,
     required this.newerMessage,
+    required this.popupPushed,
   }) : super(key: key);
 
   @override
@@ -80,6 +82,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
       });
     }
 
+    widget.popupPushed.call(true);
     await Navigator.push(
       context,
       PageRouteBuilder(
@@ -107,7 +110,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
         opaque: false,
       ),
     );
-
+    widget.popupPushed.call(false);
     if (mounted) {
       setState(() {
         visible = true;

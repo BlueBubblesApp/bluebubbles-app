@@ -565,6 +565,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                                       showHandle: widget.showHandle,
                                       isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages[index].guid,
                                       showHero: fullAnimation,
+                                      showReplies: true,
                                       onUpdate: (event) => onUpdateMessage(event),
                                       bloc: widget.messageBloc!,
                                     ));

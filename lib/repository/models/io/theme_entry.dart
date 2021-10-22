@@ -5,6 +5,7 @@ import 'package:bluebubbles/repository/models/io/join_tables.dart';
 import 'package:bluebubbles/repository/models/io/theme_object.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:objectbox/objectbox.dart';
 
 @Entity()
 class ThemeEntry {

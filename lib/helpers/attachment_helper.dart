@@ -201,9 +201,9 @@ class AttachmentHelper {
   }
 
   static dynamic getContent(Attachment attachment, {String? path}) {
-    if ((kIsWeb || kIsDesktop) && attachment.bytes == null && attachment.guid != "redacted-mode-demo-attachment") {
+    if (kIsWeb && attachment.bytes == null && attachment.guid != "redacted-mode-demo-attachment") {
       return Get.put(AttachmentDownloadController(attachment: attachment), tag: attachment.guid);
-    } else if (kIsWeb || kIsDesktop) {
+    } else if (kIsWeb) {
       return PlatformFile(
         name: attachment.transferName!,
         path: null,

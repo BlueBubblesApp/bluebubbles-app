@@ -1,5 +1,6 @@
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -15,7 +16,24 @@ import 'package:url_launcher/url_launcher.dart';
 
 // Mixin just for commonly shared functions and properties between the SentMessage and ReceivedMessage
 abstract class MessageWidgetMixin {
+  String contactTitle = "";
+  bool hasHyperlinks = false;
   static const double maxSize = 3 / 5;
+
+  Future<void> initMessageState(Message message, bool? showHandle) async {
+    hasHyperlinks = parseLinks(message.text!).isNotEmpty;
+    await getContactTitle(message, showHandle);
+  }
+
+  Future<void> getContactTitle(Message message, bool? showHandle) async {
+    if (message.handle == null || !showHandle!) return;
+
+    String? title = await ContactManager().getContactTitle(message.handle);
+
+    if (title != contactTitle) {
+      contactTitle = title ?? "";
+    }
+  }
 
   /// Adds reacts to a [message] widget
   static Widget addReactionsToWidget(
@@ -42,7 +60,7 @@ abstract class MessageWidgetMixin {
     );
   }
 
-  static List<InlineSpan> buildMessageSpans(BuildContext context, Message? message, {List<Color>? colors = const []}) {
+  static List<InlineSpan> buildMessageSpans(BuildContext context, Message? message, {List<Color>? colors = const [], Color? colorOverride}) {
     List<InlineSpan> textSpans = <InlineSpan>[];
 
     final bool generateContent =
@@ -102,6 +120,7 @@ abstract class MessageWidgetMixin {
         if (hideContent) {
           _textStyle = _textStyle.apply(color: Colors.transparent);
         }
+        if (colorOverride != null && !hideContent) _textStyle = _textStyle.apply(color: colorOverride);
         textSpans.add(
           TextSpan(
             text: "${message.subject}\n",
@@ -173,7 +192,7 @@ abstract class MessageWidgetMixin {
   }
 
   static Future<List<InlineSpan>> buildMessageSpansAsync(BuildContext context, Message? message,
-      {List<Color>? colors = const []}) async {
+      {List<Color>? colors = const [], Color? colorOverride}) async {
     List<InlineSpan> textSpans = <InlineSpan>[];
 
     final bool generateContent =
@@ -258,6 +277,7 @@ abstract class MessageWidgetMixin {
         if (hideContent) {
           _textStyle = _textStyle.apply(color: Colors.transparent);
         }
+        if (colorOverride != null && !hideContent) _textStyle = _textStyle.apply(color: colorOverride);
         textSpans.add(
           TextSpan(
             text: "${message.subject}\n",

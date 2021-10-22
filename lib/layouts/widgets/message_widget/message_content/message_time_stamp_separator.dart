@@ -16,7 +16,7 @@ class MessageTimeStampSeparator extends StatelessWidget {
     return second.dateCreated!.difference(first.dateCreated!).inMinutes.abs() > threshold;
   }
 
-  Map<String, String> _buildTimeStamp() {
+  Map<String, String> buildTimeStamp() {
     if (newerMessage != null &&
         (!isEmptyString(message.fullText) || message.hasAttachments) &&
         withinTimeThreshold(message, newerMessage, threshold: 30)) {
@@ -31,7 +31,7 @@ class MessageTimeStampSeparator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Map<String, String> timeStamp = _buildTimeStamp();
+    Map<String, String> timeStamp = buildTimeStamp();
 
     return timeStamp.isNotEmpty
         ? Padding(
@@ -40,10 +40,11 @@ class MessageTimeStampSeparator extends StatelessWidget {
               text: TextSpan(
                 style: Theme.of(context).textTheme.subtitle2,
                 children: [
-                  TextSpan(
-                    text: "${timeStamp["date"]}, ",
-                    style: Theme.of(context).textTheme.subtitle2!.apply(fontWeightDelta: 10),
-                  ),
+                  if (timeStamp["date"] != null)
+                    TextSpan(
+                      text: "${timeStamp["date"]}, ",
+                      style: Theme.of(context).textTheme.subtitle2!.apply(fontWeightDelta: 10),
+                    ),
                   TextSpan(text: "${timeStamp["time"]}")
                 ],
               ),

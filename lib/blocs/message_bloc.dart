@@ -33,6 +33,7 @@ class MessageBloc {
   final Rxn<MessageBlocEvent> event = Rxn<MessageBlocEvent>();
   Map<String, Message> _allMessages = {};
   final Map<String, Message> _reactionMessages = {};
+  final RxMap<String, String> threadOriginators = <String, String>{}.obs;
   int _reactions = 0;
   bool showDeleted = false;
   bool _canLoadMore = true;
@@ -174,6 +175,10 @@ class MessageBloc {
       mbEvent.data = data;
       event.value = mbEvent;
     }
+  }
+
+  void addMessage(Message m) {
+    _allMessages[m.guid!] = m;
   }
 
   LinkedHashMap<M, N> linkedHashMapInsert<M, N>(map, int index, M key, N value) {

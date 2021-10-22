@@ -1,16 +1,18 @@
 import 'dart:convert';
 import 'dart:typed_data';
+
+import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/objectbox.g.dart';
 import 'package:bluebubbles/repository/models/io/join_tables.dart';
 import 'package:bluebubbles/repository/models/io/message.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
-import 'package:universal_io/io.dart';
-import 'package:bluebubbles/helpers/attachment_helper.dart';
-import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:mime_type/mime_type.dart';
+import 'package:objectbox/objectbox.dart';
+import 'package:universal_io/io.dart';
 
 @Entity()
 class Attachment {

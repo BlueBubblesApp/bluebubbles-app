@@ -24,6 +24,8 @@ import 'package:get/get.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:universal_io/io.dart';
 
+import 'blocs/message_bloc.dart';
+
 /// This helper class allows us to section off all socket "actions"
 /// These actions allow us to interact with the server, whether it
 /// be telling the server to do something, or asking the server for
@@ -35,8 +37,9 @@ class ActionHandler {
   /// ```dart
   /// sendMessage(chatObject, 'Hello world!')
   /// ```
-  static Future<void> sendMessage(Chat chat, String text, {List<Attachment> attachments = const []}) async {
-    if (isNullOrEmpty(text, trimString: true)!) return;
+  static Future<void> sendMessage(Chat chat, String text,
+      {MessageBloc? messageBloc, List<Attachment> attachments = const [], String? subject, String? replyGuid}) async {
+    if (isNullOrEmpty(text, trimString: true)! && isNullOrEmpty(subject ?? "", trimString: true)!) return;
 
     if ((await SettingsManager().getMacOSVersion() ?? 10) < 11) {
       List<Message> messages = <Message>[];
@@ -71,8 +74,11 @@ class ActionHandler {
 
       Message mainMsg = Message(
         text: mainText.trim(),
+        subject: subject,
         dateCreated: DateTime.now(),
         hasAttachments: attachments.isNotEmpty ? true : false,
+        threadOriginatorGuid: replyGuid,
+        isFromMe: true,
       );
 
       // Generate a Temp GUID
@@ -86,6 +92,8 @@ class ActionHandler {
           text: secondaryText.trim(),
           dateCreated: DateTime.now(),
           hasAttachments: false,
+          threadOriginatorGuid: replyGuid,
+          isFromMe: true,
         );
 
         // Generate a Temp GUID
@@ -113,8 +121,11 @@ class ActionHandler {
       // Create the main message
       Message message = Message(
         text: text.trim(),
+        subject: subject,
         dateCreated: DateTime.now(),
         hasAttachments: attachments.isNotEmpty ? true : false,
+        threadOriginatorGuid: replyGuid,
+        isFromMe: true,
       );
 
       // Generate a Temp GUID
@@ -144,20 +155,57 @@ class ActionHandler {
     params["tempGuid"] = message.guid;
 
     void sendSocketMessage() {
-      SocketManager().sendMessage("send-message", params, (response) async {
-        String? tempGuid = message.guid;
+      if ((message.subject?.isNotEmpty ?? false) || message.threadOriginatorGuid != null) {
+        api.sendMessage(chat.guid!, message.guid!, message.text!, subject: message.subject, method: "private-api", selectedMessageGuid: message.threadOriginatorGuid).then((response) async {
+          String? tempGuid = message.guid;
+          // If there is an error, replace the temp value with an error
+          if (response.statusCode != 200) {
+            message.guid = message.guid!.replaceAll("temp", "error-${response.data['error']['message']}");
+            message.error =
+            response.statusCode == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
 
-        // If there is an error, replace the temp value with an error
-        if (response['status'] != 200) {
-          message.guid = message.guid!.replaceAll("temp", "error-${response['error']['message']}");
-          message.error = response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
+            await Message.replaceMessage(tempGuid, message);
+            NewMessageManager().updateMessage(chat, tempGuid!, message);
+          } else {
+            print(response.data);
+            Message newMessage = Message.fromMap(response.data['data']);
+            await Message.replaceMessage(tempGuid, newMessage, chat: chat);
+            List<dynamic> attachments = response.data.containsKey("attachments") ? response.data['attachments'] : [];
+            newMessage.attachments = [];
+            for (dynamic attachmentItem in attachments) {
+              Attachment file = Attachment.fromMap(attachmentItem);
 
-          await Message.replaceMessage(tempGuid, message);
-          NewMessageManager().updateMessage(chat, tempGuid!, message);
-        }
+              try {
+                Attachment.replaceAttachment(tempGuid, file);
+              } catch (ex) {
+                Logger.warn("Attachment's Old GUID doesn't exist. Skipping");
+              }
+              newMessage.attachments!.add(file);
+            }
+            Logger.info("Message match: [${response.data['data']["text"]}] - ${response.data['data']["guid"]} - $tempGuid", tag: "MessageStatus");
 
-        completer.complete();
-      });
+            NewMessageManager().updateMessage(chat, tempGuid!, newMessage);
+          }
+
+          completer.complete();
+        });
+      } else {
+        SocketManager().sendMessage("send-message", params, (response) async {
+          String? tempGuid = message.guid;
+
+          // If there is an error, replace the temp value with an error
+          if (response['status'] != 200) {
+            message.guid = message.guid!.replaceAll("temp", "error-${response['error']['message']}");
+            message.error =
+            response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
+
+            await Message.replaceMessage(tempGuid, message);
+            NewMessageManager().updateMessage(chat, tempGuid!, message);
+          }
+
+          completer.complete();
+        });
+      }
     }
 
     bool isConnected = kIsWeb;
