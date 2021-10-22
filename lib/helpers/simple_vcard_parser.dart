@@ -8,9 +8,9 @@ class VCard {
   String? version;
 
   VCard(vCardString) {
-    this._vCardString = vCardString;
+    _vCardString = vCardString;
 
-    lines = LineSplitter().convert(this._vCardString!);
+    lines = LineSplitter().convert(_vCardString!);
     for (var i = lines.length - 1; i >= 0; i--) {
       if (lines[i].startsWith("BEGIN:VCARD") || lines[i].startsWith("END:VCARD") || lines[i].trim().isEmpty) {
         lines.removeAt(i);
@@ -18,7 +18,7 @@ class VCard {
     }
 
     for (var i = lines.length - 1; i >= 0; i--) {
-      if (!lines[i].startsWith(new RegExp(r'^\S+(:|;)'))) {
+      if (!lines[i].startsWith(RegExp(r'^\S+(:|;)'))) {
         String tmpLine = lines[i];
         String prevLine = lines[i - 1];
         lines[i - 1] = prevLine + ', ' + tmpLine;
@@ -30,7 +30,7 @@ class VCard {
   }
 
   String? get fullString {
-    return this._vCardString;
+    return _vCardString;
   }
 
   void printLines() {

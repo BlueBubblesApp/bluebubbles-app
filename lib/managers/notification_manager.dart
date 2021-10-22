@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
+import 'package:bluebubbles/managers/life_cycle_manager.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:quick_notify/quick_notify.dart';
 import 'package:universal_html/html.dart' as uh;
 
@@ -17,7 +19,6 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
-import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart' as fln;
 import 'package:timezone/timezone.dart' as tz;
@@ -81,19 +82,21 @@ class NotificationManager {
       }
     }
     ChatBloc().updateUnreads();
-    MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
+    if (!LifeCycleManager().isBubble) {
+      MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
+    }
   }
 
   /// Creates notification channel for android
   /// This is done through native code and all of this data is hard coded for now
   Future<void> createNotificationChannel(String channelID, String channelName, String channelDescription) async {
-    List<String> sounds = ["twig.wav", "walrus.wav", "sugarfree.wav", "raspberry.wav"];
+    //List<String> sounds = ["twig.wav", "walrus.wav", "sugarfree.wav", "raspberry.wav"];
     await MethodChannelInterface().invokeMethod("create-notif-channel", {
       "channel_name": channelName,
       "channel_description": channelDescription,
       "CHANNEL_ID": channelID,
     });
-    if (channelID.contains("new_messages")) {
+    /*if (channelID.contains("new_messages")) {
       sounds.forEach((s) async {
         await MethodChannelInterface().invokeMethod("create-notif-channel", {
           "channel_name": channelName,
@@ -102,7 +105,7 @@ class NotificationManager {
           "sound": s,
         });
       });
-    }
+    }*/
   }
 
   Future<void> scheduleNotification(Chat chat, Message message, DateTime time) async {
@@ -111,9 +114,7 @@ class NotificationManager {
     bool isGroup = chat.isGroup();
 
     // If we couldn't get a chat title, generate placeholder names
-    if (chatTitle == null) {
-      chatTitle = isGroup ? 'Group Chat' : 'iMessage Chat';
-    }
+    chatTitle ??= isGroup ? 'Group Chat' : 'iMessage Chat';
     await flutterLocalNotificationsPlugin!.zonedSchedule(
         Random().nextInt(9998) + 1,
         'Reminder: $chatTitle',
@@ -164,16 +165,16 @@ class NotificationManager {
     // Get the contact name if the message is not from you
     String? contactName = 'You';
     if (!message.isFromMe!) {
-      contactName = await ContactManager().getContactTitle(message.handle);
+      contactName = ContactManager().getContactTitle(message.handle);
     }
 
     // If it's still null or empty, we need to put something in there... so 'You'
-    if (contactName == null || contactName.isEmpty) {
+    if (contactName.isEmpty) {
       contactName = 'Unknown';
     }
 
     // Get the actual contact metadata
-    Contact? contact = await ContactManager().getCachedContact(message.handle);
+    Contact? contact = ContactManager().getCachedContact(handle: message.handle);
 
     // Build the message text for the notification
     String? messageText = await MessageHelper.getNotificationText(message);
@@ -182,12 +183,12 @@ class NotificationManager {
     // Try to load in an avatar for the person
     try {
       // If there is a contact specified, we can use it's avatar
-      if (contact != null && contact.avatar != null) {
-        if (contact.avatar!.length > 0) contactIcon = contact.avatar;
+      if (contact != null && (contact.avatar.value?.isNotEmpty ?? false)) {
+        if (contact.avatar.value!.isNotEmpty) contactIcon = contact.avatar.value!;
         // Otherwise if there isn't, we use the [defaultAvatar]
       } else {
         // If [defaultAvatar] is not loaded, load it from assets
-        if (defaultAvatar == null) {
+        if ((contact?.avatar.value == null || contact!.avatar.value!.isEmpty) && defaultAvatar == null) {
           ByteData file = await loadAsset("assets/images/person64.png");
           defaultAvatar = file.buffer.asUint8List();
         }
@@ -210,9 +211,7 @@ class NotificationManager {
     bool isGroup = chat.isGroup();
 
     // If we couldn't get a chat title, generate placeholder names
-    if (chatTitle == null) {
-      chatTitle = isGroup ? 'Group Chat' : 'iMessage Chat';
-    }
+    chatTitle ??= isGroup ? 'Group Chat' : 'iMessage Chat';
 
     await createNewMessageNotification(
         chat.guid!,
@@ -221,6 +220,7 @@ class NotificationManager {
         contactIcon,
         contactName,
         contactIcon,
+        message.guid!,
         messageText,
         message.dateCreated ?? DateTime.now(),
         message.isFromMe ?? false,
@@ -234,6 +234,7 @@ class NotificationManager {
       Uint8List? chatIcon,
       String contactName,
       Uint8List? contactAvatar,
+      String messageGuid,
       String messageText,
       DateTime messageDate,
       bool messageIsFromMe,
@@ -264,6 +265,7 @@ class NotificationManager {
       "chatIcon": chatIcon,
       "contactName": contactName,
       "contactAvatar": contactAvatar,
+      "messageGuid": messageGuid,
       "messageText": messageText,
       "messageDate": messageDate.millisecondsSinceEpoch,
       "messageIsFromMe": messageIsFromMe,

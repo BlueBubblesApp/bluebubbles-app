@@ -38,8 +38,21 @@ class CupertinoConversationList extends StatefulWidget {
 }
 
 class CupertinoConversationListState extends State<CupertinoConversationList> {
-  final key = new GlobalKey<NavigatorState>();
+  final key = GlobalKey<NavigatorState>();
+  final Rx<Color> headerColor = Rx<Color>(Colors.transparent);
   bool openedChatAlready = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.parent.scrollController.addListener(() {
+      if (widget.parent.scrollController.hasClients && widget.parent.scrollController.offset > (125 - kToolbarHeight)) {
+        headerColor.value = Get.context!.theme.accentColor.withOpacity(0.5);
+      } else {
+        headerColor.value = Colors.transparent;
+      }
+    });
+  }
 
   Future<void> openLastChat(BuildContext context) async {
     if (ChatBloc().chatRequest != null &&
@@ -93,46 +106,41 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                 child: ClipRRect(
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                    child: StreamBuilder<Color?>(
-                      stream: widget.parent.headerColorStream.stream,
-                      builder: (context, snapshot) {
-                        return AnimatedCrossFade(
-                          crossFadeState: widget.parent.theme == Colors.transparent
-                              ? CrossFadeState.showFirst
-                              : CrossFadeState.showSecond,
-                          duration: Duration(milliseconds: 250),
-                          secondChild: AppBar(
-                            iconTheme: IconThemeData(color: context.theme.primaryColor),
-                            elevation: 0,
-                            backgroundColor: widget.parent.theme,
-                            centerTitle: true,
-                            brightness: brightness,
-                            title: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: <Widget>[
-                                Text(
-                                  showArchived
-                                      ? "Archive"
-                                      : showUnknown
-                                          ? "Unknown Senders"
-                                          : "Messages",
-                                  style: context.textTheme.bodyText1,
-                                ),
-                              ],
+                    child: Obx(() => AnimatedCrossFade(
+                      crossFadeState: headerColor.value == Colors.transparent
+                          ? CrossFadeState.showFirst
+                          : CrossFadeState.showSecond,
+                      duration: Duration(milliseconds: 250),
+                      secondChild: AppBar(
+                        iconTheme: IconThemeData(color: context.theme.primaryColor),
+                        elevation: 0,
+                        backgroundColor: headerColor.value,
+                        centerTitle: true,
+                        brightness: brightness,
+                        title: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: <Widget>[
+                            Text(
+                              showArchived
+                                  ? "Archive"
+                                  : showUnknown
+                                  ? "Unknown Senders"
+                                  : "Messages",
+                              style: context.textTheme.bodyText1,
                             ),
-                          ),
-                          firstChild: AppBar(
-                            leading: new Container(),
-                            elevation: 0,
-                            brightness: brightness,
-                            backgroundColor: context.theme.backgroundColor,
-                          ),
-                        );
-                      },
+                          ],
+                        ),
+                      ),
+                      firstChild: AppBar(
+                        leading: Container(),
+                        elevation: 0,
+                        brightness: brightness,
+                        backgroundColor: context.theme.backgroundColor,
+                      ),
                     ),
-                  ),
+                    )),
                 ),
-              ),
+        ),
         backgroundColor: context.theme.backgroundColor,
         extendBodyBehindAppBar: true,
         body: CustomScrollView(
@@ -146,7 +154,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                           !showArchived &&
                           !showUnknown)
                   ? buildBackButton(context)
-                  : new Container(),
+                  : Container(),
               stretch: true,
               expandedHeight: (!showArchived && !showUnknown) ? 80 : 50,
               backgroundColor: Colors.transparent,
@@ -172,8 +180,8 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              ...widget.parent.getHeaderTextWidgets(),
-                              ...widget.parent.getConnectionIndicatorWidgets(),
+                              widget.parent.getHeaderTextWidget(),
+                              widget.parent.getConnectionIndicatorWidget(),
                               widget.parent.getSyncIndicatorWidget(),
                             ],
                           ),
@@ -206,7 +214,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                                     height: 20,
                                     child: Icon(CupertinoIcons.pencil, color: context.theme.primaryColor, size: 12),
                                   ),
-                                  onTap: this.widget.parent.openNewChatCreator,
+                                  onTap: widget.parent.openNewChatCreator,
                                 ),
                               ),
                             ),
@@ -241,7 +249,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
 
                                     String appDocPath = SettingsManager().appDocDir.path;
                                     String ext = ".png";
-                                    File file = new File("$appDocPath/attachments/" + randomString(16) + ext);
+                                    File file = File("$appDocPath/attachments/" + randomString(16) + ext);
                                     await file.create(recursive: true);
 
                                     // Take the picture after opening the camera

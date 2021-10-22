@@ -10,7 +10,6 @@ import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_tile.dart';
-import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
@@ -608,7 +607,7 @@ class ChatListState extends State<ChatList> {
                                               Get.back();
                                               await chat.toggleMute(chat.muteType != "mute");
                                               await chat.update();
-                                              if (this.mounted) setState(() {});
+                                              if (mounted) setState(() {});
                                               EventDispatcher().emit("refresh", null);
                                             },
                                           ),
@@ -617,10 +616,7 @@ class ChatListState extends State<ChatList> {
                                             subtitle: Text("Mute certain individuals in this chat", style: Theme.of(context).textTheme.subtitle1),
                                             onTap: () async {
                                               Get.back();
-                                              List<Future<String?>> names = chat.participants.map((e) async =>
-                                              await ContactManager().getContactTitle(e)).toList();
-                                              Future<List<String?>> futureList = Future.wait(names);
-                                              List<String?> result = await futureList;
+                                              List<String?> names = chat.participants.map((e) => ContactManager().getContactTitle(e)).toList();
                                               List<String> existing = chat.muteArgs?.split(",") ?? [];
                                               Get.defaultDialog(
                                                 title: "Mute Individuals",
@@ -668,7 +664,7 @@ class ChatListState extends State<ChatList> {
                                                                             });
                                                                           },
                                                                           activeColor: Theme.of(context).primaryColor,
-                                                                          title: Text(result[index] ?? chat.participants[index].address, style: Theme.of(context).textTheme.headline1),
+                                                                          title: Text(names[index] ?? chat.participants[index].address, style: Theme.of(context).textTheme.headline1),
                                                                         ),
                                                                       );
                                                                     },
@@ -691,7 +687,7 @@ class ChatListState extends State<ChatList> {
                                                   chat.muteArgs = existing.join(",");
                                                   Get.back();
                                                   await chat.update();
-                                                  if (this.mounted) setState(() {});
+                                                  if (mounted) setState(() {});
                                                   EventDispatcher().emit("refresh", null);
                                                 },
                                               );
@@ -719,7 +715,7 @@ class ChatListState extends State<ChatList> {
                                                     chat.muteType = "temporary_mute";
                                                     chat.muteArgs = finalDate.toIso8601String();
                                                     await chat.update();
-                                                    if (this.mounted) setState(() {});
+                                                    if (mounted) setState(() {});
                                                     EventDispatcher().emit("refresh", null);
                                                   }
                                                 }
@@ -774,7 +770,7 @@ class ChatListState extends State<ChatList> {
                                                   chat.muteArgs = controller.text;
                                                   Get.back();
                                                   await chat.update();
-                                                  if (this.mounted) setState(() {});
+                                                  if (mounted) setState(() {});
                                                   EventDispatcher().emit("refresh", null);
                                                 },
                                               );
@@ -789,7 +785,7 @@ class ChatListState extends State<ChatList> {
                                               chat.muteType = null;
                                               chat.muteArgs = null;
                                               await chat.update();
-                                              if (this.mounted) setState(() {});
+                                              if (mounted) setState(() {});
                                               EventDispatcher().emit("refresh", null);
                                             },
                                           ),

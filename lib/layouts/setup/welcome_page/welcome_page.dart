@@ -36,20 +36,20 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
     });
     _titleController = AnimationController(vsync: this, duration: Duration(seconds: 1));
     titleOffset = Tween<Offset>(begin: Offset(0.0, 3), end: Offset(0.0, 0.0))
-        .animate(new CurvedAnimation(parent: _titleController, curve: Curves.easeInOut));
+        .animate(CurvedAnimation(parent: _titleController, curve: Curves.easeInOut));
 
     opacityTitle =
-        Tween<double>(begin: 0, end: 1).animate(new CurvedAnimation(parent: _titleController, curve: Curves.easeInOut));
+        Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(parent: _titleController, curve: Curves.easeInOut));
 
     _subtitleController = AnimationController(vsync: this, duration: Duration(seconds: 1));
     subtitleOffset = Tween<Offset>(begin: Offset(0.0, 5), end: Offset(0.0, 2))
-        .animate(new CurvedAnimation(parent: _subtitleController, curve: Curves.easeInOut));
+        .animate(CurvedAnimation(parent: _subtitleController, curve: Curves.easeInOut));
 
     opacitySubtitle = Tween<double>(begin: 0, end: 1)
-        .animate(new CurvedAnimation(parent: _subtitleController, curve: Curves.easeInOut));
+        .animate(CurvedAnimation(parent: _subtitleController, curve: Curves.easeInOut));
 
     opacityButton = Tween<double>(begin: 0, end: 1)
-        .animate(new CurvedAnimation(parent: _subtitleController, curve: Curves.easeInOut));
+        .animate(CurvedAnimation(parent: _subtitleController, curve: Curves.easeInOut));
   }
 
   Future<void> animateTitle() async {

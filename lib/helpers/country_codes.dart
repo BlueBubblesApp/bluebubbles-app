@@ -1241,7 +1241,7 @@ List<Map<String, String>> codes = [
 ];
 
 List<CountryCode> getCountryCodes() {
-  if (countryCodes.length > 0) return countryCodes;
+  if (countryCodes.isNotEmpty) return countryCodes;
   for (Map<String, String> item in codes) {
     if (countryCodes.firstWhereOrNull((element) => element.code == item['code']) == null) {
       countryCodes.add(CountryCode(name: item["name"]!, code: item["code"]!, dialCode: item["dial_code"]!));

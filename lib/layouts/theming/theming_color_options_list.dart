@@ -43,7 +43,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
         builder: (context) => NewThemeCreateAlert(
           onCreate: (String name) async {
             Navigator.of(context).pop();
-            ThemeObject newTheme = new ThemeObject(data: currentTheme!.themeData, name: name);
+            ThemeObject newTheme = ThemeObject(data: currentTheme!.themeData, name: name);
             allThemes.add(newTheme);
             currentTheme = newTheme;
             if (widget.isDarkMode) {
@@ -77,7 +77,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
       await theme.fetchData();
     }
 
-    if (this.mounted) setState(() {});
+    if (mounted) setState(() {});
   }
 
   @override
@@ -249,10 +249,10 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                       style: TextStyle(color: Colors.red),
                     ),
                     onPressed: () async {
-                      allThemes.removeWhere((element) => element == this.currentTheme);
-                      await this.currentTheme!.delete();
-                      this.currentTheme =
-                          widget.isDarkMode ? await ThemeObject.getDarkTheme() : await ThemeObject.getLightTheme();
+                      allThemes.removeWhere((element) => element == currentTheme);
+                      await currentTheme!.delete();
+                      currentTheme =
+                        widget.isDarkMode ? await revertToPreviousDarkTheme() : await revertToPreviousLightTheme();
                       allThemes = await ThemeObject.getThemes();
                       if (widget.isDarkMode) {
                         await SettingsManager().saveSelectedTheme(context, selectedDarkTheme: currentTheme);

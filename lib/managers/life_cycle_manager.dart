@@ -23,7 +23,9 @@ class LifeCycleManager {
 
   bool get isAlive => _isAlive;
 
-  StreamController<bool> _stream = new StreamController.broadcast();
+  bool isBubble = false;
+
+  final StreamController<bool> _stream = StreamController.broadcast();
   Stream<bool> get stream => _stream.stream;
 
   LifeCycleManager._internal() {

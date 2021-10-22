@@ -1,6 +1,5 @@
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
-import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 import 'dart:ui';
@@ -65,7 +64,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
   void initState() {
     super.initState();
     chat = widget.chat;
-    controller = new TextEditingController(text: chat.displayName);
+    readOnly = !(chat.participants.length > 1);
+    controller = TextEditingController(text: chat.displayName);
     showNameField = chat.displayName?.isNotEmpty ?? false;
 
     fetchAttachments();
@@ -74,7 +74,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
       if (_chat == null) return;
       await _chat.getParticipants();
       chat = _chat;
-      if (this.mounted) setState(() {});
+      readOnly = !(chat.participants.length > 1);
+      if (mounted) setState(() {});
     });
   }
 
@@ -86,18 +87,19 @@ class _ConversationDetailsState extends State<ConversationDetails> {
     readOnly = !(chat.participants.length > 1);
 
     Logger.info("Updated readonly $readOnly");
-    if (this.mounted) setState(() {});
+    if (mounted) setState(() {});
   }
 
   void fetchAttachments() {
     if (kIsWeb) {
-      attachmentsForChat = CurrentChat.activeChat?.chatAttachments ?? [];
-      if (this.mounted) setState(() {});
+      if (attachmentsForChat.length > 25) attachmentsForChat = attachmentsForChat.sublist(0, 25);
+      if (mounted) setState(() {});
       return;
     }
     Chat.getAttachments(chat).then((value) {
       attachmentsForChat = value;
-      if (this.mounted) setState(() {});
+      if (attachmentsForChat.length > 25) attachmentsForChat = attachmentsForChat.sublist(0, 25);
+      if (mounted) setState(() {});
     });
   }
 
@@ -179,7 +181,6 @@ class _ConversationDetailsState extends State<ConversationDetails> {
     final bool generateName = redactedMode && SettingsManager().settings.generateFakeContactNames.value;
     if (generateName) controller.text = "Group Chat";
 
-    final bool showGroupNameInfo = (showNameField && !hideInfo) || generateName;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
@@ -287,7 +288,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                 builder: (BuildContext context) {
                                   return AlertDialog(
                                       backgroundColor: Theme.of(context).accentColor,
-                                      title: new Text("Group Naming",
+                                      title: Text("Group Naming",
                                           style:
                                           TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
                                       content: Column(
@@ -330,7 +331,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                 if (index >= participants.length && shouldShowMore) {
                   return ListTile(
                     onTap: () {
-                      if (!this.mounted) return;
+                      if (!mounted) return;
                       setState(() {
                         showMore = !showMore;
                       });
@@ -359,7 +360,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                   chat: chat,
                   updateChat: (Chat newChat) {
                     chat = newChat;
-                    if (this.mounted) setState(() {});
+                    if (mounted) setState(() {});
                   },
                   canBeRemoved: chat.participants.length > 1 && SettingsManager().settings.enablePrivateAPI.value,
                 );
@@ -470,7 +471,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                         builder: (BuildContext context) {
                           return AlertDialog(
                               backgroundColor: Theme.of(context).accentColor,
-                              title: new Text("Custom Avatar",
+                              title: Text("Custom Avatar",
                                   style: TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
                               content: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -498,7 +499,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                             .subtitle1!
                                             .apply(color: Theme.of(context).primaryColor)),
                                     onPressed: () {
-                                      File file = new File(chat.customAvatarPath.value!);
+                                      File file = File(chat.customAvatarPath.value!);
                                       file.delete();
                                       chat.customAvatarPath.value = null;
                                       chat.save();
@@ -606,7 +607,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                         onChanged: (value) async {
                           await widget.chat.togglePin(!widget.chat.isPinned!);
                           EventDispatcher().emit("refresh", null);
-                          if (this.mounted) setState(() {});
+                          if (mounted) setState(() {});
                         }))),
             SliverToBoxAdapter(
                 child: ListTile(
@@ -624,7 +625,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                           await widget.chat.toggleMute(value);
                           EventDispatcher().emit("refresh", null);
 
-                          if (this.mounted) setState(() {});
+                          if (mounted) setState(() {});
                         }))),
             SliverToBoxAdapter(
                 child: ListTile(
@@ -646,30 +647,33 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                           }
 
                           EventDispatcher().emit("refresh", null);
-                          if (this.mounted) setState(() {});
+                          if (mounted) setState(() {});
                         }))),
             SliverToBoxAdapter(
               child: InkWell(
                 onTap: () async {
-                  if (this.mounted)
+                  if (mounted) {
                     setState(() {
                       isClearing = true;
                     });
+                  }
 
                   try {
                     await widget.chat.clearTranscript();
                     EventDispatcher().emit("refresh-messagebloc", {"chatGuid": widget.chat.guid});
-                    if (this.mounted)
+                    if (mounted) {
                       setState(() {
                         isClearing = false;
                         isCleared = true;
                       });
+                    }
                   } catch (ex) {
-                    if (this.mounted)
+                    if (mounted) {
                       setState(() {
                         isClearing = false;
                         isCleared = false;
                       });
+                    }
                   }
                 },
                 child: ListTile(
@@ -710,7 +714,6 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     ),
                     child: AttachmentDetailsCard(
                       attachment: attachmentsForChat[index],
-                      allAttachments: attachmentsForChat.reversed.toList(),
                     ),
                   );
                 },
@@ -757,7 +760,7 @@ class _SyncDialogState extends State<SyncDialog> {
     }
 
     SocketManager().fetchMessages(widget.chat, offset: offset, limit: widget.limit)!.then((dynamic messages) {
-      if (this.mounted) {
+      if (mounted) {
         setState(() {
           message = "Adding ${messages.length} messages...";
         });
@@ -770,7 +773,7 @@ class _SyncDialogState extends State<SyncDialog> {
           this.progress = progress / length;
         }
 
-        if (this.mounted) setState(() {});
+        if (mounted) setState(() {});
       }).then((List<Message> __) {
         onFinish(true);
       });
@@ -780,7 +783,7 @@ class _SyncDialogState extends State<SyncDialog> {
   }
 
   void onFinish([bool success = true]) {
-    if (!this.mounted) return;
+    if (!mounted) return;
     if (success) Navigator.of(context).pop();
     if (!success) setState(() {});
   }

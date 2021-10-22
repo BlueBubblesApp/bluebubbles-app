@@ -51,7 +51,7 @@ class SentMessageHelper {
         SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideEmojis.value;
 
     Widget msg;
-    bool hasReactions = (message?.getReactions() ?? []).length > 0;
+    bool hasReactions = (message?.getReactions() ?? []).isNotEmpty;
     Skins currentSkin = Skin.of(context)?.skin ?? SettingsManager().settings.skin.value;
 
     if (message?.isBigEmoji() ?? false) {
@@ -142,27 +142,18 @@ class SentMessageHelper {
                             : null,
                 color: customColor ?? bubbleColor,
               ),
-              child: customContent == null
-                  ? FutureBuilder<List<InlineSpan>>(
+              child: customContent ?? FutureBuilder<List<InlineSpan>>(
                       future: msgSpanFuture,
+                      initialData: MessageWidgetMixin.buildMessageSpans(context, message),
                       builder: (context, snapshot) {
-                        if (snapshot.data != null) {
-                          return RichText(
-                            text: TextSpan(
-                              children: snapshot.data!,
-                              style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
-                            ),
-                          );
-                        }
                         return RichText(
                           text: TextSpan(
-                            children: MessageWidgetMixin.buildMessageSpans(context, message),
+                            children: snapshot.data ?? MessageWidgetMixin.buildMessageSpans(context, message),
                             style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
                           ),
                         );
                       }
-                    )
-                  : customContent,
+                    ),
             );
           }),
         ],
@@ -183,7 +174,7 @@ class SentMessageHelper {
             getErrorWidget(
               context,
               message,
-              currentChat != null ? currentChat.chat : CurrentChat.of(context)?.chat,
+              currentChat != null ? currentChat.chat : CurrentChat.activeChat?.chat,
             ),
           ],
         ));
@@ -207,12 +198,12 @@ class SentMessageHelper {
               context: context,
               builder: (BuildContext context) {
                 return AlertDialog(
-                  title: new Text("Message failed to send", style: TextStyle(color: Colors.black)),
-                  content: new Text("Error ($errorCode): $errorText"),
+                  title: Text("Message failed to send", style: TextStyle(color: Colors.black)),
+                  content: Text("Error ($errorCode): $errorText"),
                   actions: <Widget>[
                     if (chat != null)
-                      new TextButton(
-                        child: new Text("Retry"),
+                      TextButton(
+                        child: Text("Retry"),
                         onPressed: () async {
                           // Remove the OG alert dialog
                           Navigator.of(context).pop();
@@ -223,8 +214,8 @@ class SentMessageHelper {
                         },
                       ),
                     if (chat != null)
-                      new TextButton(
-                        child: new Text("Remove"),
+                      TextButton(
+                        child: Text("Remove"),
                         onPressed: () async {
                           Navigator.of(context).pop();
                           // Delete the message from the DB
@@ -243,8 +234,8 @@ class SentMessageHelper {
                           await ChatBloc().updateChatPosition(chat);
                         },
                       ),
-                    new TextButton(
-                      child: new Text("Cancel"),
+                    TextButton(
+                      child: Text("Cancel"),
                       onPressed: () {
                         Navigator.of(context).pop();
                         NotificationManager().clearFailedToSend();
@@ -318,7 +309,6 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
   void initState() {
     super.initState();
     showReplies = widget.showReplies;
-    initMessageState(widget.message, false);
   }
 
   List<Color> getBubbleColors(Message message) {
@@ -434,7 +424,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
             );
           },
           child: StreamBuilder<double>(
-            stream: CurrentChat.of(context)?.timeStampOffsetStream.stream,
+            stream: CurrentChat.activeChat?.timeStampOffsetStream.stream,
             builder: (context, snapshot) {
               final offset = (-(snapshot.data ?? 0)).clamp(0, 70).toDouble();
               return AnimatedContainer(
@@ -446,7 +436,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
                     crossAxisAlignment: CrossAxisAlignment.end,
                     mainAxisAlignment: msg.isFromMe ?? false ? MainAxisAlignment.end : MainAxisAlignment.start,
                     children: [
-                      if ((CurrentChat.of(context)?.chat.isGroup() ?? false) && !msg.isFromMe!)
+                      if ((CurrentChat.activeChat?.chat.isGroup() ?? false) && !msg.isFromMe!)
                         Padding(
                           padding: EdgeInsets.only(top: 5, left: 6),
                           child: ContactAvatarWidget(
@@ -536,8 +526,8 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
     // Second, add the attachments
     if (isEmptyString(widget.message.fullText)) {
       messageColumn.add(
-        addStickersToWidget(
-          message: addReactionsToWidget(
+        MessageWidgetMixin.addStickersToWidget(
+          message: MessageWidgetMixin.addReactionsToWidget(
               messageWidget: widget.attachmentsWidget, reactions: widget.reactionsWidget, message: widget.message),
           stickers: widget.stickersWidget,
           isFromMe: widget.message.isFromMe!,
@@ -595,7 +585,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
         messageSize ??= widget.message.getBubbleSize(context);
         messageColumn.add(
           StreamBuilder<double>(
-            stream: CurrentChat.of(context)?.timeStampOffsetStream.stream,
+            stream: CurrentChat.activeChat?.timeStampOffsetStream.stream,
             builder: (context, snapshot) {
               final offset = (-(snapshot.data ?? 0)).clamp(0, 70).toDouble();
               final originalWidth = max(min(CustomNavigator.width(context) - messageSize!.width - 150, CustomNavigator.width(context) / 3), 10);
@@ -605,7 +595,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
                 width: CustomNavigator.width(context) - 10 - offset,
                 padding: EdgeInsets.only(
                   // add extra padding when showing contact avatars
-                  left: max(((CurrentChat.of(context)?.chat.isGroup() ?? false)
+                  left: max(((CurrentChat.activeChat?.chat.isGroup() ?? false)
                       || SettingsManager().settings.alwaysShowAvatars.value
                       ? 75 : 40) - (width == 10 ? offset - (originalWidth - width) : 0), 0),
                 ),
@@ -636,8 +626,8 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
                           )
                       )
                     ),
-                    addStickersToWidget(
-                      message: addReactionsToWidget(
+                    MessageWidgetMixin.addStickersToWidget(
+                      message: MessageWidgetMixin.addReactionsToWidget(
                           messageWidget: Padding(
                             padding: EdgeInsets.only(bottom: widget.showTail ? 2.0 : 0),
                             child: message,
@@ -655,8 +645,8 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
         );
       } else {
         messageColumn.add(
-          addStickersToWidget(
-            message: addReactionsToWidget(
+          MessageWidgetMixin.addStickersToWidget(
+            message: MessageWidgetMixin.addReactionsToWidget(
                 messageWidget: Padding(
                   padding: EdgeInsets.only(bottom: widget.showTail ? 2.0 : 0),
                   child: message,

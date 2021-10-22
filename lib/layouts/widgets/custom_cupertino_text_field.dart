@@ -44,11 +44,6 @@ const BoxDecoration _kDefaultRoundedBorderDecoration = BoxDecoration(
   borderRadius: BorderRadius.all(Radius.circular(5.0)),
 );
 
-const Color _kDisabledBackground = CupertinoDynamicColor.withBrightness(
-  color: Color(0xFFFAFAFA),
-  darkColor: Color(0xFF050505),
-);
-
 // Value inspected from Xcode 12 & iOS 14.0 Simulator.
 // Note it may not be consistent with https://developer.apple.com/design/resources/.
 const CupertinoDynamicColor _kClearButtonColor = CupertinoDynamicColor.withBrightness(
@@ -296,7 +291,7 @@ class CustomCupertinoTextField extends StatefulWidget {
     this.scrollPhysics,
     this.autofillHints,
     this.restorationId,
-    this.onContentCommitted,
+    //this.onContentCommitted,
     this.onLongPressStart,
   })  : assert(obscuringCharacter.length == 1),
         smartDashesType = smartDashesType ?? (obscureText ? SmartDashesType.disabled : SmartDashesType.enabled),
@@ -418,7 +413,7 @@ class CustomCupertinoTextField extends StatefulWidget {
         this.maxLengthEnforced = true,
     this.maxLengthEnforcement,
     this.onChanged,
-    this.onContentCommitted,
+    //this.onContentCommitted,
     this.onEditingComplete,
     this.onSubmitted,
     this.inputFormatters,
@@ -670,7 +665,7 @@ class CustomCupertinoTextField extends StatefulWidget {
   final ValueChanged<String>? onChanged;
 
   /// Once new content is commited...
-  final ValueChanged<CommittedContent>? onContentCommitted;
+  //final ValueChanged<CommittedContent>? onContentCommitted;
 
   /// {@macro flutter.widgets.editableText.onEditingComplete}
   final VoidCallback? onEditingComplete;
@@ -1179,7 +1174,7 @@ class _CustomCupertinoTextFieldState extends State<CustomCupertinoTextField>
             selectionColor: selectionColor,
             selectionControls: widget.selectionEnabled ? textSelectionControls : null,
             onChanged: widget.onChanged,
-            onContentCommitted: widget.onContentCommitted,
+            //onContentCommitted: widget.onContentCommitted,
             onSelectionChanged: _handleSelectionChanged,
             onEditingComplete: widget.onEditingComplete,
             onSubmitted: widget.onSubmitted,

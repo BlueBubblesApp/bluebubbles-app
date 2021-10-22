@@ -33,10 +33,6 @@ class CurrentChat {
 
   Stream get stream => _stream.stream;
 
-  StreamController<Map<String, List<Attachment?>>> _attachmentStream = StreamController.broadcast();
-
-  Stream get attachmentStream => _attachmentStream.stream;
-
   Chat chat;
 
   Map<String, Uint8List> imageData = {};
@@ -75,7 +71,7 @@ class CurrentChat {
   final RxBool showScrollDown = false.obs;
 
   CurrentChat(this.chat) {
-    messageMarkers = new MessageMarkers(this.chat);
+    messageMarkers = MessageMarkers(chat);
 
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
       if (!event.containsKey("type")) return;
@@ -146,10 +142,6 @@ class CurrentChat {
       _stream = StreamController.broadcast();
     }
 
-    if (_attachmentStream.isClosed) {
-      _attachmentStream = StreamController.broadcast();
-    }
-
     if (timeStampOffsetStream.isClosed) {
       timeStampOffsetStream = StreamController.broadcast();
     }
@@ -182,23 +174,22 @@ class CurrentChat {
 
   static CurrentChat? of(BuildContext context) {
     return context.findAncestorStateOfType<ConversationViewState>()?.currentChat ??
-        context.findAncestorStateOfType<MessageDetailsPopupState>()?.currentChat ??
-        null;
+        context.findAncestorStateOfType<MessageDetailsPopupState>()?.currentChat;
   }
 
   /// Fetch and store all of the attachments for a [message]
   /// @param [message] the message you want to fetch for
-  List<Attachment?>? getAttachmentsForMessage(Message? message) {
+  List<Attachment?> getAttachmentsForMessage(Message? message) {
     // If we have already disposed, do nothing
     if (!messageAttachments.containsKey(message!.guid)) {
-      preloadMessageAttachments(specificMessages: [message]).then(
-        (value) => _attachmentStream.sink.add(
-          {message.guid!: messageAttachments[message.guid] ?? []},
-        ),
-      );
-      return [];
+      preloadMessageAttachments(specificMessages: [message]);
+      return messageAttachments[message.guid] ?? [];
     }
-    return messageAttachments[message.guid];
+    if (messageAttachments[message.guid] != null && messageAttachments[message.guid]!.isNotEmpty) {
+      final guids = messageAttachments[message.guid]!.map((e) => e!.guid).toSet();
+      messageAttachments[message.guid]!.retainWhere((element) => guids.remove(element!.guid));
+    }
+    return messageAttachments[message.guid] ?? [];
   }
 
   List<Attachment?>? updateExistingAttachments(NewMessageEvent event) {
@@ -206,12 +197,12 @@ class CurrentChat {
     String? oldGuid = event.event["oldGuid"];
     if (!messageAttachments.containsKey(oldGuid)) return [];
     Message message = event.event["message"];
-    if (message.attachments!.isEmpty) return [];
+    if (message.attachments.isEmpty) return [];
 
     messageAttachments.remove(oldGuid);
-    messageAttachments[message.guid!] = message.attachments ?? [];
+    messageAttachments[message.guid!] = message.attachments;
 
-    String? newAttachmentGuid = message.attachments!.first!.guid;
+    String? newAttachmentGuid = message.attachments.first!.guid;
     if (imageData.containsKey(oldGuid)) {
       Uint8List data = imageData.remove(oldGuid)!;
       imageData[newAttachmentGuid!] = data;
@@ -244,7 +235,7 @@ class CurrentChat {
 
   Future<void> preloadMessageAttachments({List<Message?>? specificMessages}) async {
     List<Message?> messages =
-        specificMessages != null ? specificMessages : await Chat.getMessagesSingleton(chat, limit: 25);
+        specificMessages ?? await Chat.getMessagesSingleton(chat, limit: 25);
     for (Message? message in messages) {
       if (message!.hasAttachments) {
         List<Attachment?>? attachments = await message.fetchAttachments();
@@ -282,9 +273,9 @@ class CurrentChat {
 
   void changeCurrentPlayingVideo(Map<String, VideoPlayerController> video) {
     if (!isNullOrEmpty(currentPlayingVideo)!) {
-      currentPlayingVideo.values.forEach((element) {
+      for (VideoPlayerController element in currentPlayingVideo.values) {
         videoControllersToDispose.add(element);
-      });
+      }
     }
     currentPlayingVideo = video;
     _stream.sink.add(
@@ -298,21 +289,20 @@ class CurrentChat {
   /// Dispose all of the controllers and whatnot
   void dispose() {
     if (!isNullOrEmpty(currentPlayingVideo)!) {
-      currentPlayingVideo.values.forEach((element) {
+      for (VideoPlayerController element in currentPlayingVideo.values) {
         element.dispose();
-      });
+      }
     }
 
     if (!isNullOrEmpty(audioPlayers)!) {
-      audioPlayers.values.forEach((element) {
+      for (Tuple2<ChewieAudioController, VideoPlayerController> element in audioPlayers.values) {
         element.item1.dispose();
         element.item2.dispose();
-      });
+      }
       audioPlayers = {};
     }
 
     if (_stream.isClosed) _stream.close();
-    if (!_attachmentStream.isClosed) _attachmentStream.close();
     if (!timeStampOffsetStream.isClosed) timeStampOffsetStream.close();
 
     _timeStampOffset = 0;
@@ -359,9 +349,9 @@ class CurrentChat {
   }
 
   void disposeVideoControllers() {
-    videoControllersToDispose.forEach((element) {
+    for (VideoPlayerController element in videoControllersToDispose) {
       element.dispose();
-    });
+    }
     videoControllersToDispose = [];
   }
 

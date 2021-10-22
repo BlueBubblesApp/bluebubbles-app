@@ -65,22 +65,22 @@ class Attachment {
 
   bool get existsOnDisk {
     if (kIsWeb) return false;
-    File attachment = new File(AttachmentHelper.getAttachmentPath(this));
+    File attachment = File(AttachmentHelper.getAttachmentPath(this));
     return attachment.existsSync();
   }
 
   String get orientation {
     String orientation = 'portrait'; // Default
-    if (this.metadata == null) return orientation;
+    if (metadata == null) return orientation;
     // This key is from FlutterNativeImage
-    if (this.metadata!.containsKey('orientation') &&
-        (this.metadata!['orientation'].toString().toLowerCase().contains('landscape') ||
-            this.metadata!['orientation'].toString() == '0')) {
+    if (metadata!.containsKey('orientation') &&
+        (metadata!['orientation'].toString().toLowerCase().contains('landscape') ||
+            metadata!['orientation'].toString() == '0')) {
       orientation = 'landscape';
       // This key is from the Exif loader
-    } else if (this.metadata!.containsKey('Image Orientation') &&
-        (this.metadata!['Image Orientation'].toString().toLowerCase().contains('horizontal') ||
-            this.metadata!['orientation'].toString() == '0')) {
+    } else if (metadata!.containsKey('Image Orientation') &&
+        (metadata!['Image Orientation'].toString().toLowerCase().contains('horizontal') ||
+            metadata!['orientation'].toString() == '0')) {
       orientation = 'landscape';
     }
 
@@ -101,11 +101,11 @@ class Attachment {
       if (metadata is String) {
         try {
           metadata = jsonDecode(metadata);
-        } catch (ex) {}
+        } catch (_) {}
       }
     }
 
-    var data = new Attachment(
+    var data = Attachment(
       id: json.containsKey("ROWID") ? json["ROWID"] : null,
       originalROWID: json.containsKey("originalROWID") ? json["originalROWID"] : null,
       guid: json["guid"],
@@ -125,9 +125,7 @@ class Attachment {
     );
 
     // Adds fallback getter for the ID
-    if (data.id == null) {
-      data.id = json.containsKey("id") ? json["id"] : null;
-    }
+    data.id ??= json.containsKey("id") ? json["id"] : null;
 
     return data;
   }
@@ -136,15 +134,15 @@ class Attachment {
     final Database? db = await DBProvider.db.database;
 
     // Try to find an existing attachment before saving it
-    Attachment? existing = await Attachment.findOne({"guid": this.guid});
+    Attachment? existing = await Attachment.findOne({"guid": guid});
     if (existing != null) {
-      this.id = existing.id;
+      id = existing.id;
     }
 
     // If it already exists, update it
     if (existing == null) {
       // Remove the ID from the map for inserting
-      var map = this.toMap();
+      var map = toMap();
       if (map.containsKey("ROWID")) {
         map.remove("ROWID");
       }
@@ -152,10 +150,10 @@ class Attachment {
         map.remove("participants");
       }
 
-      this.id = (await db?.insert("attachment", map)) ?? id;
+      id = (await db?.insert("attachment", map)) ?? id;
 
-      if (this.id != null && message!.id != null) {
-        await db?.insert("attachment_message_join", {"attachmentId": this.id, "messageId": message.id});
+      if (id != null && message!.id != null) {
+        await db?.insert("attachment_message_join", {"attachmentId": id, "messageId": message.id});
       }
     }
 
@@ -166,18 +164,18 @@ class Attachment {
     final Database? db = await DBProvider.db.database;
 
     Map<String, dynamic> params = {
-      "width": this.width,
-      "height": this.height,
+      "width": width,
+      "height": height,
       // If it's null or empty, save it as null
-      "metadata": isNullOrEmpty(this.metadata)! ? null : jsonEncode(this.metadata)
+      "metadata": isNullOrEmpty(metadata)! ? null : jsonEncode(metadata)
     };
 
-    if (this.originalROWID != null) {
-      params["originalROWID"] = this.originalROWID;
+    if (originalROWID != null) {
+      params["originalROWID"] = originalROWID;
     }
 
-    if (this.id != null) {
-      await db?.update("attachment", params, where: "ROWID = ?", whereArgs: [this.id]);
+    if (id != null) {
+      await db?.update("attachment", params, where: "ROWID = ?", whereArgs: [id]);
     }
 
     return this;
@@ -225,9 +223,13 @@ class Attachment {
     final Database? db = await DBProvider.db.database;
     if (db == null) return null;
     List<String> whereParams = [];
-    filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
+    for (var filter in filters.keys) {
+      whereParams.add('$filter = ?');
+    }
     List<dynamic> whereArgs = [];
-    filters.values.forEach((filter) => whereArgs.add(filter));
+    for (var filter in filters.values) {
+      whereArgs.add(filter);
+    }
     var res = await db.query("attachment", where: whereParams.join(" AND "), whereArgs: whereArgs, limit: 1);
 
     if (res.isEmpty) {
@@ -241,13 +243,17 @@ class Attachment {
     final Database? db = await DBProvider.db.database;
     if (db == null) return [];
     List<String> whereParams = [];
-    filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
+    for (var filter in filters.keys) {
+      whereParams.add('$filter = ?');
+    }
     List<dynamic> whereArgs = [];
-    filters.values.forEach((filter) => whereArgs.add(filter));
+    for (var filter in filters.values) {
+      whereArgs.add(filter);
+    }
 
     var res = await db.query("attachment",
-        where: (whereParams.length > 0) ? whereParams.join(" AND ") : null,
-        whereArgs: (whereArgs.length > 0) ? whereArgs : null);
+        where: (whereParams.isNotEmpty) ? whereParams.join(" AND ") : null,
+        whereArgs: (whereArgs.isNotEmpty) ? whereArgs : null);
     return (res.isNotEmpty) ? res.map((c) => Attachment.fromMap(c)).toList() : [];
   }
 
@@ -256,8 +262,8 @@ class Attachment {
     await db?.delete("attachment");
   }
 
-  getFriendlySize({decimals: 2}) {
-    double size = ((this.totalBytes ?? 0) / 1024000.0);
+  getFriendlySize({decimals = 2}) {
+    double size = ((totalBytes ?? 0) / 1024000.0);
     String postfix = "MB";
     if (size < 1) {
       size = size * 1024;
@@ -273,8 +279,8 @@ class Attachment {
   bool get hasValidSize => (width ?? 0) > 0 && (height ?? 0) > 0;
 
   String? get mimeStart {
-    if (this.mimeType == null) return null;
-    String _mimeType = this.mimeType!;
+    if (mimeType == null) return null;
+    String _mimeType = mimeType!;
     _mimeType = _mimeType.substring(0, _mimeType.indexOf("/"));
     return _mimeType;
   }
@@ -295,20 +301,20 @@ class Attachment {
 
     // Execute the query
     var res = await db.rawQuery("$query;", [chat.id]);
-    if (res.length == 0) return 0;
+    if (res.isEmpty) return 0;
 
     return res[0]["count"] as int?;
   }
 
   String getPath() {
-    String? fileName = this.transferName;
+    String? fileName = transferName;
     String appDocPath = SettingsManager().appDocDir.path;
-    String pathName = "$appDocPath/attachments/${this.guid}/$fileName";
+    String pathName = "$appDocPath/attachments/$guid/$fileName";
     return pathName;
   }
 
   String getCompressedPath() {
-    return "${this.getPath()}.${SettingsManager().compressionQuality}.compressed";
+    return "${getPath()}.${SettingsManager().compressionQuality}.compressed";
   }
 
   Map<String, dynamic> toMap() => {
