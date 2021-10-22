@@ -94,6 +94,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
 
     currentIndex = startingIndex ?? 0;
     controller = PageController(initialPage: startingIndex ?? 0);
+    if (mounted) setState(() {});
   }
 
   void getStartingIndex() {

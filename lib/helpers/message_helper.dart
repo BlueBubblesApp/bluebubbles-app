@@ -425,9 +425,9 @@ class MessageHelper {
         message.dateDelivered != null &&
         newerMessage.dateDelivered == null) return true;
 
-    Message? lastRead = CurrentChat.of(context)?.messageMarkers.lastReadMessage;
+    Message? lastRead = CurrentChat.activeChat?.messageMarkers.lastReadMessage;
     if (lastRead != null && lastRead.guid == message.guid) return true;
-    Message? lastDelivered = CurrentChat.of(context)?.messageMarkers.lastDeliveredMessage;
+    Message? lastDelivered = CurrentChat.activeChat?.messageMarkers.lastDeliveredMessage;
     if (lastDelivered != null && lastDelivered.guid == message.guid) return true;
 
     return false;

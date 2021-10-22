@@ -155,7 +155,7 @@ class VideoWidget extends StatelessWidget {
         controller.showPlayPauseOverlay.value = true;
       } else {
         controller.navigated = true;
-        CurrentChat? currentChat = CurrentChat.of(context);
+        CurrentChat? currentChat = CurrentChat.activeChat;
         await Navigator.of(context).push(
           ThemeSwitcher.buildPageRoute(
             builder: (context) => AttachmentFullscreenViewer(

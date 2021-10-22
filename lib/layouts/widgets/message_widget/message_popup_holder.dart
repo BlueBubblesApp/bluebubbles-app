@@ -47,9 +47,9 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
     Size size = renderBox.size;
     Offset offset = renderBox.localToGlobal(Offset.zero);
     bool increaseWidth = !MessageHelper.getShowTail(context, widget.message, widget.newerMessage) &&
-        (SettingsManager().settings.alwaysShowAvatars.value || (CurrentChat.of(context)?.chat.isGroup() ?? false));
+        (SettingsManager().settings.alwaysShowAvatars.value || (CurrentChat.activeChat?.chat.isGroup() ?? false));
     bool doNotIncreaseHeight = ((widget.message.isFromMe ?? false) ||
-        !(CurrentChat.of(context)?.chat.isGroup() ?? false) ||
+        !(CurrentChat.activeChat?.chat.isGroup() ?? false) ||
         !sameSender(widget.message, widget.olderMessage) ||
         !widget.message.dateCreated!.isWithin(widget.olderMessage!.dateCreated!, minutes: 30));
 
@@ -76,7 +76,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
     HapticFeedback.lightImpact();
     getOffset();
 
-    CurrentChat? currentChat = CurrentChat.of(context);
+    CurrentChat? currentChat = CurrentChat.activeChat;
     if (mounted) {
       setState(() {
         visible = false;
@@ -121,7 +121,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
 
   void sendReaction(String type) {
     Logger.info("Sending reaction type: " + type);
-    ActionHandler.sendReaction(CurrentChat.of(context)!.chat, widget.message, type);
+    ActionHandler.sendReaction(CurrentChat.activeChat!.chat, widget.message, type);
   }
 
   @override

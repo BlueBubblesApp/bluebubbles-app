@@ -219,7 +219,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
             color: Colors.transparent,
             child: InkWell(
               onTap: () {
-                CurrentChat? currentChat = CurrentChat.of(context);
+                CurrentChat? currentChat = CurrentChat.activeChat;
                 Navigator.of(context).push(
                   ThemeSwitcher.buildPageRoute(
                     builder: (context) => AttachmentFullscreenViewer(

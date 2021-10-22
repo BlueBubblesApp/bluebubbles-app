@@ -339,7 +339,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
         messageSize ??= widget.message.getBubbleSize(context);
         messageColumn.add(
           StreamBuilder<double>(
-            stream: CurrentChat.of(context)?.timeStampOffsetStream.stream,
+            stream: CurrentChat.activeChat?.timeStampOffsetStream.stream,
             builder: (context, snapshot) {
               final offset = (-(snapshot.data ?? 0)).clamp(0, 70).toDouble();
               final originalWidth = max(min(CustomNavigator.width(context) - messageSize!.width - 125, CustomNavigator.width(context) / 3), 10);
@@ -590,7 +590,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                   crossAxisAlignment: CrossAxisAlignment.end,
                   mainAxisAlignment: msg.isFromMe ?? false ? MainAxisAlignment.end : MainAxisAlignment.start,
                   children: [
-                    if ((CurrentChat.of(context)?.chat.isGroup() ?? false) && !msg.isFromMe!)
+                    if ((CurrentChat.activeChat?.chat.isGroup() ?? false) && !msg.isFromMe!)
                       Padding(
                         padding: EdgeInsets.only(top: 5),
                         child: ContactAvatarWidget(

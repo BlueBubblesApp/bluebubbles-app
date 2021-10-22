@@ -41,7 +41,7 @@ class ImageWidgetController extends GetxController {
     if (!runForcefully && data.value != null) return;
 
     // Try to get the image data from the "cache"
-    Uint8List? tmpData = CurrentChat.of(context)?.getImageData(attachment);
+    Uint8List? tmpData = CurrentChat.activeChat?.getImageData(attachment);
     if (tmpData == null) {
       // If it's an image, compress the image when loading it
       if (kIsWeb || file.path == null) {
@@ -64,8 +64,8 @@ class ImageWidgetController extends GetxController {
         tmpData = await File(file.path!).readAsBytes();
       }
 
-      if (tmpData == null || CurrentChat.of(context) == null) return;
-      CurrentChat.of(context)?.saveImageData(tmpData, attachment);
+      if (tmpData == null || CurrentChat.activeChat == null) return;
+      CurrentChat.activeChat?.saveImageData(tmpData, attachment);
       if (!(attachment.mimeType?.endsWith("heic") ?? false) && !(attachment.mimeType?.endsWith("heif") ?? false)) {
         await precacheImage(MemoryImage(tmpData), context, size: attachment.width == null ? null : Size.fromWidth(attachment.width! / 2));
       }
@@ -98,7 +98,7 @@ class ImageWidget extends StatelessWidget {
           if (!SettingsManager().settings.lowMemoryMode.value) return;
           if (info.visibleFraction == 0 && controller.visible && !controller.navigated) {
             controller.visible = false;
-            CurrentChat.of(context)?.clearImageData(controller.attachment);
+            CurrentChat.activeChat?.clearImageData(controller.attachment);
             controller.update();
           } else if (!controller.visible) {
             controller.visible = true;
@@ -109,7 +109,7 @@ class ImageWidget extends StatelessWidget {
           child: buildSwitcher(context, controller),
           onTap: () async {
             controller.navigated = true;
-            CurrentChat? currentChat = CurrentChat.of(context);
+            CurrentChat? currentChat = CurrentChat.activeChat;
             await Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (context) => AttachmentFullscreenViewer(

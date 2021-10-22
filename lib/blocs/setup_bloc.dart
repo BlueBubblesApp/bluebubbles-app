@@ -128,8 +128,11 @@ class SetupBloc {
 
     try {
       addOutput("Getting contacts...", SetupOutputType.LOG);
+      Stopwatch s = Stopwatch();
+      s.start();
       await ContactManager().getContacts(force: true);
-      addOutput("Received contacts list. Size: ${ContactManager().contacts.length}", SetupOutputType.LOG);
+      s.stop();
+      addOutput("Received contacts list. Size: ${ContactManager().contacts.length}, speed: ${s.elapsedMilliseconds} ms", SetupOutputType.LOG);
       addOutput("Getting Chats...", SetupOutputType.LOG);
       List<Chat> chats = await SocketManager().getChats({"withLastMessage": kIsWeb});
 

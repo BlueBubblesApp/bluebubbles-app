@@ -102,8 +102,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     super.initState();
     getPlaceholder();
 
-    if (CurrentChat.of(context)?.chat != null) {
-      textFieldData = TextFieldBloc().getTextField(CurrentChat.of(context)!.chat.guid!);
+    if (CurrentChat.activeChat?.chat != null) {
+      textFieldData = TextFieldBloc().getTextField(CurrentChat.activeChat!.chat.guid!);
     }
 
     controller = textFieldData != null ? textFieldData!.controller : TextEditingController();
@@ -112,7 +112,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     // Add the text listener to detect when we should send the typing indicators
     controller!.addListener(() {
       setCanRecord();
-      if (!mounted || CurrentChat.of(context)?.chat == null) return;
+      if (!mounted || CurrentChat.activeChat?.chat == null) return;
 
       // If the private API features are disabled, or sending the indicators is disabled, return
       if (!SettingsManager().settings.enablePrivateAPI.value ||
@@ -122,11 +122,11 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
       if (controller!.text.isEmpty && pickedImages.isEmpty && selfTyping) {
         selfTyping = false;
-        SocketManager().sendMessage("stopped-typing", {"chatGuid": CurrentChat.of(context)!.chat.guid}, (data) {});
+        SocketManager().sendMessage("stopped-typing", {"chatGuid": CurrentChat.activeChat!.chat.guid}, (data) {});
       } else if (!selfTyping && (controller!.text.isNotEmpty || pickedImages.isNotEmpty)) {
         selfTyping = true;
         if (SettingsManager().settings.privateSendTypingIndicators.value) {
-          SocketManager().sendMessage("started-typing", {"chatGuid": CurrentChat.of(context)!.chat.guid}, (data) {});
+          SocketManager().sendMessage("started-typing", {"chatGuid": CurrentChat.activeChat!.chat.guid}, (data) {});
         }
       }
 
@@ -134,7 +134,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     });
     subjectController!.addListener(() {
       setCanRecord();
-      if (!mounted || CurrentChat.of(context)?.chat == null) return;
+      if (!mounted || CurrentChat.activeChat?.chat == null) return;
 
       // If the private API features are disabled, or sending the indicators is disabled, return
       if (!SettingsManager().settings.enablePrivateAPI.value ||
@@ -144,11 +144,11 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
       if (subjectController!.text.isEmpty && pickedImages.isEmpty && selfTyping) {
         selfTyping = false;
-        SocketManager().sendMessage("stopped-typing", {"chatGuid": CurrentChat.of(context)!.chat.guid}, (data) {});
+        SocketManager().sendMessage("stopped-typing", {"chatGuid": CurrentChat.activeChat!.chat.guid}, (data) {});
       } else if (!selfTyping && (subjectController!.text.isNotEmpty || pickedImages.isNotEmpty)) {
         selfTyping = true;
         if (SettingsManager().settings.privateSendTypingIndicators.value) {
-          SocketManager().sendMessage("started-typing", {"chatGuid": CurrentChat.of(context)!.chat.guid}, (data) {});
+          SocketManager().sendMessage("started-typing", {"chatGuid": CurrentChat.activeChat!.chat.guid}, (data) {});
         }
       }
 
@@ -160,7 +160,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     focusNode = FocusNode();
     subjectFocusNode = FocusNode();
     focusNode!.addListener(() {
-      CurrentChat.of(context)?.keyboardOpen = focusNode?.hasFocus ?? false;
+      CurrentChat.activeChat?.keyboardOpen = focusNode?.hasFocus ?? false;
 
       if (focusNode!.hasFocus && mounted) {
         if (!showShareMenu.value) return;
@@ -170,7 +170,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       EventDispatcher().emit("keyboard-status", focusNode!.hasFocus);
     });
     subjectFocusNode!.addListener(() {
-      CurrentChat.of(context)?.keyboardOpen = focusNode?.hasFocus ?? false;
+      CurrentChat.activeChat?.keyboardOpen = focusNode?.hasFocus ?? false;
 
       if (focusNode!.hasFocus && mounted) {
         if (!showShareMenu.value) return;
@@ -277,7 +277,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    safeChat = CurrentChat.of(context);
+    safeChat = CurrentChat.activeChat;
   }
 
   @override
@@ -304,9 +304,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
   void disposeAudioFile(BuildContext context, PlatformFile file) {
     // Dispose of the audio controller
-    CurrentChat.of(context)?.audioPlayers[file.path]?.item1.dispose();
-    CurrentChat.of(context)?.audioPlayers[file.path]?.item2.pause();
-    CurrentChat.of(context)?.audioPlayers.removeWhere((key, _) => key == file.path);
+    CurrentChat.activeChat?.audioPlayers[file.path]?.item1.dispose();
+    CurrentChat.activeChat?.audioPlayers[file.path]?.item2.pause();
+    CurrentChat.activeChat?.audioPlayers.removeWhere((key, _) => key == file.path);
     if (file.path != null) {
       // Delete the file
       File(file.path!).delete();
@@ -436,7 +436,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           ListTile(
             title: Text("Send location", style: Theme.of(context).textTheme.bodyText1),
             onTap: () async {
-              Share.location(CurrentChat.of(context)!.chat);
+              Share.location(CurrentChat.activeChat!.chat);
               Get.back();
             },
           ),
@@ -591,25 +591,25 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeContactNames.value;
 
         // If it's a group chat, get the title of the chat
-        if (CurrentChat.of(context)?.chat.isGroup() ?? false) {
+        if (CurrentChat.activeChat?.chat.isGroup() ?? false) {
           if (generateNames) {
             placeholder = "Group Chat";
           } else if (hideInfo) {
             placeholder = "BlueBubbles";
           } else {
-            String? title = await CurrentChat.of(context)?.chat.getTitle();
+            String? title = await CurrentChat.activeChat?.chat.getTitle();
             if (!isNullOrEmpty(title)!) {
               placeholder = title!;
             }
           }
-        } else if (!isNullOrEmpty(CurrentChat.of(context)?.chat.participants)!) {
+        } else if (!isNullOrEmpty(CurrentChat.activeChat?.chat.participants)!) {
           if (generateNames) {
-            placeholder = CurrentChat.of(context)!.chat.fakeParticipants[0] ?? "BlueBubbles";
+            placeholder = CurrentChat.activeChat!.chat.fakeParticipants[0] ?? "BlueBubbles";
           } else if (hideInfo) {
             placeholder = "BlueBubbles";
           } else {
             // If it's not a group chat, get the participant's contact info
-            Handle? handle = CurrentChat.of(context)?.chat.participants[0];
+            Handle? handle = CurrentChat.activeChat?.chat.participants[0];
             Contact? contact = ContactManager().getCachedContact(address: handle?.address ?? "");
             if (contact == null) {
               placeholder = await formatPhoneNumber(handle);

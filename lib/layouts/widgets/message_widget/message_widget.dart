@@ -67,7 +67,7 @@ class _MessageState extends State<MessageWidget> {
   @override
   void initState() {
     super.initState();
-    currentChat = CurrentChat.of(context);
+    currentChat = CurrentChat.activeChat;
     _message = widget.message;
     _newerMessage = widget.newerMessage;
     _olderMessage = widget.olderMessage;

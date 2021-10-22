@@ -81,7 +81,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
   void initState() {
     super.initState();
 
-    currentChat = CurrentChat.of(context);
+    currentChat = CurrentChat.activeChat;
     if (widget.messageBloc != null) ever<MessageBlocEvent?>(widget.messageBloc!.event, (e) => handleNewMessage(e));
 
     // See if we need to load anything from the message bloc
@@ -223,7 +223,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     int originalMessageLength = _messages.length;
     if (event.type == MessageBlocEventType.insert && mounted) {
       if (LifeCycleManager().isAlive && !event.outGoing) {
-        NotificationManager().switchChat(CurrentChat.of(context)?.chat);
+        NotificationManager().switchChat(CurrentChat.activeChat?.chat);
       }
 
       bool isNewMessage = true;
@@ -397,14 +397,14 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
         onHorizontalDragStart: (details) {},
         onHorizontalDragUpdate: (details) {
           if (SettingsManager().settings.skin.value != Skins.Samsung) {
-            CurrentChat.of(context)!.timeStampOffset += details.delta.dx * 0.3;
+            CurrentChat.activeChat!.timeStampOffset += details.delta.dx * 0.3;
           }
         },
         onHorizontalDragEnd: (details) {
-          if (SettingsManager().settings.skin.value != Skins.Samsung) CurrentChat.of(context)!.timeStampOffset = 0;
+          if (SettingsManager().settings.skin.value != Skins.Samsung) CurrentChat.activeChat!.timeStampOffset = 0;
         },
         onHorizontalDragCancel: () {
-          if (SettingsManager().settings.skin.value != Skins.Samsung) CurrentChat.of(context)!.timeStampOffset = 0;
+          if (SettingsManager().settings.skin.value != Skins.Samsung) CurrentChat.activeChat!.timeStampOffset = 0;
         },
         child: CustomScrollView(
           controller: scrollController ?? ScrollController(),

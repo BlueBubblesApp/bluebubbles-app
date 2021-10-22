@@ -219,7 +219,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
                                                   style: Theme.of(context).textTheme.bodyText1,
                                                 ),
                                                 onPressed: () async {
-                                                  Share.location(CurrentChat.of(context)!.chat);
+                                                  Share.location(CurrentChat.activeChat!.chat);
                                                   Navigator.of(context).pop();
                                                 },
                                               ),

@@ -174,7 +174,7 @@ class SentMessageHelper {
             getErrorWidget(
               context,
               message,
-              currentChat != null ? currentChat.chat : CurrentChat.of(context)?.chat,
+              currentChat != null ? currentChat.chat : CurrentChat.activeChat?.chat,
             ),
           ],
         ));
@@ -424,7 +424,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
             );
           },
           child: StreamBuilder<double>(
-            stream: CurrentChat.of(context)?.timeStampOffsetStream.stream,
+            stream: CurrentChat.activeChat?.timeStampOffsetStream.stream,
             builder: (context, snapshot) {
               final offset = (-(snapshot.data ?? 0)).clamp(0, 70).toDouble();
               return AnimatedContainer(
@@ -436,7 +436,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
                     crossAxisAlignment: CrossAxisAlignment.end,
                     mainAxisAlignment: msg.isFromMe ?? false ? MainAxisAlignment.end : MainAxisAlignment.start,
                     children: [
-                      if ((CurrentChat.of(context)?.chat.isGroup() ?? false) && !msg.isFromMe!)
+                      if ((CurrentChat.activeChat?.chat.isGroup() ?? false) && !msg.isFromMe!)
                         Padding(
                           padding: EdgeInsets.only(top: 5, left: 6),
                           child: ContactAvatarWidget(
@@ -585,7 +585,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
         messageSize ??= widget.message.getBubbleSize(context);
         messageColumn.add(
           StreamBuilder<double>(
-            stream: CurrentChat.of(context)?.timeStampOffsetStream.stream,
+            stream: CurrentChat.activeChat?.timeStampOffsetStream.stream,
             builder: (context, snapshot) {
               final offset = (-(snapshot.data ?? 0)).clamp(0, 70).toDouble();
               final originalWidth = max(min(CustomNavigator.width(context) - messageSize!.width - 150, CustomNavigator.width(context) / 3), 10);
@@ -595,7 +595,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
                 width: CustomNavigator.width(context) - 10 - offset,
                 padding: EdgeInsets.only(
                   // add extra padding when showing contact avatars
-                  left: max(((CurrentChat.of(context)?.chat.isGroup() ?? false)
+                  left: max(((CurrentChat.activeChat?.chat.isGroup() ?? false)
                       || SettingsManager().settings.alwaysShowAvatars.value
                       ? 75 : 40) - (width == 10 ? offset - (originalWidth - width) : 0), 0),
                 ),

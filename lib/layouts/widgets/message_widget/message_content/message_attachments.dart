@@ -70,7 +70,7 @@ class MessageAttachments extends StatelessWidget {
     if (message?.guid == "redacted-mode-demo" || message!.guid!.contains("theme-selector")) {
       items = message!.attachments;
     } else {
-      items = CurrentChat.of(context)?.getAttachmentsForMessage(message) ?? [];
+      items = CurrentChat.activeChat?.getAttachmentsForMessage(message) ?? [];
     }
     for (Attachment? attachment in items) {
       if (attachment!.mimeType != null) {
@@ -91,7 +91,7 @@ class MessageAttachments extends StatelessWidget {
             children: [
               attachmentWidget,
               Container(width: 5),
-              SentMessageHelper.getErrorWidget(context, message, CurrentChat.of(context)?.chat, rightPadding: 0),
+              SentMessageHelper.getErrorWidget(context, message, CurrentChat.activeChat?.chat, rightPadding: 0),
             ],
           ));
         }
