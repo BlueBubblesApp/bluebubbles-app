@@ -161,7 +161,7 @@ class ContactManager {
     List<Handle> handles = kIsWeb ? ChatBloc().cachedHandles : await Handle.find({});
     for (Handle handle in handles) {
       // If we already have a "match", skip
-      if (handleToContact.containsKey(handle.address)) {
+      if (handleToContact.containsKey(handle.address) && handleToContact[handle.address] != null) {
         continue;
       }
 
