@@ -165,7 +165,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       if (focusNode!.hasFocus && mounted) {
         if (!showShareMenu.value) return;
         showShareMenu.value = false;
-        EventDispatcher().emit("update-offset", null);
       }
 
       EventDispatcher().emit("keyboard-status", focusNode!.hasFocus);
@@ -176,7 +175,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       if (focusNode!.hasFocus && mounted) {
         if (!showShareMenu.value) return;
         showShareMenu.value = false;
-        EventDispatcher().emit("update-offset", null);
       }
 
       EventDispatcher().emit("keyboard-status", focusNode!.hasFocus);
@@ -457,19 +455,16 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     }
     if (!showMenu && !(await PhotoManager.requestPermission())) {
       showShareMenu.value = false;
-      EventDispatcher().emit("update-offset", null);
       return;
     }
 
     showShareMenu.value = !showMenu;
-    EventDispatcher().emit("update-offset", null);
   }
 
   Future<bool> _onWillPop() async {
     if (showShareMenu.value) {
       if (mounted) {
         showShareMenu.value = false;
-        EventDispatcher().emit("update-offset", null);
       }
       return false;
     }
