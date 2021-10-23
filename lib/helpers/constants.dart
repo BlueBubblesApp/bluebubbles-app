@@ -24,6 +24,21 @@ abstract class ThemeColors {
   ];
 }
 
+final effectMap = {
+  "slam": "com.apple.MobileSMS.expressivesend.impact",
+  "loud": "com.apple.MobileSMS.expressivesend.loud",
+  "gentle": "com.apple.MobileSMS.expressivesend.gentle",
+  "invisible ink": "com.apple.MobileSMS.expressivesend.invisibleink",
+  "echo": "com.apple.messages.effect.CKEchoEffect",
+  "spotlight": "com.apple.messages.effect.CKSpotlightEffect",
+  "balloons": "com.apple.messages.effect.CKHappyBirthdayEffect",
+  "confetti": "com.apple.messages.effect.CKConfettiEffect",
+  "love": "com.apple.messages.effect.CKHeartEffect",
+  "lasers": "com.apple.messages.effect.CKLasersEffect",
+  "fireworks": "com.apple.messages.effect.CKFireworksEffect",
+  "celebration": "com.apple.messages.effect.CKCelebrationEffect",
+};
+
 enum Skins {
   iOS,
   Material,
