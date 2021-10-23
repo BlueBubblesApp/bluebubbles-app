@@ -39,6 +39,7 @@ import 'package:flutter_dropzone/flutter_dropzone.dart';
 import 'package:get/get.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:record/record.dart';
+import 'package:simple_animations/simple_animations.dart';
 import 'package:transparent_pointer/transparent_pointer.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
@@ -1487,6 +1488,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       isFromMe: true,
     );
     message.generateTempGuid();
+    CustomAnimationControl animController = CustomAnimationControl.stop;
     Navigator.push(
       context,
       PageRouteBuilder(
@@ -1562,6 +1564,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                                       setState(() {
                                                         bubbleSelected = bubbleEffects[index];
                                                       });
+                                                      animController = CustomAnimationControl.playFromStart;
                                                     },
                                                     child: Container(
                                                       width: context.width / 3,
@@ -1643,7 +1646,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                           message.isBigEmoji(),
                                           MessageWidgetMixin.buildMessageSpansAsync(context, message),
                                           currentChat: CurrentChat.activeChat,
-                                          customColor: Theme.of(context).primaryColor
+                                          customColor: Theme.of(context).primaryColor,
+                                          effect: stringToMessageEffect[typeSelected == "bubble" ? bubbleSelected : screenSelected] ?? MessageEffect.none,
+                                          controller: animController,
                                         ),
                                       ),
                                     ),

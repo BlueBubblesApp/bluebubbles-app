@@ -39,6 +39,44 @@ final effectMap = {
   "celebration": "com.apple.messages.effect.CKCelebrationEffect",
 };
 
+final stringToMessageEffect = {
+  null: MessageEffect.none,
+  "slam": MessageEffect.slam,
+  "loud": MessageEffect.loud,
+  "gentle": MessageEffect.gentle,
+  "invisible ink": MessageEffect.invisibleInk,
+  "echo": MessageEffect.echo,
+  "spotlight": MessageEffect.spotlight,
+  "balloons": MessageEffect.balloons,
+  "confetti": MessageEffect.confetti,
+  "love": MessageEffect.love,
+  "lasers": MessageEffect.lasers,
+  "fireworks": MessageEffect.fireworks,
+  "celebration": MessageEffect.celebration,
+};
+
+enum MessageEffect {
+  none,
+  slam,
+  loud,
+  gentle,
+  invisibleInk,
+  echo,
+  spotlight,
+  balloons,
+  confetti,
+  love,
+  lasers,
+  fireworks,
+  celebration,
+}
+
+extension EffectHelper on MessageEffect {
+  bool get isBubble => this == MessageEffect.slam || this == MessageEffect.loud || this == MessageEffect.gentle || this == MessageEffect.invisibleInk;
+
+  bool get isScreen => !isBubble && this != MessageEffect.none;
+}
+
 enum Skins {
   iOS,
   Material,

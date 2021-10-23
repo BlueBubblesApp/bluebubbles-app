@@ -1023,6 +1023,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.3"
+  particles_flutter:
+    dependency: "direct main"
+    description:
+      name: particles_flutter
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.1.4"
   path:
     dependency: "direct main"
     description:
