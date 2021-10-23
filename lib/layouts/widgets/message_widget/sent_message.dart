@@ -660,101 +660,114 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
       }
     }
     messageColumn.add(
-      Obx(() {
-        final list = widget.messageBloc?.threadOriginators.values.where((e) => e == widget.message.guid) ?? [];
-        if (list.isNotEmpty) {
-          return GestureDetector(
-            onTap: () {
-              List<Message> _messages = [];
-              if (widget.message.threadOriginatorGuid != null) {
-                _messages = widget.messageBloc?.messages.values.where((e) => e.threadOriginatorGuid == widget.message.threadOriginatorGuid || e.guid == widget.message.threadOriginatorGuid).toList() ?? [];
-              } else {
-                _messages = widget.messageBloc?.messages.values.where((e) => e.threadOriginatorGuid == widget.message.guid || e.guid == widget.message.guid).toList() ?? [];
-              }
-              _messages.sort((a, b) => a.id!.compareTo(b.id!));
-              _messages.sort((a, b) => a.dateCreated!.compareTo(b.dateCreated!));
-              final controller = ScrollController();
-              Navigator.push(
-                context,
-                PageRouteBuilder(
-                  settings: RouteSettings(arguments: {"hideTail": true}),
-                  transitionDuration: Duration(milliseconds: 150),
-                  pageBuilder: (context, animation, secondaryAnimation) {
-                    Future.delayed(Duration.zero, () => controller.jumpTo(controller.position.maxScrollExtent));
-                    return FadeTransition(
-                        opacity: animation,
-                        child: GestureDetector(
-                          onTap: () {
-                            Get.back();
-                          },
-                          child: AnnotatedRegion<SystemUiOverlayStyle>(
-                            value: SystemUiOverlayStyle(
-                              systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
-                              systemNavigationBarIconBrightness:
-                              Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
-                              statusBarColor: Colors.transparent, // status bar color
-                            ),
-                            child: Scaffold(
-                              backgroundColor: Colors.transparent,
-                              body: BackdropFilter(
-                                filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-                                child: SafeArea(
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                                    child: Center(
-                                      child: ListView.builder(
-                                        shrinkWrap: true,
-                                        controller: controller,
-                                        itemBuilder: (context, index) {
-                                          return AbsorbPointer(
-                                            absorbing: true,
-                                            child: Padding(
-                                                padding: EdgeInsets.only(left: 5.0, right: 5.0),
-                                                child: MessageWidget(
-                                                  key: Key(_messages[index].guid!),
-                                                  message: _messages[index],
-                                                  olderMessage: null,
-                                                  newerMessage: null,
-                                                  showHandle: true,
-                                                  isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages[index].guid,
-                                                  showHero: false,
-                                                  showReplies: false,
-                                                  bloc: widget.messageBloc!,
-                                                )),
-                                          );
-                                        },
-                                        itemCount: _messages.length,
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          if (widget.message.expressiveSendStyleId != null)
+            Padding(
+              padding: const EdgeInsets.only(left: 8.0, top: 2, right: 8.0, bottom: 2),
+              child: Text(
+                "Sent with ${effectMap.entries.firstWhereOrNull((element) => element.value == widget.message.expressiveSendStyleId)?.key ?? "unknown"} effect",
+                style: Theme.of(context).textTheme.subtitle2!.copyWith(fontWeight: FontWeight.bold, color: Colors.blue),
+              ),
+            ),
+          Obx(() {
+            final list = widget.messageBloc?.threadOriginators.values.where((e) => e == widget.message.guid) ?? [];
+            if (list.isNotEmpty) {
+              return GestureDetector(
+                onTap: () {
+                  List<Message> _messages = [];
+                  if (widget.message.threadOriginatorGuid != null) {
+                    _messages = widget.messageBloc?.messages.values.where((e) => e.threadOriginatorGuid == widget.message.threadOriginatorGuid || e.guid == widget.message.threadOriginatorGuid).toList() ?? [];
+                  } else {
+                    _messages = widget.messageBloc?.messages.values.where((e) => e.threadOriginatorGuid == widget.message.guid || e.guid == widget.message.guid).toList() ?? [];
+                  }
+                  _messages.sort((a, b) => a.id!.compareTo(b.id!));
+                  _messages.sort((a, b) => a.dateCreated!.compareTo(b.dateCreated!));
+                  final controller = ScrollController();
+                  Navigator.push(
+                    context,
+                    PageRouteBuilder(
+                      settings: RouteSettings(arguments: {"hideTail": true}),
+                      transitionDuration: Duration(milliseconds: 150),
+                      pageBuilder: (context, animation, secondaryAnimation) {
+                        Future.delayed(Duration.zero, () => controller.jumpTo(controller.position.maxScrollExtent));
+                        return FadeTransition(
+                            opacity: animation,
+                            child: GestureDetector(
+                              onTap: () {
+                                Get.back();
+                              },
+                              child: AnnotatedRegion<SystemUiOverlayStyle>(
+                                value: SystemUiOverlayStyle(
+                                  systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+                                  systemNavigationBarIconBrightness:
+                                  Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+                                  statusBarColor: Colors.transparent, // status bar color
+                                ),
+                                child: Scaffold(
+                                  backgroundColor: Colors.transparent,
+                                  body: BackdropFilter(
+                                    filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                                    child: SafeArea(
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                        child: Center(
+                                          child: ListView.builder(
+                                            shrinkWrap: true,
+                                            controller: controller,
+                                            itemBuilder: (context, index) {
+                                              return AbsorbPointer(
+                                                absorbing: true,
+                                                child: Padding(
+                                                    padding: EdgeInsets.only(left: 5.0, right: 5.0),
+                                                    child: MessageWidget(
+                                                      key: Key(_messages[index].guid!),
+                                                      message: _messages[index],
+                                                      olderMessage: null,
+                                                      newerMessage: null,
+                                                      showHandle: true,
+                                                      isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages[index].guid,
+                                                      showHero: false,
+                                                      showReplies: false,
+                                                      bloc: widget.messageBloc!,
+                                                    )),
+                                              );
+                                            },
+                                            itemCount: _messages.length,
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ),
-                        )
-                    );
-                  },
-                  fullscreenDialog: true,
-                  opaque: false,
+                            )
+                        );
+                      },
+                      fullscreenDialog: true,
+                      opaque: false,
+                    ),
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 8.0, right: 18.0, top: 2, bottom: 4),
+                  child: Text(
+                    "${list.length} Repl${list.length > 1 ? "ies" : "y"}",
+                    style: Theme.of(context).textTheme.subtitle2!.copyWith(fontWeight: FontWeight.bold, color: Colors.blue),
+                  ),
                 ),
               );
-            },
-            child: Padding(
-              padding: const EdgeInsets.only(left: 8.0, right: 18.0, top: 2, bottom: 4),
-              child: Text(
-                "${list.length} Repl${list.length > 1 ? "ies" : "y"}",
-                style: Theme.of(context).textTheme.subtitle2!.copyWith(fontWeight: FontWeight.bold, color: Colors.blue),
-              ),
-            ),
-          );
-        } else {
-          return DeliveredReceipt(
-            message: widget.message,
-            showDeliveredReceipt: widget.showDeliveredReceipt,
-            shouldAnimate: widget.shouldFadeIn,
-          );
-        }
-      })
+            } else {
+              return DeliveredReceipt(
+                message: widget.message,
+                showDeliveredReceipt: widget.showDeliveredReceipt,
+                shouldAnimate: widget.shouldFadeIn,
+              );
+            }
+          }),
+        ],
+      )
     );
 
     // Now, let's create a row that will be the row with the following:

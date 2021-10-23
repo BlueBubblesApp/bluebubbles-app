@@ -40,7 +40,7 @@ class ActionHandler {
   /// sendMessage(chatObject, 'Hello world!')
   /// ```
   static Future<void> sendMessage(Chat chat, String text,
-      {MessageBloc? messageBloc, List<Attachment> attachments = const [], String? subject, String? replyGuid}) async {
+      {MessageBloc? messageBloc, List<Attachment> attachments = const [], String? subject, String? replyGuid, String? effectId}) async {
     if (isNullOrEmpty(text, trimString: true)! && isNullOrEmpty(subject ?? "", trimString: true)!) return;
 
     if ((await SettingsManager().getMacOSVersion() ?? 10) < 11) {
@@ -80,6 +80,7 @@ class ActionHandler {
         dateCreated: DateTime.now(),
         hasAttachments: attachments.isNotEmpty ? true : false,
         threadOriginatorGuid: replyGuid,
+        expressiveSendStyleId: effectId,
         isFromMe: true,
       );
 
@@ -96,6 +97,7 @@ class ActionHandler {
           dateCreated: DateTime.now(),
           hasAttachments: false,
           threadOriginatorGuid: replyGuid,
+          expressiveSendStyleId: effectId,
           isFromMe: true,
         );
 
@@ -132,6 +134,7 @@ class ActionHandler {
         dateCreated: DateTime.now(),
         hasAttachments: attachments.isNotEmpty ? true : false,
         threadOriginatorGuid: replyGuid,
+        expressiveSendStyleId: effectId,
         isFromMe: true,
       );
 
@@ -166,8 +169,16 @@ class ActionHandler {
     params["tempGuid"] = message.guid;
 
     void sendSocketMessage() {
-      if ((message.subject?.isNotEmpty ?? false) || message.threadOriginatorGuid != null) {
-        api.sendMessage(chat.guid!, message.guid!, message.text!, subject: message.subject, method: "private-api", selectedMessageGuid: message.threadOriginatorGuid).then((response) async {
+      if ((message.subject?.isNotEmpty ?? false) || message.threadOriginatorGuid != null || message.expressiveSendStyleId != null) {
+        api.sendMessage(
+            chat.guid!,
+            message.guid!,
+            message.text!,
+            subject: message.subject,
+            method: "private-api",
+            selectedMessageGuid: message.threadOriginatorGuid,
+            effectId: message.expressiveSendStyleId
+        ).then((response) async {
           String? tempGuid = message.guid;
           // If there is an error, replace the temp value with an error
           if (response.statusCode != 200) {

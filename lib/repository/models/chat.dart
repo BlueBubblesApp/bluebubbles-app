@@ -722,7 +722,7 @@ class Chat {
         " message.balloonBundleId AS balloonBundleId,"
         " message.associatedMessageGuid AS associatedMessageGuid,"
         " message.associatedMessageType AS associatedMessageType,"
-        " message.expressiveSendStyleId AS texexpressiveSendStyleIdt,"
+        " message.expressiveSendStyleId AS expressiveSendStyleId,"
         " message.timeExpressiveSendStyleId AS timeExpressiveSendStyleId,"
         " message.hasAttachments AS hasAttachments,"
         " message.hasReactions AS hasReactions,"
