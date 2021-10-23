@@ -479,7 +479,7 @@ class Chat {
 
   /// Add a lot of messages for the single chat to avoid running [addMessage]
   /// in a loop
-  Future<List<Message>> bulkAddMessages(List<Message> messages, {bool changeUnreadStatus = true, bool checkForMessageText = true}) async {
+  /*Future<List<Message>> bulkAddMessages(List<Message> messages, {bool changeUnreadStatus = true, bool checkForMessageText = true}) async {
     final Database? db = await DBProvider.db.database;
 
     for (Message m in messages) {
@@ -554,7 +554,7 @@ class Chat {
 
     // Return the current chat instance (with updated vals)
     return messages;
-  }
+  }*/
 
   void serverSyncParticipants() {
     // Send message to server to get the participants
