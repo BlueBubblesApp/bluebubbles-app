@@ -1074,12 +1074,15 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                           isDense: true,
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(20),
+                            borderSide: BorderSide.none
                           ),
                           disabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(20),
+                            borderSide: BorderSide.none
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(20),
+                            borderSide: BorderSide.none
                           ),
                           hintText: "Subject",
                           hintStyle: Theme.of(context).textTheme.subtitle1!.copyWith(fontWeight: FontWeight.bold),
@@ -1167,7 +1170,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               ),
               samsungSkin: Container(
                 decoration: BoxDecoration(
-                  color: context.theme.dividerColor,
+                  color: Theme.of(context).dividerColor.withOpacity(1),
                   border: Border.fromBorderSide(SettingsManager().settings.privateSubjectLine.value ? BorderSide(
                     color: Theme.of(context).dividerColor,
                     width: 1.5,
@@ -1753,6 +1756,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         color: SettingsManager().settings.skin.value == Skins.Samsung ? Colors.transparent : Theme.of(context).primaryColor,
                         child: InkWell(
                           onTap: sendAction,
+                          onLongPress: (sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value ?
+                            sendEffectAction : null,
                           child: Stack(
                             alignment: Alignment.center,
                             children: [
