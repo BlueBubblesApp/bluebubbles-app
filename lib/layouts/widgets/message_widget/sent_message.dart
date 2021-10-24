@@ -52,10 +52,10 @@ class SentMessageHelper {
         bool margin = true,
         double? customWidth,
         MessageEffect effect = MessageEffect.none,
-        CustomAnimationControl? controller,
+        CustomAnimationControl controller = CustomAnimationControl.stop,
         void Function()? updateController,
       }) {
-    if (effect.isBubble) assert(controller != null && updateController != null);
+    if (effect.isBubble) assert(updateController != null);
     Color bubbleColor;
     bubbleColor = message == null || message.guid!.startsWith("temp")
         ? Theme.of(context).primaryColor.darkenAmount(0.2)
@@ -67,7 +67,10 @@ class SentMessageHelper {
     Widget msg;
     bool hasReactions = (message?.getReactions() ?? []).isNotEmpty;
     Skins currentSkin = Skin.of(context)?.skin ?? SettingsManager().settings.skin.value;
-
+    Size bubbleSize = Size(0, 0);
+    if (controller != CustomAnimationControl.stop) {
+      bubbleSize = message!.getBubbleSize(context);
+    }
     if (message?.isBigEmoji() ?? false) {
       // this stack is necessary for layouting width properly
       msg = Stack(alignment: AlignmentDirectional.bottomEnd, children: [
@@ -105,7 +108,6 @@ class SentMessageHelper {
       ]);
     } else {
       Animatable<TimelineValue<String>>? tween;
-      Size bubbleSize = Size(0, 0);
       double opacity = 0;
       if (effect == MessageEffect.gentle && controller != CustomAnimationControl.stop) {
         tween = TimelineTween<String>()
@@ -120,7 +122,6 @@ class SentMessageHelper {
               .animate("size", tween: 1.0.tweenTo(1.0));
       }
       if (effect == MessageEffect.invisibleInk && controller != CustomAnimationControl.stop) {
-        bubbleSize = message!.getBubbleSize(context);
         opacity = 1;
       }
       msg = Stack(
@@ -176,7 +177,7 @@ class SentMessageHelper {
                 color: customColor ?? bubbleColor,
               ),
               child: customContent ?? (effect.isBubble && controller != CustomAnimationControl.stop ? CustomAnimation<TimelineValue<String>>(
-                control: controller!,
+                control: controller,
                 tween: tween!,
                 duration: Duration(milliseconds: 1800),
                 builder: (context, child, anim) {
@@ -238,12 +239,12 @@ class SentMessageHelper {
                                   absorbing: true,
                                   child: CircularParticle(
                                     key: UniqueKey(),
-                                    numberOfParticles: 100,
+                                    numberOfParticles: bubbleSize.height * bubbleSize.width / 25,
                                     speedOfParticles: 0.25,
                                     height: bubbleSize.height - 20,
                                     width: bubbleSize.width - 25,
                                     particleColor: Colors.white.withAlpha(150),
-                                    maxParticleSize: 0.5,
+                                    maxParticleSize: (bubbleSize.height / 75).clamp(0.5, 1),
                                     isRandSize: true,
                                     isRandomColor: false,
                                   ),
@@ -326,7 +327,7 @@ class SentMessageHelper {
               .animate("size", tween: 0.8.tweenTo(1.0));
       }
       return CustomAnimation<TimelineValue<String>>(
-          control: controller!,
+          control: controller,
           tween: tween,
           duration: Duration(milliseconds: effect == MessageEffect.loud ? 900 : effect == MessageEffect.slam ? 500 : 1800),
           animationStatusListener: (status) {
@@ -344,31 +345,40 @@ class SentMessageHelper {
               value2 = anim.get("rotation");
             }
             if (effect == MessageEffect.gentle) {
-              return Transform.scale(
-                scale: value1,
-                alignment: Alignment.bottomRight,
-                child: child,
+              return Padding(
+                padding: EdgeInsets.only(top: (bubbleSize.height + (hasReactions && margin ? 18 : 0)) * (value1.clamp(1, 1.2) - 1)),
+                child: Transform.scale(
+                    scale: value1,
+                    alignment: Alignment.bottomRight,
+                    child: child
+                ),
               );
             }
             if (effect == MessageEffect.loud) {
-              return Transform.scale(
-                scale: value1,
-                alignment: Alignment.bottomRight,
-                child: Transform.rotate(
-                  angle: sin(value2 * pi * 4) * pi / 24,
-                  alignment: Alignment.bottomCenter,
-                  child: child
+              return Container(
+                width: (bubbleSize.width + (margin ? 20 : 0)) * value1,
+                height: (bubbleSize.height + (hasReactions && margin ? 18 : 0)) * value1,
+                child: FittedBox(
+                  alignment: Alignment.bottomRight,
+                  child: Transform.rotate(
+                      angle: sin(value2 * pi * 4) * pi / 24,
+                      alignment: Alignment.bottomCenter,
+                      child: child
+                  ),
                 ),
               );
             }
             if (effect == MessageEffect.slam) {
-              return Transform.scale(
-                scale: value1,
-                alignment: Alignment.centerRight,
-                child: Transform.rotate(
-                    angle: value2,
-                    alignment: Alignment.bottomCenter,
-                    child: child
+              return Container(
+                width: (bubbleSize.width + (margin ? 20 : 0)) * value1,
+                height: (bubbleSize.height + (hasReactions && margin ? 18 : 0)) * value1,
+                child: FittedBox(
+                  alignment: Alignment.centerRight,
+                  child: Transform.rotate(
+                      angle: value2,
+                      alignment: Alignment.bottomCenter,
+                      child: child
+                  ),
                 ),
               );
             }
@@ -514,21 +524,24 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
     super.initState();
     showReplies = widget.showReplies;
 
-    SchedulerBinding.instance!.addPostFrameCallback((_) {
-      if (ModalRoute.of(context)?.animation?.status == AnimationStatus.completed && widget.autoplayEffect && mounted) {
-        setState(() {
-          animController = CustomAnimationControl.playFromStart;
-        });
-      } else if (widget.autoplayEffect) {
-        ModalRoute.of(context)?.animation?.addStatusListener((status) {
-          if (status == AnimationStatus.completed && widget.autoplayEffect && mounted) {
-            setState(() {
-              animController = CustomAnimationControl.playFromStart;
-            });
-          }
-        });
-      }
-    });
+    /*if (CurrentChat.activeChat?.autoplayGuid == widget.message.guid && widget.autoplayEffect) {
+      CurrentChat.activeChat?.autoplayGuid = null;
+      SchedulerBinding.instance!.addPostFrameCallback((_) {
+        if (ModalRoute.of(context)?.animation?.status == AnimationStatus.completed && widget.autoplayEffect && mounted) {
+          setState(() {
+            animController = CustomAnimationControl.playFromStart;
+          });
+        } else if (widget.autoplayEffect) {
+          ModalRoute.of(context)?.animation?.addStatusListener((status) {
+            if (status == AnimationStatus.completed && widget.autoplayEffect && mounted) {
+              setState(() {
+                animController = CustomAnimationControl.playFromStart;
+              });
+            }
+          });
+        }
+      });
+    }*/
   }
 
   List<Color> getBubbleColors(Message message) {
@@ -845,7 +858,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
               child: Padding(
                 padding: const EdgeInsets.only(left: 8.0, top: 2, right: 8.0, bottom: 2),
                 child: Text(
-                  "Sent with $effect effect",
+                  "↺ sent with $effect",
                   style: Theme.of(context).textTheme.subtitle2!.copyWith(fontWeight: FontWeight.bold, color: Colors.blue),
                 ),
               ),

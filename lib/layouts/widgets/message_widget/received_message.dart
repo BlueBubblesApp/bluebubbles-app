@@ -101,21 +101,24 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
       }
     });
 
-    SchedulerBinding.instance!.addPostFrameCallback((_) {
-      if (ModalRoute.of(context)?.animation?.status == AnimationStatus.completed && widget.autoplayEffect && mounted) {
-        setState(() {
-          controller = CustomAnimationControl.playFromStart;
-        });
-      } else if (widget.autoplayEffect) {
-        ModalRoute.of(context)?.animation?.addStatusListener((status) {
-          if (status == AnimationStatus.completed && widget.autoplayEffect && mounted) {
-            setState(() {
-              controller = CustomAnimationControl.playFromStart;
-            });
-          }
-        });
-      }
-    });
+    /*if (CurrentChat.activeChat?.autoplayGuid == widget.message.guid && widget.autoplayEffect) {
+      CurrentChat.activeChat?.autoplayGuid = null;
+      SchedulerBinding.instance!.addPostFrameCallback((_) {
+        if (ModalRoute.of(context)?.animation?.status == AnimationStatus.completed && widget.autoplayEffect && mounted) {
+          setState(() {
+            controller = CustomAnimationControl.playFromStart;
+          });
+        } else if (widget.autoplayEffect) {
+          ModalRoute.of(context)?.animation?.addStatusListener((status) {
+            if (status == AnimationStatus.completed && widget.autoplayEffect && mounted) {
+              setState(() {
+                controller = CustomAnimationControl.playFromStart;
+              });
+            }
+          });
+        }
+      });
+    }*/
   }
 
   List<Color> getBubbleColors(Message message) {
@@ -187,6 +190,9 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     Animatable<TimelineValue<String>>? tween;
     Size bubbleSize = Size(0, 0);
     double opacity = 0;
+    if (controller != CustomAnimationControl.stop) {
+      bubbleSize = message.getBubbleSize(context);
+    }
     if (effect == MessageEffect.gentle && controller != CustomAnimationControl.stop) {
       tween = TimelineTween<String>()
         ..addScene(begin: Duration.zero, duration: const Duration(milliseconds: 500))
@@ -201,10 +207,15 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     }
     if (effect == MessageEffect.invisibleInk && controller != CustomAnimationControl.stop) {
       setState(() {
-        bubbleSize = message.getBubbleSize(context);
         opacity = 1;
       });
     }
+    double topPadding = widget.message
+        .getReactions().isNotEmpty && !widget.message.hasAttachments
+        ? 18
+        : (widget.message.isFromMe != widget.olderMessage?.isFromMe && skin.value != Skins.Samsung)
+        ? 5.0
+        : 0;
     final child = Stack(
       alignment: AlignmentDirectional.bottomStart,
       children: [
@@ -215,12 +226,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
           )),
         Container(
           margin: EdgeInsets.only(
-            top: widget.message
-                .getReactions().isNotEmpty && !widget.message.hasAttachments
-                ? 18
-                : (widget.message.isFromMe != widget.olderMessage?.isFromMe && skin.value != Skins.Samsung)
-                ? 5.0
-                : 0,
+            top: topPadding,
             left: 10,
             right: 10,
           ),
@@ -326,12 +332,12 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                               absorbing: true,
                               child: CircularParticle(
                                 key: UniqueKey(),
-                                numberOfParticles: 100,
+                                numberOfParticles: bubbleSize.height * bubbleSize.width / 25,
                                 speedOfParticles: 0.25,
                                 height: bubbleSize.height - 20,
                                 width: bubbleSize.width - 25,
                                 particleColor: Colors.white.withAlpha(150),
-                                maxParticleSize: 0.5,
+                                maxParticleSize: (bubbleSize.height / 75).clamp(0.5, 1),
                                 isRandSize: true,
                                 isRandomColor: false,
                               ),
@@ -415,31 +421,40 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
               value2 = anim.get("rotation");
             }
             if (effect == MessageEffect.gentle) {
-              return Transform.scale(
-                scale: value1,
-                alignment: Alignment.bottomLeft,
-                child: child,
-              );
-            }
-            if (effect == MessageEffect.loud) {
-              return Transform.scale(
-                scale: value1,
-                alignment: Alignment.bottomLeft,
-                child: Transform.rotate(
-                    angle: sin(value2 * pi * 4) * pi / 24,
-                    alignment: Alignment.bottomCenter,
+              return Padding(
+                padding: EdgeInsets.only(top: (bubbleSize.height + topPadding) * (value1.clamp(1, 1.2) - 1)),
+                child: Transform.scale(
+                    scale: value1,
+                    alignment: Alignment.bottomLeft,
                     child: child
                 ),
               );
             }
+            if (effect == MessageEffect.loud) {
+              return Container(
+                width: (bubbleSize.width + 20) * value1,
+                height: (bubbleSize.height + topPadding) * value1,
+                child: FittedBox(
+                  alignment: Alignment.bottomLeft,
+                  child: Transform.rotate(
+                      angle: sin(value2 * pi * 4) * pi / 24,
+                      alignment: Alignment.bottomCenter,
+                      child: child
+                  ),
+                ),
+              );
+            }
             if (effect == MessageEffect.slam) {
-              return Transform.scale(
-                scale: value1,
-                alignment: Alignment.centerLeft,
-                child: Transform.rotate(
-                    angle: value2,
-                    alignment: Alignment.bottomCenter,
-                    child: child
+              return Container(
+                width: (bubbleSize.width + 20) * value1,
+                height: (bubbleSize.height + topPadding) * value1,
+                child: FittedBox(
+                  alignment: Alignment.centerLeft,
+                  child: Transform.rotate(
+                      angle: value2,
+                      alignment: Alignment.bottomCenter,
+                      child: child
+                  ),
                 ),
               );
             }
@@ -870,7 +885,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                             child: Padding(
                               padding: EdgeInsets.only(left: addedAvatar ? 50 : 18, right: 8.0, top: 2, bottom: 4),
                               child: Text(
-                                "sent with $effect effect",
+                                "↺ sent with $effect",
                                 style: Theme.of(context).textTheme.subtitle2!.copyWith(fontWeight: FontWeight.bold, color: Colors.blue),
                               ),
                             ),
