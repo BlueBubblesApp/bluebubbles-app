@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:bluebubbles/blocs/message_bloc.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/show_reply_thread.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -53,6 +55,7 @@ class MessageDetailsPopup extends StatefulWidget {
     required this.childSize,
     required this.child,
     required this.currentChat,
+    required this.messageBloc,
   }) : super(key: key);
 
   final Message message;
@@ -60,6 +63,7 @@ class MessageDetailsPopup extends StatefulWidget {
   final Size? childSize;
   final Widget child;
   final CurrentChat? currentChat;
+  final MessageBloc? messageBloc;
 
   @override
   MessageDetailsPopupState createState() => MessageDetailsPopupState();
@@ -450,6 +454,25 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
               ),
               trailing: Icon(
                 SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.reply : Icons.reply,
+                color: Theme.of(context).textTheme.bodyText1!.color,
+              ),
+            ),
+          ),
+        ),
+      if (widget.message.threadOriginatorGuid != null && isBigSur)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () async {
+              showReplyThread(context, widget.message, widget.messageBloc);
+            },
+            child: ListTile(
+              title: Text(
+                "View Thread",
+                style: Theme.of(context).textTheme.bodyText1,
+              ),
+              trailing: Icon(
+                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.bubble_left_bubble_right : Icons.forum,
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
             ),

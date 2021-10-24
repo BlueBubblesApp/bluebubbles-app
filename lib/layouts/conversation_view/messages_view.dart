@@ -505,6 +505,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                                 showReplies: true,
                                 onUpdate: (event) => onUpdateMessage(event),
                                 bloc: widget.messageBloc!,
+                                autoplayEffect: index == 0 && _messages[index].originalROWID != null,
                               ));
 
                           if (fullAnimation) {

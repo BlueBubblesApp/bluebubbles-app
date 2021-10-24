@@ -34,6 +34,7 @@ class MessageWidget extends StatefulWidget {
     required this.showReplies,
     this.onUpdate,
     this.bloc,
+    required this.autoplayEffect,
   }) : super(key: key);
 
   final Message message;
@@ -45,6 +46,7 @@ class MessageWidget extends StatefulWidget {
   final bool showReplies;
   final Message? Function(NewMessageEvent event)? onUpdate;
   final MessageBloc? bloc;
+  final bool autoplayEffect;
 
   @override
   _MessageState createState() => _MessageState();
@@ -292,6 +294,7 @@ class _MessageState extends State<MessageWidget> {
         shouldFadeIn: currentChat?.sentMessages.firstWhereOrNull((e) => e?.guid == _message.guid) != null,
         showHero: widget.showHero,
         showDeliveredReceipt: widget.isFirstSentMessage,
+        autoplayEffect: widget.autoplayEffect,
       );
     } else {
       message = ReceivedMessage(
@@ -308,6 +311,7 @@ class _MessageState extends State<MessageWidget> {
         stickersWidget: stickersWidget,
         attachmentsWidget: widgetAttachments,
         reactionsWidget: reactionsWidget,
+        autoplayEffect: widget.autoplayEffect,
       );
     }
 

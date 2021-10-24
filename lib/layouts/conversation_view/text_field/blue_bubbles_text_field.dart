@@ -1649,6 +1649,11 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                           customColor: Theme.of(context).primaryColor,
                                           effect: stringToMessageEffect[typeSelected == "bubble" ? bubbleSelected : screenSelected] ?? MessageEffect.none,
                                           controller: animController,
+                                          updateController: () {
+                                            setState(() {
+                                              animController = CustomAnimationControl.stop;
+                                            });
+                                          }
                                         ),
                                       ),
                                     ),
