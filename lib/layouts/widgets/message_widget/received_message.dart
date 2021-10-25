@@ -755,7 +755,8 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                   crossAxisAlignment: CrossAxisAlignment.end,
                   mainAxisAlignment: msg.isFromMe ?? false ? MainAxisAlignment.end : MainAxisAlignment.start,
                   children: [
-                    if ((CurrentChat.activeChat?.chat.isGroup() ?? false) && !msg.isFromMe!)
+                    if ((SettingsManager().settings.alwaysShowAvatars.value ||
+                        (CurrentChat.activeChat?.chat.isGroup() ?? false)) && !msg.isFromMe!)
                       Padding(
                         padding: EdgeInsets.only(top: 5),
                         child: ContactAvatarWidget(
