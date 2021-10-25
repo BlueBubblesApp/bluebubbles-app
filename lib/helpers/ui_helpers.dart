@@ -1,6 +1,7 @@
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
@@ -11,7 +12,7 @@ import 'package:get/get.dart';
 Widget buildBackButton(BuildContext context,
     {EdgeInsets padding = EdgeInsets.zero, double? iconSize, Skins? skin, Function()? callback}) {
   return Container(
-    padding: padding,
+    padding: kIsDesktop ? EdgeInsets.only(left: 10) : padding,
     width: 25,
     child: IconButton(
       iconSize: iconSize ?? (SettingsManager().settings.skin.value == Skins.iOS ? 30 : 24),

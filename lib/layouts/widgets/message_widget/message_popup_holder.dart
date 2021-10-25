@@ -1,4 +1,5 @@
 import 'package:bluebubbles/action_handler.dart';
+import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -20,6 +21,7 @@ class MessagePopupHolder extends StatefulWidget {
   final Message? olderMessage;
   final Message? newerMessage;
   final Function(bool) popupPushed;
+  final MessageBloc? messageBloc;
 
   MessagePopupHolder({
     Key? key,
@@ -29,6 +31,7 @@ class MessagePopupHolder extends StatefulWidget {
     required this.olderMessage,
     required this.newerMessage,
     required this.popupPushed,
+    required this.messageBloc,
   }) : super(key: key);
 
   @override
@@ -101,6 +104,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
                   childOffset: childOffset,
                   childSize: childSize,
                   message: widget.message,
+                  messageBloc: widget.messageBloc,
                 );
               },
             ),

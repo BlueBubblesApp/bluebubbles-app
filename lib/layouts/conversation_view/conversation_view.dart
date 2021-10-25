@@ -213,7 +213,8 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
           ).createRenderObject(context);
           final size = renderParagraph.getDryLayout(constraints);
           final size2 = renderParagraph2.getDryLayout(constraints);
-          if (!(event.message?.hasAttachments ?? false) && (!(event.message?.text?.isEmpty ?? true) || !(event.message?.subject?.isEmpty ?? true))) {
+          if (!(event.message?.hasAttachments ?? false) &&
+              (!(event.message?.text?.isEmpty ?? true) || !(event.message?.subject?.isEmpty ?? true))) {
             setState(() {
               tween = Tween<double>(
                   begin: CustomNavigator.width(context) - 30,
@@ -261,7 +262,8 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     super.dispose();
   }
 
-  Future<bool> send(List<PlatformFile> attachments, String text, String subject, String? replyGuid) async {
+  Future<bool> send(
+      List<PlatformFile> attachments, String text, String subject, String? replyGuid, String? effectId) async {
     bool isDifferentChat = currentChat == null || currentChat?.chat.guid != chat?.guid;
 
     if (isCreator!) {
@@ -322,7 +324,8 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       }
     } else if (chat != null) {
       // We include messageBloc here because the bloc listener may not be instantiated yet
-      ActionHandler.sendMessage(chat!, text, messageBloc: messageBloc, subject: subject, replyGuid: replyGuid);
+      ActionHandler.sendMessage(chat!, text,
+          messageBloc: messageBloc, subject: subject, replyGuid: replyGuid, effectId: effectId);
     }
 
     return true;
@@ -411,6 +414,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
     if (messageBloc == null && !widget.isCreator) {
       messageBloc = initMessageBloc();
+      messageBloc!.getMessages();
     }
 
     Widget textField = BlueBubblesTextField(
@@ -598,39 +602,50 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
-      child: Scaffold(
-        backgroundColor: Theme.of(context).backgroundColor,
-        extendBodyBehindAppBar: !isCreator!,
-        appBar: !isCreator!
-            ? buildConversationViewHeader() as PreferredSizeWidget?
-            : buildChatSelectorHeader() as PreferredSizeWidget?,
-        body: Obx(() => adjustBackground.value
-            ? MirrorAnimation<MultiTweenValues<String>>(
-                tween: ConversationViewMixin.gradientTween.value,
-                curve: Curves.fastOutSlowIn,
-                duration: Duration(seconds: 3),
-                builder: (context, child, anim) {
-                  return Container(
-                    decoration: (searchQuery.isEmpty || !isCreator!) && chat != null && adjustBackground.value
-                        ? BoxDecoration(
-                            gradient: LinearGradient(begin: Alignment.topRight, end: Alignment.bottomLeft, stops: [
-                            anim.get("color1"),
-                            anim.get("color2")
-                          ], colors: [
-                            AdaptiveTheme.of(context).mode == AdaptiveThemeMode.light
-                                ? Theme.of(context).primaryColor.lightenPercent(20)
-                                : Theme.of(context).primaryColor.darkenPercent(20),
-                            Theme.of(context).backgroundColor
-                          ]))
-                        : null,
-                    child: child,
-                  );
-                },
-                child: child,
-              )
-            : child),
-        floatingActionButton: AnimatedOpacity(
-            duration: Duration(milliseconds: 250), opacity: 1, curve: Curves.easeInOut, child: buildFAB()),
+      child: Obx(
+        () {
+          bool ios = SettingsManager().settings.skin.value == Skins.iOS;
+          return Padding(
+            padding: EdgeInsets.only(
+              top: kIsDesktop && !ios ? 20 : 0,
+            ),
+            child: Scaffold(
+              backgroundColor: Theme.of(context).backgroundColor,
+              extendBodyBehindAppBar: !isCreator!,
+              appBar: !isCreator!
+                  ? buildConversationViewHeader() as PreferredSizeWidget?
+                  : buildChatSelectorHeader() as PreferredSizeWidget?,
+              body: Obx(() => adjustBackground.value
+                  ? MirrorAnimation<MultiTweenValues<String>>(
+                      tween: ConversationViewMixin.gradientTween.value,
+                      curve: Curves.fastOutSlowIn,
+                      duration: Duration(seconds: 3),
+                      builder: (context, child, anim) {
+                        return Container(
+                          decoration: (searchQuery.isEmpty || !isCreator!) && chat != null && adjustBackground.value
+                              ? BoxDecoration(
+                                  gradient:
+                                      LinearGradient(begin: Alignment.topRight, end: Alignment.bottomLeft, stops: [
+                                  anim.get("color1"),
+                                  anim.get("color2")
+                                ], colors: [
+                                  AdaptiveTheme.of(context).mode == AdaptiveThemeMode.light
+                                      ? Theme.of(context).primaryColor.lightenPercent(20)
+                                      : Theme.of(context).primaryColor.darkenPercent(20),
+                                  Theme.of(context).backgroundColor
+                                ]))
+                              : null,
+                          child: child,
+                        );
+                      },
+                      child: child,
+                    )
+                  : child),
+              floatingActionButton: AnimatedOpacity(
+                  duration: Duration(milliseconds: 250), opacity: 1, curve: Curves.easeInOut, child: buildFAB()),
+            ),
+          );
+        },
       ),
     );
   }

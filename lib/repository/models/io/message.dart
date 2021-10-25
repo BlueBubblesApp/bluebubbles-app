@@ -844,6 +844,8 @@ class Message {
       "hasReactions": hasReactions ? 1 : 0,
       "dateDeleted": (dateDeleted == null) ? null : dateDeleted!.millisecondsSinceEpoch,
       "metadata": jsonEncode(metadata),
+      "threadOriginatorGuid": threadOriginatorGuid,
+      "threadOriginatorPart": threadOriginatorPart,
     };
     if (includeObjects) {
       map['attachments'] = (attachments ?? []).map((e) => e!.toMap()).toList();

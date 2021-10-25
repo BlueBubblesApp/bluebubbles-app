@@ -70,7 +70,7 @@ class ConversationListState extends State<ConversationList> {
     if (size != null) style = style!.copyWith(fontSize: size);
 
     return Padding(
-      padding: const EdgeInsets.only(right: 10.0),
+      padding: EdgeInsets.only(right: 10.0, left: kIsDesktop && SettingsManager().settings.skin.value != Skins.iOS ? 5 : 0),
       child: Text(widget.showArchivedChats ? "Archive" : widget.showUnknownSenders ? "Unknown Senders" : "Messages", style: style),
     );
   }

@@ -587,62 +587,65 @@ class _Material extends StatelessWidget {
           onLongPress: () {
             parent.onSelect();
           },
-          child: Obx(
-            () => Container(
-              decoration: BoxDecoration(
-                border: (!SettingsManager().settings.hideDividers.value)
-                    ? Border(
-                        top: BorderSide(
-                          color: Theme.of(context).dividerColor,
-                          width: 0.5,
-                        ),
-                      )
-                    : null,
-              ),
-              child: ListTile(
-                dense: SettingsManager().settings.denseChatTiles.value,
-                title: parent.buildTitle(),
-                subtitle: parent.widget.subtitle ?? parent.buildSubtitle(),
-                minVerticalPadding: 10,
-                leading: Stack(
-                  alignment: Alignment.topRight,
-                  children: [
-                    parent.buildLeading(),
-                    if (parent.widget.chat.muteType != "mute")
-                      Container(
-                        width: 10,
-                        height: 10,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          color: parent.widget.chat.hasUnreadMessage!
-                              ? Theme.of(context).primaryColor
-                              : Colors.transparent,
-                        ),
-                      ),
-                  ],
-                ),
-                trailing: Container(
-                  padding: EdgeInsets.only(right: 3),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: <Widget>[
-                        if (parent.widget.chat.isPinned!) Icon(Icons.star, size: 15, color: Colors.yellow),
-                        if (parent.widget.chat.muteType == "mute")
-                          Icon(
-                            Icons.notifications_off,
-                            color: parent.widget.chat.hasUnreadMessage!
-                                ? Theme.of(context).primaryColor.withOpacity(0.8)
-                                : Theme.of(context).textTheme.subtitle1!.color,
-                            size: 15,
+          child: Padding(
+            padding: EdgeInsets.only(left: kIsDesktop ? 5 : 0),
+            child: Obx(
+              () => Container(
+                decoration: BoxDecoration(
+                  border: (!SettingsManager().settings.hideDividers.value)
+                      ? Border(
+                          top: BorderSide(
+                            color: Theme.of(context).dividerColor,
+                            width: 0.5,
                           ),
+                        )
+                      : null,
+                ),
+                child: ListTile(
+                  dense: SettingsManager().settings.denseChatTiles.value,
+                  title: parent.buildTitle(),
+                  subtitle: parent.widget.subtitle ?? parent.buildSubtitle(),
+                  minVerticalPadding: 10,
+                  leading: Stack(
+                    alignment: Alignment.topRight,
+                    children: [
+                      parent.buildLeading(),
+                      if (parent.widget.chat.muteType != "mute")
                         Container(
-                          padding: EdgeInsets.only(right: 2, left: 2),
-                          child: parent._buildDate(),
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            color: parent.widget.chat.hasUnreadMessage!
+                                ? Theme.of(context).primaryColor
+                                : Colors.transparent,
+                          ),
                         ),
-                      ],
+                    ],
+                  ),
+                  trailing: Container(
+                    padding: EdgeInsets.only(right: 3),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: <Widget>[
+                          if (parent.widget.chat.isPinned!) Icon(Icons.star, size: 15, color: Colors.yellow),
+                          if (parent.widget.chat.muteType == "mute")
+                            Icon(
+                              Icons.notifications_off,
+                              color: parent.widget.chat.hasUnreadMessage!
+                                  ? Theme.of(context).primaryColor.withOpacity(0.8)
+                                  : Theme.of(context).textTheme.subtitle1!.color,
+                              size: 15,
+                            ),
+                          Container(
+                            padding: EdgeInsets.only(right: 2, left: 2),
+                            child: parent._buildDate(),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

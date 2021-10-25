@@ -1,20 +1,18 @@
-import 'package:universal_html/html.dart' as html;
-
-import 'package:bluebubbles/repository/models/platform_file.dart';
-import 'package:flutter/foundation.dart';
-import 'package:universal_io/io.dart';
-
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
-import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:chewie_audio/chewie_audio.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
+import 'package:chewie_audio/chewie_audio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:tuple/tuple.dart';
+import 'package:universal_html/html.dart' as html;
+import 'package:universal_io/io.dart';
 import 'package:video_player/video_player.dart';
 
-class AudioPlayerWiget extends StatefulWidget {
-  AudioPlayerWiget({
+class AudioPlayerWidget extends StatefulWidget {
+  AudioPlayerWidget({
     Key? key,
     required this.file,
     required this.context,
@@ -28,10 +26,10 @@ class AudioPlayerWiget extends StatefulWidget {
   final bool isFromMe;
 
   @override
-  _AudioPlayerWigetState createState() => _AudioPlayerWigetState();
+  _AudioPlayerWidgetState createState() => _AudioPlayerWidgetState();
 }
 
-class _AudioPlayerWigetState extends State<AudioPlayerWiget> {
+class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   late final ChewieAudioController controller;
   late final VideoPlayerController audioController;
 

@@ -9,6 +9,8 @@ import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
+import 'package:bluebubbles/socket_manager.dart';
+import 'package:collection/src/iterable_extensions.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -24,11 +26,20 @@ class PrivateAPIPanelBinding extends Bindings {
 
 class PrivateAPIPanelController extends GetxController {
   late Settings _settingsCopy;
+  final RxnInt serverVersionCode = RxnInt();
 
   @override
   void onInit() {
     super.onInit();
     _settingsCopy = SettingsManager().settings;
+    SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
+      final String? serverVersion = res['data']['server_version'];
+      serverVersionCode.value = serverVersion?.split(".").mapIndexed((index, e) {
+        if (index == 0) return int.parse(e) * 100;
+        if (index == 1) return int.parse(e) * 21;
+        return int.parse(e);
+      }).sum;
+    });
   }
 
   void saveSettings() async {
@@ -90,14 +101,18 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                         child: RichText(
                           text: TextSpan(
                             children: [
-                              TextSpan(text: "Private API features give you the ability to send tapbacks, send read receipts, and see typing indicators."),
+                              TextSpan(text: "Private API features give you the ability to:\n"),
+                              TextSpan(text: " - Send tapbacks\n"),
+                              TextSpan(text: " - Send read receipts\n"),
+                              TextSpan(text: " - Send & receive typing indicators\n"),
+                              TextSpan(text: " - Mark chats read on the Mac server\n"),
+                              TextSpan(text: " - Send messages with subject lines\n"),
+                              TextSpan(text: " - Send message effects\n"),
+                              TextSpan(text: " - Change group chat names\n"),
+                              TextSpan(text: " - Add & remove people from group chats\n"),
+                              TextSpan(text: " - Send replies (requires Big Sur and up)"),
                               TextSpan(text: "\n\n"),
-                              TextSpan(text: "These features are only available to those running the nightly version of the server on Mac OS 10.15 and under."),
-                              TextSpan(text: "\n\n"),
-                              TextSpan(text: "Please note that servers running Mac OS 11+ "),
-                              TextSpan(text: "are not supported.", style: TextStyle(fontStyle: FontStyle.italic)),
-                              TextSpan(text: "\n\n"),
-                              TextSpan(text: "You must be using the nightly version of the server for these features to function, regardless of whether you enable them here."),
+                              TextSpan(text: "You must have the Private API bundle installed on the server for these features to function, regardless of whether you enable the setting here."),
                             ],
                             style: Theme.of(context).textTheme.bodyText1,
                           ),
@@ -254,6 +269,21 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                             },
                             backgroundColor: tileColor,
                             secondaryColor: headerColor,
+                          );
+                        } else {
+                          return SizedBox.shrink();
+                        }
+                      }),
+                      Obx(() {
+                        if ((controller.serverVersionCode.value ?? 0) >= 63) {
+                          return SettingsSwitch(
+                            onChanged: (bool val) {
+                              controller._settingsCopy.privateSubjectLine.value = val;
+                              saveSettings();
+                            },
+                            initialVal: controller._settingsCopy.privateSubjectLine.value,
+                            title: "Send Subject Lines",
+                            backgroundColor: tileColor,
                           );
                         } else {
                           return SizedBox.shrink();

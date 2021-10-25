@@ -355,7 +355,12 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         actions: [
           Obx(() {
             if (SettingsManager().settings.showConnectionIndicator.value) {
-              return Obx(() => getIndicatorIcon(SocketManager().state.value, size: 12));
+              return Obx(
+                () => getIndicatorIcon(
+                  SocketManager().state.value,
+                  size: 12,
+                ),
+              );
             } else {
               return SizedBox.shrink();
             }
@@ -528,6 +533,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     //                     ])))));
 
     return CupertinoNavigationBar(
+        padding: EdgeInsetsDirectional.only(top: kIsDesktop ? 20 : 0),
         backgroundColor: Theme.of(context).accentColor.withAlpha(125),
         border: Border(
           bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1.5),

@@ -580,25 +580,33 @@ Future<File?> saveImageFromUrl(String guid, String url) async {
 }
 
 Widget getIndicatorIcon(SocketState socketState, {double size = 24, bool showAlpha = true}) {
-  return Obx(() {
-    if (SettingsManager().settings.colorblindMode.value) {
-      if (socketState == SocketState.CONNECTING) {
-        return Icon(Icons.cloud_upload, color: HexColor('ffd500').withAlpha(showAlpha ? 200 : 255), size: size);
-      } else if (socketState == SocketState.CONNECTED) {
-        return Icon(Icons.cloud_done, color: HexColor('32CD32').withAlpha(showAlpha ? 200 : 255), size: size);
-      } else {
-        return Icon(Icons.cloud_off, color: HexColor('DC143C').withAlpha(showAlpha ? 200 : 255), size: size);
-      }
-    } else {
-      if (socketState == SocketState.CONNECTING) {
-        return Icon(Icons.fiber_manual_record, color: HexColor('ffd500').withAlpha(showAlpha ? 200 : 255), size: size);
-      } else if (socketState == SocketState.CONNECTED) {
-        return Icon(Icons.fiber_manual_record, color: HexColor('32CD32').withAlpha(showAlpha ? 200 : 255), size: size);
-      } else {
-        return Icon(Icons.fiber_manual_record, color: HexColor('DC143C').withAlpha(showAlpha ? 200 : 255), size: size);
-      }
-    }
-  });
+  return Padding(
+    padding: EdgeInsets.only(right: kIsDesktop ? 10 : 0),
+    child: Obx(
+      () {
+        if (SettingsManager().settings.colorblindMode.value) {
+          if (socketState == SocketState.CONNECTING) {
+            return Icon(Icons.cloud_upload, color: HexColor('ffd500').withAlpha(showAlpha ? 200 : 255), size: size);
+          } else if (socketState == SocketState.CONNECTED) {
+            return Icon(Icons.cloud_done, color: HexColor('32CD32').withAlpha(showAlpha ? 200 : 255), size: size);
+          } else {
+            return Icon(Icons.cloud_off, color: HexColor('DC143C').withAlpha(showAlpha ? 200 : 255), size: size);
+          }
+        } else {
+          if (socketState == SocketState.CONNECTING) {
+            return Icon(Icons.fiber_manual_record,
+                color: HexColor('ffd500').withAlpha(showAlpha ? 200 : 255), size: size);
+          } else if (socketState == SocketState.CONNECTED) {
+            return Icon(Icons.fiber_manual_record,
+                color: HexColor('32CD32').withAlpha(showAlpha ? 200 : 255), size: size);
+          } else {
+            return Icon(Icons.fiber_manual_record,
+                color: HexColor('DC143C').withAlpha(showAlpha ? 200 : 255), size: size);
+          }
+        }
+      },
+    ),
+  );
 }
 
 Color getIndicatorColor(SocketState socketState) {

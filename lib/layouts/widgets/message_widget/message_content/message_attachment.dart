@@ -111,7 +111,7 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
       } else if (mimeType == "audio" && !widget.attachment.mimeType!.contains("caf")) {
         return MediaFile(
           attachment: widget.attachment,
-          child: AudioPlayerWiget(file: content, context: context, width: 250, isFromMe: widget.isFromMe),
+          child: AudioPlayerWidget(file: content, context: context, width: 250, isFromMe: widget.isFromMe),
         );
       } else if (widget.attachment.mimeType == "text/x-vlocation" || widget.attachment.uti == 'public.vlocation') {
         return MediaFile(

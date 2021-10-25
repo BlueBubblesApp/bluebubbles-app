@@ -5,6 +5,7 @@ import 'dart:ui';
 
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/share.dart';
@@ -13,6 +14,8 @@ import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/lis
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/picker/text_field_attachment_picker.dart';
 import 'package:bluebubbles/layouts/widgets/custom_cupertino_text_field.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/audio_player_widget.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
@@ -28,11 +31,13 @@ import 'package:file_picker/file_picker.dart' hide PlatformFile;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dropzone/flutter_dropzone.dart';
 import 'package:get/get.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:record/record.dart';
+import 'package:simple_animations/simple_animations.dart';
 import 'package:transparent_pointer/transparent_pointer.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
@@ -42,7 +47,8 @@ class BlueBubblesTextField extends StatefulWidget {
   final String? existingText;
   final bool? isCreator;
   final bool wasCreator;
-  final Future<bool> Function(List<PlatformFile> attachments, String text, String subject, String? replyToGuid) onSend;
+  final Future<bool> Function(
+      List<PlatformFile> attachments, String text, String subject, String? replyToGuid, String? effectId) onSend;
 
   BlueBubblesTextField({
     Key? key,
@@ -98,8 +104,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     super.initState();
     getPlaceholder();
 
-    if (CurrentChat.of(context)?.chat != null) {
-      textFieldData = TextFieldBloc().getTextField(CurrentChat.of(context)!.chat.guid!);
+    if (CurrentChat.activeChat?.chat != null) {
+      textFieldData = TextFieldBloc().getTextField(CurrentChat.activeChat!.chat.guid!);
     }
 
     controller = textFieldData != null ? textFieldData!.controller : TextEditingController();
@@ -108,7 +114,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     // Add the text listener to detect when we should send the typing indicators
     controller!.addListener(() {
       setCanRecord();
-      if (!mounted || CurrentChat.of(context)?.chat == null) return;
+      if (!mounted || CurrentChat.activeChat?.chat == null) return;
 
       // If the private API features are disabled, or sending the indicators is disabled, return
       if (!SettingsManager().settings.enablePrivateAPI.value ||
@@ -118,11 +124,11 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
       if (controller!.text.isEmpty && pickedImages.isEmpty && selfTyping) {
         selfTyping = false;
-        SocketManager().sendMessage("stopped-typing", {"chatGuid": CurrentChat.of(context)!.chat.guid}, (data) {});
+        SocketManager().sendMessage("stopped-typing", {"chatGuid": CurrentChat.activeChat!.chat.guid}, (data) {});
       } else if (!selfTyping && (controller!.text.isNotEmpty || pickedImages.isNotEmpty)) {
         selfTyping = true;
         if (SettingsManager().settings.privateSendTypingIndicators.value) {
-          SocketManager().sendMessage("started-typing", {"chatGuid": CurrentChat.of(context)!.chat.guid}, (data) {});
+          SocketManager().sendMessage("started-typing", {"chatGuid": CurrentChat.activeChat!.chat.guid}, (data) {});
         }
       }
 
@@ -130,7 +136,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     });
     subjectController!.addListener(() {
       setCanRecord();
-      if (!mounted || CurrentChat.of(context)?.chat == null) return;
+      if (!mounted || CurrentChat.activeChat?.chat == null) return;
 
       // If the private API features are disabled, or sending the indicators is disabled, return
       if (!SettingsManager().settings.enablePrivateAPI.value ||
@@ -138,13 +144,14 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         return;
       }
 
-      if (subjectController!.text.length == 0 && pickedImages.length == 0 && selfTyping) {
+      if (subjectController!.text.isEmpty && pickedImages.isEmpty && selfTyping) {
         selfTyping = false;
-        SocketManager().sendMessage("stopped-typing", {"chatGuid": CurrentChat.of(context)!.chat.guid}, (data) {});
-      } else if (!selfTyping && (subjectController!.text.length > 0 || pickedImages.length > 0)) {
+        SocketManager().sendMessage("stopped-typing", {"chatGuid": CurrentChat.activeChat!.chat.guid}, (data) {});
+      } else if (!selfTyping && (subjectController!.text.isNotEmpty || pickedImages.isNotEmpty)) {
         selfTyping = true;
-        if (SettingsManager().settings.privateSendTypingIndicators.value)
-          SocketManager().sendMessage("started-typing", {"chatGuid": CurrentChat.of(context)!.chat.guid}, (data) {});
+        if (SettingsManager().settings.privateSendTypingIndicators.value) {
+          SocketManager().sendMessage("started-typing", {"chatGuid": CurrentChat.activeChat!.chat.guid}, (data) {});
+        }
       }
 
       if (mounted) setState(() {});
@@ -155,9 +162,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     focusNode = FocusNode();
     subjectFocusNode = FocusNode();
     focusNode!.addListener(() {
-      CurrentChat.of(context)?.keyboardOpen = focusNode?.hasFocus ?? false;
+      CurrentChat.activeChat?.keyboardOpen = focusNode?.hasFocus ?? false;
 
-      if (focusNode!.hasFocus && this.mounted) {
+      if (focusNode!.hasFocus && mounted) {
         if (!showShareMenu.value) return;
         showShareMenu.value = false;
       }
@@ -165,7 +172,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       EventDispatcher().emit("keyboard-status", focusNode!.hasFocus);
     });
     subjectFocusNode!.addListener(() {
-      CurrentChat.of(context)?.keyboardOpen = focusNode?.hasFocus ?? false;
+      CurrentChat.activeChat?.keyboardOpen = focusNode?.hasFocus ?? false;
 
       if (focusNode!.hasFocus && mounted) {
         if (!showShareMenu.value) return;
@@ -205,7 +212,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         focusNode!.requestFocus();
         if (event['data'] != null) {
           replyToMessage = event['data'];
-          setState(() {});
+          if (mounted) setState(() {});
         }
       } else if (event["type"] == "text-field-update-attachments") {
         addSharedAttachments();
@@ -218,7 +225,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         }
       } else if (event["type"] == "focus-keyboard" && event["data"] != null) {
         replyToMessage = event['data'];
-        setState(() {});
+        if (mounted) setState(() {});
       }
     });
 
@@ -272,7 +279,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    safeChat = CurrentChat.of(context);
+    safeChat = CurrentChat.activeChat;
   }
 
   @override
@@ -299,9 +306,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
   void disposeAudioFile(BuildContext context, PlatformFile file) {
     // Dispose of the audio controller
-    CurrentChat.of(context)?.audioPlayers[file.path]?.item1.dispose();
-    CurrentChat.of(context)?.audioPlayers[file.path]?.item2.pause();
-    CurrentChat.of(context)?.audioPlayers.removeWhere((key, _) => key == file.path);
+    CurrentChat.activeChat?.audioPlayers[file.path]?.item1.dispose();
+    CurrentChat.activeChat?.audioPlayers[file.path]?.item2.pause();
+    CurrentChat.activeChat?.audioPlayers.removeWhere((key, _) => key == file.path);
     if (file.path != null) {
       // Delete the file
       File(file.path!).delete();
@@ -347,7 +354,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             children: [
               Text("Review your audio snippet before sending it", style: Theme.of(context).textTheme.subtitle1),
               Container(height: 10.0),
-              AudioPlayerWiget(
+              AudioPlayerWidget(
                 key: Key("AudioMessage-${file.size}"),
                 file: file,
                 context: originalContext,
@@ -374,7 +381,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 if (thisChat == null) {
                   addAttachments([file]);
                 } else {
-                  await widget.onSend([file], "", "", null);
+                  await widget.onSend([file], "", "", null, null);
                   if (!kIsWeb) disposeAudioFile(originalContext, file);
                 }
 
@@ -431,7 +438,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           ListTile(
             title: Text("Send location", style: Theme.of(context).textTheme.bodyText1),
             onTap: () async {
-              Share.location(CurrentChat.of(context)!.chat);
+              Share.location(CurrentChat.activeChat!.chat);
               Get.back();
             },
           ),
@@ -543,10 +550,13 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 },
                 onDrop: (ev) async {
                   fileDragged = false;
-                  addAttachment(PlatformFile(
+                  addAttachment(
+                    PlatformFile(
                       name: await dropZoneController!.getFilename(ev),
                       bytes: await dropZoneController!.getFileData(ev),
-                      size: await dropZoneController!.getFileSize(ev)));
+                      size: await dropZoneController!.getFileSize(ev),
+                    ),
+                  );
                 },
               ),
             TransparentPointer(
@@ -1392,7 +1402,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     }
   }
 
-  Future<void> sendMessage() async {
+  Future<void> sendMessage({String? effect}) async {
     // If send delay is enabled, delay the sending
     if (!isNullOrZero(SettingsManager().settings.sendDelay.value)) {
       // Break the delay into 1 second intervals
@@ -1421,7 +1431,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       return;
     }
 
-    if (await widget.onSend(pickedImages, controller!.text, subjectController!.text, replyToMessage?.guid)) {
+    if (await widget.onSend(pickedImages, controller!.text, subjectController!.text,
+        replyToMessage?.threadOriginatorGuid ?? replyToMessage?.guid, effect)) {
       controller!.text = "";
       subjectController!.text = "";
       replyToMessage = null;
@@ -1449,6 +1460,229 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     if (shouldUpdate && mounted) setState(() {});
   }
 
+  void sendEffectAction() {
+    if (!SettingsManager().settings.enablePrivateAPI.value) return;
+    String typeSelected = "bubble";
+    final bubbleEffects = ["slam", "loud", "gentle", "invisible ink"];
+    final screenEffects = ["echo", "spotlight", "balloons", "confetti", "love", "lasers", "fireworks", "celebration"];
+    String bubbleSelected = "slam";
+    String screenSelected = "echo";
+    Message message = Message(
+      text: controller!.text.trim(),
+      subject: subjectController!.text.trim(),
+      dateCreated: DateTime.now(),
+      hasAttachments: false,
+      threadOriginatorGuid: replyToMessage?.guid,
+      isFromMe: true,
+    );
+    message.generateTempGuid();
+    CustomAnimationControl animController = CustomAnimationControl.stop;
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        transitionDuration: Duration(milliseconds: 150),
+        pageBuilder: (context, animation, secondaryAnimation) {
+          return FadeTransition(
+              opacity: animation,
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.of(context).pop();
+                },
+                child: AnnotatedRegion<SystemUiOverlayStyle>(
+                  value: SystemUiOverlayStyle(
+                    systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+                    systemNavigationBarIconBrightness:
+                        Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+                    statusBarColor: Colors.transparent, // status bar color
+                  ),
+                  child: Scaffold(
+                    backgroundColor: context.theme.backgroundColor.withOpacity(0.3),
+                    body: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                      child: SafeArea(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 20.0),
+                          child: Center(
+                            child: StatefulBuilder(
+                                builder: (BuildContext context, void Function(void Function()) setState) {
+                              return Column(children: [
+                                Text(
+                                  "Send with effect",
+                                  style: Theme.of(context).textTheme.subtitle1!,
+                                  textScaleFactor: 1.75,
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 20.0),
+                                  child: Container(
+                                    height: 50,
+                                    width: context.width / 2,
+                                    child: CupertinoSlidingSegmentedControl<String>(
+                                      children: {
+                                        "bubble": Text("Bubble"),
+                                        "screen": Text("Screen"),
+                                      },
+                                      groupValue: typeSelected,
+                                      thumbColor: CupertinoColors.tertiarySystemFill.lightenOrDarken(20),
+                                      backgroundColor: CupertinoColors.tertiarySystemFill,
+                                      onValueChanged: (str) {
+                                        setState(() {
+                                          typeSelected = str ?? "bubble";
+                                        });
+                                      },
+                                    ),
+                                  ),
+                                ),
+                                Spacer(),
+                                if (typeSelected == "bubble")
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 20.0),
+                                    child: ConstrainedBox(
+                                        constraints: BoxConstraints(
+                                          maxHeight: 250,
+                                          maxWidth: context.width,
+                                        ),
+                                        child: Wrap(
+                                          alignment: WrapAlignment.center,
+                                          children: List.generate(bubbleEffects.length, (index) {
+                                            return Padding(
+                                              padding: const EdgeInsets.all(8.0),
+                                              child: GestureDetector(
+                                                onTap: () {
+                                                  setState(() {
+                                                    bubbleSelected = bubbleEffects[index];
+                                                  });
+                                                  animController = CustomAnimationControl.playFromStart;
+                                                },
+                                                child: Container(
+                                                  width: context.width / 3,
+                                                  height: 50,
+                                                  decoration: BoxDecoration(
+                                                    color: CupertinoColors.tertiarySystemFill,
+                                                    border: Border.fromBorderSide(bubbleSelected == bubbleEffects[index]
+                                                        ? BorderSide(
+                                                            color: Theme.of(context).primaryColor,
+                                                            width: 1.5,
+                                                            style: BorderStyle.solid,
+                                                          )
+                                                        : BorderSide.none),
+                                                    borderRadius: BorderRadius.circular(5),
+                                                  ),
+                                                  child: Center(
+                                                    child: Text(
+                                                      bubbleEffects[index].toUpperCase(),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          }),
+                                        )),
+                                  ),
+                                if (typeSelected == "screen")
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 20.0),
+                                    child: ConstrainedBox(
+                                      constraints: BoxConstraints(
+                                        maxHeight: 350,
+                                        maxWidth: context.width,
+                                      ),
+                                      child: SingleChildScrollView(
+                                        child: Wrap(
+                                          alignment: WrapAlignment.center,
+                                          children: List.generate(screenEffects.length, (index) {
+                                            return Padding(
+                                              padding: const EdgeInsets.all(8.0),
+                                              child: GestureDetector(
+                                                onTap: () {
+                                                  setState(() {
+                                                    screenSelected = screenEffects[index];
+                                                  });
+                                                },
+                                                child: Container(
+                                                  width: context.width / 3,
+                                                  height: 50,
+                                                  decoration: BoxDecoration(
+                                                    color: CupertinoColors.tertiarySystemFill,
+                                                    border: Border.fromBorderSide(screenSelected == screenEffects[index]
+                                                        ? BorderSide(
+                                                            color: Theme.of(context).primaryColor,
+                                                            width: 1.5,
+                                                            style: BorderStyle.solid,
+                                                          )
+                                                        : BorderSide.none),
+                                                    borderRadius: BorderRadius.circular(5),
+                                                  ),
+                                                  child: Center(
+                                                    child: Text(
+                                                      screenEffects[index].toUpperCase(),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          }),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                Spacer(),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(right: 5.0),
+                                    child: SentMessageHelper.buildMessageWithTail(
+                                        context,
+                                        message,
+                                        true,
+                                        false,
+                                        message.isBigEmoji(),
+                                        MessageWidgetMixin.buildMessageSpansAsync(context, message),
+                                        currentChat: CurrentChat.activeChat,
+                                        customColor: Theme.of(context).primaryColor,
+                                        effect: stringToMessageEffect[
+                                                typeSelected == "bubble" ? bubbleSelected : screenSelected] ??
+                                            MessageEffect.none,
+                                        controller: animController, updateController: () {
+                                      setState(() {
+                                        animController = CustomAnimationControl.stop;
+                                      });
+                                    }),
+                                  ),
+                                ),
+                                Spacer(),
+                                TextButton(
+                                  child: Text(
+                                    typeSelected == "bubble"
+                                        ? "Send with $bubbleSelected"
+                                        : "Send with $screenSelected",
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyText1!
+                                        .apply(color: Theme.of(context).primaryColor),
+                                    textScaleFactor: 1.15,
+                                  ),
+                                  onPressed: () async {
+                                    Navigator.of(context).pop();
+                                    await sendMessage(
+                                        effect: effectMap[typeSelected == "bubble" ? bubbleSelected : screenSelected]);
+                                  },
+                                ),
+                              ]);
+                            }),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ));
+        },
+        fullscreenDialog: true,
+        opaque: false,
+      ),
+    );
+  }
+
   Widget buildSendButton() => Align(
         alignment: Alignment.bottomRight,
         child: Row(mainAxisAlignment: MainAxisAlignment.end, crossAxisAlignment: CrossAxisAlignment.center, children: [
@@ -1457,52 +1691,59 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               ? Container(
                   constraints: BoxConstraints(maxWidth: 35, maxHeight: 34),
                   padding: EdgeInsets.only(right: 4, top: 2, bottom: 2),
-                  child: ButtonTheme(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                          padding: EdgeInsets.only(
-                            right: 0,
-                          ),
-                          primary: Theme.of(context).primaryColor,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(40),
-                          ),
-                          elevation: 0),
-                      onPressed: sendAction,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Obx(() => AnimatedOpacity(
-                                opacity: sendCountdown == null && canRecord.value && !kIsDesktop ? 1.0 : 0.0,
-                                duration: Duration(milliseconds: 150),
-                                child: Icon(
-                                  CupertinoIcons.waveform,
-                                  color: (isRecording.value) ? Colors.red : Colors.white,
-                                  size: 22,
-                                ),
-                              )),
-                          Obx(() => AnimatedOpacity(
-                                opacity:
-                                    (sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value
-                                        ? 1.0
-                                        : 0.0,
-                                duration: Duration(milliseconds: 150),
-                                child: Icon(
-                                  CupertinoIcons.arrow_up,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
-                              )),
-                          AnimatedOpacity(
-                            opacity: sendCountdown != null ? 1.0 : 0.0,
-                            duration: Duration(milliseconds: 50),
-                            child: Icon(
-                              CupertinoIcons.xmark_circle,
-                              color: Colors.red,
-                              size: 20,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    onSecondaryTap: sendEffectAction,
+                    child: ButtonTheme(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                            padding: EdgeInsets.only(
+                              right: 0,
                             ),
-                          ),
-                        ],
+                            primary: Theme.of(context).primaryColor,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(40),
+                            ),
+                            elevation: 0),
+                        onPressed: sendAction,
+                        onLongPress: (sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value
+                            ? sendEffectAction
+                            : null,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Obx(() => AnimatedOpacity(
+                                  opacity: sendCountdown == null && canRecord.value && !kIsDesktop ? 1.0 : 0.0,
+                                  duration: Duration(milliseconds: 150),
+                                  child: Icon(
+                                    CupertinoIcons.waveform,
+                                    color: (isRecording.value) ? Colors.red : Colors.white,
+                                    size: 22,
+                                  ),
+                                )),
+                            Obx(() => AnimatedOpacity(
+                                  opacity:
+                                      (sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value
+                                          ? 1.0
+                                          : 0.0,
+                                  duration: Duration(milliseconds: 150),
+                                  child: Icon(
+                                    CupertinoIcons.arrow_up,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                )),
+                            AnimatedOpacity(
+                              opacity: sendCountdown != null ? 1.0 : 0.0,
+                              duration: Duration(milliseconds: 50),
+                              child: Icon(
+                                CupertinoIcons.xmark_circle,
+                                color: Colors.red,
+                                size: 20,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),

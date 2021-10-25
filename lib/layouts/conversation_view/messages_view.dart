@@ -555,20 +555,21 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                                 bool fullAnimation = index == 0 &&
                                     (!_messages[index].isFromMe! || _messages[index].originalROWID == null);
 
-                                Widget messageWidget = Padding(
-                                    padding: EdgeInsets.only(left: 5.0, right: 5.0),
-                                    child: MessageWidget(
-                                      key: Key(_messages[index].guid!),
-                                      message: _messages[index],
-                                      olderMessage: olderMessage,
-                                      newerMessage: newerMessage,
-                                      showHandle: widget.showHandle,
-                                      isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages[index].guid,
-                                      showHero: fullAnimation,
-                                      showReplies: true,
-                                      onUpdate: (event) => onUpdateMessage(event),
-                                      bloc: widget.messageBloc!,
-                                    ));
+                          Widget messageWidget = Padding(
+                              padding: EdgeInsets.only(left: 5.0, right: 5.0),
+                              child: MessageWidget(
+                                key: Key(_messages[index].guid!),
+                                message: _messages[index],
+                                olderMessage: olderMessage,
+                                newerMessage: newerMessage,
+                                showHandle: widget.showHandle,
+                                isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages[index].guid,
+                                showHero: fullAnimation,
+                                showReplies: true,
+                                onUpdate: (event) => onUpdateMessage(event),
+                                bloc: widget.messageBloc!,
+                                autoplayEffect: index == 0 && _messages[index].originalROWID != null,
+                              ));
 
                                 if (fullAnimation) {
                                   return SizeTransition(
