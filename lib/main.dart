@@ -620,12 +620,14 @@ Future<void> initSystemTray() async {
       MenuItem(
         label: 'Open App',
         onClicked: () {
-            appWindow.show();
+          LifeCycleManager().opened();
+          appWindow.show();
         },
       ),
       MenuItem(
         label: 'Hide App',
         onClicked: () {
+          LifeCycleManager().close();
           appWindow.hide();
         },
       ),
