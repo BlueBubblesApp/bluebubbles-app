@@ -225,7 +225,7 @@ class ApiService extends GetxService {
     return await dio.post("$origin/message/text",
         queryParameters: buildQueryParams(),
         data: {
-          "guid": chatGuid,
+          "chatGuid": chatGuid,
           "tempGuid": tempGuid,
           "message": message.isEmpty && (subject?.isNotEmpty ?? false) ? " " : message,
           "method": method,
@@ -244,7 +244,7 @@ class ApiService extends GetxService {
     final fileName = file.path.split('/').last;
     final formData = FormData.fromMap({
       "file": await MultipartFile.fromFile(file.path, filename: fileName),
-      "guid": chatGuid,
+      "chatGuid": chatGuid,
       "tempGuid": tempGuid,
       "name": fileName,
     });
