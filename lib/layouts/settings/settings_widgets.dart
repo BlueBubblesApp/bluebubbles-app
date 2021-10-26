@@ -721,8 +721,8 @@ class SquircleBorder extends ShapeBorder {
   final double superRadius;
 
   const SquircleBorder({
-    this.side: BorderSide.none,
-    this.superRadius: 5.0,
+    this.side = BorderSide.none,
+    this.superRadius = 5.0,
   });
 
   @override
@@ -730,7 +730,7 @@ class SquircleBorder extends ShapeBorder {
 
   @override
   ShapeBorder scale(double t) {
-    return new SquircleBorder(
+    return SquircleBorder(
       side: side.scale(t),
       superRadius: superRadius * t,
     );
@@ -750,7 +750,7 @@ class SquircleBorder extends ShapeBorder {
     final c = rect.center;
     final dx = c.dx * (1.0 / superRadius);
     final dy = c.dy * (1.0 / superRadius);
-    return new Path()
+    return Path()
       ..moveTo(c.dx, 0.0)
       ..relativeCubicTo(c.dx - dx, 0.0, c.dx, dy, c.dx, c.dy)
       ..relativeCubicTo(0.0, c.dy - dy, -dx, c.dy, -c.dx, c.dy)

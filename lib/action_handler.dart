@@ -20,6 +20,7 @@ import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:universal_io/io.dart';
@@ -149,6 +150,69 @@ class ActionHandler {
       // Add the message send to the queue
       await OutgoingQueue().add(QueueItem(event: "send-message", item: params));
     }
+  }
+
+  static Future<Chat> createChatBigSur(BuildContext context, String address, String text) async {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            backgroundColor: Theme.of(context).accentColor,
+            title: Text(
+              "Creating a new chat...",
+              style: Theme.of(context).textTheme.bodyText1,
+            ),
+            content:
+            Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
+              Container(
+                // height: 70,
+                // color: Colors.black,
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                ),
+              ),
+            ]),
+          );
+        });
+
+    Logger.info("Starting chat with participant: $address");
+    Message message = Message(
+      text: text.trim(),
+      dateCreated: DateTime.now(),
+      isFromMe: true,
+    );
+
+    message.generateTempGuid();
+
+    // Create params for the queue item
+    Map<String, dynamic> params = {"guid": "iMessage;-;$address", "message": message.text, "tempGuid": message.guid};
+
+    // Add the message send to the queue
+    final response = await SocketManager().sendMessage("send-message", params, (response) {});
+    message = Message.fromMap(response['data']);
+    final chat = Chat.fromMap(response['data']['chats'].first);
+
+    // If there is an error, replace the temp value with an error
+    if (response['status'] != 200) {
+      message.guid = message.guid!.replaceAll("temp", "error-${response['error']['message']}");
+      message.error =
+      response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
+    }
+
+    // Make sure to save the chat
+    // If we already have the ID, we don't have to wait to resave it
+    chat.save();
+    await ChatBloc().updateChatPosition(chat);
+    // for some reason it likes to add multiple of the chat in the chat list so
+    // deduplicate them just in case
+    final ids = ChatBloc().chats.map((e) => e.guid).toSet();
+    ChatBloc().chats.retainWhere((element) => ids.remove(element.guid));
+
+    // Add the message to the UI and DB
+    NewMessageManager().addMessage(chat, message, outgoing: true);
+    chat.addMessage(message);
+    Navigator.of(context).pop();
+    return chat;
   }
 
   static Future<void> sendMessageHelper(Chat chat, Message message) async {
