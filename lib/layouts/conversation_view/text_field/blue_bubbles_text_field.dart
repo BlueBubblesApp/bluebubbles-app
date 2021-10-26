@@ -1529,7 +1529,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                       padding: const EdgeInsets.symmetric(vertical: 20.0),
                                       child: Container(
                                         height: 50,
-                                        width: context.width / 2,
+                                        width: CustomNavigator.width(context) / 2,
                                         child: CupertinoSlidingSegmentedControl<String>(
                                           children: {
                                             "bubble": Text("Bubble"),

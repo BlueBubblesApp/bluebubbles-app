@@ -988,7 +988,6 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
     if (SettingsManager().settings.enablePrivateAPI.value && (await SettingsManager().getMacOSVersion() ?? 0) > 10 && existingChat == null) {
       api.createChat(participants, null).then((response) async {
-        print(response.data);
         if (response.statusCode != 200) {
           Navigator.of(context).pop();
           showDialog(
