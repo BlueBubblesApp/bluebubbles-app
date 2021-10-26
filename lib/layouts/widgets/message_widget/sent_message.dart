@@ -4,11 +4,11 @@ import 'dart:ui';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/layouts/setup/theme_selector/theme_selector.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reply_line_painter.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/show_reply_thread.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:collection/collection.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -31,17 +31,31 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/helpers/darty.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:particles_flutter/particles_flutter.dart';
+import 'package:simple_animations/simple_animations.dart';
+import 'package:supercharged/supercharged.dart';
 
 class SentMessageHelper {
   static Widget buildMessageWithTail(
-      BuildContext context, Message? message, bool showTail, bool hasReactions, bool bigEmoji, Future<List<InlineSpan>> msgSpanFuture,
-      {Widget? customContent,
-      Message? olderMessage,
-      CurrentChat? currentChat,
-      Color? customColor,
-      bool padding = true,
-      bool margin = true,
-      double? customWidth}) {
+      BuildContext context,
+      Message? message,
+      bool showTail,
+      bool hasReactions,
+      bool bigEmoji,
+      Future<List<InlineSpan>> msgSpanFuture,
+      {
+        Widget? customContent,
+        Message? olderMessage,
+        CurrentChat? currentChat,
+        Color? customColor,
+        bool padding = true,
+        bool margin = true,
+        double? customWidth,
+        MessageEffect effect = MessageEffect.none,
+        CustomAnimationControl controller = CustomAnimationControl.stop,
+        void Function()? updateController,
+      }) {
+    if (effect.isBubble) assert(updateController != null);
     Color bubbleColor;
     bubbleColor = message == null || message.guid!.startsWith("temp")
         ? Theme.of(context).primaryColor.darkenAmount(0.2)
@@ -53,7 +67,10 @@ class SentMessageHelper {
     Widget msg;
     bool hasReactions = (message?.getReactions() ?? []).isNotEmpty;
     Skins currentSkin = Skin.of(context)?.skin ?? SettingsManager().settings.skin.value;
-
+    Size bubbleSize = Size(0, 0);
+    if (controller != CustomAnimationControl.stop) {
+      bubbleSize = message!.getBubbleSize(context);
+    }
     if (message?.isBigEmoji() ?? false) {
       // this stack is necessary for layouting width properly
       msg = Stack(alignment: AlignmentDirectional.bottomEnd, children: [
@@ -90,6 +107,23 @@ class SentMessageHelper {
         })
       ]);
     } else {
+      Animatable<TimelineValue<String>>? tween;
+      double opacity = 0;
+      if (effect == MessageEffect.gentle && controller != CustomAnimationControl.stop) {
+        tween = TimelineTween<String>()
+          ..addScene(begin: Duration.zero, duration: const Duration(milliseconds: 500))
+              .animate("size", tween: 0.5.tweenTo(0.5))
+          ..addScene(begin: Duration(milliseconds: 1000), duration: const Duration(milliseconds: 800), curve: Curves.easeInOut)
+              .animate("size", tween: 0.5.tweenTo(1.0));
+        opacity = 1;
+      } else if (controller != CustomAnimationControl.stop) {
+        tween = TimelineTween<String>()
+          ..addScene(begin: Duration.zero, duration: const Duration(milliseconds: 500), curve: Curves.easeInOut)
+              .animate("size", tween: 1.0.tweenTo(1.0));
+      }
+      if (effect == MessageEffect.invisibleInk && controller != CustomAnimationControl.stop) {
+        opacity = 1;
+      }
       msg = Stack(
         alignment: AlignmentDirectional.bottomEnd,
         children: [
@@ -142,7 +176,87 @@ class SentMessageHelper {
                             : null,
                 color: customColor ?? bubbleColor,
               ),
-              child: customContent ?? FutureBuilder<List<InlineSpan>>(
+              child: customContent ?? (effect.isBubble && controller != CustomAnimationControl.stop ? CustomAnimation<TimelineValue<String>>(
+                control: controller,
+                tween: tween!,
+                duration: Duration(milliseconds: 1800),
+                builder: (context, child, anim) {
+                  double value = anim.get("size");
+                  return StatefulBuilder(
+                    builder: (context, setState) {
+                      return GestureDetector(
+                        onTap: () {
+                          if (effect == MessageEffect.invisibleInk) {
+                            setState(() {
+                              opacity = 1 - opacity;
+                            });
+                            updateController?.call();
+                          }
+                        },
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Opacity(
+                              opacity: 1 - opacity,
+                              child: RichText(
+                                text: TextSpan(
+                                  children: [
+                                    if (!isNullOrEmpty(message!.subject)!)
+                                      TextSpan(
+                                        text: "${message.subject}\n",
+                                        style: Theme.of(context).textTheme.bodyText2!.apply(fontWeightDelta: 2, color: Colors.white),
+                                      ),
+                                    TextSpan(
+                                      text: message.text,
+                                      style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
+                                    ),
+                                  ],
+                                  style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
+                                ),
+                              ),
+                            ),
+                            if (effect == MessageEffect.gentle)
+                              RichText(
+                                text: TextSpan(
+                                  children: [
+                                    if (!isNullOrEmpty(message.subject)!)
+                                      TextSpan(
+                                        text: "${message.subject}\n",
+                                        style: Theme.of(context).textTheme.bodyText2!.apply(fontWeightDelta: 2, fontSizeFactor: value, color: Colors.white),
+                                      ),
+                                    TextSpan(
+                                      text: message.text,
+                                      style: Theme.of(context).textTheme.bodyText2!.apply(fontSizeFactor: value, color: Colors.white),
+                                    ),
+                                  ],
+                                  style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
+                                ),
+                              ),
+                            if (effect == MessageEffect.invisibleInk && controller != CustomAnimationControl.stop)
+                              Opacity(
+                                opacity: opacity,
+                                child: AbsorbPointer(
+                                  absorbing: true,
+                                  child: CircularParticle(
+                                    key: UniqueKey(),
+                                    numberOfParticles: bubbleSize.height * bubbleSize.width / 25,
+                                    speedOfParticles: 0.25,
+                                    height: bubbleSize.height - 20,
+                                    width: bubbleSize.width - 25,
+                                    particleColor: Colors.white.withAlpha(150),
+                                    maxParticleSize: (bubbleSize.height / 75).clamp(0.5, 1),
+                                    isRandSize: true,
+                                    isRandomColor: false,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      );
+                    }
+                  );
+                }
+              ) : FutureBuilder<List<InlineSpan>>(
                       future: msgSpanFuture,
                       initialData: MessageWidgetMixin.buildMessageSpans(context, message),
                       builder: (context, snapshot) {
@@ -153,14 +267,15 @@ class SentMessageHelper {
                           ),
                         );
                       }
-                    ),
+                    )
+              )
             );
           }),
         ],
       );
     }
     if (!padding) return msg;
-    return Container(
+    final child = Container(
         width: customWidth != null ? customWidth - (showTail ? 20 : 0) : null,
         constraints: BoxConstraints(
           maxWidth: customWidth != null ? customWidth - (showTail ? 20 : 0) : CustomNavigator.width(context),
@@ -178,6 +293,102 @@ class SentMessageHelper {
             ),
           ],
         ));
+    if (effect.isBubble && effect != MessageEffect.invisibleInk && controller != CustomAnimationControl.stop) {
+      Animatable<TimelineValue<String>> tween = TimelineTween<String>()
+        ..addScene(begin: Duration.zero, duration: const Duration(milliseconds: 500), curve: Curves.easeInOut)
+            .animate("size", tween: 1.0.tweenTo(1.0));
+      if (effect == MessageEffect.gentle && controller != CustomAnimationControl.stop) {
+        tween = TimelineTween<String>()
+          ..addScene(begin: Duration.zero, duration: const Duration(milliseconds: 500), curve: Curves.easeInOut)
+              .animate("size", tween: 0.0.tweenTo(1.2))
+          ..addScene(begin: Duration(milliseconds: 1000), duration: const Duration(milliseconds: 800), curve: Curves.easeInOut)
+              .animate("size", tween: 1.2.tweenTo(1.0));
+      }
+      if (effect == MessageEffect.loud) {
+        tween = TimelineTween<String>()
+          ..addScene(begin: Duration.zero, duration: const Duration(milliseconds: 300), curve: Curves.easeIn)
+              .animate("size", tween: 1.0.tweenTo(3.0))
+          ..addScene(begin: Duration(milliseconds: 200), duration: const Duration(milliseconds: 400), curve: Curves.linear)
+              .animate("rotation", tween: 0.0.tweenTo(2.0))
+          ..addScene(begin: Duration(milliseconds: 400), duration: const Duration(milliseconds: 500), curve: Curves.easeIn)
+              .animate("size", tween: 3.0.tweenTo(1.0));
+      }
+      if (effect == MessageEffect.slam) {
+        tween = TimelineTween<String>()
+          ..addScene(begin: Duration.zero, duration: const Duration(milliseconds: 200), curve: Curves.easeIn)
+              .animate("size", tween: 1.0.tweenTo(5.0))
+          ..addScene(begin: Duration.zero, duration: const Duration(milliseconds: 200), curve: Curves.easeIn)
+              .animate("rotation", tween: 0.0.tweenTo(pi / 16))
+          ..addScene(begin: Duration(milliseconds: 250), duration: const Duration(milliseconds: 150), curve: Curves.easeIn)
+              .animate("size", tween: 5.0.tweenTo(0.8))
+          ..addScene(begin: Duration(milliseconds: 250), duration: const Duration(milliseconds: 150), curve: Curves.easeIn)
+              .animate("rotation", tween: (pi / 16).tweenTo(0))
+          ..addScene(begin: Duration(milliseconds: 400), duration: const Duration(milliseconds: 100), curve: Curves.easeIn)
+              .animate("size", tween: 0.8.tweenTo(1.0));
+      }
+      return CustomAnimation<TimelineValue<String>>(
+          control: controller,
+          tween: tween,
+          duration: Duration(milliseconds: effect == MessageEffect.loud ? 900 : effect == MessageEffect.slam ? 500 : 1800),
+          animationStatusListener: (status) {
+            if (status == AnimationStatus.completed) {
+              updateController?.call();
+            }
+          },
+          builder: (context, child, anim) {
+            double value1 = 1;
+            double value2 = 0;
+            if (effect == MessageEffect.gentle) {
+              value1 = anim.get("size");
+            } else if (effect == MessageEffect.loud || effect == MessageEffect.slam) {
+              value1 = anim.get("size");
+              value2 = anim.get("rotation");
+            }
+            if (effect == MessageEffect.gentle) {
+              return Padding(
+                padding: EdgeInsets.only(top: (bubbleSize.height + (hasReactions && margin ? 18 : 0)) * (value1.clamp(1, 1.2) - 1)),
+                child: Transform.scale(
+                    scale: value1,
+                    alignment: Alignment.bottomRight,
+                    child: child
+                ),
+              );
+            }
+            if (effect == MessageEffect.loud) {
+              return Container(
+                width: (bubbleSize.width + (margin ? 20 : 0)) * value1,
+                height: (bubbleSize.height + (hasReactions && margin ? 18 : 0)) * value1,
+                child: FittedBox(
+                  alignment: Alignment.bottomRight,
+                  child: Transform.rotate(
+                      angle: sin(value2 * pi * 4) * pi / 24,
+                      alignment: Alignment.bottomCenter,
+                      child: child
+                  ),
+                ),
+              );
+            }
+            if (effect == MessageEffect.slam) {
+              return Container(
+                width: (bubbleSize.width + (margin ? 20 : 0)) * value1,
+                height: (bubbleSize.height + (hasReactions && margin ? 18 : 0)) * value1,
+                child: FittedBox(
+                  alignment: Alignment.centerRight,
+                  child: Transform.rotate(
+                      angle: value2,
+                      alignment: Alignment.bottomCenter,
+                      child: child
+                  ),
+                ),
+              );
+            }
+            return child!;
+          },
+          child: child
+      );
+    } else {
+      return child;
+    }
   }
 
   static Widget getErrorWidget(BuildContext context, Message? message, Chat? chat, {double rightPadding = 8.0}) {
@@ -266,6 +477,7 @@ class SentMessage extends StatefulWidget {
   final bool hasTimestampAbove;
   final bool hasTimestampBelow;
   final bool showReplies;
+  final bool autoplayEffect;
 
   // Sub-widgets
   final Widget stickersWidget;
@@ -286,6 +498,7 @@ class SentMessage extends StatefulWidget {
     required this.hasTimestampAbove,
     required this.hasTimestampBelow,
     required this.showReplies,
+    required this.autoplayEffect,
 
     // Sub-widgets
     required this.stickersWidget,
@@ -304,11 +517,31 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
   Size? threadOriginatorSize;
   Size? messageSize;
   bool showReplies = false;
+  CustomAnimationControl animController = CustomAnimationControl.stop;
 
   @override
   void initState() {
     super.initState();
     showReplies = widget.showReplies;
+
+    /*if (CurrentChat.activeChat?.autoplayGuid == widget.message.guid && widget.autoplayEffect) {
+      CurrentChat.activeChat?.autoplayGuid = null;
+      SchedulerBinding.instance!.addPostFrameCallback((_) {
+        if (ModalRoute.of(context)?.animation?.status == AnimationStatus.completed && widget.autoplayEffect && mounted) {
+          setState(() {
+            animController = CustomAnimationControl.playFromStart;
+          });
+        } else if (widget.autoplayEffect) {
+          ModalRoute.of(context)?.animation?.addStatusListener((status) {
+            if (status == AnimationStatus.completed && widget.autoplayEffect && mounted) {
+              setState(() {
+                animController = CustomAnimationControl.playFromStart;
+              });
+            }
+          });
+        }
+      });
+    }*/
   }
 
   List<Color> getBubbleColors(Message message) {
@@ -349,79 +582,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
       if (msg != null && widget.olderMessage?.guid != msg.guid && widget.olderMessage?.threadOriginatorGuid != widget.message.threadOriginatorGuid) {
         messageColumn.add(GestureDetector(
           onTap: () {
-            List<Message> _messages = [];
-            if (widget.message.threadOriginatorGuid != null) {
-              _messages = widget.messageBloc?.messages.values.where((e) => e.threadOriginatorGuid == widget.message.threadOriginatorGuid || e.guid == widget.message.threadOriginatorGuid).toList() ?? [];
-            } else {
-              _messages = widget.messageBloc?.messages.values.where((e) => e.threadOriginatorGuid == widget.message.guid || e.guid == widget.message.guid).toList() ?? [];
-            }
-            _messages.sort((a, b) => a.id!.compareTo(b.id!));
-            _messages.sort((a, b) => a.dateCreated!.compareTo(b.dateCreated!));
-            final controller = ScrollController();
-            Navigator.push(
-              context,
-              PageRouteBuilder(
-                settings: RouteSettings(arguments: {"hideTail": true}),
-                transitionDuration: Duration(milliseconds: 150),
-                pageBuilder: (context, animation, secondaryAnimation) {
-                  Future.delayed(Duration.zero, () => controller.jumpTo(controller.position.maxScrollExtent));
-                  return FadeTransition(
-                    opacity: animation,
-                    child: GestureDetector(
-                      onTap: () {
-                        Get.back();
-                      },
-                      child: AnnotatedRegion<SystemUiOverlayStyle>(
-                        value: SystemUiOverlayStyle(
-                          systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
-                          systemNavigationBarIconBrightness:
-                          Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
-                          statusBarColor: Colors.transparent, // status bar color
-                        ),
-                        child: Scaffold(
-                          backgroundColor: Colors.transparent,
-                          body: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-                            child: SafeArea(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                                child: Center(
-                                  child: ListView.builder(
-                                    shrinkWrap: true,
-                                    controller: controller,
-                                    itemBuilder: (context, index) {
-                                      return AbsorbPointer(
-                                        absorbing: true,
-                                        child: Padding(
-                                            padding: EdgeInsets.only(left: 5.0, right: 5.0),
-                                            child: MessageWidget(
-                                              key: Key(_messages[index].guid!),
-                                              message: _messages[index],
-                                              olderMessage: null,
-                                              newerMessage: null,
-                                              showHandle: true,
-                                              isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages[index].guid,
-                                              showHero: false,
-                                              showReplies: false,
-                                              bloc: widget.messageBloc!,
-                                            )),
-                                      );
-                                    },
-                                    itemCount: _messages.length,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    )
-                  );
-                },
-                fullscreenDialog: true,
-                opaque: false,
-              ),
-            );
+            showReplyThread(context, widget.message, widget.messageBloc);
           },
           child: StreamBuilder<double>(
             stream: CurrentChat.activeChat?.timeStampOffsetStream.stream,
@@ -436,7 +597,8 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
                     crossAxisAlignment: CrossAxisAlignment.end,
                     mainAxisAlignment: msg.isFromMe ?? false ? MainAxisAlignment.end : MainAxisAlignment.start,
                     children: [
-                      if ((CurrentChat.activeChat?.chat.isGroup() ?? false) && !msg.isFromMe!)
+                      if ((SettingsManager().settings.alwaysShowAvatars.value ||
+                          (CurrentChat.activeChat?.chat.isGroup() ?? false)) && !msg.isFromMe!)
                         Padding(
                           padding: EdgeInsets.only(top: 5, left: 6),
                           child: ContactAvatarWidget(
@@ -539,13 +701,29 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
 
     // Third, let's add the message or URL preview
     Widget? message;
+    String effect = widget.message.expressiveSendStyleId == null
+        ? "none"
+        : effectMap.entries.firstWhereOrNull((element) => element.value == widget.message.expressiveSendStyleId)?.key ?? "unknown";
     if (widget.message.balloonBundleId != null &&
         widget.message.balloonBundleId != 'com.apple.messages.URLBalloonProvider') {
       message = BalloonBundleWidget(message: widget.message);
     } else if (!isEmptyString(widget.message.text) || !isEmptyString(widget.message.subject ?? "")) {
       message = SentMessageHelper.buildMessageWithTail(
-          context, widget.message, widget.showTail, widget.message.hasReactions, widget.message.bigEmoji ?? false, spanFuture,
-          olderMessage: widget.olderMessage);
+          context,
+          widget.message,
+          widget.showTail,
+          widget.message.hasReactions,
+          widget.message.bigEmoji ?? false,
+          spanFuture,
+          olderMessage: widget.olderMessage,
+          effect: stringToMessageEffect[effect] ?? MessageEffect.none,
+          controller: animController,
+          updateController: () {
+            setState(() {
+              animController = CustomAnimationControl.stop;
+            });
+          }
+      );
       if (widget.showHero) {
         message = Hero(
           tag: "first",
@@ -664,11 +842,26 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (widget.message.expressiveSendStyleId != null)
-            Padding(
-              padding: const EdgeInsets.only(left: 8.0, top: 2, right: 8.0, bottom: 2),
-              child: Text(
-                "Sent with ${effectMap.entries.firstWhereOrNull((element) => element.value == widget.message.expressiveSendStyleId)?.key ?? "unknown"} effect",
-                style: Theme.of(context).textTheme.subtitle2!.copyWith(fontWeight: FontWeight.bold, color: Colors.blue),
+            GestureDetector(
+              onTap: () {
+                if ((stringToMessageEffect[effect] ?? MessageEffect.none).isBubble) {
+                  if (effect == "invisible ink" && animController == CustomAnimationControl.playFromStart) {
+                    setState(() {
+                      animController = CustomAnimationControl.stop;
+                    });
+                  } else {
+                    setState(() {
+                      animController = CustomAnimationControl.playFromStart;
+                    });
+                  }
+                }
+              },
+              child: Padding(
+                padding: const EdgeInsets.only(left: 8.0, top: 2, right: 8.0, bottom: 2),
+                child: Text(
+                  "↺ sent with $effect",
+                  style: Theme.of(context).textTheme.subtitle2!.copyWith(fontWeight: FontWeight.bold, color: Colors.blue),
+                ),
               ),
             ),
           Obx(() {
@@ -676,79 +869,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
             if (list.isNotEmpty) {
               return GestureDetector(
                 onTap: () {
-                  List<Message> _messages = [];
-                  if (widget.message.threadOriginatorGuid != null) {
-                    _messages = widget.messageBloc?.messages.values.where((e) => e.threadOriginatorGuid == widget.message.threadOriginatorGuid || e.guid == widget.message.threadOriginatorGuid).toList() ?? [];
-                  } else {
-                    _messages = widget.messageBloc?.messages.values.where((e) => e.threadOriginatorGuid == widget.message.guid || e.guid == widget.message.guid).toList() ?? [];
-                  }
-                  _messages.sort((a, b) => a.id!.compareTo(b.id!));
-                  _messages.sort((a, b) => a.dateCreated!.compareTo(b.dateCreated!));
-                  final controller = ScrollController();
-                  Navigator.push(
-                    context,
-                    PageRouteBuilder(
-                      settings: RouteSettings(arguments: {"hideTail": true}),
-                      transitionDuration: Duration(milliseconds: 150),
-                      pageBuilder: (context, animation, secondaryAnimation) {
-                        Future.delayed(Duration.zero, () => controller.jumpTo(controller.position.maxScrollExtent));
-                        return FadeTransition(
-                            opacity: animation,
-                            child: GestureDetector(
-                              onTap: () {
-                                Get.back();
-                              },
-                              child: AnnotatedRegion<SystemUiOverlayStyle>(
-                                value: SystemUiOverlayStyle(
-                                  systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
-                                  systemNavigationBarIconBrightness:
-                                  Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
-                                  statusBarColor: Colors.transparent, // status bar color
-                                ),
-                                child: Scaffold(
-                                  backgroundColor: Colors.transparent,
-                                  body: BackdropFilter(
-                                    filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-                                    child: SafeArea(
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                                        child: Center(
-                                          child: ListView.builder(
-                                            shrinkWrap: true,
-                                            controller: controller,
-                                            itemBuilder: (context, index) {
-                                              return AbsorbPointer(
-                                                absorbing: true,
-                                                child: Padding(
-                                                    padding: EdgeInsets.only(left: 5.0, right: 5.0),
-                                                    child: MessageWidget(
-                                                      key: Key(_messages[index].guid!),
-                                                      message: _messages[index],
-                                                      olderMessage: null,
-                                                      newerMessage: null,
-                                                      showHandle: true,
-                                                      isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages[index].guid,
-                                                      showHero: false,
-                                                      showReplies: false,
-                                                      bloc: widget.messageBloc!,
-                                                    )),
-                                              );
-                                            },
-                                            itemCount: _messages.length,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            )
-                        );
-                      },
-                      fullscreenDialog: true,
-                      opaque: false,
-                    ),
-                  );
+                  showReplyThread(context, widget.message, widget.messageBloc);
                 },
                 child: Padding(
                   padding: const EdgeInsets.only(left: 8.0, right: 18.0, top: 2, bottom: 4),
@@ -807,6 +928,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
           message: widget.message,
           olderMessage: widget.olderMessage,
           newerMessage: widget.newerMessage,
+          messageBloc: widget.messageBloc,
           popupPushed: (pushed) {
             if (mounted) {
               setState(() {

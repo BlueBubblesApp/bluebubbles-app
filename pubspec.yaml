@@ -104,6 +104,7 @@ dependencies:
   qr_flutter: ^4.0.0
   window_manager: ^0.0.4
   js: ^0.6.3
+  particles_flutter: ^0.1.4
 
 dependency_overrides:
   rxdart: ^0.27.2
