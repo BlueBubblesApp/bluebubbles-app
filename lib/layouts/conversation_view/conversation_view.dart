@@ -265,7 +265,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   Future<bool> send(
       List<PlatformFile> attachments, String text, String subject, String? replyGuid, String? effectId) async {
     bool isDifferentChat = currentChat == null || currentChat?.chat.guid != chat?.guid;
-
+    bool alreadySent = false;
     if (isCreator!) {
       if (chat == null && selected.length == 1) {
         try {
@@ -277,8 +277,23 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         } catch (_) {}
       }
 
-      // If the chat is null, create it
-      chat ??= await createChat();
+      if (chat == null && (await SettingsManager().getMacOSVersion() ?? 10) > 10 && SettingsManager().settings.enablePrivateAPI.value == false) {
+        if (searchQuery.isNotEmpty) {
+          selected.add(UniqueContact(address: searchQuery, displayName: searchQuery));
+        }
+        if (selected.length > 1) {
+          showSnackbar("Error", "Creating group chats is currently unsupported on Big Sur without Private API!");
+          return false;
+        } else if (isNullOrEmpty(text, trimString: true)!) {
+          showSnackbar("Error", "Starting new chats with an attachment is currently unsupported on Big Sur without Private API! Please start the chat with a text instead.");
+          return false;
+        } else if (!isNullOrEmpty(cleansePhoneNumber(selected.firstOrNull?.address ?? ""))!) {
+          chat = await ActionHandler.createChatBigSur(context, cleansePhoneNumber(selected.firstOrNull?.address ?? ""), text);
+          alreadySent = true;
+        }
+      } else {
+        chat ??= await createChat();
+      }
 
       // If the chat is still null, return false
       if (chat == null) return false;
@@ -317,15 +332,27 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
               chat!,
               // This means to send the text when the last attachment is sent
               // If we switched this to i == 0, then it will be send with the first attachment
-              i == attachments.length - 1 ? text : "",
+              i == attachments.length - 1 && !alreadySent ? text : "",
             ),
           ),
         );
       }
-    } else if (chat != null) {
+    } else if (chat != null && !alreadySent) {
       // We include messageBloc here because the bloc listener may not be instantiated yet
       ActionHandler.sendMessage(chat!, text,
           messageBloc: messageBloc, subject: subject, replyGuid: replyGuid, effectId: effectId);
+    }
+
+    if (alreadySent) {
+      setState(() {
+        tween = Tween<double>(begin: 1, end: 0);
+        controller = CustomAnimationControl.stop;
+        message = null;
+        existingText = "";
+        existingAttachments = [];
+        isCreator = false;
+        wasCreator = true;
+      });
     }
 
     return true;

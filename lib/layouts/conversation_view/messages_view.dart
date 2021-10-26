@@ -228,7 +228,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     int originalMessageLength = _messages.length;
     if (event.type == MessageBlocEventType.insert && mounted) {
       if (LifeCycleManager().isAlive && !event.outGoing) {
-        NotificationManager().switchChat(CurrentChat.of(context)?.chat);
+        NotificationManager().switchChat(CurrentChat.activeChat?.chat);
       }
 
       bool isNewMessage = true;
