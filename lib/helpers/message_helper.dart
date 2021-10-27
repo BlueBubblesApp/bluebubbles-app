@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_html/html.dart' as html;
 
@@ -217,6 +218,10 @@ class MessageHelper {
     if (message.isFromMe! || message.handle == null) return; // Don't notify if the text is from me
 
     CurrentChat? currChat = CurrentChat.activeChat;
+
+    // add unread icon as long as it isn't the active chat
+    if (currChat?.chat.guid != chat.guid) ChatBloc().toggleChatUnread(chat, true);
+
     if (((LifeCycleManager().isAlive && !kIsWeb) || (kIsWeb && !(html.window.document.hidden ?? false))) &&
         ((!SettingsManager().settings.notifyOnChatList.value &&
                 currChat == null &&

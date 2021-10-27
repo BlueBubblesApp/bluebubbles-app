@@ -68,6 +68,7 @@ bool get isInDebugMode {
 FlutterLocalNotificationsPlugin? flutterLocalNotificationsPlugin;
 late SharedPreferences prefs;
 late FirebaseApp app;
+String? recentIntent;
 
 Future<Null> _reportError(dynamic error, dynamic stackTrace) async {
   // Print the exception to the console.
@@ -430,7 +431,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           if (!SettingsManager().settings.finishedSetup.value) return;
           if (value != null) {
             LifeCycleManager().isBubble = value['bubble'] == "true";
-            MethodChannelInterface().openChat(value.toString());
+            MethodChannelInterface().openChat(value['guid'].toString());
           }
         });
       }
