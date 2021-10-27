@@ -220,7 +220,7 @@ class MessageHelper {
     CurrentChat? currChat = CurrentChat.activeChat;
 
     // add unread icon as long as it isn't the active chat
-    if (currChat?.chat.guid != chat.guid) ChatBloc().toggleChatUnread(chat, true);
+    if (currChat?.chat.guid != chat.guid) ChatBloc().toggleChatUnread(chat, true, clearNotifications: false);
 
     if (((LifeCycleManager().isAlive && !kIsWeb) || (kIsWeb && !(html.window.document.hidden ?? false))) &&
         ((!SettingsManager().settings.notifyOnChatList.value &&

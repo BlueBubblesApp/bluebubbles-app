@@ -337,7 +337,11 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
       // create a send port to receive messages from the background isolate when
       // the UI thread is active
-      IsolateNameServer.registerPortWithName(port.sendPort, 'bg_isolate');
+      final result = IsolateNameServer.registerPortWithName(port.sendPort, 'bg_isolate');
+      if (!result) {
+        IsolateNameServer.removePortNameMapping('bg_isolate');
+        IsolateNameServer.registerPortWithName(port.sendPort, 'bg_isolate');
+      }
       port.listen((dynamic data) {
         Logger.info("SendPort received action ${data['action']}");
         if (data['action'] == 'new-message') {

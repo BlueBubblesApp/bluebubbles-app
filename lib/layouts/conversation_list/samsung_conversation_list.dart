@@ -374,7 +374,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
   Widget buildChatList() {
     bool showArchived = widget.parent.widget.showArchivedChats;
     bool showUnknown = widget.parent.widget.showUnknownSenders;
-    return Obx(() => WillPopScope(
+    return WillPopScope(
         onWillPop: () async {
           if (selected.isNotEmpty) {
             selected = [];
@@ -648,8 +648,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
               ? widget.parent.buildFloatingActionButton()
               : null,
         ),
-      ),
-    );
+      );
   }
 
   Widget buildForLandscape(BuildContext context, Widget chatList) {
