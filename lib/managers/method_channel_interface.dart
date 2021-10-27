@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
@@ -138,10 +139,11 @@ class MethodChannelInterface {
 
         return Future.value("");
       case "ChatOpen":
+        recentIntent = call.arguments["guid"];
         Logger.info("Opening Chat with GUID: ${call.arguments['guid']}, bubble: ${call.arguments['bubble']}");
         LifeCycleManager().isBubble = call.arguments['bubble'] == "true";
-        openChat(call.arguments['guid']);
-
+        await openChat(call.arguments['guid']);
+        recentIntent = null;
         return Future.value("");
       case "socket-error-open":
         Get.toNamed("/settings/server-management-panel");
@@ -197,6 +199,7 @@ class MethodChannelInterface {
         return Future.value("");
       case "shareAttachments":
         if (!SettingsManager().settings.finishedSetup.value) return Future.value("");
+        recentIntent = call.arguments["id"];
         List<PlatformFile> attachments = [];
 
         // Loop through all of the attachments sent by native code
@@ -244,10 +247,12 @@ class MethodChannelInterface {
               ),
               (route) => route.isFirst,
             );
+        recentIntent = null;
         return Future.value("");
 
       case "shareText":
         if (!SettingsManager().settings.finishedSetup.value) return Future.value("");
+        recentIntent = call.arguments["id"];
         // Get the text that was shared to the app
         String? text = call.arguments["text"];
 
@@ -280,7 +285,7 @@ class MethodChannelInterface {
               ),
               (route) => route.isFirst,
             );
-
+        recentIntent = null;
         return Future.value("");
       case "alarm-wake":
         AlarmManager().onReceiveAlarm(call.arguments["id"]);

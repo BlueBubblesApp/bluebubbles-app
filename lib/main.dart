@@ -68,6 +68,7 @@ bool get isInDebugMode {
 FlutterLocalNotificationsPlugin? flutterLocalNotificationsPlugin;
 late SharedPreferences prefs;
 late FirebaseApp app;
+String? recentIntent;
 
 Future<Null> _reportError(dynamic error, dynamic stackTrace) async {
   // Print the exception to the console.
