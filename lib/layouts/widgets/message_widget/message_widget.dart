@@ -68,6 +68,7 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
   late Message _message;
   Message? _newerMessage;
   Message? _olderMessage;
+  RxBool tapped = false.obs;
 
   @override
   void initState() {
@@ -297,7 +298,6 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
     );
 
     // Add the correct type of message to the message stack
-    RxBool tapped = false.obs;
     return Obx(
       () {
         Widget message;
@@ -342,7 +342,7 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
         }
 
         return GestureDetector(
-          onTap: kIsDesktop || kIsWeb ? () => _tapped = !_tapped : null,
+          onTap: kIsDesktop || kIsWeb ? () => tapped.value = !tapped.value : null,
           child: Column(
             children: [
               message,

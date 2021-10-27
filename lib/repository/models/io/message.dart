@@ -512,6 +512,7 @@ class Message {
       }
     } else {
       associatedMessages = Message.find(cond: Message_.associatedMessageGuid.equals(guid ?? ""));
+      associatedMessages = MessageHelper.normalizedAssociatedMessages(associatedMessages);
       if (threadOriginatorGuid != null) {
         final existing = bloc?.messages.values.firstWhereOrNull((e) => e.guid == threadOriginatorGuid);
         final threadOriginator = existing ?? Message.findOne(guid: threadOriginatorGuid);
@@ -522,7 +523,6 @@ class Message {
       }
     }
     associatedMessages.sort((a, b) => a.originalROWID!.compareTo(b.originalROWID!));
-    if (!kIsWeb) associatedMessages = MessageHelper.normalizedAssociatedMessages(associatedMessages);
     return this;
   }
 

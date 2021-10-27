@@ -93,7 +93,7 @@ class ChatBloc {
     lastFetch = DateTime.now().toUtc().millisecondsSinceEpoch;
 
     // Fetch the first x chats
-    getChatBatches();
+    getChatBatches(fakeNames: ContactManager().handleToFakeName);
   }
 
   Future<void> resumeRefresh() async {
@@ -280,7 +280,7 @@ class ChatBloc {
     return NewMessageManager().stream.listen(handleMessageAction);
   }
 
-  Future<void> getChatBatches({int batchSize = 15}) async {
+  Future<void> getChatBatches({int batchSize = 15, required Map fakeNames}) async {
     int count = Chat.count() ?? (await api.chatCount()).data['data']['total'];
     if (count == 0 && !kIsWeb) {
       hasChats.value = false;
@@ -297,7 +297,7 @@ class ChatBloc {
       if (kIsWeb) {
         chats = await SocketManager().getChats({"withLastMessage": true, "limit": batchSize, "offset": i * batchSize});
       } else {
-        chats = await Chat.getChats(limit: batchSize, offset: i * batchSize);
+        chats = await Chat.getChats(limit: batchSize, offset: i * batchSize, fakeNames: fakeNames);
       }
       if (chats.isEmpty) break;
 

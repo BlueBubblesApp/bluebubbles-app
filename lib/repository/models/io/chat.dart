@@ -268,7 +268,7 @@ Future<List<Chat>> getChatsIsolate(List<dynamic> stuff) async {
       final eligibleHandles = chJoins.where((element) => element.chatId == c.id).map((e) => e.handleId);
       c.participants = eligibleHandles.map((element) => nonNullHandles.firstWhereOrNull((e) => e.id == element)).where((e) => e != null).map((e) => e!).toList();
       c._deduplicateParticipants();
-      c.fakeParticipants = c.participants.map((p) => ContactManager().handleToFakeName[p.address] ?? "Unknown").toList();
+      c.fakeParticipants = c.participants.map((p) => (stuff[3][p.address] ?? "Unknown") as String).toList();
     }
     return chats;
   });
@@ -335,7 +335,7 @@ class Chat {
     if (json.containsKey('participants')) {
       for (dynamic item in (json['participants'] as List<dynamic>)) {
         participants.add(Handle.fromMap(item));
-        fakeParticipants.add(ContactManager().handleToFakeName[participants.last.address] ?? "Unknown");
+        fakeParticipants.add(ContactManager().handleToFakeName[participants.last] ?? "Unknown");
       }
     }
     Message? message;
@@ -912,10 +912,10 @@ class Chat {
     return null;
   }
 
-  static Future<List<Chat>> getChats({int limit = 15, int offset = 0}) async {
+  static Future<List<Chat>> getChats({int limit = 15, int offset = 0, required Map fakeNames }) async {
     if (kIsWeb) throw Exception("Use socket to get chats on Web!");
 
-    return await compute(getChatsIsolate, [limit, offset, prefs.getString("objectbox-reference")!]);
+    return await compute(getChatsIsolate, [limit, offset, prefs.getString("objectbox-reference")!, fakeNames]);
   }
 
   bool isGroup() {

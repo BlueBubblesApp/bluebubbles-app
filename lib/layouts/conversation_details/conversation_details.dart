@@ -5,9 +5,11 @@ import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_details/attachment_details_card.dart';
 import 'package:bluebubbles/layouts/conversation_details/contact_tile.dart';
 import 'package:bluebubbles/layouts/widgets/avatar_crop.dart';
+import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
@@ -27,7 +29,8 @@ class ConversationDetails extends StatefulWidget {
   final Chat chat;
   final MessageBloc messageBloc;
 
-  ConversationDetails({Key? key, required this.chat, required this.messageBloc}) : super(key: key);
+  ConversationDetails({Key? key, required this.chat, required this.messageBloc})
+      : super(key: key);
 
   @override
   _ConversationDetailsState createState() => _ConversationDetailsState();
@@ -53,7 +56,9 @@ class _ConversationDetailsState extends State<ConversationDetails> {
     if (showMore) return chat.participants;
 
     // If we aren't showing all, show the max we can show
-    return chat.participants.length > maxPageSize ? chat.participants.sublist(0, maxPageSize) : chat.participants;
+    return chat.participants.length > maxPageSize
+        ? chat.participants.sublist(0, maxPageSize)
+        : chat.participants;
   }
 
   @override
@@ -78,30 +83,112 @@ class _ConversationDetailsState extends State<ConversationDetails> {
   void fetchAttachments() async {
     if (kIsWeb) {
       attachmentsForChat = CurrentChat.activeChat?.chatAttachments ?? [];
-      if (attachmentsForChat.length > 25) attachmentsForChat = attachmentsForChat.sublist(0, 25);
+      if (attachmentsForChat.length > 25)
+        attachmentsForChat = attachmentsForChat.sublist(0, 25);
       if (mounted) setState(() {});
       return;
     }
     attachmentsForChat = await chat.getAttachmentsAsync();
-    if (attachmentsForChat.length > 25) attachmentsForChat = attachmentsForChat.sublist(0, 25);
+    if (attachmentsForChat.length > 25)
+      attachmentsForChat = attachmentsForChat.sublist(0, 25);
     if (mounted) setState(() {});
   }
 
   final scrollController = ScrollController();
 
+  void showChangeName(String method) {
+    showDialog(
+        context: context,
+        builder: (_) {
+          return AlertDialog(
+            actions: [
+              TextButton(
+                child: Text("OK"),
+                onPressed: () async {
+                  if (method == "private-api") {
+                    showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            backgroundColor: Theme.of(context).accentColor,
+                            title: Text(
+                              controller.text.isEmpty
+                                  ? "Removing name..."
+                                  : "Changing name to ${controller.text}...",
+                              style: Theme.of(context).textTheme.bodyText1,
+                            ),
+                            content: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: <Widget>[
+                                  Container(
+                                    // height: 70,
+                                    // color: Colors.black,
+                                    child: CircularProgressIndicator(
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                          Theme.of(context).primaryColor),
+                                    ),
+                                  ),
+                                ]),
+                          );
+                        });
+                    final response =
+                        await api.updateChat(chat.guid!, controller.text);
+                    if (response.statusCode == 200) {
+                      Get.back();
+                      Get.back();
+                      showSnackbar("Notice", "Updated name successfully!");
+                    } else {
+                      Get.back();
+                      showSnackbar("Error", "Failed to update name!");
+                    }
+                  } else {
+                    Get.back();
+                    widget.chat.changeName(controller.text);
+                    widget.chat.getTitle();
+                    ChatBloc().updateChat(chat);
+                  }
+                },
+              ),
+              TextButton(
+                child: Text("Cancel"),
+                onPressed: () => Get.back(),
+              )
+            ],
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: controller,
+                  decoration: InputDecoration(
+                    labelText: "Chat Name",
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+            title: Text("Change Name"),
+          );
+        });
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool redactedMode = SettingsManager().settings.redactedMode.value;
-    final bool hideInfo = redactedMode && SettingsManager().settings.hideContactInfo.value;
-    final bool generateName = redactedMode && SettingsManager().settings.generateFakeContactNames.value;
+    final bool hideInfo =
+        redactedMode && SettingsManager().settings.hideContactInfo.value;
+    final bool generateName = redactedMode &&
+        SettingsManager().settings.generateFakeContactNames.value;
     if (generateName) controller.text = "Group Chat";
 
-    final bool showGroupNameInfo = (showNameField && !hideInfo) || generateName;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarColor:
+            Theme.of(context).backgroundColor, // navigation bar color
         systemNavigationBarIconBrightness:
-            Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+            Theme.of(context).backgroundColor.computeLuminance() > 0.5
+                ? Brightness.dark
+                : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
@@ -130,7 +217,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                   preferredSize: Size.fromHeight(0.5),
                 ),
               )) as PreferredSizeWidget?,
-        extendBodyBehindAppBar: SettingsManager().settings.skin.value == Skins.iOS ? true : false,
+        extendBodyBehindAppBar:
+            SettingsManager().settings.skin.value == Skins.iOS ? true : false,
         body: ImprovedScrolling(
           enableMMBScrolling: true,
           enableKeyboardScrolling: true,
@@ -152,132 +240,139 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     height: 100,
                   ),
                 ),
-              SliverToBoxAdapter(
-                child: readOnly
-                    ? Container()
-                    : showGroupNameInfo
-                        ? Row(
-                            children: [
-                              Expanded(
-                                child: Padding(
-                                  padding: const EdgeInsets.only(left: 16.0, right: 8.0, bottom: 8.0),
-                                  child: TextField(
-                                    cursorColor: Theme.of(context).primaryColor,
-                                    readOnly: !chat.isGroup() || redactedMode,
-                                    onSubmitted: (String newName) {
-                                      widget.chat.changeName(newName);
-                                      widget.chat.getTitle();
-                                      setState(() {
-                                        showNameField = newName.isNotEmpty;
-                                      });
-                                      ChatBloc().updateChat(chat);
-                                    },
-                                    controller: controller,
-                                    style: Theme.of(context).textTheme.bodyText1,
-                                    autofocus: false,
-                                    autocorrect: false,
-                                    decoration: InputDecoration(
-                                        labelText: chat.displayName!.isEmpty ? "SET NAME" : "NAME",
-                                        labelStyle: TextStyle(color: Theme.of(context).primaryColor),
-                                        enabledBorder:
-                                            UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey))),
-                                  ),
-                                ),
-                              ),
-                              if (showGroupNameInfo && chat.displayName!.isNotEmpty)
-                                Container(
-                                    padding: EdgeInsets.only(right: 10),
-                                    child: GestureDetector(
-                                        onTap: () {
-                                          showDialog(
-                                            context: context,
-                                            builder: (BuildContext context) {
-                                              return AlertDialog(
-                                                  backgroundColor: Theme.of(context).accentColor,
-                                                  title: Text("Group Naming",
-                                                      style: TextStyle(
-                                                          color: Theme.of(context).textTheme.bodyText1!.color)),
-                                                  content: Column(
-                                                    mainAxisAlignment: MainAxisAlignment.center,
-                                                    mainAxisSize: MainAxisSize.min,
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: [
-                                                      Text(
-                                                          "Changing the group name will only change it locally for you. It will not change the group name on any of your other devices, or for other members of the chat.",
-                                                          style: Theme.of(context).textTheme.bodyText1),
-                                                    ],
-                                                  ),
-                                                  actions: <Widget>[
-                                                    TextButton(
-                                                        child: Text("OK",
-                                                            style: Theme.of(context)
-                                                                .textTheme
-                                                                .subtitle1!
-                                                                .apply(color: Theme.of(context).primaryColor)),
-                                                        onPressed: () {
-                                                          Navigator.of(context).pop();
-                                                        }),
-                                                  ]);
-                                            },
-                                          );
-                                        },
-                                        child: Icon(
-                                          SettingsManager().settings.skin.value == Skins.iOS
-                                              ? CupertinoIcons.info
-                                              : Icons.info_outline,
-                                          color: Theme.of(context).primaryColor,
-                                        ))),
-                              if (chat.displayName!.isEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 8.0, right: 16.0, bottom: 8.0),
-                                  child: ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      primary: Theme.of(context).accentColor,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(18),
+              if (chat.isGroup())
+                SliverToBoxAdapter(
+                  child: Center(
+                    child: ContactAvatarGroupWidget(
+                      chat: chat,
+                      size: 100,
+                      onTap: () {},
+                    ),
+                  ),
+                ),
+              if (chat.isGroup() &&
+                  (chat.displayName?.isNotEmpty ?? false) &&
+                  !hideInfo)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Center(
+                        child: Text(
+                      controller.text,
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyText1!
+                          .copyWith(fontWeight: FontWeight.bold),
+                      textScaleFactor: 1.75,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    )),
+                  ),
+                ),
+              if (chat.isGroup())
+                SliverToBoxAdapter(
+                  child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        TextButton(
+                          child: Text(
+                            "${(chat.displayName?.isNotEmpty ?? false) ? "Change" : "Add"} Name",
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyText1!
+                                .apply(color: Theme.of(context).primaryColor),
+                            textScaleFactor: 1.15,
+                          ),
+                          onPressed: () {
+                            if (!SettingsManager()
+                                .settings
+                                .enablePrivateAPI
+                                .value) {
+                              showChangeName("local");
+                            } else {
+                              showChangeName("private-api");
+                            }
+                          },
+                          onLongPress: () {
+                            showChangeName("local");
+                          },
+                        ),
+                        Container(
+                          child: IconButton(
+                            icon: Icon(
+                              SettingsManager().settings.skin.value == Skins.iOS
+                                  ? CupertinoIcons.info
+                                  : Icons.info_outline,
+                              size: 15,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                            padding: EdgeInsets.zero,
+                            iconSize: 15,
+                            constraints:
+                                BoxConstraints(maxWidth: 20, maxHeight: 20),
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                      backgroundColor:
+                                          Theme.of(context).accentColor,
+                                      title: Text("Group Naming",
+                                          style: TextStyle(
+                                              color: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyText1!
+                                                  .color)),
+                                      content: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        mainAxisSize: MainAxisSize.min,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          if (!SettingsManager()
+                                              .settings
+                                              .enablePrivateAPI
+                                              .value)
+                                            Text(
+                                                "You have Private API disabled, so changing the name here will only change it locally for you. You will not see these changes on other devices, and the other members of this chat will not see these changes.",
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodyText1),
+                                          if (SettingsManager()
+                                              .settings
+                                              .enablePrivateAPI
+                                              .value)
+                                            Text(
+                                                "You have Private API enabled, so changing the name here will change the name for everyone in this chat. If you only want to change it locally, you can tap and hold the \"Change Name\" button.",
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodyText1),
+                                        ],
                                       ),
-                                    ),
-                                    onPressed: () async {
-                                      setState(() {
-                                        showNameField = false;
-                                      });
-                                    },
-                                    child: Text(
-                                      "CANCEL",
-                                      style: TextStyle(
-                                        color: Theme.of(context).textTheme.bodyText1!.color,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          )
-                        : !hideInfo
-                            ? Padding(
-                                padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 8.0),
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    primary: Theme.of(context).accentColor,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(18),
-                                    ),
-                                  ),
-                                  onPressed: () async {
-                                    setState(() {
-                                      showNameField = true;
-                                    });
-                                  },
-                                  child: Text(
-                                    "ADD NAME",
-                                    style: TextStyle(
-                                      color: Theme.of(context).textTheme.bodyText1!.color,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ))
-                            : Container(),
-              ),
+                                      actions: <Widget>[
+                                        TextButton(
+                                            child: Text("OK",
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .subtitle1!
+                                                    .apply(
+                                                        color: Theme.of(context)
+                                                            .primaryColor)),
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            }),
+                                      ]);
+                                },
+                              );
+                            },
+                          ),
+                        )
+                      ],
+                    ),
+                  ),
+                ),
               SliverList(
                 delegate: SliverChildBuilderDelegate((context, index) {
                   if (index >= participants.length && shouldShowMore) {
@@ -316,13 +411,133 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                       chat = newChat;
                       if (mounted) setState(() {});
                     },
-                    canBeRemoved: chat.participants.length > 1,
+                    canBeRemoved: chat.participants.length > 1 &&
+                        SettingsManager().settings.enablePrivateAPI.value,
                   );
                 }, childCount: participants.length + 1),
               ),
               SliverPadding(
-                padding: EdgeInsets.symmetric(vertical: 20),
+                padding: EdgeInsets.symmetric(vertical: 10),
               ),
+              if (SettingsManager().settings.enablePrivateAPI.value)
+                SliverToBoxAdapter(
+                  child: Padding(
+                      padding: const EdgeInsets.only(
+                          left: 16.0, right: 16.0, bottom: 8.0),
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          primary: Theme.of(context).accentColor,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                        ),
+                        onPressed: () async {
+                          final TextEditingController participantController =
+                              TextEditingController();
+                          showDialog(
+                              context: context,
+                              builder: (_) {
+                                return AlertDialog(
+                                  actions: [
+                                    TextButton(
+                                      child: Text("OK"),
+                                      onPressed: () async {
+                                        if (participantController
+                                                .text.isEmpty ||
+                                            (!participantController
+                                                    .text.isEmail &&
+                                                !participantController
+                                                    .text.isPhoneNumber)) {
+                                          showSnackbar("Error",
+                                              "Enter a valid address!");
+                                          return;
+                                        }
+                                        showDialog(
+                                            context: context,
+                                            builder: (BuildContext context) {
+                                              return AlertDialog(
+                                                backgroundColor:
+                                                    Theme.of(context)
+                                                        .accentColor,
+                                                title: Text(
+                                                  "Adding ${participantController.text}...",
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .bodyText1,
+                                                ),
+                                                content: Row(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center,
+                                                    children: <Widget>[
+                                                      Container(
+                                                        // height: 70,
+                                                        // color: Colors.black,
+                                                        child:
+                                                            CircularProgressIndicator(
+                                                          valueColor:
+                                                              AlwaysStoppedAnimation<
+                                                                  Color>(Theme.of(
+                                                                      context)
+                                                                  .primaryColor),
+                                                        ),
+                                                      ),
+                                                    ]),
+                                              );
+                                            });
+                                        final response =
+                                            await api.chatParticipant(
+                                                "add",
+                                                chat.guid!,
+                                                participantController.text);
+                                        if (response.statusCode == 200) {
+                                          Get.back();
+                                          Get.back();
+                                          showSnackbar("Notice",
+                                              "Added ${participantController.text} successfully!");
+                                        } else {
+                                          Get.back();
+                                          showSnackbar("Error",
+                                              "Failed to add ${participantController.text}!");
+                                        }
+                                      },
+                                    ),
+                                    TextButton(
+                                      child: Text("Cancel"),
+                                      onPressed: () => Get.back(),
+                                    )
+                                  ],
+                                  content: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      TextField(
+                                        controller: participantController,
+                                        decoration: InputDecoration(
+                                          labelText: "Phone Number / Email",
+                                          border: OutlineInputBorder(),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  title: Text("Add Participant"),
+                                );
+                              });
+                        },
+                        child: Text(
+                          "ADD PARTICIPANT",
+                          style: TextStyle(
+                            color: Theme.of(context).textTheme.bodyText1!.color,
+                            fontSize: 13,
+                          ),
+                        ),
+                      )),
+                ),
+              if (SettingsManager().settings.enablePrivateAPI.value)
+                SliverPadding(
+                  padding: EdgeInsets.symmetric(vertical: 10),
+                ),
               if (!kIsWeb)
                 SliverToBoxAdapter(
                   child: InkWell(
@@ -334,7 +549,11 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                             return AlertDialog(
                                 backgroundColor: Theme.of(context).accentColor,
                                 title: Text("Custom Avatar",
-                                    style: TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
+                                    style: TextStyle(
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .bodyText1!
+                                            .color)),
                                 content: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   mainAxisSize: MainAxisSize.min,
@@ -342,7 +561,9 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                   children: [
                                     Text(
                                         "You have already set a custom avatar for this chat. What would you like to do?",
-                                        style: Theme.of(context).textTheme.bodyText1),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyText1),
                                   ],
                                 ),
                                 actions: <Widget>[
@@ -351,7 +572,9 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle1!
-                                              .apply(color: Theme.of(context).primaryColor)),
+                                              .apply(
+                                                  color: Theme.of(context)
+                                                      .primaryColor)),
                                       onPressed: () {
                                         Navigator.of(context).pop();
                                       }),
@@ -360,9 +583,12 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle1!
-                                              .apply(color: Theme.of(context).primaryColor)),
+                                              .apply(
+                                                  color: Theme.of(context)
+                                                      .primaryColor)),
                                       onPressed: () {
-                                        File file = File(chat.customAvatarPath!);
+                                        File file =
+                                            File(chat.customAvatarPath!);
                                         file.delete();
                                         chat.customAvatarPath = null;
                                         chat.save();
@@ -373,7 +599,9 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle1!
-                                              .apply(color: Theme.of(context).primaryColor)),
+                                              .apply(
+                                                  color: Theme.of(context)
+                                                      .primaryColor)),
                                       onPressed: () {
                                         Navigator.of(context).pop();
                                         Get.to(() => AvatarCrop(chat: chat));
@@ -395,7 +623,9 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                       trailing: Padding(
                         padding: EdgeInsets.only(right: 15),
                         child: Icon(
-                          SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.person : Icons.person,
+                          SettingsManager().settings.skin.value == Skins.iOS
+                              ? CupertinoIcons.person
+                              : Icons.person,
                           color: Theme.of(context).primaryColor,
                         ),
                       ),
@@ -407,8 +637,11 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                   onTap: () async {
                     await showDialog(
                       context: context,
-                      builder: (context) =>
-                          SyncDialog(chat: chat, withOffset: true, initialMessage: "Fetching messages...", limit: 100),
+                      builder: (context) => SyncDialog(
+                          chat: chat,
+                          withOffset: true,
+                          initialMessage: "Fetching messages...",
+                          limit: 100),
                     );
 
                     fetchAttachments();
@@ -437,7 +670,10 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                   onTap: () async {
                     showDialog(
                       context: context,
-                      builder: (context) => SyncDialog(chat: chat, initialMessage: "Syncing messages...", limit: 25),
+                      builder: (context) => SyncDialog(
+                          chat: chat,
+                          initialMessage: "Syncing messages...",
+                          limit: 25),
                     );
                   },
                   child: ListTile(
@@ -468,8 +704,10 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                       trailing: Switch(
                           value: widget.chat.isPinned!,
                           activeColor: Theme.of(context).primaryColor,
-                          activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
-                          inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
+                          activeTrackColor:
+                              Theme.of(context).primaryColor.withAlpha(200),
+                          inactiveTrackColor:
+                              Theme.of(context).accentColor.withOpacity(0.6),
                           inactiveThumbColor: Theme.of(context).accentColor,
                           onChanged: (value) {
                             widget.chat.togglePin(!widget.chat.isPinned!);
@@ -485,8 +723,10 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                       trailing: Switch(
                           value: widget.chat.muteType == "mute",
                           activeColor: Theme.of(context).primaryColor,
-                          activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
-                          inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
+                          activeTrackColor:
+                              Theme.of(context).primaryColor.withAlpha(200),
+                          inactiveTrackColor:
+                              Theme.of(context).accentColor.withOpacity(0.6),
                           inactiveThumbColor: Theme.of(context).accentColor,
                           onChanged: (value) {
                             widget.chat.toggleMute(value);
@@ -503,8 +743,10 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                       trailing: Switch(
                           value: widget.chat.isArchived!,
                           activeColor: Theme.of(context).primaryColor,
-                          activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
-                          inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
+                          activeTrackColor:
+                              Theme.of(context).primaryColor.withAlpha(200),
+                          inactiveTrackColor:
+                              Theme.of(context).accentColor.withOpacity(0.6),
                           inactiveThumbColor: Theme.of(context).accentColor,
                           onChanged: (value) {
                             if (value) {
@@ -527,7 +769,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
 
                     try {
                       widget.chat.clearTranscript();
-                      EventDispatcher().emit("refresh-messagebloc", {"chatGuid": widget.chat.guid});
+                      EventDispatcher().emit("refresh-messagebloc",
+                          {"chatGuid": widget.chat.guid});
                       if (mounted) {
                         setState(() {
                           isClearing = false;
@@ -554,17 +797,20 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                       padding: EdgeInsets.only(right: 15),
                       child: (isClearing)
                           ? CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                  Theme.of(context).primaryColor),
                             )
                           : (isCleared)
                               ? Icon(
-                                  SettingsManager().settings.skin.value == Skins.iOS
+                                  SettingsManager().settings.skin.value ==
+                                          Skins.iOS
                                       ? CupertinoIcons.checkmark
                                       : Icons.done,
                                   color: Theme.of(context).primaryColor,
                                 )
                               : Icon(
-                                  SettingsManager().settings.skin.value == Skins.iOS
+                                  SettingsManager().settings.skin.value ==
+                                          Skins.iOS
                                       ? CupertinoIcons.trash
                                       : Icons.delete_forever,
                                   color: Theme.of(context).primaryColor,
@@ -581,7 +827,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                   (context, int index) {
                     return Container(
                       decoration: BoxDecoration(
-                        border: Border.all(color: Theme.of(context).backgroundColor, width: 3),
+                        border: Border.all(
+                            color: Theme.of(context).backgroundColor, width: 3),
                       ),
                       child: AttachmentDetailsCard(
                         attachment: attachmentsForChat[index],
@@ -601,7 +848,12 @@ class _ConversationDetailsState extends State<ConversationDetails> {
 }
 
 class SyncDialog extends StatefulWidget {
-  SyncDialog({Key? key, required this.chat, this.initialMessage, this.withOffset = false, this.limit = 100})
+  SyncDialog(
+      {Key? key,
+      required this.chat,
+      this.initialMessage,
+      this.withOffset = false,
+      this.limit = 100})
       : super(key: key);
   final Chat chat;
   final String? initialMessage;
@@ -631,14 +883,17 @@ class _SyncDialogState extends State<SyncDialog> {
       offset = Message.countForChat(widget.chat) ?? 0;
     }
 
-    SocketManager().fetchMessages(widget.chat, offset: offset, limit: widget.limit)!.then((dynamic messages) {
+    SocketManager()
+        .fetchMessages(widget.chat, offset: offset, limit: widget.limit)!
+        .then((dynamic messages) {
       if (mounted) {
         setState(() {
           message = "Adding ${messages.length} messages...";
         });
       }
 
-      MessageHelper.bulkAddMessages(widget.chat, messages, onProgress: (int progress, int length) {
+      MessageHelper.bulkAddMessages(widget.chat, messages,
+          onProgress: (int progress, int length) {
         if (progress == 0 || length == 0) {
           this.progress = null;
         } else {
@@ -672,7 +927,8 @@ class _SyncDialogState extends State<SyncDialog> {
                 child: LinearProgressIndicator(
                   value: progress,
                   backgroundColor: Colors.white,
-                  valueColor: AlwaysStoppedAnimation(Theme.of(context).primaryColor),
+                  valueColor:
+                      AlwaysStoppedAnimation(Theme.of(context).primaryColor),
                 ),
               ),
             ),
