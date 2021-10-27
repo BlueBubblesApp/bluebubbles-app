@@ -22,7 +22,7 @@ class _TextFieldAttachmentListState extends State<TextFieldAttachmentList> with 
       curve: Curves.easeInOut,
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxHeight: widget.attachments.length > 0 ? 100 : 0,
+          maxHeight: widget.attachments.isNotEmpty ? 100 : 0,
         ),
         child: GridView.builder(
           itemCount: widget.attachments.length,

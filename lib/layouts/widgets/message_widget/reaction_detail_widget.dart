@@ -28,19 +28,11 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
     super.initState();
 
     contactTitle = widget.message.isFromMe! ? "You" : widget.handle!.address;
-  }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (widget.message.isFromMe! || widget.handle == null) return;
-
-    ContactManager().getContactTitle(widget.handle).then((String? title) {
-      if (title != contactTitle) {
-        contactTitle = title;
-        if (this.mounted) setState(() {});
-      }
-    });
+    String? title = ContactManager().getContactTitle(widget.handle);
+    if (title != contactTitle) {
+      contactTitle = title;
+    }
   }
 
   @override
@@ -78,7 +70,7 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
             borderRadius: BorderRadius.circular(100),
             color: Theme.of(context).accentColor,
             boxShadow: [
-              new BoxShadow(
+              BoxShadow(
                 blurRadius: 1.0,
                 color: Colors.black,
               )

@@ -1,3 +1,4 @@
+import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:universal_html/html.dart' as html;
 
 import 'package:bluebubbles/action_handler.dart';
@@ -20,6 +21,8 @@ class MessagePopupHolder extends StatefulWidget {
   final Message message;
   final Message? olderMessage;
   final Message? newerMessage;
+  final Function(bool) popupPushed;
+  final MessageBloc? messageBloc;
 
   MessagePopupHolder({
     Key? key,
@@ -28,6 +31,8 @@ class MessagePopupHolder extends StatefulWidget {
     required this.message,
     required this.olderMessage,
     required this.newerMessage,
+    required this.popupPushed,
+    required this.messageBloc,
   }) : super(key: key);
 
   @override
@@ -45,18 +50,18 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
     Size size = renderBox.size;
     Offset offset = renderBox.localToGlobal(Offset.zero);
     bool increaseWidth = !MessageHelper.getShowTail(context, widget.message, widget.newerMessage) &&
-        (SettingsManager().settings.alwaysShowAvatars.value || (CurrentChat.of(context)?.chat.isGroup() ?? false));
+        (SettingsManager().settings.alwaysShowAvatars.value || (CurrentChat.activeChat?.chat.isGroup() ?? false));
     bool doNotIncreaseHeight = ((widget.message.isFromMe ?? false) ||
-        !(CurrentChat.of(context)?.chat.isGroup() ?? false) ||
+        !(CurrentChat.activeChat?.chat.isGroup() ?? false) ||
         !sameSender(widget.message, widget.olderMessage) ||
         !widget.message.dateCreated!.isWithin(widget.olderMessage!.dateCreated!, minutes: 30));
 
-    this.childOffset = Offset(
+    childOffset = Offset(
         offset.dx - (increaseWidth ? 35 : 0),
         offset.dy -
             (doNotIncreaseHeight
                 ? 0
-                : widget.message.getReactions().length > 0
+                : widget.message.getReactions().isNotEmpty
                     ? 20.0
                     : 23.0));
     childSize = Size(
@@ -64,7 +69,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
         size.height +
             (doNotIncreaseHeight
                 ? 0
-                : widget.message.getReactions().length > 0
+                : widget.message.getReactions().isNotEmpty
                     ? 20.0
                     : 23.0));
   }
@@ -74,13 +79,14 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
     HapticFeedback.lightImpact();
     getOffset();
 
-    CurrentChat? currentChat = CurrentChat.of(context);
-    if (this.mounted) {
+    CurrentChat? currentChat = CurrentChat.activeChat;
+    if (mounted) {
       setState(() {
         visible = false;
       });
     }
 
+    widget.popupPushed.call(true);
     await Navigator.push(
       context,
       PageRouteBuilder(
@@ -99,6 +105,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
                   childOffset: childOffset,
                   childSize: childSize,
                   message: widget.message,
+                  messageBloc: widget.messageBloc,
                 );
               },
             ),
@@ -108,8 +115,8 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
         opaque: false,
       ),
     );
-
-    if (this.mounted) {
+    widget.popupPushed.call(false);
+    if (mounted) {
       setState(() {
         visible = true;
       });
@@ -118,7 +125,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
 
   void sendReaction(String type) {
     Logger.info("Sending reaction type: " + type);
-    ActionHandler.sendReaction(CurrentChat.of(context)!.chat, widget.message, type);
+    ActionHandler.sendReaction(CurrentChat.activeChat!.chat, widget.message, type);
   }
 
   @override
@@ -126,20 +133,20 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
     return GestureDetector(
       key: containerKey,
       onDoubleTap: SettingsManager().settings.doubleTapForDetails.value && !widget.message.guid!.startsWith('temp')
-          ? this.openMessageDetails
+          ? openMessageDetails
           : SettingsManager().settings.enableQuickTapback.value
               ? () {
                   HapticFeedback.lightImpact();
-                  this.sendReaction(SettingsManager().settings.quickTapbackType.value);
+                  sendReaction(SettingsManager().settings.quickTapbackType.value);
                 }
               : null,
-      onLongPress: this.openMessageDetails,
+      onLongPress: openMessageDetails,
       onSecondaryTapUp: (details) async {
         if (!kIsWeb && !kIsDesktop) return;
         if (kIsWeb) {
           (await html.document.onContextMenu.first).preventDefault();
         }
-        this.openMessageDetails();
+        openMessageDetails();
       },
       child: Opacity(
         child: widget.child,

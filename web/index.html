@@ -44,6 +44,37 @@
        application. For more information, see:
        https://developers.google.com/web/fundamentals/primers/service-workers -->
   <script>
+    function checkClipboard() {
+      return new Promise(resolve => {
+        navigator.permissions.query({ name: "clipboard-read" }).then((result) => {
+          // If permission to read the clipboard is granted or if the user will
+          // be prompted to allow it, we proceed.
+          if (result.state == "granted" || result.state == "prompt") {
+            navigator.clipboard.read().then((data) => {
+              for (let i = 0; i < data.length; i++) {
+                if (!data[i].types.includes("image/png")) {
+                  resolve(null);
+                } else {
+                  data[i].getType("image/png").then((blob) => {
+                    resolve(blob);
+                  });
+                }
+              }
+            });
+          } else {
+            console.log('fired')
+            resolve(null);
+          }
+        });
+      });
+    }
+
+    async function getPastedImage() {
+      const result = await checkClipboard();
+      return result;
+    }
+  </script>
+  <script>
     var serviceWorkerVersion = null;
     var scriptLoaded = false;
     function loadMainDartJs() {

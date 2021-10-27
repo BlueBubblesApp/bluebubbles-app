@@ -9,17 +9,17 @@ Map<String, Completer<Chat>> chatCache = {};
 /// of a fetch, per chat by [chatGuid]. This was created so that stream listeners from
 /// multiple widgets can request the `fetchChat()` function, at the same time, without actually
 /// sending multiple requests to the server. Each call within 5 seconds will piggy-back on the previous
-Future<Chat?> fetchChatSingleton(String chatGuid, {withParticipants: true}) async {
+Future<Chat?> fetchChatSingleton(String chatGuid, {withParticipants = true}) async {
   // If we are already processing, return the currently processed item
   if (chatCache.containsKey(chatGuid)) return chatCache[chatGuid]?.future;
-  chatCache[chatGuid] = new Completer<Chat>();
+  chatCache[chatGuid] = Completer<Chat>();
 
   // A local helper function for removing from the cache
-  Function removeFromCache = (String guid) {
+  void removeFromCache(String guid) {
     if (chatCache.containsKey(guid)) {
       chatCache.remove(guid);
     }
-  };
+  }
 
   // Fetch the chat data
   SocketManager().fetchChat(chatGuid, withParticipants: withParticipants).then((Chat? chat) {
@@ -28,7 +28,7 @@ Future<Chat?> fetchChatSingleton(String chatGuid, {withParticipants: true}) asyn
     chatCache[chatGuid]?.complete(chat);
 
     // Remove the item from the cache after 5 seconds
-    new Future.delayed(const Duration(seconds: 5)).then((_) {
+    Future.delayed(const Duration(seconds: 5)).then((_) {
       removeFromCache(chatGuid);
     });
   }).catchError((e) {

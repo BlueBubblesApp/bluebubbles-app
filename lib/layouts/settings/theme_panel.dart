@@ -3,7 +3,6 @@ import 'dart:ui';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/helpers/themes.dart';
@@ -328,22 +327,23 @@ class ThemePanel extends GetView<ThemePanelController> {
                 ),
                 if (!kIsWeb && !kIsDesktop)
                   Obx(() {
-                    if (controller.refreshRates.length > 2)
+                    if (controller.refreshRates.length > 2) {
                       return SettingsHeader(
                           headerColor: headerColor,
                           tileColor: tileColor,
                           iosSubtitle: iosSubtitle,
                           materialSubtitle: materialSubtitle,
                           text: "Refresh Rate");
-                    else
+                    } else {
                       return SizedBox.shrink();
+                    }
                   }),
                 if (!kIsWeb && !kIsDesktop)
                   SettingsSection(
                     backgroundColor: tileColor,
                     children: [
                       Obx(() {
-                        if (controller.refreshRates.length > 2)
+                        if (controller.refreshRates.length > 2) {
                           return SettingsOptions<int>(
                             initial: controller.currentMode.value,
                             onChanged: (val) async {
@@ -358,8 +358,9 @@ class ThemePanel extends GetView<ThemePanelController> {
                             backgroundColor: tileColor,
                             secondaryColor: headerColor,
                           );
-                        else
+                        } else {
                           return SizedBox.shrink();
+                        }
                       }),
                     ],
                   ),

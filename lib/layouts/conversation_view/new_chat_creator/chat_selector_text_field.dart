@@ -1,7 +1,7 @@
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:collection/collection.dart';
-import 'package:contacts_service/contacts_service.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
@@ -105,11 +105,11 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
             if (done.isEmpty) return;
             done = done.trim();
             if (done.isEmail || done.isPhoneNumber) {
-              Contact? contact = ContactManager().getCachedContactSync(done);
+              Contact? contact = ContactManager().getCachedContact(address: done);
               if (contact == null) {
-                widget.onSelected(new UniqueContact(address: done, displayName: done.isEmail ? done : await formatPhoneNumber(done)));
+                widget.onSelected(UniqueContact(address: done, displayName: done.isEmail ? done : await formatPhoneNumber(done)));
               } else {
-                widget.onSelected(new UniqueContact(address: done, displayName: contact.displayName ?? done));
+                widget.onSelected(UniqueContact(address: done, displayName: contact.displayName));
               }
             } else {
               if (widget.allContacts.isEmpty) {

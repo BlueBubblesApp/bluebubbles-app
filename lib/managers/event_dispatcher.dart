@@ -15,7 +15,7 @@ class EventDispatcher {
   //   "data": any
   // }
 
-  StreamController<Map<String, dynamic>> _stream = new StreamController<Map<String, dynamic>>.broadcast();
+  final StreamController<Map<String, dynamic>> _stream = StreamController<Map<String, dynamic>>.broadcast();
 
   Stream<Map<String, dynamic>> get stream => _stream.stream;
 

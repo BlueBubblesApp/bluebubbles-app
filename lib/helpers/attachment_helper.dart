@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -14,7 +15,6 @@ import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/simple_vcard_parser.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:contacts_service/contacts_service.dart';
 import 'package:exif/exif.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -26,7 +26,6 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/material.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
-import 'package:image_size_getter/file_input.dart';
 import 'package:image_size_getter/image_size_getter.dart' as isg;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
@@ -72,7 +71,7 @@ class AttachmentHelper {
       for (var i in opts) {
         if (url.contains(i)) {
           var items = url.split(i);
-          if (items.length >= 1) {
+          if (items.isNotEmpty) {
             query = items[1];
           }
         }
@@ -101,50 +100,22 @@ class AttachmentHelper {
     VCard _contact = VCard(appleContact);
     _contact.printLines();
 
-    Contact contact = Contact();
-    contact.displayName = _contact.formattedName;
+    Contact contact = Contact(displayName: _contact.formattedName ?? "Unknown", id: randomString(8));
 
-    List<Item> emails = <Item>[];
-    List<Item> phones = <Item>[];
-    List<PostalAddress> addresses = <PostalAddress>[];
+    List<String> emails = <String>[];
+    List<String> phones = <String>[];
 
     // Parse emails from results
     for (dynamic email in _contact.typedEmail) {
-      String label = "HOME";
-      if (email.length > 1 && email[1].length > 0 && email[1][1] != null) {
-        label = email[1][1] ?? label;
-      }
-
-      emails.add(new Item(value: email[0], label: label));
+      emails.add(email[0]);
     }
 
     // Parse phone numbers from results
     for (dynamic phone in _contact.typedTelephone) {
-      String label = "HOME";
-      if (phone.length > 1 && phone[1].length > 0 && phone[1][1] != null) {
-        label = phone[1][1] ?? label;
-      }
-
-      phones.add(new Item(value: phone[0], label: label));
-    }
-
-    // Parse addresses numbers from results
-    for (dynamic address in _contact.typedAddress) {
-      String street = address[0].length > 0 ? address[0][0] : '';
-      String city = address[0].length > 1 ? address[0][1] : '';
-      String state = address[0].length > 2 ? address[0][2] : '';
-      String country = address[0].length > 3 ? address[0][3] : '';
-
-      String label = "HOME";
-      if (address.length > 1 && address[1].length > 0 && address[1][1] != null) {
-        label = address[1][1] ?? label;
-      }
-
-      addresses.add(new PostalAddress(label: label, street: street, city: city, region: state, country: country));
+      phones.add(phone[0]);
     }
 
     contact.phones = phones;
-    contact.postalAddresses = addresses;
     contact.emails = emails;
 
     return contact;
@@ -178,12 +149,12 @@ class AttachmentHelper {
     }
     if (kIsDesktop) {
       String downloadsPath = (await getDownloadsDirectory())!.path;
-      File(join(downloadsPath, file.name))..writeAsBytes(file.bytes!);
+      File(join(downloadsPath, file.name)).writeAsBytes(file.bytes!);
       return showSnackbar('Success', 'Saved attachment to $downloadsPath!');
     }
-    Function showDeniedSnackbar = (String? err) {
+    void showDeniedSnackbar({String? err}) {
       showSnackbar("Save Failed", err ?? "Failed to save attachment!");
-    };
+    }
 
     var hasPermissions = await Permission.storage.isGranted;
     var permDenied = await Permission.storage.isPermanentlyDenied;
@@ -197,7 +168,7 @@ class AttachmentHelper {
 
     // If we still don't have the permission or we are permanently denied, show the snackbar error
     if (!hasPermissions || permDenied) {
-      return showDeniedSnackbar("BlueBubbles does not have the required permissions!");
+      return showDeniedSnackbar(err: "BlueBubbles does not have the required permissions!");
     }
 
     if (file.path == null) {
@@ -286,8 +257,8 @@ class AttachmentHelper {
 
   static void redownloadAttachment(Attachment attachment, {Function()? onComplete, Function()? onError}) {
     if (!kIsWeb) {
-      File file = new File(attachment.getPath());
-      File compressedFile = new File(attachment.getCompressedPath());
+      File file = File(attachment.getPath());
+      File compressedFile = File(attachment.getCompressedPath());
 
       // If neither exist, don't do anything
       bool fExists = file.existsSync();
@@ -304,17 +275,19 @@ class AttachmentHelper {
         tag: attachment.guid);
   }
 
-  static Future<Uint8List?> getVideoThumbnail(String filePath) async {
-    File cachedFile = new File("$filePath.thumbnail");
-    if (cachedFile.existsSync()) {
-      return cachedFile.readAsBytes();
+  static Future<Uint8List?> getVideoThumbnail(String filePath, {bool useCachedFile = true}) async {
+    File cachedFile = File("$filePath.thumbnail");
+    if (useCachedFile) {
+      if (cachedFile.existsSync()) {
+        return cachedFile.readAsBytes();
+      }
     }
     Uint8List? thumbnail = await VideoThumbnail.thumbnailData(
       video: filePath,
       imageFormat: ImageFormat.JPEG,
       quality: SettingsManager().compressionQuality,
     );
-    if (thumbnail != null) {
+    if (useCachedFile && thumbnail != null) {
       cachedFile.writeAsBytes(thumbnail);
     }
     return thumbnail;
@@ -324,10 +297,10 @@ class AttachmentHelper {
     try {
       if (!kIsWeb) {
         dynamic file = File(filePath);
-        isg.Size size = isg.ImageSizeGetter.getSize(FileInput(file));
+        isg.Size size = await isg.AsyncImageSizeGetter.getSize(AsyncFileInput(file));
         return Size(size.width.toDouble(), size.height.toDouble());
       } else {
-        isg.Size size = isg.ImageSizeGetter.getSize(isg.MemoryInput(bytes!));
+        isg.Size size = await isg.AsyncImageSizeGetter.getSize(AsyncMemoryInput(bytes!));
         return Size(size.width.toDouble(), size.height.toDouble());
       }
     } catch (ex) {
@@ -346,12 +319,12 @@ class AttachmentHelper {
       }
 
       if (width == 0 || height == 0) {
-        return AttachmentHelper.getImageSizingFallback(filePath, bytes: bytes);
+        return await AttachmentHelper.getImageSizingFallback(filePath, bytes: bytes);
       }
 
       return Size(width, height);
     } catch (_) {
-      return AttachmentHelper.getImageSizingFallback(filePath, bytes: bytes);
+      return await AttachmentHelper.getImageSizingFallback(filePath, bytes: bytes);
     }
   }
 
@@ -365,27 +338,23 @@ class AttachmentHelper {
     return tempAssets.absolute.path;
   }
 
-  static File tryCopyTempFile(File oldFile) {
+  static Future<File> tryCopyTempFile(File oldFile) async {
     // Pull the filename from the Uri. If we can't, just return the original file
     String? ogFilename = getFilenameFromUri(oldFile.absolute.path);
     if (ogFilename == null) return oldFile;
-
     // Build the new path
     String newPath = '${AttachmentHelper.getTempPath()}/$ogFilename';
-
     // If the paths are the same, return the original file
     if (oldFile.absolute.path == newPath) return oldFile;
 
     // Otherwise, copy the file to the new path
-    return oldFile.copySync(newPath);
+    return await oldFile.copy(newPath);
   }
 
   static Future<Uint8List?> compressAttachment(Attachment attachment, String filePath,
       {int? qualityOverride, bool getActualPath = true}) async {
     if (kIsWeb || attachment.mimeType == null) return null;
-    if (attachment.metadata == null) {
-      attachment.metadata = {};
-    }
+    attachment.metadata ??= {};
 
     // Make sure the attachment is an image or video
     String mimeStart = attachment.mimeType!.split("/").first;
@@ -396,24 +365,25 @@ class AttachmentHelper {
       filePath = AttachmentHelper.getAttachmentPath(attachment);
     }
 
-    File originalFile = new File(filePath);
+    dynamic originalFile = File(filePath);
 
     // If we don't get the actual path, it's a dummy "attachment" and we need to copy it locally
     if (!getActualPath) {
-      originalFile = tryCopyTempFile(originalFile);
+      originalFile = await tryCopyTempFile(originalFile);
       filePath = originalFile.absolute.path;
     }
 
     // Handle getting heic images
-    if (attachment.mimeType == 'image/heic') {
-      originalFile = await FlutterNativeImage.compressImage(
+    if (attachment.mimeType == 'image/heic' || attachment.mimeType == 'image/heif') {
+      dynamic file = await FlutterNativeImage.compressImage(
         filePath,
         percentage: 100,
         quality: qualityOverride ?? SettingsManager().compressionQuality
       );
+      originalFile = file;
     }
 
-    Uint8List previewData = originalFile.readAsBytesSync();
+    Uint8List previewData = await originalFile.readAsBytes();
     if (attachment.mimeType == "image/gif") {
       try {
         Size size = getGifDimensions(previewData);
@@ -449,7 +419,7 @@ class AttachmentHelper {
 
     // Map the EXIF to the metadata
     try {
-      Map<String, IfdTag> exif = await readExifFromFile(new File(filePath));
+      Map<String, IfdTag> exif = await readExifFromFile(File(filePath));
       for (var item in exif.entries) {
         attachment.metadata![item.key] = item.value.printable;
       }

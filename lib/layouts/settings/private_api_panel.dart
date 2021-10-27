@@ -2,14 +2,13 @@ import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
-import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -27,17 +26,20 @@ class PrivateAPIPanelBinding extends Bindings {
 
 class PrivateAPIPanelController extends GetxController {
   late Settings _settingsCopy;
-  final RxnInt macOSVersionNumber = RxnInt();
-  final RxnString macOSVersion = RxnString();
+  final RxnInt serverVersionCode = RxnInt();
 
   @override
   void onInit() {
     super.onInit();
     _settingsCopy = SettingsManager().settings;
     SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
-      macOSVersionNumber.value = int.tryParse(res['data']['os_version'].toString().split(".")[0]);
-      macOSVersion.value = res['data']['os_version'];
-      if ((macOSVersionNumber.value ?? 10) > 10) _settingsCopy.enablePrivateAPI.value = false;
+      final String? serverVersion = res['data']['server_version'];
+      serverVersionCode.value = serverVersion?.split(".").mapIndexed((index, e) {
+        if (index == 0) return int.parse(e) * 100;
+        if (index == 1) return int.parse(e) * 21;
+        return int.parse(e);
+      }).sum;
+      print(serverVersionCode);
     });
   }
 
@@ -100,14 +102,18 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                         child: RichText(
                           text: TextSpan(
                             children: [
-                              TextSpan(text: "Private API features give you the ability to send tapbacks, send read receipts, and see typing indicators."),
+                              TextSpan(text: "Private API features give you the ability to:\n"),
+                              TextSpan(text: " - Send tapbacks\n"),
+                              TextSpan(text: " - Send read receipts\n"),
+                              TextSpan(text: " - Send & receive typing indicators\n"),
+                              TextSpan(text: " - Mark chats read on the Mac server\n"),
+                              TextSpan(text: " - Send messages with subject lines\n"),
+                              TextSpan(text: " - Send message effects\n"),
+                              TextSpan(text: " - Change group chat names\n"),
+                              TextSpan(text: " - Add & remove people from group chats\n"),
+                              TextSpan(text: " - Send replies (requires Big Sur and up)"),
                               TextSpan(text: "\n\n"),
-                              TextSpan(text: "These features are only available to those running the nightly version of the server on Mac OS 10.15 and under."),
-                              TextSpan(text: "\n\n"),
-                              TextSpan(text: "Please note that servers running Mac OS 11+ "),
-                              TextSpan(text: "are not supported.", style: TextStyle(fontStyle: FontStyle.italic)),
-                              TextSpan(text: "\n\n"),
-                              TextSpan(text: "You must be using the nightly version of the server for these features to function, regardless of whether you enable them here."),
+                              TextSpan(text: "You must have the Private API bundle installed on the server for these features to function, regardless of whether you enable the setting here."),
                             ],
                             style: Theme.of(context).textTheme.bodyText1,
                           ),
@@ -126,15 +132,14 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                       materialIcon: Icons.privacy_tip,
                     ),
                   ),
-                  ((controller.macOSVersionNumber.value ?? 10) < 11) ?
                   Container(
                     color: tileColor,
                     child: Padding(
                       padding: const EdgeInsets.only(left: 65.0),
                       child: SettingsDivider(color: headerColor),
                     ),
-                  ) : Container(),
-                  (controller.macOSVersionNumber.value ?? 10) < 11 ? SettingsSwitch(
+                  ),
+                  SettingsSwitch(
                     onChanged: (bool val) {
                       controller._settingsCopy.enablePrivateAPI.value = val;
                       saveSettings();
@@ -142,32 +147,10 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                     initialVal: controller._settingsCopy.enablePrivateAPI.value,
                     title: "Enable Private API Features",
                     backgroundColor: tileColor,
-                  ) : Container(
-                      decoration: BoxDecoration(
-                        color: tileColor,
-                        border: Border(
-                            top: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
-                        ),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
-                        child: RichText(
-                          text: TextSpan(
-                            children: [
-                              TextSpan(text: "Private API features are not supported on your server's macOS Version."),
-                              TextSpan(text: "\n\n"),
-                              TextSpan(text: "Current: ${controller.macOSVersion.value ?? "Unknown"}"),
-                              TextSpan(text: "\n\n"),
-                              TextSpan(text: "Required: 10.15.7 and under"),
-                            ],
-                            style: Theme.of(context).textTheme.bodyText1,
-                          ),
-                        ),
-                      )
                   ),
                 ],
               ),
-              if (SettingsManager().settings.enablePrivateAPI.value && (controller.macOSVersionNumber.value ?? 10) < 11)
+              if (SettingsManager().settings.enablePrivateAPI.value)
                 ...[
                   SettingsHeader(
                       headerColor: headerColor,
@@ -247,7 +230,7 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                       ) : SizedBox.shrink()),
                       Obx(() {
                         if (SettingsManager().settings.enableQuickTapback.value &&
-                            SettingsManager().settings.skin.value == Skins.iOS)
+                            SettingsManager().settings.skin.value == Skins.iOS) {
                           return Container(
                             decoration: BoxDecoration(
                               color: tileColor,
@@ -255,11 +238,12 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                             padding: EdgeInsets.only(left: 15),
                             child: Text("Select Quick Tapback"),
                           );
-                        else
+                        } else {
                           return SizedBox.shrink();
+                        }
                       }),
                       Obx(() {
-                        if (SettingsManager().settings.enableQuickTapback.value)
+                        if (SettingsManager().settings.enableQuickTapback.value) {
                           return SettingsOptions<String>(
                             title: "Quick Tapback",
                             options: ReactionTypes.toList(),
@@ -287,8 +271,24 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                             backgroundColor: tileColor,
                             secondaryColor: headerColor,
                           );
-                        else
+                        } else {
                           return SizedBox.shrink();
+                        }
+                      }),
+                      Obx(() {
+                        if ((controller.serverVersionCode.value ?? 0) >= 63) {
+                          return SettingsSwitch(
+                            onChanged: (bool val) {
+                              controller._settingsCopy.privateSubjectLine.value = val;
+                              saveSettings();
+                            },
+                            initialVal: controller._settingsCopy.privateSubjectLine.value,
+                            title: "Send Subject Lines",
+                            backgroundColor: tileColor,
+                          );
+                        } else {
+                          return SizedBox.shrink();
+                        }
                       }),
                     ],
                   )

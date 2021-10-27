@@ -72,7 +72,8 @@ class BaseNavigator extends GetxService {
     if (Get.keys.containsKey(2) && (!context.isPhone || context.isLandscape) && SettingsManager().settings.tabletMode.value) {
       Get.offUntil(GetPageRoute(
         page: () => widget,
-        transition: Transition.noTransition
+        transition: Transition.noTransition,
+        transitionDuration: Duration.zero,
       ), predicate, id: 2);
     } else {
       Navigator.of(context).pushAndRemoveUntil(ThemeSwitcher.buildPageRoute(
@@ -88,7 +89,8 @@ class BaseNavigator extends GetxService {
       Get.offUntil(GetPageRoute(
           page: () => widget,
           binding: binding,
-          transition: Transition.noTransition
+          transition: Transition.noTransition,
+          transitionDuration: Duration.zero,
       ), predicate, id: 3);
     } else {
       binding?.dependencies();

@@ -10,7 +10,6 @@ import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/metadata_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/message.dart';
@@ -57,8 +56,8 @@ class UrlPreviewController extends GetxController with SingleGetTickerProviderMi
 
   Future<void> fetchPreview() async {
     // Try to get any already loaded attachment data
-    if (CurrentChat.of(context)!.urlPreviews.containsKey(message.text)) {
-      data.value = CurrentChat.of(context)!.urlPreviews[message.text];
+    if (CurrentChat.activeChat!.urlPreviews.containsKey(message.text)) {
+      data.value = CurrentChat.activeChat!.urlPreviews[message.text];
     }
 
     if (data.value != null || MetadataHelper.isNotEmpty(data.value)) return;
@@ -94,7 +93,7 @@ class UrlPreviewController extends GetxController with SingleGetTickerProviderMi
 
     // Save the metadata
     if (data.value != null) {
-      CurrentChat.of(context)!.urlPreviews[message.text!] = data.value!;
+      CurrentChat.activeChat?.urlPreviews[message.text!] = data.value!;
     }
   }
 }
@@ -109,7 +108,7 @@ class UrlPreviewWidget extends StatelessWidget {
   dynamic attachmentFile(Attachment attachment) {
     String appDocPath = SettingsManager().appDocDir.path;
     String pathName = "$appDocPath/attachments/${attachment.guid}/${attachment.transferName}";
-    return new File(pathName);
+    return File(pathName);
   }
 
   @override
@@ -200,7 +199,7 @@ class UrlPreviewWidget extends StatelessWidget {
                       ],
                     ),
                   ),
-                  (!kIsWeb && linkPreviews.length > 0 && linkPreviews.first!.existsOnDisk)
+                  (!kIsWeb && linkPreviews.isNotEmpty && linkPreviews.first!.existsOnDisk)
                       ? Padding(
                           padding: EdgeInsets.only(left: 10.0, bottom: 10.0),
                           child: ClipRRect(

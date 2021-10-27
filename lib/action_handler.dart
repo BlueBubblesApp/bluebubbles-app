@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -19,17 +20,14 @@ import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/outgoing_queue.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
-import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
-import 'package:sqflite/sqflite.dart';
 
 /// This helper class allows us to section off all socket "actions"
 /// These actions allow us to interact with the server, whether it
@@ -43,8 +41,8 @@ class ActionHandler {
   /// sendMessage(chatObject, 'Hello world!')
   /// ```
   static Future<void> sendMessage(Chat chat, String text,
-      {MessageBloc? messageBloc, List<Attachment> attachments = const []}) async {
-    if (isNullOrEmpty(text, trimString: true)!) return;
+      {MessageBloc? messageBloc, List<Attachment> attachments = const [], String? subject, String? replyGuid, String? effectId}) async {
+    if (isNullOrEmpty(text, trimString: true)! && isNullOrEmpty(subject ?? "", trimString: true)!) return;
 
     if ((await SettingsManager().getMacOSVersion() ?? 10) < 11) {
       List<Message> messages = <Message>[];
@@ -55,7 +53,7 @@ class ActionHandler {
       List<RegExpMatch> matches = parseLinks(text.replaceAll("\n", " "));
 
       // Get the first match (if it exists)
-      if (matches.length > 0) {
+      if (matches.isNotEmpty) {
         linkMatch = matches.first;
         linkMsg = text.substring(linkMatch.start, linkMatch.end).trim();
       }
@@ -79,14 +77,19 @@ class ActionHandler {
 
       Message mainMsg = Message(
         text: mainText.trim(),
+        subject: subject,
         dateCreated: DateTime.now(),
-        hasAttachments: attachments.length > 0 ? true : false,
+        hasAttachments: attachments.isNotEmpty ? true : false,
+        threadOriginatorGuid: replyGuid,
+        expressiveSendStyleId: effectId,
+        isFromMe: true,
       );
 
       // Generate a Temp GUID
       mainMsg.generateTempGuid();
 
-      if (mainMsg.text!.trim().length > 0) messages.add(mainMsg);
+      if (mainMsg.text!.trim().isNotEmpty
+          || (mainMsg.subject?.trim().length ?? 0) > 0) messages.add(mainMsg);
 
       // If there is a link, build the link message
       if (shouldSplit) {
@@ -94,6 +97,9 @@ class ActionHandler {
           text: secondaryText.trim(),
           dateCreated: DateTime.now(),
           hasAttachments: false,
+          threadOriginatorGuid: replyGuid,
+          expressiveSendStyleId: effectId,
+          isFromMe: true,
         );
 
         // Generate a Temp GUID
@@ -119,14 +125,18 @@ class ActionHandler {
         Map<String, dynamic> params = {"chat": chat, "message": message};
 
         // Add the message send to the queue
-        await OutgoingQueue().add(new QueueItem(event: "send-message", item: params));
+        await OutgoingQueue().add(QueueItem(event: "send-message", item: params));
       });
     } else {
       // Create the main message
       Message message = Message(
         text: text.trim(),
+        subject: subject,
         dateCreated: DateTime.now(),
-        hasAttachments: attachments.length > 0 ? true : false,
+        hasAttachments: attachments.isNotEmpty ? true : false,
+        threadOriginatorGuid: replyGuid,
+        expressiveSendStyleId: effectId,
+        isFromMe: true,
       );
 
       // Generate a Temp GUID
@@ -148,44 +158,150 @@ class ActionHandler {
       Map<String, dynamic> params = {"chat": chat, "message": message};
 
       // Add the message send to the queue
-      await OutgoingQueue().add(new QueueItem(event: "send-message", item: params));
+      await OutgoingQueue().add(QueueItem(event: "send-message", item: params));
     }
   }
 
+  static Future<Chat> createChatBigSur(BuildContext context, String address, String text) async {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            backgroundColor: Theme.of(context).accentColor,
+            title: Text(
+              "Creating a new chat...",
+              style: Theme.of(context).textTheme.bodyText1,
+            ),
+            content:
+            Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
+              Container(
+                // height: 70,
+                // color: Colors.black,
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                ),
+              ),
+            ]),
+          );
+        });
+
+    Logger.info("Starting chat with participant: $address");
+    Message message = Message(
+      text: text.trim(),
+      dateCreated: DateTime.now(),
+      isFromMe: true,
+    );
+
+    message.generateTempGuid();
+
+    // Create params for the queue item
+    Map<String, dynamic> params = {"guid": "iMessage;-;$address", "message": message.text, "tempGuid": message.guid};
+
+    // Add the message send to the queue
+    final response = await SocketManager().sendMessage("send-message", params, (response) {});
+    message = Message.fromMap(response['data']);
+    final chat = Chat.fromMap(response['data']['chats'].first);
+
+    // If there is an error, replace the temp value with an error
+    if (response['status'] != 200) {
+      message.guid = message.guid!.replaceAll("temp", "error-${response['error']['message']}");
+      message.error.value =
+      response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
+    }
+
+    // Make sure to save the chat
+    // If we already have the ID, we don't have to wait to resave it
+    await chat.save();
+    await ChatBloc().updateChatPosition(chat);
+    // for some reason it likes to add multiple of the chat in the chat list so
+    // deduplicate them just in case
+    final ids = ChatBloc().chats.map((e) => e.guid).toSet();
+    ChatBloc().chats.retainWhere((element) => ids.remove(element.guid));
+
+    // Add the message to the UI and DB
+    NewMessageManager().addMessage(chat, message, outgoing: true);
+    chat.addMessage(message);
+    Navigator.of(context).pop();
+    return chat;
+  }
+
   static Future<void> sendMessageHelper(Chat chat, Message message) async {
-    Completer<void> completer = new Completer<void>();
-    Map<String, dynamic> params = new Map();
+    Completer<void> completer = Completer<void>();
+    Map<String, dynamic> params = {};
     params["guid"] = chat.guid;
     params["message"] = message.text;
     params["tempGuid"] = message.guid;
 
-    VoidCallback sendSocketMessage = () {
-      SocketManager().sendMessage("send-message", params, (response) async {
-        String? tempGuid = message.guid;
+    void sendSocketMessage() {
+      if ((message.subject?.isNotEmpty ?? false) || message.threadOriginatorGuid != null || message.expressiveSendStyleId != null) {
+        api.sendMessage(
+            chat.guid!,
+            message.guid!,
+            message.text!,
+            subject: message.subject,
+            method: "private-api",
+            selectedMessageGuid: message.threadOriginatorGuid,
+            effectId: message.expressiveSendStyleId
+        ).then((response) async {
+          String? tempGuid = message.guid;
+          // If there is an error, replace the temp value with an error
+          if (response.statusCode != 200) {
+            message.guid = message.guid!.replaceAll("temp", "error-${response.data['error']['message']}");
+            message.error.value =
+            response.statusCode == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
 
-        // If there is an error, replace the temp value with an error
-        if (response['status'] != 200) {
-          message.guid = message.guid!.replaceAll("temp", "error-${response['error']['message']}");
-          message.error.value =
-              response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
+            await Message.replaceMessage(tempGuid, message);
+            NewMessageManager().updateMessage(chat, tempGuid!, message);
+          } else {
+            Message newMessage = Message.fromMap(response.data['data']);
+            await Message.replaceMessage(tempGuid, newMessage, chat: chat);
+            List<dynamic> attachments = response.data.containsKey("attachments") ? response.data['attachments'] : [];
+            newMessage.attachments = [];
+            for (dynamic attachmentItem in attachments) {
+              Attachment file = Attachment.fromMap(attachmentItem);
 
-          await Message.replaceMessage(tempGuid, message);
-          NewMessageManager().updateMessage(chat, tempGuid!, message);
-        }
+              try {
+                await Attachment.replaceAttachment(tempGuid, file);
+              } catch (ex) {
+                Logger.warn("Attachment's Old GUID doesn't exist. Skipping");
+              }
+              newMessage.attachments.add(file);
+            }
+            Logger.info("Message match: [${response.data["text"]}] - ${response.data["guid"]} - ${response.data["tempGuid"]}", tag: "MessageStatus");
 
-        completer.complete();
-      });
-    };
+            NewMessageManager().updateMessage(chat, tempGuid!, newMessage);
+          }
+
+          completer.complete();
+        });
+      } else {
+        SocketManager().sendMessage("send-message", params, (response) async {
+          String? tempGuid = message.guid;
+
+          // If there is an error, replace the temp value with an error
+          if (response['status'] != 200) {
+            message.guid = message.guid!.replaceAll("temp", "error-${response['error']['message']}");
+            message.error.value =
+            response['status'] == 400 ? MessageError.BAD_REQUEST.code : MessageError.SERVER_ERROR.code;
+
+            await Message.replaceMessage(tempGuid, message);
+            NewMessageManager().updateMessage(chat, tempGuid!, message);
+          }
+
+          completer.complete();
+        });
+      }
+    }
 
     bool isConnected = kIsWeb;
     if (!isConnected) {
       isConnected = await InternetConnectionChecker().hasConnection;
     }
     if (!isConnected) {
-      InternetConnectionChecker().checkInterval = Duration(seconds: 1);
+      InternetConnectionChecker().checkInterval = const Duration(seconds: 1);
       StreamSubscription? sub;
       Worker? sub2;
-      Timer timer = Timer(Duration(seconds: 30), () async {
+      Timer timer = Timer(const Duration(seconds: 30), () async {
         sub?.cancel();
         sub2?.dispose();
         String? tempGuid = message.guid;
@@ -238,12 +354,12 @@ class ActionHandler {
     Map<String, dynamic> params = {"chat": chat, "message": message, "reaction": reaction};
 
     // Add the message send to the queue
-    await OutgoingQueue().add(new QueueItem(event: "send-reaction", item: params));
+    await OutgoingQueue().add(QueueItem(event: "send-reaction", item: params));
   }
 
   static Future<void> sendReactionHelper(Chat chat, Message message, String reaction) async {
-    Completer<void> completer = new Completer<void>();
-    Map<String, dynamic> params = new Map();
+    Completer<void> completer = Completer<void>();
+    Map<String, dynamic> params = {};
 
     String? text = !isEmptyString(message.text) ? message.text : "A text";
 
@@ -281,16 +397,16 @@ class ActionHandler {
     if (chat == null) throw ("Could not find chat!");
 
     await message.fetchAttachments();
-    for (int i = 0; i < message.attachments!.length; i++) {
+    for (int i = 0; i < message.attachments.length; i++) {
       String appDocPath = SettingsManager().appDocDir.path;
       String pathName =
-          "$appDocPath/attachments/${message.attachments![i]!.guid}/${message.attachments![i]!.transferName}";
+          "$appDocPath/attachments/${message.attachments[i]!.guid}/${message.attachments[i]!.transferName}";
       File file = File(pathName);
 
       OutgoingQueue().add(
-        new QueueItem(
+        QueueItem(
           event: "send-attachment",
-          item: new AttachmentSender(
+          item: AttachmentSender(
             PlatformFile(
               path: file.path,
               name: file.path.split("/").last,
@@ -298,20 +414,20 @@ class ActionHandler {
               bytes: file.readAsBytesSync(),
             ),
             chat,
-            i == message.attachments!.length - 1 ? message.text ?? "" : "",
+            i == message.attachments.length - 1 ? message.text ?? "" : "",
           ),
         ),
       );
     }
 
     // If we sent attachments, return because we finished sending
-    if (message.attachments!.length > 0) return;
+    if (message.attachments.isNotEmpty) return;
 
     // Generate the temp GUID for the message to be used
     message.generateTempGuid();
 
     // Build request parameters
-    Map<String, dynamic> params = new Map();
+    Map<String, dynamic> params = {};
     params["guid"] = chat.guid;
     params["message"] = message.text!.trim();
 
@@ -352,64 +468,6 @@ class ActionHandler {
     });
   }
 
-  /// Resyncs a [chat] by removing all currently saved messages
-  /// for the given [chat], then redownloads its' messages from the server
-  ///
-  /// ```dart
-  /// resyncChat(chatObj)
-  /// ```
-  static Future<void> resyncChat(Chat chat, MessageBloc messageBloc) async {
-    final Database? db = await DBProvider.db.database;
-    if (db == null) return;
-    await chat.save();
-
-    // Fetch messages associated with the chat
-    var items = await db.rawQuery(
-        "SELECT"
-        " ROWID,"
-        " chatId,"
-        " messageId"
-        " FROM chat_message_join"
-        " WHERE chatId = ?",
-        [chat.id]);
-
-    // If there are no messages, return
-    Logger.info("Deleting ${items.length} messages");
-    if (isNullOrEmpty(items)!) return;
-
-    Batch batch = db.batch();
-    for (Map<String, dynamic> message in items) {
-      // Find all attachments associated with a message
-      var attachments = await db.rawQuery(
-          "SELECT"
-          " ROWID,"
-          " attachmentId,"
-          " messageId"
-          " FROM attachment_message_join"
-          " WHERE messageId = ?",
-          [message["messageId"]]);
-
-      // 1 -> Delete all attachments associated with a message
-      for (Map<String, dynamic> attachment in attachments) {
-        batch.delete("attachment", where: "ROWID = ?", whereArgs: [attachment["attachmentId"]]);
-
-        batch.delete("attachment_message_join", where: "ROWID = ?", whereArgs: [attachment["ROWID"]]);
-      }
-
-      // 2 -> Delete all messages associated with a chat
-      batch.delete("message", where: "ROWID = ?", whereArgs: [message["messageId"]]);
-      // 3 -> Delete all chat_message_join entries associated with a chat
-      batch.delete("chat_message_join", where: "ROWID = ?", whereArgs: [message["ROWID"]]);
-    }
-
-    // Commit the deletes
-    await batch.commit(noResult: true, continueOnError: true);
-
-    // Now, let's re-fetch the messages for the chat
-    await messageBloc.loadMessageChunk(0, includeReactions: false);
-    ChatBloc().refreshChats();
-  }
-
   /// Handles the ingestion of a 'updated-message' event. It takes the
   /// input [data] and uses that data to update an already existing
   /// message within the database
@@ -418,10 +476,10 @@ class ActionHandler {
   /// handleUpdatedMessage(JsonMap)
   /// ```
   static Future<void> handleUpdatedMessage(Map<String, dynamic> data, {bool headless = false}) async {
-    Message updatedMessage = new Message.fromMap(data);
+    Message updatedMessage = Message.fromMap(data);
 
     if (updatedMessage.isFromMe!) {
-      await Future.delayed(Duration(milliseconds: 200));
+      await Future.delayed(const Duration(milliseconds: 200));
       Logger.info("Handling message update: " + updatedMessage.text!, tag: "Actions-UpdatedMessage");
     }
 
@@ -531,7 +589,7 @@ class ActionHandler {
           } catch (ex) {
             Logger.warn("Attachment's Old GUID doesn't exist. Skipping");
           }
-          message.attachments!.add(file);
+          message.attachments.add(file);
         }
         Logger.info("Message match: [${data["text"]}] - ${data["guid"]} - ${data["tempGuid"]}", tag: "MessageStatus");
 
@@ -548,7 +606,7 @@ class ActionHandler {
           await ActionHandler.handleChat(chat: chats[i], checkIfExists: true, isHeadless: isHeadless);
           chat = chats[i];
         }
-
+        await chat.getParticipants();
         Handle? handle = chat.participants.firstWhereOrNull((e) => e.address == message.handle?.address);
 
         if (handle != null) {
@@ -556,7 +614,6 @@ class ActionHandler {
           message.handle?.defaultPhone = handle.defaultPhone;
         }
 
-        await chat.getParticipants();
         // Handle the notification based on the message and chat
         await MessageHelper.handleNotification(message, chat);
 
@@ -585,9 +642,9 @@ class ActionHandler {
         }
       }
 
-      chats.forEach((element) {
+      for (Chat element in chats) {
         if (!isHeadless) NewMessageManager().addMessage(element, message);
-      });
+      }
     } else if (NotificationManager().hasProcessed(data["guid"])) {
       Message? existing = await Message.findOne({'guid': data['guid']});
       if (existing != null) {

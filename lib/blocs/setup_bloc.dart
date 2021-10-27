@@ -8,11 +8,11 @@ import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/fcm_data.dart';
+import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 enum SetupOutputType { ERROR, LOG }
@@ -127,6 +127,12 @@ class SetupBloc {
     });
 
     try {
+      addOutput("Getting contacts...", SetupOutputType.LOG);
+      Stopwatch s = Stopwatch();
+      s.start();
+      await ContactManager().getContacts(force: true);
+      s.stop();
+      addOutput("Received contacts list. Size: ${ContactManager().contacts.length}, speed: ${s.elapsedMilliseconds} ms", SetupOutputType.LOG);
       addOutput("Getting Chats...", SetupOutputType.LOG);
       List<Chat> chats = await SocketManager().getChats({"withLastMessage": kIsWeb});
 
@@ -146,14 +152,14 @@ class SetupBloc {
         ChatBloc().hasChats.value = true;
         ChatBloc().loadedChatBatch.value = true;
         for (Chat chat in chats) {
-          chat.participants.forEach((element) {
+          for (Handle element in chat.participants) {
             if (ChatBloc().cachedHandles.firstWhereOrNull((e) => e.address == element.address) == null) {
               ChatBloc().cachedHandles.add(element);
             }
             addOutput("Finished syncing chat, '${chat.chatIdentifier}'", SetupOutputType.LOG);
-          });
+          }
           _currentIndex += 1;
-          _progress = ((_currentIndex / chats.length) * 100).clamp(0, 99);
+          _progress = (_currentIndex / chats.length) * 100;
         }
         addOutput("Fetching contacts from server...", SetupOutputType.LOG);
         await ContactManager().getContacts(force: true);
@@ -162,7 +168,7 @@ class SetupBloc {
         await ContactManager().matchHandles();
         _progress = 100;
         finishSetup();
-        this.startIncrementalSync(settings);
+        startIncrementalSync(settings);
         return;
       }
       for (Chat chat in chats) {
@@ -171,7 +177,7 @@ class SetupBloc {
         } else {
           try {
             if (!(chat.chatIdentifier ?? "").startsWith("urn:biz")) {
-              Map<String, dynamic> params = Map();
+              Map<String, dynamic> params = {};
               params["identifier"] = chat.guid;
               params["withBlurhash"] = false;
               params["limit"] = numberOfMessagesPerPage.round();
@@ -180,7 +186,7 @@ class SetupBloc {
               ];
               List<dynamic> messages = await SocketManager().getChatMessages(params)!;
               addOutput("Received ${messages.length} messages for chat, '${chat.chatIdentifier}'!", SetupOutputType.LOG);
-              if (!skipEmptyChats || (skipEmptyChats && messages.length > 0)) {
+              if (!skipEmptyChats || (skipEmptyChats && messages.isNotEmpty)) {
                 await chat.save();
 
                 // Re-match the handles with the contacts
@@ -203,7 +209,7 @@ class SetupBloc {
         // If we have no chats, we can't divide by 0
         // Also means there are not chats to sync
         // It should never be 0... but still want to check to be safe.
-        if (chats.length == 0) {
+        if (chats.isEmpty) {
           break;
         } else {
           // Set the new progress
@@ -218,18 +224,19 @@ class SetupBloc {
       addOutput("Failed to sync chats!", SetupOutputType.ERROR);
       addOutput("Error: ${ex.toString()}", SetupOutputType.ERROR);
     } finally {
+      await ContactManager().matchHandles();
       finishSetup();
     }
 
     // Start an incremental sync to catch any messages we missed during setup
-    this.startIncrementalSync(settings);
+    startIncrementalSync(settings);
   }
 
   Future<void> syncChat(Chat chat, List<dynamic> messages) async {
     // Since we got the messages in desc order, we want to reverse it.
     // Reversing it will add older messages before newer one. This should help fix
     // issues with associated message GUIDs
-    if (!skipEmptyChats || (skipEmptyChats && messages.length > 0)) {
+    if (!skipEmptyChats || (skipEmptyChats && messages.isNotEmpty)) {
       await MessageHelper.bulkAddMessages(chat, messages.reversed.toList(),
           notifyForNewMessage: false, checkForLatestMessageText: true);
 
@@ -247,8 +254,6 @@ class SetupBloc {
     Settings _settingsCopy = SettingsManager().settings;
     _settingsCopy.finishedSetup.value = true;
     await SettingsManager().saveSettings(_settingsCopy);
-
-    if (!kIsWeb) ContactManager().contacts = [];
     if (!kIsWeb) await ContactManager().getContacts(force: true);
     if (!kIsWeb) await ChatBloc().refreshChats(force: true);
     await SocketManager().authFCM(force: true);
@@ -265,8 +270,9 @@ class SetupBloc {
       {String? chatGuid, bool saveDate = true, Function? onConnectionError, Function? onComplete}) async {
     // If we are already syncing, don't sync again
     // Or, if we haven't finished setup, or we aren't connected, don't sync
-    if (isSyncing.value || !settings.finishedSetup.value || SocketManager().state.value != SocketState.CONNECTED)
+    if (isSyncing.value || !settings.finishedSetup.value || SocketManager().state.value != SocketState.CONNECTED) {
       return;
+    }
 
     // Reset the progress
     _progress = 0;
@@ -287,7 +293,7 @@ class SetupBloc {
     int batches = 10;
     for (int i = 0; i < batches; i++) {
       // Build request params. We want all details on the messages
-      Map<String, dynamic> params = Map();
+      Map<String, dynamic> params = {};
       if (chatGuid != null) {
         params["chatGuid"] = chatGuid;
       }
@@ -313,11 +319,11 @@ class SetupBloc {
         addOutput("Incremental sync found ${messages.length} messages. Syncing...", SetupOutputType.LOG);
       }
 
-      if (messages.length > 0) {
+      if (messages.isNotEmpty) {
         await MessageHelper.bulkAddMessages(null, messages, onProgress: (progress, total) {
           _progress = (progress / total) * 100;
           data.value = SetupData(_progress, output);
-        });
+        }, notifyForNewMessage: true);
 
         // If we want to download the attachments, do it, and wait for them to finish before continuing
         if (downloadAttachments) {
@@ -338,9 +344,9 @@ class SetupBloc {
       SettingsManager().saveSettings(_settingsCopy);
     }
 
-    if (SettingsManager().settings.showIncrementalSync.value)
-      // Show a nice lil toast/snackbar
+    if (SettingsManager().settings.showIncrementalSync.value) {
       showSnackbar('Success', '🔄 Incremental sync complete 🔄');
+    }
 
     if (onComplete != null) {
       onComplete();

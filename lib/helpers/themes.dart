@@ -167,9 +167,7 @@ Future<ThemeObject> revertToPreviousDarkTheme() async {
   List<ThemeObject> allThemes = await ThemeObject.getThemes();
   ThemeObject? previous = allThemes.firstWhereOrNull((e) => e.previousDarkTheme);
 
-  if (previous == null) {
-    previous = Themes.themes.firstWhereOrNull((element) => element.name == "OLED Dark");
-  }
+  previous ??= Themes.themes.firstWhereOrNull((element) => element.name == "OLED Dark");
 
   // Remove the previous flags
   previous!.previousDarkTheme = false;
@@ -182,9 +180,7 @@ Future<ThemeObject> revertToPreviousLightTheme() async {
   List<ThemeObject> allThemes = await ThemeObject.getThemes();
   ThemeObject? previous = allThemes.firstWhereOrNull((e) => e.previousDarkTheme);
 
-  if (previous == null) {
-    previous = Themes.themes.firstWhereOrNull((element) => element.name == "Bright White");
-  }
+  previous ??= Themes.themes.firstWhereOrNull((element) => element.name == "Bright White");
 
   // Remove the previous flags
   previous!.previousDarkTheme = false;

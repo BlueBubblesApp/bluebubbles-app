@@ -70,7 +70,7 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                 child: Slider(
                   value: numberOfMessages,
                   onChanged: (double value) {
-                    if (!this.mounted) return;
+                    if (!mounted) return;
 
                     setState(() {
                       numberOfMessages = value == 0 ? 1 : value;
@@ -132,7 +132,7 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                       inactiveTrackColor: Theme.of(context).primaryColor.withAlpha(75),
                       inactiveThumbColor: Theme.of(context).textTheme.bodyText1!.color,
                       onChanged: (bool value) {
-                        if (!this.mounted) return;
+                        if (!mounted) return;
 
                         setState(() {
                           skipEmptyChats = value;

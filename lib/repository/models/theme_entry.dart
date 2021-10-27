@@ -45,9 +45,9 @@ class ThemeEntry {
 
   dynamic get style => isFont!
       ? TextStyle(
-          color: this.color,
+          color: color,
           fontWeight: FontWeight.normal,
-          fontSize: fontSize?.toDouble() ?? null,
+          fontSize: fontSize?.toDouble(),
         )
       : color;
 
@@ -55,30 +55,30 @@ class ThemeEntry {
     final Database? db = await DBProvider.db.database;
 
     //assert(theme.id != null);
-    this.themeId = theme.id;
+    themeId = theme.id;
 
     // Try to find an existing ConfigEntry before saving it
-    ThemeEntry? existing = await ThemeEntry.findOne({"name": this.name, "themeId": this.themeId});
+    ThemeEntry? existing = await ThemeEntry.findOne({"name": name, "themeId": themeId});
     if (existing != null) {
-      this.id = existing.id;
+      id = existing.id;
     }
 
     // If it already exists, update it
     if (existing == null) {
       // Remove the ID from the map for inserting
-      var map = this.toMap();
+      var map = toMap();
       map.remove("ROWID");
       try {
-        this.id = (await db?.insert("theme_values", map)) ?? id;
+        id = (await db?.insert("theme_values", map)) ?? id;
       } catch (e) {
-        this.id = null;
+        id = null;
       }
 
-      if (this.id != null && theme.id != null) {
-        await db?.insert("theme_value_join", {"themeValueId": this.id, "themeId": theme.id});
+      if (id != null && theme.id != null) {
+        await db?.insert("theme_value_join", {"themeValueId": id, "themeId": theme.id});
       }
     } else if (updateIfAbsent) {
-      await this.update(theme);
+      await update(theme);
     }
 
     return this;
@@ -88,31 +88,35 @@ class ThemeEntry {
     final Database? db = await DBProvider.db.database;
 
     // If it already exists, update it
-    if (this.id != null) {
+    if (id != null) {
       await db?.update(
           "theme_values",
           {
-            "name": this.name,
-            "color": this.color!.value.toRadixString(16),
-            "isFont": this.isFont! ? 1 : 0,
-            "fontSize": this.fontSize,
+            "name": name,
+            "color": color!.value.toRadixString(16),
+            "isFont": isFont! ? 1 : 0,
+            "fontSize": fontSize,
           },
           where: "ROWID = ?",
-          whereArgs: [this.id]);
+          whereArgs: [id]);
     } else {
-      await this.save(theme, updateIfAbsent: false);
+      await save(theme, updateIfAbsent: false);
     }
 
     return this;
   }
 
   static Future<ThemeEntry?> findOne(Map<String, dynamic> filters, {Database? database}) async {
-    final Database? db = database != null ? database : await DBProvider.db.database;
+    final Database? db = database ?? await DBProvider.db.database;
     if (db == null) return null;
     List<String> whereParams = [];
-    filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
+    for (var filter in filters.keys) {
+      whereParams.add('$filter = ?');
+    }
     List<dynamic> whereArgs = [];
-    filters.values.forEach((filter) => whereArgs.add(filter));
+    for (var filter in filters.values) {
+      whereArgs.add(filter);
+    }
     var res = await db.query("theme_values", where: whereParams.join(" AND "), whereArgs: whereArgs, limit: 1);
 
     if (res.isEmpty) {
@@ -123,11 +127,11 @@ class ThemeEntry {
   }
 
   Map<String, dynamic> toMap() => {
-        "ROWID": this.id,
-        "name": this.name,
-        "themeId": this.themeId,
-        "color": this.color!.value.toRadixString(16),
-        "isFont": this.isFont! ? 1 : 0,
-        "fontSize": this.fontSize,
+        "ROWID": id,
+        "name": name,
+        "themeId": themeId,
+        "color": color!.value.toRadixString(16),
+        "isFont": isFont! ? 1 : 0,
+        "fontSize": fontSize,
       };
 }

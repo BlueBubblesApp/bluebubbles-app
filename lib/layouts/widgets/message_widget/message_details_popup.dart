@@ -1,7 +1,11 @@
 import 'dart:async';
+import 'package:bluebubbles/blocs/message_bloc.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/show_reply_thread.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
+import 'package:bluebubbles/managers/life_cycle_manager.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
-import 'package:universal_io/io.dart';
 import 'dart:math';
 import 'dart:ui';
 import 'package:bluebubbles/helpers/logger.dart';
@@ -22,8 +26,8 @@ import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
-import 'package:bluebubbles/layouts/widgets/CustomCupertinoAlertDialog.dart';
-import 'package:bluebubbles/layouts/widgets/CustomCupertinoNavBar.dart';
+import 'package:bluebubbles/layouts/widgets/custom_cupertino_alert_dialog.dart';
+import 'package:bluebubbles/layouts/widgets/custom_cupertino_nav_bar.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reaction_detail_widget.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
@@ -34,7 +38,6 @@ import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/helpers/darty.dart';
-import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart' as cupertino;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -52,6 +55,7 @@ class MessageDetailsPopup extends StatefulWidget {
     required this.childSize,
     required this.child,
     required this.currentChat,
+    required this.messageBloc,
   }) : super(key: key);
 
   final Message message;
@@ -59,6 +63,7 @@ class MessageDetailsPopup extends StatefulWidget {
   final Size? childSize;
   final Widget child;
   final CurrentChat? currentChat;
+  final MessageBloc? messageBloc;
 
   @override
   MessageDetailsPopupState createState() => MessageDetailsPopupState();
@@ -76,6 +81,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   late double messageTopOffset;
   late double topMinimum;
   double? height;
+  bool isBigSur = true;
 
   @override
   void initState() {
@@ -92,12 +98,13 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
 
     fetchReactions();
 
-    // Animate showing the copy menu, slightly delayed
-    Future.delayed(Duration(milliseconds: 400), () {
-      if (this.mounted)
+    SettingsManager().getMacOSVersion().then((val) {
+      if (mounted) {
         setState(() {
+          isBigSur = (val ?? 0) >= 11;
           showTools = true;
         });
+      }
     });
   }
 
@@ -106,7 +113,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
     super.didChangeDependencies();
     fetchReactions();
     SchedulerBinding.instance!.addPostFrameCallback((_) {
-      if (this.mounted) {
+      if (mounted) {
         setState(() {
           double totalHeight = context.height - detailsMenuHeight! - 20;
           double offset = (widget.childOffset.dy + widget.childSize!.height) - totalHeight;
@@ -126,7 +133,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
     }
 
     // Create a new fetch request
-    fetchRequest = new Completer();
+    fetchRequest = Completer();
 
     // If there are no associated messages, return now
     List<Message> reactions = widget.message.getReactions();
@@ -153,10 +160,10 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
     }
 
     // If we aren't mounted, get out
-    if (!this.mounted) return fetchRequest!.complete();
+    if (!mounted) return fetchRequest!.complete();
 
     // Tell the component to re-render
-    this.setState(() {});
+    setState(() {});
     return fetchRequest!.complete();
   }
 
@@ -215,7 +222,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                   duration: Duration(milliseconds: 500),
                   curve: Sprung.underDamped,
                   alignment: Alignment.center,
-                  child: reactionWidgets.length > 0
+                  child: reactionWidgets.isNotEmpty
                       ? ClipRRect(
                           borderRadius: BorderRadius.circular(20),
                           child: BackdropFilter(
@@ -258,7 +265,11 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   }
 
   Widget buildReactionMenu() {
-    double reactionIconSize = ((8.5 / 10 * min(CustomNavigator.width(context), context.height)) / (ReactionTypes.toList().length).toDouble());
+    double reactionIconSize = ((8.5 /
+        10 *
+        min(context.isTablet ? max(CustomNavigator.width(context) / 2, 400) : CustomNavigator.width(context),
+            context.height)) /
+        (ReactionTypes.toList().length).toDouble());
     double maxMenuWidth = (ReactionTypes.toList().length * reactionIconSize).toDouble();
     double menuHeight = (reactionIconSize).toDouble();
     double topPadding = -20;
@@ -318,12 +329,12 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                             } else {
                               currentlySelectedReaction = e;
                             }
-                            if (this.mounted) setState(() {});
+                            if (mounted) setState(() {});
                           },
                           onTapUp: (details) {},
                           onTapCancel: () {
                             currentlySelectedReaction = selfReaction;
-                            if (this.mounted) setState(() {});
+                            if (mounted) setState(() {});
                           },
                           child: Padding(
                             padding: const EdgeInsets.all(6),
@@ -343,8 +354,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
 
   bool get showDownload =>
       widget.message.hasAttachments &&
-      widget.message.attachments!.where((element) => element!.mimeStart != null).length > 0 &&
-      widget.message.attachments!.where((element) => AttachmentHelper.getContent(element!) is PlatformFile).length > 0;
+      widget.message.attachments.where((element) => element!.mimeStart != null).isNotEmpty &&
+      widget.message.attachments.where((element) => AttachmentHelper.getContent(element!) is PlatformFile).isNotEmpty;
 
   bool get isSent => !widget.message.guid!.startsWith('temp') && !widget.message.guid!.startsWith('error');
 
@@ -353,7 +364,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
   }
 
   set detailsMenuHeight(double? value) {
-    this.height = value;
+    height = value;
   }
 
   Widget buildCopyPasteMenu() {
@@ -362,7 +373,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
     double maxHeight = context.height - topMinimum - widget.childSize!.height;
 
     List<Widget> allActions = [
-      if (widget.currentChat!.chat.isGroup() && !widget.message.isFromMe! && dmChat != null)
+      if (widget.currentChat!.chat.isGroup() && !widget.message.isFromMe! && dmChat != null && !LifeCycleManager().isBubble)
         Material(
           color: Colors.transparent,
           child: InkWell(
@@ -390,7 +401,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             ),
           ),
         ),
-      if (widget.message.fullText.replaceAll("\n", " ").hasUrl && !kIsWeb && !kIsDesktop)
+      if (widget.message.fullText.replaceAll("\n", " ").hasUrl && !kIsWeb && !kIsDesktop && !LifeCycleManager().isBubble)
         Material(
           color: Colors.transparent,
           child: InkWell(
@@ -413,12 +424,12 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             ),
           ),
         ),
-      if (showDownload && kIsWeb && widget.message.attachments!.first?.webUrl != null)
+      if (showDownload && kIsWeb && widget.message.attachments.first?.webUrl != null)
         Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: () async {
-              await launch(widget.message.attachments!.first!.webUrl! + "?guid=${SettingsManager().settings.guidAuthKey}");
+              await launch(widget.message.attachments.first!.webUrl! + "?guid=${SettingsManager().settings.guidAuthKey}");
             },
             child: ListTile(
               title: Text(
@@ -432,31 +443,71 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             ),
           ),
         ),
-      if (widget.currentChat!.chat.isGroup() && !widget.message.isFromMe! && dmChat == null)
+      if (SettingsManager().settings.enablePrivateAPI.value && isBigSur)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () async {
+              Get.back();
+              EventDispatcher().emit("focus-keyboard", widget.message);
+            },
+            child: ListTile(
+              title: Text(
+                "Reply",
+                style: Theme.of(context).textTheme.bodyText1,
+              ),
+              trailing: Icon(
+                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.reply : Icons.reply,
+                color: Theme.of(context).textTheme.bodyText1!.color,
+              ),
+            ),
+          ),
+        ),
+      if ((widget.message.threadOriginatorGuid != null ||
+          widget.messageBloc?.threadOriginators.values.firstWhereOrNull((e) => e == widget.message.guid) != null) &&
+          isBigSur)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () async {
+              showReplyThread(context, widget.message, widget.messageBloc);
+            },
+            child: ListTile(
+              title: Text(
+                "View Thread",
+                style: Theme.of(context).textTheme.bodyText1,
+              ),
+              trailing: Icon(
+                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.bubble_left_bubble_right : Icons.forum,
+                color: Theme.of(context).textTheme.bodyText1!.color,
+              ),
+            ),
+          ),
+        ),
+      if (widget.currentChat!.chat.isGroup() && !widget.message.isFromMe! && dmChat == null && !LifeCycleManager().isBubble)
         Material(
           color: Colors.transparent,
           child: InkWell(
             splashColor: Colors.transparent,
             highlightColor: Colors.transparent,
             onTap: () async {
-              bool shouldShowSnackbar = (await SettingsManager().getMacOSVersion())! >= 11;
               Handle? handle = widget.message.handle;
               String? address = handle?.address ?? "";
-              Contact? contact = ContactManager().getCachedContactSync(address);
+              Contact? contact = ContactManager().getCachedContact(address: address);
               UniqueContact uniqueContact;
               if (contact == null) {
                 uniqueContact = UniqueContact(address: address, displayName: (await formatPhoneNumber(handle)));
               } else {
-                uniqueContact = UniqueContact(address: address, displayName: contact.displayName ?? address);
+                uniqueContact = UniqueContact(address: address, displayName: contact.displayName);
               }
               Navigator.pushReplacement(
                 context,
                 cupertino.CupertinoPageRoute(
                   builder: (BuildContext context) {
+                    EventDispatcher().emit("update-highlight", null);
                     return ConversationView(
                       isCreator: true,
                       selected: [uniqueContact],
-                      showSnackbar: shouldShowSnackbar,
                     );
                   },
                 ),
@@ -474,48 +525,48 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             ),
           ),
         ),
-      Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () async {
-            bool shouldShowSnackbar = (await SettingsManager().getMacOSVersion())! >= 11;
-            Navigator.of(context).pop();
-            Navigator.pushReplacement(
-              context,
-              cupertino.CupertinoPageRoute(
-                builder: (BuildContext context) {
-                  List<PlatformFile> existingAttachments = [];
-                  if (!widget.message.isUrlPreview()) {
-                    existingAttachments =
-                        widget.message.attachments!.map((attachment) => PlatformFile(
-                          name: attachment!.transferName!,
-                          path: kIsWeb ? null : attachment.getPath(),
-                          bytes: attachment.bytes,
-                          size: attachment.totalBytes!,
-                        )).toList();
-                  }
-                  return ConversationView(
-                    isCreator: true,
-                    existingText: widget.message.text,
-                    existingAttachments: existingAttachments,
-                    showSnackbar: shouldShowSnackbar,
-                  );
-                },
+      if (!LifeCycleManager().isBubble)
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              Navigator.of(context).pop();
+              Navigator.pushReplacement(
+                context,
+                cupertino.CupertinoPageRoute(
+                  builder: (BuildContext context) {
+                    List<PlatformFile> existingAttachments = [];
+                    if (!widget.message.isUrlPreview()) {
+                      existingAttachments =
+                          widget.message.attachments.map((attachment) => PlatformFile(
+                            name: attachment!.transferName!,
+                            path: kIsWeb ? null : attachment.getPath(),
+                            bytes: attachment.bytes,
+                            size: attachment.totalBytes!,
+                          )).toList();
+                    }
+                    EventDispatcher().emit("update-highlight", null);
+                    return ConversationView(
+                      isCreator: true,
+                      existingText: widget.message.text,
+                      existingAttachments: existingAttachments,
+                    );
+                  },
+                ),
+              );
+            },
+            child: ListTile(
+              title: Text(
+                "Forward",
+                style: Theme.of(context).textTheme.bodyText1,
               ),
-            );
-          },
-          child: ListTile(
-            title: Text(
-              "Forward",
-              style: Theme.of(context).textTheme.bodyText1,
-            ),
-            trailing: Icon(
-              SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.arrow_right : Icons.forward,
-              color: Theme.of(context).textTheme.bodyText1!.color,
+              trailing: Icon(
+                SettingsManager().settings.skin.value == Skins.iOS ? cupertino.CupertinoIcons.arrow_right : Icons.forward,
+                color: Theme.of(context).textTheme.bodyText1!.color,
+              ),
             ),
           ),
         ),
-      ),
       Material(
         color: Colors.transparent,
         child: InkWell(
@@ -541,7 +592,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
           color: Colors.transparent,
           child: InkWell(
             onTap: () {
-              Clipboard.setData(new ClipboardData(text: widget.message.fullText));
+              Clipboard.setData(ClipboardData(text: widget.message.fullText));
               Navigator.of(context).pop();
               showSnackbar("Copied", "Copied to clipboard!", durationMs: 1000);
             },
@@ -622,8 +673,8 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
           color: Colors.transparent,
           child: InkWell(
             onTap: () {
-              for (Attachment? element in widget.message.attachments!) {
-                CurrentChat.of(context)?.clearImageData(element!);
+              for (Attachment? element in widget.message.attachments) {
+                CurrentChat.activeChat?.clearImageData(element!);
                 AttachmentHelper.redownloadAttachment(element!);
               }
               setState(() {});
@@ -647,7 +698,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
           child: InkWell(
             onTap: () async {
               try {
-                for (Attachment? element in widget.message.attachments!) {
+                for (Attachment? element in widget.message.attachments) {
                   dynamic content = AttachmentHelper.getContent(element!);
                   if (content is PlatformFile) {
                     await AttachmentHelper.saveToGallery(context, content);
@@ -670,19 +721,19 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             ),
           ),
         ),
-      if ((widget.message.hasAttachments && !kIsWeb && !kIsDesktop) || widget.message.text!.length > 0)
+      if ((widget.message.hasAttachments && !kIsWeb && !kIsDesktop) || widget.message.text!.isNotEmpty)
         Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: () {
               if (widget.message.hasAttachments && !widget.message.isUrlPreview() && !kIsWeb && !kIsDesktop) {
-                for (Attachment? element in widget.message.attachments!) {
+                for (Attachment? element in widget.message.attachments) {
                   Share.file(
                     "${element!.mimeType!.split("/")[0].capitalizeFirst} shared from BlueBubbles: ${element.transferName}",
                     element.getPath(),
                   );
                 }
-              } else if (widget.message.text!.length > 0) {
+              } else if (widget.message.text!.isNotEmpty) {
                 Share.text(
                   "Text shared from BlueBubbles",
                   widget.message.text!,
@@ -770,7 +821,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               ...detailsActions,
-              if (moreActions.length > 0)
+              if (moreActions.isNotEmpty)
                 Material(
                   color: Colors.transparent,
                   child: InkWell(

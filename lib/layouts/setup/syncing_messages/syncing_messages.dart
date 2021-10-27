@@ -1,4 +1,5 @@
 import 'package:bluebubbles/helpers/navigator.dart';
+import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/layouts/setup/qr_scan/failed_to_scan_dialog.dart';
@@ -37,6 +38,10 @@ class _SyncingMessagesState extends State<SyncingMessages> {
           curve: Curves.easeInOut,
         );*/
         SocketManager().toggleSetupFinished(true, applyToDb: true);
+        Get.offAll(() => ConversationList(
+          showArchivedChats: false,
+          showUnknownSenders: false,
+        ), duration: Duration.zero, transition: Transition.noTransition);
       }
     });
   }

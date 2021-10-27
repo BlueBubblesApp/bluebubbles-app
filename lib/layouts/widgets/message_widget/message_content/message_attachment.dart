@@ -35,7 +35,7 @@ class MessageAttachment extends StatefulWidget {
 
 class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeepAliveClientMixin {
   Widget? attachmentWidget;
-  var content;
+  dynamic content;
 
   @override
   void initState() {
@@ -53,7 +53,7 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
 
     // If we can download it, do so
     if (await AttachmentHelper.canAutoDownload() && content is Attachment) {
-      if (this.mounted) {
+      if (mounted) {
         setState(() {
           content = Get.put(AttachmentDownloadController(attachment: content), tag: content.guid);
         });
@@ -111,7 +111,7 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
       } else if (mimeType == "audio" && !widget.attachment.mimeType!.contains("caf")) {
         return MediaFile(
           attachment: widget.attachment,
-          child: AudioPlayerWiget(file: content, context: context, width: 250, isFromMe: widget.isFromMe),
+          child: AudioPlayerWidget(file: content, context: context, width: 250, isFromMe: widget.isFromMe),
         );
       } else if (widget.attachment.mimeType == "text/x-vlocation" || widget.attachment.uti == 'public.vlocation') {
         return MediaFile(
@@ -146,7 +146,7 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
       return AttachmentDownloaderWidget(
         onPressed: () {
           content = Get.put(AttachmentDownloadController(attachment: content), tag: content.guid);
-          if (this.mounted) setState(() {});
+          if (mounted) setState(() {});
         },
         attachment: content,
         placeHolder: buildPlaceHolder(widget),
@@ -162,7 +162,7 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
           return AttachmentDownloaderWidget(
             onPressed: () {
               content = Get.put(AttachmentDownloadController(attachment: content), tag: content.guid);
-              if (this.mounted) setState(() {});
+              if (mounted) setState(() {});
             },
             attachment: content,
             placeHolder: buildPlaceHolder(widget),
@@ -200,10 +200,16 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
                         ? Container(height: 5.0)
                         : Container(),
                     (content.attachment.mimeType != null)
-                        ? Text(
+                        ? Container(
+                          height: 50,
+                          alignment: Alignment.center,
+                          child: Text(
                             content.attachment.mimeType,
                             style: Theme.of(context).textTheme.bodyText1,
-                          )
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        )
                         : Container()
                   ],
                 ),
