@@ -32,14 +32,15 @@ class MessageBlocEvent {
 
 class MessageBloc {
   final Rxn<MessageBlocEvent> event = Rxn<MessageBlocEvent>();
-  LinkedHashMap<String, Message> _allMessages = new LinkedHashMap();
-  LinkedHashMap<String, Message> _reactionMessages = new LinkedHashMap();
+  Map<String, Message> _allMessages = {};
+  final Map<String, Message> _reactionMessages = {};
+  final RxMap<String, String> threadOriginators = <String, String>{}.obs;
   int _reactions = 0;
   bool showDeleted = false;
   bool _canLoadMore = true;
   bool _isGettingMore = false;
 
-  LinkedHashMap<String, Message> get messages {
+  Map<String, Message> get messages {
     if (!showDeleted) {
       _allMessages.removeWhere((key, value) => value.dateDeleted != null);
     }
@@ -47,7 +48,7 @@ class MessageBloc {
     return _allMessages;
   }
 
-  LinkedHashMap<String, Message> get reactionMessages {
+  Map<String, Message> get reactionMessages {
     if (!showDeleted) {
       _reactionMessages.removeWhere((key, value) => value.dateDeleted != null);
     }
@@ -78,7 +79,7 @@ class MessageBloc {
 
       // Iterate over each action that needs to take place on the chat
       bool addToRx = true;
-      MessageBlocEvent baseEvent = new MessageBlocEvent();
+      MessageBlocEvent baseEvent = MessageBlocEvent();
 
       // If we want to remove something, set the event data correctly
       if (msgEvent.type == NewMessageType.REMOVE && _allMessages.containsKey(msgEvent.event["guid"])) {
@@ -177,6 +178,10 @@ class MessageBloc {
     }
   }
 
+  void addMessage(Message m) {
+    _allMessages[m.guid!] = m;
+  }
+
   LinkedHashMap<M, N> linkedHashMapInsert<M, N>(map, int index, M key, N value) {
     List<M> keys = map.keys.toList();
     List<N> values = map.values.toList();
@@ -192,16 +197,16 @@ class MessageBloc {
     event.value = mbEvent;
   }
 
-  Future<LinkedHashMap<String, Message>> getMessages() async {
+  Future<Map<String, Message>> getMessages() async {
     // If we are already fetching, return empty
-    if (_isGettingMore || !this._canLoadMore) return new LinkedHashMap();
+    if (_isGettingMore || !_canLoadMore) return {};
     _isGettingMore = true;
 
     // Fetch messages
     List<Message> messages = await Chat.getMessagesSingleton(_currentChat);
 
     if (isNullOrEmpty(messages)!) {
-      _allMessages = new LinkedHashMap();
+      _allMessages = {};
     } else {
       for (var element in messages) {
         if (element.associatedMessageGuid == null && element.guid != null) {
@@ -213,7 +218,7 @@ class MessageBloc {
       }
     }
 
-    this.emitLoaded();
+    emitLoaded();
 
     _isGettingMore = false;
     return _allMessages;
@@ -232,7 +237,7 @@ class MessageBloc {
 
     // List<dynamic> res =
     //     await SocketManager().fetchMessages(null, limit: 3, where: params);
-    _allMessages = new LinkedHashMap();
+    _allMessages = {};
     if (message.guid != null) {
       _allMessages.addAll({message.guid!: message});
     }
@@ -257,14 +262,14 @@ class MessageBloc {
 
     // Logger.instance.log(_allMessages.length);
 
-    this.emitLoaded();
+    emitLoaded();
   }
 
   Future<LoadMessageResult> loadMessageChunk(int offset,
       {bool includeReactions = true, bool checkLocal = true, CurrentChat? currentChat}) async {
     int reactionCnt = includeReactions ? _reactions : 0;
-    Completer<LoadMessageResult> completer = new Completer();
-    if (!this._canLoadMore) {
+    Completer<LoadMessageResult> completer = Completer();
+    if (!_canLoadMore) {
       completer.complete(LoadMessageResult.RETREIVED_LAST_PAGE);
       return completer.future;
     }
@@ -325,7 +330,7 @@ class MessageBloc {
         await currentChat.preloadMessageAttachments(specificMessages: messagesWithAttachment);
       }
 
-      this.emitLoaded();
+      emitLoaded();
 
       // Complete the execution
       if (count < 25 && !completer.isCompleted) {
@@ -342,15 +347,15 @@ class MessageBloc {
   }
 
   Future<void> refresh() async {
-    _allMessages = new LinkedHashMap();
+    _allMessages = {};
     _reactionMessages.clear();
     _reactions = 0;
 
-    await this.getMessages();
+    await getMessages();
   }
 
   void dispose() {
-    _allMessages = new LinkedHashMap();
+    _allMessages = {};
   }
 }
 

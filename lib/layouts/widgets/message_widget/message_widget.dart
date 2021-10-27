@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
@@ -16,12 +15,9 @@ import 'package:bluebubbles/layouts/widgets/message_widget/stickers_widget.dart'
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
-import 'package:bluebubbles/socket_manager.dart';
-import 'package:bluebubbles/helpers/darty.dart';
-import 'package:collection/src/iterable_extensions.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -35,8 +31,10 @@ class MessageWidget extends StatefulWidget {
     required this.showHandle,
     required this.isFirstSentMessage,
     required this.showHero,
+    required this.showReplies,
     this.onUpdate,
     this.bloc,
+    required this.autoplayEffect,
   }) : super(key: key);
 
   final Message message;
@@ -45,14 +43,16 @@ class MessageWidget extends StatefulWidget {
   final bool showHandle;
   final bool isFirstSentMessage;
   final bool showHero;
+  final bool showReplies;
   final Message? Function(NewMessageEvent event)? onUpdate;
   final MessageBloc? bloc;
+  final bool autoplayEffect;
 
   @override
   _MessageState createState() => _MessageState();
 }
 
-class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMixin {
+class _MessageState extends State<MessageWidget> {
   bool showTail = true;
   Completer<void>? associatedMessageRequest;
   Completer<void>? attachmentsRequest;
@@ -60,7 +60,6 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
   int lastRequestCount = -1;
   int attachmentCount = 0;
   int associatedCount = 0;
-  bool handledInit = false;
   CurrentChat? currentChat;
   StreamSubscription<NewMessageEvent>? subscription;
   late Message _message;
@@ -70,23 +69,14 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
   @override
   void initState() {
     super.initState();
-    init();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
+    currentChat = CurrentChat.activeChat;
+    _message = widget.message;
+    _newerMessage = widget.newerMessage;
+    _olderMessage = widget.olderMessage;
     init();
   }
 
   void init() {
-    currentChat = CurrentChat.of(context);
-    if (handledInit) return;
-    handledInit = true;
-    _message = widget.message;
-    _newerMessage = widget.newerMessage;
-    _olderMessage = widget.olderMessage;
-
     checkHandle();
     fetchAssociatedMessages();
     fetchAttachments();
@@ -136,7 +126,7 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
         if (widget.onUpdate != null) {
           Message? result = widget.onUpdate!(data);
           if (result != null) {
-            if (this.mounted)
+            if (mounted) {
               setState(() {
                 if (_message.guid == oldGuid) {
                   _message = result;
@@ -144,6 +134,7 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
                   _newerMessage = result;
                 }
               });
+            }
           }
         }
       }
@@ -159,7 +150,7 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
   Future<void> checkHandle() async {
     // If we've already started, return the request
     if (handleRequest != null) return handleRequest!.future;
-    handleRequest = new Completer();
+    handleRequest = Completer();
 
     // Checks ordered in a specific way to ever so slightly reduce processing
     if (_message.isFromMe!) return handleRequest!.complete();
@@ -167,7 +158,7 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
 
     try {
       Handle? handle = await _message.getHandle();
-      if (this.mounted && handle != null) {
+      if (mounted && handle != null) {
         setState(() {});
       }
     } catch (ex) {
@@ -180,7 +171,7 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
     if (!forceReload && associatedMessageRequest != null) return associatedMessageRequest!.future;
 
     // Create a new request and get the messages
-    associatedMessageRequest = new Completer();
+    associatedMessageRequest = Completer();
 
     try {
       await _message.fetchAssociatedMessages(bloc: widget.bloc);
@@ -198,12 +189,12 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
     if (hasChanges) {
       // If we don't think there are reactions, and we found reactions,
       // Update the DB so it saves that we have reactions
-      if (!_message.hasReactions && _message.getReactions().length > 0) {
+      if (!_message.hasReactions && _message.getReactions().isNotEmpty) {
         _message.hasReactions = true;
         _message.update();
       }
 
-      if (this.mounted) setState(() {});
+      if (mounted) setState(() {});
     }
 
     associatedMessageRequest!.complete();
@@ -214,8 +205,8 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
     if (!forceReload && attachmentsRequest != null) return attachmentsRequest!.future;
 
     // Create a new request and get the attachments
-    attachmentsRequest = new Completer();
-    if (!this.mounted) return attachmentsRequest!.complete();
+    attachmentsRequest = Completer();
+    if (!mounted) return attachmentsRequest!.complete();
 
     try {
       await _message.fetchAttachments(currentChat: currentChat);
@@ -223,25 +214,14 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
       return attachmentsRequest!.completeError(ex);
     }
 
-    // If this is a URL preview and we don't have attachments, we need to get them
-    List<Attachment?> nullAttachments = _message.getPreviewAttachments();
-    if (_message.fullText.replaceAll("\n", " ").hasUrl && nullAttachments.isEmpty) {
-      if (lastRequestCount != nullAttachments.length) {
-        lastRequestCount = nullAttachments.length;
-
-        List<dynamic> msgs = (await SocketManager().getAttachments(currentChat!.chat.guid!, _message.guid!)) ?? [];
-        for (var msg in msgs) await ActionHandler.handleMessage(msg, forceProcess: true);
-      }
-    }
-
     bool hasChanges = false;
-    if (_message.attachments!.length != this.attachmentCount || forceReload) {
-      this.attachmentCount = _message.attachments!.length;
+    if (_message.attachments.length != attachmentCount || forceReload) {
+      attachmentCount = _message.attachments.length;
       hasChanges = true;
     }
 
     // NOTE: Not sure if we need to re-render
-    if (this.mounted && hasChanges) {
+    if (mounted && hasChanges) {
       setState(() {});
     }
 
@@ -250,8 +230,6 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
-
     if (_newerMessage != null) {
       if (_newerMessage!.isGroupEvent()) {
         showTail = true;
@@ -283,11 +261,19 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
     );
 
     UrlPreviewWidget urlPreviewWidget = UrlPreviewWidget(
-        key: new Key("preview-${_message.guid}"), linkPreviews: _message.getPreviewAttachments(), message: _message);
+        key: Key("preview-${_message.guid}"), linkPreviews: _message.getPreviewAttachments(), message: _message);
     StickersWidget stickersWidget =
-        StickersWidget(key: new Key("stickers-${associatedCount.toString()}"), messages: _message.associatedMessages);
+        StickersWidget(key: Key("stickers-${associatedCount.toString()}"), messages: _message.associatedMessages);
     ReactionsWidget reactionsWidget = ReactionsWidget(
-        key: new Key("reactions-${associatedCount.toString()}"), associatedMessages: _message.associatedMessages);
+        key: Key("reactions-${associatedCount.toString()}"), associatedMessages: _message.associatedMessages);
+    final separator = MessageTimeStampSeparator(
+      newerMessage: _message,
+      message: _olderMessage ?? _message,
+    );
+    final separator2 = MessageTimeStampSeparator(
+      newerMessage: _newerMessage,
+      message: _message,
+    );
 
     // Add the correct type of message to the message stack
     Widget message;
@@ -297,13 +283,18 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
         olderMessage: widget.olderMessage,
         newerMessage: widget.newerMessage,
         message: _message,
+        messageBloc: widget.bloc,
+        hasTimestampAbove: separator.buildTimeStamp().isNotEmpty,
+        hasTimestampBelow: separator2.buildTimeStamp().isNotEmpty,
+        showReplies: widget.showReplies,
         urlPreviewWidget: urlPreviewWidget,
         stickersWidget: stickersWidget,
         attachmentsWidget: widgetAttachments,
         reactionsWidget: reactionsWidget,
-        shouldFadeIn: currentChat?.sentMessages.contains(_message.guid) ?? false,
+        shouldFadeIn: currentChat?.sentMessages.firstWhereOrNull((e) => e?.guid == _message.guid) != null,
         showHero: widget.showHero,
         showDeliveredReceipt: widget.isFirstSentMessage,
+        autoplayEffect: widget.autoplayEffect,
       );
     } else {
       message = ReceivedMessage(
@@ -311,25 +302,24 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
         olderMessage: widget.olderMessage,
         newerMessage: widget.newerMessage,
         message: _message,
+        messageBloc: widget.bloc,
+        hasTimestampAbove: separator.buildTimeStamp().isNotEmpty,
+        hasTimestampBelow: separator2.buildTimeStamp().isNotEmpty,
+        showReplies: widget.showReplies,
         showHandle: widget.showHandle,
         urlPreviewWidget: urlPreviewWidget,
         stickersWidget: stickersWidget,
         attachmentsWidget: widgetAttachments,
         reactionsWidget: reactionsWidget,
+        autoplayEffect: widget.autoplayEffect,
       );
     }
 
     return Column(
       children: [
         message,
-        MessageTimeStampSeparator(
-          newerMessage: _newerMessage,
-          message: _message,
-        )
+        separator2,
       ],
     );
   }
-
-  @override
-  bool get wantKeepAlive => true;
 }

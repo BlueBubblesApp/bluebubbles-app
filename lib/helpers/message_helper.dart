@@ -1,8 +1,8 @@
 import 'dart:async';
+import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_html/html.dart' as html;
 
-import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -15,7 +15,6 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
-import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'emoji_regex.dart';
@@ -62,7 +61,7 @@ class MessageHelper {
       Chat? msgChat = chat;
       if (msgChat == null) {
         List<Chat> msgChats = parseChats(item);
-        msgChat = msgChats.length > 0 ? msgChats.first : null;
+        msgChat = msgChats.isNotEmpty ? msgChats.first : null;
 
         // If there is a cached chat, get it. Otherwise, save the new one
         if (msgChat != null && chats.containsKey(msgChat.guid)) {
@@ -96,10 +95,10 @@ class MessageHelper {
 
       // Create the attachments
       List<dynamic> attachments = item['attachments'];
-      attachments.forEach((attachmentItem) async {
+      for (dynamic attachmentItem in attachments) {
         Attachment file = Attachment.fromMap(attachmentItem);
         await file.save(message);
-      });
+      }
 
       // Add message to the "master list"
       _messages.add(message);
@@ -112,8 +111,6 @@ class MessageHelper {
         Logger.info('Saved ${messages.length} messages', tag: "BulkIngest");
       }
     }
-
-    //ChatBloc().chats.add(chat!);
 
     if (notifyForNewMessage || notifyMessageManager) {
       notificationMessages.forEach((message, value) async {
@@ -153,7 +150,7 @@ class MessageHelper {
       Chat? msgChat = chat;
       if (msgChat == null) {
         List<Chat> msgChats = parseChats(item);
-        msgChat = msgChats.length > 0 ? msgChats[0] : null;
+        msgChat = msgChats.isNotEmpty ? msgChats[0] : null;
 
         // If there is a cached chat, get it. Otherwise, save the new one
         if (msgChat != null && chats.containsKey(msgChat.guid)) {
@@ -177,7 +174,7 @@ class MessageHelper {
   }
 
   static Future<void> downloadAttachmentSync(Attachment file) {
-    Completer<void> completer = new Completer();
+    Completer<void> completer = Completer();
     Get.put(
         AttachmentDownloadController(
             attachment: file,
@@ -185,7 +182,7 @@ class MessageHelper {
               completer.complete();
             },
             onError: () {
-              completer.completeError(new Error());
+              completer.completeError(Error());
             }),
         tag: file.guid);
 
@@ -195,7 +192,7 @@ class MessageHelper {
   static List<Chat> parseChats(Map<String, dynamic> data) {
     List<Chat> chats = [];
 
-    if (data.containsKey("chats") && data["chats"] != null || data["chats"].length > 0) {
+    if (data.containsKey("chats") && data["chats"] != null && data["chats"].length > 0) {
       for (int i = 0; i < data["chats"].length; i++) {
         Chat chat = Chat.fromMap(data["chats"][i]);
         chats.add(chat);
@@ -221,6 +218,10 @@ class MessageHelper {
     if (message.isFromMe! || message.handle == null) return; // Don't notify if the text is from me
 
     CurrentChat? currChat = CurrentChat.activeChat;
+
+    // add unread icon as long as it isn't the active chat
+    if (currChat?.chat.guid != chat.guid) ChatBloc().toggleChatUnread(chat, true, clearNotifications: false);
+
     if (((LifeCycleManager().isAlive && !kIsWeb) || (kIsWeb && !(html.window.document.hidden ?? false))) &&
         ((!SettingsManager().settings.notifyOnChatList.value &&
                 currChat == null &&
@@ -244,7 +245,7 @@ class MessageHelper {
       return "Interactive: ${MessageHelper.getInteractiveText(message)}";
     }
 
-    if (isNullOrEmpty(message.text, trimString: true)! && !message.hasAttachments) {
+    if (isNullOrEmpty(message.fullText, trimString: true)! && !message.hasAttachments) {
       return "";
     }
 
@@ -252,12 +253,12 @@ class MessageHelper {
     List<RegExpMatch> matches = parseLinks(message.text!);
 
     // If there are attachments, return the number of attachments
-    int aCount = (message.attachments ?? []).length;
+    int aCount = (message.attachments).length;
     if (message.hasAttachments && matches.isEmpty) {
       // Build the attachment output by counting the attachments
       String output = "Attachment${aCount > 1 ? "s" : ""}";
       Map<String, int> counts = {};
-      for (Attachment? attachment in message.attachments ?? []) {
+      for (Attachment? attachment in message.attachments) {
         String? mime = attachment!.mimeType;
         String key;
         if (mime == null) {
@@ -290,7 +291,7 @@ class MessageHelper {
       return "$output: ${attachmentStr.join(attachmentStr.length == 2 ? " & " : ", ")}";
     } else {
       // It's all other message types
-      return message.text ?? "";
+      return message.fullText;
     }
   }
 
@@ -304,7 +305,7 @@ class MessageHelper {
       return "Interactive: ${MessageHelper.getInteractiveText(message)}";
     }
 
-    if (isNullOrEmpty(message.text, trimString: true)! && !message.hasAttachments) {
+    if (isNullOrEmpty(message.fullText, trimString: true)! && !message.hasAttachments) {
       return "Empty message";
     }
 
@@ -312,12 +313,12 @@ class MessageHelper {
     List<RegExpMatch> matches = parseLinks(message.text!);
 
     // If there are attachments, return the number of attachments
-    int aCount = (message.attachments ?? []).length;
+    int aCount = message.attachments.length;
     if (message.hasAttachments && matches.isEmpty) {
       // Build the attachment output by counting the attachments
       String output = "Attachment${aCount > 1 ? "s" : ""}";
       Map<String, int> counts = {};
-      for (Attachment? attachment in message.attachments ?? []) {
+      for (Attachment? attachment in message.attachments) {
         String? mime = attachment!.mimeType;
         String key;
         if (mime == null) {
@@ -350,18 +351,12 @@ class MessageHelper {
       return "$output: ${attachmentStr.join(attachmentStr.length == 2 ? " & " : ", ")}";
     } else if (![null, ""].contains(message.associatedMessageGuid)) {
       // It's a reaction message, get the "sender"
-      String? sender = message.isFromMe! ? "You" : await formatPhoneNumber(message.handle);
-      if (!message.isFromMe! && message.handle != null) {
-        Contact? contact = await ContactManager().getCachedContact(message.handle);
-        if (contact != null) {
-          sender = contact.givenName ?? contact.displayName;
-        }
-      }
+      String? sender = message.isFromMe! ? "You" : ContactManager().getContactTitle(message.handle);
 
       return "$sender ${message.text}";
     } else {
       // It's all other message types
-      return message.text ?? "Unknown Message";
+      return message.fullText;
     }
   }
 
@@ -414,10 +409,10 @@ class MessageHelper {
     }
 
     List<String> items = val.split(":").reversed.toList();
-    return (items.length > 0) ? items[0] : val;
+    return (items.isNotEmpty) ? items[0] : val;
   }
 
-  static bool withinTimeThreshold(Message? first, Message? second, {threshold: 5}) {
+  static bool withinTimeThreshold(Message? first, Message? second, {threshold = 5}) {
     if (first == null || second == null) return false;
     return second.dateCreated!.difference(first.dateCreated!).inMinutes.abs() > threshold;
   }
@@ -430,9 +425,9 @@ class MessageHelper {
         message.dateDelivered != null &&
         newerMessage.dateDelivered == null) return true;
 
-    Message? lastRead = CurrentChat.of(context)?.messageMarkers.lastReadMessage;
+    Message? lastRead = CurrentChat.activeChat?.messageMarkers.lastReadMessage;
     if (lastRead != null && lastRead.guid == message.guid) return true;
-    Message? lastDelivered = CurrentChat.of(context)?.messageMarkers.lastDeliveredMessage;
+    Message? lastDelivered = CurrentChat.activeChat?.messageMarkers.lastDeliveredMessage;
     if (lastDelivered != null && lastDelivered.guid == message.guid) return true;
 
     return false;

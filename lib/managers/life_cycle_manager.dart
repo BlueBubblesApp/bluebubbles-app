@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
@@ -23,7 +24,9 @@ class LifeCycleManager {
 
   bool get isAlive => _isAlive;
 
-  StreamController<bool> _stream = new StreamController.broadcast();
+  bool isBubble = false;
+
+  final StreamController<bool> _stream = StreamController.broadcast();
   Stream<bool> get stream => _stream.stream;
 
   LifeCycleManager._internal() {
@@ -49,7 +52,7 @@ class LifeCycleManager {
     SocketManager().startSocketIO();
 
     // Refresh all the chats assuming that the app has already finished setup
-    if (SettingsManager().settings.finishedSetup.value) {
+    if (SettingsManager().settings.finishedSetup.value && recentIntent == null) {
       ChatBloc().resumeRefresh();
     }
   }

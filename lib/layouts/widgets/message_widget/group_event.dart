@@ -34,11 +34,11 @@ class _GroupEventState extends State<GroupEvent> {
 
   Future<void> getEventText() async {
     if (completer != null) return completer!.future;
-    completer = new Completer();
+    completer = Completer();
 
     try {
       String text = await getGroupEventText(widget.message!);
-      if (this.text != text && this.mounted) {
+      if (this.text != text && mounted) {
         setState(() {
           this.text = text;
         });

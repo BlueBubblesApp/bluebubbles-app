@@ -72,7 +72,7 @@ class AttachmentDownloadController extends GetxController {
 
   Future<void> getChunkRecursive(String guid, int index, int total, List<int> currentBytes) async {
     // if (index <= total) {
-    Map<String, dynamic> params = new Map();
+    Map<String, dynamic> params = {};
     params["identifier"] = guid;
     params["start"] = index * chunkSize;
     params["chunkSize"] = chunkSize;
@@ -107,7 +107,7 @@ class AttachmentDownloadController extends GetxController {
       if (attachmentResponse['status'] != 200 ||
           (attachmentResponse.containsKey("error") && attachmentResponse["error"] != null)) {
         if (!kIsWeb) {
-          File file = new File(attachment.getPath());
+          File file = File(attachment.getPath());
           if (await file.exists()) {
             await file.delete();
           }
@@ -122,7 +122,7 @@ class AttachmentDownloadController extends GetxController {
 
       int? numBytes = attachmentResponse["byteLength"];
 
-      if (numBytes == chunkSize && (progress.value ?? 0) < 1) {
+      if (numBytes == chunkSize) {
         // Calculate some stats
         double progress = ((index + 1) / total).clamp(0, 1).toDouble();
         Logger.info("Progress: ${(progress * 100).round()}% of the attachment");

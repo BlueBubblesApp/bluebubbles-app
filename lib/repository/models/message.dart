@@ -1,7 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
+import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
-import 'package:collection/src/iterable_extensions.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
+import 'package:collection/collection.dart';
 import 'package:crypto/crypto.dart' as crypto;
 
 import 'package:bluebubbles/helpers/message_helper.dart';
@@ -11,6 +15,7 @@ import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:sqflite/sqflite.dart';
@@ -29,6 +34,8 @@ String messageToJson(Message data) {
   final dyn = data.toMap();
   return json.encode(dyn);
 }
+
+enum LineType {meToMe, otherToMe, meToOther, otherToOther}
 
 class Message {
   int? id;
@@ -68,8 +75,10 @@ class Message {
   bool hasReactions;
   DateTime? dateDeleted;
   Map<String, dynamic>? metadata;
+  String? threadOriginatorGuid;
+  String? threadOriginatorPart;
 
-  List<Attachment?>? attachments = [];
+  List<Attachment?> attachments = [];
   List<Message> associatedMessages = [];
   bool? bigEmoji;
 
@@ -112,17 +121,19 @@ class Message {
       this.attachments = const [],
       this.associatedMessages = const [],
       this.dateDeleted,
-      this.metadata}) {
+      this.metadata,
+      this.threadOriginatorGuid,
+      this.threadOriginatorPart}) {
     if (error2 != null) error.value = error2;
   }
 
   String get fullText {
-    String fullText = this.subject ?? "";
+    String fullText = subject ?? "";
     if (fullText.isNotEmpty) {
       fullText += "\n";
     }
 
-    fullText += this.text ?? "";
+    fullText += text ?? "";
 
     return sanitizeString(fullText);
   }
@@ -132,7 +143,7 @@ class Message {
     if (json.containsKey("hasAttachments")) {
       hasAttachments = json["hasAttachments"] == 1 ? true : false;
     } else if (json.containsKey("attachments")) {
-      hasAttachments = (json['attachments'] as List).length > 0 ? true : false;
+      hasAttachments = (json['attachments'] as List).isNotEmpty ? true : false;
     }
 
     List<Attachment> attachments =
@@ -145,7 +156,7 @@ class Message {
       if (metadata is String) {
         try {
           metadata = jsonDecode(metadata);
-        } catch (ex) {}
+        } catch (_) {}
       }
     }
 
@@ -158,7 +169,7 @@ class Message {
       }
     }
 
-    var data = new Message(
+    var data = Message(
       id: json.containsKey("ROWID") ? json["ROWID"] : null,
       originalROWID: json.containsKey("originalROWID") ? json["originalROWID"] : null,
       guid: json["guid"],
@@ -204,12 +215,12 @@ class Message {
       hasReactions: json.containsKey('hasReactions') ? ((json['hasReactions'] == 1) ? true : false) : false,
       dateDeleted: json.containsKey("dateDeleted") ? parseDate(json["dateDeleted"]) : null,
       metadata: metadata is String ? null : metadata,
+      threadOriginatorGuid: json['threadOriginatorGuid'],
+      threadOriginatorPart: json['threadOriginatorPart'],
     );
 
     // Adds fallback getter for the ID
-    if (data.id == null) {
-      data.id = json.containsKey("id") ? json["id"] : null;
-    }
+    data.id ??= json.containsKey("id") ? json["id"] : null;
 
     return data;
   }
@@ -217,34 +228,34 @@ class Message {
   Future<Message> save([bool updateIfAbsent = true]) async {
     final Database? db = await DBProvider.db.database;
     // Try to find an existing chat before saving it
-    Message? existing = await Message.findOne({"guid": this.guid});
+    Message? existing = await Message.findOne({"guid": guid});
     if (existing != null) {
-      this.id = existing.id;
+      id = existing.id;
     }
 
     // Save the participant & set the handle ID to the new participant
-    if (this.handle != null) {
-      await this.handle!.save();
-      this.handleId = this.handle!.id;
+    if (handle != null) {
+      await handle!.save();
+      handleId = handle!.id;
     }
-    if (this.associatedMessageType != null && this.associatedMessageGuid != null) {
-      Message? associatedMessage = await Message.findOne({"guid": this.associatedMessageGuid});
+    if (associatedMessageType != null && associatedMessageGuid != null) {
+      Message? associatedMessage = await Message.findOne({"guid": associatedMessageGuid});
       if (associatedMessage != null) {
         associatedMessage.hasReactions = true;
         await associatedMessage.save();
       }
-    } else if (!this.hasReactions) {
-      Message? reaction = await Message.findOne({"associatedMessageGuid": this.guid});
+    } else if (!hasReactions) {
+      Message? reaction = await Message.findOne({"associatedMessageGuid": guid});
       if (reaction != null) {
-        this.hasReactions = true;
+        hasReactions = true;
       }
     }
 
     // If it already exists, update it
     if (existing == null) {
       // Remove the ID from the map for inserting
-      if (this.handleId == null) this.handleId = 0;
-      var map = this.toMap();
+      handleId ??= 0;
+      var map = toMap();
       if (map.containsKey("ROWID")) {
         map.remove("ROWID");
       }
@@ -252,9 +263,9 @@ class Message {
         map.remove("handle");
       }
 
-      this.id = await db?.insert("message", map);
+      id = await db?.insert("message", map);
     } else if (updateIfAbsent) {
-      await this.update();
+      await update();
     }
 
     return this;
@@ -313,11 +324,11 @@ class Message {
 
   Future<Message> updateMetadata(Metadata? metadata) async {
     final Database? db = await DBProvider.db.database;
-    if (this.id == null) return this;
+    if (id == null) return this;
     this.metadata = metadata!.toJson();
 
     await db?.update("message", {"metadata": isNullOrEmpty(this.metadata)! ? null : jsonEncode(this.metadata)},
-        where: "ROWID = ?", whereArgs: [this.id]);
+        where: "ROWID = ?", whereArgs: [id]);
 
     return this;
   }
@@ -326,44 +337,44 @@ class Message {
     final Database? db = await DBProvider.db.database;
 
     Map<String, dynamic> params = {
-      "dateCreated": (this.dateCreated == null) ? null : this.dateCreated!.millisecondsSinceEpoch,
-      "dateRead": (this.dateRead == null) ? null : this.dateRead!.millisecondsSinceEpoch,
-      "dateDelivered": (this.dateDelivered == null) ? null : this.dateDelivered!.millisecondsSinceEpoch,
-      "isArchived": this.isArchived! ? 1 : 0,
-      "datePlayed": (this.datePlayed == null) ? null : this.datePlayed!.millisecondsSinceEpoch,
-      "error": this.error.value,
-      "hasReactions": this.hasReactions ? 1 : 0,
-      "hasDdResults": this.hasDdResults! ? 1 : 0,
-      "metadata": isNullOrEmpty(this.metadata)! ? null : jsonEncode(this.metadata)
+      "dateCreated": (dateCreated == null) ? null : dateCreated!.millisecondsSinceEpoch,
+      "dateRead": (dateRead == null) ? null : dateRead!.millisecondsSinceEpoch,
+      "dateDelivered": (dateDelivered == null) ? null : dateDelivered!.millisecondsSinceEpoch,
+      "isArchived": isArchived! ? 1 : 0,
+      "datePlayed": (datePlayed == null) ? null : datePlayed!.millisecondsSinceEpoch,
+      "error": error.value,
+      "hasReactions": hasReactions ? 1 : 0,
+      "hasDdResults": hasDdResults! ? 1 : 0,
+      "metadata": isNullOrEmpty(metadata)! ? null : jsonEncode(metadata)
     };
 
-    if (this.originalROWID != null) {
-      params["originalROWID"] = this.originalROWID;
+    if (originalROWID != null) {
+      params["originalROWID"] = originalROWID;
     }
 
     // If it already exists, update it
-    if (this.id != null) {
-      await db?.update("message", params, where: "ROWID = ?", whereArgs: [this.id]);
+    if (id != null) {
+      await db?.update("message", params, where: "ROWID = ?", whereArgs: [id]);
     } else {
-      await this.save(false);
+      await save(false);
     }
 
     return this;
   }
 
   Future<List<Attachment?>?> fetchAttachments({CurrentChat? currentChat}) async {
-    if (this.hasAttachments && this.attachments != null && this.attachments!.length != 0) {
-      return this.attachments;
+    if (hasAttachments && attachments.isNotEmpty) {
+      return attachments;
     }
 
     if (currentChat != null) {
-      this.attachments = currentChat.getAttachmentsForMessage(this);
-      if (this.attachments!.length != 0) return this.attachments;
+      attachments = currentChat.getAttachmentsForMessage(this);
+      if (attachments.isNotEmpty) return attachments;
     }
 
     final Database? db = await DBProvider.db.database;
     if (db == null) return [];
-    if (this.id == null) return [];
+    if (id == null) return [];
 
     var res = await db.rawQuery(
         "SELECT"
@@ -386,11 +397,11 @@ class Message {
         " JOIN attachment_message_join AS amj ON message.ROWID = amj.messageId"
         " JOIN attachment ON attachment.ROWID = amj.attachmentId"
         " WHERE message.ROWID = ?;",
-        [this.id]);
+        [id]);
 
-    this.attachments = (res.isNotEmpty) ? res.map((c) => Attachment.fromMap(c)).toList() : [];
+    attachments = (res.isNotEmpty) ? res.map((c) => Attachment.fromMap(c)).toList() : [];
 
-    return this.attachments;
+    return attachments;
   }
 
   static Future<Chat?> getChat(Message message) async {
@@ -417,18 +428,34 @@ class Message {
   }
 
   Future<Message> fetchAssociatedMessages({MessageBloc? bloc}) async {
-    if (this.associatedMessages.isNotEmpty &&
-        this.associatedMessages.length == 1 &&
-        this.associatedMessages[0].guid == this.guid) {
+    if (associatedMessages.isNotEmpty &&
+        associatedMessages.length == 1 &&
+        associatedMessages[0].guid == guid) {
       return this;
     }
     if (kIsWeb) {
       associatedMessages = bloc?.reactionMessages.values.where((element) => element.associatedMessageGuid == guid).toList() ?? [];
+      if (threadOriginatorGuid != null) {
+        final existing = bloc?.messages.values.firstWhereOrNull((e) => e.guid == threadOriginatorGuid);
+        final threadOriginator = existing ?? await Message.findOne({"guid": threadOriginatorGuid});
+        threadOriginator?.handle ??= await Handle.findOne({"ROWID": threadOriginator.handleId});
+        if (threadOriginator != null) associatedMessages.add(threadOriginator);
+        if (existing == null && threadOriginator != null) bloc?.addMessage(threadOriginator);
+        if (!guid!.startsWith("temp")) bloc?.threadOriginators[guid!] = threadOriginatorGuid!;
+      }
     } else {
-      associatedMessages = await Message.find({"associatedMessageGuid": this.guid});
+      associatedMessages = await Message.find({"associatedMessageGuid": guid});
+      associatedMessages = MessageHelper.normalizedAssociatedMessages(associatedMessages);
+      if (threadOriginatorGuid != null) {
+        final existing = bloc?.messages.values.firstWhereOrNull((e) => e.guid == threadOriginatorGuid);
+        final threadOriginator = existing ?? await Message.findOne({"guid": threadOriginatorGuid});
+        threadOriginator?.handle ??= await Handle.findOne({"ROWID": threadOriginator.handleId});
+        if (threadOriginator != null) associatedMessages.add(threadOriginator);
+        if (existing == null && threadOriginator != null) bloc?.addMessage(threadOriginator);
+        if (!guid!.startsWith("temp")) bloc?.threadOriginators[guid!] = threadOriginatorGuid!;
+      }
     }
     associatedMessages.sort((a, b) => a.originalROWID!.compareTo(b.originalROWID!));
-    if (!kIsWeb) associatedMessages = MessageHelper.normalizedAssociatedMessages(associatedMessages);
     return this;
   }
 
@@ -447,19 +474,23 @@ class Message {
         " FROM handle"
         " JOIN message ON message.handleId = handle.ROWID"
         " WHERE message.ROWID = ?;",
-        [this.id]);
+        [id]);
 
-    this.handle = (res.isNotEmpty) ? res.map((c) => Handle.fromMap(c)).toList()[0] : null;
-    return this.handle;
+    handle = (res.isNotEmpty) ? res.map((c) => Handle.fromMap(c)).toList()[0] : null;
+    return handle;
   }
 
   static Future<Message?> findOne(Map<String, dynamic> filters) async {
     final Database? db = await DBProvider.db.database;
     if (db == null) return null;
     List<String> whereParams = [];
-    filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
+    for (var filter in filters.keys) {
+      whereParams.add('$filter = ?');
+    }
     List<dynamic> whereArgs = [];
-    filters.values.forEach((filter) => whereArgs.add(filter));
+    for (var filter in filters.values) {
+      whereArgs.add(filter);
+    }
     var res = await db.query("message", where: whereParams.join(" AND "), whereArgs: whereArgs, limit: 1);
 
     if (res.isEmpty) {
@@ -481,13 +512,17 @@ class Message {
     final Database? db = await DBProvider.db.database;
     if (db == null) return [];
     List<String> whereParams = [];
-    filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
+    for (var filter in filters.keys) {
+      whereParams.add('$filter = ?');
+    }
     List<dynamic> whereArgs = [];
-    filters.values.forEach((filter) => whereArgs.add(filter));
+    for (var filter in filters.values) {
+      whereArgs.add(filter);
+    }
 
     var res = await db.query("message",
-        where: (whereParams.length > 0) ? whereParams.join(" AND ") : null,
-        whereArgs: (whereArgs.length > 0) ? whereArgs : null);
+        where: (whereParams.isNotEmpty) ? whereParams.join(" AND ") : null,
+        whereArgs: (whereArgs.isNotEmpty) ? whereArgs : null);
     return (res.isNotEmpty) ? res.map((c) => Message.fromMap(c)).toList() : [];
   }
 
@@ -495,9 +530,13 @@ class Message {
     final Database? db = await DBProvider.db.database;
 
     List<String> whereParams = [];
-    where.keys.forEach((filter) => whereParams.add('$filter = ?'));
+    for (var filter in where.keys) {
+      whereParams.add('$filter = ?');
+    }
     List<dynamic> whereArgs = [];
-    where.values.forEach((filter) => whereArgs.add(filter));
+    for (var filter in where.values) {
+      whereArgs.add(filter);
+    }
 
     List<Message> toDelete = await Message.find(where);
     for (Message msg in toDelete) {
@@ -510,9 +549,13 @@ class Message {
     final Database? db = await DBProvider.db.database;
 
     List<String> whereParams = [];
-    where.keys.forEach((filter) => whereParams.add('$filter = ?'));
+    for (var filter in where.keys) {
+      whereParams.add('$filter = ?');
+    }
     List<dynamic> whereArgs = [];
-    where.values.forEach((filter) => whereArgs.add(filter));
+    for (var filter in where.values) {
+      whereArgs.add(filter);
+    }
 
     List<Message> toDelete = await Message.find(where);
     for (Message msg in toDelete) {
@@ -528,67 +571,64 @@ class Message {
 
   bool isUrlPreview() {
     // first condition is for macOS < 11 and second condition is for macOS >= 11
-    return (this.balloonBundleId != null &&
-            this.balloonBundleId == "com.apple.messages.URLBalloonProvider" &&
-            this.hasDdResults!) ||
-        (this.hasDdResults! && (this.text ?? "").replaceAll("\n", " ").hasUrl);
+    return (balloonBundleId != null &&
+            balloonBundleId == "com.apple.messages.URLBalloonProvider" &&
+            hasDdResults!) ||
+        (hasDdResults! && (text ?? "").replaceAll("\n", " ").hasUrl);
   }
 
   String? getUrl() {
     if (text == null) return null;
-    List<String> splits = this.text!.replaceAll("\n", " ").split(" ");
+    List<String> splits = text!.replaceAll("\n", " ").split(" ");
     return splits.firstWhereOrNull((String element) => element.hasUrl);
   }
 
   bool isInteractive() {
-    return this.balloonBundleId != null && this.balloonBundleId != "com.apple.messages.URLBalloonProvider";
+    return balloonBundleId != null && balloonBundleId != "com.apple.messages.URLBalloonProvider";
   }
 
   bool hasText({stripWhitespace = false}) {
-    return !isEmptyString(this.fullText, stripWhitespace: stripWhitespace);
+    return !isEmptyString(fullText, stripWhitespace: stripWhitespace);
   }
 
   bool isGroupEvent() {
-    return isEmptyString(this.fullText) && !this.hasAttachments && this.balloonBundleId == null;
+    return isEmptyString(fullText) && !hasAttachments && balloonBundleId == null;
   }
 
   bool isBigEmoji() {
     // We are checking the variable first because we want to
     // avoid processing twice for this as it won't change
-    if (this.bigEmoji == null) {
-      this.bigEmoji = MessageHelper.shouldShowBigEmoji(this.fullText);
-    }
+    bigEmoji ??= MessageHelper.shouldShowBigEmoji(fullText);
 
-    return this.bigEmoji!;
+    return bigEmoji!;
   }
 
   List<Attachment?> getRealAttachments() {
-    return this.attachments!.where((item) => item!.mimeType != null).toList();
+    return attachments.where((item) => item!.mimeType != null).toList();
   }
 
   List<Attachment?> getPreviewAttachments() {
-    return this.attachments!.where((item) => item!.mimeType == null).toList();
+    return attachments.where((item) => item!.mimeType == null).toList();
   }
 
   List<Message> getReactions() {
-    return this
-        .associatedMessages
+    return associatedMessages
         .where((item) => ReactionTypes.toList().contains(item.associatedMessageType))
         .toList();
   }
 
   void generateTempGuid() {
-    List<String> unique = [this.text ?? "", this.dateCreated?.millisecondsSinceEpoch.toString() ?? ""];
+    List<String> unique = [text ?? "", dateCreated?.millisecondsSinceEpoch.toString() ?? ""];
 
     String preHashed;
-    if (unique.every((element) => element.trim().length == 0)) {
+    if (unique.every((element) => element.trim().isEmpty)) {
       preHashed = randomString(8);
     } else {
       preHashed = unique.join(":");
     }
 
     String hashed = crypto.sha1.convert(utf8.encode(preHashed)).toString();
-    this.guid = "temp-$hashed";
+    guid = "temp-$hashed";
   }
 
   static Future<int?> countForChat(Chat? chat) async {
@@ -605,42 +645,141 @@ class Message {
 
     // Execute the query
     var res = await db.rawQuery("$query;", [chat.id]);
-    if (res.length == 0) return 0;
+    if (res.isEmpty) return 0;
 
     return res[0]["count"] as int?;
   }
 
   void merge(Message otherMessage) {
-    if (this.dateCreated == null && otherMessage.dateCreated != null) {
-      this.dateCreated = otherMessage.dateCreated;
+    if (dateCreated == null && otherMessage.dateCreated != null) {
+      dateCreated = otherMessage.dateCreated;
     }
-    if (this.dateDelivered == null && otherMessage.dateDelivered != null) {
-      this.dateDelivered = otherMessage.dateDelivered;
+    if (dateDelivered == null && otherMessage.dateDelivered != null) {
+      dateDelivered = otherMessage.dateDelivered;
     }
-    if (this.dateRead == null && otherMessage.dateRead != null) {
-      this.dateRead = otherMessage.dateRead;
+    if (dateRead == null && otherMessage.dateRead != null) {
+      dateRead = otherMessage.dateRead;
     }
-    if (this.dateDeleted == null && otherMessage.dateDeleted != null) {
-      this.dateDeleted = otherMessage.dateDeleted;
+    if (dateDeleted == null && otherMessage.dateDeleted != null) {
+      dateDeleted = otherMessage.dateDeleted;
     }
-    if (this.datePlayed == null && otherMessage.datePlayed != null) {
-      this.datePlayed = otherMessage.datePlayed;
+    if (datePlayed == null && otherMessage.datePlayed != null) {
+      datePlayed = otherMessage.datePlayed;
     }
-    if (this.metadata == null && otherMessage.metadata != null) {
-      this.metadata = otherMessage.metadata;
+    if (metadata == null && otherMessage.metadata != null) {
+      metadata = otherMessage.metadata;
     }
-    if (this.originalROWID == null && otherMessage.originalROWID != null) {
-      this.originalROWID = otherMessage.originalROWID;
+    if (originalROWID == null && otherMessage.originalROWID != null) {
+      originalROWID = otherMessage.originalROWID;
     }
-    if (!this.hasAttachments && otherMessage.hasAttachments) {
-      this.hasAttachments = otherMessage.hasAttachments;
+    if (!hasAttachments && otherMessage.hasAttachments) {
+      hasAttachments = otherMessage.hasAttachments;
     }
-    if (!this.hasReactions && otherMessage.hasReactions) {
-      this.hasReactions = otherMessage.hasReactions;
+    if (!hasReactions && otherMessage.hasReactions) {
+      hasReactions = otherMessage.hasReactions;
     }
-    if (this.error.value == 0 && otherMessage.error.value != 0) {
-      this.error.value = otherMessage.error.value;
+    if (error.value == 0 && otherMessage.error.value != 0) {
+      error.value = otherMessage.error.value;
     }
+  }
+
+  /// Get what shape the reply line should be
+  LineType getLineType(Message? olderMessage, Message threadOriginator) {
+    if (olderMessage?.threadOriginatorGuid != threadOriginatorGuid) olderMessage = threadOriginator;
+    if (isFromMe! && (olderMessage?.isFromMe ?? false)) {
+      return LineType.meToMe;
+    } else if (!isFromMe! && (olderMessage?.isFromMe ?? false)) {
+      return LineType.meToOther;
+    } else if (isFromMe! && !(olderMessage?.isFromMe ?? false)) {
+      return LineType.otherToMe;
+    } else {
+      return LineType.otherToOther;
+    }
+  }
+
+  /// Get whether the reply line from the message should connect to the message below
+  bool shouldConnectLower(Message? olderMessage, Message? newerMessage, Message threadOriginator) {
+    // if theres no newer message or it isn't part of the thread, don't connect
+    if (newerMessage == null || newerMessage.threadOriginatorGuid != threadOriginatorGuid) return false;
+    // if the line is from me to other or from other to other, don't connect lower.
+    // we only want lines ending at messages to me to connect downwards (this
+    // helps simplify some things and prevent rendering mistakes)
+    if (getLineType(olderMessage, threadOriginator) == LineType.meToOther || getLineType(olderMessage, threadOriginator) == LineType.otherToOther) return false;
+    // if the lower message isn't from me, then draw the connecting line
+    // (if the message is from me, that message will draw a connecting line up
+    // rather than this message drawing one downwards).
+    return isFromMe != newerMessage.isFromMe;
+  }
+
+  /// Get whether the reply line from the message should connect to the message above
+  bool shouldConnectUpper(Message? olderMessage, Message threadOriginator) {
+    // if theres no older message, or it isn't a part of the thread (make sure
+    // to check that it isn't actually an outlined bubble representing the
+    // thread originator), don't connect
+    if (olderMessage == null || (olderMessage.threadOriginatorGuid != threadOriginatorGuid && !upperIsThreadOriginatorBubble(olderMessage))) return false;
+    // if the older message is the outlined bubble, or the originator is from
+    // someone else and the message is from me, then draw the connecting line
+    // (the second condition might be redundant / unnecessary but I left it in
+    // just in case)
+    if (upperIsThreadOriginatorBubble(olderMessage) || (!threadOriginator.isFromMe! && isFromMe!) || getLineType(olderMessage, threadOriginator) == LineType.meToMe  || getLineType(olderMessage, threadOriginator) == LineType.otherToMe) return true;
+    // if the upper message is from me, then draw the connecting line
+    // (if the message is not from me, that message will draw a connecting line
+    // down rather than this message drawing one upwards).
+    return isFromMe == olderMessage.isFromMe;
+  }
+
+  /// Get whether the upper bubble is actually the thread originator as the
+  /// outlined bubble
+  bool upperIsThreadOriginatorBubble(Message? olderMessage) {
+    return olderMessage?.threadOriginatorGuid != threadOriginatorGuid;
+  }
+
+  /// Calculate the size of the message bubble by calculating text size or
+  /// attachment size
+  Size getBubbleSize(BuildContext context, {double? maxWidthOverride, double? minHeightOverride, String? textOverride}) {
+    // cache this value because the calculation can be expensive
+    if (ChatBloc().cachedMessageBubbleSizes[guid!] != null) return ChatBloc().cachedMessageBubbleSizes[guid!]!;
+    // if attachment, then grab width / height
+    if (fullText.isEmpty && attachments.isNotEmpty) {
+      return Size(attachments
+          .map((e) => e!.width)
+          .fold(0, (p, e) => max(p, (e ?? CustomNavigator.width(context) / 2).toDouble()) + 28),
+        attachments
+          .map((e) => e!.height)
+          .fold(0, (p, e) => max(p, (e ?? CustomNavigator.width(context) / 2).toDouble())));
+    }
+    // initialize constraints for text rendering
+    final constraints = BoxConstraints(
+      maxWidth: maxWidthOverride ?? CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE - 30,
+      minHeight: minHeightOverride ?? Theme.of(context).textTheme.bodyText2!.fontSize!,
+    );
+    final renderParagraph = RichText(
+      text: TextSpan(
+        text: textOverride ?? fullText,
+        style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
+      ),
+    ).createRenderObject(context);
+    // get the text size
+    Size size = renderParagraph.getDryLayout(constraints);
+    // if the text is shorter than the full width, add 28 to account for the
+    // container margins
+    if (size.height < Theme.of(context).textTheme.bodyText2!.fontSize! * 2
+        || (subject != null && size.height < Theme.of(context).textTheme.bodyText2!.fontSize! * 3)) {
+      size = Size(size.width + 28, size.height);
+    }
+    // if we have a URL preview, extend to the full width
+    if (isUrlPreview()) {
+      size = Size(CustomNavigator.width(context) * 2 / 3 - 30, size.height);
+    }
+    // if we have reactions, account for the extra height they add
+    if (hasReactions) {
+      size = Size(size.width, size.height + 25);
+    }
+    // add 16 to the height to account for container margins
+    size = Size(size.width, size.height + 16);
+    // cache the value
+    ChatBloc().cachedMessageBubbleSizes[guid!] = size;
+    return size;
   }
 
   Map<String, dynamic> toMap() => {
@@ -682,5 +821,7 @@ class Message {
         "hasReactions": hasReactions ? 1 : 0,
         "dateDeleted": (dateDeleted == null) ? null : dateDeleted!.millisecondsSinceEpoch,
         "metadata": jsonEncode(metadata),
+        "threadOriginatorGuid": threadOriginatorGuid,
+        "threadOriginatorPart": threadOriginatorPart,
       };
 }

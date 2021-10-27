@@ -112,8 +112,7 @@ Widget _wrapWithBackground({
     child: result,
   );
 
-  if (backgroundColor.alpha == 0xFF)
-    return childWithBackground;
+  if (backgroundColor.alpha == 0xFF) return childWithBackground;
 
   return ClipRect(
     child: BackdropFilter(

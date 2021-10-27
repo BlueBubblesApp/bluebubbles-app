@@ -1,9 +1,7 @@
 import 'dart:ui';
 
-import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
-import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';

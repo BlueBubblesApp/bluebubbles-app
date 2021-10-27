@@ -69,6 +69,7 @@ class Settings {
   final RxBool privateSendTypingIndicators = false.obs;
   final RxBool privateMarkChatAsRead = false.obs;
   final RxBool privateManualMarkAsRead = false.obs;
+  final RxBool privateSubjectLine = false.obs;
 
   // Redacted Mode Settings
   final RxBool redactedMode = false.obs;
@@ -116,7 +117,7 @@ class Settings {
   Settings();
 
   factory Settings.fromConfigEntries(List<ConfigEntry> entries) {
-    Settings settings = new Settings();
+    Settings settings = Settings();
     for (ConfigEntry entry in entries) {
       if (entry.name == "serverAddress") {
         settings.serverAddress.value = entry.value;
@@ -200,6 +201,8 @@ class Settings {
         settings.privateMarkChatAsRead.value = entry.value;
       } else if (entry.name == "privateManualMarkAsRead") {
         settings.privateManualMarkAsRead.value = entry.value;
+      } else if (entry.name == "privateSubjectLine") {
+        settings.privateSubjectLine.value = entry.value;
       } else if (entry.name == "showSyncIndicator") {
         settings.showSyncIndicator.value = entry.value;
       } else if (entry.name == "showDeliveryTimestamps") {
@@ -302,7 +305,7 @@ class Settings {
   }
 
   Settings save() {
-    Map<String, dynamic> map = this.toMap(includeAll: true);
+    Map<String, dynamic> map = toMap(includeAll: true);
     map.forEach((key, value) {
       if (value is bool) {
         prefs.setBool(key, value);
@@ -333,7 +336,7 @@ class Settings {
 
   static Future<Settings> getSettingsOld(Database db) async {
     List<Map<String, dynamic>> result = await db.query("config");
-    if (result.isEmpty) return new Settings();
+    if (result.isEmpty) return Settings();
     List<ConfigEntry> entries = [];
     for (Map<String, dynamic> setting in result) {
       entries.add(ConfigEntry.fromMap(setting));
@@ -343,92 +346,93 @@ class Settings {
 
   Map<String, dynamic> toMap({bool includeAll = false}) {
     Map<String, dynamic> map = {
-      'chunkSize': this.chunkSize.value,
-      'autoDownload': this.autoDownload.value,
-      'onlyWifiDownload': this.onlyWifiDownload.value,
-      'autoOpenKeyboard': this.autoOpenKeyboard.value,
-      'hideTextPreviews': this.hideTextPreviews.value,
-      'showIncrementalSync': this.showIncrementalSync.value,
-      'lowMemoryMode': this.lowMemoryMode.value,
-      'lastIncrementalSync': this.lastIncrementalSync.value,
-      'refreshRate': this.refreshRate.value,
-      'colorfulAvatars': this.colorfulAvatars.value,
-      'colorfulBubbles': this.colorfulBubbles.value,
-      'hideDividers': this.hideDividers.value,
-      'scrollVelocity': this.scrollVelocity.value,
-      'sendWithReturn': this.sendWithReturn.value,
-      'doubleTapForDetails': this.doubleTapForDetails.value,
-      'denseChatTiles': this.denseChatTiles.value,
-      'smartReply': this.smartReply.value,
-      'reducedForehead': this.reducedForehead.value,
-      'preCachePreviewImages': this.preCachePreviewImages.value,
-      'showConnectionIndicator': this.showConnectionIndicator.value,
-      'showSyncIndicator': this.showSyncIndicator.value,
-      'sendDelay': this.sendDelay.value,
-      'recipientAsPlaceholder': this.recipientAsPlaceholder.value,
-      'hideKeyboardOnScroll': this.hideKeyboardOnScroll.value,
-      'moveChatCreatorToHeader': this.moveChatCreatorToHeader.value,
-      'cameraFAB': this.cameraFAB.value,
-      'swipeToCloseKeyboard': this.swipeToCloseKeyboard.value,
-      'swipeToOpenKeyboard': this.swipeToOpenKeyboard.value,
-      'openKeyboardOnSTB': this.openKeyboardOnSTB.value,
-      'swipableConversationTiles': this.swipableConversationTiles.value,
-      'colorblindMode': this.colorblindMode.value,
-      'showDeliveryTimestamps': this.showDeliveryTimestamps.value,
-      'previewCompressionQuality': this.previewCompressionQuality.value,
-      'filteredChatList': this.filteredChatList.value,
-      'startVideosMuted': this.startVideosMuted.value,
-      'startVideosMutedFullscreen': this.startVideosMutedFullscreen.value,
-      'use24HrFormat': this.use24HrFormat.value,
-      'alwaysShowAvatars': this.alwaysShowAvatars.value,
-      'notifyOnChatList': this.notifyOnChatList.value,
-      'notifyReactions': this.notifyReactions.value,
-      'notificationSound': this.notificationSound.value,
-      'globalTextDetection': this.globalTextDetection.value,
-      'filterUnknownSenders': this.filterUnknownSenders.value,
-      'tabletMode': this.tabletMode.value,
-      'enablePrivateAPI': this.enablePrivateAPI.value,
-      'privateSendTypingIndicators': this.privateSendTypingIndicators.value,
-      'privateMarkChatAsRead': this.privateMarkChatAsRead.value,
-      'privateManualMarkAsRead': this.privateManualMarkAsRead.value,
-      'redactedMode': this.redactedMode.value,
-      'hideMessageContent': this.hideMessageContent.value,
-      'hideReactions': this.hideReactions.value,
-      'hideAttachments': this.hideAttachments.value,
-      'hideEmojis': this.hideEmojis.value,
-      'hideAttachmentTypes': this.hideAttachmentTypes.value,
-      'hideContactPhotos': this.hideContactPhotos.value,
-      'hideContactInfo': this.hideContactInfo.value,
-      'removeLetterAvatars': this.removeLetterAvatars.value,
-      'generateFakeContactNames': this.generateFakeContactNames.value,
-      'generateFakeMessageContent': this.generateFakeMessageContent.value,
-      'enableQuickTapback': this.enableQuickTapback.value,
-      'quickTapbackType': this.quickTapbackType.value,
-      'iosShowPin': this.iosShowPin.value,
-      'iosShowAlert': this.iosShowAlert.value,
-      'iosShowDelete': this.iosShowDelete.value,
-      'iosShowMarkRead': this.iosShowMarkRead.value,
-      'iosShowArchive': this.iosShowArchive.value,
-      'materialRightAction': this.materialRightAction.value.index,
-      'materialLeftAction': this.materialLeftAction.value.index,
-      'shouldSecure': this.shouldSecure.value,
-      'securityLevel': this.securityLevel.value.index,
-      'incognitoKeyboard': this.incognitoKeyboard.value,
-      'skin': this.skin.value.index,
-      'theme': this.theme.value.index,
-      'fullscreenViewerSwipeDir': this.fullscreenViewerSwipeDir.value.index,
-      'pinRowsPortrait': this.pinRowsPortrait.value,
-      'pinColumnsPortrait': this.pinColumnsPortrait.value,
-      'pinRowsLandscape': this.pinRowsLandscape.value,
-      'pinColumnsLandscape': this.pinColumnsLandscape.value,
-      'maxAvatarsInGroupWidget': this.maxAvatarsInGroupWidget.value,
+      'chunkSize': chunkSize.value,
+      'autoDownload': autoDownload.value,
+      'onlyWifiDownload': onlyWifiDownload.value,
+      'autoOpenKeyboard': autoOpenKeyboard.value,
+      'hideTextPreviews': hideTextPreviews.value,
+      'showIncrementalSync': showIncrementalSync.value,
+      'lowMemoryMode': lowMemoryMode.value,
+      'lastIncrementalSync': lastIncrementalSync.value,
+      'refreshRate': refreshRate.value,
+      'colorfulAvatars': colorfulAvatars.value,
+      'colorfulBubbles': colorfulBubbles.value,
+      'hideDividers': hideDividers.value,
+      'scrollVelocity': scrollVelocity.value,
+      'sendWithReturn': sendWithReturn.value,
+      'doubleTapForDetails': doubleTapForDetails.value,
+      'denseChatTiles': denseChatTiles.value,
+      'smartReply': smartReply.value,
+      'reducedForehead': reducedForehead.value,
+      'preCachePreviewImages': preCachePreviewImages.value,
+      'showConnectionIndicator': showConnectionIndicator.value,
+      'showSyncIndicator': showSyncIndicator.value,
+      'sendDelay': sendDelay.value,
+      'recipientAsPlaceholder': recipientAsPlaceholder.value,
+      'hideKeyboardOnScroll': hideKeyboardOnScroll.value,
+      'moveChatCreatorToHeader': moveChatCreatorToHeader.value,
+      'cameraFAB': cameraFAB.value,
+      'swipeToCloseKeyboard': swipeToCloseKeyboard.value,
+      'swipeToOpenKeyboard': swipeToOpenKeyboard.value,
+      'openKeyboardOnSTB': openKeyboardOnSTB.value,
+      'swipableConversationTiles': swipableConversationTiles.value,
+      'colorblindMode': colorblindMode.value,
+      'showDeliveryTimestamps': showDeliveryTimestamps.value,
+      'previewCompressionQuality': previewCompressionQuality.value,
+      'filteredChatList': filteredChatList.value,
+      'startVideosMuted': startVideosMuted.value,
+      'startVideosMutedFullscreen': startVideosMutedFullscreen.value,
+      'use24HrFormat': use24HrFormat.value,
+      'alwaysShowAvatars': alwaysShowAvatars.value,
+      'notifyOnChatList': notifyOnChatList.value,
+      'notifyReactions': notifyReactions.value,
+      'notificationSound': notificationSound.value,
+      'globalTextDetection': globalTextDetection.value,
+      'filterUnknownSenders': filterUnknownSenders.value,
+      'tabletMode': tabletMode.value,
+      'enablePrivateAPI': enablePrivateAPI.value,
+      'privateSendTypingIndicators': privateSendTypingIndicators.value,
+      'privateMarkChatAsRead': privateMarkChatAsRead.value,
+      'privateManualMarkAsRead': privateManualMarkAsRead.value,
+      'privateSubjectLine': privateSubjectLine.value,
+      'redactedMode': redactedMode.value,
+      'hideMessageContent': hideMessageContent.value,
+      'hideReactions': hideReactions.value,
+      'hideAttachments': hideAttachments.value,
+      'hideEmojis': hideEmojis.value,
+      'hideAttachmentTypes': hideAttachmentTypes.value,
+      'hideContactPhotos': hideContactPhotos.value,
+      'hideContactInfo': hideContactInfo.value,
+      'removeLetterAvatars': removeLetterAvatars.value,
+      'generateFakeContactNames': generateFakeContactNames.value,
+      'generateFakeMessageContent': generateFakeMessageContent.value,
+      'enableQuickTapback': enableQuickTapback.value,
+      'quickTapbackType': quickTapbackType.value,
+      'iosShowPin': iosShowPin.value,
+      'iosShowAlert': iosShowAlert.value,
+      'iosShowDelete': iosShowDelete.value,
+      'iosShowMarkRead': iosShowMarkRead.value,
+      'iosShowArchive': iosShowArchive.value,
+      'materialRightAction': materialRightAction.value.index,
+      'materialLeftAction': materialLeftAction.value.index,
+      'shouldSecure': shouldSecure.value,
+      'securityLevel': securityLevel.value.index,
+      'incognitoKeyboard': incognitoKeyboard.value,
+      'skin': skin.value.index,
+      'theme': theme.value.index,
+      'fullscreenViewerSwipeDir': fullscreenViewerSwipeDir.value.index,
+      'pinRowsPortrait': pinRowsPortrait.value,
+      'pinColumnsPortrait': pinColumnsPortrait.value,
+      'pinRowsLandscape': pinRowsLandscape.value,
+      'pinColumnsLandscape': pinColumnsLandscape.value,
+      'maxAvatarsInGroupWidget': maxAvatarsInGroupWidget.value,
     };
     if (includeAll) {
       map.addAll({
-        'guidAuthKey': this.guidAuthKey.value,
-        'serverAddress': this.serverAddress.value,
-        'finishedSetup': this.finishedSetup.value,
-        'colorsFromMedia': this.colorsFromMedia.value,
+        'guidAuthKey': guidAuthKey.value,
+        'serverAddress': serverAddress.value,
+        'finishedSetup': finishedSetup.value,
+        'colorsFromMedia': colorsFromMedia.value,
       });
     }
     return map;
@@ -483,6 +487,7 @@ class Settings {
     SettingsManager().settings.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
     SettingsManager().settings.privateMarkChatAsRead.value = map['privateMarkChatAsRead'] ?? false;
     SettingsManager().settings.privateManualMarkAsRead.value = map['privateManualMarkAsRead'] ?? false;
+    SettingsManager().settings.privateSubjectLine.value = map['privateSubjectLine'] ?? false;
     SettingsManager().settings.redactedMode.value = map['redactedMode'] ?? false;
     SettingsManager().settings.hideMessageContent.value = map['hideMessageContent'] ?? true;
     SettingsManager().settings.hideReactions.value = map['hideReactions'] ?? false;
@@ -518,7 +523,7 @@ class Settings {
   }
 
   static Settings fromMap(Map<String, dynamic> map) {
-    Settings s = new Settings();
+    Settings s = Settings();
     s.guidAuthKey.value = map['guidAuthKey'] ?? "";
     s.serverAddress.value = map['serverAddress'] ?? "";
     s.finishedSetup.value = map['finishedSetup'] ?? false;
@@ -571,6 +576,7 @@ class Settings {
     s.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
     s.privateMarkChatAsRead.value = map['privateMarkChatAsRead'] ?? false;
     s.privateManualMarkAsRead.value = map['privateManualMarkAsRead'] ?? false;
+    s.privateSubjectLine.value = map['privateSubjectLine'] ?? false;
     s.redactedMode.value = map['redactedMode'] ?? false;
     s.hideMessageContent.value = map['hideMessageContent'] ?? true;
     s.hideReactions.value = map['hideReactions'] ?? false;

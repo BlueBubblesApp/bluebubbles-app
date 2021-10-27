@@ -58,8 +58,12 @@ class Reaction {
         handleCache.add(cache);
 
         // Only add the reaction if it's not a "negative"
-        if (msg.associatedMessageType != null && !msg.associatedMessageType!.startsWith("-")) output.add(msg);
-      } else if (msg.associatedMessageType != null && !msg.associatedMessageType!.startsWith("-")) output.add(msg);
+        if (msg.associatedMessageType != null && !msg.associatedMessageType!.startsWith("-")) {
+          output.add(msg);
+        }
+      } else if (msg.associatedMessageType != null && !msg.associatedMessageType!.startsWith("-")) {
+        output.add(msg);
+      }
     }
 
     return output;
@@ -67,12 +71,12 @@ class Reaction {
 
   static Map<String, Reaction> getLatestReactionMap(List<Message> messages) {
     Map<String, Reaction> reactions = {};
-    reactions[ReactionTypes.LIKE] = new Reaction(reactionType: ReactionTypes.LIKE);
-    reactions[ReactionTypes.LOVE] = new Reaction(reactionType: ReactionTypes.LOVE);
-    reactions[ReactionTypes.DISLIKE] = new Reaction(reactionType: ReactionTypes.DISLIKE);
-    reactions[ReactionTypes.QUESTION] = new Reaction(reactionType: ReactionTypes.QUESTION);
-    reactions[ReactionTypes.EMPHASIZE] = new Reaction(reactionType: ReactionTypes.EMPHASIZE);
-    reactions[ReactionTypes.LAUGH] = new Reaction(reactionType: ReactionTypes.LAUGH);
+    reactions[ReactionTypes.LIKE] = Reaction(reactionType: ReactionTypes.LIKE);
+    reactions[ReactionTypes.LOVE] = Reaction(reactionType: ReactionTypes.LOVE);
+    reactions[ReactionTypes.DISLIKE] = Reaction(reactionType: ReactionTypes.DISLIKE);
+    reactions[ReactionTypes.QUESTION] = Reaction(reactionType: ReactionTypes.QUESTION);
+    reactions[ReactionTypes.EMPHASIZE] = Reaction(reactionType: ReactionTypes.EMPHASIZE);
+    reactions[ReactionTypes.LAUGH] = Reaction(reactionType: ReactionTypes.LAUGH);
 
     // Iterate over the messages and insert the latest reaction for each user
     for (Message msg in Reaction.getUniqueReactionMessages(messages)) {
@@ -83,29 +87,29 @@ class Reaction {
   }
 
   bool hasReactions() {
-    return this.messages.length > 0;
+    return messages.isNotEmpty;
   }
 
   void addMessage(Message message) {
-    this.messages.add(message);
+    messages.add(message);
   }
 
   Widget? getSmallWidget(BuildContext context, {Message? message, bool bigPin = false, bool isReactionPicker = true}) {
-    if (this.messages.isEmpty && message == null) return null;
-    if (this.messages.isEmpty && message != null) this.messages = [message];
+    if (messages.isEmpty && message == null) return null;
+    if (messages.isEmpty && message != null) messages = [message];
 
     List<Widget> reactionList = [];
 
-    for (int i = 0; i < this.messages.length; i++) {
+    for (int i = 0; i < messages.length; i++) {
       Color iconColor = Colors.white;
-      if (!this.messages[i].isFromMe! && context.theme.accentColor.computeLuminance() >= 0.179) {
+      if (!messages[i].isFromMe! && context.theme.accentColor.computeLuminance() >= 0.179) {
         iconColor = Colors.black.withAlpha(95);
       }
 
       reactionList.add(
         Padding(
           padding: EdgeInsets.fromLTRB(
-            (this.messages[i].isFromMe! && !isReactionPicker ? 5.0 : 0.0) + i.toDouble() * 10.0,
+            (messages[i].isFromMe! && !isReactionPicker ? 5.0 : 0.0) + i.toDouble() * 10.0,
             bigPin || isReactionPicker ? 0 : 1.0,
             0,
             0,
@@ -124,7 +128,7 @@ class Reaction {
                       borderRadius: BorderRadius.circular(100),
                       color: context.theme.accentColor,
                       boxShadow: [
-                        new BoxShadow(
+                        BoxShadow(
                           blurRadius: 1.0,
                           color: Colors.black.withOpacity(0.8),
                         ),
@@ -143,7 +147,7 @@ class Reaction {
                       borderRadius: BorderRadius.circular(100),
                       color: context.theme.accentColor,
                       boxShadow: [
-                        new BoxShadow(
+                        BoxShadow(
                           blurRadius: 1.0,
                           color: Colors.black.withOpacity(0.8),
                         ),
@@ -157,11 +161,11 @@ class Reaction {
                 margin: EdgeInsets.only(right: bigPin ? 10 : 0),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(100),
-                  color: this.messages[i].isFromMe! ? context.theme.primaryColor : context.theme.accentColor,
+                  color: messages[i].isFromMe! ? context.theme.primaryColor : context.theme.accentColor,
                   boxShadow: isReactionPicker
                       ? null
                       : [
-                          new BoxShadow(
+                          BoxShadow(
                             blurRadius: 1.0,
                             color: Colors.black.withOpacity(0.8),
                           )

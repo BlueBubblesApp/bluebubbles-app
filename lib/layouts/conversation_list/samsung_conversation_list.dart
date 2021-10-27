@@ -41,7 +41,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
   final ScrollController scrollController = ScrollController();
 
   bool hasPinnedChat() {
-    for (var i = 0; i < ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).unknownSendersHelper(widget.parent.widget.showUnknownSenders).length; i++) {
+    for (int i = 0; i < ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).unknownSendersHelper(widget.parent.widget.showUnknownSenders).length; i++) {
       if (ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).unknownSendersHelper(widget.parent.widget.showUnknownSenders)[i].isPinned!) {
         widget.parent.hasPinnedChats = true;
         return true;
@@ -54,7 +54,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
 
   bool hasNormalChats() {
     int counter = 0;
-    for (var i = 0; i < ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).unknownSendersHelper(widget.parent.widget.showUnknownSenders).length; i++) {
+    for (int i = 0; i < ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).unknownSendersHelper(widget.parent.widget.showUnknownSenders).length; i++) {
       if (ChatBloc().chats.archivedHelper(widget.parent.widget.showArchivedChats).unknownSendersHelper(widget.parent.widget.showUnknownSenders)[i].isPinned!) {
         counter++;
       } else {}
@@ -237,8 +237,8 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                ...widget.parent.getHeaderTextWidgets(selected: selected.length),
-                ...widget.parent.getConnectionIndicatorWidgets(),
+                widget.parent.getHeaderTextWidget(size: 20),
+                widget.parent.getConnectionIndicatorWidget(),
                 widget.parent.getSyncIndicatorWidget(),
               ],
             ),
@@ -281,6 +281,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
               (SettingsManager().settings.moveChatCreatorToHeader.value && !showArchived && !showUnknown)
                   ? GestureDetector(
                 onTap: () {
+                  EventDispatcher().emit("update-highlight", null);
                   CustomNavigator.pushAndRemoveUntil(
                     context,
                     ConversationView(
@@ -317,7 +318,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
 
                   String appDocPath = SettingsManager().appDocDir.path;
                   String ext = ".png";
-                  File file = new File("$appDocPath/attachments/" + randomString(16) + ext);
+                  File file = File("$appDocPath/attachments/" + randomString(16) + ext);
                   await file.create(recursive: true);
 
                   // Take the picture after opening the camera
@@ -373,7 +374,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
   Widget buildChatList() {
     bool showArchived = widget.parent.widget.showArchivedChats;
     bool showUnknown = widget.parent.widget.showUnknownSenders;
-    return Obx(() => WillPopScope(
+    return WillPopScope(
         onWillPop: () async {
           if (selected.isNotEmpty) {
             selected = [];
@@ -546,11 +547,12 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
                     .contains(selected.where((element) => element.hasUnreadMessage!).length))
                   GestureDetector(
                     onTap: () {
-                      selected.forEach((element) {
+                      for (Chat element in selected) {
                         element.toggleHasUnread(!element.hasUnreadMessage!);
-                      });
+                      }
+
                       selected = [];
-                      if (this.mounted) setState(() {});
+                      if (mounted) setState(() {});
                     },
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
@@ -564,11 +566,12 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
                     .contains(selected.where((element) => element.muteType == "mute").length))
                   GestureDetector(
                     onTap: () {
-                      selected.forEach((element) {
+                      for (Chat element in selected) {
                         element.toggleMute(element.muteType != "mute");
-                      });
+                      }
+
                       selected = [];
-                      if (this.mounted) setState(() {});
+                      if (mounted) setState(() {});
                     },
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
@@ -584,11 +587,12 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
                     .contains(selected.where((element) => element.isPinned!).length))
                   GestureDetector(
                     onTap: () {
-                      selected.forEach((element) {
+                      for (Chat element in selected) {
                         element.togglePin(!element.isPinned!);
-                      });
+                      }
+
                       selected = [];
-                      if (this.mounted) setState(() {});
+                      if (mounted) setState(() {});
                     },
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
@@ -600,15 +604,15 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
                   ),
                 GestureDetector(
                   onTap: () {
-                    selected.forEach((element) {
+                    for (Chat element in selected) {
                       if (element.isArchived!) {
                         ChatBloc().unArchiveChat(element);
                       } else {
                         ChatBloc().archiveChat(element);
                       }
-                    });
+                    }
                     selected = [];
-                    if (this.mounted) setState(() {});
+                    if (mounted) setState(() {});
                   },
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
@@ -621,12 +625,13 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
                 if (selected[0].isArchived!)
                   GestureDetector(
                     onTap: () {
-                      selected.forEach((element) {
+                      for (Chat element in selected) {
                         ChatBloc().deleteChat(element);
                         Chat.deleteChat(element);
-                      });
+                      }
+
                       selected = [];
-                      if (this.mounted) setState(() {});
+                      if (mounted) setState(() {});
                     },
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
@@ -643,8 +648,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
               ? widget.parent.buildFloatingActionButton()
               : null,
         ),
-      ),
-    );
+      );
   }
 
   Widget buildForLandscape(BuildContext context, Widget chatList) {
@@ -731,12 +735,12 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
                 if (SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.pin) {
                   chat.togglePin(!chat.isPinned!);
                   EventDispatcher().emit("refresh", null);
-                  if (this.mounted) setState(() {});
+                  if (mounted) setState(() {});
                 } else if (SettingsManager().settings.materialLeftAction.value ==
                     MaterialSwipeAction.alerts) {
                   chat.toggleMute(
                       chat.muteType != "mute");
-                  if (this.mounted) setState(() {});
+                  if (mounted) setState(() {});
                 } else if (SettingsManager().settings.materialLeftAction.value ==
                     MaterialSwipeAction.delete) {
                   ChatBloc().deleteChat(chat);
@@ -756,12 +760,12 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
                 if (SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.pin) {
                   chat.togglePin(!chat.isPinned!);
                   EventDispatcher().emit("refresh", null);
-                  if (this.mounted) setState(() {});
+                  if (mounted) setState(() {});
                 } else if (SettingsManager().settings.materialRightAction.value ==
                     MaterialSwipeAction.alerts) {
                   chat.toggleMute(
                       chat.muteType != "mute");
-                  if (this.mounted) setState(() {});
+                  if (mounted) setState(() {});
                 } else if (SettingsManager().settings.materialRightAction.value ==
                     MaterialSwipeAction.delete) {
                   ChatBloc().deleteChat(chat);

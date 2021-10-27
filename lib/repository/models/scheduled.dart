@@ -26,7 +26,7 @@ class ScheduledMessage {
   ScheduledMessage({this.id, this.chatGuid, this.message, this.epochTime, this.completed});
 
   factory ScheduledMessage.fromMap(Map<String, dynamic> json) {
-    return new ScheduledMessage(
+    return ScheduledMessage(
         id: json.containsKey("ROWID") ? json["ROWID"] : null,
         chatGuid: json["chatGuid"],
         message: json["message"],
@@ -39,23 +39,23 @@ class ScheduledMessage {
 
     // Try to find an existing handle before saving it
     ScheduledMessage? existing = await ScheduledMessage.findOne(
-        {"chatGuid": this.chatGuid, "message": this.message, "epochTime": this.epochTime});
+        {"chatGuid": chatGuid, "message": message, "epochTime": epochTime});
     if (existing != null) {
-      this.id = existing.id;
+      id = existing.id;
     }
 
     // If it already exists, update it
     if (existing == null) {
       // Remove the ID from the map for inserting
-      var map = this.toMap();
+      var map = toMap();
       map.remove("ROWID");
       try {
-        this.id = await db?.insert("scheduled", map);
+        id = await db?.insert("scheduled", map);
       } catch (e) {
-        this.id = null;
+        id = null;
       }
     } else if (updateIfAbsent) {
-      await this.update();
+      await update();
     }
 
     return this;
@@ -65,19 +65,19 @@ class ScheduledMessage {
     final Database? db = await DBProvider.db.database;
 
     // If it already exists, update it
-    if (this.id != null) {
+    if (id != null) {
       await db?.update(
           "scheduled",
           {
-            "chatGuid": this.chatGuid,
-            "message": this.message,
-            "epochTime": this.epochTime,
-            "completed": this.completed! ? 1 : 0
+            "chatGuid": chatGuid,
+            "message": message,
+            "epochTime": epochTime,
+            "completed": completed! ? 1 : 0
           },
           where: "ROWID = ?",
-          whereArgs: [this.id]);
+          whereArgs: [id]);
     } else {
-      await this.save(false);
+      await save(false);
     }
 
     return this;
@@ -87,9 +87,13 @@ class ScheduledMessage {
     final Database? db = await DBProvider.db.database;
     if (db == null) return null;
     List<String> whereParams = [];
-    filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
+    for (var filter in filters.keys) {
+      whereParams.add('$filter = ?');
+    }
     List<dynamic> whereArgs = [];
-    filters.values.forEach((filter) => whereArgs.add(filter));
+    for (var filter in filters.values) {
+      whereArgs.add(filter);
+    }
     var res = await db.query("scheduled", where: whereParams.join(" AND "), whereArgs: whereArgs, limit: 1);
 
     if (res.isEmpty) {
@@ -103,12 +107,16 @@ class ScheduledMessage {
     final Database? db = await DBProvider.db.database;
     if (db == null) return [];
     List<String> whereParams = [];
-    filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
+    for (var filter in filters.keys) {
+      whereParams.add('$filter = ?');
+    }
     List<dynamic> whereArgs = [];
-    filters.values.forEach((filter) => whereArgs.add(filter));
+    for (var filter in filters.values) {
+      whereArgs.add(filter);
+    }
     var res = await db.query("scheduled",
-        where: (whereParams.length > 0) ? whereParams.join(" AND ") : null,
-        whereArgs: (whereArgs.length > 0) ? whereArgs : null);
+        where: (whereParams.isNotEmpty) ? whereParams.join(" AND ") : null,
+        whereArgs: (whereArgs.isNotEmpty) ? whereArgs : null);
 
     return (res.isNotEmpty) ? res.map((c) => ScheduledMessage.fromMap(c)).toList() : [];
   }

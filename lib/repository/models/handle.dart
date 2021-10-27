@@ -37,7 +37,7 @@ class Handle {
   });
 
   factory Handle.fromMap(Map<String, dynamic> json) {
-    var data = new Handle(
+    var data = Handle(
       id: json.containsKey("ROWID") ? json["ROWID"] : null,
       originalROWID: json.containsKey("originalROWID") ? json["originalROWID"] : null,
       address: json["address"],
@@ -48,9 +48,7 @@ class Handle {
     );
 
     // Adds fallback getter for the ID
-    if (data.id == null) {
-      data.id = json.containsKey("id") ? json["id"] : null;
-    }
+    data.id ??= json.containsKey("id") ? json["id"] : null;
 
     return data;
   }
@@ -59,23 +57,23 @@ class Handle {
     final Database? db = await DBProvider.db.database;
 
     // Try to find an existing handle before saving it
-    Handle? existing = await Handle.findOne({"address": this.address});
+    Handle? existing = await Handle.findOne({"address": address});
     if (existing != null) {
-      this.id = existing.id;
+      id = existing.id;
     }
 
     // If it already exists, update it
     if (existing == null) {
       // Remove the ID from the map for inserting
-      var map = this.toMap();
+      var map = toMap();
       map.remove("ROWID");
       try {
-        this.id = await db?.insert("handle", map);
+        id = await db?.insert("handle", map);
       } catch (e) {
-        this.id = null;
+        id = null;
       }
     } else if (updateIfAbsent) {
-      await this.update();
+      await update();
     }
 
     return this;
@@ -85,22 +83,22 @@ class Handle {
     final Database? db = await DBProvider.db.database;
 
     // If it already exists, update it
-    if (this.id != null) {
+    if (id != null) {
       Map<String, dynamic> params = {
-        "address": this.address,
-        "country": this.country,
-        "color": this.color,
-        "defaultPhone": this.defaultPhone,
-        "uncanonicalizedId": this.uncanonicalizedId
+        "address": address,
+        "country": country,
+        "color": color,
+        "defaultPhone": defaultPhone,
+        "uncanonicalizedId": uncanonicalizedId
       };
 
-      if (this.originalROWID != null) {
-        params["originalROWID"] = this.originalROWID;
+      if (originalROWID != null) {
+        params["originalROWID"] = originalROWID;
       }
 
-      await db?.update("handle", params, where: "ROWID = ?", whereArgs: [this.id]);
+      await db?.update("handle", params, where: "ROWID = ?", whereArgs: [id]);
     } else {
-      await this.save(false);
+      await save(false);
     }
 
     return this;
@@ -108,18 +106,18 @@ class Handle {
 
   Future<Handle> updateColor(String? newColor) async {
     final Database? db = await DBProvider.db.database;
-    if (this.id == null) return this;
+    if (id == null) return this;
 
-    await db?.update("handle", {"color": newColor}, where: "ROWID = ?", whereArgs: [this.id]);
+    await db?.update("handle", {"color": newColor}, where: "ROWID = ?", whereArgs: [id]);
 
     return this;
   }
 
   Future<Handle> updateDefaultPhone(String newPhone) async {
     final Database? db = await DBProvider.db.database;
-    if (this.id == null) return this;
+    if (id == null) return this;
 
-    await db?.update("handle", {"defaultPhone": newPhone}, where: "ROWID = ?", whereArgs: [this.id]);
+    await db?.update("handle", {"defaultPhone": newPhone}, where: "ROWID = ?", whereArgs: [id]);
 
     return this;
   }
@@ -128,9 +126,13 @@ class Handle {
     final Database? db = await DBProvider.db.database;
     if (db == null) return null;
     List<String> whereParams = [];
-    filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
+    for (var filter in filters.keys) {
+      whereParams.add('$filter = ?');
+    }
     List<dynamic> whereArgs = [];
-    filters.values.forEach((filter) => whereArgs.add(filter));
+    for (var filter in filters.values) {
+      whereArgs.add(filter);
+    }
     var res = await db.query("handle", where: whereParams.join(" AND "), whereArgs: whereArgs, limit: 1);
 
     if (res.isEmpty) {
@@ -144,12 +146,16 @@ class Handle {
     final Database? db = await DBProvider.db.database;
     if (db == null) return ChatBloc().cachedHandles;
     List<String> whereParams = [];
-    filters.keys.forEach((filter) => whereParams.add('$filter = ?'));
+    for (var filter in filters.keys) {
+      whereParams.add('$filter = ?');
+    }
     List<dynamic> whereArgs = [];
-    filters.values.forEach((filter) => whereArgs.add(filter));
+    for (var filter in filters.values) {
+      whereArgs.add(filter);
+    }
     var res = await db.query("handle",
-        where: (whereParams.length > 0) ? whereParams.join(" AND ") : null,
-        whereArgs: (whereArgs.length > 0) ? whereArgs : null);
+        where: (whereParams.isNotEmpty) ? whereParams.join(" AND ") : null,
+        whereArgs: (whereArgs.isNotEmpty) ? whereArgs : null);
 
     return (res.isNotEmpty) ? res.map((c) => Handle.fromMap(c)).toList() : [];
   }

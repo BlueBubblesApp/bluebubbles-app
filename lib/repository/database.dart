@@ -45,29 +45,29 @@ class DBProvider {
 
   static Database? _database;
   static String _path = "";
-  static int currentVersion = 14;
+  static int currentVersion = 15;
 
   /// Contains list of functions to invoke when going from a previous to the current database verison
   /// The previous version is always [key - 1], for example for key 2, it will be the upgrade scheme from version 1 to version 2
   static final List<DBUpgradeItem> upgradeSchemes = [
-    new DBUpgradeItem(
+    DBUpgradeItem(
         addedInVersion: 2,
         upgrade: (Database db) {
           db.execute("ALTER TABLE message ADD COLUMN hasDdResults INTEGER DEFAULT 0;");
         }),
-    new DBUpgradeItem(
+    DBUpgradeItem(
         addedInVersion: 3,
         upgrade: (Database db) {
           db.execute("ALTER TABLE message ADD COLUMN balloonBundleId TEXT DEFAULT NULL;");
           db.execute("ALTER TABLE chat ADD COLUMN isFiltered INTEGER DEFAULT 0;");
         }),
-    new DBUpgradeItem(
+    DBUpgradeItem(
         addedInVersion: 4,
         upgrade: (Database db) {
           db.execute("ALTER TABLE message ADD COLUMN dateDeleted INTEGER DEFAULT NULL;");
           db.execute("ALTER TABLE chat ADD COLUMN isPinned INTEGER DEFAULT 0;");
         }),
-    new DBUpgradeItem(
+    DBUpgradeItem(
         addedInVersion: 5,
         upgrade: (Database db) {
           db.execute("ALTER TABLE handle ADD COLUMN originalROWID INTEGER DEFAULT NULL;");
@@ -75,49 +75,49 @@ class DBProvider {
           db.execute("ALTER TABLE attachment ADD COLUMN originalROWID INTEGER DEFAULT NULL;");
           db.execute("ALTER TABLE message ADD COLUMN otherHandle INTEGER DEFAULT NULL;");
         }),
-    new DBUpgradeItem(
+    DBUpgradeItem(
         addedInVersion: 6,
         upgrade: (Database db) {
           db.execute("ALTER TABLE attachment ADD COLUMN metadata TEXT DEFAULT NULL;");
         }),
-    new DBUpgradeItem(
+    DBUpgradeItem(
         addedInVersion: 7,
         upgrade: (Database db) {
           db.execute("ALTER TABLE message ADD COLUMN metadata TEXT DEFAULT NULL;");
         }),
-    new DBUpgradeItem(
+    DBUpgradeItem(
         addedInVersion: 8,
         upgrade: (Database db) {
           db.execute("ALTER TABLE handle ADD COLUMN color TEXT DEFAULT NULL;");
         }),
-    new DBUpgradeItem(
+    DBUpgradeItem(
         addedInVersion: 9,
         upgrade: (Database db) {
           db.execute("ALTER TABLE handle ADD COLUMN defaultPhone TEXT DEFAULT NULL;");
         }),
-    new DBUpgradeItem(
+    DBUpgradeItem(
         addedInVersion: 10,
         upgrade: (Database db) {
           db.execute("ALTER TABLE chat ADD COLUMN customAvatarPath TEXT DEFAULT NULL;");
         }),
-    new DBUpgradeItem(
+    DBUpgradeItem(
         addedInVersion: 11,
         upgrade: (Database db) {
           db.execute("ALTER TABLE chat ADD COLUMN pinIndex INTEGER DEFAULT NULL;");
         }),
-    new DBUpgradeItem(
+    DBUpgradeItem(
         addedInVersion: 12,
         upgrade: (Database db) async {
           db.execute("ALTER TABLE chat ADD COLUMN muteType TEXT DEFAULT NULL;");
           db.execute("ALTER TABLE chat ADD COLUMN muteArgs TEXT DEFAULT NULL;");
           await db.update("chat", {'muteType': 'mute'}, where: "isMuted = ?", whereArgs: [1]);
         }),
-    new DBUpgradeItem(
+    DBUpgradeItem(
         addedInVersion: 13,
         upgrade: (Database db) {
           db.execute("ALTER TABLE themes ADD COLUMN gradientBg INTEGER DEFAULT 0;");
         }),
-    new DBUpgradeItem(
+    DBUpgradeItem(
         addedInVersion: 14,
         upgrade: (Database db) async {
           db.execute("ALTER TABLE themes ADD COLUMN previousLightTheme INTEGER DEFAULT 0;");
@@ -125,6 +125,12 @@ class DBProvider {
           Settings s = await Settings.getSettingsOld(db);
           s.save();
           db.execute("DELETE FROM config");
+        }),
+    DBUpgradeItem(
+        addedInVersion: 15,
+        upgrade: (Database db) {
+          db.execute("ALTER TABLE message ADD COLUMN threadOriginatorGuid TEXT DEFAULT NULL;");
+          db.execute("ALTER TABLE message ADD COLUMN threadOriginatorPart TEXT DEFAULT NULL;");
         }),
   ];
 
@@ -159,7 +165,7 @@ class DBProvider {
     }, onCreate: (Database db, int version) async {
       Logger.info("creating database");
       _database = db;
-      await this.buildDatabase(db);
+      await buildDatabase(db);
       _database = null;
     });
   }
@@ -339,6 +345,8 @@ class DBProvider {
         "hasReactions INTEGER DEFAULT 0,"
         "metadata TEXT DEFAULT NULL,"
         "dateDeleted INTEGER DEFAULT NULL,"
+        "threadOriginatorGuid TEXT DEFAULT NULL,"
+        "threadOriginatorPart TEXT DEFAULT NULL,"
         "FOREIGN KEY(handleId) REFERENCES handle(ROWID)"
         ");");
   }

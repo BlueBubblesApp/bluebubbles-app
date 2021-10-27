@@ -14,12 +14,12 @@ class MessageTimeStamp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (CurrentChat.of(context) == null) return Container();
+    if (CurrentChat.activeChat == null) return Container();
 
     return StreamBuilder<double>(
-        stream: CurrentChat.of(context)?.timeStampOffsetStream.stream,
+        stream: CurrentChat.activeChat?.timeStampOffsetStream.stream,
         builder: (context, snapshot) {
-          double offset = CurrentChat.of(context)!.timeStampOffset;
+          double offset = CurrentChat.activeChat!.timeStampOffset;
           String text = buildTime(message.dateCreated).toLowerCase();
           if (!message.dateCreated!.isToday()) {
             String formatted = buildDate(message.dateCreated);

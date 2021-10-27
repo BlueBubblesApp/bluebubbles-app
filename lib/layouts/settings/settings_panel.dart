@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
+import 'package:bluebubbles/layouts/setup/setup_view.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/repository/models/fcm_data.dart';
@@ -30,7 +31,6 @@ import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:collection/collection.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/misc_panel.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -64,7 +64,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
       if (!event.containsKey("type")) return;
 
-      if (event["type"] == 'theme-update' && this.mounted) {
+      if (event["type"] == 'theme-update' && mounted) {
         setState(() {});
       }
     });
@@ -165,7 +165,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                             );
                           },
                           onLongPress: () {
-                            Clipboard.setData(new ClipboardData(text: _settingsCopy.serverAddress.value));
+                            Clipboard.setData(ClipboardData(text: _settingsCopy.serverAddress.value));
                             showSnackbar('Copied', "Address copied to clipboard");
                           },
                           leading: Column(
@@ -883,7 +883,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                             String entryJson = "[";
                                             await e.fetchData();
                                             e.entries.forEachIndexed((index, e2) {
-                                              entryJson = entryJson + "${jsonEncode(e2.toMap())}";
+                                              entryJson = entryJson + jsonEncode(e2.toMap());
                                               if (index != e.entries.length - 1) {
                                                 entryJson = entryJson + ",";
                                               } else {
@@ -893,7 +893,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                             Map<String, dynamic> map = e.toMap();
                                             Logger.debug(entryJson);
                                             map['entries'] = jsonDecode(entryJson);
-                                            jsonStr = jsonStr + "${jsonEncode(map)}";
+                                            jsonStr = jsonStr + jsonEncode(map);
                                             if (index != allThemes.length - 1) {
                                               jsonStr = jsonStr + ",";
                                             } else {
@@ -1013,7 +1013,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                               ContactManager().handleToContact.values.where((element) => element != null).forEachIndexed((index, c) {
                                 var map = c!.toMap();
                                 map.remove("avatar");
-                                json = json + "${jsonEncode(map)}";
+                                json = json + jsonEncode(map);
                                 if (index != ContactManager().handleToContact.values.where((element) => element != null).length - 1) {
                                   json = json + ",";
                                 } else {
@@ -1057,9 +1057,11 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                         await DBProvider.deleteDB();
                                         await SettingsManager().resetConnection();
                                         SettingsManager().settings.finishedSetup.value = false;
-                                        SocketManager().finishedSetup.sink.add(false);
-                                        Navigator.of(context).popUntil((route) => route.isFirst);
-                                        SettingsManager().settings = new Settings();
+                                        Get.offAll(() => WillPopScope(
+                                          onWillPop: () async => false,
+                                          child: SetupView(),
+                                        ), duration: Duration.zero, transition: Transition.noTransition);
+                                        SettingsManager().settings = Settings();
                                         SettingsManager().settings.save();
                                         SettingsManager().fcmData = null;
                                         FCMData.deleteFcmData();

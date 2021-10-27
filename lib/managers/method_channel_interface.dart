@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
@@ -78,7 +80,7 @@ class MethodChannelInterface {
   ///
   /// @param [method] is the tag to be recognized in native code
   /// @param [arguments] is an optional parameter which can be used to send other data along with the method call
-  Future invokeMethod(String method, [dynamic arguments]) async {
+  Future<dynamic> invokeMethod(String method, [dynamic arguments]) async {
     if (kIsWeb || kIsDesktop) return;
     return platform.invokeMethod(method, arguments);
   }
@@ -90,7 +92,7 @@ class MethodChannelInterface {
     // call.method is the name of the call from native code
     switch (call.method) {
       case "new-server":
-        if (!SettingsManager().settings.finishedSetup.value) return new Future.value("");
+        if (!SettingsManager().settings.finishedSetup.value) return Future.value("");
 
         // The arguments for a new server are formatted with the new server address inside square brackets
         // As such: [https://alksdjfoaehg.ngrok.io]
@@ -102,7 +104,7 @@ class MethodChannelInterface {
         // And then tell the socket to set the new server address
         await SocketManager().newServer(address);
 
-        return new Future.value("");
+        return Future.value("");
       case "new-message":
         Logger.info("Received new message from FCM");
         // Retreive the data for this message as a json
@@ -117,10 +119,10 @@ class MethodChannelInterface {
         } else {
           Logger.info("Handling through IncomingQueue");
           // Add it to the queue with the data as the item
-          IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_MESSAGE_EVENT, item: {"data": data}));
+          IncomingQueue().add(QueueItem(event: IncomingQueue.HANDLE_MESSAGE_EVENT, item: {"data": data}));
         }
 
-        return new Future.value("");
+        return Future.value("");
       case "updated-message":
         // Retreive the data for this message as a json
         Map<String, dynamic>? data = jsonDecode(call.arguments);
@@ -132,18 +134,20 @@ class MethodChannelInterface {
           send.send(data);
         } else {
           // Add it to the queue with the data as the item
-          IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_UPDATE_MESSAGE, item: {"data": data}));
+          IncomingQueue().add(QueueItem(event: IncomingQueue.HANDLE_UPDATE_MESSAGE, item: {"data": data}));
         }
 
-        return new Future.value("");
+        return Future.value("");
       case "ChatOpen":
-        Logger.info("Opening Chat with GUID: ${call.arguments}");
-        openChat(call.arguments);
-
-        return new Future.value("");
+        recentIntent = call.arguments["guid"];
+        Logger.info("Opening Chat with GUID: ${call.arguments['guid']}, bubble: ${call.arguments['bubble']}");
+        LifeCycleManager().isBubble = call.arguments['bubble'] == "true";
+        await openChat(call.arguments['guid']);
+        recentIntent = null;
+        return Future.value("");
       case "socket-error-open":
         Get.toNamed("/settings/server-management-panel");
-        return new Future.value("");
+        return Future.value("");
       case "reply":
         if (call.arguments["chat"] == "google-play-test-chat") {
           TestingModeController controller = Get.find<TestingModeController>();
@@ -151,7 +155,7 @@ class MethodChannelInterface {
           // If `reply` is called when the app is in a background isolate, then we need to close it once we are done
           closeThread();
 
-          return new Future.value("");
+          return Future.value("");
         }
         // Find the chat to reply to
         Chat? chat = await Chat.findOne({"guid": call.arguments["chat"]});
@@ -161,7 +165,7 @@ class MethodChannelInterface {
           // If `reply` is called when the app is in a background isolate, then we need to close it once we are done
           closeThread();
 
-          return new Future.value("");
+          return Future.value("");
         }
 
         // Send the message to that chat
@@ -169,7 +173,7 @@ class MethodChannelInterface {
 
         closeThread();
 
-        return new Future.value("");
+        return Future.value("");
       case "markAsRead":
         // Find the chat to mark as read
         Chat? chat = await Chat.findOne({"guid": call.arguments["chat"]});
@@ -179,7 +183,7 @@ class MethodChannelInterface {
           // If `markAsRead` is called when the app is in a background isolate, then we need to close it once we are done
           closeThread();
 
-          return new Future.value("");
+          return Future.value("");
         }
 
         // Remove the notificaiton from that chat
@@ -192,9 +196,10 @@ class MethodChannelInterface {
         // In case this method is called when the app is in a background isolate
         closeThread();
 
-        return new Future.value("");
+        return Future.value("");
       case "shareAttachments":
         if (!SettingsManager().settings.finishedSetup.value) return Future.value("");
+        recentIntent = call.arguments["id"];
         List<PlatformFile> attachments = [];
 
         // Loop through all of the attachments sent by native code
@@ -219,7 +224,7 @@ class MethodChannelInterface {
           List<Chat?> chats = ChatBloc().chats.where((element) => element.guid == guid).toList();
 
           // If we did find a chat matching the criteria
-          if (chats.length != 0) {
+          if (chats.isNotEmpty) {
             // Get the most recent of our results
             chats.sort(Chat.sort);
             Chat chat = chats.first!;
@@ -228,7 +233,7 @@ class MethodChannelInterface {
             openChat(chat.guid!, existingAttachments: attachments);
 
             // Nothing else to do
-            return new Future.value("");
+            return Future.value("");
           }
         }
 
@@ -242,10 +247,12 @@ class MethodChannelInterface {
               ),
               (route) => route.isFirst,
             );
-        return new Future.value("");
+        recentIntent = null;
+        return Future.value("");
 
       case "shareText":
         if (!SettingsManager().settings.finishedSetup.value) return Future.value("");
+        recentIntent = call.arguments["id"];
         // Get the text that was shared to the app
         String? text = call.arguments["text"];
 
@@ -257,7 +264,7 @@ class MethodChannelInterface {
           List<Chat?> chats = ChatBloc().chats.where((element) => element.guid == guid).toList();
 
           // If we did find a chat matching the criteria
-          if (chats.length != 0) {
+          if (chats.isNotEmpty) {
             // Get the most recent of our results
             chats.sort(Chat.sort);
             Chat chat = chats.first!;
@@ -266,7 +273,7 @@ class MethodChannelInterface {
             openChat(chat.guid!, existingText: text);
 
             // Nothing else to do
-            return new Future.value("");
+            return Future.value("");
           }
         }
         // Navigate to the new chat creator with the specified text
@@ -278,11 +285,11 @@ class MethodChannelInterface {
               ),
               (route) => route.isFirst,
             );
-
-        return new Future.value("");
+        recentIntent = null;
+        return Future.value("");
       case "alarm-wake":
         AlarmManager().onReceiveAlarm(call.arguments["id"]);
-        return new Future.value("");
+        return Future.value("");
       case "media-colors":
         if (!SettingsManager().settings.colorsFromMedia.value) return Future.value("");
         final Color primary = Color(call.arguments['primary']);
@@ -348,7 +355,7 @@ class MethodChannelInterface {
         print("Removed sendPort because Activity was destroyed");
         return Future.value("");
       default:
-        return new Future.value("");
+        return Future.value("");
     }
   }
 

@@ -39,6 +39,7 @@ import static com.bluebubbles.messaging.MainActivity.engine;
 
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
+import java.util.HashMap;
 
 
 public class MethodCallHandler {
@@ -76,8 +77,13 @@ public class MethodCallHandler {
             new PushShareTargets(context, call, result).Handle();
         } else if (call.method.equals("get-starting-intent")) {
             String intent = ((MainActivity) context).getIntent().getStringExtra("chatGuid");
+            String bubble = ((MainActivity) context).getIntent().getStringExtra("bubble");
             ((MainActivity) context).getIntent().putExtra("chatGuid", (String) null);
-            result.success(intent);
+            ((MainActivity) context).getIntent().putExtra("bubble", (String) null);
+            HashMap<String, Object> args = new HashMap<>();
+            args.put("guid", intent);
+            args.put("bubble", bubble);
+            result.success(args);
         } else if (call.method.equals(InitializeBackgroundHandle.TAG)) {
             new InitializeBackgroundHandle(context, call, result).Handle();
         } else if (call.method.equals(GetServerUrl.TAG)) {
