@@ -1,19 +1,14 @@
 import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
-import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/settings/settings_panel.dart';
-import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 class AttachmentPanel extends StatelessWidget {
 
@@ -23,8 +18,8 @@ class AttachmentPanel extends StatelessWidget {
     final materialSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
     Color headerColor;
     Color tileColor;
-    if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance()
-        || SettingsManager().settings.skin.value != Skins.iOS) {
+    if ((Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+        SettingsManager().settings.skin.value == Skins.Material) && (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
       headerColor = Theme.of(context).accentColor;
       tileColor = Theme.of(context).backgroundColor;
     } else {
@@ -35,57 +30,20 @@ class AttachmentPanel extends StatelessWidget {
       tileColor = headerColor;
     }
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle(
-        systemNavigationBarColor: headerColor, // navigation bar color
-        systemNavigationBarIconBrightness:
-        headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
-        statusBarColor: Colors.transparent, // status bar color
-      ),
-      child: Scaffold(
-        backgroundColor: SettingsManager().settings.skin.value != Skins.iOS ? tileColor : headerColor,
-        appBar: PreferredSize(
-          preferredSize: Size(CustomNavigator.width(context), 80),
-          child: ClipRRect(
-            child: BackdropFilter(
-              child: AppBar(
-                brightness: ThemeData.estimateBrightnessForColor(headerColor),
-                toolbarHeight: 100.0,
-                elevation: 0,
-                leading: buildBackButton(context),
-                backgroundColor: headerColor.withOpacity(0.5),
-                title: Text(
-                  "Media Settings",
-                  style: Theme.of(context).textTheme.headline1,
-                ),
-              ),
-              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-            ),
-          ),
-        ),
-        body: CustomScrollView(
-          physics: ThemeSwitcher.getScrollPhysics(),
-          slivers: <Widget>[
-            SliverList(
-              delegate: SliverChildListDelegate(
-                <Widget>[
-                  Container(
-                      height: SettingsManager().settings.skin.value == Skins.iOS ? 30 : 40,
-                      alignment: Alignment.bottomLeft,
-                      decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
-                        color: headerColor,
-                        border: Border(
-                            bottom: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
-                        ),
-                      ) : BoxDecoration(
-                        color: tileColor,
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0, left: 15),
-                        child: Text("Auto-download".psCapitalize, style: SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
-                      )
-                  ),
-                  Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
+    return SettingsScaffold(
+      title: "Attachments & Media",
+      initialHeader: "Auto-download",
+      iosSubtitle: iosSubtitle,
+      materialSubtitle: materialSubtitle,
+      tileColor: tileColor,
+      headerColor: headerColor,
+      bodySlivers: [
+        SliverList(
+          delegate: SliverChildListDelegate(
+            <Widget>[
+              SettingsSection(
+                backgroundColor: tileColor,
+                children: [
                   Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
                       SettingsManager().settings.autoDownload.value = val;
@@ -111,13 +69,18 @@ class AttachmentPanel extends StatelessWidget {
                     title: "Only Auto-download Attachments on WiFi",
                     backgroundColor: tileColor,
                   )),
-                  SettingsHeader(
-                      headerColor: headerColor,
-                      tileColor: tileColor,
-                      iosSubtitle: iosSubtitle,
-                      materialSubtitle: materialSubtitle,
-                      text: "Video Mute Behavior"
-                  ),
+                ],
+              ),
+              SettingsHeader(
+                  headerColor: headerColor,
+                  tileColor: tileColor,
+                  iosSubtitle: iosSubtitle,
+                  materialSubtitle: materialSubtitle,
+                  text: "Video Mute Behavior"
+              ),
+              SettingsSection(
+                backgroundColor: tileColor,
+                children: [
                   Obx(() => SettingsSwitch(
                     onChanged: (bool val) {
                       SettingsManager().settings.startVideosMuted.value = val;
@@ -143,75 +106,86 @@ class AttachmentPanel extends StatelessWidget {
                     title: "Mute Videos by Default in Fullscreen Player",
                     backgroundColor: tileColor,
                   )),
-                  if (!kIsWeb)
-                    SettingsHeader(
-                        headerColor: headerColor,
-                        tileColor: tileColor,
-                        iosSubtitle: iosSubtitle,
-                        materialSubtitle: materialSubtitle,
-                        text: "Attachment Preview Quality"
-                    ),
-                  if (!kIsWeb)
-                    Container(
-                        color: tileColor,
-                        child: Padding(
-                          padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
-                          child: Text(
-                            "Controls the resolution of attachment previews in the message screen. A higher value will make attachments show in better quality at the cost of longer load times."
-                          ),
-                        )
-                    ),
-                  if (!kIsWeb)
-                    Obx(() => SettingsSlider(
-                        text: "Attachment Preview Quality",
-                        startingVal: SettingsManager().settings.previewCompressionQuality.value.toDouble(),
-                        update: (double val) {
-                          SettingsManager().settings.previewCompressionQuality.value = val.toInt();
-                          saveSettings();
-                        },
-                        formatValue: ((double val) => val.toInt().toString() + "%"),
-                        backgroundColor: tileColor,
-                        leading: Obx(() => Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(5),
-                              child: ImageFiltered(
-                                imageFilter: ImageFilter.blur(
-                                  sigmaX: (1 - SettingsManager().settings.previewCompressionQuality.value / 100),
-                                  sigmaY: (1 - SettingsManager().settings.previewCompressionQuality.value / 100),
-                                ),
-                                child: Container(
-                                  width: 32,
-                                  height: 32,
-                                  decoration: BoxDecoration(
-                                    color: SettingsManager().settings.skin.value == Skins.iOS ?
-                                    Colors.grey : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(5),
+                ],
+              ),
+              if (!kIsWeb)
+                SettingsHeader(
+                    headerColor: headerColor,
+                    tileColor: tileColor,
+                    iosSubtitle: iosSubtitle,
+                    materialSubtitle: materialSubtitle,
+                    text: "Attachment Preview Quality"
+                ),
+              if (!kIsWeb)
+                SettingsSection(
+                  backgroundColor: tileColor,
+                  children: [
+                    if (!kIsWeb)
+                      Container(
+                          color: tileColor,
+                          child: Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0, left: 15, top: 8.0, right: 15),
+                            child: Text(
+                                "Controls the resolution of attachment previews in the message screen. A higher value will make attachments show in better quality at the cost of longer load times."
+                            ),
+                          )
+                      ),
+                    if (!kIsWeb)
+                      Obx(() => SettingsSlider(
+                          text: "Attachment Preview Quality",
+                          startingVal: SettingsManager().settings.previewCompressionQuality.value.toDouble(),
+                          update: (double val) {
+                            SettingsManager().settings.previewCompressionQuality.value = val.toInt();
+                            saveSettings();
+                          },
+                          formatValue: ((double val) => val.toInt().toString() + "%"),
+                          backgroundColor: tileColor,
+                          leading: Obx(() => Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(5),
+                                child: ImageFiltered(
+                                  imageFilter: ImageFilter.blur(
+                                    sigmaX: (1 - SettingsManager().settings.previewCompressionQuality.value / 100),
+                                    sigmaY: (1 - SettingsManager().settings.previewCompressionQuality.value / 100),
                                   ),
-                                  alignment: Alignment.center,
-                                  child: Icon(SettingsManager().settings.skin.value == Skins.iOS
-                                      ? CupertinoIcons.sparkles : Icons.auto_awesome,
+                                  child: Container(
+                                    width: 32,
+                                    height: 32,
+                                    decoration: BoxDecoration(
                                       color: SettingsManager().settings.skin.value == Skins.iOS ?
-                                      Colors.white : Colors.grey,
-                                      size: SettingsManager().settings.skin.value == Skins.iOS ? 23 : 30
+                                      Colors.grey : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(5),
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: Icon(SettingsManager().settings.skin.value == Skins.iOS
+                                        ? CupertinoIcons.sparkles : Icons.auto_awesome,
+                                        color: SettingsManager().settings.skin.value == Skins.iOS ?
+                                        Colors.white : Colors.grey,
+                                        size: SettingsManager().settings.skin.value == Skins.iOS ? 23 : 30
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
-                        )),
-                        min: 10,
-                        max: 100,
-                        divisions: 18
-                    )),
-                  SettingsHeader(
-                      headerColor: headerColor,
-                      tileColor: tileColor,
-                      iosSubtitle: iosSubtitle,
-                      materialSubtitle: materialSubtitle,
-                      text: "Attachment Viewer"
-                  ),
+                            ],
+                          )),
+                          min: 10,
+                          max: 100,
+                          divisions: 18
+                      )),
+                  ]
+                ),
+              SettingsHeader(
+                  headerColor: headerColor,
+                  tileColor: tileColor,
+                  iosSubtitle: iosSubtitle,
+                  materialSubtitle: materialSubtitle,
+                  text: "Attachment Viewer"
+              ),
+              SettingsSection(
+                backgroundColor: tileColor,
+                children: [
                   Obx(() {
                     if (SettingsManager().settings.skin.value == Skins.iOS)
                       return SettingsTile(
@@ -236,13 +210,18 @@ class AttachmentPanel extends StatelessWidget {
                     backgroundColor: tileColor,
                     secondaryColor: headerColor,
                   )),
-                  SettingsHeader(
-                      headerColor: headerColor,
-                      tileColor: tileColor,
-                      iosSubtitle: iosSubtitle,
-                      materialSubtitle: materialSubtitle,
-                      text: "Advanced"
-                  ),
+                ],
+              ),
+              SettingsHeader(
+                  headerColor: headerColor,
+                  tileColor: tileColor,
+                  iosSubtitle: iosSubtitle,
+                  materialSubtitle: materialSubtitle,
+                  text: "Advanced"
+              ),
+              SettingsSection(
+                backgroundColor: tileColor,
+                children: [
                   SettingsTile(
                     title: "Attachment Chunk Size",
                     subtitle: "Controls the amount of data the app gets from the server on each network request",
@@ -289,27 +268,12 @@ class AttachmentPanel extends StatelessWidget {
                       subtitle: "Caches URL preview images for faster load times",
                       backgroundColor: tileColor,
                     )),
-                  Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
-                  Container(
-                    height: 30,
-                    decoration: SettingsManager().settings.skin.value == Skins.iOS ? BoxDecoration(
-                      color: headerColor,
-                      border: Border(
-                          top: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)
-                      ),
-                    ) : null,
-                  ),
                 ],
               ),
-            ),
-            SliverList(
-              delegate: SliverChildListDelegate(
-                <Widget>[],
-              ),
-            )
-          ],
+            ],
+          ),
         ),
-      ),
+      ]
     );
   }
 

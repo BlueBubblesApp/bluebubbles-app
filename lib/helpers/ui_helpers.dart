@@ -15,10 +15,10 @@ Widget buildBackButton(BuildContext context,
     padding: padding,
     width: 25,
     child: IconButton(
-      iconSize: iconSize ?? (SettingsManager().settings.skin.value == Skins.iOS ? 30 : 24),
+      iconSize: iconSize ?? (SettingsManager().settings.skin.value != Skins.Material ? 30 : 24),
       icon: skin != null
-          ? Icon(skin == Skins.iOS ? CupertinoIcons.back : Icons.arrow_back, color: Theme.of(context).primaryColor)
-          : Obx(() => Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.back : Icons.arrow_back,
+          ? Icon(skin != Skins.Material ? CupertinoIcons.back : Icons.arrow_back, color: Theme.of(context).primaryColor)
+          : Obx(() => Icon(SettingsManager().settings.skin.value != Skins.Material ? CupertinoIcons.back : Icons.arrow_back,
               color: Theme.of(context).primaryColor)),
       onPressed: () {
         callback?.call();

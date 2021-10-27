@@ -438,9 +438,6 @@ class MessageHelper {
     return false;
   }
 
-  static bool getShowTailReversed(BuildContext context, Message message, Message? olderMessage) =>
-      getShowTail(context, message, olderMessage);
-
 // static List<TextSpan> buildEmojiText(String text, TextStyle style) {
 //   final children = <TextSpan>[];
 //   final runes = text.runes;

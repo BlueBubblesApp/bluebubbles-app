@@ -34,6 +34,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:simple_animations/simple_animations.dart';
 import 'package:slugify/slugify.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on State<ConversationView> {
   /// Commonly shared variables
@@ -321,6 +322,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   Widget buildConversationViewHeader() {
     Color backgroundColor = Theme.of(context).backgroundColor;
     Color? fontColor = Theme.of(context).textTheme.headline1!.color;
+    Color? fontColor2 = Theme.of(context).textTheme.subtitle1!.color;
     String? title = chat!.title;
 
     final hideTitle = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideContactInfo.value;
@@ -329,15 +331,28 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
     if (generateTitle)
       title = chat!.fakeParticipants.length > 1 ? "Group Chat" : chat!.fakeParticipants[0];
-    else if (hideTitle) fontColor = Colors.transparent;
+    else if (hideTitle) {
+      fontColor = Colors.transparent;
+      fontColor2 = Colors.transparent;
+    }
 
     if (SettingsManager().settings.skin.value == Skins.Material ||
         SettingsManager().settings.skin.value == Skins.Samsung) {
       return AppBar(
         brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
-        title: Text(
-          title!,
-          style: Theme.of(context).textTheme.headline1!.apply(color: fontColor),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title!,
+              style: Theme.of(context).textTheme.headline1!.apply(color: fontColor),
+            ),
+            if (SettingsManager().settings.skin.value == Skins.Samsung && (chat!.isGroup() || (!title.isPhoneNumber && !title.isEmail)))
+              Text(
+                chat!.isGroup() ? "${chat!.participants.length} recipients" : chat!.participants[0].address,
+                style: Theme.of(context).textTheme.subtitle1!.apply(color: fontColor2),
+              ),
+          ],
         ),
         bottom: PreferredSize(
           child: Container(
@@ -346,6 +361,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           ),
           preferredSize: Size.fromHeight(0.5),
         ),
+        leading: buildBackButton(context),
+        automaticallyImplyLeading: false,
         backgroundColor: backgroundColor,
         actionsIconTheme: IconThemeData(color: Theme.of(context).primaryColor),
         iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
@@ -393,6 +410,23 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             else
               return SizedBox.shrink();
           }),
+          if (!chat!.isGroup() && (chat!.participants[0].address.isPhoneNumber || chat!.participants[0].address.isEmail))
+            Padding(
+              padding: const EdgeInsets.only(right: 12.0),
+              child: GestureDetector(
+                child: Icon(
+                  chat!.participants[0].address.isPhoneNumber ? Icons.call : Icons.email,
+                  color: fontColor,
+                ),
+                onTap: () {
+                  if (chat!.participants[0].address.isPhoneNumber) {
+                    launch("tel://${chat!.participants[0].address}");
+                  } else {
+                    launch('mailto:${chat!.participants[0].address}');
+                  }
+                },
+              ),
+            ),
           Padding(
             padding: const EdgeInsets.only(right: 8.0),
             child: GestureDetector(
@@ -1024,22 +1058,25 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     fetchingCurrentChat.value = false;
   }
 
-  Widget buildChatSelectorBody() => StreamBuilder(
-      initialData: contacts,
-      stream: contactStream,
-      builder: (BuildContext context, AsyncSnapshot<List<UniqueContact>> snapshot) {
-        List? data = snapshot.hasData ? snapshot.data : [];
-        return ListView.builder(
-          physics: ThemeSwitcher.getScrollPhysics(),
-          itemBuilder: (BuildContext context, int index) => ContactSelectorOption(
-            key: new Key("selector-${data![index].displayName}"),
-            item: data[index],
-            onSelected: onSelected,
-            index: index,
-          ),
-          itemCount: data?.length ?? 0,
-        );
-      });
+  Widget buildChatSelectorBody() => ClipRRect(
+    borderRadius: SettingsManager().settings.skin.value == Skins.Samsung ? BorderRadius.circular(25) : BorderRadius.circular(0),
+    child: StreamBuilder(
+        initialData: contacts,
+        stream: contactStream,
+        builder: (BuildContext context, AsyncSnapshot<List<UniqueContact>> snapshot) {
+          List? data = snapshot.hasData ? snapshot.data : [];
+          return ListView.builder(
+            physics: ThemeSwitcher.getScrollPhysics(),
+            itemBuilder: (BuildContext context, int index) => ContactSelectorOption(
+              key: new Key("selector-${data![index].displayName}"),
+              item: data[index],
+              onSelected: onSelected,
+              index: index,
+            ),
+            itemCount: data?.length ?? 0,
+          );
+        }),
+  );
 
   Widget buildChatSelectorHeader() => PreferredSize(
         preferredSize: Size.fromHeight(40),

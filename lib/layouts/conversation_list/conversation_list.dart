@@ -103,11 +103,11 @@ class ConversationListState extends State<ConversationList> {
     return scrollController.hasClients && scrollController.offset > (125 - kToolbarHeight);
   }
 
-  List<Widget> getHeaderTextWidgets({double? size}) {
+  List<Widget> getHeaderTextWidgets({double? size, int selected = 0}) {
     TextStyle? style = context.textTheme.headline1;
     if (size != null) style = style!.copyWith(fontSize: size);
 
-    return [Text(widget.showArchivedChats ? "Archive" : widget.showUnknownSenders ? "Unknown Senders" : "Messages", style: style), Container(width: 10)];
+    return [Text(widget.showArchivedChats ? "Archive" : widget.showUnknownSenders ? "Unknown Senders" : selected > 0 ? "$selected selected" : "Messages", style: style), Container(width: 10)];
   }
 
   Widget getSyncIndicatorWidget() {

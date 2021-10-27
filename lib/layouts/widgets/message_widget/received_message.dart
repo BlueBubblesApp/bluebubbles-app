@@ -175,7 +175,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                 .getReactions()
                 .length > 0 && !widget.message.hasAttachments
                 ? 18
-                : (widget.message.isFromMe != widget.olderMessage?.isFromMe)
+                : (widget.message.isFromMe != widget.olderMessage?.isFromMe && skin.value != Skins.Samsung)
                 ? 5.0
                 : 0,
             left: 10,
@@ -376,10 +376,8 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     bool addedAvatar = false;
     if (widget.showTail && (showSender || skin.value == Skins.Samsung)) {
       double topPadding = (isGroup) ? 5 : 0;
-      if (skin.value == Skins.Samsung) {
-        topPadding = 5.0;
-        if (showSender) topPadding += 18;
-        if (widget.message.hasReactions) topPadding += 20;
+      if (skin.value == Skins.Samsung && addedSender) {
+        topPadding = 27.5;
       }
 
       msgRow.add(
@@ -399,10 +397,8 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
     List<Widget> msgPopupRow = List<Widget>.from(msgRow);
     if (!addedAvatar && (showSender || skin.value == Skins.Samsung)) {
       double topPadding = (isGroup) ? 5 : 0;
-      if (skin.value == Skins.Samsung) {
-        topPadding = 5.0;
-        if (showSender) topPadding += 18;
-        if (widget.message.hasReactions) topPadding += 20;
+      if (skin.value == Skins.Samsung && addedSender) {
+        topPadding = 27.5;
       }
 
       msgPopupRow.add(
@@ -468,7 +464,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.end,
+                  crossAxisAlignment: skin.value == Skins.Samsung ? CrossAxisAlignment.start : CrossAxisAlignment.end,
                   children: msgRow,
                 ),
                 // Add the timestamp for the samsung theme
@@ -479,7 +475,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                         widget.message.handleId != widget.newerMessage?.handleId ||
                         !widget.message.dateCreated!.isWithin(widget.newerMessage!.dateCreated!, minutes: 5)))
                   Padding(
-                    padding: EdgeInsets.only(top: 5, left: (isGroup) ? 60 : 20),
+                    padding: EdgeInsets.only(top: 5, left: addedAvatar ? 50 : 15),
                     child: MessageTimeStamp(
                       message: widget.message,
                       singleLine: true,
@@ -490,7 +486,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
               popupChild: Row(
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.end,
+                crossAxisAlignment: skin.value == Skins.Samsung ? CrossAxisAlignment.start : CrossAxisAlignment.end,
                 children: msgPopupRow,
               ),
           ),

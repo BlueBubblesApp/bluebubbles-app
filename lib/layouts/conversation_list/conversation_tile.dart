@@ -723,7 +723,6 @@ class _Samsung extends StatelessWidget {
           );
         },
         child: InkWell(
-          hoverColor: Colors.red,
           onTap: () {
             if (parent.selected) {
               parent.onSelect();
@@ -741,7 +740,6 @@ class _Samsung extends StatelessWidget {
           child: Obx(
             () => Container(
               decoration: BoxDecoration(
-                color: Theme.of(context).accentColor,
                 border: (!SettingsManager().settings.hideDividers.value)
                     ? Border(
                         top: BorderSide(
