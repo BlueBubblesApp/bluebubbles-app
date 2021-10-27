@@ -201,11 +201,11 @@ class ChatBloc {
     }
   }
 
-  Future<void> toggleChatUnread(Chat chat, bool isUnread) async {
+  Future<void> toggleChatUnread(Chat chat, bool isUnread, {bool clearNotifications = true}) async {
     await chat.toggleHasUnread(isUnread);
 
     // Remove from notification shade
-    MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
+    if (clearNotifications) MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
 
     updateChatPosition(chat);
   }
