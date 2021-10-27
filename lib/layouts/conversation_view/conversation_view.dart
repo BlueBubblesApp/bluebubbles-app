@@ -238,7 +238,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   @override
   void didChangeDependencies() async {
     super.didChangeDependencies();
-    didChangeDependenciesConversationView();
+    if (CurrentChat.activeChat != null) didChangeDependenciesConversationView();
     getAdjustBackground();
   }
 
@@ -249,7 +249,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       Logger.info("Removing CurrentChat imageData");
       CurrentChat.activeChat?.imageData.clear();
     }
-    if (widgetsBuilt) didChangeDependenciesConversationView();
+    if (widgetsBuilt && CurrentChat.activeChat != null) didChangeDependenciesConversationView();
   }
 
   @override
