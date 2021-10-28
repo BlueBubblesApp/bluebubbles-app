@@ -28,7 +28,7 @@ void showReplyThread(BuildContext context, Message message, MessageBloc? message
             opacity: animation,
             child: GestureDetector(
               onTap: () {
-                Get.back();
+                Navigator.of(context).pop();
               },
               child: AnnotatedRegion<SystemUiOverlayStyle>(
                 value: SystemUiOverlayStyle(

@@ -1499,7 +1499,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               opacity: animation,
               child: GestureDetector(
                 onTap: () {
-                  Get.back();
+                  Navigator.of(context).pop();
                 },
                 child: AnnotatedRegion<SystemUiOverlayStyle>(
                   value: SystemUiOverlayStyle(
@@ -1670,7 +1670,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                             .bodyText1!
                                             .apply(color: Theme.of(context).primaryColor), textScaleFactor: 1.15,),
                                       onPressed: () async {
-                                        Get.back();
+                                        Navigator.of(context).pop();
                                         await sendMessage(effect: effectMap[typeSelected == "bubble" ? bubbleSelected : screenSelected]);
                                       },
                                     ),

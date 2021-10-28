@@ -59,7 +59,7 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
         Padding(
           padding: EdgeInsets.only(bottom: 8.0),
           child: Text(
-            getContactName(context, contactTitle, widget.handle?.address),
+            widget.message.isFromMe! ? "You" : getContactName(context, contactTitle, widget.handle?.address),
             style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeDelta: -5),
           ),
         ),
