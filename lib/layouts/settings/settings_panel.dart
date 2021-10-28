@@ -1142,7 +1142,14 @@ class _SettingsPanelState extends State<SettingsPanel> {
         CustomNavigator.maxWidthSettings = constraints.maxWidth;
         return WillPopScope(
           onWillPop: () async {
-            Get.back(id: 3);
+            Get.until((route) {
+              if (route.settings.name == "initial") {
+                Get.back();
+              } else {
+                Get.back(id: 3);
+              }
+              return true;
+            }, id: 3);
             return false;
           },
           child: Navigator(
