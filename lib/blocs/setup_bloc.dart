@@ -181,9 +181,6 @@ class SetupBloc {
               params["identifier"] = chat.guid;
               params["withBlurhash"] = false;
               params["limit"] = numberOfMessagesPerPage.round();
-              params["where"] = [
-                {"statement": "message.service = 'iMessage'", "args": null}
-              ];
               List<dynamic> messages = await SocketManager().getChatMessages(params)!;
               addOutput("Received ${messages.length} messages for chat, '${chat.chatIdentifier}'!", SetupOutputType.LOG);
               if (!skipEmptyChats || (skipEmptyChats && messages.isNotEmpty)) {
@@ -307,9 +304,6 @@ class SetupBloc {
       params["withAttachments"] = true; // We want the attachment data
       params["withHandle"] = true; // We want to know who sent it
       params["sort"] = "DESC"; // Sort my DESC so we receive the newest messages first
-      params["where"] = [
-        {"statement": "message.service = 'iMessage'", "args": null}
-      ];
 
       List<dynamic> messages = await SocketManager().getMessages(params)!;
       if (messages.isEmpty) {
