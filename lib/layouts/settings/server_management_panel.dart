@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/layouts/setup/qr_scan/text_input_url.dart';
+import 'package:flutter/gestures.dart';
+import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:universal_io/io.dart';
@@ -167,7 +169,11 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                                           : SocketState.DISCONNECTED))),
                                     if ((controller.serverVersionCode.value ?? 0) >= 42)
                                       TextSpan(text: "\n\n"),
-                                    TextSpan(text: "Server URL: ${redact ? "Redacted" : controller._settingsCopy.serverAddress}"),
+                                    TextSpan(text: "Server URL: ${redact ? "Redacted" : controller._settingsCopy.serverAddress.value}", recognizer: TapGestureRecognizer()
+                                      ..onTap = () {
+                                        Clipboard.setData(ClipboardData(text: controller._settingsCopy.serverAddress.value));
+                                        showSnackbar('Copied', "Address copied to clipboard");
+                                      }),
                                     TextSpan(text: "\n\n"),
                                     TextSpan(text: "Latency: ${redact ? "Redacted" : ((controller.latency.value ?? "N/A").toString() + " ms")}"),
                                     TextSpan(text: "\n\n"),
