@@ -76,8 +76,8 @@ class ActionHandler {
       }
 
       Message mainMsg = Message(
-        text: mainText.trim(),
-        subject: subject,
+        text: mainText.isEmpty && (subject ?? "").trim().isNotEmpty ? (subject ?? "").trim() : mainText.trim(),
+        subject: (mainText.isEmpty && (subject ?? "").trim().isNotEmpty) || (subject ?? "").trim().isEmpty ? null : (subject ?? "").trim(),
         dateCreated: DateTime.now(),
         hasAttachments: attachments.isNotEmpty ? true : false,
         threadOriginatorGuid: replyGuid,
@@ -130,8 +130,8 @@ class ActionHandler {
     } else {
       // Create the main message
       Message message = Message(
-        text: text.trim(),
-        subject: subject,
+        text: text.isEmpty && (subject ?? "").trim().isNotEmpty ? (subject ?? "").trim() : text.trim(),
+        subject: (text.isEmpty && (subject ?? "").trim().isNotEmpty) || (subject ?? "").trim().isEmpty ? null : (subject ?? "").trim(),
         dateCreated: DateTime.now(),
         hasAttachments: attachments.isNotEmpty ? true : false,
         threadOriginatorGuid: replyGuid,
