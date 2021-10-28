@@ -39,7 +39,6 @@ class PrivateAPIPanelController extends GetxController {
         if (index == 1) return int.parse(e) * 21;
         return int.parse(e);
       }).sum;
-      print(serverVersionCode);
     });
   }
 
