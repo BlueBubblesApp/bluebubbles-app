@@ -278,8 +278,8 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
               return StatefulBuilder(
                 builder: (context, setState) {
                   return GestureDetector(
-                    onTap: () {
-                      if (effect == MessageEffect.invisibleInk) {
+                    onHorizontalDragEnd: (DragEndDetails details) {
+                      if ((details.primaryVelocity ?? 0) > 0 && effect == MessageEffect.invisibleInk) {
                         setState(() {
                           opacity = 1 - opacity;
                           controller = CustomAnimationControl.stop;

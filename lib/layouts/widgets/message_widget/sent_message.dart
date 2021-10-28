@@ -185,8 +185,8 @@ class SentMessageHelper {
                   return StatefulBuilder(
                     builder: (context, setState) {
                       return GestureDetector(
-                        onTap: () {
-                          if (effect == MessageEffect.invisibleInk) {
+                        onHorizontalDragEnd: (DragEndDetails details) {
+                          if ((details.primaryVelocity ?? 0) > 0 && effect == MessageEffect.invisibleInk) {
                             setState(() {
                               opacity = 1 - opacity;
                             });
