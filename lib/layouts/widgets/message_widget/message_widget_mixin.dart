@@ -212,13 +212,7 @@ abstract class MessageWidgetMixin {
     if ((!isEmptyString(message.text) || !isEmptyString(message.subject))) {
       RegExp exp = RegExp(
           r'((https?://)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9/()@:%_.~#?&=*\[\]]*)\b');
-      List<RegExpMatch> matches = exp.allMatches(message.text!).toList();
-
       List<Tuple2<String, int>> linkIndexMatches = <Tuple2<String, int>>[];
-      for (RegExpMatch match in matches) {
-        linkIndexMatches.add(Tuple2("link", match.start));
-        linkIndexMatches.add(Tuple2("link", match.end));
-      }
       if (!kIsWeb && !kIsDesktop) {
         if (CurrentChat.activeChat?.mlKitParsedText[message.guid!] == null) {
           CurrentChat.activeChat?.mlKitParsedText[message.guid!] = await GoogleMlKit.nlp.entityExtractor(EntityExtractorOptions.ENGLISH).extractEntities(message.text!);
@@ -237,7 +231,17 @@ abstract class MessageWidgetMixin {
             linkIndexMatches.add(Tuple2("email", element.start));
             linkIndexMatches.add(Tuple2("email", element.end));
             break;
+          } else if (element.entities.first is UrlEntity) {
+            linkIndexMatches.add(Tuple2("link", element.start));
+            linkIndexMatches.add(Tuple2("link", element.end));
+            break;
           }
+        }
+      } else {
+        List<RegExpMatch> matches = exp.allMatches(message.text!).toList();
+        for (RegExpMatch match in matches) {
+          linkIndexMatches.add(Tuple2("link", match.start));
+          linkIndexMatches.add(Tuple2("link", match.end));
         }
       }
       if (!isNullOrEmpty(message.subject)!) {
