@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/group_event.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/url_preview_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
@@ -13,6 +15,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/received_message.dart
 import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/stickers_widget.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
@@ -21,6 +24,10 @@ import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:get/get_rx/src/rx_types/rx_types.dart';
+import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
+import 'package:get/get_utils/src/extensions/context_extensions.dart';
 
 class MessageWidget extends StatefulWidget {
   MessageWidget({
@@ -65,6 +72,10 @@ class _MessageState extends State<MessageWidget> {
   late Message _message;
   Message? _newerMessage;
   Message? _olderMessage;
+  RxBool tapped = false.obs;
+  double baseOffset = 0;
+  RxDouble offset = 0.0.obs;
+  bool gaveHapticFeedback = false;
 
   @override
   void initState() {
@@ -100,16 +111,26 @@ class _MessageState extends State<MessageWidget> {
 
         if (kIsWeb && message.associatedMessageGuid != null) {
           // someone removed their reaction (remove original)
-          if (message.associatedMessageType!.startsWith("-") && ReactionTypes.toList().contains(message.associatedMessageType!.replaceAll("-", ""))) {
-            MapEntry? entry = widget.bloc?.reactionMessages.entries.firstWhereOrNull((entry) => entry.value.handle?.address == message.handle?.address && entry.value.associatedMessageType == message.associatedMessageType!.replaceAll("-", ""));
+          if (message.associatedMessageType!.startsWith("-") &&
+              ReactionTypes.toList().contains(message.associatedMessageType!.replaceAll("-", ""))) {
+            MapEntry? entry = widget.bloc?.reactionMessages.entries.firstWhereOrNull((entry) =>
+                entry.value.handle?.address == message.handle?.address &&
+                entry.value.associatedMessageType == message.associatedMessageType!.replaceAll("-", ""));
             if (entry != null) widget.bloc?.reactionMessages.remove(entry.key);
             // someone changed their reaction (remove original and add new)
-          } else if (widget.bloc?.reactionMessages.entries.firstWhereOrNull((e) => e.value.associatedMessageGuid == message.associatedMessageGuid && e.value.handle?.address == message.handle?.address) != null && ReactionTypes.toList().contains(message.associatedMessageType)) {
-            MapEntry? entry = widget.bloc?.reactionMessages.entries.firstWhereOrNull((e) => e.value.associatedMessageGuid == message.associatedMessageGuid && e.value.handle?.address == message.handle?.address);
+          } else if (widget.bloc?.reactionMessages.entries.firstWhereOrNull((e) =>
+                      e.value.associatedMessageGuid == message.associatedMessageGuid &&
+                      e.value.handle?.address == message.handle?.address) !=
+                  null &&
+              ReactionTypes.toList().contains(message.associatedMessageType)) {
+            MapEntry? entry = widget.bloc?.reactionMessages.entries.firstWhereOrNull((e) =>
+                e.value.associatedMessageGuid == message.associatedMessageGuid &&
+                e.value.handle?.address == message.handle?.address);
             if (entry != null) widget.bloc?.reactionMessages.remove(entry.key);
             widget.bloc?.reactionMessages[message.guid!] = message;
             // we have a fresh reaction (add new)
-          } else if (widget.bloc?.reactionMessages[message.guid!] == null && ReactionTypes.toList().contains(message.associatedMessageType)) {
+          } else if (widget.bloc?.reactionMessages[message.guid!] == null &&
+              ReactionTypes.toList().contains(message.associatedMessageType)) {
             widget.bloc?.reactionMessages[message.guid!] = message;
           }
         }
@@ -276,50 +297,125 @@ class _MessageState extends State<MessageWidget> {
     );
 
     // Add the correct type of message to the message stack
-    Widget message;
-    if (_message.isFromMe!) {
-      message = SentMessage(
-        showTail: showTail,
-        olderMessage: widget.olderMessage,
-        newerMessage: widget.newerMessage,
-        message: _message,
-        messageBloc: widget.bloc,
-        hasTimestampAbove: separator.buildTimeStamp().isNotEmpty,
-        hasTimestampBelow: separator2.buildTimeStamp().isNotEmpty,
-        showReplies: widget.showReplies,
-        urlPreviewWidget: urlPreviewWidget,
-        stickersWidget: stickersWidget,
-        attachmentsWidget: widgetAttachments,
-        reactionsWidget: reactionsWidget,
-        shouldFadeIn: currentChat?.sentMessages.firstWhereOrNull((e) => e?.guid == _message.guid) != null,
-        showHero: widget.showHero,
-        showDeliveredReceipt: widget.isFirstSentMessage,
-        autoplayEffect: widget.autoplayEffect,
-      );
-    } else {
-      message = ReceivedMessage(
-        showTail: showTail,
-        olderMessage: widget.olderMessage,
-        newerMessage: widget.newerMessage,
-        message: _message,
-        messageBloc: widget.bloc,
-        hasTimestampAbove: separator.buildTimeStamp().isNotEmpty,
-        hasTimestampBelow: separator2.buildTimeStamp().isNotEmpty,
-        showReplies: widget.showReplies,
-        showHandle: widget.showHandle,
-        urlPreviewWidget: urlPreviewWidget,
-        stickersWidget: stickersWidget,
-        attachmentsWidget: widgetAttachments,
-        reactionsWidget: reactionsWidget,
-        autoplayEffect: widget.autoplayEffect,
-      );
-    }
+    return Obx(
+      () {
+        Widget message;
+        bool _tapped = tapped.value;
+        if (_message.isFromMe!) {
+          message = SentMessage(
+            showTail: showTail,
+            olderMessage: widget.olderMessage,
+            newerMessage: widget.newerMessage,
+            message: _message,
+            messageBloc: widget.bloc,
+            hasTimestampAbove: separator.buildTimeStamp().isNotEmpty,
+            hasTimestampBelow: separator2.buildTimeStamp().isNotEmpty,
+            showReplies: widget.showReplies,
+            urlPreviewWidget: urlPreviewWidget,
+            stickersWidget: stickersWidget,
+            attachmentsWidget: widgetAttachments,
+            reactionsWidget: reactionsWidget,
+            shouldFadeIn: currentChat?.sentMessages.firstWhereOrNull((e) => e?.guid == _message.guid) != null,
+            showHero: widget.showHero,
+            showDeliveredReceipt: widget.isFirstSentMessage || _tapped,
+            autoplayEffect: widget.autoplayEffect,
+          );
+        } else {
+          message = ReceivedMessage(
+            showTail: showTail,
+            olderMessage: widget.olderMessage,
+            newerMessage: widget.newerMessage,
+            message: _message,
+            messageBloc: widget.bloc,
+            hasTimestampAbove: separator.buildTimeStamp().isNotEmpty,
+            hasTimestampBelow: separator2.buildTimeStamp().isNotEmpty,
+            showReplies: widget.showReplies,
+            showHandle: widget.showHandle,
+            urlPreviewWidget: urlPreviewWidget,
+            stickersWidget: stickersWidget,
+            attachmentsWidget: widgetAttachments,
+            reactionsWidget: reactionsWidget,
+            showTimeStamp: _tapped,
+            autoplayEffect: widget.autoplayEffect,
+          );
+        }
 
-    return Column(
-      children: [
-        message,
-        separator2,
-      ],
+        double replyThreshold = 40;
+
+        return Obx(
+          () => GestureDetector(
+            behavior: HitTestBehavior.deferToChild,
+            onTap: kIsDesktop || kIsWeb ? () => tapped.value = !tapped.value : null,
+            onHorizontalDragStart: (details) {
+              baseOffset = details.localPosition.dx;
+            },
+            onHorizontalDragUpdate: (details) {
+              offset.value = min(max((details.localPosition.dx - baseOffset) * (_message.isFromMe! ? -1 : 1), 0), replyThreshold * 1.5);
+              if (!gaveHapticFeedback && offset.value >= replyThreshold) {
+                HapticFeedback.lightImpact();
+                gaveHapticFeedback = true;
+              } else if (offset.value < replyThreshold) {
+                gaveHapticFeedback = false;
+              }
+              CurrentChat.of(context)?.setReplyOffset(_message.guid ?? "", offset.value);
+            },
+            onHorizontalDragEnd: (details) {
+              if (offset.value >= replyThreshold) {
+                EventDispatcher().emit("focus-keyboard", _message);
+              }
+              offset.value = 0;
+              CurrentChat.of(context)?.setReplyOffset(_message.guid ?? "", offset.value);
+            },
+            child: AnimatedContainer(
+              duration: Duration(milliseconds: offset.value == 0 ? 150 : 0),
+              padding: _message.isFromMe!
+                  ? EdgeInsets.only(
+                      right: max(0, offset.value),
+                    )
+                  : EdgeInsets.only(
+                      left: max(0, offset.value),
+                    ),
+              child: Column(
+                children: [
+                  Stack(
+                    clipBehavior: Clip.none,
+                    alignment: Alignment.center,
+                    children: <Widget>[
+                      AnimatedPositioned(
+                        duration: Duration(milliseconds: offset.value == 0 ? 150 : 0),
+                        left: !_message.isFromMe! ? -offset.value * 0.8 : null,
+                        right: _message.isFromMe! ? -offset.value * 0.8 : null,
+                        child: AnimatedContainer(
+                          duration: Duration(milliseconds: offset.value == 0 ? 150 : 0),
+                          width: min(replyThreshold, offset.value) * 0.8,
+                          height: min(replyThreshold, offset.value) * 0.8,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.all(
+                              Radius.circular(
+                                min(replyThreshold, offset.value) * 0.4,
+                              ),
+                            ),
+                            color: context.theme.accentColor,
+                          ),
+                          child: AnimatedScale(
+                            scale: min(replyThreshold, offset.value) * (offset.value >= replyThreshold ? 0.5 : 0.4),
+                            duration: Duration(milliseconds: offset.value == 0 ? 150 : 0),
+                            child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.reply : Icons.reply,
+                            size: 1,
+                            color: context.textTheme.headline1!.color,),
+                          ),
+                        ),
+                      ),
+                      message,
+                    ],
+                  ),
+                  separator2,
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
