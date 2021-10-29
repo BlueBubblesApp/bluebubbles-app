@@ -1003,7 +1003,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                 focusNode!.requestFocus();
                                 sendMessage();
                               },
-                              // onContentCommitted: onContentCommit,
+                              onContentCommitted: onContentCommit,
                               textCapitalization: TextCapitalization.sentences,
                               focusNode: focusNode,
                               autocorrect: true,
@@ -1180,7 +1180,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                     : Colors.white,
                                 fontSizeDelta: -0.25,
                               ),
-                          // onContentCommitted: onContentCommit,
+                          onContentCommitted: onContentCommit,
                           decoration: InputDecoration(
                             isDense: true,
                             enabledBorder: OutlineInputBorder(
@@ -1383,7 +1383,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                     : Colors.white,
                                 fontSizeDelta: -0.25,
                               ),
-                          // onContentCommitted: onContentCommit,
+                          onContentCommitted: onContentCommit,
                           decoration: InputDecoration(
                             isDense: true,
                             enabledBorder: OutlineInputBorder(
