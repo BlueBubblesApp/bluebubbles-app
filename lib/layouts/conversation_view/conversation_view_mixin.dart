@@ -219,11 +219,10 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   }
 
   Future<void> openDetails() async {
-    Chat _chat = await chat!.getParticipants();
     Navigator.of(context).push(
       ThemeSwitcher.buildPageRoute(
         builder: (context) => ConversationDetails(
-          chat: _chat,
+          chat: chat!,
           messageBloc: messageBloc ?? initMessageBloc(),
         ),
       ),
