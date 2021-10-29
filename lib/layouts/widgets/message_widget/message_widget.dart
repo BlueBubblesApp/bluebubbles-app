@@ -347,10 +347,15 @@ class _MessageState extends State<MessageWidget> {
             behavior: HitTestBehavior.deferToChild,
             onTap: kIsDesktop || kIsWeb ? () => tapped.value = !tapped.value : null,
             onHorizontalDragStart: (details) {
+              if (!SettingsManager().settings.enablePrivateAPI.value || !SettingsManager().settings.swipeToReply.value)
+                return;
               baseOffset = details.localPosition.dx;
             },
             onHorizontalDragUpdate: (details) {
-              offset.value = min(max((details.localPosition.dx - baseOffset) * (_message.isFromMe! ? -1 : 1), 0), replyThreshold * 1.5);
+              if (!SettingsManager().settings.enablePrivateAPI.value || !SettingsManager().settings.swipeToReply.value)
+                return;
+              offset.value = min(max((details.localPosition.dx - baseOffset) * (_message.isFromMe! ? -1 : 1), 0),
+                  replyThreshold * 1.5);
               if (!gaveHapticFeedback && offset.value >= replyThreshold) {
                 HapticFeedback.lightImpact();
                 gaveHapticFeedback = true;
@@ -360,6 +365,8 @@ class _MessageState extends State<MessageWidget> {
               CurrentChat.of(context)?.setReplyOffset(_message.guid ?? "", offset.value);
             },
             onHorizontalDragEnd: (details) {
+              if (!SettingsManager().settings.enablePrivateAPI.value || !SettingsManager().settings.swipeToReply.value)
+                return;
               if (offset.value >= replyThreshold) {
                 EventDispatcher().emit("focus-keyboard", _message);
               }
@@ -375,41 +382,44 @@ class _MessageState extends State<MessageWidget> {
                   : EdgeInsets.only(
                       left: max(0, offset.value),
                     ),
-              child: Column(
-                children: [
-                  Stack(
-                    clipBehavior: Clip.none,
-                    alignment: Alignment.center,
-                    children: <Widget>[
-                      AnimatedPositioned(
-                        duration: Duration(milliseconds: offset.value == 0 ? 150 : 0),
-                        left: !_message.isFromMe! ? -offset.value * 0.8 : null,
-                        right: _message.isFromMe! ? -offset.value * 0.8 : null,
-                        child: AnimatedContainer(
-                          duration: Duration(milliseconds: offset.value == 0 ? 150 : 0),
-                          width: min(replyThreshold, offset.value) * 0.8,
-                          height: min(replyThreshold, offset.value) * 0.8,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.all(
-                              Radius.circular(
-                                min(replyThreshold, offset.value) * 0.4,
-                              ),
-                            ),
-                            color: context.theme.accentColor,
-                          ),
-                          child: AnimatedScale(
-                            scale: min(replyThreshold, offset.value) * (offset.value >= replyThreshold ? 0.5 : 0.4),
-                            duration: Duration(milliseconds: offset.value == 0 ? 150 : 0),
-                            child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.reply : Icons.reply,
-                            size: 1,
-                            color: context.textTheme.headline1!.color,),
+              child: Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.center,
+                children: <Widget>[
+                  AnimatedPositioned(
+                    duration: Duration(milliseconds: offset.value == 0 ? 150 : 0),
+                    left: !_message.isFromMe! ? -offset.value * 0.8 : null,
+                    right: _message.isFromMe! ? -offset.value * 0.8 : null,
+                    child: AnimatedContainer(
+                      margin: EdgeInsets.only(
+                          bottom: min(replyThreshold, offset.value) * (!_message.isFromMe! ? 0.10 : 0.20) +
+                              (widget.isFirstSentMessage && _message.dateDelivered != null ? 20 : 0)),
+                      duration: Duration(milliseconds: offset.value == 0 ? 150 : 0),
+                      width: min(replyThreshold, offset.value) * 0.8,
+                      height: min(replyThreshold, offset.value) * 0.8,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.all(
+                          Radius.circular(
+                            min(replyThreshold, offset.value) * 0.4,
                           ),
                         ),
+                        color: context.theme.accentColor,
                       ),
-                      message,
-                    ],
+                      child: AnimatedScale(
+                        scale: min(replyThreshold, offset.value) * (offset.value >= replyThreshold ? 0.5 : 0.4),
+                        duration: Duration(milliseconds: offset.value == 0 ? 150 : 0),
+                        child: Icon(
+                          SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.reply : Icons.reply,
+                          size: 1,
+                          color: context.textTheme.headline1!.color,
+                        ),
+                      ),
+                    ),
                   ),
-                  separator2,
+                  Column(children: <Widget>[
+                    message,
+                    separator2,
+                  ]),
                 ],
               ),
             ),
