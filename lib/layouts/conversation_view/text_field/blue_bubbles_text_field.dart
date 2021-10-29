@@ -81,7 +81,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   final StreamController _streamController = StreamController.broadcast();
   DropzoneViewController? dropZoneController;
   CurrentChat? safeChat;
-  Message? replyToMessage;
+  Rxn<Message?> replyToMessage = Rxn();
 
   bool selfTyping = false;
   int? sendCountdown;
@@ -215,8 +215,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         Logger.info("(EVENT) Focus Keyboard");
         focusNode!.requestFocus();
         if (event['data'] != null) {
-          replyToMessage = event['data'];
-          if (mounted) setState(() {});
+          replyToMessage.value = event['data'];
         }
       } else if (event["type"] == "text-field-update-attachments") {
         addSharedAttachments();
@@ -228,8 +227,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           Navigator.of(context).pop();
         }
       } else if (event["type"] == "focus-keyboard" && event["data"] != null) {
-        replyToMessage = event['data'];
-        if (mounted) setState(() {});
+        replyToMessage.value = event['data'];
       }
     });
 
@@ -658,286 +656,283 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       fit: FlexFit.loose,
       child: Container(
         child: AnimatedSize(
-            vsync: this,
-            duration: Duration(milliseconds: 100),
-            curve: Curves.easeInOut,
-            child: FocusScope(
-              child: Focus(
-                focusNode: FocusNode(),
-                onKey: (focus, event) {
-                  if (event is! RawKeyDownEvent) return KeyEventResult.ignored;
-                  Logger.info(
-                      "Got key label ${event.data.keyLabel}, physical key ${event.data.physicalKey.toString()}, logical key ${event.data.logicalKey.toString()}",
-                      tag: "RawKeyboardListener");
-                  if (event.data is RawKeyEventDataWindows) {
-                    var data = event.data as RawKeyEventDataWindows;
-                    if (data.keyCode == 13 && !event.isShiftPressed) {
-                      sendMessage();
-                      focusNode!.requestFocus();
-                      return KeyEventResult.handled;
-                    }
-                    if (data.keyCode == 8 && event.isControlPressed) {
-                      // Delete bad character (code 127)
-                      String text = controller!.text;
-                      text = text.characters.where((char) => char.codeUnits[0] != 127).join();
-                      TextSelection selection = controller!.selection;
-                      TextPosition base = selection.base;
-                      int startPos = base.offset;
-                      controller!.text = text;
-                      controller!.selection = TextSelection.fromPosition(TextPosition(offset: startPos - 1));
-
-                      if (text.isEmpty) return KeyEventResult.ignored;
-
-                      // Get the word
-                      List<String> words = text.trimRight().split(RegExp("[ \n]"));
-                      RegExp punctuation = RegExp("[\!\"\#\$\%\&\'\(\)\*\+\,\-\.\/\:\;\<\=\>\?\@\[\\\]\^\_\`\{\|\}\~]");
-                      int trailing = text.length - text.trimRight().length;
-                      List<int> counts = words.map((word) => word.length).toList();
-                      int end = startPos - 1 - trailing;
-                      int start = 0;
-                      if (punctuation.hasMatch(text.characters.toList()[end - 1])) {
-                        start = end - 1;
-                      } else {
-                        for (int i = 0; i < counts.length; i++) {
-                          int count = counts[i];
-                          if (start + count < end) {
-                            start += count + (i == counts.length - 1 ? 0 : 1);
-                          } else {
-                            break;
-                          }
-                        }
-                      }
-                      end += trailing; // Account for trimming
-                      start = max(0, start); // Make sure it's not negative
-                      text = text.substring(0, start) + text.substring(end);
-                      controller!.text = text; // Set the text
-                      controller!.selection =
-                          TextSelection.fromPosition(TextPosition(offset: start)); // Set the position
-                      return KeyEventResult.handled;
-                    }
-                    return KeyEventResult.ignored;
-                  }
-                  // TODO figure out the Linux keycode
-                  if (event.data is RawKeyEventDataLinux) {
-                    var data = event.data as RawKeyEventDataLinux;
-                    if (data.keyCode == 13 && !event.isShiftPressed) {
-                      sendMessage();
-                      focusNode!.requestFocus();
-                      return KeyEventResult.handled;
-                    }
-                    if (data.keyCode == 8 && event.isControlPressed) {
-                      // Delete bad character (code 127)
-                      String text = controller!.text;
-                      text = text.characters.where((char) => char.codeUnits[0] != 127).join();
-                      TextSelection selection = controller!.selection;
-                      TextPosition base = selection.base;
-                      int startPos = base.offset;
-                      controller!.text = text;
-                      controller!.selection = TextSelection.fromPosition(TextPosition(offset: startPos - 1));
-
-                      // Check if at end of a word
-                      if (startPos - 1 == text.length || text.characters.toList()[startPos - 1].isBlank!) {
-                        // Get the word
-                        int trailing = text.length - text.trimRight().length;
-                        List<String> words = text.trimRight().split(" ");
-                        print(words);
-                        List<int> counts = words.map((word) => word.length).toList();
-                        int end = startPos - 1 - trailing;
-                        int start = 0;
-                        for (int i = 0; i < counts.length; i++) {
-                          int count = counts[i];
-                          if (start + count < end) {
-                            start += count + (i == counts.length - 1 ? 0 : 1);
-                          } else {
-                            break;
-                          }
-                        }
-                        end += trailing; // Account for trimming
-                        start -= 1; // Remove the space after the previous word
-                        start = max(0, start); // Make sure it's not negative
-                        text = text.substring(0, start) + text.substring(end);
-                        // Set the text
-                        controller!.text = text;
-                        // Set the position
-                        controller!.selection = TextSelection.fromPosition(TextPosition(offset: start));
-                      }
-                      return KeyEventResult.handled;
-                    }
-                    return KeyEventResult.ignored;
-                  }
-                  // TODO figure out the MacOs keycode
-                  if (event.data is RawKeyEventDataMacOs) {
-                    var data = event.data as RawKeyEventDataMacOs;
-                    if (data.keyCode == 13 && !event.isShiftPressed) {
-                      sendMessage();
-                      focusNode!.requestFocus();
-                      return KeyEventResult.handled;
-                    }
-                    if (data.keyCode == 8 && event.isControlPressed) {
-                      // Delete bad character (code 127)
-                      String text = controller!.text;
-                      text = text.characters.where((char) => char.codeUnits[0] != 127).join();
-                      TextSelection selection = controller!.selection;
-                      TextPosition base = selection.base;
-                      int startPos = base.offset;
-                      controller!.text = text;
-                      controller!.selection = TextSelection.fromPosition(TextPosition(offset: startPos - 1));
-
-                      // Check if at end of a word
-                      if (startPos - 1 == text.length || text.characters.toList()[startPos - 1].isBlank!) {
-                        // Get the word
-                        int trailing = text.length - text.trimRight().length;
-                        List<String> words = text.trimRight().split(" ");
-                        print(words);
-                        List<int> counts = words.map((word) => word.length).toList();
-                        int end = startPos - 1 - trailing;
-                        int start = 0;
-                        for (int i = 0; i < counts.length; i++) {
-                          int count = counts[i];
-                          if (start + count < end) {
-                            start += count + (i == counts.length - 1 ? 0 : 1);
-                          } else {
-                            break;
-                          }
-                        }
-                        end += trailing; // Account for trimming
-                        start -= 1; // Remove the space after the previous word
-                        start = max(0, start); // Make sure it's not negative
-                        text = text.substring(0, start) + text.substring(end);
-                        // Set the text
-                        controller!.text = text;
-                        // Set the position
-                        controller!.selection = TextSelection.fromPosition(TextPosition(offset: start));
-                      }
-                      return KeyEventResult.handled;
-                    }
-                    return KeyEventResult.ignored;
-                  }
-                  if (event.data is RawKeyEventDataWeb) {
-                    var data = event.data as RawKeyEventDataWeb;
-                    if (data.code == "Enter" && !event.isShiftPressed) {
-                      sendMessage();
-                      focusNode!.requestFocus();
-                      return KeyEventResult.handled;
-                    }
-                    if ((data.physicalKey == PhysicalKeyboardKey.keyV || data.logicalKey == LogicalKeyboardKey.keyV) &&
-                        (event.isControlPressed || previousKeyCode == 0x1700000000)) {
-                      getPastedImageWeb().then((value) {
-                        if (value != null) {
-                          var r = html.FileReader();
-                          r.readAsArrayBuffer(value);
-                          r.onLoadEnd.listen((e) {
-                            if (r.result != null && r.result is Uint8List) {
-                              Uint8List data = r.result as Uint8List;
-                              addAttachment(PlatformFile(
-                                name: randomString(8) + ".png",
-                                bytes: data,
-                                size: data.length,
-                              ));
-                            }
-                          });
-                        }
-                      });
-                    }
-                    previousKeyCode = data.logicalKey.keyId;
-                    return KeyEventResult.ignored;
-                  }
-                  if (event.physicalKey == PhysicalKeyboardKey.enter &&
-                      SettingsManager().settings.sendWithReturn.value) {
-                    if (!isNullOrEmpty(controller!.text)!) {
-                      sendMessage();
-                      focusNode!.previousFocus(); // I genuinely don't know why this works
-                      return KeyEventResult.handled;
-                    } else {
-                      controller!.text = ""; // Stop pressing physical enter with enterIsSend from creating newlines
-                      focusNode!.previousFocus(); // I genuinely don't know why this works
-                      return KeyEventResult.handled;
-                    }
-                  }
-                  // 99% sure this isn't necessary but keeping it for now
-                  if (event.isKeyPressed(LogicalKeyboardKey.enter) &&
-                      SettingsManager().settings.sendWithReturn.value &&
-                      !isNullOrEmpty(controller!.text)!) {
+          vsync: this,
+          duration: Duration(milliseconds: 100),
+          curve: Curves.easeInOut,
+          child: FocusScope(
+            child: Focus(
+              focusNode: FocusNode(),
+              onKey: (focus, event) {
+                if (event is! RawKeyDownEvent) return KeyEventResult.ignored;
+                Logger.info(
+                    "Got key label ${event.data.keyLabel}, physical key ${event.data.physicalKey.toString()}, logical key ${event.data.logicalKey.toString()}",
+                    tag: "RawKeyboardListener");
+                if (event.data is RawKeyEventDataWindows) {
+                  var data = event.data as RawKeyEventDataWindows;
+                  if (data.keyCode == 13 && !event.isShiftPressed) {
                     sendMessage();
                     focusNode!.requestFocus();
                     return KeyEventResult.handled;
                   }
+                  if (data.keyCode == 8 && event.isControlPressed) {
+                    // Delete bad character (code 127)
+                    String text = controller!.text;
+                    text = text.characters.where((char) => char.codeUnits[0] != 127).join();
+                    TextSelection selection = controller!.selection;
+                    TextPosition base = selection.base;
+                    int startPos = base.offset;
+                    controller!.text = text;
+                    controller!.selection = TextSelection.fromPosition(TextPosition(offset: startPos - 1));
+
+                    if (text.isEmpty) return KeyEventResult.ignored;
+
+                    // Get the word
+                    List<String> words = text.trimRight().split(RegExp("[ \n]"));
+                    RegExp punctuation = RegExp("[\!\"\#\$\%\&\'\(\)\*\+\,\-\.\/\:\;\<\=\>\?\@\[\\\]\^\_\`\{\|\}\~]");
+                    int trailing = text.length - text.trimRight().length;
+                    List<int> counts = words.map((word) => word.length).toList();
+                    int end = startPos - 1 - trailing;
+                    int start = 0;
+                    if (punctuation.hasMatch(text.characters.toList()[end - 1])) {
+                      start = end - 1;
+                    } else {
+                      for (int i = 0; i < counts.length; i++) {
+                        int count = counts[i];
+                        if (start + count < end) {
+                          start += count + (i == counts.length - 1 ? 0 : 1);
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    end += trailing; // Account for trimming
+                    start = max(0, start); // Make sure it's not negative
+                    text = text.substring(0, start) + text.substring(end);
+                    controller!.text = text; // Set the text
+                    controller!.selection = TextSelection.fromPosition(TextPosition(offset: start)); // Set the position
+                    return KeyEventResult.handled;
+                  }
                   return KeyEventResult.ignored;
-                },
-                child: ThemeSwitcher(
-                  iOSSkin: Container(
+                }
+                // TODO figure out the Linux keycode
+                if (event.data is RawKeyEventDataLinux) {
+                  var data = event.data as RawKeyEventDataLinux;
+                  if (data.keyCode == 13 && !event.isShiftPressed) {
+                    sendMessage();
+                    focusNode!.requestFocus();
+                    return KeyEventResult.handled;
+                  }
+                  if (data.keyCode == 8 && event.isControlPressed) {
+                    // Delete bad character (code 127)
+                    String text = controller!.text;
+                    text = text.characters.where((char) => char.codeUnits[0] != 127).join();
+                    TextSelection selection = controller!.selection;
+                    TextPosition base = selection.base;
+                    int startPos = base.offset;
+                    controller!.text = text;
+                    controller!.selection = TextSelection.fromPosition(TextPosition(offset: startPos - 1));
+
+                    // Check if at end of a word
+                    if (startPos - 1 == text.length || text.characters.toList()[startPos - 1].isBlank!) {
+                      // Get the word
+                      int trailing = text.length - text.trimRight().length;
+                      List<String> words = text.trimRight().split(" ");
+                      print(words);
+                      List<int> counts = words.map((word) => word.length).toList();
+                      int end = startPos - 1 - trailing;
+                      int start = 0;
+                      for (int i = 0; i < counts.length; i++) {
+                        int count = counts[i];
+                        if (start + count < end) {
+                          start += count + (i == counts.length - 1 ? 0 : 1);
+                        } else {
+                          break;
+                        }
+                      }
+                      end += trailing; // Account for trimming
+                      start -= 1; // Remove the space after the previous word
+                      start = max(0, start); // Make sure it's not negative
+                      text = text.substring(0, start) + text.substring(end);
+                      // Set the text
+                      controller!.text = text;
+                      // Set the position
+                      controller!.selection = TextSelection.fromPosition(TextPosition(offset: start));
+                    }
+                    return KeyEventResult.handled;
+                  }
+                  return KeyEventResult.ignored;
+                }
+                // TODO figure out the MacOs keycode
+                if (event.data is RawKeyEventDataMacOs) {
+                  var data = event.data as RawKeyEventDataMacOs;
+                  if (data.keyCode == 13 && !event.isShiftPressed) {
+                    sendMessage();
+                    focusNode!.requestFocus();
+                    return KeyEventResult.handled;
+                  }
+                  if (data.keyCode == 8 && event.isControlPressed) {
+                    // Delete bad character (code 127)
+                    String text = controller!.text;
+                    text = text.characters.where((char) => char.codeUnits[0] != 127).join();
+                    TextSelection selection = controller!.selection;
+                    TextPosition base = selection.base;
+                    int startPos = base.offset;
+                    controller!.text = text;
+                    controller!.selection = TextSelection.fromPosition(TextPosition(offset: startPos - 1));
+
+                    // Check if at end of a word
+                    if (startPos - 1 == text.length || text.characters.toList()[startPos - 1].isBlank!) {
+                      // Get the word
+                      int trailing = text.length - text.trimRight().length;
+                      List<String> words = text.trimRight().split(" ");
+                      print(words);
+                      List<int> counts = words.map((word) => word.length).toList();
+                      int end = startPos - 1 - trailing;
+                      int start = 0;
+                      for (int i = 0; i < counts.length; i++) {
+                        int count = counts[i];
+                        if (start + count < end) {
+                          start += count + (i == counts.length - 1 ? 0 : 1);
+                        } else {
+                          break;
+                        }
+                      }
+                      end += trailing; // Account for trimming
+                      start -= 1; // Remove the space after the previous word
+                      start = max(0, start); // Make sure it's not negative
+                      text = text.substring(0, start) + text.substring(end);
+                      // Set the text
+                      controller!.text = text;
+                      // Set the position
+                      controller!.selection = TextSelection.fromPosition(TextPosition(offset: start));
+                    }
+                    return KeyEventResult.handled;
+                  }
+                  return KeyEventResult.ignored;
+                }
+                if (event.data is RawKeyEventDataWeb) {
+                  var data = event.data as RawKeyEventDataWeb;
+                  if (data.code == "Enter" && !event.isShiftPressed) {
+                    sendMessage();
+                    focusNode!.requestFocus();
+                    return KeyEventResult.handled;
+                  }
+                  if ((data.physicalKey == PhysicalKeyboardKey.keyV || data.logicalKey == LogicalKeyboardKey.keyV) &&
+                      (event.isControlPressed || previousKeyCode == 0x1700000000)) {
+                    getPastedImageWeb().then((value) {
+                      if (value != null) {
+                        var r = html.FileReader();
+                        r.readAsArrayBuffer(value);
+                        r.onLoadEnd.listen((e) {
+                          if (r.result != null && r.result is Uint8List) {
+                            Uint8List data = r.result as Uint8List;
+                            addAttachment(PlatformFile(
+                              name: randomString(8) + ".png",
+                              bytes: data,
+                              size: data.length,
+                            ));
+                          }
+                        });
+                      }
+                    });
+                  }
+                  previousKeyCode = data.logicalKey.keyId;
+                  return KeyEventResult.ignored;
+                }
+                if (event.physicalKey == PhysicalKeyboardKey.enter && SettingsManager().settings.sendWithReturn.value) {
+                  if (!isNullOrEmpty(controller!.text)!) {
+                    sendMessage();
+                    focusNode!.previousFocus(); // I genuinely don't know why this works
+                    return KeyEventResult.handled;
+                  } else {
+                    controller!.text = ""; // Stop pressing physical enter with enterIsSend from creating newlines
+                    focusNode!.previousFocus(); // I genuinely don't know why this works
+                    return KeyEventResult.handled;
+                  }
+                }
+                // 99% sure this isn't necessary but keeping it for now
+                if (event.isKeyPressed(LogicalKeyboardKey.enter) &&
+                    SettingsManager().settings.sendWithReturn.value &&
+                    !isNullOrEmpty(controller!.text)!) {
+                  sendMessage();
+                  focusNode!.requestFocus();
+                  return KeyEventResult.handled;
+                }
+                return KeyEventResult.ignored;
+              },
+              child: ThemeSwitcher(
+                iOSSkin: Obx(
+                  () => Container(
                     decoration: BoxDecoration(
                       color: Theme.of(context).backgroundColor,
-                      border: SettingsManager().settings.privateSubjectLine.value
-                          ? Border.all(
+                      border: Border.fromBorderSide(SettingsManager().settings.privateSubjectLine.value || replyToMessage.value != null
+                          ? BorderSide(
                               color: Theme.of(context).dividerColor,
                               width: 1.5,
                             )
-                          : null,
+                          : BorderSide.none),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     clipBehavior: Clip.antiAlias,
                     child: Column(
                       children: [
-                        if (replyToMessage != null)
-                          AnimatedSize(
-                            vsync: this,
-                            duration: Duration(milliseconds: 300),
-                            child: replyToMessage == null
-                                ? null
-                                : Container(
-                                    width: double.infinity,
-                                    height: 40,
-                                    color: Theme.of(context).dividerColor,
-                                    child: Row(
-                                      children: [
-                                        IconButton(
-                                          icon: Icon(
-                                            CupertinoIcons.xmark_circle,
-                                            color: Theme.of(context).textTheme.subtitle1!.color,
-                                            size: 17,
-                                          ),
-                                          onPressed: () {
-                                            replyToMessage = null;
-                                            setState(() {});
-                                          },
-                                          iconSize: 17,
+                        Obx(() {
+                          Message? reply = replyToMessage.value;
+                          return AnimatedContainer(
+                            duration: Duration(milliseconds: 150),
+                            width: double.infinity,
+                            height: reply == null ? 0 : 40,
+                            color: Theme.of(context).dividerColor,
+                            child: reply != null
+                                ? Row(
+                                    children: [
+                                      IconButton(
+                                        constraints: BoxConstraints(maxWidth: 30),
+                                        padding: EdgeInsets.symmetric(horizontal: 8),
+                                        icon: Icon(
+                                          CupertinoIcons.xmark_circle,
+                                          color: Theme.of(context).textTheme.subtitle1!.color,
+                                          size: 17,
                                         ),
-                                        Expanded(
-                                          child: Text.rich(
-                                            TextSpan(children: [
-                                              TextSpan(text: "Replying to "),
-                                              TextSpan(
-                                                text: generateContactInfo
-                                                    ? ContactManager()
-                                                            .handleToFakeName[replyToMessage!.handle?.address] ??
-                                                        "You"
-                                                    : ContactManager()
-                                                            .handleToContact[replyToMessage!.handle?.address ?? ""]
-                                                            ?.displayName ??
-                                                        replyToMessage!.handle?.address ??
-                                                        "You",
-                                                style: Theme.of(context).textTheme.subtitle1!.copyWith(
-                                                    fontWeight: FontWeight.bold,
-                                                    color: hideContactInfo ? Colors.transparent : null),
-                                              ),
-                                              TextSpan(
-                                                text:
-                                                    " - ${generateContent ? faker.lorem.words(MessageHelper.getNotificationTextSync(replyToMessage!).split(" ").length).join(" ") : MessageHelper.getNotificationTextSync(replyToMessage!)}",
-                                                style: Theme.of(context).textTheme.subtitle1!.copyWith(
-                                                    fontStyle: FontStyle.italic,
-                                                    color: hideContent ? Colors.transparent : null),
-                                              ),
-                                            ]),
-                                            style: Theme.of(context).textTheme.subtitle1,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
+                                        onPressed: () {
+                                          replyToMessage.value = null;
+                                        },
+                                        iconSize: 17,
+                                      ),
+                                      Expanded(
+                                        child: Text.rich(
+                                          TextSpan(children: [
+                                            TextSpan(text: "Replying to "),
+                                            TextSpan(
+                                              text: generateContactInfo
+                                                  ? ContactManager().handleToFakeName[reply.handle?.address] ?? "You"
+                                                  : ContactManager()
+                                                          .handleToContact[reply.handle?.address ?? ""]
+                                                          ?.displayName ??
+                                                      reply.handle?.address ??
+                                                      "You",
+                                              style: Theme.of(context).textTheme.subtitle1!.copyWith(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: hideContactInfo ? Colors.transparent : null),
+                                            ),
+                                            TextSpan(
+                                              text:
+                                                  " - ${generateContent ? faker.lorem.words(MessageHelper.getNotificationTextSync(reply).split(" ").length).join(" ") : MessageHelper.getNotificationTextSync(reply)}",
+                                              style: Theme.of(context).textTheme.subtitle1!.copyWith(
+                                                  fontStyle: FontStyle.italic,
+                                                  color: hideContent ? Colors.transparent : null),
+                                            ),
+                                          ]),
+                                          style: Theme.of(context).textTheme.subtitle1,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
-                                      ],
-                                    ),
-                                  ),
-                          ),
+                                      ),
+                                    ],
+                                  )
+                                : Container(),
+                          );
+                        }),
                         if (SettingsManager().settings.privateSubjectLine.value)
                           CustomCupertinoTextField(
                             enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
@@ -980,7 +975,12 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                             ),
                           ),
                         if (SettingsManager().settings.privateSubjectLine.value)
-                          Divider(height: 1.5, thickness: 1.5, indent: 10, color: Theme.of(context).dividerColor),
+                          Divider(
+                              height: 1.5,
+                              thickness: 1.5,
+                              indent: 10,
+                              endIndent: 10,
+                              color: Theme.of(context).dividerColor),
                         Stack(
                           alignment: Alignment.centerRight,
                           children: [
@@ -1028,12 +1028,13 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                   !widget.isCreator!,
                               decoration: BoxDecoration(
                                 color: Theme.of(context).backgroundColor,
-                                border: SettingsManager().settings.privateSubjectLine.value
-                                    ? null
-                                    : Border.all(
-                                        color: Theme.of(context).dividerColor,
-                                        width: 1.5,
-                                      ),
+                                border:
+                                    Border.fromBorderSide(SettingsManager().settings.privateSubjectLine.value || replyToMessage.value != null
+                                        ? BorderSide.none
+                                        : BorderSide(
+                                            color: Theme.of(context).dividerColor,
+                                            width: 1.5,
+                                          ),),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                             ),
@@ -1043,40 +1044,45 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       ],
                     ),
                   ),
-                  materialSkin: Container(
+                ),
+                materialSkin: Obx(
+                  () => Container(
                     decoration: BoxDecoration(
-                      border: Border.fromBorderSide(SettingsManager().settings.privateSubjectLine.value
-                          ? BorderSide(
-                              color: Theme.of(context).dividerColor,
-                              width: 1.5,
-                              style: BorderStyle.solid,
-                            )
-                          : BorderSide.none),
+                      border: Border.fromBorderSide(
+                        SettingsManager().settings.privateSubjectLine.value || replyToMessage.value != null
+                            ? BorderSide(
+                                color: Theme.of(context).dividerColor,
+                                width: 1.5,
+                                style: BorderStyle.solid,
+                              )
+                            : BorderSide.none,
+                      ),
                       borderRadius: BorderRadius.circular(20),
                     ),
+                    clipBehavior: Clip.antiAlias,
                     child: Column(
                       children: [
-                        if (replyToMessage != null)
-                          AnimatedSize(
-                            vsync: this,
-                            duration: Duration(milliseconds: 300),
-                            child: replyToMessage == null
-                                ? null
-                                : Container(
-                                    width: double.infinity,
-                                    height: 40,
-                                    color: Theme.of(context).dividerColor,
-                                    child: Row(
+                        Obx(() {
+                          Message? reply = replyToMessage.value;
+                          return AnimatedContainer(
+                              duration: Duration(milliseconds: 150),
+                              width: double.infinity,
+                              height: reply == null ? 0 : 40,
+                              color: Theme.of(context).dividerColor,
+                              child: reply != null
+                                  ? Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
                                       children: [
                                         IconButton(
+                                          constraints: BoxConstraints(maxWidth: 30),
+                                          padding: EdgeInsets.symmetric(horizontal: 8),
                                           icon: Icon(
                                             CupertinoIcons.xmark_circle,
                                             color: Theme.of(context).textTheme.subtitle1!.color,
                                             size: 17,
                                           ),
                                           onPressed: () {
-                                            replyToMessage = null;
-                                            setState(() {});
+                                            replyToMessage.value = null;
                                           },
                                           iconSize: 17,
                                         ),
@@ -1086,16 +1092,16 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                               TextSpan(text: "Replying to "),
                                               TextSpan(
                                                   text: ContactManager()
-                                                          .handleToContact[replyToMessage!.handle?.address ?? ""]
+                                                          .handleToContact[reply.handle?.address ?? ""]
                                                           ?.displayName ??
-                                                      replyToMessage!.handle?.address ??
+                                                      replyToMessage.value!.handle?.address ??
                                                       "You",
                                                   style: Theme.of(context)
                                                       .textTheme
                                                       .subtitle1!
                                                       .copyWith(fontWeight: FontWeight.bold)),
                                               TextSpan(
-                                                  text: " - ${MessageHelper.getNotificationTextSync(replyToMessage!)}",
+                                                  text: " - ${MessageHelper.getNotificationTextSync(reply)}",
                                                   style: Theme.of(context)
                                                       .textTheme
                                                       .subtitle1!
@@ -1107,9 +1113,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                           ),
                                         ),
                                       ],
-                                    ),
-                                  ),
-                          ),
+                                    )
+                                  : Container());
+                        }),
                         if (SettingsManager().settings.privateSubjectLine.value)
                           TextField(
                             // enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
@@ -1154,7 +1160,12 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                             minLines: 1,
                           ),
                         if (SettingsManager().settings.privateSubjectLine.value)
-                          Divider(height: 1.5, thickness: 1.5, indent: 10, color: Theme.of(context).dividerColor),
+                          Divider(
+                              height: 1.5,
+                              thickness: 1.5,
+                              indent: 10,
+                              endIndent: 10,
+                              color: Theme.of(context).dividerColor),
                         TextField(
                           // enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
                           controller: controller,
@@ -1184,33 +1195,36 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                           decoration: InputDecoration(
                             isDense: true,
                             enabledBorder: OutlineInputBorder(
-                              borderSide: SettingsManager().settings.privateSubjectLine.value
-                                  ? BorderSide.none
-                                  : BorderSide(
-                                      color: Theme.of(context).dividerColor,
-                                      width: 1.5,
-                                      style: BorderStyle.solid,
-                                    ),
+                              borderSide:
+                                  SettingsManager().settings.privateSubjectLine.value || replyToMessage.value != null
+                                      ? BorderSide.none
+                                      : BorderSide(
+                                          color: Theme.of(context).dividerColor,
+                                          width: 1.5,
+                                          style: BorderStyle.solid,
+                                        ),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             disabledBorder: OutlineInputBorder(
-                              borderSide: SettingsManager().settings.privateSubjectLine.value
-                                  ? BorderSide.none
-                                  : BorderSide(
-                                      color: Theme.of(context).dividerColor,
-                                      width: 1.5,
-                                      style: BorderStyle.solid,
-                                    ),
+                              borderSide:
+                                  SettingsManager().settings.privateSubjectLine.value || replyToMessage.value != null
+                                      ? BorderSide.none
+                                      : BorderSide(
+                                          color: Theme.of(context).dividerColor,
+                                          width: 1.5,
+                                          style: BorderStyle.solid,
+                                        ),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderSide: SettingsManager().settings.privateSubjectLine.value
-                                  ? BorderSide.none
-                                  : BorderSide(
-                                      color: Theme.of(context).dividerColor,
-                                      width: 1.5,
-                                      style: BorderStyle.solid,
-                                    ),
+                              borderSide:
+                                  SettingsManager().settings.privateSubjectLine.value || replyToMessage.value != null
+                                      ? BorderSide.none
+                                      : BorderSide(
+                                          color: Theme.of(context).dividerColor,
+                                          width: 1.5,
+                                          style: BorderStyle.solid,
+                                        ),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             hintText: SettingsManager().settings.recipientAsPlaceholder.value == true
@@ -1231,41 +1245,45 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       ],
                     ),
                   ),
-                  samsungSkin: Container(
+                ),
+                samsungSkin: Obx(
+                  () => Container(
                     decoration: BoxDecoration(
                       color: Theme.of(context).dividerColor.withOpacity(1),
-                      border: Border.fromBorderSide(SettingsManager().settings.privateSubjectLine.value
-                          ? BorderSide(
-                              color: Theme.of(context).dividerColor,
-                              width: 1.5,
-                              style: BorderStyle.solid,
-                            )
-                          : BorderSide.none),
+                      border: Border.fromBorderSide(
+                          SettingsManager().settings.privateSubjectLine.value || replyToMessage.value != null
+                              ? BorderSide(
+                                  color: Theme.of(context).dividerColor,
+                                  width: 1.5,
+                                  style: BorderStyle.solid,
+                                )
+                              : BorderSide.none),
                       borderRadius: BorderRadius.circular(20),
                     ),
+                    clipBehavior: Clip.antiAlias,
                     child: Column(
                       children: [
-                        if (replyToMessage != null)
-                          AnimatedSize(
-                            vsync: this,
-                            duration: Duration(milliseconds: 300),
-                            child: replyToMessage == null
-                                ? null
-                                : Container(
-                                    width: double.infinity,
-                                    height: 40,
-                                    color: Theme.of(context).dividerColor,
-                                    child: Row(
+                        Obx(
+                          () {
+                            Message? reply = replyToMessage.value;
+                            return AnimatedContainer(
+                              duration: Duration(milliseconds: 150),
+                              width: double.infinity,
+                              height: reply == null ? 0 : 40,
+                              color: Theme.of(context).dividerColor,
+                              child: reply != null
+                                  ? Row(
                                       children: [
                                         IconButton(
+                                          constraints: BoxConstraints(maxWidth: 30),
+                                          padding: EdgeInsets.symmetric(horizontal: 8),
                                           icon: Icon(
                                             CupertinoIcons.xmark_circle,
                                             color: Theme.of(context).textTheme.subtitle1!.color,
                                             size: 17,
                                           ),
                                           onPressed: () {
-                                            replyToMessage = null;
-                                            setState(() {});
+                                            replyToMessage.value = null;
                                           },
                                           iconSize: 17,
                                         ),
@@ -1275,16 +1293,16 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                               TextSpan(text: "Replying to "),
                                               TextSpan(
                                                   text: ContactManager()
-                                                          .handleToContact[replyToMessage!.handle?.address ?? ""]
+                                                          .handleToContact[reply.handle?.address ?? ""]
                                                           ?.displayName ??
-                                                      replyToMessage!.handle?.address ??
+                                                      reply.handle?.address ??
                                                       "You",
                                                   style: Theme.of(context)
                                                       .textTheme
                                                       .subtitle1!
                                                       .copyWith(fontWeight: FontWeight.bold)),
                                               TextSpan(
-                                                  text: " - ${MessageHelper.getNotificationTextSync(replyToMessage!)}",
+                                                  text: " - ${MessageHelper.getNotificationTextSync(reply)}",
                                                   style: Theme.of(context)
                                                       .textTheme
                                                       .subtitle1!
@@ -1296,9 +1314,11 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                           ),
                                         ),
                                       ],
-                                    ),
-                                  ),
-                          ),
+                                    )
+                                  : Container(),
+                            );
+                          },
+                        ),
                         if (SettingsManager().settings.privateSubjectLine.value)
                           TextField(
                             // enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
@@ -1357,7 +1377,12 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                             minLines: 1,
                           ),
                         if (SettingsManager().settings.privateSubjectLine.value)
-                          Divider(height: 1.5, thickness: 1.5, indent: 10, color: Theme.of(context).dividerColor),
+                          Divider(
+                              height: 1.5,
+                              thickness: 1.5,
+                              indent: 10,
+                              endIndent: 10,
+                              color: Theme.of(context).dividerColor),
                         TextField(
                           // enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
                           controller: controller,
@@ -1438,7 +1463,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   ),
                 ),
               ),
-            )),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -1525,10 +1552,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     }
 
     if (await widget.onSend(pickedImages, controller!.text, subjectController!.text,
-        replyToMessage?.threadOriginatorGuid ?? replyToMessage?.guid, effect)) {
+        replyToMessage.value?.threadOriginatorGuid ?? replyToMessage.value?.guid, effect)) {
       controller!.text = "";
       subjectController!.text = "";
-      replyToMessage = null;
+      replyToMessage.value = null;
       pickedImages.clear();
       updateTextFieldAttachments();
     }
@@ -1565,7 +1592,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       subject: subjectController!.text.trim(),
       dateCreated: DateTime.now(),
       hasAttachments: false,
-      threadOriginatorGuid: replyToMessage?.guid,
+      threadOriginatorGuid: replyToMessage.value?.guid,
       isFromMe: true,
     );
     message.generateTempGuid();
