@@ -440,7 +440,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
               SliverToBoxAdapter(
                 child: Row(
                   children: <Widget>[
-                    if (widget.chat?.guid == "theme-selector" ||
+                    if (SettingsManager().settings.skin.value == Skins.Samsung || widget.chat?.guid == "theme-selector" ||
                         (currentChat!.showTypingIndicator && SettingsManager().settings.alwaysShowAvatars.value))
                       Padding(
                         padding: EdgeInsets.only(left: 10.0),
