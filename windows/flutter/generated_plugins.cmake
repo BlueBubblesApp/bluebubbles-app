@@ -8,7 +8,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   quick_notify
   secure_application
   url_launcher_windows
-  window_size
+  window_manager
 )
 
 set(PLUGIN_BUNDLED_LIBRARIES)
