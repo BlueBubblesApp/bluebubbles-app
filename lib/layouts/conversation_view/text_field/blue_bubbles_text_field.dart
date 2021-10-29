@@ -27,9 +27,9 @@ import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/js.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:dio_http/dio_http.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:file_picker/file_picker.dart' hide PlatformFile;
 import 'package:file_picker/file_picker.dart' as pf;
 import 'package:flutter/cupertino.dart';
@@ -878,8 +878,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                 },
                                 iconSize: 17,
                               ),
-                              Container(
-                                width: context.width - 125,
+                              Expanded(
                                 child: Text.rich(
                                   TextSpan(
                                     children: [
@@ -1031,8 +1030,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                 },
                                 iconSize: 17,
                               ),
-                              Container(
-                                width: context.width - 125,
+                              Expanded(
                                 child: Text.rich(
                                   TextSpan(
                                       children: [
@@ -1204,8 +1202,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                 },
                                 iconSize: 17,
                               ),
-                              Container(
-                                width: context.width - 125,
+                              Expanded(
                                 child: Text.rich(
                                   TextSpan(
                                       children: [
