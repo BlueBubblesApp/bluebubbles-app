@@ -36,7 +36,7 @@ final effectMap = {
   "love": "com.apple.messages.effect.CKHeartEffect",
   "lasers": "com.apple.messages.effect.CKLasersEffect",
   "fireworks": "com.apple.messages.effect.CKFireworksEffect",
-  "celebration": "com.apple.messages.effect.CKCelebrationEffect",
+  "celebration": "com.apple.messages.effect.CKSparklesEffect",
 };
 
 final stringToMessageEffect = {
