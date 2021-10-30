@@ -104,10 +104,14 @@ class SentMessageHelper {
                             ),
                           )),
                     )
-                  : Text(
-                      message!.text!,
-                      style: Theme.of(context).textTheme.bodyText2!.apply(fontSizeFactor: 4),
-                    ),
+                  : RichText(
+                  text: TextSpan(
+                      children: MessageHelper.buildEmojiText(
+                          message!.text!,
+                          Theme.of(context)
+                              .textTheme
+                              .bodyText1!
+                              .apply(fontSizeFactor: 4)))),
             ),
           );
         })

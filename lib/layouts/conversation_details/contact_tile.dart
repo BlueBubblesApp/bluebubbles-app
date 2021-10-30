@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
@@ -90,9 +91,13 @@ class ContactTile extends StatelessWidget {
       },
       child: ListTile(
         title: (contact?.displayName != null || hideInfo || generateName)
-            ? Text(
-          getContactName(context, contact?.displayName ?? "", handle.address, currentChat: chat),
-          style: Theme.of(context).textTheme.bodyText1,
+            ? RichText(
+          text: TextSpan(
+            children: MessageHelper.buildEmojiText(
+                getContactName(context, contact?.displayName ?? "", handle.address, currentChat: chat),
+                Theme.of(context).textTheme.bodyText1!
+            )
+          ),
         ) : FutureBuilder<String>(
             future: formatPhoneNumber(handle),
             builder: (context, snapshot) {
@@ -103,9 +108,13 @@ class ContactTile extends StatelessWidget {
                 );
               }
 
-              return Text(
-                snapshot.data ?? "Unknown contact details",
-                style: Theme.of(context).textTheme.bodyText1,
+              return RichText(
+                text: TextSpan(
+                    children: MessageHelper.buildEmojiText(
+                        snapshot.data ?? "Unknown contact details",
+                        Theme.of(context).textTheme.bodyText1!
+                    )
+                )
               );
             }),
         subtitle: (contact == null || hideInfo || generateName) ? null : FutureBuilder<String>(

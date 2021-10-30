@@ -96,29 +96,29 @@ abstract class MessageWidgetMixin {
           _textStyle = _textStyle.apply(color: Colors.transparent);
         }
         if (colorOverride != null && !hideContent) _textStyle = _textStyle.apply(color: colorOverride);
-        textSpans.add(
-          TextSpan(
-            text: "${message.subject}\n",
-            style: _textStyle,
-          ),
+        textSpans.addAll(
+            MessageHelper.buildEmojiText(
+              "${message.subject}\n",
+              _textStyle,
+            )
         );
       }
 
       if (linkIndexMatches.isNotEmpty) {
         for (int i = 0; i < linkIndexMatches.length + 1; i++) {
           if (i == 0) {
-            textSpans.add(
-              TextSpan(
-                text: message.text!.substring(0, linkIndexMatches[i]),
-                style: textStyle,
-              ),
+            textSpans.addAll(
+                MessageHelper.buildEmojiText(
+                  message.text!.substring(0, linkIndexMatches[i]),
+                  textStyle!,
+                )
             );
           } else if (i == linkIndexMatches.length && i - 1 >= 0) {
-            textSpans.add(
-              TextSpan(
-                text: message.text!.substring(linkIndexMatches[i - 1], message.text!.length),
-                style: textStyle,
-              ),
+            textSpans.addAll(
+                MessageHelper.buildEmojiText(
+                  message.text!.substring(linkIndexMatches[i - 1], message.text!.length),
+                  textStyle!,
+                )
             );
           } else if (i - 1 >= 0) {
             String text = message.text!.substring(linkIndexMatches[i - 1], linkIndexMatches[i]);
@@ -139,21 +139,21 @@ abstract class MessageWidgetMixin {
                 ),
               );
             } else {
-              textSpans.add(
-                TextSpan(
-                  text: text,
-                  style: textStyle,
-                ),
+              textSpans.addAll(
+                  MessageHelper.buildEmojiText(
+                    text,
+                    textStyle!,
+                  )
               );
             }
           }
         }
       } else {
-        textSpans.add(
-          TextSpan(
-            text: message.text,
-            style: textStyle,
-          ),
+        textSpans.addAll(
+            MessageHelper.buildEmojiText(
+              message.text!,
+              textStyle!,
+            )
         );
       }
 
@@ -162,11 +162,11 @@ abstract class MessageWidgetMixin {
         return [TextSpan(text: generatedText, style: textStyle)];
       }
     } else {
-      textSpans.add(
-        TextSpan(
-          text: MessageHelper.getNotificationTextSync(message),
-          style: textStyle,
-        ),
+      textSpans.addAll(
+          MessageHelper.buildEmojiText(
+            MessageHelper.getNotificationTextSync(message),
+            textStyle!,
+          )
       );
     }
 
@@ -252,29 +252,29 @@ abstract class MessageWidgetMixin {
           _textStyle = _textStyle.apply(color: Colors.transparent);
         }
         if (colorOverride != null && !hideContent) _textStyle = _textStyle.apply(color: colorOverride);
-        textSpans.add(
-          TextSpan(
-            text: "${message.subject}\n",
-            style: _textStyle,
-          ),
+        textSpans.addAll(
+          MessageHelper.buildEmojiText(
+            "${message.subject}\n",
+            _textStyle,
+          )
         );
       }
 
       if (linkIndexMatches.isNotEmpty) {
         for (int i = 0; i < linkIndexMatches.length + 1; i++) {
           if (i == 0) {
-            textSpans.add(
-              TextSpan(
-                text: message.text!.substring(0, linkIndexMatches[i].item2),
-                style: textStyle,
-              ),
+            textSpans.addAll(
+                MessageHelper.buildEmojiText(
+                  message.text!.substring(0, linkIndexMatches[i].item2),
+                  textStyle!,
+                )
             );
           } else if (i == linkIndexMatches.length && i - 1 >= 0) {
-            textSpans.add(
-              TextSpan(
-                text: message.text!.substring(linkIndexMatches[i - 1].item2, message.text!.length),
-                style: textStyle,
-              ),
+            textSpans.addAll(
+                MessageHelper.buildEmojiText(
+                  message.text!.substring(linkIndexMatches[i - 1].item2, message.text!.length),
+                  textStyle!,
+                )
             );
           } else if (i - 1 >= 0) {
             String type = linkIndexMatches[i].item1;
@@ -304,21 +304,21 @@ abstract class MessageWidgetMixin {
                 ),
               );
             } else {
-              textSpans.add(
-                TextSpan(
-                  text: text,
-                  style: textStyle,
-                ),
+              textSpans.addAll(
+                  MessageHelper.buildEmojiText(
+                    text,
+                    textStyle!,
+                  )
               );
             }
           }
         }
       } else {
-        textSpans.add(
-          TextSpan(
-            text: message.text,
-            style: textStyle,
-          ),
+        textSpans.addAll(
+          MessageHelper.buildEmojiText(
+            message.text!,
+            textStyle!,
+          )
         );
       }
 
@@ -327,11 +327,11 @@ abstract class MessageWidgetMixin {
         return [TextSpan(text: generatedText, style: textStyle)];
       }
     } else {
-      textSpans.add(
-        TextSpan(
-          text: MessageHelper.getNotificationTextSync(message),
-          style: textStyle,
-        ),
+      textSpans.addAll(
+        MessageHelper.buildEmojiText(
+          MessageHelper.getNotificationTextSync(message),
+          textStyle!,
+        )
       );
     }
 

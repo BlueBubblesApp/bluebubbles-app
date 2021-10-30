@@ -6,6 +6,7 @@ import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/socket_singletons.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
@@ -635,9 +636,9 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                             text: TextSpan(
                               style: Theme.of(context).textTheme.headline2,
                               children: [
-                                TextSpan(
-                                  text: title,
-                                  style: titleStyle,
+                                ...MessageHelper.buildEmojiText(
+                                  title ?? "",
+                                  titleStyle!,
                                 ),
                               ],
                             ),
