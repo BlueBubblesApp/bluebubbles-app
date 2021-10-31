@@ -405,12 +405,11 @@ class _MessageState extends State<MessageWidget> {
                         ),
                         color: context.theme.accentColor,
                       ),
-                      child: AnimatedScale(
-                        scale: min(replyThreshold, offset.value) * (offset.value >= replyThreshold ? 0.5 : 0.4),
+                      child: AnimatedSize(
                         duration: Duration(milliseconds: offset.value == 0 ? 150 : 0),
                         child: Icon(
                           SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.reply : Icons.reply,
-                          size: 1,
+                          size: min(replyThreshold, offset.value) * (offset.value >= replyThreshold ? 0.5 : 0.4),
                           color: context.textTheme.headline1!.color,
                         ),
                       ),
