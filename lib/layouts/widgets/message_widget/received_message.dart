@@ -288,7 +288,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                   final text = generateContent ? faker.lorem.words(message.text?.split(" ").length).join(" ") : message.text;
                   return GestureDetector(
                     onHorizontalDragEnd: (DragEndDetails details) {
-                      if ((details.primaryVelocity ?? 0) > 0 && effect == MessageEffect.invisibleInk) {
+                      if ((details.primaryVelocity ?? 0) < 0 && effect == MessageEffect.invisibleInk) {
                         setState(() {
                           opacity = 1 - opacity;
                           controller = CustomAnimationControl.stop;
