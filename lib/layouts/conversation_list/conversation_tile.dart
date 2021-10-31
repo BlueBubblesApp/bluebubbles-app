@@ -261,9 +261,13 @@ class _ConversationTileState extends State<ConversationTile> {
               style = style.copyWith(color: Colors.transparent);
             }
 
-            return Text(
-              latestText,
-              style: style,
+            return RichText(
+              text: TextSpan(
+                children: MessageHelper.buildEmojiText(
+                  latestText,
+                  style,
+                )
+              ),
               overflow: TextOverflow.ellipsis,
               maxLines: 2,
             );

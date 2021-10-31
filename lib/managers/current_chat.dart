@@ -54,17 +54,34 @@ class CurrentChat {
   Map<String, List<Attachment?>> messageAttachments = {};
 
   double _timeStampOffset = 0.0;
+  double _replyOffset = 0.0;
 
   StreamController<double> timeStampOffsetStream = StreamController<double>.broadcast();
+  StreamController<Map<String, dynamic>> replyOffsetStream = StreamController<Map<String, dynamic>>.broadcast();
+  StreamController<dynamic> totalOffsetStream = StreamController<dynamic>.broadcast();
 
   late MessageMarkers messageMarkers;
 
   double get timeStampOffset => _timeStampOffset;
 
+  double get replyOffset => _replyOffset;
+
+  double get totalOffset => _timeStampOffset + _replyOffset;
+
   set timeStampOffset(double value) {
     if (_timeStampOffset == value) return;
     _timeStampOffset = value;
     if (!timeStampOffsetStream.isClosed) timeStampOffsetStream.sink.add(_timeStampOffset);
+    if (!totalOffsetStream.isClosed) totalOffsetStream.sink.add(_timeStampOffset - _replyOffset);
+  }
+
+  setReplyOffset(String guid, double value) {
+    if (_replyOffset == value) return;
+    _replyOffset = value;
+    if (!replyOffsetStream.isClosed) replyOffsetStream.sink.add({"guid": guid, "offset": _replyOffset});
+    if (!totalOffsetStream.isClosed) {
+      totalOffsetStream.sink.add({"guid": guid, "offset": _timeStampOffset - _replyOffset, "else": _timeStampOffset});
+    }
   }
 
   ScrollController scrollController = ScrollController();
@@ -234,8 +251,7 @@ class CurrentChat {
   }
 
   Future<void> preloadMessageAttachments({List<Message?>? specificMessages}) async {
-    List<Message?> messages =
-        specificMessages ?? await Chat.getMessagesSingleton(chat, limit: 25);
+    List<Message?> messages = specificMessages ?? await Chat.getMessagesSingleton(chat, limit: 25);
     for (Message? message in messages) {
       if (message!.hasAttachments) {
         List<Attachment?>? attachments = await message.fetchAttachments();
@@ -267,8 +283,8 @@ class CurrentChat {
   }
 
   /// Retrieve all of the attachments associated with a chat
-  Future<void> updateChatAttachments() async {
-    chatAttachments = await Chat.getAttachments(chat);
+  Future<void> updateChatAttachments({bool fetchAll = false}) async {
+    chatAttachments = await Chat.getAttachments(chat, limit: fetchAll ? 0 : 25);
   }
 
   void changeCurrentPlayingVideo(Map<String, VideoPlayerController> video) {

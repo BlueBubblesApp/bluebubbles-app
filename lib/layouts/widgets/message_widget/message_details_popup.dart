@@ -448,7 +448,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
           color: Colors.transparent,
           child: InkWell(
             onTap: () async {
-              Get.back();
+              Navigator.of(context).pop();
               EventDispatcher().emit("focus-keyboard", widget.message);
             },
             child: ListTile(

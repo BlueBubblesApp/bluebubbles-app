@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:collection/collection.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
+import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
@@ -69,6 +70,7 @@ FlutterLocalNotificationsPlugin? flutterLocalNotificationsPlugin;
 late SharedPreferences prefs;
 late FirebaseApp app;
 String? recentIntent;
+final RxBool fontExistsOnDisk = false.obs;
 
 Future<Null> _reportError(dynamic error, dynamic stackTrace) async {
   // Print the exception to the console.
@@ -145,6 +147,13 @@ Future<Null> main() async {
     if (kIsDesktop) {
       await WindowManager.instance.setTitle('BlueBubbles (Beta)');
       WindowManager.instance.addListener(DesktopWindowListener());
+    }
+    try {
+      DynamicCachedFonts.loadCachedFont("https://github.com/samuelngs/apple-emoji-linux/releases/download/latest/AppleColorEmoji.ttf", fontFamily: "Apple Color Emoji").then((_) {
+        fontExistsOnDisk.value = true;
+      });
+    } on StateError catch (_) {
+      fontExistsOnDisk.value = false;
     }
   } catch (e) {
     exception = e;

@@ -624,7 +624,25 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
             CustomNavigator.maxWidthLeft = constraints.maxWidth;
             return WillPopScope(
               onWillPop: () async {
-                Get.back(id: 1);
+                Get.until((route) {
+                  bool id2result = false;
+                  // check if we should pop the left side first
+                  Get.until((route) {
+                    if (route.settings.name != "initial") {
+                      Get.back(id: 2);
+                      id2result = true;
+                    }
+                    return true;
+                  }, id: 2);
+                  if (!id2result) {
+                    if (route.settings.name == "initial") {
+                      SystemNavigator.pop();
+                    } else {
+                      Get.back(id: 1);
+                    }
+                  }
+                  return true;
+                }, id: 1);
                 return false;
               },
               child: Navigator(

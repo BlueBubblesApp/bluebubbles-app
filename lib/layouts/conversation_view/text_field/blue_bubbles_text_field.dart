@@ -27,9 +27,10 @@ import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/js.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:dio_http/dio_http.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
+import 'package:faker/faker.dart';
 import 'package:file_picker/file_picker.dart' hide PlatformFile;
 import 'package:file_picker/file_picker.dart' as pf;
 import 'package:flutter/cupertino.dart';
@@ -50,7 +51,8 @@ class BlueBubblesTextField extends StatefulWidget {
   final String? existingText;
   final bool? isCreator;
   final bool wasCreator;
-  final Future<bool> Function(List<PlatformFile> attachments, String text, String subject, String? replyToGuid, String? effectId) onSend;
+  final Future<bool> Function(
+      List<PlatformFile> attachments, String text, String subject, String? replyToGuid, String? effectId) onSend;
 
   BlueBubblesTextField({
     Key? key,
@@ -79,7 +81,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   final StreamController _streamController = StreamController.broadcast();
   DropzoneViewController? dropZoneController;
   CurrentChat? safeChat;
-  Message? replyToMessage;
+  Rxn<Message?> replyToMessage = Rxn();
 
   bool selfTyping = false;
   int? sendCountdown;
@@ -213,8 +215,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
         Logger.info("(EVENT) Focus Keyboard");
         focusNode!.requestFocus();
         if (event['data'] != null) {
-          replyToMessage = event['data'];
-          if (mounted) setState(() {});
+          replyToMessage.value = event['data'];
         }
       } else if (event["type"] == "text-field-update-attachments") {
         addSharedAttachments();
@@ -226,8 +227,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           Navigator.of(context).pop();
         }
       } else if (event["type"] == "focus-keyboard" && event["data"] != null) {
-        replyToMessage = event['data'];
-        if (mounted) setState(() {});
+        replyToMessage.value = event['data'];
       }
     });
 
@@ -555,8 +555,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   addAttachment(PlatformFile(
                       name: await dropZoneController!.getFilename(ev),
                       bytes: await dropZoneController!.getFileData(ev),
-                      size: await dropZoneController!.getFileSize(ev)
-                  ));
+                      size: await dropZoneController!.getFileSize(ev)));
                 },
               ),
             TransparentPointer(
@@ -564,12 +563,20 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                 child: InkWell(
                   onTap: toggleShareMenu,
                   child: Padding(
-                    padding: EdgeInsets.only(right: SettingsManager().settings.skin.value == Skins.iOS ? 0 : 1, left: SettingsManager().settings.skin.value == Skins.iOS ? 0.5 : 0),
+                    padding: EdgeInsets.only(
+                        right: SettingsManager().settings.skin.value == Skins.iOS ? 0 : 1,
+                        left: SettingsManager().settings.skin.value == Skins.iOS ? 0.5 : 0),
                     child: fileDragged
                         ? Center(child: Text("Drop file here"))
                         : Icon(
-                            SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.share : SettingsManager().settings.skin.value == Skins.Samsung ? Icons.add : Icons.share,
-                            color: SettingsManager().settings.skin.value == Skins.Samsung ? context.theme.textTheme.bodyText1!.color : Colors.white,
+                            SettingsManager().settings.skin.value == Skins.iOS
+                                ? CupertinoIcons.share
+                                : SettingsManager().settings.skin.value == Skins.Samsung
+                                    ? Icons.add
+                                    : Icons.share,
+                            color: SettingsManager().settings.skin.value == Skins.Samsung
+                                ? context.theme.textTheme.bodyText1!.color
+                                : Colors.white,
                             size: SettingsManager().settings.skin.value == Skins.Samsung ? 26 : 20,
                           ),
                   ),
@@ -634,6 +641,16 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   }
 
   Widget buildActualTextField() {
+    final bool generateContent =
+        SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeMessageContent.value;
+    final bool hideContent = (SettingsManager().settings.redactedMode.value &&
+        SettingsManager().settings.hideMessageContent.value &&
+        !generateContent);
+    final bool generateContactInfo =
+        SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeContactNames.value;
+    final bool hideContactInfo = SettingsManager().settings.redactedMode.value &&
+        SettingsManager().settings.hideContactInfo.value &&
+        !generateContactInfo;
     return Flexible(
       flex: 1,
       fit: FlexFit.loose,
@@ -647,7 +664,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               focusNode: FocusNode(),
               onKey: (focus, event) {
                 if (event is! RawKeyDownEvent) return KeyEventResult.ignored;
-                Logger.info("Got key label ${event.data.keyLabel}, physical key ${event.data.physicalKey.toString()}, logical key ${event.data.logicalKey.toString()}", tag: "RawKeyboardListener");
+                Logger.info(
+                    "Got key label ${event.data.keyLabel}, physical key ${event.data.physicalKey.toString()}, logical key ${event.data.logicalKey.toString()}",
+                    tag: "RawKeyboardListener");
                 if (event.data is RawKeyEventDataWindows) {
                   var data = event.data as RawKeyEventDataWindows;
                   if (data.keyCode == 13 && !event.isShiftPressed) {
@@ -690,8 +709,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     start = max(0, start); // Make sure it's not negative
                     text = text.substring(0, start) + text.substring(end);
                     controller!.text = text; // Set the text
-                    controller!.selection =
-                        TextSelection.fromPosition(TextPosition(offset: start)); // Set the position
+                    controller!.selection = TextSelection.fromPosition(TextPosition(offset: start)); // Set the position
                     return KeyEventResult.handled;
                   }
                   return KeyEventResult.ignored;
@@ -799,8 +817,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     focusNode!.requestFocus();
                     return KeyEventResult.handled;
                   }
-                  if ((data.physicalKey == PhysicalKeyboardKey.keyV || data.logicalKey == LogicalKeyboardKey.keyV)
-                      && (event.isControlPressed || previousKeyCode == 0x1700000000)) {
+                  if ((data.physicalKey == PhysicalKeyboardKey.keyV || data.logicalKey == LogicalKeyboardKey.keyV) &&
+                      (event.isControlPressed || previousKeyCode == 0x1700000000)) {
                     getPastedImageWeb().then((value) {
                       if (value != null) {
                         var r = html.FileReader();
@@ -821,8 +839,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   previousKeyCode = data.logicalKey.keyId;
                   return KeyEventResult.ignored;
                 }
-                if (event.physicalKey == PhysicalKeyboardKey.enter &&
-                    SettingsManager().settings.sendWithReturn.value) {
+                if (event.physicalKey == PhysicalKeyboardKey.enter && SettingsManager().settings.sendWithReturn.value) {
                   if (!isNullOrEmpty(controller!.text)!) {
                     sendMessage();
                     focusNode!.previousFocus(); // I genuinely don't know why this works
@@ -842,520 +859,613 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   return KeyEventResult.handled;
                 }
                 return KeyEventResult.ignored;
-            },
-            child: ThemeSwitcher(
-              iOSSkin: Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).backgroundColor,
-                  border: SettingsManager().settings.privateSubjectLine.value ? Border.all(
-                    color: Theme.of(context).dividerColor,
-                    width: 1.5,
-                  ) : null,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: Column(
-                  children: [
-                    if (replyToMessage != null)
-                      AnimatedSize(
-                        vsync: this,
-                        duration: Duration(milliseconds: 300),
-                        child: replyToMessage == null ? null : Container(
-                          width: double.infinity,
-                          height: 40,
-                          color: Theme.of(context).dividerColor,
-                          child: Row(
-                            children: [
-                              IconButton(
-                                icon: Icon(
-                                  CupertinoIcons.xmark_circle,
-                                  color: Theme.of(context).textTheme.subtitle1!.color,
-                                  size: 17,
-                                ),
-                                onPressed: () {
-                                  replyToMessage = null;
-                                  setState(() {});
-                                },
-                                iconSize: 17,
-                              ),
-                              Container(
-                                width: context.width - 125,
-                                child: Text.rich(
-                                  TextSpan(
-                                    children: [
-                                      TextSpan(text: "Replying to "),
-                                      TextSpan(text: ContactManager().handleToContact[replyToMessage!.handle?.address ?? ""]?.displayName ?? replyToMessage!.handle?.address ?? "You", style: Theme.of(context).textTheme.subtitle1!.copyWith(fontWeight: FontWeight.bold)),
-                                      TextSpan(text: " - ${MessageHelper.getNotificationTextSync(replyToMessage!)}", style: Theme.of(context).textTheme.subtitle1!.copyWith(fontStyle: FontStyle.italic)),
-                                    ]
-                                  ),
-                                  style: Theme.of(context).textTheme.subtitle1,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    if (SettingsManager().settings.privateSubjectLine.value)
-                      CustomCupertinoTextField(
-                        enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
-                        textInputAction: SettingsManager().settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
-                            ? TextInputAction.next
-                            : TextInputAction.newline,
-                        cursorColor: Theme.of(context).primaryColor,
-                        onLongPressStart: () {
-                          Feedback.forLongPress(context);
-                        },
-                        onTap: () {
-                          HapticFeedback.selectionClick();
-                        },
-                        onSubmitted: (String value) {
-                          focusNode!.requestFocus();
-                        },
-                        textCapitalization: TextCapitalization.sentences,
-                        focusNode: subjectFocusNode,
-                        autocorrect: true,
-                        controller: subjectController,
-                        scrollPhysics: CustomBouncingScrollPhysics(),
-                        style: Theme.of(context).textTheme.bodyText1!.apply(
-                              color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) ==
-                                      Brightness.light
-                                  ? Colors.black
-                                  : Colors.white,
-                              fontSizeDelta: -0.25,
-                            ),
-                        keyboardType: TextInputType.multiline,
-                        maxLines: 14,
-                        minLines: 1,
-                        placeholder: "Subject",
-                        padding: EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
-                        placeholderStyle: Theme.of(context).textTheme.subtitle1!.copyWith(fontWeight: FontWeight.bold),
-                        autofocus: false,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).backgroundColor,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                    if (SettingsManager().settings.privateSubjectLine.value)
-                      Divider(height: 1.5, thickness: 1.5, indent: 10, color: Theme.of(context).dividerColor),
-                    Stack(
-                      alignment: Alignment.centerRight,
+              },
+              child: ThemeSwitcher(
+                iOSSkin: Obx(
+                  () => Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).backgroundColor,
+                      border: Border.fromBorderSide(SettingsManager().settings.privateSubjectLine.value || replyToMessage.value != null
+                          ? BorderSide(
+                              color: Theme.of(context).dividerColor,
+                              width: 1.5,
+                            )
+                          : BorderSide.none),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Column(
                       children: [
-                        CustomCupertinoTextField(
-                          enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
-                          enabled: sendCountdown == null,
+                        Obx(() {
+                          Message? reply = replyToMessage.value;
+                          return AnimatedContainer(
+                            duration: Duration(milliseconds: 150),
+                            width: double.infinity,
+                            height: reply == null ? 0 : 40,
+                            color: Theme.of(context).dividerColor,
+                            child: reply != null
+                                ? Row(
+                                    children: [
+                                      IconButton(
+                                        constraints: BoxConstraints(maxWidth: 30),
+                                        padding: EdgeInsets.symmetric(horizontal: 8),
+                                        icon: Icon(
+                                          CupertinoIcons.xmark_circle,
+                                          color: Theme.of(context).textTheme.subtitle1!.color,
+                                          size: 17,
+                                        ),
+                                        onPressed: () {
+                                          replyToMessage.value = null;
+                                        },
+                                        iconSize: 17,
+                                      ),
+                                      Expanded(
+                                        child: Text.rich(
+                                          TextSpan(children: [
+                                            TextSpan(text: "Replying to "),
+                                            TextSpan(
+                                              text: generateContactInfo
+                                                  ? ContactManager().handleToFakeName[reply.handle?.address] ?? "You"
+                                                  : ContactManager()
+                                                          .handleToContact[reply.handle?.address ?? ""]
+                                                          ?.displayName ??
+                                                      reply.handle?.address ??
+                                                      "You",
+                                              style: Theme.of(context).textTheme.subtitle1!.copyWith(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: hideContactInfo ? Colors.transparent : null),
+                                            ),
+                                            TextSpan(
+                                              text:
+                                                  " - ${generateContent ? faker.lorem.words(MessageHelper.getNotificationTextSync(reply).split(" ").length).join(" ") : MessageHelper.getNotificationTextSync(reply)}",
+                                              style: Theme.of(context).textTheme.subtitle1!.copyWith(
+                                                  fontStyle: FontStyle.italic,
+                                                  color: hideContent ? Colors.transparent : null),
+                                            ),
+                                          ]),
+                                          style: Theme.of(context).textTheme.subtitle1,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                : Container(),
+                          );
+                        }),
+                        if (SettingsManager().settings.privateSubjectLine.value)
+                          CustomCupertinoTextField(
+                            enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
+                            textInputAction: SettingsManager().settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
+                                ? TextInputAction.next
+                                : TextInputAction.newline,
+                            cursorColor: Theme.of(context).primaryColor,
+                            onLongPressStart: () {
+                              Feedback.forLongPress(context);
+                            },
+                            onTap: () {
+                              HapticFeedback.selectionClick();
+                            },
+                            onSubmitted: (String value) {
+                              focusNode!.requestFocus();
+                            },
+                            textCapitalization: TextCapitalization.sentences,
+                            focusNode: subjectFocusNode,
+                            autocorrect: true,
+                            controller: subjectController,
+                            scrollPhysics: CustomBouncingScrollPhysics(),
+                            style: Theme.of(context).textTheme.bodyText1!.apply(
+                                  color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) ==
+                                          Brightness.light
+                                      ? Colors.black
+                                      : Colors.white,
+                                  fontSizeDelta: -0.25,
+                                ),
+                            keyboardType: TextInputType.multiline,
+                            maxLines: 14,
+                            minLines: 1,
+                            placeholder: "Subject",
+                            padding: EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
+                            placeholderStyle:
+                                Theme.of(context).textTheme.subtitle1!.copyWith(fontWeight: FontWeight.bold),
+                            autofocus: false,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).backgroundColor,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                        if (SettingsManager().settings.privateSubjectLine.value)
+                          Divider(
+                              height: 1.5,
+                              thickness: 1.5,
+                              indent: 10,
+                              endIndent: 10,
+                              color: Theme.of(context).dividerColor),
+                        Stack(
+                          alignment: Alignment.centerRight,
+                          children: [
+                            CustomCupertinoTextField(
+                              enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
+                              enabled: sendCountdown == null,
+                              textInputAction: SettingsManager().settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
+                                  ? TextInputAction.send
+                                  : TextInputAction.newline,
+                              cursorColor: Theme.of(context).primaryColor,
+                              onLongPressStart: () {
+                                Feedback.forLongPress(context);
+                              },
+                              onTap: () {
+                                HapticFeedback.selectionClick();
+                              },
+                              key: _searchFormKey,
+                              onSubmitted: (String value) {
+                                if (isNullOrEmpty(value)! && pickedImages.isEmpty) return;
+                                focusNode!.requestFocus();
+                                sendMessage();
+                              },
+                              onContentCommitted: onContentCommit,
+                              textCapitalization: TextCapitalization.sentences,
+                              focusNode: focusNode,
+                              autocorrect: true,
+                              controller: controller,
+                              scrollPhysics: CustomBouncingScrollPhysics(),
+                              style: Theme.of(context).textTheme.bodyText1!.apply(
+                                    color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) ==
+                                            Brightness.light
+                                        ? Colors.black
+                                        : Colors.white,
+                                    fontSizeDelta: -0.25,
+                                  ),
+                              keyboardType: TextInputType.multiline,
+                              maxLines: 14,
+                              minLines: 1,
+                              placeholder: SettingsManager().settings.recipientAsPlaceholder.value == true
+                                  ? placeholder.value
+                                  : "BlueBubbles",
+                              padding: EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
+                              placeholderStyle: Theme.of(context).textTheme.subtitle1,
+                              autofocus: (SettingsManager().settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop) &&
+                                  !widget.isCreator!,
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).backgroundColor,
+                                border:
+                                    Border.fromBorderSide(SettingsManager().settings.privateSubjectLine.value || replyToMessage.value != null
+                                        ? BorderSide.none
+                                        : BorderSide(
+                                            color: Theme.of(context).dividerColor,
+                                            width: 1.5,
+                                          ),),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                            ),
+                            buildSendButton(),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                materialSkin: Obx(
+                  () => Container(
+                    decoration: BoxDecoration(
+                      border: Border.fromBorderSide(
+                        SettingsManager().settings.privateSubjectLine.value || replyToMessage.value != null
+                            ? BorderSide(
+                                color: Theme.of(context).dividerColor,
+                                width: 1.5,
+                                style: BorderStyle.solid,
+                              )
+                            : BorderSide.none,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Column(
+                      children: [
+                        Obx(() {
+                          Message? reply = replyToMessage.value;
+                          return AnimatedContainer(
+                              duration: Duration(milliseconds: 150),
+                              width: double.infinity,
+                              height: reply == null ? 0 : 40,
+                              color: Theme.of(context).dividerColor,
+                              child: reply != null
+                                  ? Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                      children: [
+                                        IconButton(
+                                          constraints: BoxConstraints(maxWidth: 30),
+                                          padding: EdgeInsets.symmetric(horizontal: 8),
+                                          icon: Icon(
+                                            CupertinoIcons.xmark_circle,
+                                            color: Theme.of(context).textTheme.subtitle1!.color,
+                                            size: 17,
+                                          ),
+                                          onPressed: () {
+                                            replyToMessage.value = null;
+                                          },
+                                          iconSize: 17,
+                                        ),
+                                        Expanded(
+                                          child: Text.rich(
+                                            TextSpan(children: [
+                                              TextSpan(text: "Replying to "),
+                                              TextSpan(
+                                                  text: ContactManager()
+                                                          .handleToContact[reply.handle?.address ?? ""]
+                                                          ?.displayName ??
+                                                      replyToMessage.value!.handle?.address ??
+                                                      "You",
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .subtitle1!
+                                                      .copyWith(fontWeight: FontWeight.bold)),
+                                              TextSpan(
+                                                  text: " - ${MessageHelper.getNotificationTextSync(reply)}",
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .subtitle1!
+                                                      .copyWith(fontStyle: FontStyle.italic)),
+                                            ]),
+                                            style: Theme.of(context).textTheme.subtitle1,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    )
+                                  : Container());
+                        }),
+                        if (SettingsManager().settings.privateSubjectLine.value)
+                          TextField(
+                            // enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
+                            controller: subjectController,
+                            focusNode: subjectFocusNode,
+                            textCapitalization: TextCapitalization.sentences,
+                            autocorrect: true,
+                            textInputAction: SettingsManager().settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
+                                ? TextInputAction.next
+                                : TextInputAction.newline,
+                            autofocus: false,
+                            cursorColor: Theme.of(context).primaryColor,
+                            onSubmitted: (String value) {
+                              focusNode!.requestFocus();
+                            },
+                            style: Theme.of(context).textTheme.bodyText1!.apply(
+                                  color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) ==
+                                          Brightness.light
+                                      ? Colors.black
+                                      : Colors.white,
+                                  fontSizeDelta: -0.25,
+                                ),
+                            decoration: InputDecoration(
+                              isDense: true,
+                              enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
+                              disabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
+                              focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
+                              hintText: "Subject",
+                              hintStyle: Theme.of(context).textTheme.subtitle1!.copyWith(fontWeight: FontWeight.bold),
+                              contentPadding: EdgeInsets.only(
+                                left: 10,
+                                top: 15,
+                                right: 10,
+                                bottom: 10,
+                              ),
+                            ),
+                            keyboardType: TextInputType.multiline,
+                            maxLines: 14,
+                            minLines: 1,
+                          ),
+                        if (SettingsManager().settings.privateSubjectLine.value)
+                          Divider(
+                              height: 1.5,
+                              thickness: 1.5,
+                              indent: 10,
+                              endIndent: 10,
+                              color: Theme.of(context).dividerColor),
+                        TextField(
+                          // enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
+                          controller: controller,
+                          focusNode: focusNode,
+                          textCapitalization: TextCapitalization.sentences,
+                          autocorrect: true,
                           textInputAction: SettingsManager().settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
                               ? TextInputAction.send
                               : TextInputAction.newline,
+                          autofocus: (SettingsManager().settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop) &&
+                              !widget.isCreator!,
                           cursorColor: Theme.of(context).primaryColor,
-                          onLongPressStart: () {
-                            Feedback.forLongPress(context);
-                          },
-                          onTap: () {
-                            HapticFeedback.selectionClick();
-                          },
                           key: _searchFormKey,
                           onSubmitted: (String value) {
                             if (isNullOrEmpty(value)! && pickedImages.isEmpty) return;
                             focusNode!.requestFocus();
                             sendMessage();
                           },
-                          onContentCommitted: onContentCommit,
-                          textCapitalization: TextCapitalization.sentences,
-                          focusNode: focusNode,
-                          autocorrect: true,
-                          controller: controller,
-                          scrollPhysics: CustomBouncingScrollPhysics(),
                           style: Theme.of(context).textTheme.bodyText1!.apply(
-                            color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) ==
-                                Brightness.light
-                                ? Colors.black
-                                : Colors.white,
-                            fontSizeDelta: -0.25,
+                                color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) ==
+                                        Brightness.light
+                                    ? Colors.black
+                                    : Colors.white,
+                                fontSizeDelta: -0.25,
+                              ),
+                          onContentCommitted: onContentCommit,
+                          decoration: InputDecoration(
+                            isDense: true,
+                            enabledBorder: OutlineInputBorder(
+                              borderSide:
+                                  SettingsManager().settings.privateSubjectLine.value || replyToMessage.value != null
+                                      ? BorderSide.none
+                                      : BorderSide(
+                                          color: Theme.of(context).dividerColor,
+                                          width: 1.5,
+                                          style: BorderStyle.solid,
+                                        ),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            disabledBorder: OutlineInputBorder(
+                              borderSide:
+                                  SettingsManager().settings.privateSubjectLine.value || replyToMessage.value != null
+                                      ? BorderSide.none
+                                      : BorderSide(
+                                          color: Theme.of(context).dividerColor,
+                                          width: 1.5,
+                                          style: BorderStyle.solid,
+                                        ),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide:
+                                  SettingsManager().settings.privateSubjectLine.value || replyToMessage.value != null
+                                      ? BorderSide.none
+                                      : BorderSide(
+                                          color: Theme.of(context).dividerColor,
+                                          width: 1.5,
+                                          style: BorderStyle.solid,
+                                        ),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            hintText: SettingsManager().settings.recipientAsPlaceholder.value == true
+                                ? placeholder.value
+                                : "BlueBubbles",
+                            hintStyle: Theme.of(context).textTheme.subtitle1,
+                            contentPadding: EdgeInsets.only(
+                              left: 10,
+                              top: 15,
+                              right: 10,
+                              bottom: 10,
+                            ),
                           ),
                           keyboardType: TextInputType.multiline,
                           maxLines: 14,
                           minLines: 1,
-                          placeholder: SettingsManager().settings.recipientAsPlaceholder.value == true
-                              ? placeholder.value
-                              : "BlueBubbles",
-                          padding: EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
-                          placeholderStyle: Theme.of(context).textTheme.subtitle1,
-                          autofocus: (SettingsManager().settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop) && !widget.isCreator!,
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).backgroundColor,
-                            border: SettingsManager().settings.privateSubjectLine.value ? null : Border.all(
-                              color: Theme.of(context).dividerColor,
-                              width: 1.5,
-                            ),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
                         ),
-                        buildSendButton(),
                       ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-              materialSkin: Container(
-                decoration: BoxDecoration(
-                  border: Border.fromBorderSide(SettingsManager().settings.privateSubjectLine.value ? BorderSide(
-                    color: Theme.of(context).dividerColor,
-                    width: 1.5,
-                    style: BorderStyle.solid,
-                  ) : BorderSide.none),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Column(
-                  children: [
-                    if (replyToMessage != null)
-                      AnimatedSize(
-                        vsync: this,
-                        duration: Duration(milliseconds: 300),
-                        child: replyToMessage == null ? null : Container(
-                          width: double.infinity,
-                          height: 40,
-                          color: Theme.of(context).dividerColor,
-                          child: Row(
-                            children: [
-                              IconButton(
-                                icon: Icon(
-                                  CupertinoIcons.xmark_circle,
-                                  color: Theme.of(context).textTheme.subtitle1!.color,
-                                  size: 17,
-                                ),
-                                onPressed: () {
-                                  replyToMessage = null;
-                                  setState(() {});
-                                },
-                                iconSize: 17,
-                              ),
-                              Container(
-                                width: context.width - 125,
-                                child: Text.rich(
-                                  TextSpan(
-                                      children: [
-                                        TextSpan(text: "Replying to "),
-                                        TextSpan(text: ContactManager().handleToContact[replyToMessage!.handle?.address ?? ""]?.displayName ?? replyToMessage!.handle?.address ?? "You", style: Theme.of(context).textTheme.subtitle1!.copyWith(fontWeight: FontWeight.bold)),
-                                        TextSpan(text: " - ${MessageHelper.getNotificationTextSync(replyToMessage!)}", style: Theme.of(context).textTheme.subtitle1!.copyWith(fontStyle: FontStyle.italic)),
-                                      ]
-                                  ),
-                                  style: Theme.of(context).textTheme.subtitle1,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    if (SettingsManager().settings.privateSubjectLine.value)
-                      TextField(
-                        // enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
-                        controller: subjectController,
-                        focusNode: subjectFocusNode,
-                        textCapitalization: TextCapitalization.sentences,
-                        autocorrect: true,
-                        textInputAction: SettingsManager().settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
-                            ? TextInputAction.next
-                            : TextInputAction.newline,
-                        autofocus: false,
-                        cursorColor: Theme.of(context).primaryColor,
-                        onSubmitted: (String value) {
-                          focusNode!.requestFocus();
-                        },
-                        style: Theme.of(context).textTheme.bodyText1!.apply(
-                              color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) ==
-                                      Brightness.light
-                                  ? Colors.black
-                                  : Colors.white,
-                              fontSizeDelta: -0.25,
-                            ),
-                        decoration: InputDecoration(
-                          isDense: true,
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(20),
-                            borderSide: BorderSide.none
-                          ),
-                          disabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(20),
-                            borderSide: BorderSide.none
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(20),
-                            borderSide: BorderSide.none
-                          ),
-                          hintText: "Subject",
-                          hintStyle: Theme.of(context).textTheme.subtitle1!.copyWith(fontWeight: FontWeight.bold),
-                          contentPadding: EdgeInsets.only(
-                            left: 10,
-                            top: 15,
-                            right: 10,
-                            bottom: 10,
-                          ),
-                        ),
-                        keyboardType: TextInputType.multiline,
-                        maxLines: 14,
-                        minLines: 1,
-                      ),
-                    if (SettingsManager().settings.privateSubjectLine.value)
-                      Divider(height: 1.5, thickness: 1.5, indent: 10, color: Theme.of(context).dividerColor),
-                    TextField(
-                      // enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
-                      controller: controller,
-                      focusNode: focusNode,
-                      textCapitalization: TextCapitalization.sentences,
-                      autocorrect: true,
-                      textInputAction: SettingsManager().settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
-                          ? TextInputAction.send
-                          : TextInputAction.newline,
-                      autofocus: (SettingsManager().settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop) && !widget.isCreator!,
-                      cursorColor: Theme.of(context).primaryColor,
-                      key: _searchFormKey,
-                      onSubmitted: (String value) {
-                        if (isNullOrEmpty(value)! && pickedImages.isEmpty) return;
-                        focusNode!.requestFocus();
-                        sendMessage();
-                      },
-                      style: Theme.of(context).textTheme.bodyText1!.apply(
-                        color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) ==
-                            Brightness.light
-                            ? Colors.black
-                            : Colors.white,
-                        fontSizeDelta: -0.25,
-                      ),
-                      onContentCommitted: onContentCommit,
-                      decoration: InputDecoration(
-                        isDense: true,
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: SettingsManager().settings.privateSubjectLine.value ? BorderSide.none : BorderSide(
-                            color: Theme.of(context).dividerColor,
-                            width: 1.5,
-                            style: BorderStyle.solid,
-                          ),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        disabledBorder: OutlineInputBorder(
-                          borderSide: SettingsManager().settings.privateSubjectLine.value ? BorderSide.none : BorderSide(
-                            color: Theme.of(context).dividerColor,
-                            width: 1.5,
-                            style: BorderStyle.solid,
-                          ),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: SettingsManager().settings.privateSubjectLine.value ? BorderSide.none : BorderSide(
-                            color: Theme.of(context).dividerColor,
-                            width: 1.5,
-                            style: BorderStyle.solid,
-                          ),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        hintText: SettingsManager().settings.recipientAsPlaceholder.value == true
-                            ? placeholder.value
-                            : "BlueBubbles",
-                        hintStyle: Theme.of(context).textTheme.subtitle1,
-                        contentPadding: EdgeInsets.only(
-                          left: 10,
-                          top: 15,
-                          right: 10,
-                          bottom: 10,
-                        ),
-                      ),
-                      keyboardType: TextInputType.multiline,
-                      maxLines: 14,
-                      minLines: 1,
+                samsungSkin: Obx(
+                  () => Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).dividerColor.withOpacity(1),
+                      border: Border.fromBorderSide(
+                          SettingsManager().settings.privateSubjectLine.value || replyToMessage.value != null
+                              ? BorderSide(
+                                  color: Theme.of(context).dividerColor,
+                                  width: 1.5,
+                                  style: BorderStyle.solid,
+                                )
+                              : BorderSide.none),
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                  ],
-                ),
-              ),
-              samsungSkin: Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).dividerColor.withOpacity(1),
-                  border: Border.fromBorderSide(SettingsManager().settings.privateSubjectLine.value ? BorderSide(
-                    color: Theme.of(context).dividerColor,
-                    width: 1.5,
-                    style: BorderStyle.solid,
-                  ) : BorderSide.none),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Column(
-                  children: [
-                    if (replyToMessage != null)
-                      AnimatedSize(
-                        vsync: this,
-                        duration: Duration(milliseconds: 300),
-                        child: replyToMessage == null ? null : Container(
-                          width: double.infinity,
-                          height: 40,
-                          color: Theme.of(context).dividerColor,
-                          child: Row(
-                            children: [
-                              IconButton(
-                                icon: Icon(
-                                  CupertinoIcons.xmark_circle,
-                                  color: Theme.of(context).textTheme.subtitle1!.color,
-                                  size: 17,
-                                ),
-                                onPressed: () {
-                                  replyToMessage = null;
-                                  setState(() {});
-                                },
-                                iconSize: 17,
-                              ),
-                              Container(
-                                width: context.width - 125,
-                                child: Text.rich(
-                                  TextSpan(
+                    clipBehavior: Clip.antiAlias,
+                    child: Column(
+                      children: [
+                        Obx(
+                          () {
+                            Message? reply = replyToMessage.value;
+                            return AnimatedContainer(
+                              duration: Duration(milliseconds: 150),
+                              width: double.infinity,
+                              height: reply == null ? 0 : 40,
+                              color: Theme.of(context).dividerColor,
+                              child: reply != null
+                                  ? Row(
                                       children: [
-                                        TextSpan(text: "Replying to "),
-                                        TextSpan(text: ContactManager().handleToContact[replyToMessage!.handle?.address ?? ""]?.displayName ?? replyToMessage!.handle?.address ?? "You", style: Theme.of(context).textTheme.subtitle1!.copyWith(fontWeight: FontWeight.bold)),
-                                        TextSpan(text: " - ${MessageHelper.getNotificationTextSync(replyToMessage!)}", style: Theme.of(context).textTheme.subtitle1!.copyWith(fontStyle: FontStyle.italic)),
-                                      ]
-                                  ),
-                                  style: Theme.of(context).textTheme.subtitle1,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                        IconButton(
+                                          constraints: BoxConstraints(maxWidth: 30),
+                                          padding: EdgeInsets.symmetric(horizontal: 8),
+                                          icon: Icon(
+                                            CupertinoIcons.xmark_circle,
+                                            color: Theme.of(context).textTheme.subtitle1!.color,
+                                            size: 17,
+                                          ),
+                                          onPressed: () {
+                                            replyToMessage.value = null;
+                                          },
+                                          iconSize: 17,
+                                        ),
+                                        Expanded(
+                                          child: Text.rich(
+                                            TextSpan(children: [
+                                              TextSpan(text: "Replying to "),
+                                              TextSpan(
+                                                  text: ContactManager()
+                                                          .handleToContact[reply.handle?.address ?? ""]
+                                                          ?.displayName ??
+                                                      reply.handle?.address ??
+                                                      "You",
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .subtitle1!
+                                                      .copyWith(fontWeight: FontWeight.bold)),
+                                              TextSpan(
+                                                  text: " - ${MessageHelper.getNotificationTextSync(reply)}",
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .subtitle1!
+                                                      .copyWith(fontStyle: FontStyle.italic)),
+                                            ]),
+                                            style: Theme.of(context).textTheme.subtitle1,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    )
+                                  : Container(),
+                            );
+                          },
+                        ),
+                        if (SettingsManager().settings.privateSubjectLine.value)
+                          TextField(
+                            // enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
+                            controller: subjectController,
+                            focusNode: subjectFocusNode,
+                            textCapitalization: TextCapitalization.sentences,
+                            autocorrect: true,
+                            textInputAction: SettingsManager().settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
+                                ? TextInputAction.next
+                                : TextInputAction.newline,
+                            autofocus: false,
+                            cursorColor: Theme.of(context).primaryColor,
+                            onSubmitted: (String value) {
+                              focusNode!.requestFocus();
+                            },
+                            style: Theme.of(context).textTheme.bodyText1!.apply(
+                                  color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) ==
+                                          Brightness.light
+                                      ? Colors.black
+                                      : Colors.white,
+                                  fontSizeDelta: -0.25,
                                 ),
+                            decoration: InputDecoration(
+                              isDense: true,
+                              enabledBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: Theme.of(context).dividerColor,
+                                ),
+                                borderRadius: BorderRadius.circular(20),
                               ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    if (SettingsManager().settings.privateSubjectLine.value)
-                      TextField(
-                        // enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
-                        controller: subjectController,
-                        focusNode: subjectFocusNode,
-                        textCapitalization: TextCapitalization.sentences,
-                        autocorrect: true,
-                        textInputAction: SettingsManager().settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
-                            ? TextInputAction.next
-                            : TextInputAction.newline,
-                        autofocus: false,
-                        cursorColor: Theme.of(context).primaryColor,
-                        onSubmitted: (String value) {
-                          focusNode!.requestFocus();
-                        },
-                        style: Theme.of(context).textTheme.bodyText1!.apply(
-                          color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) ==
-                              Brightness.light
-                              ? Colors.black
-                              : Colors.white,
-                          fontSizeDelta: -0.25,
-                        ),
-                        decoration: InputDecoration(
-                          isDense: true,
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Theme.of(context).dividerColor,
+                              disabledBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: Theme.of(context).dividerColor,
+                                ),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: Theme.of(context).dividerColor,
+                                ),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              hintText: "Subject",
+                              hintStyle: Theme.of(context).textTheme.subtitle1!.copyWith(fontWeight: FontWeight.bold),
+                              contentPadding: EdgeInsets.only(
+                                left: 10,
+                                top: 15,
+                                right: 10,
+                                bottom: 10,
+                              ),
+                              filled: true,
+                              fillColor: context.theme.dividerColor,
                             ),
-                            borderRadius: BorderRadius.circular(20),
+                            keyboardType: TextInputType.multiline,
+                            maxLines: 14,
+                            minLines: 1,
                           ),
-                          disabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Theme.of(context).dividerColor,
+                        if (SettingsManager().settings.privateSubjectLine.value)
+                          Divider(
+                              height: 1.5,
+                              thickness: 1.5,
+                              indent: 10,
+                              endIndent: 10,
+                              color: Theme.of(context).dividerColor),
+                        TextField(
+                          // enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
+                          controller: controller,
+                          focusNode: focusNode,
+                          textCapitalization: TextCapitalization.sentences,
+                          autocorrect: true,
+                          textInputAction: SettingsManager().settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
+                              ? TextInputAction.send
+                              : TextInputAction.newline,
+                          autofocus: (SettingsManager().settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop) &&
+                              !widget.isCreator!,
+                          cursorColor: Theme.of(context).primaryColor,
+                          key: _searchFormKey,
+                          onSubmitted: (String value) {
+                            if (isNullOrEmpty(value)! && pickedImages.isEmpty) return;
+                            focusNode!.requestFocus();
+                            sendMessage();
+                          },
+                          style: Theme.of(context).textTheme.bodyText1!.apply(
+                                color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) ==
+                                        Brightness.light
+                                    ? Colors.black
+                                    : Colors.white,
+                                fontSizeDelta: -0.25,
+                              ),
+                          onContentCommitted: onContentCommit,
+                          decoration: InputDecoration(
+                            isDense: true,
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: SettingsManager().settings.privateSubjectLine.value
+                                  ? BorderSide.none
+                                  : BorderSide(
+                                      color: Theme.of(context).dividerColor,
+                                      width: 1.5,
+                                      style: BorderStyle.solid,
+                                    ),
+                              borderRadius: BorderRadius.circular(20),
                             ),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Theme.of(context).dividerColor,
+                            disabledBorder: OutlineInputBorder(
+                              borderSide: SettingsManager().settings.privateSubjectLine.value
+                                  ? BorderSide.none
+                                  : BorderSide(
+                                      color: Theme.of(context).dividerColor,
+                                      width: 1.5,
+                                      style: BorderStyle.solid,
+                                    ),
+                              borderRadius: BorderRadius.circular(20),
                             ),
-                            borderRadius: BorderRadius.circular(20),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: SettingsManager().settings.privateSubjectLine.value
+                                  ? BorderSide.none
+                                  : BorderSide(
+                                      color: Theme.of(context).dividerColor,
+                                      width: 1.5,
+                                      style: BorderStyle.solid,
+                                    ),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            hintText: SettingsManager().settings.recipientAsPlaceholder.value == true
+                                ? placeholder.value
+                                : "BlueBubbles",
+                            hintStyle: Theme.of(context).textTheme.subtitle1,
+                            contentPadding: EdgeInsets.only(
+                              left: 10,
+                              top: 15,
+                              right: 10,
+                              bottom: 10,
+                            ),
+                            filled: true,
+                            fillColor: context.theme.dividerColor,
                           ),
-                          hintText: "Subject",
-                          hintStyle: Theme.of(context).textTheme.subtitle1!.copyWith(fontWeight: FontWeight.bold),
-                          contentPadding: EdgeInsets.only(
-                            left: 10,
-                            top: 15,
-                            right: 10,
-                            bottom: 10,
-                          ),
-                          filled: true,
-                          fillColor: context.theme.dividerColor,
+                          keyboardType: TextInputType.multiline,
+                          maxLines: 14,
+                          minLines: 1,
                         ),
-                        keyboardType: TextInputType.multiline,
-                        maxLines: 14,
-                        minLines: 1,
-                      ),
-                    if (SettingsManager().settings.privateSubjectLine.value)
-                      Divider(height: 1.5, thickness: 1.5, indent: 10, color: Theme.of(context).dividerColor),
-                    TextField(
-                      // enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
-                      controller: controller,
-                      focusNode: focusNode,
-                      textCapitalization: TextCapitalization.sentences,
-                      autocorrect: true,
-                      textInputAction: SettingsManager().settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
-                          ? TextInputAction.send
-                          : TextInputAction.newline,
-                      autofocus: (SettingsManager().settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop) && !widget.isCreator!,
-                      cursorColor: Theme.of(context).primaryColor,
-                      key: _searchFormKey,
-                      onSubmitted: (String value) {
-                        if (isNullOrEmpty(value)! && pickedImages.isEmpty) return;
-                        focusNode!.requestFocus();
-                        sendMessage();
-                      },
-                      style: Theme.of(context).textTheme.bodyText1!.apply(
-                        color: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) ==
-                            Brightness.light
-                            ? Colors.black
-                            : Colors.white,
-                        fontSizeDelta: -0.25,
-                      ),
-                      onContentCommitted: onContentCommit,
-                      decoration: InputDecoration(
-                        isDense: true,
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: SettingsManager().settings.privateSubjectLine.value ? BorderSide.none : BorderSide(
-                            color: Theme.of(context).dividerColor,
-                            width: 1.5,
-                            style: BorderStyle.solid,
-                          ),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        disabledBorder: OutlineInputBorder(
-                          borderSide: SettingsManager().settings.privateSubjectLine.value ? BorderSide.none : BorderSide(
-                            color: Theme.of(context).dividerColor,
-                            width: 1.5,
-                            style: BorderStyle.solid,
-                          ),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: SettingsManager().settings.privateSubjectLine.value ? BorderSide.none : BorderSide(
-                            color: Theme.of(context).dividerColor,
-                            width: 1.5,
-                            style: BorderStyle.solid,
-                          ),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        hintText: SettingsManager().settings.recipientAsPlaceholder.value == true
-                            ? placeholder.value
-                            : "BlueBubbles",
-                        hintStyle: Theme.of(context).textTheme.subtitle1,
-                        contentPadding: EdgeInsets.only(
-                          left: 10,
-                          top: 15,
-                          right: 10,
-                          bottom: 10,
-                        ),
-                        filled: true,
-                        fillColor: context.theme.dividerColor,
-                      ),
-                      keyboardType: TextInputType.multiline,
-                      maxLines: 14,
-                      minLines: 1,
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
           ),
-        )),
+        ),
       ),
     );
   }
@@ -1399,12 +1509,15 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       }
 
       if (pathName != null) {
-        reviewAudio(context, PlatformFile(
-        name: "${randomString(8)}.m4a",
-        path: kIsWeb ? null : pathName,
-        size: 0,
-        bytes: kIsWeb ? (await Dio().get(pathName, options: Options(responseType: ResponseType.bytes))).data : null,
-      ));
+        reviewAudio(
+            context,
+            PlatformFile(
+              name: "${randomString(8)}.m4a",
+              path: kIsWeb ? null : pathName,
+              size: 0,
+              bytes:
+                  kIsWeb ? (await Dio().get(pathName, options: Options(responseType: ResponseType.bytes))).data : null,
+            ));
       }
     }
   }
@@ -1438,14 +1551,11 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       return;
     }
 
-    if (await widget.onSend(pickedImages,
-        controller!.text,
-        subjectController!.text,
-        replyToMessage?.threadOriginatorGuid ?? replyToMessage?.guid,
-        effect)) {
+    if (await widget.onSend(pickedImages, controller!.text, subjectController!.text,
+        replyToMessage.value?.threadOriginatorGuid ?? replyToMessage.value?.guid, effect)) {
       controller!.text = "";
       subjectController!.text = "";
-      replyToMessage = null;
+      replyToMessage.value = null;
       pickedImages.clear();
       updateTextFieldAttachments();
     }
@@ -1460,10 +1570,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     } else if (isRecording.value) {
       await stopRecording();
       shouldUpdate = true;
-    } else if (canRecord.value &&
-        !isRecording.value &&
-        !kIsDesktop &&
-        await Record().hasPermission()) {
+    } else if (canRecord.value && !isRecording.value && !kIsDesktop && await Record().hasPermission()) {
       await startRecording();
       shouldUpdate = true;
     } else {
@@ -1485,7 +1592,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       subject: subjectController!.text.trim(),
       dateCreated: DateTime.now(),
       hasAttachments: false,
-      threadOriginatorGuid: replyToMessage?.guid,
+      threadOriginatorGuid: replyToMessage.value?.guid,
       isFromMe: true,
     );
     message.generateTempGuid();
@@ -1499,13 +1606,13 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               opacity: animation,
               child: GestureDetector(
                 onTap: () {
-                  Get.back();
+                  Navigator.of(context).pop();
                 },
                 child: AnnotatedRegion<SystemUiOverlayStyle>(
                   value: SystemUiOverlayStyle(
                     systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
                     systemNavigationBarIconBrightness:
-                    Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+                        Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
                     statusBarColor: Colors.transparent, // status bar color
                   ),
                   child: Scaffold(
@@ -1517,175 +1624,181 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                           padding: const EdgeInsets.symmetric(vertical: 20.0),
                           child: Center(
                             child: StatefulBuilder(
-                              builder: (BuildContext context, void Function(void Function()) setState) {
-                                return Column(
-                                  children: [
-                                    Text(
-                                      "Send with effect",
-                                      style: Theme.of(context).textTheme.subtitle1!,
-                                      textScaleFactor: 1.75,
+                                builder: (BuildContext context, void Function(void Function()) setState) {
+                              return Column(children: [
+                                Text(
+                                  "Send with effect",
+                                  style: Theme.of(context).textTheme.subtitle1!,
+                                  textScaleFactor: 1.75,
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 20.0),
+                                  child: Container(
+                                    height: 50,
+                                    width: CustomNavigator.width(context) / 2,
+                                    child: CupertinoSlidingSegmentedControl<String>(
+                                      children: {
+                                        "bubble": Text("Bubble"),
+                                        "screen": Text("Screen"),
+                                      },
+                                      groupValue: typeSelected,
+                                      thumbColor: CupertinoColors.tertiarySystemFill.lightenOrDarken(20),
+                                      backgroundColor: CupertinoColors.tertiarySystemFill,
+                                      onValueChanged: (str) {
+                                        setState(() {
+                                          typeSelected = str ?? "bubble";
+                                        });
+                                      },
                                     ),
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 20.0),
-                                      child: Container(
-                                        height: 50,
-                                        width: CustomNavigator.width(context) / 2,
-                                        child: CupertinoSlidingSegmentedControl<String>(
-                                          children: {
-                                            "bubble": Text("Bubble"),
-                                            "screen": Text("Screen"),
-                                          },
-                                          groupValue: typeSelected,
-                                          thumbColor: CupertinoColors.tertiarySystemFill.lightenOrDarken(20),
-                                          backgroundColor: CupertinoColors.tertiarySystemFill,
-                                          onValueChanged: (str) {
-                                            setState(() {
-                                              typeSelected = str ?? "bubble";
-                                            });
-                                          },
+                                  ),
+                                ),
+                                Spacer(),
+                                if (typeSelected == "bubble")
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 20.0),
+                                    child: ConstrainedBox(
+                                        constraints: BoxConstraints(
+                                          maxHeight: 250,
+                                          maxWidth: CustomNavigator.width(context),
                                         ),
-                                      ),
-                                    ),
-                                    Spacer(),
-                                    if (typeSelected == "bubble")
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 20.0),
-                                        child: ConstrainedBox(
-                                            constraints: BoxConstraints(
-                                              maxHeight: 250,
-                                              maxWidth: CustomNavigator.width(context),
-                                            ),
-                                            child: SingleChildScrollView(
-                                              child: Wrap(
-                                                alignment: WrapAlignment.center,
-                                                children: List.generate(bubbleEffects.length, (index) {
-                                                  return Padding(
-                                                    padding: const EdgeInsets.all(8.0),
-                                                    child: GestureDetector(
-                                                      onTap: () {
-                                                        setState(() {
-                                                          bubbleSelected = bubbleEffects[index];
-                                                        });
-                                                        animController = CustomAnimationControl.playFromStart;
-                                                      },
-                                                      child: Container(
-                                                        width: CustomNavigator.width(context) / 3,
-                                                        height: 50,
-                                                        decoration: BoxDecoration(
-                                                          color: CupertinoColors.tertiarySystemFill,
-                                                          border: Border.fromBorderSide(bubbleSelected == bubbleEffects[index] ? BorderSide(
-                                                            color: Theme.of(context).primaryColor,
-                                                            width: 1.5,
-                                                            style: BorderStyle.solid,
-                                                          ) : BorderSide.none),
-                                                          borderRadius: BorderRadius.circular(5),
-                                                        ),
-                                                        child: Center(
-                                                          child: Text(
-                                                            bubbleEffects[index].toUpperCase(),
-                                                          ),
-                                                        ),
-                                                      ),
+                                        child: SingleChildScrollView(
+                                          child: Wrap(
+                                            alignment: WrapAlignment.center,
+                                            children: List.generate(bubbleEffects.length, (index) {
+                                              return Padding(
+                                                padding: const EdgeInsets.all(8.0),
+                                                child: GestureDetector(
+                                                  onTap: () {
+                                                    setState(() {
+                                                      bubbleSelected = bubbleEffects[index];
+                                                    });
+                                                    animController = CustomAnimationControl.playFromStart;
+                                                  },
+                                                  child: Container(
+                                                    width: CustomNavigator.width(context) / 3,
+                                                    height: 50,
+                                                    decoration: BoxDecoration(
+                                                      color: CupertinoColors.tertiarySystemFill,
+                                                      border:
+                                                          Border.fromBorderSide(bubbleSelected == bubbleEffects[index]
+                                                              ? BorderSide(
+                                                                  color: Theme.of(context).primaryColor,
+                                                                  width: 1.5,
+                                                                  style: BorderStyle.solid,
+                                                                )
+                                                              : BorderSide.none),
+                                                      borderRadius: BorderRadius.circular(5),
                                                     ),
-                                                  );
-                                                }),
-                                              ),
-                                            )
-                                        ),
-                                      ),
-                                    if (typeSelected == "screen")
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 20.0),
-                                        child: ConstrainedBox(
-                                          constraints: BoxConstraints(
-                                            maxHeight: 350,
-                                            maxWidth: CustomNavigator.width(context),
-                                          ),
-                                          child: SingleChildScrollView(
-                                            child: Wrap(
-                                              alignment: WrapAlignment.center,
-                                              children: List.generate(screenEffects.length, (index) {
-                                                return Padding(
-                                                  padding: const EdgeInsets.all(8.0),
-                                                  child: GestureDetector(
-                                                    onTap: () {
-                                                      setState(() {
-                                                        screenSelected = screenEffects[index];
-                                                      });
-                                                    },
-                                                    child: Container(
-                                                      width: CustomNavigator.width(context) / 3,
-                                                      height: 50,
-                                                      decoration: BoxDecoration(
-                                                        color: CupertinoColors.tertiarySystemFill,
-                                                        border: Border.fromBorderSide(screenSelected == screenEffects[index] ? BorderSide(
-                                                          color: Theme.of(context).primaryColor,
-                                                          width: 1.5,
-                                                          style: BorderStyle.solid,
-                                                        ) : BorderSide.none),
-                                                        borderRadius: BorderRadius.circular(5),
-                                                      ),
-                                                      child: Center(
-                                                        child: Text(
-                                                          screenEffects[index].toUpperCase(),
-                                                        ),
+                                                    child: Center(
+                                                      child: Text(
+                                                        bubbleEffects[index].toUpperCase(),
                                                       ),
                                                     ),
                                                   ),
-                                                );
-                                              }),
-                                            ),
-                                          )
+                                                ),
+                                              );
+                                            }),
+                                          ),
+                                        )),
+                                  ),
+                                if (typeSelected == "screen")
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 20.0),
+                                    child: ConstrainedBox(
+                                        constraints: BoxConstraints(
+                                          maxHeight: 350,
+                                          maxWidth: CustomNavigator.width(context),
                                         ),
-                                      ),
-                                    Spacer(),
-                                    Align(
-                                      alignment: Alignment.centerRight,
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(right: 5.0),
-                                        child: SentMessageHelper.buildMessageWithTail(
-                                          context,
-                                          message,
-                                          true,
-                                          false,
-                                          message.isBigEmoji(),
-                                          MessageWidgetMixin.buildMessageSpansAsync(context, message),
-                                          currentChat: CurrentChat.activeChat,
-                                          customColor: Theme.of(context).primaryColor,
-                                          effect: stringToMessageEffect[typeSelected == "bubble" ? bubbleSelected : screenSelected] ?? MessageEffect.none,
-                                          controller: animController,
-                                          updateController: () {
-                                            setState(() {
-                                              animController = CustomAnimationControl.stop;
-                                            });
-                                          }
-                                        ),
-                                      ),
-                                    ),
-                                    Spacer(),
-                                    TextButton(
-                                      child: Text(typeSelected == "bubble" ? "Send with $bubbleSelected" : "Send with $screenSelected",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodyText1!
-                                            .apply(color: Theme.of(context).primaryColor), textScaleFactor: 1.15,),
-                                      onPressed: () async {
-                                        Get.back();
-                                        await sendMessage(effect: effectMap[typeSelected == "bubble" ? bubbleSelected : screenSelected]);
-                                      },
-                                    ),
-                                  ]
-                                );
-                              }
-                            ),
+                                        child: SingleChildScrollView(
+                                          child: Wrap(
+                                            alignment: WrapAlignment.center,
+                                            children: List.generate(screenEffects.length, (index) {
+                                              return Padding(
+                                                padding: const EdgeInsets.all(8.0),
+                                                child: GestureDetector(
+                                                  onTap: () {
+                                                    setState(() {
+                                                      screenSelected = screenEffects[index];
+                                                    });
+                                                  },
+                                                  child: Container(
+                                                    width: CustomNavigator.width(context) / 3,
+                                                    height: 50,
+                                                    decoration: BoxDecoration(
+                                                      color: CupertinoColors.tertiarySystemFill,
+                                                      border:
+                                                          Border.fromBorderSide(screenSelected == screenEffects[index]
+                                                              ? BorderSide(
+                                                                  color: Theme.of(context).primaryColor,
+                                                                  width: 1.5,
+                                                                  style: BorderStyle.solid,
+                                                                )
+                                                              : BorderSide.none),
+                                                      borderRadius: BorderRadius.circular(5),
+                                                    ),
+                                                    child: Center(
+                                                      child: Text(
+                                                        screenEffects[index].toUpperCase(),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              );
+                                            }),
+                                          ),
+                                        )),
+                                  ),
+                                Spacer(),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(right: 5.0),
+                                    child: SentMessageHelper.buildMessageWithTail(
+                                        context,
+                                        message,
+                                        true,
+                                        false,
+                                        message.isBigEmoji(),
+                                        MessageWidgetMixin.buildMessageSpansAsync(context, message),
+                                        currentChat: CurrentChat.activeChat,
+                                        customColor: Theme.of(context).primaryColor,
+                                        effect: stringToMessageEffect[
+                                                typeSelected == "bubble" ? bubbleSelected : screenSelected] ??
+                                            MessageEffect.none,
+                                        controller: animController, updateController: () {
+                                      setState(() {
+                                        animController = CustomAnimationControl.stop;
+                                      });
+                                    }),
+                                  ),
+                                ),
+                                Spacer(),
+                                TextButton(
+                                  child: Text(
+                                    typeSelected == "bubble"
+                                        ? "Send with $bubbleSelected"
+                                        : "Send with $screenSelected",
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyText1!
+                                        .apply(color: Theme.of(context).primaryColor),
+                                    textScaleFactor: 1.15,
+                                  ),
+                                  onPressed: () async {
+                                    Navigator.of(context).pop();
+                                    await sendMessage(
+                                        effect: effectMap[typeSelected == "bubble" ? bubbleSelected : screenSelected]);
+                                  },
+                                ),
+                              ]);
+                            }),
                           ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              )
-          );
+              ));
         },
         fullscreenDialog: true,
         opaque: false,
@@ -1713,8 +1826,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                           ),
                           elevation: 0),
                       onPressed: sendAction,
-                      onLongPress: (sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value ?
-                        sendEffectAction : null,
+                      onLongPress: (sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value
+                          ? sendEffectAction
+                          : null,
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
@@ -1768,11 +1882,14 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     margin: EdgeInsets.only(left: 5.0),
                     child: ClipOval(
                       child: Material(
-                        color: SettingsManager().settings.skin.value == Skins.Samsung ? Colors.transparent : Theme.of(context).primaryColor,
+                        color: SettingsManager().settings.skin.value == Skins.Samsung
+                            ? Colors.transparent
+                            : Theme.of(context).primaryColor,
                         child: InkWell(
                           onTap: sendAction,
-                          onLongPress: (sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value ?
-                            sendEffectAction : null,
+                          onLongPress: (sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value
+                              ? sendEffectAction
+                              : null,
                           child: Stack(
                             alignment: Alignment.center,
                             children: [
@@ -1780,8 +1897,14 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                     opacity: sendCountdown == null && canRecord.value && !kIsDesktop ? 1.0 : 0.0,
                                     duration: Duration(milliseconds: 150),
                                     child: Icon(
-                                      SettingsManager().settings.skin.value == Skins.Samsung ? CupertinoIcons.waveform : Icons.mic,
-                                      color: (isRecording.value) ? Colors.red : SettingsManager().settings.skin.value == Skins.Samsung ? context.theme.textTheme.bodyText1!.color : Colors.white,
+                                      SettingsManager().settings.skin.value == Skins.Samsung
+                                          ? CupertinoIcons.waveform
+                                          : Icons.mic,
+                                      color: (isRecording.value)
+                                          ? Colors.red
+                                          : SettingsManager().settings.skin.value == Skins.Samsung
+                                              ? context.theme.textTheme.bodyText1!.color
+                                              : Colors.white,
                                       size: SettingsManager().settings.skin.value == Skins.Samsung ? 26 : 20,
                                     ),
                                   )),
@@ -1793,7 +1916,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                     duration: Duration(milliseconds: 150),
                                     child: Icon(
                                       Icons.send,
-                                      color: SettingsManager().settings.skin.value == Skins.Samsung ? context.theme.textTheme.bodyText1!.color : Colors.white,
+                                      color: SettingsManager().settings.skin.value == Skins.Samsung
+                                          ? context.theme.textTheme.bodyText1!.color
+                                          : Colors.white,
                                       size: SettingsManager().settings.skin.value == Skins.Samsung ? 26 : 20,
                                     ),
                                   )),

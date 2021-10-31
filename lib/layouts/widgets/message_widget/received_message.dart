@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/darty.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
@@ -14,7 +15,6 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_tail.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_time_stamp.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_popup_holder.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/reply_line_painter.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/show_reply_thread.dart';
@@ -23,15 +23,15 @@ import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/message.dart';
-import 'package:bluebubbles/helpers/darty.dart';
 import 'package:collection/collection.dart';
+import 'package:faker/faker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:particles_flutter/particles_flutter.dart';
 import 'package:simple_animations/simple_animations.dart';
 import 'package:supercharged/supercharged.dart';
+
+import 'message_content/delivered_receipt.dart';
 
 class ReceivedMessage extends StatefulWidget {
   final bool showTail;
@@ -51,6 +51,8 @@ class ReceivedMessage extends StatefulWidget {
   final Widget reactionsWidget;
   final Widget urlPreviewWidget;
 
+  final bool showTimeStamp;
+
   ReceivedMessage({
     Key? key,
     required this.showTail,
@@ -69,6 +71,7 @@ class ReceivedMessage extends StatefulWidget {
     required this.attachmentsWidget,
     required this.reactionsWidget,
     required this.urlPreviewWidget,
+    this.showTimeStamp = false,
   }) : super(key: key);
 
   @override
@@ -177,14 +180,14 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                 ),
               )),
         )
-            : Text(
-          message.text!,
-          style: Theme
-              .of(context)
-              .textTheme
-              .bodyText2!
-              .apply(fontSizeFactor: 4),
-        ),
+            : RichText(
+            text: TextSpan(
+                children: MessageHelper.buildEmojiText(
+                    message.text!,
+                    Theme.of(context)
+                        .textTheme
+                        .bodyText1!
+                        .apply(fontSizeFactor: 4)))),
       );
     }
     Animatable<TimelineValue<String>>? tween;
@@ -277,9 +280,15 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
               double value = anim.get("size");
               return StatefulBuilder(
                 builder: (context, setState) {
+                  final bool generateContent =
+                      SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeMessageContent.value;
+                  final bool hideContent =
+                      (SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value && !generateContent);
+                  final subject = generateContent ? faker.lorem.words(message.subject?.split(" ").length).join(" ") : message.subject;
+                  final text = generateContent ? faker.lorem.words(message.text?.split(" ").length).join(" ") : message.text;
                   return GestureDetector(
-                    onTap: () {
-                      if (effect == MessageEffect.invisibleInk) {
+                    onHorizontalDragEnd: (DragEndDetails details) {
+                      if ((details.primaryVelocity ?? 0) < 0 && effect == MessageEffect.invisibleInk) {
                         setState(() {
                           opacity = 1 - opacity;
                           controller = CustomAnimationControl.stop;
@@ -296,15 +305,15 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                               children: [
                                 if (!isNullOrEmpty(message.subject)!)
                                   TextSpan(
-                                    text: "${message.subject}\n",
-                                    style: Theme.of(context).textTheme.bodyText2!.apply(fontWeightDelta: 2, color: Colors.white),
+                                    text: "$subject\n",
+                                    style: Theme.of(context).textTheme.bodyText2!.apply(fontWeightDelta: 2, color: hideContent ? Colors.transparent : Colors.white),
                                   ),
                                 TextSpan(
-                                  text: message.text,
-                                  style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
+                                  text: text,
+                                  style: Theme.of(context).textTheme.bodyText2!.apply(color: hideContent ? Colors.transparent : Colors.white),
                                 ),
                               ],
-                              style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
+                              style: Theme.of(context).textTheme.bodyText2!.apply(color: hideContent ? Colors.transparent : Colors.white),
                             ),
                           ),
                         ),
@@ -314,15 +323,15 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                               children: [
                                 if (!isNullOrEmpty(message.subject)!)
                                   TextSpan(
-                                    text: "${message.subject}\n",
-                                    style: Theme.of(context).textTheme.bodyText2!.apply(fontWeightDelta: 2, fontSizeFactor: value, color: Colors.white),
+                                    text: "$subject\n",
+                                    style: Theme.of(context).textTheme.bodyText2!.apply(fontWeightDelta: 2, fontSizeFactor: value, color: hideContent ? Colors.transparent : Colors.white),
                                   ),
                                 TextSpan(
-                                  text: message.text,
-                                  style: Theme.of(context).textTheme.bodyText2!.apply(fontSizeFactor: value, color: Colors.white),
+                                  text: text,
+                                  style: Theme.of(context).textTheme.bodyText2!.apply(fontSizeFactor: value, color: hideContent ? Colors.transparent : Colors.white),
                                 ),
                               ],
-                              style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
+                              style: Theme.of(context).textTheme.bodyText2!.apply(color: hideContent ? Colors.transparent : Colors.white),
                             ),
                           ),
                         if (effect == MessageEffect.invisibleInk && controller != CustomAnimationControl.stop)
@@ -570,12 +579,27 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
         }
         messageSize ??= widget.message.getBubbleSize(context);
         messageColumn.add(
-          StreamBuilder<double>(
-            stream: CurrentChat.activeChat?.timeStampOffsetStream.stream,
+          StreamBuilder<dynamic>(
+            stream: CurrentChat.of(context)?.totalOffsetStream.stream,
             builder: (context, snapshot) {
-              final offset = (-(snapshot.data ?? 0)).clamp(0, 70).toDouble();
-              final originalWidth = max(min(CustomNavigator.width(context) - messageSize!.width - 125, CustomNavigator.width(context) / 3), 10);
-              final width = max(min(CustomNavigator.width(context) - messageSize!.width - 125, CustomNavigator.width(context) / 3) - offset, 10);
+              double? data;
+              if (snapshot.data is double) {
+                data = snapshot.data;
+              } else if (snapshot.data is Map<String, dynamic>) {
+                if (snapshot.data["guid"] == widget.message.guid) {
+                  data = snapshot.data["offset"];
+                } else {
+                  data = snapshot.data["else"];
+                }
+              }
+              final offset = (-(data ?? 0)).clamp(0, 70).toDouble();
+              final originalWidth = max(
+                  min(CustomNavigator.width(context) - messageSize!.width - 125, CustomNavigator.width(context) / 3),
+                  10);
+              final width = max(
+                  min(CustomNavigator.width(context) - messageSize!.width - 125, CustomNavigator.width(context) / 3) -
+                      offset,
+                  10);
               return AnimatedContainer(
                 duration: Duration(milliseconds: offset == 0 ? 150 : 0),
                 width: CustomNavigator.width(context) - 45 - offset,
@@ -621,7 +645,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                   ],
                 ),
               );
-            }
+            },
           ),
         );
       } else {
@@ -639,6 +663,16 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
           ),
         );
       }
+    }
+
+    if (widget.showTimeStamp) {
+      messageColumn.add(
+        DeliveredReceipt(
+          message: widget.message,
+          showDeliveredReceipt: widget.showTimeStamp,
+          shouldAnimate: true,
+        ),
+      );
     }
 
     List<Widget> messagePopupColumn = List<Widget>.from(messageColumn);
@@ -674,7 +708,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
 
       msgRow.add(
         Padding(
-          padding: EdgeInsets.only(left: 5.0, top: topPadding),
+          padding: EdgeInsets.only(left: 5.0, top: topPadding, bottom: widget.showTimeStamp ? 20 : 0),
           child: ContactAvatarWidget(
             handle: widget.message.handle,
             size: 30,

@@ -592,116 +592,120 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                 ),
               ),
             ),
-            SliverToBoxAdapter(
-                child: ListTile(
-                    leading: Text("Pin Conversation",
-                        style: TextStyle(
-                          color: Theme.of(context).primaryColor,
-                        )),
-                    trailing: Switch(
-                        value: widget.chat.isPinned!,
-                        activeColor: Theme.of(context).primaryColor,
-                        activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
-                        inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
-                        inactiveThumbColor: Theme.of(context).accentColor,
-                        onChanged: (value) async {
-                          await widget.chat.togglePin(!widget.chat.isPinned!);
-                          EventDispatcher().emit("refresh", null);
-                          if (mounted) setState(() {});
+            if (!kIsWeb)
+              SliverToBoxAdapter(
+                  child: ListTile(
+                      leading: Text("Pin Conversation",
+                          style: TextStyle(
+                            color: Theme.of(context).primaryColor,
+                          )),
+                      trailing: Switch(
+                          value: widget.chat.isPinned!,
+                          activeColor: Theme.of(context).primaryColor,
+                          activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
+                          inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
+                          inactiveThumbColor: Theme.of(context).accentColor,
+                          onChanged: (value) async {
+                            await widget.chat.togglePin(!widget.chat.isPinned!);
+                            EventDispatcher().emit("refresh", null);
+                            if (mounted) setState(() {});
                         }))),
-            SliverToBoxAdapter(
-                child: ListTile(
-                    leading: Text("Mute Conversation",
-                        style: TextStyle(
-                          color: Theme.of(context).primaryColor,
-                        )),
-                    trailing: Switch(
-                        value: widget.chat.muteType == "mute",
-                        activeColor: Theme.of(context).primaryColor,
-                        activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
-                        inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
-                        inactiveThumbColor: Theme.of(context).accentColor,
-                        onChanged: (value) async {
-                          await widget.chat.toggleMute(value);
-                          EventDispatcher().emit("refresh", null);
+            if (!kIsWeb)
+              SliverToBoxAdapter(
+                  child: ListTile(
+                      leading: Text("Mute Conversation",
+                          style: TextStyle(
+                            color: Theme.of(context).primaryColor,
+                          )),
+                      trailing: Switch(
+                          value: widget.chat.muteType == "mute",
+                          activeColor: Theme.of(context).primaryColor,
+                          activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
+                          inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
+                          inactiveThumbColor: Theme.of(context).accentColor,
+                          onChanged: (value) async {
+                            await widget.chat.toggleMute(value);
+                            EventDispatcher().emit("refresh", null);
 
-                          if (mounted) setState(() {});
-                        }))),
-            SliverToBoxAdapter(
-                child: ListTile(
-                    leading: Text("Archive Conversation",
-                        style: TextStyle(
-                          color: Theme.of(context).primaryColor,
-                        )),
-                    trailing: Switch(
-                        value: widget.chat.isArchived!,
-                        activeColor: Theme.of(context).primaryColor,
-                        activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
-                        inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
-                        inactiveThumbColor: Theme.of(context).accentColor,
-                        onChanged: (value) {
-                          if (value) {
-                            ChatBloc().archiveChat(widget.chat);
-                          } else {
-                            ChatBloc().unArchiveChat(widget.chat);
-                          }
+                            if (mounted) setState(() {});
+                          }))),
+            if (!kIsWeb)
+              SliverToBoxAdapter(
+                  child: ListTile(
+                      leading: Text("Archive Conversation",
+                          style: TextStyle(
+                            color: Theme.of(context).primaryColor,
+                          )),
+                      trailing: Switch(
+                          value: widget.chat.isArchived!,
+                          activeColor: Theme.of(context).primaryColor,
+                          activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
+                          inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
+                          inactiveThumbColor: Theme.of(context).accentColor,
+                          onChanged: (value) {
+                            if (value) {
+                              ChatBloc().archiveChat(widget.chat);
+                            } else {
+                              ChatBloc().unArchiveChat(widget.chat);
+                            }
 
-                          EventDispatcher().emit("refresh", null);
-                          if (mounted) setState(() {});
-                        }))),
-            SliverToBoxAdapter(
-              child: InkWell(
-                onTap: () async {
-                  if (mounted) {
-                    setState(() {
-                      isClearing = true;
-                    });
-                  }
-
-                  try {
-                    await widget.chat.clearTranscript();
-                    EventDispatcher().emit("refresh-messagebloc", {"chatGuid": widget.chat.guid});
+                            EventDispatcher().emit("refresh", null);
+                            if (mounted) setState(() {});
+                          }))),
+            if (!kIsWeb)
+              SliverToBoxAdapter(
+                child: InkWell(
+                  onTap: () async {
                     if (mounted) {
                       setState(() {
-                        isClearing = false;
-                        isCleared = true;
+                        isClearing = true;
                       });
                     }
-                  } catch (ex) {
-                    if (mounted) {
-                      setState(() {
-                        isClearing = false;
-                        isCleared = false;
-                      });
+
+                    try {
+                      await widget.chat.clearTranscript();
+                      EventDispatcher().emit("refresh-messagebloc", {"chatGuid": widget.chat.guid});
+                      if (mounted) {
+                        setState(() {
+                          isClearing = false;
+                          isCleared = true;
+                        });
+                      }
+                    } catch (ex) {
+                      if (mounted) {
+                        setState(() {
+                          isClearing = false;
+                          isCleared = false;
+                        });
+                      }
                     }
-                  }
-                },
-                child: ListTile(
-                  leading: Text(
-                    "Clear Transcript (Local Only)",
-                    style: TextStyle(
-                      color: Theme.of(context).primaryColor,
+                  },
+                  child: ListTile(
+                    leading: Text(
+                      "Clear Transcript (Local Only)",
+                      style: TextStyle(
+                        color: Theme.of(context).primaryColor,
+                      ),
                     ),
-                  ),
-                  trailing: Padding(
-                    padding: EdgeInsets.only(right: 15),
-                    child: (isClearing)
-                        ? CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
-                          )
-                        : (isCleared)
-                            ? Icon(
-                                SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.checkmark : Icons.done,
-                                color: Theme.of(context).primaryColor,
-                              )
-                            : Icon(
-                                SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.trash : Icons.delete_forever,
-                                color: Theme.of(context).primaryColor,
-                              ),
+                    trailing: Padding(
+                      padding: EdgeInsets.only(right: 15),
+                      child: (isClearing)
+                          ? CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                            )
+                          : (isCleared)
+                              ? Icon(
+                                  SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.checkmark : Icons.done,
+                                  color: Theme.of(context).primaryColor,
+                                )
+                              : Icon(
+                                  SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.trash : Icons.delete_forever,
+                                  color: Theme.of(context).primaryColor,
+                                ),
+                    ),
                   ),
                 ),
               ),
-            ),
             SliverGrid(
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,

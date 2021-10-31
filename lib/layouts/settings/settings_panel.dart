@@ -1052,6 +1052,14 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                   backgroundColor: Theme.of(context).backgroundColor,
                                   actions: <Widget>[
                                     TextButton(
+                                      child: Text("Remove Attachments"),
+                                      onPressed: () async {
+                                        final dir = Directory("${SettingsManager().appDocDir.path}/attachments");
+                                        await dir.delete(recursive: true);
+                                        showSnackbar("Success", "Deleted cached attachments");
+                                      },
+                                    ),
+                                    TextButton(
                                       child: Text("Yes"),
                                       onPressed: () async {
                                         await DBProvider.deleteDB();
@@ -1142,7 +1150,14 @@ class _SettingsPanelState extends State<SettingsPanel> {
         CustomNavigator.maxWidthSettings = constraints.maxWidth;
         return WillPopScope(
           onWillPop: () async {
-            Get.back(id: 3);
+            Get.until((route) {
+              if (route.settings.name == "initial") {
+                Get.back();
+              } else {
+                Get.back(id: 3);
+              }
+              return true;
+            }, id: 3);
             return false;
           },
           child: Navigator(

@@ -550,9 +550,6 @@ class SocketManager {
     params["limit"] = limit;
     params["offset"] = offset;
     params["withBlurhash"] = false;
-    params["where"] = [
-      {"statement": "message.service = 'iMessage'", "args": null}
-    ];
 
     SocketManager().sendMessage("get-chat-messages", params, (data) async {
       if (data['status'] != 200) {
