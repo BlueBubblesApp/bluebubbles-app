@@ -624,7 +624,7 @@ class Chat {
         " WHERE chat.ROWID = ? AND attachment.mimeType IS NOT NULL");
 
     // Add pagination
-    query += " ORDER BY message.dateCreated DESC LIMIT $limit OFFSET $offset";
+    query += " ORDER BY message.dateCreated DESC ${limit == 0 ? "" : "LIMIT $limit OFFSET $offset"}";
 
     // Execute the query
     var res = await db.rawQuery("$query;", [chat.id]);

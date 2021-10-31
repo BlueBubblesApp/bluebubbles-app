@@ -64,7 +64,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
     // If the allAttachments is not updated
     if (startingIndex == null) {
       // Then fetch all of them and try again
-      await widget.currentChat?.updateChatAttachments();
+      await widget.currentChat?.updateChatAttachments(fetchAll: true);
       getStartingIndex();
     }
 

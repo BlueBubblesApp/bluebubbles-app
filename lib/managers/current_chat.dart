@@ -283,8 +283,8 @@ class CurrentChat {
   }
 
   /// Retrieve all of the attachments associated with a chat
-  Future<void> updateChatAttachments() async {
-    chatAttachments = await Chat.getAttachments(chat);
+  Future<void> updateChatAttachments({bool fetchAll = false}) async {
+    chatAttachments = await Chat.getAttachments(chat, limit: fetchAll ? 0 : 25);
   }
 
   void changeCurrentPlayingVideo(Map<String, VideoPlayerController> video) {
