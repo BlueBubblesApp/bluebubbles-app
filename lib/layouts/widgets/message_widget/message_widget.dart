@@ -59,7 +59,7 @@ class MessageWidget extends StatefulWidget {
   _MessageState createState() => _MessageState();
 }
 
-class _MessageState extends State<MessageWidget> {
+class _MessageState extends State<MessageWidget> with TickerProviderStateMixin {
   bool showTail = true;
   Completer<void>? associatedMessageRequest;
   Completer<void>? attachmentsRequest;
@@ -410,6 +410,7 @@ class _MessageState extends State<MessageWidget> {
                         color: context.theme.accentColor,
                       ),
                       child: AnimatedSize(
+                        vsync: this,
                         duration: Duration(milliseconds: offset.value == 0 ? 150 : 0),
                         child: Icon(
                           SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.reply : Icons.reply,
