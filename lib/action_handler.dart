@@ -255,7 +255,7 @@ class ActionHandler {
           } else {
             Message newMessage = Message.fromMap(response.data['data']);
             await Message.replaceMessage(tempGuid, newMessage, chat: chat);
-            List<dynamic> attachments = response.data.containsKey("attachments") ? response.data['attachments'] : [];
+            List<dynamic> attachments = response.data['data'].containsKey("attachments") ? response.data['data']['attachments'] : [];
             newMessage.attachments = [];
             for (dynamic attachmentItem in attachments) {
               Attachment file = Attachment.fromMap(attachmentItem);
@@ -267,7 +267,7 @@ class ActionHandler {
               }
               newMessage.attachments.add(file);
             }
-            Logger.info("Message match: [${response.data["text"]}] - ${response.data["guid"]} - ${response.data["tempGuid"]}", tag: "MessageStatus");
+            Logger.info("Message match: [${response.data['data']["text"]}] - ${response.data['data']["guid"]} - $tempGuid", tag: "MessageStatus");
 
             NewMessageManager().updateMessage(chat, tempGuid!, newMessage);
           }

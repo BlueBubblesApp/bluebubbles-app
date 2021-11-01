@@ -150,9 +150,13 @@ class _MessageState extends State<MessageWidget> {
             if (mounted) {
               setState(() {
                 if (_message.guid == oldGuid) {
+                  final associatedMessages = _message.associatedMessages;
                   _message = result;
+                  _message.associatedMessages = associatedMessages;
                 } else if (_newerMessage!.guid == oldGuid) {
+                  final associatedMessages = _newerMessage!.associatedMessages;
                   _newerMessage = result;
+                  _newerMessage!.associatedMessages = associatedMessages;
                 }
               });
             }

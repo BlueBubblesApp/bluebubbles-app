@@ -267,7 +267,6 @@ class ApiService extends GetxService {
         queryParameters: buildQueryParams(),
         data: {
           "chatGuid": chatGuid,
-          "tempGuid": tempGuid,
           "message": message.isEmpty && (subject?.isNotEmpty ?? false) ? " " : message,
           "method": method,
           "effectId": effectId,
@@ -548,7 +547,7 @@ class ApiInterceptor extends Interceptor {
     Logger.error(err.error, tag: "ERROR[${err.response?.statusCode}]");
     Logger.error(err.requestOptions.contentType, tag: "ERROR[${err.response?.statusCode}]");
     Logger.error(err.response?.data, tag: "ERROR[${err.response?.statusCode}]");
-    if (err.response != null) handler.resolve(err.response!);
+    if (err.response != null) return handler.resolve(err.response!);
     return super.onError(err, handler);
   }
 }
