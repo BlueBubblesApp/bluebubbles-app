@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:flutter/foundation.dart';
+import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:universal_html/html.dart' as html;
 
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
@@ -352,8 +353,43 @@ class MessageHelper {
     } else if (![null, ""].contains(message.associatedMessageGuid)) {
       // It's a reaction message, get the "sender"
       String? sender = message.isFromMe! ? "You" : ContactManager().getContactTitle(message.handle);
-
-      return "$sender ${message.text}";
+      // translate the reaction text if necessary (to account for different
+      // locales on the tapback sender's phone
+      final languageIdentifier = GoogleMlKit.nlp.languageIdentifier();
+      final locale = Localizations.localeOf(Get.context!);
+      String translated = message.text ?? "";
+      String lang = "und";
+      // if the reaction message is on an actual message, check to see if the
+      // message was simply sent in another language or if the reaction summary
+      // itself is in another language
+      if ((message.text ?? "").contains("“")) {
+        final messageStr = message.text!.split("“").sublist(1).join("“");
+        final reactionStr = message.text!.split("“").first;
+        lang = await languageIdentifier.identifyLanguage(messageStr);
+        final langs = (await languageIdentifier.identifyPossibleLanguages(reactionStr)).map((e) => e.language);
+        if (!langs.contains(lang)) {
+          lang = "und";
+        }
+      // otherwise just get the language of the raw string
+      } else {
+        lang = await languageIdentifier.identifyLanguage(message.text ?? "");
+      }
+      // only translate if we have a valid language and it isn't the device's
+      // current language
+      if (lang != "und" && lang != locale.languageCode) {
+        final translateLanguageModelManager = GoogleMlKit.nlp.translateLanguageModelManager();
+        if (!await translateLanguageModelManager.isModelDownloaded(lang)) {
+          await translateLanguageModelManager.downloadModel(lang, isWifiRequired: false);
+        }
+        if (!await translateLanguageModelManager.isModelDownloaded(locale.languageCode)) {
+          await translateLanguageModelManager.downloadModel(locale.languageCode, isWifiRequired: false);
+        }
+        final onDeviceTranslator = GoogleMlKit.nlp.onDeviceTranslator(sourceLanguage: lang, targetLanguage: locale.languageCode);
+        translated = await onDeviceTranslator.translateText(message.text ?? "");
+        languageIdentifier.close();
+        onDeviceTranslator.close();
+      }
+      return "$sender $translated";
     } else {
       // It's all other message types
       return message.fullText;

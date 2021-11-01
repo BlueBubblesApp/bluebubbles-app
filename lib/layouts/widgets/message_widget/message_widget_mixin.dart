@@ -218,23 +218,27 @@ abstract class MessageWidgetMixin {
           CurrentChat.activeChat?.mlKitParsedText[message.guid!] = await GoogleMlKit.nlp.entityExtractor(EntityExtractorOptions.ENGLISH).extractEntities(message.text!);
         }
         final entities = CurrentChat.activeChat?.mlKitParsedText[message.guid!] ?? [];
-        for (EntityAnnotation element in entities) {
+        List<EntityAnnotation> normalizedEntities = [];
+        if (entities.isNotEmpty) {
+          for (int i = 0; i < entities.length; i++) {
+            if (i == 0 || entities[i].start > normalizedEntities.last.end) {
+              normalizedEntities.add(entities[i]);
+            }
+          }
+        }
+        for (EntityAnnotation element in normalizedEntities) {
           if (element.entities.first is AddressEntity) {
             linkIndexMatches.add(Tuple2("map", element.start));
             linkIndexMatches.add(Tuple2("map", element.end));
-            break;
           } else if (element.entities.first is PhoneEntity) {
             linkIndexMatches.add(Tuple2("phone", element.start));
             linkIndexMatches.add(Tuple2("phone", element.end));
-            break;
           } else if (element.entities.first is EmailEntity) {
             linkIndexMatches.add(Tuple2("email", element.start));
             linkIndexMatches.add(Tuple2("email", element.end));
-            break;
           } else if (element.entities.first is UrlEntity) {
             linkIndexMatches.add(Tuple2("link", element.start));
             linkIndexMatches.add(Tuple2("link", element.end));
-            break;
           }
         }
       } else {
