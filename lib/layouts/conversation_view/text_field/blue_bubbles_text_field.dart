@@ -11,6 +11,8 @@ import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/animations/fireworks_classes.dart';
+import 'package:bluebubbles/layouts/animations/fireworks_rendering.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/list/text_field_attachment_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/picker/text_field_attachment_picker.dart';
 import 'package:bluebubbles/layouts/widgets/custom_cupertino_text_field.dart';
@@ -1599,6 +1601,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     );
     message.generateTempGuid();
     CustomAnimationControl animController = CustomAnimationControl.stop;
+    final FireworkController fireworkController = FireworkController(vsync: this);
+    final ConfettiController confettiController = ConfettiController(duration: Duration(seconds: 1));
     Navigator.push(
       context,
       PageRouteBuilder(
@@ -1622,179 +1626,203 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     body: BackdropFilter(
                       filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
                       child: SafeArea(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 20.0),
-                          child: Center(
-                            child: StatefulBuilder(
-                                builder: (BuildContext context, void Function(void Function()) setState) {
-                              return Column(children: [
-                                Text(
-                                  "Send with effect",
-                                  style: Theme.of(context).textTheme.subtitle1!,
-                                  textScaleFactor: 1.75,
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 20.0),
-                                  child: Container(
-                                    height: 50,
-                                    width: CustomNavigator.width(context) / 2,
-                                    child: CupertinoSlidingSegmentedControl<String>(
-                                      children: {
-                                        "bubble": Text("Bubble"),
-                                        "screen": Text("Screen"),
-                                      },
-                                      groupValue: typeSelected,
-                                      thumbColor: CupertinoColors.tertiarySystemFill.lightenOrDarken(20),
-                                      backgroundColor: CupertinoColors.tertiarySystemFill,
-                                      onValueChanged: (str) {
-                                        setState(() {
-                                          typeSelected = str ?? "bubble";
-                                        });
-                                      },
+                        child: StatefulBuilder(
+                          builder: (BuildContext context, void Function(void Function()) setState) {
+                            return Stack(
+                              children: [
+                                if (screenSelected == "fireworks")
+                                  Fireworks(controller: fireworkController),
+                                if (screenSelected == "confetti")
+                                  Align(
+                                    alignment: Alignment.topCenter,
+                                    child: ConfettiWidget(
+                                      confettiController: confettiController,
+                                      blastDirection: pi / 2,
+                                      blastDirectionality: BlastDirectionality.explosive,
+                                      emissionFrequency: 0.35,
                                     ),
                                   ),
-                                ),
-                                Spacer(),
-                                if (typeSelected == "bubble")
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 20.0),
-                                    child: ConstrainedBox(
-                                        constraints: BoxConstraints(
-                                          maxHeight: 250,
-                                          maxWidth: CustomNavigator.width(context),
-                                        ),
-                                        child: SingleChildScrollView(
-                                          child: Wrap(
-                                            alignment: WrapAlignment.center,
-                                            children: List.generate(bubbleEffects.length, (index) {
-                                              return Padding(
-                                                padding: const EdgeInsets.all(8.0),
-                                                child: GestureDetector(
-                                                  onTap: () {
-                                                    setState(() {
-                                                      bubbleSelected = bubbleEffects[index];
-                                                    });
-                                                    animController = CustomAnimationControl.playFromStart;
-                                                  },
-                                                  child: Container(
-                                                    width: CustomNavigator.width(context) / 3,
-                                                    height: 50,
-                                                    decoration: BoxDecoration(
-                                                      color: CupertinoColors.tertiarySystemFill,
-                                                      border:
-                                                          Border.fromBorderSide(bubbleSelected == bubbleEffects[index]
-                                                              ? BorderSide(
-                                                                  color: Theme.of(context).primaryColor,
-                                                                  width: 1.5,
-                                                                  style: BorderStyle.solid,
-                                                                )
-                                                              : BorderSide.none),
-                                                      borderRadius: BorderRadius.circular(5),
-                                                    ),
-                                                    child: Center(
-                                                      child: Text(
-                                                        bubbleEffects[index].toUpperCase(),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              );
-                                            }),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 20.0),
+                                  child: Center(
+                                    child: Column(children: [
+                                      Text(
+                                        "Send with effect",
+                                        style: Theme.of(context).textTheme.subtitle1!,
+                                        textScaleFactor: 1.75,
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(vertical: 20.0),
+                                        child: Container(
+                                          height: 50,
+                                          width: CustomNavigator.width(context) / 2,
+                                          child: CupertinoSlidingSegmentedControl<String>(
+                                            children: {
+                                              "bubble": Text("Bubble"),
+                                              "screen": Text("Screen"),
+                                            },
+                                            groupValue: typeSelected,
+                                            thumbColor: CupertinoColors.tertiarySystemFill.lightenOrDarken(20),
+                                            backgroundColor: CupertinoColors.tertiarySystemFill,
+                                            onValueChanged: (str) {
+                                              setState(() {
+                                                typeSelected = str ?? "bubble";
+                                              });
+                                            },
                                           ),
-                                        )),
-                                  ),
-                                if (typeSelected == "screen")
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 20.0),
-                                    child: ConstrainedBox(
-                                        constraints: BoxConstraints(
-                                          maxHeight: 350,
-                                          maxWidth: CustomNavigator.width(context),
                                         ),
-                                        child: SingleChildScrollView(
-                                          child: Wrap(
-                                            alignment: WrapAlignment.center,
-                                            children: List.generate(screenEffects.length, (index) {
-                                              return Padding(
-                                                padding: const EdgeInsets.all(8.0),
-                                                child: GestureDetector(
-                                                  onTap: () {
-                                                    setState(() {
-                                                      screenSelected = screenEffects[index];
-                                                    });
-                                                  },
-                                                  child: Container(
-                                                    width: CustomNavigator.width(context) / 3,
-                                                    height: 50,
-                                                    decoration: BoxDecoration(
-                                                      color: CupertinoColors.tertiarySystemFill,
-                                                      border:
-                                                          Border.fromBorderSide(screenSelected == screenEffects[index]
-                                                              ? BorderSide(
-                                                                  color: Theme.of(context).primaryColor,
-                                                                  width: 1.5,
-                                                                  style: BorderStyle.solid,
-                                                                )
-                                                              : BorderSide.none),
-                                                      borderRadius: BorderRadius.circular(5),
-                                                    ),
-                                                    child: Center(
-                                                      child: Text(
-                                                        screenEffects[index].toUpperCase(),
+                                      ),
+                                      Spacer(),
+                                      if (typeSelected == "bubble")
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 20.0),
+                                          child: ConstrainedBox(
+                                              constraints: BoxConstraints(
+                                                maxHeight: 250,
+                                                maxWidth: CustomNavigator.width(context),
+                                              ),
+                                              child: SingleChildScrollView(
+                                                child: Wrap(
+                                                  alignment: WrapAlignment.center,
+                                                  children: List.generate(bubbleEffects.length, (index) {
+                                                    return Padding(
+                                                      padding: const EdgeInsets.all(8.0),
+                                                      child: GestureDetector(
+                                                        onTap: () {
+                                                          setState(() {
+                                                            bubbleSelected = bubbleEffects[index];
+                                                          });
+                                                          animController = CustomAnimationControl.playFromStart;
+                                                        },
+                                                        child: Container(
+                                                          width: CustomNavigator.width(context) / 3,
+                                                          height: 50,
+                                                          decoration: BoxDecoration(
+                                                            color: CupertinoColors.tertiarySystemFill,
+                                                            border:
+                                                            Border.fromBorderSide(bubbleSelected == bubbleEffects[index]
+                                                                ? BorderSide(
+                                                              color: Theme.of(context).primaryColor,
+                                                              width: 1.5,
+                                                              style: BorderStyle.solid,
+                                                            )
+                                                                : BorderSide.none),
+                                                            borderRadius: BorderRadius.circular(5),
+                                                          ),
+                                                          child: Center(
+                                                            child: Text(
+                                                              bubbleEffects[index].toUpperCase(),
+                                                            ),
+                                                          ),
+                                                        ),
                                                       ),
-                                                    ),
-                                                  ),
+                                                    );
+                                                  }),
                                                 ),
-                                              );
-                                            }),
-                                          ),
-                                        )),
-                                  ),
-                                Spacer(),
-                                Align(
-                                  alignment: Alignment.centerRight,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(right: 5.0),
-                                    child: SentMessageHelper.buildMessageWithTail(
-                                        context,
-                                        message,
-                                        true,
-                                        false,
-                                        message.isBigEmoji(),
-                                        MessageWidgetMixin.buildMessageSpansAsync(context, message),
-                                        currentChat: CurrentChat.forGuid(widget.chatGuid),
-                                        customColor: Theme.of(context).primaryColor,
-                                        effect: stringToMessageEffect[
-                                                typeSelected == "bubble" ? bubbleSelected : screenSelected] ??
-                                            MessageEffect.none,
-                                        controller: animController, updateController: () {
-                                      setState(() {
-                                        animController = CustomAnimationControl.stop;
-                                      });
-                                    }),
+                                              )),
+                                        ),
+                                      if (typeSelected == "screen")
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 20.0),
+                                          child: ConstrainedBox(
+                                              constraints: BoxConstraints(
+                                                maxHeight: 350,
+                                                maxWidth: CustomNavigator.width(context),
+                                              ),
+                                              child: SingleChildScrollView(
+                                                child: Wrap(
+                                                  alignment: WrapAlignment.center,
+                                                  children: List.generate(screenEffects.length, (index) {
+                                                    return Padding(
+                                                      padding: const EdgeInsets.all(8.0),
+                                                      child: GestureDetector(
+                                                        onTap: () async {
+                                                          setState(() {
+                                                            screenSelected = screenEffects[index];
+                                                          });
+                                                          if (screenSelected == "fireworks" && !fireworkController.isPlaying) {
+                                                            fireworkController.start();
+                                                            await Future.delayed(Duration(seconds: 1));
+                                                            fireworkController.stop();
+                                                          } else if (screenSelected == "confetti") {
+                                                            confettiController.play();
+                                                          }
+                                                        },
+                                                        child: Container(
+                                                          width: CustomNavigator.width(context) / 3,
+                                                          height: 50,
+                                                          decoration: BoxDecoration(
+                                                            color: CupertinoColors.tertiarySystemFill,
+                                                            border:
+                                                            Border.fromBorderSide(screenSelected == screenEffects[index]
+                                                                ? BorderSide(
+                                                              color: Theme.of(context).primaryColor,
+                                                              width: 1.5,
+                                                              style: BorderStyle.solid,
+                                                            )
+                                                                : BorderSide.none),
+                                                            borderRadius: BorderRadius.circular(5),
+                                                          ),
+                                                          child: Center(
+                                                            child: Text(
+                                                              screenEffects[index].toUpperCase(),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    );
+                                                  }),
+                                                ),
+                                              )),
+                                        ),
+                                      Spacer(),
+                                      Align(
+                                        alignment: Alignment.centerRight,
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(right: 5.0),
+                                          child: SentMessageHelper.buildMessageWithTail(
+                                              context,
+                                              message,
+                                              true,
+                                              false,
+                                              message.isBigEmoji(),
+                                              MessageWidgetMixin.buildMessageSpansAsync(context, message),
+                                              currentChat: CurrentChat.forGuid(widget.chatGuid),
+                                              customColor: Theme.of(context).primaryColor,
+                                              effect: stringToMessageEffect[
+                                              typeSelected == "bubble" ? bubbleSelected : screenSelected] ??
+                                                  MessageEffect.none,
+                                              controller: animController, updateController: () {
+                                            setState(() {
+                                              animController = CustomAnimationControl.stop;
+                                            });
+                                          }),
+                                        ),
+                                      ),
+                                      Spacer(),
+                                      TextButton(
+                                        child: Text(
+                                          typeSelected == "bubble"
+                                              ? "Send with $bubbleSelected"
+                                              : "Send with $screenSelected",
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyText1!
+                                              .apply(color: Theme.of(context).primaryColor),
+                                          textScaleFactor: 1.15,
+                                        ),
+                                        onPressed: () async {
+                                          Navigator.of(context).pop();
+                                          await sendMessage(
+                                              effect: effectMap[typeSelected == "bubble" ? bubbleSelected : screenSelected]);
+                                        },
+                                      ),
+                                    ])
                                   ),
                                 ),
-                                Spacer(),
-                                TextButton(
-                                  child: Text(
-                                    typeSelected == "bubble"
-                                        ? "Send with $bubbleSelected"
-                                        : "Send with $screenSelected",
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyText1!
-                                        .apply(color: Theme.of(context).primaryColor),
-                                    textScaleFactor: 1.15,
-                                  ),
-                                  onPressed: () async {
-                                    Navigator.of(context).pop();
-                                    await sendMessage(
-                                        effect: effectMap[typeSelected == "bubble" ? bubbleSelected : screenSelected]);
-                                  },
-                                ),
-                              ]);
-                            }),
-                          ),
+                              ],
+                            );
+                          }
                         ),
                       ),
                     ),

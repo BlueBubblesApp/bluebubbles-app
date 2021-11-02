@@ -224,6 +224,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.15.0"
+  confetti:
+    dependency: "direct main"
+    description:
+      name: confetti
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.6.0"
   connectivity_plus:
     dependency: "direct main"
     description:
