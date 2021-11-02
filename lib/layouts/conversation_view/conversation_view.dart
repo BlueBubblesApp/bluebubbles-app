@@ -447,6 +447,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       isCreator: isCreator,
       existingAttachments: existingAttachments,
       existingText: existingText,
+      chatGuid: widget.chat?.guid,
     );
 
     final Widget child =  Column(
