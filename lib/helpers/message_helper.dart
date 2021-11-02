@@ -359,22 +359,10 @@ class MessageHelper {
         // locales on the tapback sender's phone
         final languageIdentifier = GoogleMlKit.nlp.languageIdentifier();
         final locale = Localizations.localeOf(Get.context!);
-        String lang = "und";
-        // if the reaction message is on an actual message, check to see if the
-        // message was simply sent in another language or if the reaction summary
-        // itself is in another language
-        if ((message.text ?? "").contains("“")) {
-          final messageStr = message.text!.split("“").sublist(1).join("“");
-          final reactionStr = message.text!.split("“").first;
-          lang = await languageIdentifier.identifyLanguage(messageStr);
-          final langs = (await languageIdentifier.identifyPossibleLanguages(reactionStr)).map((e) => e.language);
-          if (!langs.contains(lang)) {
-            lang = "und";
-          }
-          // otherwise just get the language of the raw string
-        } else {
-          lang = await languageIdentifier.identifyLanguage(message.text ?? "");
-        }
+        // check if the reaction text is in a different language
+        final splits = message.text!.split("“");
+        final reactionStr = sender + " " + splits.first;
+        final lang = await languageIdentifier.identifyLanguage(reactionStr);
         // only translate if we have a valid language and it isn't the device's
         // current language
         if (lang != "und" && lang != locale.languageCode) {
@@ -386,7 +374,13 @@ class MessageHelper {
             await translateLanguageModelManager.downloadModel(locale.languageCode, isWifiRequired: false);
           }
           final onDeviceTranslator = GoogleMlKit.nlp.onDeviceTranslator(sourceLanguage: lang, targetLanguage: locale.languageCode);
-          translated = await onDeviceTranslator.translateText(message.text ?? "");
+          translated = await onDeviceTranslator.translateText(reactionStr);
+          if (splits.length > 1) {
+            translated = translated + (translated.endsWith(" ") ? "“" : " “") + splits.sublist(1).join("“");
+          }
+          if (translated.startsWith(sender)) {
+            translated = translated.substring(sender.length + 1);
+          }
           languageIdentifier.close();
           onDeviceTranslator.close();
         }
