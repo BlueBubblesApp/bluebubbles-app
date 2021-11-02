@@ -4,17 +4,20 @@ import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
+import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/layouts/settings/custom_avatar_color_panel.dart';
 import 'package:bluebubbles/layouts/settings/custom_avatar_panel.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/repository/models/theme_object.dart';
+import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -364,18 +367,75 @@ class ThemePanel extends GetView<ThemePanelController> {
                       }),
                     ],
                   ),
-                // SettingsOptions<String>(
-                //   initial: controller._settingsCopy.emojiFontFamily == null
-                //       ? "System"
-                //       : fontFamilyToString[controller._settingsCopy.emojiFontFamily],
-                //   onChanged: (val) {
-                //     controller._settingsCopy.emojiFontFamily = stringToFontFamily[val];
-                //   },
-                //   options: stringToFontFamily.keys.toList(),
-                //   textProcessing: (dynamic val) => val,
-                //   title: "Emoji Style",
-                //   showDivider: false,
-                // ),
+                if (!kIsWeb)
+                  SettingsHeader(
+                      headerColor: headerColor,
+                      tileColor: tileColor,
+                      iosSubtitle: iosSubtitle,
+                      materialSubtitle: materialSubtitle,
+                      text: "Text and Font"),
+                if (!kIsWeb)
+                  SettingsSection(
+                    backgroundColor: tileColor,
+                    children: [
+                      Obx(() {
+                        if (!fontExistsOnDisk.value) {
+                          return SettingsTile(
+                            onTap: () async {
+                              Get.defaultDialog(
+                                title: "Downloading font file...",
+                                titleStyle: Theme.of(context).textTheme.headline1,
+                                confirm: Container(height: 0, width: 0),
+                                cancel: Container(height: 0, width: 0),
+                                content: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: <Widget>[
+                                      SizedBox(
+                                        height: 15.0,
+                                      ),
+                                      buildProgressIndicator(context),
+                                      SizedBox(
+                                        height: 15.0,
+                                      ),
+                                      Text("The font file is over 30mb, this may take a moment")
+                                    ]
+                                ),
+                                barrierDismissible: false,
+                                backgroundColor: Theme.of(context).backgroundColor,
+                              );
+                              final DynamicCachedFonts dynamicCachedFont = DynamicCachedFonts(
+                                fontFamily: "Apple Color Emoji",
+                                url: "https://github.com/samuelngs/apple-emoji-linux/releases/download/latest/AppleColorEmoji.ttf",
+                              );
+                              await dynamicCachedFont.load();
+                              fontExistsOnDisk.value = true;
+                              Get.back();
+                              showSnackbar("Notice", "Font loaded");
+                            },
+                            title: "Download iOS Emoji Font",
+                            backgroundColor: tileColor,
+                          );
+                        } else {
+                          return SizedBox.shrink();
+                        }
+                      }),
+                      Obx(() {
+                        if (fontExistsOnDisk.value) {
+                          return SettingsTile(
+                            onTap: () async {
+                              await DynamicCachedFonts.removeCachedFont("https://github.com/samuelngs/apple-emoji-linux/releases/download/latest/AppleColorEmoji.ttf");
+                              fontExistsOnDisk.value = false;
+                              showSnackbar("Notice", "Font removed, restart the app for changes to take effect");
+                            },
+                            title: "Delete iOS Emoji Font",
+                            backgroundColor: tileColor,
+                          );
+                        } else {
+                          return SizedBox.shrink();
+                        }
+                      }),
+                    ],
+                  ),
               ],
             ),
           ),
