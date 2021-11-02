@@ -115,6 +115,11 @@ class CurrentChat {
     return currentChat;
   }
 
+  static CurrentChat? forGuid(String? guid) {
+    if (guid == null) return null;
+    return AttachmentInfoBloc().getCurrentChat(guid);
+  }
+
   static bool isActive(String chatGuid) => AttachmentInfoBloc().getCurrentChat(chatGuid)?.isAlive ?? false;
 
   static CurrentChat? get activeChat {
