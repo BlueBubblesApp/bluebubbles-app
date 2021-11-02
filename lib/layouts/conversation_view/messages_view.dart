@@ -5,6 +5,7 @@ import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
@@ -388,9 +389,13 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
           child: Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 13.0),
-              child: Text(
-                text,
-                style: Theme.of(context).textTheme.bodyText1,
+              child: RichText(
+                text: TextSpan(
+                  children: MessageHelper.buildEmojiText(
+                    text,
+                    Theme.of(context).textTheme.bodyText1!,
+                  ),
+                ),
               ),
             ),
           ),
@@ -429,9 +434,14 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                         duration: Duration(milliseconds: 400),
                         vsync: this,
                         child: internalSmartReplies.isEmpty
-                            ? Container()
+                            ? Container(
+                              height: Theme.of(context).textTheme.bodyText1!.fontSize! + 35,
+                              child: ListView(
+                                  reverse: true,
+                                  scrollDirection: Axis.horizontal,
+                                  children: replies.map((e) => _buildReply(e).value).toList()))
                             : Container(
-                                height: Theme.of(context).textTheme.bodyText1!.fontSize! + 30,
+                                height: Theme.of(context).textTheme.bodyText1!.fontSize! + 35,
                                 child: ListView(
                                     reverse: true,
                                     scrollDirection: Axis.horizontal,
