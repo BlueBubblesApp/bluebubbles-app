@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:bluebubbles/layouts/animations/fireworks_classes.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -135,7 +133,8 @@ class RenderFireworks extends RenderBox {
           ),
         Paint()
           ..color = HSVColor.fromAHSV(
-              particle.alpha, particle.hue % 360, 1, particle.brightness)
+              particle.alpha, particle.saturation != null
+              ? particle.hue : particle.hue % 360, particle.saturation ?? 1, particle.brightness)
               .toColor()
           ..blendMode = BlendMode.screen
           ..strokeWidth = particle.size

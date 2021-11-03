@@ -11,6 +11,10 @@ import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/animations/balloon_classes.dart';
+import 'package:bluebubbles/layouts/animations/balloon_rendering.dart';
+import 'package:bluebubbles/layouts/animations/celebration_class.dart';
+import 'package:bluebubbles/layouts/animations/celebration_rendering.dart';
 import 'package:bluebubbles/layouts/animations/fireworks_classes.dart';
 import 'package:bluebubbles/layouts/animations/fireworks_rendering.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/list/text_field_attachment_list.dart';
@@ -31,6 +35,7 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:confetti/confetti.dart';
 import 'package:dio_http/dio_http.dart';
 import 'package:faker/faker.dart';
 import 'package:file_picker/file_picker.dart' hide PlatformFile;
@@ -1602,7 +1607,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     message.generateTempGuid();
     CustomAnimationControl animController = CustomAnimationControl.stop;
     final FireworkController fireworkController = FireworkController(vsync: this);
+    final CelebrationController celebrationController = CelebrationController(vsync: this);
     final ConfettiController confettiController = ConfettiController(duration: Duration(seconds: 1));
+    final BalloonController balloonController = BalloonController(vsync: this);
     Navigator.push(
       context,
       PageRouteBuilder(
@@ -1632,6 +1639,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                               children: [
                                 if (screenSelected == "fireworks")
                                   Fireworks(controller: fireworkController),
+                                if (screenSelected == "celebration")
+                                  Celebration(controller: celebrationController),
+                                if (screenSelected == "balloons")
+                                  Balloons(controller: balloonController),
                                 if (screenSelected == "confetti")
                                   Align(
                                     alignment: Alignment.topCenter,
@@ -1744,6 +1755,14 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                                             fireworkController.start();
                                                             await Future.delayed(Duration(seconds: 1));
                                                             fireworkController.stop();
+                                                          } else if (screenSelected == "celebration" && !celebrationController.isPlaying) {
+                                                            celebrationController.start();
+                                                            await Future.delayed(Duration(seconds: 1));
+                                                            celebrationController.stop();
+                                                          } else if (screenSelected == "balloons" && !balloonController.isPlaying) {
+                                                            balloonController.start();
+                                                            await Future.delayed(Duration(seconds: 1));
+                                                            balloonController.stop();
                                                           } else if (screenSelected == "confetti") {
                                                             confettiController.play();
                                                           }

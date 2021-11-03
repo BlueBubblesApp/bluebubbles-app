@@ -18,18 +18,18 @@ class FireworkController implements Listenable {
   final TickerProvider vsync;
   final List<FireworkRocket> rockets = [];
   final List<FireworkParticle> particles = [];
-  final Random _random = Random();
+  final Random random = Random();
   Size windowSize = Size.zero;
-  double _globalHue = 42;
+  double globalHue = 42;
 
-  late Ticker _ticker;
+  late Ticker ticker;
 
   bool hasCreatedParticles = false;
   bool isPlaying = false;
   bool requestedToStop = false;
-  final List<VoidCallback> _listeners = [];
+  final List<VoidCallback> listeners = [];
 
-  Duration _lastAutoLaunch = Duration.zero;
+  Duration lastAutoLaunch = Duration.zero;
   Duration autoLaunchDuration = Duration(milliseconds: 100);
   double particleSize = 3;
   double get _rocketSize => max(0, particleSize - 1);
@@ -38,8 +38,8 @@ class FireworkController implements Listenable {
   void start() {
     isPlaying = true;
     autoLaunchDuration = Duration(milliseconds: 100);
-    _lastAutoLaunch = Duration.zero;
-    _ticker = vsync.createTicker(_update)..start();
+    lastAutoLaunch = Duration.zero;
+    ticker = vsync.createTicker(update)..start();
   }
 
   void stop() {
@@ -49,46 +49,46 @@ class FireworkController implements Listenable {
 
   @override
   void addListener(listener) {
-    assert(!_listeners.contains(listener));
+    assert(!listeners.contains(listener));
 
-    _listeners.add(listener);
+    listeners.add(listener);
   }
 
   @override
   void removeListener(listener) {
-    assert(_listeners.contains(listener));
+    assert(listeners.contains(listener));
 
-    _listeners.remove(listener);
+    listeners.remove(listener);
   }
 
   void dispose() {
-    _listeners.clear();
-    _ticker.dispose();
+    listeners.clear();
+    ticker.dispose();
   }
 
-  void _update(Duration elapsedDuration) {
+  void update(Duration elapsedDuration) {
     if (windowSize == Size.zero) {
       // We need to wait until we have the size.
       return;
     }
 
-    _globalHue += _random.nextDouble() * 360;
-    _globalHue %= 360;
+    globalHue += random.nextDouble() * 360;
+    globalHue %= 360;
 
     if (autoLaunchDuration != Duration.zero &&
-        (elapsedDuration - _lastAutoLaunch >= autoLaunchDuration || elapsedDuration == Duration.zero)) {
-      _lastAutoLaunch = elapsedDuration;
+        (elapsedDuration - lastAutoLaunch >= autoLaunchDuration || elapsedDuration == Duration.zero)) {
+      lastAutoLaunch = elapsedDuration;
       rockets.add(FireworkRocket(
-        random: _random,
+        random: random,
         start: Point(
-          32 + _random.nextDouble() * (windowSize.width - 32) - 32,
+          32 + random.nextDouble() * (windowSize.width - 32) - 32,
           windowSize.height * 1.2,
         ),
         target: Point(
-          8 + _random.nextDouble() * (windowSize.width - 8) - 8,
-          8 + _random.nextDouble() * windowSize.height * 4 / 7,
+          8 + random.nextDouble() * (windowSize.width - 8) - 8,
+          8 + random.nextDouble() * windowSize.height * 4 / 7,
         ),
-        hue: _globalHue,
+        hue: globalHue,
         size: _rocketSize,
       ));
     }
@@ -110,8 +110,8 @@ class FireworkController implements Listenable {
     });
     particles.removeWhere((element) => element.alpha <= 0);
     if (particles.isEmpty && requestedToStop && hasCreatedParticles) {
-      _ticker.stop();
-      _ticker.dispose();
+      ticker.stop();
+      ticker.dispose();
       isPlaying = false;
       requestedToStop = false;
       hasCreatedParticles = false;
@@ -121,8 +121,8 @@ class FireworkController implements Listenable {
     // ConcurrentModificationError's, in case a listener removes itself
     // or another listener.
     // See https://stackoverflow.com/q/62417999/6509751.
-    for (final listener in List.of(_listeners)) {
-      if (!_listeners.contains(listener)) continue;
+    for (final listener in List.of(listeners)) {
+      if (!listeners.contains(listener)) continue;
       listener.call();
     }
   }
@@ -131,7 +131,7 @@ class FireworkController implements Listenable {
     for (var i = 0; i < explosionParticleCount; i++) {
       hasCreatedParticles = true;
       particles.add(FireworkParticle(
-        random: _random,
+        random: random,
         position: rocket.position,
         hueBaseValue: rocket.hue,
         size: particleSize,
@@ -190,17 +190,19 @@ class FireworkParticle extends FireworkObjectWithTrail {
     required Random random,
     required Point<double> position,
     required double hueBaseValue,
+    this.saturation,
+    bool isCelebration = false,
     required double size,
   })   : angle = random.nextDouble() * 2 * pi,
-        velocity = random.nextDouble() * 12 + 1,
-        hue = hueBaseValue - 50 + random.nextDouble() * 100,
+        velocity = random.nextDouble() * (isCelebration ? 50 : 12) + 1,
+        hue = hueBaseValue + (isCelebration ? 0 : - 50 + random.nextDouble() * 100),
         brightness = .5 + random.nextDouble() * .3,
         alphaDecay = random.nextDouble() * .007 + .013,
         super(
-        trailCount: size.toInt() * 2,
+        trailCount: isCelebration ? 2 : size.toInt() * 2,
         position: position,
         random: random,
-        size: size,
+        size: isCelebration ? random.nextDouble() * 10 : size,
       );
 
   final double angle;
@@ -210,6 +212,7 @@ class FireworkParticle extends FireworkObjectWithTrail {
   final double gravity = 2.35;
 
   final double hue;
+  final double? saturation;
   final double brightness;
 
   double alpha = 1;
