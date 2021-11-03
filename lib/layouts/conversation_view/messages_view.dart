@@ -433,14 +433,14 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                       child: AnimatedSize(
                         duration: Duration(milliseconds: 400),
                         vsync: this,
-                        child: internalSmartReplies.isEmpty
+                        child: internalSmartReplies.isEmpty && replies.isNotEmpty
                             ? Container(
                               height: Theme.of(context).textTheme.bodyText1!.fontSize! + 35,
                               child: ListView(
                                   reverse: true,
                                   scrollDirection: Axis.horizontal,
                                   children: replies.map((e) => _buildReply(e).value).toList()))
-                            : Container(
+                            : internalSmartReplies.isNotEmpty ? Container(
                                 height: Theme.of(context).textTheme.bodyText1!.fontSize! + 35,
                                 child: ListView(
                                     reverse: true,
@@ -450,7 +450,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                                         .toList()
                                         .reversed
                                         .toList()),
-                              ),
+                              ) : Container(),
                       ),
                     ),
                   );
