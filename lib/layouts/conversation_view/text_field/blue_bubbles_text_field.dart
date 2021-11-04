@@ -17,6 +17,10 @@ import 'package:bluebubbles/layouts/animations/celebration_class.dart';
 import 'package:bluebubbles/layouts/animations/celebration_rendering.dart';
 import 'package:bluebubbles/layouts/animations/fireworks_classes.dart';
 import 'package:bluebubbles/layouts/animations/fireworks_rendering.dart';
+import 'package:bluebubbles/layouts/animations/love_classes.dart';
+import 'package:bluebubbles/layouts/animations/love_rendering.dart';
+import 'package:bluebubbles/layouts/animations/spotlight_classes.dart';
+import 'package:bluebubbles/layouts/animations/spotlight_rendering.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/list/text_field_attachment_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/picker/text_field_attachment_picker.dart';
 import 'package:bluebubbles/layouts/widgets/custom_cupertino_text_field.dart';
@@ -1605,11 +1609,14 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       isFromMe: true,
     );
     message.generateTempGuid();
+    final GlobalKey key = GlobalKey();
     CustomAnimationControl animController = CustomAnimationControl.stop;
     final FireworkController fireworkController = FireworkController(vsync: this);
     final CelebrationController celebrationController = CelebrationController(vsync: this);
     final ConfettiController confettiController = ConfettiController(duration: Duration(seconds: 1));
     final BalloonController balloonController = BalloonController(vsync: this);
+    final LoveController loveController = LoveController(vsync: this);
+    final SpotlightController spotlightController = SpotlightController(vsync: this);
     Navigator.push(
       context,
       PageRouteBuilder(
@@ -1632,28 +1639,32 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     backgroundColor: context.theme.backgroundColor.withOpacity(0.3),
                     body: BackdropFilter(
                       filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-                      child: SafeArea(
-                        child: StatefulBuilder(
-                          builder: (BuildContext context, void Function(void Function()) setState) {
-                            return Stack(
-                              children: [
-                                if (screenSelected == "fireworks")
-                                  Fireworks(controller: fireworkController),
-                                if (screenSelected == "celebration")
-                                  Celebration(controller: celebrationController),
-                                if (screenSelected == "balloons")
-                                  Balloons(controller: balloonController),
-                                if (screenSelected == "confetti")
-                                  Align(
-                                    alignment: Alignment.topCenter,
-                                    child: ConfettiWidget(
-                                      confettiController: confettiController,
-                                      blastDirection: pi / 2,
-                                      blastDirectionality: BlastDirectionality.explosive,
-                                      emissionFrequency: 0.35,
-                                    ),
+                      child: StatefulBuilder(
+                        builder: (BuildContext context, void Function(void Function()) setState) {
+                          return Stack(
+                            children: [
+                              if (screenSelected == "fireworks")
+                                Fireworks(controller: fireworkController),
+                              if (screenSelected == "celebration")
+                                Celebration(controller: celebrationController),
+                              if (screenSelected == "balloons")
+                                Balloons(controller: balloonController),
+                              if (screenSelected == "love")
+                                Love(controller: loveController),
+                              if (screenSelected == "spotlight")
+                                Spotlight(controller: spotlightController),
+                              if (screenSelected == "confetti")
+                                Align(
+                                  alignment: Alignment.topCenter,
+                                  child: ConfettiWidget(
+                                    confettiController: confettiController,
+                                    blastDirection: pi / 2,
+                                    blastDirectionality: BlastDirectionality.explosive,
+                                    emissionFrequency: 0.35,
                                   ),
-                                Padding(
+                                ),
+                              SafeArea(
+                                child: Padding(
                                   padding: const EdgeInsets.symmetric(vertical: 20.0),
                                   child: Center(
                                     child: Column(children: [
@@ -1763,6 +1774,18 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                                             balloonController.start();
                                                             await Future.delayed(Duration(seconds: 1));
                                                             balloonController.stop();
+                                                          } else if (screenSelected == "love" && !loveController.isPlaying) {
+                                                            if (key.globalPaintBounds != null) {
+                                                              loveController.start(Point((key.globalPaintBounds!.left + key.globalPaintBounds!.right) / 2, (key.globalPaintBounds!.top + key.globalPaintBounds!.bottom) / 2));
+                                                              await Future.delayed(Duration(seconds: 1));
+                                                              loveController.stop();
+                                                            }
+                                                          } else if (screenSelected == "spotlight" && !spotlightController.isPlaying) {
+                                                            if (key.globalPaintBounds != null) {
+                                                              spotlightController.start(key.globalPaintBounds!);
+                                                              await Future.delayed(Duration(seconds: 1));
+                                                              spotlightController.stop();
+                                                            }
                                                           } else if (screenSelected == "confetti") {
                                                             confettiController.play();
                                                           }
@@ -1798,6 +1821,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                       Align(
                                         alignment: Alignment.centerRight,
                                         child: Padding(
+                                          key: key,
                                           padding: const EdgeInsets.only(right: 5.0),
                                           child: SentMessageHelper.buildMessageWithTail(
                                               context,
@@ -1839,10 +1863,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                     ])
                                   ),
                                 ),
-                              ],
-                            );
-                          }
-                        ),
+                              ),
+                            ],
+                          );
+                        }
                       ),
                     ),
                   ),
