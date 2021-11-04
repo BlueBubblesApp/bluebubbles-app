@@ -17,6 +17,8 @@ import 'package:bluebubbles/layouts/animations/celebration_class.dart';
 import 'package:bluebubbles/layouts/animations/celebration_rendering.dart';
 import 'package:bluebubbles/layouts/animations/fireworks_classes.dart';
 import 'package:bluebubbles/layouts/animations/fireworks_rendering.dart';
+import 'package:bluebubbles/layouts/animations/laser_classes.dart';
+import 'package:bluebubbles/layouts/animations/laser_rendering.dart';
 import 'package:bluebubbles/layouts/animations/love_classes.dart';
 import 'package:bluebubbles/layouts/animations/love_rendering.dart';
 import 'package:bluebubbles/layouts/animations/spotlight_classes.dart';
@@ -1617,6 +1619,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     final BalloonController balloonController = BalloonController(vsync: this);
     final LoveController loveController = LoveController(vsync: this);
     final SpotlightController spotlightController = SpotlightController(vsync: this);
+    final LaserController laserController = LaserController(vsync: this);
     Navigator.push(
       context,
       PageRouteBuilder(
@@ -1653,6 +1656,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                 Love(controller: loveController),
                               if (screenSelected == "spotlight")
                                 Spotlight(controller: spotlightController),
+                              if (screenSelected == "lasers")
+                                Laser(controller: laserController),
                               if (screenSelected == "confetti")
                                 Align(
                                   alignment: Alignment.topCenter,
@@ -1785,6 +1790,12 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                                               spotlightController.start(key.globalPaintBounds!);
                                                               await Future.delayed(Duration(seconds: 1));
                                                               spotlightController.stop();
+                                                            }
+                                                          } else if (screenSelected == "lasers" && !laserController.isPlaying) {
+                                                            if (key.globalPaintBounds != null) {
+                                                              laserController.start(key.globalPaintBounds!);
+                                                              await Future.delayed(Duration(seconds: 1));
+                                                              laserController.stop();
                                                             }
                                                           } else if (screenSelected == "confetti") {
                                                             confettiController.play();

@@ -45,8 +45,6 @@ class SpotlightController implements Listenable {
     listeners.add(listener);
   }
 
-    //https://stackoverflow.com/questions/32441576/html-canvas-spotlight-effect
-  //https://stackoverflow.com/questions/40705631/drawing-a-nice-looking-laser-star-wars-on-the-canvas
   @override
   void removeListener(listener) {
     assert(listeners.contains(listener));
@@ -106,8 +104,6 @@ class SpotlightObject {
   Point<double> position;
   final double size;
   double stop = 1;
-
-  double velocity = 50;
 
   void update(Duration elapsed) {
     if (elapsed.inSeconds < 3) {

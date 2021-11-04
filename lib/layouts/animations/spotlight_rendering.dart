@@ -93,12 +93,12 @@ class RenderSpotlight extends RenderBox {
       ..clipRect(offset & size)
       ..translate(offset.dx, offset.dy);
 
-    _drawBalloons(canvas);
+    _drawSpotlight(canvas);
 
     canvas.restore();
   }
 
-  void _drawBalloons(Canvas canvas) {
+  void _drawSpotlight(Canvas canvas) {
     if (controller.spotlight != null) {
       final Path p = Path();
       double centerX = controller.spotlight!.position.x;
