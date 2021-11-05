@@ -162,7 +162,7 @@ class ActionHandler {
     }
   }
 
-  static Future<Chat> createChatBigSur(BuildContext context, String address, String text) async {
+  static Future<Chat?> createChatBigSur(BuildContext context, String address, String text) async {
     showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -199,6 +199,9 @@ class ActionHandler {
 
     // Add the message send to the queue
     final response = await SocketManager().sendMessage("send-message", params, (response) {});
+    if (response['data'] == null) {
+      return null;
+    }
     message = Message.fromMap(response['data']);
     final chat = Chat.fromMap(response['data']['chats'].first);
 
