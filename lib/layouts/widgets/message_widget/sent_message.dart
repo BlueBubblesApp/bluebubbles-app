@@ -864,7 +864,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
                       MessageWidgetMixin.addStickersToWidget(
                         message: MessageWidgetMixin.addReactionsToWidget(
                             messageWidget: Padding(
-                              key: key,
+                              key: showReplies ? key : null,
                               padding: EdgeInsets.only(bottom: widget.showTail ? 2.0 : 0),
                               child: message,
                             ),
@@ -883,7 +883,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
           MessageWidgetMixin.addStickersToWidget(
             message: MessageWidgetMixin.addReactionsToWidget(
                 messageWidget: Padding(
-                  key: key,
+                  key: showReplies ? key : null,
                   padding: EdgeInsets.only(bottom: widget.showTail ? 2.0 : 0),
                   child: message,
                 ),

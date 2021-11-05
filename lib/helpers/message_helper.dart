@@ -468,11 +468,11 @@ class MessageHelper {
   static List<TextSpan> buildEmojiText(String text, TextStyle style) {
     final children = <TextSpan>[];
     final runes = text.runes;
-
+    final List<int> excludeList = [8217, 400];
     for (int i = 0; i < runes.length;) {
       int current = runes.elementAt(i);
-      final isEmoji = current > 255;
-      final shouldBreak = isEmoji ? (x) => x <= 255 || x == 8217 : (x) => x > 255 && x != 8217;
+      final isEmoji = current > 255 && !excludeList.contains(current);
+      final shouldBreak = isEmoji ? (x) => x <= 255 || excludeList.contains(x) : (x) => x > 255 && !excludeList.contains(x);
 
       final chunk = <int>[];
       while (!shouldBreak(current)) {
@@ -486,7 +486,9 @@ class MessageHelper {
           style: style.apply(
               fontFamily: (isEmoji)
                   ? "Apple Color Emoji"
-                  : null),
+                  : null,
+              heightFactor: isEmoji ? 0.5 : 1
+          ),
         ),
       );
     }

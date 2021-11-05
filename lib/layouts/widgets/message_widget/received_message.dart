@@ -612,7 +612,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                   children: [
                     MessageWidgetMixin.addStickersToWidget(
                       message: MessageWidgetMixin.addReactionsToWidget(
-                          messageWidget: SizedBox(key: key, child: message!),
+                          messageWidget: SizedBox(key: showReplies ? key : null, child: message!),
                           reactions: widget.reactionsWidget,
                           message: widget.message,
                           shouldShow: widget.message
@@ -654,7 +654,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
         messageColumn.add(
           MessageWidgetMixin.addStickersToWidget(
             message: MessageWidgetMixin.addReactionsToWidget(
-                messageWidget: SizedBox(key: key, child: message),
+                messageWidget: SizedBox(key: showReplies ? key : null, child: message),
                 reactions: widget.reactionsWidget,
                 message: widget.message,
                 shouldShow: widget.message
