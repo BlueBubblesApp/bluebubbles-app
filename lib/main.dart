@@ -475,6 +475,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // Call the [LifeCycleManager] events based on the [state]
     if (state == AppLifecycleState.paused) {
+      SystemChannels.textInput.invokeMethod('TextInput.hide').catchError((e) {
+        Logger.error("Error caught while hiding keyboard: ${e.toString()}");
+      });
       LifeCycleManager().close();
     } else if (state == AppLifecycleState.resumed) {
       LifeCycleManager().opened();
