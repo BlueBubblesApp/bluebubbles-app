@@ -21,6 +21,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.
 import 'package:bluebubbles/layouts/widgets/message_widget/reply_line_painter.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/show_reply_thread.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -552,6 +553,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
   Size? messageSize;
   bool showReplies = false;
   CustomAnimationControl animController = CustomAnimationControl.stop;
+  final GlobalKey key = GlobalKey();
 
   @override
   void initState() {
@@ -861,6 +863,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
                       MessageWidgetMixin.addStickersToWidget(
                         message: MessageWidgetMixin.addReactionsToWidget(
                             messageWidget: Padding(
+                              key: key,
                               padding: EdgeInsets.only(bottom: widget.showTail ? 2.0 : 0),
                               child: message,
                             ),
@@ -879,6 +882,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
           MessageWidgetMixin.addStickersToWidget(
             message: MessageWidgetMixin.addReactionsToWidget(
                 messageWidget: Padding(
+                  key: key,
                   padding: EdgeInsets.only(bottom: widget.showTail ? 2.0 : 0),
                   child: message,
                 ),
@@ -906,6 +910,11 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
                     animController = CustomAnimationControl.playFromStart;
                   });
                 }
+              } else {
+                EventDispatcher().emit('play-effect', {
+                  'type': effect,
+                  'size': key.globalPaintBounds,
+                });
               }
             },
             child: Padding(

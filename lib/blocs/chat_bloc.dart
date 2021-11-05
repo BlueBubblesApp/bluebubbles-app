@@ -326,6 +326,8 @@ class ChatBloc {
 
       if (newChats.isNotEmpty) {
         _chats.value = newChats;
+        final ids = _chats.map((e) => e.guid).toSet();
+        _chats.retainWhere((element) => ids.remove(element.guid));
         _chats.sort(Chat.sort);
       }
 

@@ -148,12 +148,14 @@ Future<Null> main() async {
       await WindowManager.instance.setTitle('BlueBubbles (Beta)');
       WindowManager.instance.addListener(DesktopWindowListener());
     }
-    try {
-      DynamicCachedFonts.loadCachedFont("https://github.com/samuelngs/apple-emoji-linux/releases/download/latest/AppleColorEmoji.ttf", fontFamily: "Apple Color Emoji").then((_) {
-        fontExistsOnDisk.value = true;
-      });
-    } on StateError catch (_) {
-      fontExistsOnDisk.value = false;
+    if (!kIsWeb) {
+      try {
+        DynamicCachedFonts.loadCachedFont("https://github.com/samuelngs/apple-emoji-linux/releases/download/latest/AppleColorEmoji.ttf", fontFamily: "Apple Color Emoji").then((_) {
+          fontExistsOnDisk.value = true;
+        });
+      } on StateError catch (_) {
+        fontExistsOnDisk.value = false;
+      }
     }
   } catch (e) {
     exception = e;

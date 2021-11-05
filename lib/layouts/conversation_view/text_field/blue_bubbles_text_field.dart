@@ -11,6 +11,18 @@ import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/animations/balloon_classes.dart';
+import 'package:bluebubbles/layouts/animations/balloon_rendering.dart';
+import 'package:bluebubbles/layouts/animations/celebration_class.dart';
+import 'package:bluebubbles/layouts/animations/celebration_rendering.dart';
+import 'package:bluebubbles/layouts/animations/fireworks_classes.dart';
+import 'package:bluebubbles/layouts/animations/fireworks_rendering.dart';
+import 'package:bluebubbles/layouts/animations/laser_classes.dart';
+import 'package:bluebubbles/layouts/animations/laser_rendering.dart';
+import 'package:bluebubbles/layouts/animations/love_classes.dart';
+import 'package:bluebubbles/layouts/animations/love_rendering.dart';
+import 'package:bluebubbles/layouts/animations/spotlight_classes.dart';
+import 'package:bluebubbles/layouts/animations/spotlight_rendering.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/list/text_field_attachment_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/picker/text_field_attachment_picker.dart';
 import 'package:bluebubbles/layouts/widgets/custom_cupertino_text_field.dart';
@@ -29,6 +41,7 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:confetti/confetti.dart';
 import 'package:dio_http/dio_http.dart';
 import 'package:faker/faker.dart';
 import 'package:file_picker/file_picker.dart' hide PlatformFile;
@@ -53,6 +66,7 @@ class BlueBubblesTextField extends StatefulWidget {
   final bool wasCreator;
   final Future<bool> Function(
       List<PlatformFile> attachments, String text, String subject, String? replyToGuid, String? effectId) onSend;
+  final String? chatGuid;
 
   BlueBubblesTextField({
     Key? key,
@@ -61,6 +75,7 @@ class BlueBubblesTextField extends StatefulWidget {
     required this.isCreator,
     required this.wasCreator,
     required this.onSend,
+    required this.chatGuid,
   }) : super(key: key);
 
   static BlueBubblesTextFieldState? of(BuildContext context) {
@@ -108,8 +123,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     super.initState();
     getPlaceholder();
 
-    if (CurrentChat.activeChat?.chat != null) {
-      textFieldData = TextFieldBloc().getTextField(CurrentChat.activeChat!.chat.guid!);
+    if (CurrentChat.forGuid(widget.chatGuid) != null) {
+      textFieldData = TextFieldBloc().getTextField(widget.chatGuid!);
     }
 
     controller = textFieldData != null ? textFieldData!.controller : TextEditingController();
@@ -118,7 +133,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     // Add the text listener to detect when we should send the typing indicators
     controller!.addListener(() {
       setCanRecord();
-      if (!mounted || CurrentChat.activeChat?.chat == null) return;
+      if (!mounted || CurrentChat.forGuid(widget.chatGuid)?.chat == null) return;
 
       // If the private API features are disabled, or sending the indicators is disabled, return
       if (!SettingsManager().settings.enablePrivateAPI.value ||
@@ -128,11 +143,11 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
       if (controller!.text.isEmpty && pickedImages.isEmpty && selfTyping) {
         selfTyping = false;
-        SocketManager().sendMessage("stopped-typing", {"chatGuid": CurrentChat.activeChat!.chat.guid}, (data) {});
+        SocketManager().sendMessage("stopped-typing", {"chatGuid": widget.chatGuid}, (data) {});
       } else if (!selfTyping && (controller!.text.isNotEmpty || pickedImages.isNotEmpty)) {
         selfTyping = true;
         if (SettingsManager().settings.privateSendTypingIndicators.value) {
-          SocketManager().sendMessage("started-typing", {"chatGuid": CurrentChat.activeChat!.chat.guid}, (data) {});
+          SocketManager().sendMessage("started-typing", {"chatGuid": widget.chatGuid}, (data) {});
         }
       }
 
@@ -140,7 +155,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     });
     subjectController!.addListener(() {
       setCanRecord();
-      if (!mounted || CurrentChat.activeChat?.chat == null) return;
+      if (!mounted || CurrentChat.forGuid(widget.chatGuid)?.chat == null) return;
 
       // If the private API features are disabled, or sending the indicators is disabled, return
       if (!SettingsManager().settings.enablePrivateAPI.value ||
@@ -150,11 +165,11 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
       if (subjectController!.text.isEmpty && pickedImages.isEmpty && selfTyping) {
         selfTyping = false;
-        SocketManager().sendMessage("stopped-typing", {"chatGuid": CurrentChat.activeChat!.chat.guid}, (data) {});
+        SocketManager().sendMessage("stopped-typing", {"chatGuid": widget.chatGuid}, (data) {});
       } else if (!selfTyping && (subjectController!.text.isNotEmpty || pickedImages.isNotEmpty)) {
         selfTyping = true;
         if (SettingsManager().settings.privateSendTypingIndicators.value) {
-          SocketManager().sendMessage("started-typing", {"chatGuid": CurrentChat.activeChat!.chat.guid}, (data) {});
+          SocketManager().sendMessage("started-typing", {"chatGuid": widget.chatGuid}, (data) {});
         }
       }
 
@@ -166,7 +181,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     focusNode = FocusNode();
     subjectFocusNode = FocusNode();
     focusNode!.addListener(() {
-      CurrentChat.activeChat?.keyboardOpen = focusNode?.hasFocus ?? false;
+      CurrentChat.forGuid(widget.chatGuid)?.keyboardOpen = focusNode?.hasFocus ?? false;
 
       if (focusNode!.hasFocus && mounted) {
         if (!showShareMenu.value) return;
@@ -176,7 +191,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       EventDispatcher().emit("keyboard-status", focusNode!.hasFocus);
     });
     subjectFocusNode!.addListener(() {
-      CurrentChat.activeChat?.keyboardOpen = focusNode?.hasFocus ?? false;
+      CurrentChat.forGuid(widget.chatGuid)?.keyboardOpen = focusNode?.hasFocus ?? false;
 
       if (focusNode!.hasFocus && mounted) {
         if (!showShareMenu.value) return;
@@ -281,7 +296,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    safeChat = CurrentChat.activeChat;
+    safeChat = CurrentChat.forGuid(widget.chatGuid);
   }
 
   @override
@@ -308,9 +323,9 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
   void disposeAudioFile(BuildContext context, PlatformFile file) {
     // Dispose of the audio controller
-    CurrentChat.activeChat?.audioPlayers[file.path]?.item1.dispose();
-    CurrentChat.activeChat?.audioPlayers[file.path]?.item2.pause();
-    CurrentChat.activeChat?.audioPlayers.removeWhere((key, _) => key == file.path);
+    CurrentChat.forGuid(widget.chatGuid)?.audioPlayers[file.path]?.item1.dispose();
+    CurrentChat.forGuid(widget.chatGuid)?.audioPlayers[file.path]?.item2.pause();
+    CurrentChat.forGuid(widget.chatGuid)?.audioPlayers.removeWhere((key, _) => key == file.path);
     if (file.path != null) {
       // Delete the file
       File(file.path!).delete();
@@ -440,7 +455,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           ListTile(
             title: Text("Send location", style: Theme.of(context).textTheme.bodyText1),
             onTap: () async {
-              Share.location(CurrentChat.activeChat!.chat);
+              Share.location(CurrentChat.forGuid(widget.chatGuid)!.chat);
               Get.back();
             },
           ),
@@ -602,25 +617,25 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeContactNames.value;
 
         // If it's a group chat, get the title of the chat
-        if (CurrentChat.activeChat?.chat.isGroup() ?? false) {
+        if (CurrentChat.forGuid(widget.chatGuid)?.chat.isGroup() ?? false) {
           if (generateNames) {
             placeholder = "Group Chat";
           } else if (hideInfo) {
             placeholder = "BlueBubbles";
           } else {
-            String? title = await CurrentChat.activeChat?.chat.getTitle();
+            String? title = await CurrentChat.forGuid(widget.chatGuid)?.chat.getTitle();
             if (!isNullOrEmpty(title)!) {
               placeholder = title!;
             }
           }
-        } else if (!isNullOrEmpty(CurrentChat.activeChat?.chat.participants)!) {
+        } else if (!isNullOrEmpty(CurrentChat.forGuid(widget.chatGuid)?.chat.participants)!) {
           if (generateNames) {
-            placeholder = CurrentChat.activeChat!.chat.fakeParticipants[0] ?? "BlueBubbles";
+            placeholder = CurrentChat.forGuid(widget.chatGuid)!.chat.fakeParticipants[0] ?? "BlueBubbles";
           } else if (hideInfo) {
             placeholder = "BlueBubbles";
           } else {
             // If it's not a group chat, get the participant's contact info
-            Handle? handle = CurrentChat.activeChat?.chat.participants[0];
+            Handle? handle = CurrentChat.forGuid(widget.chatGuid)?.chat.participants[0];
             Contact? contact = ContactManager().getCachedContact(address: handle?.address ?? "");
             if (contact == null) {
               placeholder = await formatPhoneNumber(handle);
@@ -1596,7 +1611,15 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       isFromMe: true,
     );
     message.generateTempGuid();
+    final GlobalKey key = GlobalKey();
     CustomAnimationControl animController = CustomAnimationControl.stop;
+    final FireworkController fireworkController = FireworkController(vsync: this);
+    final CelebrationController celebrationController = CelebrationController(vsync: this);
+    final ConfettiController confettiController = ConfettiController(duration: Duration(seconds: 1));
+    final BalloonController balloonController = BalloonController(vsync: this);
+    final LoveController loveController = LoveController(vsync: this);
+    final SpotlightController spotlightController = SpotlightController(vsync: this);
+    final LaserController laserController = LaserController(vsync: this);
     Navigator.push(
       context,
       PageRouteBuilder(
@@ -1619,181 +1642,242 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     backgroundColor: context.theme.backgroundColor.withOpacity(0.3),
                     body: BackdropFilter(
                       filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-                      child: SafeArea(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 20.0),
-                          child: Center(
-                            child: StatefulBuilder(
-                                builder: (BuildContext context, void Function(void Function()) setState) {
-                              return Column(children: [
-                                Text(
-                                  "Send with effect",
-                                  style: Theme.of(context).textTheme.subtitle1!,
-                                  textScaleFactor: 1.75,
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 20.0),
-                                  child: Container(
-                                    height: 50,
-                                    width: CustomNavigator.width(context) / 2,
-                                    child: CupertinoSlidingSegmentedControl<String>(
-                                      children: {
-                                        "bubble": Text("Bubble"),
-                                        "screen": Text("Screen"),
-                                      },
-                                      groupValue: typeSelected,
-                                      thumbColor: CupertinoColors.tertiarySystemFill.lightenOrDarken(20),
-                                      backgroundColor: CupertinoColors.tertiarySystemFill,
-                                      onValueChanged: (str) {
-                                        setState(() {
-                                          typeSelected = str ?? "bubble";
-                                        });
-                                      },
-                                    ),
-                                  ),
-                                ),
-                                Spacer(),
-                                if (typeSelected == "bubble")
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 20.0),
-                                    child: ConstrainedBox(
-                                        constraints: BoxConstraints(
-                                          maxHeight: 250,
-                                          maxWidth: CustomNavigator.width(context),
-                                        ),
-                                        child: SingleChildScrollView(
-                                          child: Wrap(
-                                            alignment: WrapAlignment.center,
-                                            children: List.generate(bubbleEffects.length, (index) {
-                                              return Padding(
-                                                padding: const EdgeInsets.all(8.0),
-                                                child: GestureDetector(
-                                                  onTap: () {
-                                                    setState(() {
-                                                      bubbleSelected = bubbleEffects[index];
-                                                    });
-                                                    animController = CustomAnimationControl.playFromStart;
-                                                  },
-                                                  child: Container(
-                                                    width: CustomNavigator.width(context) / 3,
-                                                    height: 50,
-                                                    decoration: BoxDecoration(
-                                                      color: CupertinoColors.tertiarySystemFill,
-                                                      border:
-                                                          Border.fromBorderSide(bubbleSelected == bubbleEffects[index]
-                                                              ? BorderSide(
-                                                                  color: Theme.of(context).primaryColor,
-                                                                  width: 1.5,
-                                                                  style: BorderStyle.solid,
-                                                                )
-                                                              : BorderSide.none),
-                                                      borderRadius: BorderRadius.circular(5),
-                                                    ),
-                                                    child: Center(
-                                                      child: Text(
-                                                        bubbleEffects[index].toUpperCase(),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              );
-                                            }),
-                                          ),
-                                        )),
-                                  ),
-                                if (typeSelected == "screen")
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 20.0),
-                                    child: ConstrainedBox(
-                                        constraints: BoxConstraints(
-                                          maxHeight: 350,
-                                          maxWidth: CustomNavigator.width(context),
-                                        ),
-                                        child: SingleChildScrollView(
-                                          child: Wrap(
-                                            alignment: WrapAlignment.center,
-                                            children: List.generate(screenEffects.length, (index) {
-                                              return Padding(
-                                                padding: const EdgeInsets.all(8.0),
-                                                child: GestureDetector(
-                                                  onTap: () {
-                                                    setState(() {
-                                                      screenSelected = screenEffects[index];
-                                                    });
-                                                  },
-                                                  child: Container(
-                                                    width: CustomNavigator.width(context) / 3,
-                                                    height: 50,
-                                                    decoration: BoxDecoration(
-                                                      color: CupertinoColors.tertiarySystemFill,
-                                                      border:
-                                                          Border.fromBorderSide(screenSelected == screenEffects[index]
-                                                              ? BorderSide(
-                                                                  color: Theme.of(context).primaryColor,
-                                                                  width: 1.5,
-                                                                  style: BorderStyle.solid,
-                                                                )
-                                                              : BorderSide.none),
-                                                      borderRadius: BorderRadius.circular(5),
-                                                    ),
-                                                    child: Center(
-                                                      child: Text(
-                                                        screenEffects[index].toUpperCase(),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              );
-                                            }),
-                                          ),
-                                        )),
-                                  ),
-                                Spacer(),
+                      child: StatefulBuilder(
+                        builder: (BuildContext context, void Function(void Function()) setState) {
+                          return Stack(
+                            children: [
+                              if (screenSelected == "fireworks")
+                                Fireworks(controller: fireworkController),
+                              if (screenSelected == "celebration")
+                                Celebration(controller: celebrationController),
+                              if (screenSelected == "balloons")
+                                Balloons(controller: balloonController),
+                              if (screenSelected == "love")
+                                Love(controller: loveController),
+                              if (screenSelected == "spotlight")
+                                Spotlight(controller: spotlightController),
+                              if (screenSelected == "lasers")
+                                Laser(controller: laserController),
+                              if (screenSelected == "confetti")
                                 Align(
-                                  alignment: Alignment.centerRight,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(right: 5.0),
-                                    child: SentMessageHelper.buildMessageWithTail(
-                                        context,
-                                        message,
-                                        true,
-                                        false,
-                                        message.isBigEmoji(),
-                                        MessageWidgetMixin.buildMessageSpansAsync(context, message),
-                                        currentChat: CurrentChat.activeChat,
-                                        customColor: Theme.of(context).primaryColor,
-                                        effect: stringToMessageEffect[
-                                                typeSelected == "bubble" ? bubbleSelected : screenSelected] ??
-                                            MessageEffect.none,
-                                        controller: animController, updateController: () {
-                                      setState(() {
-                                        animController = CustomAnimationControl.stop;
-                                      });
-                                    }),
+                                  alignment: Alignment.topCenter,
+                                  child: ConfettiWidget(
+                                    confettiController: confettiController,
+                                    blastDirection: pi / 2,
+                                    blastDirectionality: BlastDirectionality.explosive,
+                                    emissionFrequency: 0.35,
                                   ),
                                 ),
-                                Spacer(),
-                                TextButton(
-                                  child: Text(
-                                    typeSelected == "bubble"
-                                        ? "Send with $bubbleSelected"
-                                        : "Send with $screenSelected",
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyText1!
-                                        .apply(color: Theme.of(context).primaryColor),
-                                    textScaleFactor: 1.15,
+                              SafeArea(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 20.0),
+                                  child: Center(
+                                    child: Column(children: [
+                                      Text(
+                                        "Send with effect",
+                                        style: Theme.of(context).textTheme.subtitle1!,
+                                        textScaleFactor: 1.75,
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(vertical: 20.0),
+                                        child: Container(
+                                          height: 50,
+                                          width: CustomNavigator.width(context) / 2,
+                                          child: CupertinoSlidingSegmentedControl<String>(
+                                            children: {
+                                              "bubble": Text("Bubble"),
+                                              "screen": Text("Screen"),
+                                            },
+                                            groupValue: typeSelected,
+                                            thumbColor: CupertinoColors.tertiarySystemFill.lightenOrDarken(20),
+                                            backgroundColor: CupertinoColors.tertiarySystemFill,
+                                            onValueChanged: (str) {
+                                              setState(() {
+                                                typeSelected = str ?? "bubble";
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                      Spacer(),
+                                      if (typeSelected == "bubble")
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 20.0),
+                                          child: ConstrainedBox(
+                                              constraints: BoxConstraints(
+                                                maxHeight: 250,
+                                                maxWidth: CustomNavigator.width(context),
+                                              ),
+                                              child: SingleChildScrollView(
+                                                child: Wrap(
+                                                  alignment: WrapAlignment.center,
+                                                  children: List.generate(bubbleEffects.length, (index) {
+                                                    return Padding(
+                                                      padding: const EdgeInsets.all(8.0),
+                                                      child: GestureDetector(
+                                                        onTap: () {
+                                                          setState(() {
+                                                            bubbleSelected = bubbleEffects[index];
+                                                          });
+                                                          animController = CustomAnimationControl.playFromStart;
+                                                        },
+                                                        child: Container(
+                                                          width: CustomNavigator.width(context) / 3,
+                                                          height: 50,
+                                                          decoration: BoxDecoration(
+                                                            color: CupertinoColors.tertiarySystemFill,
+                                                            border:
+                                                            Border.fromBorderSide(bubbleSelected == bubbleEffects[index]
+                                                                ? BorderSide(
+                                                              color: Theme.of(context).primaryColor,
+                                                              width: 1.5,
+                                                              style: BorderStyle.solid,
+                                                            )
+                                                                : BorderSide.none),
+                                                            borderRadius: BorderRadius.circular(5),
+                                                          ),
+                                                          child: Center(
+                                                            child: Text(
+                                                              bubbleEffects[index].toUpperCase(),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    );
+                                                  }),
+                                                ),
+                                              )),
+                                        ),
+                                      if (typeSelected == "screen")
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 20.0),
+                                          child: ConstrainedBox(
+                                              constraints: BoxConstraints(
+                                                maxHeight: 350,
+                                                maxWidth: CustomNavigator.width(context),
+                                              ),
+                                              child: SingleChildScrollView(
+                                                child: Wrap(
+                                                  alignment: WrapAlignment.center,
+                                                  children: List.generate(screenEffects.length, (index) {
+                                                    return Padding(
+                                                      padding: const EdgeInsets.all(8.0),
+                                                      child: GestureDetector(
+                                                        onTap: () async {
+                                                          setState(() {
+                                                            screenSelected = screenEffects[index];
+                                                          });
+                                                          if (screenSelected == "fireworks" && !fireworkController.isPlaying) {
+                                                            fireworkController.start();
+                                                            await Future.delayed(Duration(seconds: 1));
+                                                            fireworkController.stop();
+                                                          } else if (screenSelected == "celebration" && !celebrationController.isPlaying) {
+                                                            celebrationController.start();
+                                                            await Future.delayed(Duration(seconds: 1));
+                                                            celebrationController.stop();
+                                                          } else if (screenSelected == "balloons" && !balloonController.isPlaying) {
+                                                            balloonController.start();
+                                                            await Future.delayed(Duration(seconds: 1));
+                                                            balloonController.stop();
+                                                          } else if (screenSelected == "love" && !loveController.isPlaying) {
+                                                            if (key.globalPaintBounds != null) {
+                                                              loveController.start(Point((key.globalPaintBounds!.left + key.globalPaintBounds!.right) / 2, (key.globalPaintBounds!.top + key.globalPaintBounds!.bottom) / 2));
+                                                              await Future.delayed(Duration(seconds: 1));
+                                                              loveController.stop();
+                                                            }
+                                                          } else if (screenSelected == "spotlight" && !spotlightController.isPlaying) {
+                                                            if (key.globalPaintBounds != null) {
+                                                              spotlightController.start(key.globalPaintBounds!);
+                                                              await Future.delayed(Duration(seconds: 1));
+                                                              spotlightController.stop();
+                                                            }
+                                                          } else if (screenSelected == "lasers" && !laserController.isPlaying) {
+                                                            if (key.globalPaintBounds != null) {
+                                                              laserController.start(key.globalPaintBounds!);
+                                                              await Future.delayed(Duration(seconds: 1));
+                                                              laserController.stop();
+                                                            }
+                                                          } else if (screenSelected == "confetti") {
+                                                            confettiController.play();
+                                                          }
+                                                        },
+                                                        child: Container(
+                                                          width: CustomNavigator.width(context) / 3,
+                                                          height: 50,
+                                                          decoration: BoxDecoration(
+                                                            color: CupertinoColors.tertiarySystemFill,
+                                                            border:
+                                                            Border.fromBorderSide(screenSelected == screenEffects[index]
+                                                                ? BorderSide(
+                                                              color: Theme.of(context).primaryColor,
+                                                              width: 1.5,
+                                                              style: BorderStyle.solid,
+                                                            )
+                                                                : BorderSide.none),
+                                                            borderRadius: BorderRadius.circular(5),
+                                                          ),
+                                                          child: Center(
+                                                            child: Text(
+                                                              screenEffects[index].toUpperCase(),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    );
+                                                  }),
+                                                ),
+                                              )),
+                                        ),
+                                      Spacer(),
+                                      Align(
+                                        alignment: Alignment.centerRight,
+                                        child: Padding(
+                                          key: key,
+                                          padding: const EdgeInsets.only(right: 5.0),
+                                          child: SentMessageHelper.buildMessageWithTail(
+                                              context,
+                                              message,
+                                              true,
+                                              false,
+                                              message.isBigEmoji(),
+                                              MessageWidgetMixin.buildMessageSpansAsync(context, message),
+                                              currentChat: CurrentChat.forGuid(widget.chatGuid),
+                                              customColor: Theme.of(context).primaryColor,
+                                              effect: stringToMessageEffect[
+                                              typeSelected == "bubble" ? bubbleSelected : screenSelected] ??
+                                                  MessageEffect.none,
+                                              controller: animController, updateController: () {
+                                            setState(() {
+                                              animController = CustomAnimationControl.stop;
+                                            });
+                                          }),
+                                        ),
+                                      ),
+                                      Spacer(),
+                                      TextButton(
+                                        child: Text(
+                                          typeSelected == "bubble"
+                                              ? "Send with $bubbleSelected"
+                                              : "Send with $screenSelected",
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyText1!
+                                              .apply(color: Theme.of(context).primaryColor),
+                                          textScaleFactor: 1.15,
+                                        ),
+                                        onPressed: () async {
+                                          Navigator.of(context).pop();
+                                          await sendMessage(
+                                              effect: effectMap[typeSelected == "bubble" ? bubbleSelected : screenSelected]);
+                                        },
+                                      ),
+                                    ])
                                   ),
-                                  onPressed: () async {
-                                    Navigator.of(context).pop();
-                                    await sendMessage(
-                                        effect: effectMap[typeSelected == "bubble" ? bubbleSelected : screenSelected]);
-                                  },
                                 ),
-                              ]);
-                            }),
-                          ),
-                        ),
+                              ),
+                            ],
+                          );
+                        }
                       ),
                     ),
                   ),

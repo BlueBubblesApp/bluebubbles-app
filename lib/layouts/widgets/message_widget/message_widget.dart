@@ -394,28 +394,32 @@ class _MessageState extends State<MessageWidget> with TickerProviderStateMixin {
                     duration: Duration(milliseconds: offset.value == 0 ? 150 : 0),
                     left: !_message.isFromMe! ? -offset.value * 0.8 : null,
                     right: _message.isFromMe! ? -offset.value * 0.8 : null,
-                    child: AnimatedContainer(
-                      margin: EdgeInsets.only(
-                          bottom: min(replyThreshold, offset.value) * (!_message.isFromMe! ? 0.10 : 0.20) +
-                              (widget.isFirstSentMessage && _message.dateDelivered != null ? 20 : 0)),
+                    child: AnimatedOpacity(
                       duration: Duration(milliseconds: offset.value == 0 ? 150 : 0),
-                      width: min(replyThreshold, offset.value) * 0.8,
-                      height: min(replyThreshold, offset.value) * 0.8,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.all(
-                          Radius.circular(
-                            min(replyThreshold, offset.value) * 0.4,
-                          ),
-                        ),
-                        color: context.theme.accentColor,
-                      ),
-                      child: AnimatedSize(
-                        vsync: this,
+                      opacity: offset.value == 0 ? 0 : 1,
+                      child: AnimatedContainer(
+                        margin: EdgeInsets.only(
+                            bottom: min(replyThreshold, offset.value) * (!_message.isFromMe! ? 0.10 : 0.20) +
+                                (widget.isFirstSentMessage && _message.dateDelivered != null ? 20 : 0)),
                         duration: Duration(milliseconds: offset.value == 0 ? 150 : 0),
-                        child: Icon(
-                          SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.reply : Icons.reply,
-                          size: min(replyThreshold, offset.value) * (offset.value >= replyThreshold ? 0.5 : 0.4),
-                          color: context.textTheme.headline1!.color,
+                        width: min(replyThreshold, offset.value) * 0.8,
+                        height: min(replyThreshold, offset.value) * 0.8,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.all(
+                            Radius.circular(
+                              min(replyThreshold, offset.value) * 0.4,
+                            ),
+                          ),
+                          color: context.theme.accentColor,
+                        ),
+                        child: AnimatedSize(
+                          vsync: this,
+                          duration: Duration(milliseconds: offset.value == 0 ? 150 : 0),
+                          child: Icon(
+                            SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.reply : Icons.reply,
+                            size: min(replyThreshold, offset.value) * (offset.value >= replyThreshold ? 0.5 : 0.4),
+                            color: context.textTheme.headline1!.color,
+                          ),
                         ),
                       ),
                     ),

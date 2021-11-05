@@ -106,6 +106,7 @@ dependencies:
   js: ^0.6.3
   particles_flutter: ^0.1.4
   dynamic_cached_fonts: ^0.4.0
+  confetti: ^0.6.0
 
 dependency_overrides:
   rxdart: ^0.27.2
