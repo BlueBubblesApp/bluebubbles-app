@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/widgets/screen_effects_widget.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'dart:math';
 import 'dart:ui';
@@ -497,6 +498,9 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         }),
         Expanded(
           child: Stack(children: [
+            Positioned.fill(
+              child: ScreenEffectsWidget()
+            ),
             Column(mainAxisAlignment: MainAxisAlignment.end, mainAxisSize: MainAxisSize.min, children: [
               Expanded(
                 child: Obx(
@@ -517,9 +521,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                         ],
                       ),
                     ),
-                  )
-                      : (searchQuery.isEmpty || !isCreator!) && chat != null
-                      ? Stack(
+                  ) : (searchQuery.isEmpty || !isCreator!) && chat != null ? Stack(
                     alignment: Alignment.bottomCenter,
                     children: [
                       MessagesView(
@@ -529,17 +531,14 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                         chat: chat,
                         initComplete: widget.onMessagesViewComplete,
                       ),
-                      currentChat != null
-                          ? Obx(() => AnimatedOpacity(
+                      currentChat != null ? Obx(() => AnimatedOpacity(
                         duration: Duration(milliseconds: 250),
                         opacity: currentChat!.showScrollDown.value ? 1 : 0,
                         curve: Curves.easeInOut,
                         child: buildScrollToBottomFAB(context),
-                      ))
-                          : Container(),
+                      )) : Container(),
                     ],
-                  )
-                      : buildChatSelectorBody(),
+                  ) : buildChatSelectorBody(),
                 ),
               ),
               if (widget.onSelect == null)

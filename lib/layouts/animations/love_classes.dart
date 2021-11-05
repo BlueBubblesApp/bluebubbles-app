@@ -64,6 +64,7 @@ class LoveController implements Listenable {
     heart ??= LoveObject(
         random: random,
         originalPosition: position,
+        screenWidth: windowSize.width,
         position: position,
         size: 1,
       );
@@ -93,12 +94,14 @@ class LoveObject {
   LoveObject({
     required this.random,
     required this.originalPosition,
+    required this.screenWidth,
     required this.position,
     required this.size,
   });
 
   final Random random;
   final Point<double> originalPosition;
+  final double screenWidth;
   Point<double> position;
   double size;
 
@@ -112,7 +115,11 @@ class LoveObject {
       return;
     }
 
-    position = Point(position.x - velocity * cos(5 * pi / 12), position.y - velocity * sin(5 * pi / 12));
+    double angle = atan((0 - originalPosition.y) / (screenWidth / 2 - originalPosition.x + (originalPosition.x < screenWidth / 2 ? size / 2 : - size / 2))).abs();
+    if (originalPosition.x < screenWidth / 2) {
+      angle = pi - angle;
+    }
+    position = Point(position.x - velocity * cos(angle), position.y - velocity * sin(angle));
 
     velocity *= acceleration;
     velocity.clamp(0.5, 2);

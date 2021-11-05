@@ -87,6 +87,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
   Size? messageSize;
   bool showReplies = false;
   CustomAnimationControl controller = CustomAnimationControl.stop;
+  final GlobalKey key = GlobalKey();
 
   @override
   initState() {
@@ -610,7 +611,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                   children: [
                     MessageWidgetMixin.addStickersToWidget(
                       message: MessageWidgetMixin.addReactionsToWidget(
-                          messageWidget: message!,
+                          messageWidget: SizedBox(key: key, child: message!),
                           reactions: widget.reactionsWidget,
                           message: widget.message,
                           shouldShow: widget.message
@@ -652,7 +653,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
         messageColumn.add(
           MessageWidgetMixin.addStickersToWidget(
             message: MessageWidgetMixin.addReactionsToWidget(
-                messageWidget: message,
+                messageWidget: SizedBox(key: key, child: message),
                 reactions: widget.reactionsWidget,
                 message: widget.message,
                 shouldShow: widget.message
@@ -915,6 +916,11 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                                     controller = CustomAnimationControl.playFromStart;
                                   });
                                 }
+                              } else {
+                                EventDispatcher().emit('play-effect', {
+                                  'type': effect,
+                                  'size': key.globalPaintBounds,
+                                });
                               }
                             },
                             child: Padding(
