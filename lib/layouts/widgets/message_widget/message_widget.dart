@@ -400,7 +400,7 @@ class _MessageState extends State<MessageWidget> with TickerProviderStateMixin {
                       child: AnimatedContainer(
                         margin: EdgeInsets.only(
                             bottom: min(replyThreshold, offset.value) * (!_message.isFromMe! ? 0.10 : 0.20) +
-                                (widget.isFirstSentMessage && _message.dateDelivered != null ? 20 : 0)),
+                                (widget.isFirstSentMessage && _message.dateDelivered.value != null ? 20 : 0)),
                         duration: Duration(milliseconds: offset.value == 0 ? 150 : 0),
                         width: min(replyThreshold, offset.value) * 0.8,
                         height: min(replyThreshold, offset.value) * 0.8,

@@ -454,8 +454,8 @@ class MessageHelper {
     if (!sameSender(message, newerMessage)) return true;
     if (message!.isFromMe! &&
         newerMessage!.isFromMe! &&
-        message.dateDelivered != null &&
-        newerMessage.dateDelivered == null) return true;
+        message.dateDelivered.value != null &&
+        newerMessage.dateDelivered.value == null) return true;
 
     Message? lastRead = CurrentChat.activeChat?.messageMarkers.lastReadMessage;
     if (lastRead != null && lastRead.guid == message.guid) return true;

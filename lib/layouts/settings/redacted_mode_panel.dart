@@ -78,7 +78,7 @@ class RedactedModePanel extends StatelessWidget {
                     autoplayEffect: false,
                     message: Message(
                       guid: "redacted-mode-demo",
-                      dateDelivered: DateTime.now().toLocal(),
+                      dateDelivered2: DateTime.now().toLocal(),
                       dateCreated: DateTime.now().toLocal(),
                       isFromMe: false,
                       hasReactions: true,

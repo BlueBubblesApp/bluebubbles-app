@@ -24,7 +24,7 @@ class DeliveredReceipt extends StatefulWidget {
 class _DeliveredReceiptState extends State<DeliveredReceipt> with TickerProviderStateMixin {
   bool shouldShow(Message? myLastMessage, Message? lastReadMessage, Message? lastDeliveredMessage) {
     // If we have no delivered date, don't show anything
-    if (widget.message.dateDelivered == null) return false;
+    if (widget.message.dateDelivered.value == null) return false;
 
     if (CurrentChat.activeChat != null) {
       lastReadMessage ??= CurrentChat.activeChat?.messageMarkers.lastReadMessage;
@@ -34,7 +34,7 @@ class _DeliveredReceiptState extends State<DeliveredReceipt> with TickerProvider
 
     // If the message is the same as the last read message, we want to show it
     if (!widget.showDeliveredReceipt &&
-        widget.message.dateRead != null &&
+        widget.message.dateRead.value != null &&
         lastReadMessage != null &&
         widget.message.guid == lastReadMessage.guid) {
       return true;
@@ -42,7 +42,7 @@ class _DeliveredReceiptState extends State<DeliveredReceipt> with TickerProvider
 
     // If the message is the same as the last delivered message, we want to show it
     if (!widget.showDeliveredReceipt &&
-        widget.message.dateDelivered != null &&
+        widget.message.dateDelivered.value != null &&
         lastDeliveredMessage != null &&
         widget.message.guid == lastDeliveredMessage.guid) {
       return true;
@@ -67,10 +67,10 @@ class _DeliveredReceiptState extends State<DeliveredReceipt> with TickerProvider
 
   String getText() {
     String text = "Delivered";
-    if (widget.message.dateRead != null) {
-      text = "Read " + buildDate(widget.message.dateRead);
-    } else if (SettingsManager().settings.showDeliveryTimestamps.value && widget.message.dateDelivered != null) {
-      text = "Delivered " + buildDate(widget.message.dateDelivered);
+    if (widget.message.dateRead.value != null) {
+      text = "Read " + buildDate(widget.message.dateRead.value);
+    } else if (SettingsManager().settings.showDeliveryTimestamps.value && widget.message.dateDelivered.value != null) {
+      text = "Delivered " + buildDate(widget.message.dateDelivered.value);
     }
 
     return text;
