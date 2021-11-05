@@ -230,6 +230,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                         if (mounted) setState(() {});
                       });
                       return Obx(() {
+                        final placeholderVar = null.obs.value;
                         if (content.error.value = true) {
                           return Text(
                             "Error loading",
