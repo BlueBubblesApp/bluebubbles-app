@@ -6,12 +6,13 @@ import 'package:flutter/scheduler.dart';
 class BalloonController implements Listenable {
   BalloonController({
     required this.vsync,
+    required this.windowSize,
   });
 
   final TickerProvider vsync;
   final List<BalloonObject> balloons = [];
   final Random random = Random();
-  Size windowSize = Size.zero;
+  Size windowSize;
 
   late Ticker ticker;
 

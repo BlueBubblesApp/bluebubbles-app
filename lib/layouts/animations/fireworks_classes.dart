@@ -13,13 +13,14 @@ import 'package:flutter/scheduler.dart';
 class FireworkController implements Listenable {
   FireworkController({
     required this.vsync,
+    required this.windowSize,
   });
 
   final TickerProvider vsync;
   final List<FireworkRocket> rockets = [];
   final List<FireworkParticle> particles = [];
   final Random random = Random();
-  Size windowSize = Size.zero;
+  Size windowSize;
   double globalHue = 42;
 
   late Ticker ticker;

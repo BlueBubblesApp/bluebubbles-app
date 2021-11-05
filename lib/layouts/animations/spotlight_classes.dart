@@ -6,12 +6,13 @@ import 'package:flutter/scheduler.dart';
 class SpotlightController implements Listenable {
   SpotlightController({
     required this.vsync,
+    required this.windowSize,
   });
 
   final TickerProvider vsync;
   SpotlightObject? spotlight;
   final Random random = Random();
-  Size windowSize = Size.zero;
+  Size windowSize;
 
   late Ticker ticker;
   late Point<double> position;

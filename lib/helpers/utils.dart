@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
@@ -765,12 +766,14 @@ extension LastChars on String {
 }
 
 extension WidgetLocation on GlobalKey {
-  Rect? get globalPaintBounds {
+  Rect? globalPaintBounds(BuildContext context) {
+    double difference = context.width - CustomNavigator.width(context);
     final renderObject = currentContext?.findRenderObject();
     final translation = renderObject?.getTransformTo(null).getTranslation();
     if (translation != null && renderObject?.paintBounds != null) {
       final offset = Offset(translation.x, translation.y);
-      return renderObject!.paintBounds.shift(offset);
+      final tempRect = renderObject!.paintBounds.shift(offset);
+      return Rect.fromLTRB(tempRect.left - difference, tempRect.top, tempRect.right - difference, tempRect.bottom);
     } else {
       return null;
     }

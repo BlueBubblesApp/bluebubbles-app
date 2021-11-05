@@ -7,7 +7,8 @@ import 'package:flutter/scheduler.dart';
 class CelebrationController extends FireworkController {
   CelebrationController({
     required TickerProvider vsync,
-  }) : super(vsync: vsync);
+    required Size windowSize,
+  }) : super(vsync: vsync, windowSize: windowSize);
 
   @override
   void start() {

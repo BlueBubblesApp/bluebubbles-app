@@ -6,12 +6,13 @@ import 'package:flutter/scheduler.dart';
 class LoveController implements Listenable {
   LoveController({
     required this.vsync,
+    required this.windowSize,
   });
 
   final TickerProvider vsync;
   LoveObject? heart;
   final Random random = Random();
-  Size windowSize = Size.zero;
+  Size windowSize;
 
   late Ticker ticker;
   late Point<double> position;

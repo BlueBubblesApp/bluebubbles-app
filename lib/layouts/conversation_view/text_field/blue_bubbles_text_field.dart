@@ -1613,13 +1613,13 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     message.generateTempGuid();
     final GlobalKey key = GlobalKey();
     CustomAnimationControl animController = CustomAnimationControl.stop;
-    final FireworkController fireworkController = FireworkController(vsync: this);
-    final CelebrationController celebrationController = CelebrationController(vsync: this);
+    final FireworkController fireworkController = FireworkController(vsync: this, windowSize: Size(CustomNavigator.width(context), context.height));
+    final CelebrationController celebrationController = CelebrationController(vsync: this, windowSize: Size(CustomNavigator.width(context), context.height));
     final ConfettiController confettiController = ConfettiController(duration: Duration(seconds: 1));
-    final BalloonController balloonController = BalloonController(vsync: this);
-    final LoveController loveController = LoveController(vsync: this);
-    final SpotlightController spotlightController = SpotlightController(vsync: this);
-    final LaserController laserController = LaserController(vsync: this);
+    final BalloonController balloonController = BalloonController(vsync: this, windowSize: Size(CustomNavigator.width(context), context.height));
+    final LoveController loveController = LoveController(vsync: this, windowSize: Size(CustomNavigator.width(context), context.height));
+    final SpotlightController spotlightController = SpotlightController(vsync: this, windowSize: Size(CustomNavigator.width(context), context.height));
+    final LaserController laserController = LaserController(vsync: this, windowSize: Size(CustomNavigator.width(context), context.height));
     Navigator.push(
       context,
       PageRouteBuilder(
@@ -1768,32 +1768,38 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                                             screenSelected = screenEffects[index];
                                                           });
                                                           if (screenSelected == "fireworks" && !fireworkController.isPlaying) {
+                                                            fireworkController.windowSize = Size(CustomNavigator.width(context), context.height);
                                                             fireworkController.start();
                                                             await Future.delayed(Duration(seconds: 1));
                                                             fireworkController.stop();
                                                           } else if (screenSelected == "celebration" && !celebrationController.isPlaying) {
+                                                            celebrationController.windowSize = Size(CustomNavigator.width(context), context.height);
                                                             celebrationController.start();
                                                             await Future.delayed(Duration(seconds: 1));
                                                             celebrationController.stop();
                                                           } else if (screenSelected == "balloons" && !balloonController.isPlaying) {
+                                                            balloonController.windowSize = Size(CustomNavigator.width(context), context.height);
                                                             balloonController.start();
                                                             await Future.delayed(Duration(seconds: 1));
                                                             balloonController.stop();
                                                           } else if (screenSelected == "love" && !loveController.isPlaying) {
-                                                            if (key.globalPaintBounds != null) {
-                                                              loveController.start(Point((key.globalPaintBounds!.left + key.globalPaintBounds!.right) / 2, (key.globalPaintBounds!.top + key.globalPaintBounds!.bottom) / 2));
+                                                            if (key.globalPaintBounds(context) != null) {
+                                                              loveController.windowSize = Size(CustomNavigator.width(context), context.height);
+                                                              loveController.start(Point((key.globalPaintBounds(context)!.left + key.globalPaintBounds(context)!.right) / 2, (key.globalPaintBounds(context)!.top + key.globalPaintBounds(context)!.bottom) / 2));
                                                               await Future.delayed(Duration(seconds: 1));
                                                               loveController.stop();
                                                             }
                                                           } else if (screenSelected == "spotlight" && !spotlightController.isPlaying) {
-                                                            if (key.globalPaintBounds != null) {
-                                                              spotlightController.start(key.globalPaintBounds!);
+                                                            if (key.globalPaintBounds(context) != null) {
+                                                              spotlightController.windowSize = Size(CustomNavigator.width(context), context.height);
+                                                              spotlightController.start(key.globalPaintBounds(context)!);
                                                               await Future.delayed(Duration(seconds: 1));
                                                               spotlightController.stop();
                                                             }
                                                           } else if (screenSelected == "lasers" && !laserController.isPlaying) {
-                                                            if (key.globalPaintBounds != null) {
-                                                              laserController.start(key.globalPaintBounds!);
+                                                            if (key.globalPaintBounds(context) != null) {
+                                                              laserController.windowSize = Size(CustomNavigator.width(context), context.height);
+                                                              laserController.start(key.globalPaintBounds(context)!);
                                                               await Future.delayed(Duration(seconds: 1));
                                                               laserController.stop();
                                                             }
@@ -1898,55 +1904,65 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               ? Container(
                   constraints: BoxConstraints(maxWidth: 35, maxHeight: 34),
                   padding: EdgeInsets.only(right: 4, top: 2, bottom: 2),
-                  child: ButtonTheme(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                          padding: EdgeInsets.only(
-                            right: 0,
-                          ),
-                          primary: Theme.of(context).primaryColor,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(40),
-                          ),
-                          elevation: 0),
-                      onPressed: sendAction,
-                      onLongPress: (sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value
-                          ? sendEffectAction
-                          : null,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Obx(() => AnimatedOpacity(
-                                opacity: sendCountdown == null && canRecord.value && !kIsDesktop ? 1.0 : 0.0,
-                                duration: Duration(milliseconds: 150),
-                                child: Icon(
-                                  CupertinoIcons.waveform,
-                                  color: (isRecording.value) ? Colors.red : Colors.white,
-                                  size: 22,
-                                ),
-                              )),
-                          Obx(() => AnimatedOpacity(
-                                opacity:
-                                    (sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value
-                                        ? 1.0
-                                        : 0.0,
-                                duration: Duration(milliseconds: 150),
-                                child: Icon(
-                                  CupertinoIcons.arrow_up,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
-                              )),
-                          AnimatedOpacity(
-                            opacity: sendCountdown != null ? 1.0 : 0.0,
-                            duration: Duration(milliseconds: 50),
-                            child: Icon(
-                              CupertinoIcons.xmark_circle,
-                              color: Colors.red,
-                              size: 20,
+                  child: GestureDetector(
+                    onSecondaryTapUp: (details) async {
+                      if (kIsWeb) {
+                        (await html.document.onContextMenu.first).preventDefault();
+                      }
+                      if ((sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value) {
+                        sendEffectAction();
+                      }
+                    },
+                    child: ButtonTheme(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                            padding: EdgeInsets.only(
+                              right: 0,
                             ),
-                          ),
-                        ],
+                            primary: Theme.of(context).primaryColor,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(40),
+                            ),
+                            elevation: 0),
+                        onPressed: sendAction,
+                        onLongPress: (sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value
+                            ? sendEffectAction
+                            : null,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Obx(() => AnimatedOpacity(
+                                  opacity: sendCountdown == null && canRecord.value && !kIsDesktop ? 1.0 : 0.0,
+                                  duration: Duration(milliseconds: 150),
+                                  child: Icon(
+                                    CupertinoIcons.waveform,
+                                    color: (isRecording.value) ? Colors.red : Colors.white,
+                                    size: 22,
+                                  ),
+                                )),
+                            Obx(() => AnimatedOpacity(
+                                  opacity:
+                                      (sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value
+                                          ? 1.0
+                                          : 0.0,
+                                  duration: Duration(milliseconds: 150),
+                                  child: Icon(
+                                    CupertinoIcons.arrow_up,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                )),
+                            AnimatedOpacity(
+                              opacity: sendCountdown != null ? 1.0 : 0.0,
+                              duration: Duration(milliseconds: 50),
+                              child: Icon(
+                                CupertinoIcons.xmark_circle,
+                                color: Colors.red,
+                                size: 20,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -1969,53 +1985,63 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         color: SettingsManager().settings.skin.value == Skins.Samsung
                             ? Colors.transparent
                             : Theme.of(context).primaryColor,
-                        child: InkWell(
-                          onTap: sendAction,
-                          onLongPress: (sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value
-                              ? sendEffectAction
-                              : null,
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              Obx(() => AnimatedOpacity(
-                                    opacity: sendCountdown == null && canRecord.value && !kIsDesktop ? 1.0 : 0.0,
-                                    duration: Duration(milliseconds: 150),
-                                    child: Icon(
-                                      SettingsManager().settings.skin.value == Skins.Samsung
-                                          ? CupertinoIcons.waveform
-                                          : Icons.mic,
-                                      color: (isRecording.value)
-                                          ? Colors.red
-                                          : SettingsManager().settings.skin.value == Skins.Samsung
-                                              ? context.theme.textTheme.bodyText1!.color
-                                              : Colors.white,
-                                      size: SettingsManager().settings.skin.value == Skins.Samsung ? 26 : 20,
-                                    ),
-                                  )),
-                              Obx(() => AnimatedOpacity(
-                                    opacity: (sendCountdown == null && (!canRecord.value || kIsDesktop)) &&
-                                            !isRecording.value
-                                        ? 1.0
-                                        : 0.0,
-                                    duration: Duration(milliseconds: 150),
-                                    child: Icon(
-                                      Icons.send,
-                                      color: SettingsManager().settings.skin.value == Skins.Samsung
-                                          ? context.theme.textTheme.bodyText1!.color
-                                          : Colors.white,
-                                      size: SettingsManager().settings.skin.value == Skins.Samsung ? 26 : 20,
-                                    ),
-                                  )),
-                              AnimatedOpacity(
-                                opacity: sendCountdown != null ? 1.0 : 0.0,
-                                duration: Duration(milliseconds: 50),
-                                child: Icon(
-                                  Icons.cancel_outlined,
-                                  color: Colors.red,
-                                  size: 20,
+                        child: GestureDetector(
+                          onSecondaryTapUp: (_) async {
+                            if (kIsWeb) {
+                              (await html.document.onContextMenu.first).preventDefault();
+                            }
+                            if ((sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value) {
+                              sendEffectAction();
+                            }
+                          },
+                          child: InkWell(
+                            onTap: sendAction,
+                            onLongPress: (sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value
+                                ? sendEffectAction
+                                : null,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                Obx(() => AnimatedOpacity(
+                                      opacity: sendCountdown == null && canRecord.value && !kIsDesktop ? 1.0 : 0.0,
+                                      duration: Duration(milliseconds: 150),
+                                      child: Icon(
+                                        SettingsManager().settings.skin.value == Skins.Samsung
+                                            ? CupertinoIcons.waveform
+                                            : Icons.mic,
+                                        color: (isRecording.value)
+                                            ? Colors.red
+                                            : SettingsManager().settings.skin.value == Skins.Samsung
+                                                ? context.theme.textTheme.bodyText1!.color
+                                                : Colors.white,
+                                        size: SettingsManager().settings.skin.value == Skins.Samsung ? 26 : 20,
+                                      ),
+                                    )),
+                                Obx(() => AnimatedOpacity(
+                                      opacity: (sendCountdown == null && (!canRecord.value || kIsDesktop)) &&
+                                              !isRecording.value
+                                          ? 1.0
+                                          : 0.0,
+                                      duration: Duration(milliseconds: 150),
+                                      child: Icon(
+                                        Icons.send,
+                                        color: SettingsManager().settings.skin.value == Skins.Samsung
+                                            ? context.theme.textTheme.bodyText1!.color
+                                            : Colors.white,
+                                        size: SettingsManager().settings.skin.value == Skins.Samsung ? 26 : 20,
+                                      ),
+                                    )),
+                                AnimatedOpacity(
+                                  opacity: sendCountdown != null ? 1.0 : 0.0,
+                                  duration: Duration(milliseconds: 50),
+                                  child: Icon(
+                                    Icons.cancel_outlined,
+                                    color: Colors.red,
+                                    size: 20,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),

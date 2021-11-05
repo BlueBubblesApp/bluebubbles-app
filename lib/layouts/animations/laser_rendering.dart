@@ -70,13 +70,6 @@ class RenderLaser extends RenderBox {
   bool get sizedByParent => true;
 
   @override
-  void performResize() {
-    super.performResize();
-
-    controller.windowSize = size;
-  }
-
-  @override
   Size computeDryLayout(BoxConstraints constraints) {
     return constraints.biggest;
   }

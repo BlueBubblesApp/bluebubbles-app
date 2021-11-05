@@ -25,6 +25,7 @@ import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:collection/collection.dart';
 import 'package:faker/faker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:particles_flutter/particles_flutter.dart';
@@ -919,11 +920,22 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                               } else {
                                 EventDispatcher().emit('play-effect', {
                                   'type': effect,
-                                  'size': key.globalPaintBounds,
+                                  'size': key.globalPaintBounds(context),
                                 });
                               }
                             },
-                            child: Padding(
+                            child: kIsWeb ? Padding(
+                              padding: EdgeInsets.only(left: addedAvatar ? 50 : 18, right: 8.0, top: 2, bottom: 4),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.refresh, size: 10, color: Colors.blue),
+                                  Text(
+                                    " sent with $effect",
+                                    style: Theme.of(context).textTheme.subtitle2!.copyWith(fontWeight: FontWeight.bold, color: Colors.blue),
+                                  ),
+                                ]
+                              ),
+                            ) : Padding(
                               padding: EdgeInsets.only(left: addedAvatar ? 50 : 18, right: 8.0, top: 2, bottom: 4),
                               child: Text(
                                 "↺ sent with $effect",
