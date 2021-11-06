@@ -923,10 +923,10 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
               child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Icon(Icons.refresh, size: 10, color: Colors.blue),
+                    Icon(Icons.refresh, size: 10, color: Theme.of(context).primaryColor),
                     Text(
                       " sent with $effect",
-                      style: Theme.of(context).textTheme.subtitle2!.copyWith(fontWeight: FontWeight.bold, color: Colors.blue),
+                      style: Theme.of(context).textTheme.subtitle2!.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
                     ),
                   ]
               ),
@@ -934,7 +934,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
               padding: const EdgeInsets.only(left: 8.0, top: 2, right: 8.0, bottom: 2),
               child: Text(
                 "↺ sent with $effect",
-                style: Theme.of(context).textTheme.subtitle2!.copyWith(fontWeight: FontWeight.bold, color: Colors.blue),
+                style: Theme.of(context).textTheme.subtitle2!.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
               ),
             ),
           ),
@@ -950,7 +950,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
                 child: Text(
                   "${list.length} Repl${list.length > 1 ? "ies" : "y"}",
                   style:
-                      Theme.of(context).textTheme.subtitle2!.copyWith(fontWeight: FontWeight.bold, color: Colors.blue),
+                      Theme.of(context).textTheme.subtitle2!.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
                 ),
               ),
             );

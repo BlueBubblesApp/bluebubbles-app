@@ -318,7 +318,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     );
   }
 
-  Widget buildConversationViewHeader() {
+  Widget buildConversationViewHeader(BuildContext context) {
     Color backgroundColor = Theme.of(context).backgroundColor;
     Color? fontColor = Theme.of(context).textTheme.headline1!.color;
     Color? fontColor2 = Theme.of(context).textTheme.subtitle1!.color;

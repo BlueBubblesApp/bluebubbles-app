@@ -255,7 +255,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                 ),
               ),
               // Only show the reaction menu if it's enabled and the message isn't temporary
-              if (SettingsManager().settings.enablePrivateAPI.value && isSent && !hideReactions) buildReactionMenu(),
+              if (SettingsManager().settings.enablePrivateAPI.value && isSent && !hideReactions && (currentChat?.chat.isIMessage ?? true)) buildReactionMenu(),
               buildCopyPasteMenu(),
             ],
           ),
@@ -443,7 +443,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             ),
           ),
         ),
-      if (SettingsManager().settings.enablePrivateAPI.value && isBigSur)
+      if (SettingsManager().settings.enablePrivateAPI.value && isBigSur && (currentChat?.chat.isIMessage ?? true))
         Material(
           color: Colors.transparent,
           child: InkWell(

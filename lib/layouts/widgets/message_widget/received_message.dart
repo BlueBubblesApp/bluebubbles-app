@@ -127,7 +127,9 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
   }
 
   List<Color> getBubbleColors(Message message) {
-    List<Color> bubbleColors = message.isFromMe ?? false ? [Colors.blue, Colors.blue] : [Theme
+    List<Color> bubbleColors = message.isFromMe ?? false ? [
+      Theme.of(context).primaryColor,
+      Theme.of(context).primaryColor] : [Theme
         .of(context)
         .accentColor, Theme
         .of(context)
@@ -928,10 +930,10 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                               padding: EdgeInsets.only(left: addedAvatar ? 50 : 18, right: 8.0, top: 2, bottom: 4),
                               child: Row(
                                 children: [
-                                  Icon(Icons.refresh, size: 10, color: Colors.blue),
+                                  Icon(Icons.refresh, size: 10, color: Theme.of(context).primaryColor),
                                   Text(
                                     " sent with $effect",
-                                    style: Theme.of(context).textTheme.subtitle2!.copyWith(fontWeight: FontWeight.bold, color: Colors.blue),
+                                    style: Theme.of(context).textTheme.subtitle2!.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
                                   ),
                                 ]
                               ),
@@ -939,7 +941,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                               padding: EdgeInsets.only(left: addedAvatar ? 50 : 18, right: 8.0, top: 2, bottom: 4),
                               child: Text(
                                 "↺ sent with $effect",
-                                style: Theme.of(context).textTheme.subtitle2!.copyWith(fontWeight: FontWeight.bold, color: Colors.blue),
+                                style: Theme.of(context).textTheme.subtitle2!.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
                               ),
                             ),
                           ),
@@ -954,7 +956,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                                 padding: EdgeInsets.only(left: addedAvatar ? 50 : 18, right: 8.0, top: 2, bottom: 4),
                                 child: Text(
                                   "${list.length} Repl${list.length > 1 ? "ies" : "y"}",
-                                  style: Theme.of(context).textTheme.subtitle2!.copyWith(fontWeight: FontWeight.bold, color: Colors.blue),
+                                  style: Theme.of(context).textTheme.subtitle2!.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
                                 ),
                               ),
                             );

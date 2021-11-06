@@ -1022,6 +1022,12 @@ class Chat {
     return message;
   }
 
+  bool get isTextForwarding => chatIdentifier?.startsWith("sms") ?? false;
+
+  bool get isSMS => false;
+
+  bool get isIMessage => !isTextForwarding && !isSMS;
+
   static int sort(Chat? a, Chat? b) {
     if (a!.pinIndex.value != null && b!.pinIndex.value != null) return a.pinIndex.value!.compareTo(b.pinIndex.value!);
     if (b!.pinIndex.value != null) return 1;

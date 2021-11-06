@@ -18,6 +18,7 @@ import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:collection/collection.dart';
@@ -345,18 +346,19 @@ class _MessageState extends State<MessageWidget> with TickerProviderStateMixin {
         }
 
         double replyThreshold = 40;
+        final Chat? chat = CurrentChat.of(context)?.chat;
 
         return Obx(
           () => GestureDetector(
             behavior: HitTestBehavior.deferToChild,
             onTap: kIsDesktop || kIsWeb ? () => tapped.value = !tapped.value : null,
             onHorizontalDragStart: (details) {
-              if (!SettingsManager().settings.enablePrivateAPI.value || !SettingsManager().settings.swipeToReply.value)
+              if (!SettingsManager().settings.enablePrivateAPI.value || !SettingsManager().settings.swipeToReply.value || !(chat?.isIMessage ?? true))
                 return;
               baseOffset = details.localPosition.dx;
             },
             onHorizontalDragUpdate: (details) {
-              if (!SettingsManager().settings.enablePrivateAPI.value || !SettingsManager().settings.swipeToReply.value)
+              if (!SettingsManager().settings.enablePrivateAPI.value || !SettingsManager().settings.swipeToReply.value || !(chat?.isIMessage ?? true))
                 return;
               offset.value = min(max((details.localPosition.dx - baseOffset) * (_message.isFromMe! ? -1 : 1), 0),
                   replyThreshold * 1.5);
@@ -369,7 +371,7 @@ class _MessageState extends State<MessageWidget> with TickerProviderStateMixin {
               CurrentChat.of(context)?.setReplyOffset(_message.guid ?? "", offset.value);
             },
             onHorizontalDragEnd: (details) {
-              if (!SettingsManager().settings.enablePrivateAPI.value || !SettingsManager().settings.swipeToReply.value)
+              if (!SettingsManager().settings.enablePrivateAPI.value || !SettingsManager().settings.swipeToReply.value || !(chat?.isIMessage ?? true))
                 return;
               if (offset.value >= replyThreshold) {
                 EventDispatcher().emit("focus-keyboard", _message);

@@ -20,6 +20,7 @@ import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/js.dart';
 import 'package:bluebubbles/repository/models/message.dart';
@@ -79,6 +80,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   final StreamController _streamController = StreamController.broadcast();
   DropzoneViewController? dropZoneController;
   CurrentChat? safeChat;
+  Chat? chat;
   Rxn<Message?> replyToMessage = Rxn();
 
   bool selfTyping = false;
@@ -105,7 +107,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   void initState() {
     super.initState();
     getPlaceholder();
-
+    chat = CurrentChat.forGuid(widget.chatGuid)?.chat;
     if (CurrentChat.forGuid(widget.chatGuid) != null) {
       textFieldData = TextFieldBloc().getTextField(widget.chatGuid!);
     }
@@ -588,7 +590,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   }
 
   Future<void> getPlaceholder() async {
-    String placeholder = "BlueBubbles";
+    String placeholder = chat?.isTextForwarding ?? false
+        ? "Text Forwarding" : "iMessage";
 
     try {
       // Don't do anything if this setting isn't enabled
@@ -604,7 +607,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           if (generateNames) {
             placeholder = "Group Chat";
           } else if (hideInfo) {
-            placeholder = "BlueBubbles";
+            placeholder = chat?.isTextForwarding ?? false
+                ? "Text Forwarding" : "iMessage";
           } else {
             String? title = await CurrentChat.forGuid(widget.chatGuid)?.chat.getTitle();
             if (!isNullOrEmpty(title)!) {
@@ -613,9 +617,10 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           }
         } else if (!isNullOrEmpty(CurrentChat.forGuid(widget.chatGuid)?.chat.participants)!) {
           if (generateNames) {
-            placeholder = CurrentChat.forGuid(widget.chatGuid)!.chat.fakeParticipants[0] ?? "BlueBubbles";
+            placeholder = CurrentChat.forGuid(widget.chatGuid)!.chat.fakeParticipants[0] ??
+                (chat?.isTextForwarding ?? false ? "Text Forwarding" : "iMessage");
           } else if (hideInfo) {
-            placeholder = "BlueBubbles";
+            placeholder = chat?.isTextForwarding ?? false ? "Text Forwarding" : "iMessage";
           } else {
             // If it's not a group chat, get the participant's contact info
             Handle? handle = CurrentChat.forGuid(widget.chatGuid)?.chat.participants[0];
@@ -863,7 +868,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   () => Container(
                     decoration: BoxDecoration(
                       color: Theme.of(context).backgroundColor,
-                      border: Border.fromBorderSide(SettingsManager().settings.privateSubjectLine.value || replyToMessage.value != null
+                      border: Border.fromBorderSide((SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateSubjectLine.value && (chat?.isIMessage ?? true)) || replyToMessage.value != null
                           ? BorderSide(
                               color: Theme.of(context).dividerColor,
                               width: 1.5,
@@ -931,7 +936,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                 : Container(),
                           );
                         }),
-                        if (SettingsManager().settings.privateSubjectLine.value)
+                        if (SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateSubjectLine.value && (chat?.isIMessage ?? true))
                           CustomCupertinoTextField(
                             enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
                             textInputAction: SettingsManager().settings.sendWithReturn.value && !kIsWeb && !kIsDesktop
@@ -972,7 +977,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                               borderRadius: BorderRadius.circular(20),
                             ),
                           ),
-                        if (SettingsManager().settings.privateSubjectLine.value)
+                        if (SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateSubjectLine.value && (chat?.isIMessage ?? true))
                           Divider(
                               height: 1.5,
                               thickness: 1.5,
@@ -1019,7 +1024,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                               minLines: 1,
                               placeholder: SettingsManager().settings.recipientAsPlaceholder.value == true
                                   ? placeholder.value
-                                  : "BlueBubbles",
+                                  : chat?.isTextForwarding ?? false
+                                  ? "Text Forwarding" : "iMessage",
                               padding: EdgeInsets.only(left: 10, top: 10, right: 40, bottom: 10),
                               placeholderStyle: Theme.of(context).textTheme.subtitle1,
                               autofocus: (SettingsManager().settings.autoOpenKeyboard.value || kIsWeb || kIsDesktop) &&
@@ -1027,7 +1033,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                               decoration: BoxDecoration(
                                 color: Theme.of(context).backgroundColor,
                                 border:
-                                    Border.fromBorderSide(SettingsManager().settings.privateSubjectLine.value || replyToMessage.value != null
+                                    Border.fromBorderSide((SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateSubjectLine.value && (chat?.isIMessage ?? true)) || replyToMessage.value != null
                                         ? BorderSide.none
                                         : BorderSide(
                                             color: Theme.of(context).dividerColor,
@@ -1047,7 +1053,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   () => Container(
                     decoration: BoxDecoration(
                       border: Border.fromBorderSide(
-                        SettingsManager().settings.privateSubjectLine.value || replyToMessage.value != null
+                        (SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateSubjectLine.value && (chat?.isIMessage ?? true)) || replyToMessage.value != null
                             ? BorderSide(
                                 color: Theme.of(context).dividerColor,
                                 width: 1.5,
@@ -1114,7 +1120,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                     )
                                   : Container());
                         }),
-                        if (SettingsManager().settings.privateSubjectLine.value)
+                        if (SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateSubjectLine.value && (chat?.isIMessage ?? true))
                           TextField(
                             // enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
                             controller: subjectController,
@@ -1157,7 +1163,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                             maxLines: 14,
                             minLines: 1,
                           ),
-                        if (SettingsManager().settings.privateSubjectLine.value)
+                        if (SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateSubjectLine.value && (chat?.isIMessage ?? true))
                           Divider(
                               height: 1.5,
                               thickness: 1.5,
@@ -1194,7 +1200,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                             isDense: true,
                             enabledBorder: OutlineInputBorder(
                               borderSide:
-                                  SettingsManager().settings.privateSubjectLine.value || replyToMessage.value != null
+                                  (SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateSubjectLine.value && (chat?.isIMessage ?? true)) || replyToMessage.value != null
                                       ? BorderSide.none
                                       : BorderSide(
                                           color: Theme.of(context).dividerColor,
@@ -1205,7 +1211,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                             ),
                             disabledBorder: OutlineInputBorder(
                               borderSide:
-                                  SettingsManager().settings.privateSubjectLine.value || replyToMessage.value != null
+                                  (SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateSubjectLine.value && (chat?.isIMessage ?? true)) || replyToMessage.value != null
                                       ? BorderSide.none
                                       : BorderSide(
                                           color: Theme.of(context).dividerColor,
@@ -1216,7 +1222,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderSide:
-                                  SettingsManager().settings.privateSubjectLine.value || replyToMessage.value != null
+                                  (SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateSubjectLine.value && (chat?.isIMessage ?? true)) || replyToMessage.value != null
                                       ? BorderSide.none
                                       : BorderSide(
                                           color: Theme.of(context).dividerColor,
@@ -1227,7 +1233,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                             ),
                             hintText: SettingsManager().settings.recipientAsPlaceholder.value == true
                                 ? placeholder.value
-                                : "BlueBubbles",
+                                : chat?.isTextForwarding ?? false
+                                ? "Text Forwarding" : "iMessage",
                             hintStyle: Theme.of(context).textTheme.subtitle1,
                             contentPadding: EdgeInsets.only(
                               left: 10,
@@ -1249,7 +1256,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                     decoration: BoxDecoration(
                       color: Theme.of(context).dividerColor.withOpacity(1),
                       border: Border.fromBorderSide(
-                          SettingsManager().settings.privateSubjectLine.value || replyToMessage.value != null
+                          (SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateSubjectLine.value && (chat?.isIMessage ?? true)) || replyToMessage.value != null
                               ? BorderSide(
                                   color: Theme.of(context).dividerColor,
                                   width: 1.5,
@@ -1317,7 +1324,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                             );
                           },
                         ),
-                        if (SettingsManager().settings.privateSubjectLine.value)
+                        if (SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateSubjectLine.value && (chat?.isIMessage ?? true))
                           TextField(
                             // enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
                             controller: subjectController,
@@ -1374,7 +1381,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                             maxLines: 14,
                             minLines: 1,
                           ),
-                        if (SettingsManager().settings.privateSubjectLine.value)
+                        if (SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateSubjectLine.value && (chat?.isIMessage ?? true))
                           Divider(
                               height: 1.5,
                               thickness: 1.5,
@@ -1410,7 +1417,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                           decoration: InputDecoration(
                             isDense: true,
                             enabledBorder: OutlineInputBorder(
-                              borderSide: SettingsManager().settings.privateSubjectLine.value
+                              borderSide: (SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateSubjectLine.value && (chat?.isIMessage ?? true))
                                   ? BorderSide.none
                                   : BorderSide(
                                       color: Theme.of(context).dividerColor,
@@ -1420,7 +1427,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                               borderRadius: BorderRadius.circular(20),
                             ),
                             disabledBorder: OutlineInputBorder(
-                              borderSide: SettingsManager().settings.privateSubjectLine.value
+                              borderSide: (SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateSubjectLine.value && (chat?.isIMessage ?? true))
                                   ? BorderSide.none
                                   : BorderSide(
                                       color: Theme.of(context).dividerColor,
@@ -1430,7 +1437,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                               borderRadius: BorderRadius.circular(20),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderSide: SettingsManager().settings.privateSubjectLine.value
+                              borderSide: (SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateSubjectLine.value && (chat?.isIMessage ?? true))
                                   ? BorderSide.none
                                   : BorderSide(
                                       color: Theme.of(context).dividerColor,
@@ -1441,7 +1448,8 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                             ),
                             hintText: SettingsManager().settings.recipientAsPlaceholder.value == true
                                 ? placeholder.value
-                                : "BlueBubbles",
+                                : chat?.isTextForwarding ?? false
+                                ? "Text Forwarding" : "iMessage",
                             hintStyle: Theme.of(context).textTheme.subtitle1,
                             contentPadding: EdgeInsets.only(
                               left: 10,
@@ -1591,7 +1599,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                       if (kIsWeb) {
                         (await html.document.onContextMenu.first).preventDefault();
                       }
-                      if ((sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value) {
+                      if ((sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value && (chat?.isIMessage ?? true)) {
                         sendEffectAction(context, this, controller!.text.trim(), subjectController!.text.trim(), replyToMessage.value?.guid, widget.chatGuid, sendMessage);
                       }
                     },
@@ -1607,7 +1615,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                             ),
                             elevation: 0),
                         onPressed: sendAction,
-                        onLongPress: (sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value
+                        onLongPress: (sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value && (chat?.isIMessage ?? true)
                             ? () => sendEffectAction(context, this, controller!.text.trim(), subjectController!.text.trim(), replyToMessage.value?.guid, widget.chatGuid, sendMessage)
                             : null,
                         child: Stack(
@@ -1672,13 +1680,13 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                             if (kIsWeb) {
                               (await html.document.onContextMenu.first).preventDefault();
                             }
-                            if ((sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value) {
+                            if ((sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value && (chat?.isIMessage ?? true)) {
                               sendEffectAction(context, this, controller!.text.trim(), subjectController!.text.trim(), replyToMessage.value?.guid, widget.chatGuid, sendMessage);
                             }
                           },
                           child: InkWell(
                             onTap: sendAction,
-                            onLongPress: (sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value
+                            onLongPress: (sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value && (chat?.isIMessage ?? true)
                                 ? () => sendEffectAction(context, this, controller!.text.trim(), subjectController!.text.trim(), replyToMessage.value?.guid, widget.chatGuid, sendMessage)
                                 : null,
                             child: Stack(
