@@ -1122,7 +1122,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         }),
                         if (SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateSubjectLine.value && (chat?.isIMessage ?? true))
                           TextField(
-                            // enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
+                            enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
                             controller: subjectController,
                             focusNode: subjectFocusNode,
                             textCapitalization: TextCapitalization.sentences,
@@ -1171,7 +1171,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                               endIndent: 10,
                               color: Theme.of(context).dividerColor),
                         TextField(
-                          // enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
+                          enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
                           controller: controller,
                           focusNode: focusNode,
                           textCapitalization: TextCapitalization.sentences,
@@ -1326,7 +1326,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         ),
                         if (SettingsManager().settings.enablePrivateAPI.value && SettingsManager().settings.privateSubjectLine.value && (chat?.isIMessage ?? true))
                           TextField(
-                            // enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
+                            enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
                             controller: subjectController,
                             focusNode: subjectFocusNode,
                             textCapitalization: TextCapitalization.sentences,
@@ -1389,7 +1389,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                               endIndent: 10,
                               color: Theme.of(context).dividerColor),
                         TextField(
-                          // enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
+                          enableIMEPersonalizedLearning: !SettingsManager().settings.incognitoKeyboard.value,
                           controller: controller,
                           focusNode: focusNode,
                           textCapitalization: TextCapitalization.sentences,

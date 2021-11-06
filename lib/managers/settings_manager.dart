@@ -138,7 +138,6 @@ class SettingsManager {
     AdaptiveTheme.of(context).setTheme(
       light: lightTheme,
       dark: darkTheme,
-      isDefault: true,
     );
   }
 
