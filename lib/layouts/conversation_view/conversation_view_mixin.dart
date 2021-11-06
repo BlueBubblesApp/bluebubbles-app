@@ -1157,7 +1157,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Support for creating group chats might be unreliable on MacOS 11 (Big Sur) and up due to limitations imposed by Apple. Enabling the Private API will fix this issue.',
+                            'Support for creating group chats currently does not work on MacOS 11 (Big Sur) and up due to limitations imposed by Apple. We hope to soon implement this feature with the Private API.',
                             style: context.theme.textTheme.subtitle1,
                           ),
                         ],
