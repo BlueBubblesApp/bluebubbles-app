@@ -275,9 +275,10 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         } catch (_) {}
       }
 
-      if (chat == null && (await SettingsManager().getMacOSVersion() ?? 10) > 10 && SettingsManager().settings.enablePrivateAPI.value == false) {
+      if (chat == null && (await SettingsManager().getMacOSVersion() ?? 10) > 10 /*&& SettingsManager().settings.enablePrivateAPI.value == false*/) {
         if (searchQuery.isNotEmpty) {
           selected.add(UniqueContact(address: searchQuery, displayName: searchQuery));
+          resetCursor();
         }
         if (selected.length > 1) {
           showSnackbar("Error", "Creating group chats is currently unsupported on Big Sur without Private API!");
@@ -287,7 +288,13 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
           return false;
         } else if (!isNullOrEmpty(cleansePhoneNumber(selected.firstOrNull?.address ?? ""))!) {
           chat = await ActionHandler.createChatBigSur(context, cleansePhoneNumber(selected.firstOrNull?.address ?? ""), text);
-          alreadySent = true;
+          if (chat == null) {
+            Navigator.of(context).pop();
+            showSnackbar("Error", "Failed to create chat.");
+            return false;
+          } else {
+            alreadySent = true;
+          }
         }
       } else {
         chat ??= await createChat();

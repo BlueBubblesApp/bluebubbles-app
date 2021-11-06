@@ -5,31 +5,16 @@ import 'dart:ui';
 
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/animations/balloon_classes.dart';
-import 'package:bluebubbles/layouts/animations/balloon_rendering.dart';
-import 'package:bluebubbles/layouts/animations/celebration_class.dart';
-import 'package:bluebubbles/layouts/animations/celebration_rendering.dart';
-import 'package:bluebubbles/layouts/animations/fireworks_classes.dart';
-import 'package:bluebubbles/layouts/animations/fireworks_rendering.dart';
-import 'package:bluebubbles/layouts/animations/laser_classes.dart';
-import 'package:bluebubbles/layouts/animations/laser_rendering.dart';
-import 'package:bluebubbles/layouts/animations/love_classes.dart';
-import 'package:bluebubbles/layouts/animations/love_rendering.dart';
-import 'package:bluebubbles/layouts/animations/spotlight_classes.dart';
-import 'package:bluebubbles/layouts/animations/spotlight_rendering.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/list/text_field_attachment_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/picker/text_field_attachment_picker.dart';
 import 'package:bluebubbles/layouts/widgets/custom_cupertino_text_field.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/audio_player_widget.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
+import 'package:bluebubbles/layouts/widgets/send_effect_picker.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
@@ -41,7 +26,6 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:bluebubbles/socket_manager.dart';
-import 'package:confetti/confetti.dart';
 import 'package:dio_http/dio_http.dart';
 import 'package:faker/faker.dart';
 import 'package:file_picker/file_picker.dart' hide PlatformFile;
@@ -54,7 +38,6 @@ import 'package:flutter_dropzone/flutter_dropzone.dart';
 import 'package:get/get.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:record/record.dart';
-import 'package:simple_animations/simple_animations.dart';
 import 'package:transparent_pointer/transparent_pointer.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
@@ -1595,301 +1578,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
     if (shouldUpdate && mounted) setState(() {});
   }
 
-  void sendEffectAction() {
-    if (!SettingsManager().settings.enablePrivateAPI.value) return;
-    String typeSelected = "bubble";
-    final bubbleEffects = ["slam", "loud", "gentle", "invisible ink"];
-    final screenEffects = ["echo", "spotlight", "balloons", "confetti", "love", "lasers", "fireworks", "celebration"];
-    String bubbleSelected = "slam";
-    String screenSelected = "echo";
-    Message message = Message(
-      text: controller!.text.trim(),
-      subject: subjectController!.text.trim(),
-      dateCreated: DateTime.now(),
-      hasAttachments: false,
-      threadOriginatorGuid: replyToMessage.value?.guid,
-      isFromMe: true,
-    );
-    message.generateTempGuid();
-    final GlobalKey key = GlobalKey();
-    CustomAnimationControl animController = CustomAnimationControl.stop;
-    final FireworkController fireworkController = FireworkController(vsync: this);
-    final CelebrationController celebrationController = CelebrationController(vsync: this);
-    final ConfettiController confettiController = ConfettiController(duration: Duration(seconds: 1));
-    final BalloonController balloonController = BalloonController(vsync: this);
-    final LoveController loveController = LoveController(vsync: this);
-    final SpotlightController spotlightController = SpotlightController(vsync: this);
-    final LaserController laserController = LaserController(vsync: this);
-    Navigator.push(
-      context,
-      PageRouteBuilder(
-        transitionDuration: Duration(milliseconds: 150),
-        pageBuilder: (context, animation, secondaryAnimation) {
-          return FadeTransition(
-              opacity: animation,
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.of(context).pop();
-                },
-                child: AnnotatedRegion<SystemUiOverlayStyle>(
-                  value: SystemUiOverlayStyle(
-                    systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
-                    systemNavigationBarIconBrightness:
-                        Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
-                    statusBarColor: Colors.transparent, // status bar color
-                  ),
-                  child: Scaffold(
-                    backgroundColor: context.theme.backgroundColor.withOpacity(0.3),
-                    body: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-                      child: StatefulBuilder(
-                        builder: (BuildContext context, void Function(void Function()) setState) {
-                          return Stack(
-                            children: [
-                              if (screenSelected == "fireworks")
-                                Fireworks(controller: fireworkController),
-                              if (screenSelected == "celebration")
-                                Celebration(controller: celebrationController),
-                              if (screenSelected == "balloons")
-                                Balloons(controller: balloonController),
-                              if (screenSelected == "love")
-                                Love(controller: loveController),
-                              if (screenSelected == "spotlight")
-                                Spotlight(controller: spotlightController),
-                              if (screenSelected == "lasers")
-                                Laser(controller: laserController),
-                              if (screenSelected == "confetti")
-                                Align(
-                                  alignment: Alignment.topCenter,
-                                  child: ConfettiWidget(
-                                    confettiController: confettiController,
-                                    blastDirection: pi / 2,
-                                    blastDirectionality: BlastDirectionality.explosive,
-                                    emissionFrequency: 0.35,
-                                  ),
-                                ),
-                              SafeArea(
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 20.0),
-                                  child: Center(
-                                    child: Column(children: [
-                                      Text(
-                                        "Send with effect",
-                                        style: Theme.of(context).textTheme.subtitle1!,
-                                        textScaleFactor: 1.75,
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 20.0),
-                                        child: Container(
-                                          height: 50,
-                                          width: CustomNavigator.width(context) / 2,
-                                          child: CupertinoSlidingSegmentedControl<String>(
-                                            children: {
-                                              "bubble": Text("Bubble"),
-                                              "screen": Text("Screen"),
-                                            },
-                                            groupValue: typeSelected,
-                                            thumbColor: CupertinoColors.tertiarySystemFill.lightenOrDarken(20),
-                                            backgroundColor: CupertinoColors.tertiarySystemFill,
-                                            onValueChanged: (str) {
-                                              setState(() {
-                                                typeSelected = str ?? "bubble";
-                                              });
-                                            },
-                                          ),
-                                        ),
-                                      ),
-                                      Spacer(),
-                                      if (typeSelected == "bubble")
-                                        Padding(
-                                          padding: const EdgeInsets.symmetric(vertical: 20.0),
-                                          child: ConstrainedBox(
-                                              constraints: BoxConstraints(
-                                                maxHeight: 250,
-                                                maxWidth: CustomNavigator.width(context),
-                                              ),
-                                              child: SingleChildScrollView(
-                                                child: Wrap(
-                                                  alignment: WrapAlignment.center,
-                                                  children: List.generate(bubbleEffects.length, (index) {
-                                                    return Padding(
-                                                      padding: const EdgeInsets.all(8.0),
-                                                      child: GestureDetector(
-                                                        onTap: () {
-                                                          setState(() {
-                                                            bubbleSelected = bubbleEffects[index];
-                                                          });
-                                                          animController = CustomAnimationControl.playFromStart;
-                                                        },
-                                                        child: Container(
-                                                          width: CustomNavigator.width(context) / 3,
-                                                          height: 50,
-                                                          decoration: BoxDecoration(
-                                                            color: CupertinoColors.tertiarySystemFill,
-                                                            border:
-                                                            Border.fromBorderSide(bubbleSelected == bubbleEffects[index]
-                                                                ? BorderSide(
-                                                              color: Theme.of(context).primaryColor,
-                                                              width: 1.5,
-                                                              style: BorderStyle.solid,
-                                                            )
-                                                                : BorderSide.none),
-                                                            borderRadius: BorderRadius.circular(5),
-                                                          ),
-                                                          child: Center(
-                                                            child: Text(
-                                                              bubbleEffects[index].toUpperCase(),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    );
-                                                  }),
-                                                ),
-                                              )),
-                                        ),
-                                      if (typeSelected == "screen")
-                                        Padding(
-                                          padding: const EdgeInsets.symmetric(vertical: 20.0),
-                                          child: ConstrainedBox(
-                                              constraints: BoxConstraints(
-                                                maxHeight: 350,
-                                                maxWidth: CustomNavigator.width(context),
-                                              ),
-                                              child: SingleChildScrollView(
-                                                child: Wrap(
-                                                  alignment: WrapAlignment.center,
-                                                  children: List.generate(screenEffects.length, (index) {
-                                                    return Padding(
-                                                      padding: const EdgeInsets.all(8.0),
-                                                      child: GestureDetector(
-                                                        onTap: () async {
-                                                          setState(() {
-                                                            screenSelected = screenEffects[index];
-                                                          });
-                                                          if (screenSelected == "fireworks" && !fireworkController.isPlaying) {
-                                                            fireworkController.start();
-                                                            await Future.delayed(Duration(seconds: 1));
-                                                            fireworkController.stop();
-                                                          } else if (screenSelected == "celebration" && !celebrationController.isPlaying) {
-                                                            celebrationController.start();
-                                                            await Future.delayed(Duration(seconds: 1));
-                                                            celebrationController.stop();
-                                                          } else if (screenSelected == "balloons" && !balloonController.isPlaying) {
-                                                            balloonController.start();
-                                                            await Future.delayed(Duration(seconds: 1));
-                                                            balloonController.stop();
-                                                          } else if (screenSelected == "love" && !loveController.isPlaying) {
-                                                            if (key.globalPaintBounds != null) {
-                                                              loveController.start(Point((key.globalPaintBounds!.left + key.globalPaintBounds!.right) / 2, (key.globalPaintBounds!.top + key.globalPaintBounds!.bottom) / 2));
-                                                              await Future.delayed(Duration(seconds: 1));
-                                                              loveController.stop();
-                                                            }
-                                                          } else if (screenSelected == "spotlight" && !spotlightController.isPlaying) {
-                                                            if (key.globalPaintBounds != null) {
-                                                              spotlightController.start(key.globalPaintBounds!);
-                                                              await Future.delayed(Duration(seconds: 1));
-                                                              spotlightController.stop();
-                                                            }
-                                                          } else if (screenSelected == "lasers" && !laserController.isPlaying) {
-                                                            if (key.globalPaintBounds != null) {
-                                                              laserController.start(key.globalPaintBounds!);
-                                                              await Future.delayed(Duration(seconds: 1));
-                                                              laserController.stop();
-                                                            }
-                                                          } else if (screenSelected == "confetti") {
-                                                            confettiController.play();
-                                                          }
-                                                        },
-                                                        child: Container(
-                                                          width: CustomNavigator.width(context) / 3,
-                                                          height: 50,
-                                                          decoration: BoxDecoration(
-                                                            color: CupertinoColors.tertiarySystemFill,
-                                                            border:
-                                                            Border.fromBorderSide(screenSelected == screenEffects[index]
-                                                                ? BorderSide(
-                                                              color: Theme.of(context).primaryColor,
-                                                              width: 1.5,
-                                                              style: BorderStyle.solid,
-                                                            )
-                                                                : BorderSide.none),
-                                                            borderRadius: BorderRadius.circular(5),
-                                                          ),
-                                                          child: Center(
-                                                            child: Text(
-                                                              screenEffects[index].toUpperCase(),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    );
-                                                  }),
-                                                ),
-                                              )),
-                                        ),
-                                      Spacer(),
-                                      Align(
-                                        alignment: Alignment.centerRight,
-                                        child: Padding(
-                                          key: key,
-                                          padding: const EdgeInsets.only(right: 5.0),
-                                          child: SentMessageHelper.buildMessageWithTail(
-                                              context,
-                                              message,
-                                              true,
-                                              false,
-                                              message.isBigEmoji(),
-                                              MessageWidgetMixin.buildMessageSpansAsync(context, message),
-                                              currentChat: CurrentChat.forGuid(widget.chatGuid),
-                                              customColor: Theme.of(context).primaryColor,
-                                              effect: stringToMessageEffect[
-                                              typeSelected == "bubble" ? bubbleSelected : screenSelected] ??
-                                                  MessageEffect.none,
-                                              controller: animController, updateController: () {
-                                            setState(() {
-                                              animController = CustomAnimationControl.stop;
-                                            });
-                                          }),
-                                        ),
-                                      ),
-                                      Spacer(),
-                                      TextButton(
-                                        child: Text(
-                                          typeSelected == "bubble"
-                                              ? "Send with $bubbleSelected"
-                                              : "Send with $screenSelected",
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyText1!
-                                              .apply(color: Theme.of(context).primaryColor),
-                                          textScaleFactor: 1.15,
-                                        ),
-                                        onPressed: () async {
-                                          Navigator.of(context).pop();
-                                          await sendMessage(
-                                              effect: effectMap[typeSelected == "bubble" ? bubbleSelected : screenSelected]);
-                                        },
-                                      ),
-                                    ])
-                                  ),
-                                ),
-                              ),
-                            ],
-                          );
-                        }
-                      ),
-                    ),
-                  ),
-                ),
-              ));
-        },
-        fullscreenDialog: true,
-        opaque: false,
-      ),
-    );
-  }
-
   Widget buildSendButton() => Align(
         alignment: Alignment.bottomRight,
         child: Row(mainAxisAlignment: MainAxisAlignment.end, crossAxisAlignment: CrossAxisAlignment.center, children: [
@@ -1898,55 +1586,65 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
               ? Container(
                   constraints: BoxConstraints(maxWidth: 35, maxHeight: 34),
                   padding: EdgeInsets.only(right: 4, top: 2, bottom: 2),
-                  child: ButtonTheme(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                          padding: EdgeInsets.only(
-                            right: 0,
-                          ),
-                          primary: Theme.of(context).primaryColor,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(40),
-                          ),
-                          elevation: 0),
-                      onPressed: sendAction,
-                      onLongPress: (sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value
-                          ? sendEffectAction
-                          : null,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Obx(() => AnimatedOpacity(
-                                opacity: sendCountdown == null && canRecord.value && !kIsDesktop ? 1.0 : 0.0,
-                                duration: Duration(milliseconds: 150),
-                                child: Icon(
-                                  CupertinoIcons.waveform,
-                                  color: (isRecording.value) ? Colors.red : Colors.white,
-                                  size: 22,
-                                ),
-                              )),
-                          Obx(() => AnimatedOpacity(
-                                opacity:
-                                    (sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value
-                                        ? 1.0
-                                        : 0.0,
-                                duration: Duration(milliseconds: 150),
-                                child: Icon(
-                                  CupertinoIcons.arrow_up,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
-                              )),
-                          AnimatedOpacity(
-                            opacity: sendCountdown != null ? 1.0 : 0.0,
-                            duration: Duration(milliseconds: 50),
-                            child: Icon(
-                              CupertinoIcons.xmark_circle,
-                              color: Colors.red,
-                              size: 20,
+                  child: GestureDetector(
+                    onSecondaryTapUp: (details) async {
+                      if (kIsWeb) {
+                        (await html.document.onContextMenu.first).preventDefault();
+                      }
+                      if ((sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value) {
+                        sendEffectAction(context, this, controller!.text.trim(), subjectController!.text.trim(), replyToMessage.value?.guid, widget.chatGuid, sendMessage);
+                      }
+                    },
+                    child: ButtonTheme(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                            padding: EdgeInsets.only(
+                              right: 0,
                             ),
-                          ),
-                        ],
+                            primary: Theme.of(context).primaryColor,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(40),
+                            ),
+                            elevation: 0),
+                        onPressed: sendAction,
+                        onLongPress: (sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value
+                            ? () => sendEffectAction(context, this, controller!.text.trim(), subjectController!.text.trim(), replyToMessage.value?.guid, widget.chatGuid, sendMessage)
+                            : null,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Obx(() => AnimatedOpacity(
+                                  opacity: sendCountdown == null && canRecord.value && !kIsDesktop ? 1.0 : 0.0,
+                                  duration: Duration(milliseconds: 150),
+                                  child: Icon(
+                                    CupertinoIcons.waveform,
+                                    color: (isRecording.value) ? Colors.red : Colors.white,
+                                    size: 22,
+                                  ),
+                                )),
+                            Obx(() => AnimatedOpacity(
+                                  opacity:
+                                      (sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value
+                                          ? 1.0
+                                          : 0.0,
+                                  duration: Duration(milliseconds: 150),
+                                  child: Icon(
+                                    CupertinoIcons.arrow_up,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                )),
+                            AnimatedOpacity(
+                              opacity: sendCountdown != null ? 1.0 : 0.0,
+                              duration: Duration(milliseconds: 50),
+                              child: Icon(
+                                CupertinoIcons.xmark_circle,
+                                color: Colors.red,
+                                size: 20,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -1969,53 +1667,63 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                         color: SettingsManager().settings.skin.value == Skins.Samsung
                             ? Colors.transparent
                             : Theme.of(context).primaryColor,
-                        child: InkWell(
-                          onTap: sendAction,
-                          onLongPress: (sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value
-                              ? sendEffectAction
-                              : null,
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              Obx(() => AnimatedOpacity(
-                                    opacity: sendCountdown == null && canRecord.value && !kIsDesktop ? 1.0 : 0.0,
-                                    duration: Duration(milliseconds: 150),
-                                    child: Icon(
-                                      SettingsManager().settings.skin.value == Skins.Samsung
-                                          ? CupertinoIcons.waveform
-                                          : Icons.mic,
-                                      color: (isRecording.value)
-                                          ? Colors.red
-                                          : SettingsManager().settings.skin.value == Skins.Samsung
-                                              ? context.theme.textTheme.bodyText1!.color
-                                              : Colors.white,
-                                      size: SettingsManager().settings.skin.value == Skins.Samsung ? 26 : 20,
-                                    ),
-                                  )),
-                              Obx(() => AnimatedOpacity(
-                                    opacity: (sendCountdown == null && (!canRecord.value || kIsDesktop)) &&
-                                            !isRecording.value
-                                        ? 1.0
-                                        : 0.0,
-                                    duration: Duration(milliseconds: 150),
-                                    child: Icon(
-                                      Icons.send,
-                                      color: SettingsManager().settings.skin.value == Skins.Samsung
-                                          ? context.theme.textTheme.bodyText1!.color
-                                          : Colors.white,
-                                      size: SettingsManager().settings.skin.value == Skins.Samsung ? 26 : 20,
-                                    ),
-                                  )),
-                              AnimatedOpacity(
-                                opacity: sendCountdown != null ? 1.0 : 0.0,
-                                duration: Duration(milliseconds: 50),
-                                child: Icon(
-                                  Icons.cancel_outlined,
-                                  color: Colors.red,
-                                  size: 20,
+                        child: GestureDetector(
+                          onSecondaryTapUp: (_) async {
+                            if (kIsWeb) {
+                              (await html.document.onContextMenu.first).preventDefault();
+                            }
+                            if ((sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value) {
+                              sendEffectAction(context, this, controller!.text.trim(), subjectController!.text.trim(), replyToMessage.value?.guid, widget.chatGuid, sendMessage);
+                            }
+                          },
+                          child: InkWell(
+                            onTap: sendAction,
+                            onLongPress: (sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value
+                                ? () => sendEffectAction(context, this, controller!.text.trim(), subjectController!.text.trim(), replyToMessage.value?.guid, widget.chatGuid, sendMessage)
+                                : null,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                Obx(() => AnimatedOpacity(
+                                      opacity: sendCountdown == null && canRecord.value && !kIsDesktop ? 1.0 : 0.0,
+                                      duration: Duration(milliseconds: 150),
+                                      child: Icon(
+                                        SettingsManager().settings.skin.value == Skins.Samsung
+                                            ? CupertinoIcons.waveform
+                                            : Icons.mic,
+                                        color: (isRecording.value)
+                                            ? Colors.red
+                                            : SettingsManager().settings.skin.value == Skins.Samsung
+                                                ? context.theme.textTheme.bodyText1!.color
+                                                : Colors.white,
+                                        size: SettingsManager().settings.skin.value == Skins.Samsung ? 26 : 20,
+                                      ),
+                                    )),
+                                Obx(() => AnimatedOpacity(
+                                      opacity: (sendCountdown == null && (!canRecord.value || kIsDesktop)) &&
+                                              !isRecording.value
+                                          ? 1.0
+                                          : 0.0,
+                                      duration: Duration(milliseconds: 150),
+                                      child: Icon(
+                                        Icons.send,
+                                        color: SettingsManager().settings.skin.value == Skins.Samsung
+                                            ? context.theme.textTheme.bodyText1!.color
+                                            : Colors.white,
+                                        size: SettingsManager().settings.skin.value == Skins.Samsung ? 26 : 20,
+                                      ),
+                                    )),
+                                AnimatedOpacity(
+                                  opacity: sendCountdown != null ? 1.0 : 0.0,
+                                  duration: Duration(milliseconds: 50),
+                                  child: Icon(
+                                    Icons.cancel_outlined,
+                                    color: Colors.red,
+                                    size: 20,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),

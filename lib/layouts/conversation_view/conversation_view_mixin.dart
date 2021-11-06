@@ -856,14 +856,14 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     }
 
     // slugify the search query for matching
-    searchQuery = slugText(searchQuery);
+    String tempSearchQuery = slugText(searchQuery);
 
     List<UniqueContact> _contacts = [];
     List<String> cache = [];
     void addContactEntries(Contact contact, {conditionally = false}) {
       for (String phone in contact.phones) {
         String cleansed = slugText(phone);
-        if (conditionally && !cleansed.contains(searchQuery)) continue;
+        if (conditionally && !cleansed.contains(tempSearchQuery)) continue;
 
         if (!cache.contains(cleansed)) {
           cache.add(cleansed);
@@ -878,7 +878,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
       for (String email in contact.emails) {
         String emailVal = slugText.call(email);
-        if (conditionally && !emailVal.contains(searchQuery)) continue;
+        if (conditionally && !emailVal.contains(tempSearchQuery)) continue;
 
         if (!cache.contains(emailVal)) {
           cache.add(emailVal);
@@ -895,7 +895,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     if (widget.type != ChatSelectorTypes.ONLY_EXISTING) {
       for (Contact contact in ContactManager().contacts) {
         String name = slugText(contact.displayName);
-        if (name.contains(searchQuery)) {
+        if (name.contains(tempSearchQuery)) {
           addContactEntries(contact);
         } else {
           addContactEntries(contact, conditionally: true);
@@ -908,7 +908,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       for (Chat chat in conversations) {
         if (chat.title == null && chat.displayName == null) continue;
         String title = slugText(chat.title ?? chat.displayName!);
-        if (title.contains(searchQuery)) {
+        if (title.contains(tempSearchQuery)) {
           if (!cache.contains(chat.guid)) {
             cache.add(chat.guid!);
             _conversations.add(

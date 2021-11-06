@@ -30,6 +30,7 @@ import 'package:bluebubbles/repository/models/message.dart';
 import 'package:collection/collection.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:particles_flutter/particles_flutter.dart';
@@ -863,7 +864,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
                       MessageWidgetMixin.addStickersToWidget(
                         message: MessageWidgetMixin.addReactionsToWidget(
                             messageWidget: Padding(
-                              key: key,
+                              key: showReplies ? key : null,
                               padding: EdgeInsets.only(bottom: widget.showTail ? 2.0 : 0),
                               child: message,
                             ),
@@ -882,7 +883,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
           MessageWidgetMixin.addStickersToWidget(
             message: MessageWidgetMixin.addReactionsToWidget(
                 messageWidget: Padding(
-                  key: key,
+                  key: showReplies ? key : null,
                   padding: EdgeInsets.only(bottom: widget.showTail ? 2.0 : 0),
                   child: message,
                 ),
@@ -913,11 +914,23 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
               } else {
                 EventDispatcher().emit('play-effect', {
                   'type': effect,
-                  'size': key.globalPaintBounds,
+                  'size': key.globalPaintBounds(context),
                 });
               }
             },
-            child: Padding(
+            child: kIsWeb ? Padding(
+              padding: const EdgeInsets.only(left: 8.0, top: 2, right: 8.0, bottom: 2),
+              child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Icon(Icons.refresh, size: 10, color: Colors.blue),
+                    Text(
+                      " sent with $effect",
+                      style: Theme.of(context).textTheme.subtitle2!.copyWith(fontWeight: FontWeight.bold, color: Colors.blue),
+                    ),
+                  ]
+              ),
+            ): Padding(
               padding: const EdgeInsets.only(left: 8.0, top: 2, right: 8.0, bottom: 2),
               child: Text(
                 "↺ sent with $effect",

@@ -7,13 +7,14 @@ import 'package:tuple/tuple.dart';
 class LaserController implements Listenable {
   LaserController({
     required this.vsync,
+    required this.windowSize,
   });
 
   final TickerProvider vsync;
   LaserObject? laser;
   List<LaserBeam> beams = [];
   final Random random = Random();
-  Size windowSize = Size.zero;
+  Size windowSize;
 
   late Ticker ticker;
   late Point<double> position;

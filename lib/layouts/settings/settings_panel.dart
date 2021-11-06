@@ -53,6 +53,7 @@ class SettingsPanel extends StatefulWidget {
 class _SettingsPanelState extends State<SettingsPanel> {
   late Settings _settingsCopy;
   bool needToReconnect = false;
+  bool pushedServerManagement = false;
   int? lastRestart;
   final ScrollController scrollController = ScrollController();
 
@@ -72,6 +73,17 @@ class _SettingsPanelState extends State<SettingsPanel> {
 
   @override
   Widget build(BuildContext context) {
+    Future.delayed(Duration.zero, () {
+      if (!pushedServerManagement && SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape)) {
+        pushedServerManagement = true;
+        CustomNavigator.pushAndRemoveSettingsUntil(
+          context,
+          ServerManagementPanel(),
+              (route) => route.isFirst,
+          binding: ServerManagementPanelBinding(),
+        );
+      }
+    });
     Color headerColor;
     if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
         SettingsManager().settings.skin.value != Skins.iOS) {

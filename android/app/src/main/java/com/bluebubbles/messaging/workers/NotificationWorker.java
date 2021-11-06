@@ -70,7 +70,9 @@ public class NotificationWorker extends Worker implements DartWorker {
 
             // We don't want to finish this worker until we know the backgroundChannel is finished
             // The backgroundChannel is manually closed through dart code
-            while (backgroundChannel != null && !isStopped()) {
+            // we don't close the background channel when replying because we can't await all
+            // the functions due to the socket connection required to send the message
+            while (backgroundChannel != null && !isStopped() && !type.equals("reply")) {
             }
             return Result.success();
         } else {
@@ -139,15 +141,17 @@ public class NotificationWorker extends Worker implements DartWorker {
     }
 
     private void invokeMethod() {
-        Handler handler = new Handler(Looper.getMainLooper());
-        synchronized (handler) {
-            NotifyRunnable runnable = new NotifyRunnable(handler, () -> backgroundChannel.invokeMethod(getInputData().getString("type"), getInputData().getKeyValueMap()));
-            handler.post(runnable);
-            while (!runnable.isFinished()) {
-                try {
-                    handler.wait();
-                } catch (InterruptedException is) {
-                    // ignore
+        if (backgroundChannel != null) {
+            Handler handler = new Handler(Looper.getMainLooper());
+            synchronized (handler) {
+                NotifyRunnable runnable = new NotifyRunnable(handler, () -> backgroundChannel.invokeMethod(getInputData().getString("type"), getInputData().getKeyValueMap()));
+                handler.post(runnable);
+                while (!runnable.isFinished()) {
+                    try {
+                        handler.wait();
+                    } catch (InterruptedException is) {
+                        // ignore
+                    }
                 }
             }
         }

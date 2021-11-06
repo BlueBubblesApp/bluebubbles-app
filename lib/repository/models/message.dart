@@ -48,8 +48,8 @@ class Message {
   String? country;
   final RxInt error = RxInt(0);
   DateTime? dateCreated;
-  DateTime? dateRead;
-  DateTime? dateDelivered;
+  final Rxn<DateTime> dateRead = Rxn<DateTime>();
+  final Rxn<DateTime> dateDelivered = Rxn<DateTime>();
   bool? isFromMe;
   bool? isDelayed;
   bool? isAutoReply;
@@ -93,8 +93,8 @@ class Message {
       this.country,
       int? error2,
       this.dateCreated,
-      this.dateRead,
-      this.dateDelivered,
+      DateTime? dateRead2,
+      DateTime? dateDelivered2,
       this.isFromMe = true,
       this.isDelayed = false,
       this.isAutoReply = false,
@@ -125,6 +125,8 @@ class Message {
       this.threadOriginatorGuid,
       this.threadOriginatorPart}) {
     if (error2 != null) error.value = error2;
+    dateRead.value = dateRead2;
+    dateDelivered.value = dateDelivered2;
   }
 
   String get fullText {
@@ -180,8 +182,8 @@ class Message {
       country: json.containsKey("country") ? json["country"] : null,
       error2: json.containsKey("error") ? json["error"] : 0,
       dateCreated: json.containsKey("dateCreated") ? parseDate(json["dateCreated"]) : null,
-      dateRead: json.containsKey("dateRead") ? parseDate(json["dateRead"]) : null,
-      dateDelivered: json.containsKey("dateDelivered") ? parseDate(json["dateDelivered"]) : null,
+      dateRead2: json.containsKey("dateRead") ? parseDate(json["dateRead"]) : null,
+      dateDelivered2: json.containsKey("dateDelivered") ? parseDate(json["dateDelivered"]) : null,
       isFromMe: (json["isFromMe"] is bool) ? json['isFromMe'] : ((json['isFromMe'] == 1) ? true : false),
       isDelayed: (json["isDelayed"] is bool) ? json['isDelayed'] : ((json['isDelayed'] == 1) ? true : false),
       isAutoReply: (json["isAutoReply"] is bool) ? json['isAutoReply'] : ((json['isAutoReply'] == 1) ? true : false),
@@ -289,6 +291,9 @@ class Message {
       }
 
       return newMessage;
+    } else {
+      existing.dateDelivered.value = newMessage?.dateDelivered.value ?? existing.dateDelivered.value;
+      existing.dateRead.value = newMessage?.dateRead.value ?? existing.dateRead.value;
     }
 
     Map<String, dynamic> params = newMessage!.toMap();
@@ -338,8 +343,8 @@ class Message {
 
     Map<String, dynamic> params = {
       "dateCreated": (dateCreated == null) ? null : dateCreated!.millisecondsSinceEpoch,
-      "dateRead": (dateRead == null) ? null : dateRead!.millisecondsSinceEpoch,
-      "dateDelivered": (dateDelivered == null) ? null : dateDelivered!.millisecondsSinceEpoch,
+      "dateRead": (dateRead.value == null) ? null : dateRead.value!.millisecondsSinceEpoch,
+      "dateDelivered": (dateDelivered.value == null) ? null : dateDelivered.value!.millisecondsSinceEpoch,
       "isArchived": isArchived! ? 1 : 0,
       "datePlayed": (datePlayed == null) ? null : datePlayed!.millisecondsSinceEpoch,
       "error": error.value,
@@ -654,11 +659,11 @@ class Message {
     if (dateCreated == null && otherMessage.dateCreated != null) {
       dateCreated = otherMessage.dateCreated;
     }
-    if (dateDelivered == null && otherMessage.dateDelivered != null) {
-      dateDelivered = otherMessage.dateDelivered;
+    if (dateDelivered.value == null && otherMessage.dateDelivered.value != null) {
+      dateDelivered.value = otherMessage.dateDelivered.value;
     }
-    if (dateRead == null && otherMessage.dateRead != null) {
-      dateRead = otherMessage.dateRead;
+    if (dateRead.value == null && otherMessage.dateRead.value != null) {
+      dateRead.value = otherMessage.dateRead.value;
     }
     if (dateDeleted == null && otherMessage.dateDeleted != null) {
       dateDeleted = otherMessage.dateDeleted;
@@ -793,8 +798,8 @@ class Message {
         "country": country,
         "error": error.value,
         "dateCreated": (dateCreated == null) ? null : dateCreated!.millisecondsSinceEpoch,
-        "dateRead": (dateRead == null) ? null : dateRead!.millisecondsSinceEpoch,
-        "dateDelivered": (dateDelivered == null) ? null : dateDelivered!.millisecondsSinceEpoch,
+        "dateRead": (dateRead.value == null) ? null : dateRead.value!.millisecondsSinceEpoch,
+        "dateDelivered": (dateDelivered.value == null) ? null : dateDelivered.value!.millisecondsSinceEpoch,
         "isFromMe": isFromMe! ? 1 : 0,
         "isDelayed": isDelayed! ? 1 : 0,
         "isAutoReply": isAutoReply! ? 1 : 0,

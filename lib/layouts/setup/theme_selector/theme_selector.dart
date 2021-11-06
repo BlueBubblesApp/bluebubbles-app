@@ -89,7 +89,7 @@ class ThemeSelectorController extends GetxController {
         Message(
           guid: "theme-selector-4",
           dateCreated: DateTime(1, 1, 2021, 9, 40),
-          dateDelivered: DateTime(1, 1, 2021, 9, 41),
+          dateDelivered2: DateTime(1, 1, 2021, 9, 41),
           isFromMe: false,
           hasReactions: false,
           hasAttachments: false,
@@ -102,7 +102,7 @@ class ThemeSelectorController extends GetxController {
         Message(
           guid: "theme-selector-3",
           dateCreated: DateTime(1, 1, 2021, 9, 40),
-          dateDelivered: DateTime(1, 1, 2021, 9, 41),
+          dateDelivered2: DateTime(1, 1, 2021, 9, 41),
           isFromMe: true,
           hasReactions: true,
           hasAttachments: false,
@@ -123,7 +123,7 @@ class ThemeSelectorController extends GetxController {
         Message(
           guid: "theme-selector-2",
           dateCreated: DateTime(1, 1, 2021, 9, 45),
-          dateDelivered: DateTime(1, 1, 2021, 9, 46),
+          dateDelivered2: DateTime(1, 1, 2021, 9, 46),
           isFromMe: false,
           hasReactions: true,
           hasAttachments: true,
@@ -154,7 +154,7 @@ class ThemeSelectorController extends GetxController {
         Message(
           guid: "theme-selector-1",
           dateCreated: DateTime(1, 1, 2021, 9, 40),
-          dateDelivered: DateTime(1, 1, 2021, 9, 41),
+          dateDelivered2: DateTime(1, 1, 2021, 9, 41),
           isFromMe: true,
           hasReactions: false,
           hasAttachments: false,

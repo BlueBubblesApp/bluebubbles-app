@@ -20,6 +20,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
+import 'package:provider/provider.dart';
+// (needed for custom back button)
+//ignore: implementation_imports
+import 'package:chewie/src/notifiers/index.dart';
 
 class VideoViewer extends StatefulWidget {
   VideoViewer({Key? key, required this.file, required this.attachment, required this.showInteractions})
@@ -74,6 +78,181 @@ class _VideoViewerState extends State<VideoViewer> {
           handleColor: Theme.of(context).primaryColor,
           bufferedColor: Theme.of(context).backgroundColor,
           backgroundColor: Theme.of(context).disabledColor),
+      customControls: Stack(
+        children: [
+          Positioned.fill(child: MaterialControls()),
+          Positioned(
+            top: 0,
+            left: 5,
+            child: Consumer<PlayerNotifier>(
+              builder: (
+                  BuildContext context,
+                  PlayerNotifier notifier,
+                  Widget? widget,
+                  ) =>
+                  AnimatedOpacity(
+                    opacity: notifier.hideStuff ? 0.0 : 0.8,
+                    duration: const Duration(
+                      milliseconds: 250,
+                    ),
+                    child: CupertinoButton(
+                      padding: EdgeInsets.symmetric(horizontal: 5),
+                      onPressed: () async {
+                        Navigator.pop(context);
+                      },
+                      child: Icon(
+                        SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.back : Icons.arrow_back,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+            ),
+          ),
+        ]
+      ),
+      additionalOptions: (context) => SettingsManager().settings.skin.value == Skins.iOS ? [] : [
+        OptionItem(
+          onTap: () async {
+            List<Widget> metaWidgets = [];
+            for (var entry in widget.attachment.metadata?.entries ?? {}.entries) {
+              metaWidgets.add(RichText(
+                  text: TextSpan(children: [
+                    TextSpan(
+                        text: "${entry.key}: ",
+                        style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2)),
+                    TextSpan(text: entry.value.toString(), style: Theme.of(context).textTheme.bodyText1)
+                  ])));
+            }
+
+            if (metaWidgets.isEmpty) {
+              metaWidgets.add(Text(
+                "No metadata available",
+                style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2),
+                textAlign: TextAlign.center,
+              ));
+            }
+
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: Text(
+                  "Metadata",
+                  style: Theme.of(context).textTheme.headline1,
+                  textAlign: TextAlign.center,
+                ),
+                backgroundColor: Theme.of(context).accentColor,
+                content: SizedBox(
+                  width: CustomNavigator.width(context) * 3 / 5,
+                  height: context.height * 1 / 4,
+                  child: Container(
+                    padding: EdgeInsets.all(10.0),
+                    decoration: BoxDecoration(
+                        color: Theme.of(context).backgroundColor,
+                        borderRadius: BorderRadius.all(Radius.circular(10))),
+                    child: ListView(
+                      physics: AlwaysScrollableScrollPhysics(
+                        parent: BouncingScrollPhysics(),
+                      ),
+                      children: metaWidgets,
+                    ),
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    child: Text(
+                      "Close",
+                      style: Theme.of(context).textTheme.bodyText1!.copyWith(
+                        color: Theme.of(context).primaryColor,
+                      ),
+                    ),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+            );
+          },
+          iconData: Icons.info,
+          title: 'Metadata',
+        ),
+        OptionItem(
+          onTap: () async {
+            Navigator.pop(context);
+            isReloading.value = true;
+            CurrentChat.activeChat?.clearImageData(widget.attachment);
+
+            showSnackbar('In Progress', 'Redownloading attachment. Please wait...');
+            AttachmentHelper.redownloadAttachment(widget.attachment, onComplete: () async {
+              controller.dispose();
+              chewieController?.dispose();
+              if (kIsWeb || widget.file.path == null) {
+                final blob = html.Blob([widget.file.bytes]);
+                final url = html.Url.createObjectUrlFromBlob(blob);
+                controller = VideoPlayerController.network(url);
+              } else {
+                dynamic file = File(widget.file.path!);
+                controller = VideoPlayerController.file(file);
+              }
+              await controller.initialize();
+              isReloading.value = false;
+              controller.setVolume(SettingsManager().settings.startVideosMutedFullscreen.value ? 0 : 1);
+              chewieController = ChewieController(
+                videoPlayerController: controller,
+                aspectRatio: controller.value.aspectRatio,
+                allowFullScreen: false,
+                allowMuting: false,
+                materialProgressColors: ChewieProgressColors(
+                    playedColor: Theme.of(context).primaryColor,
+                    handleColor: Theme.of(context).primaryColor,
+                    bufferedColor: Theme.of(context).backgroundColor,
+                    backgroundColor: Theme.of(context).disabledColor),
+                cupertinoProgressColors: ChewieProgressColors(
+                    playedColor: Theme.of(context).primaryColor,
+                    handleColor: Theme.of(context).primaryColor,
+                    bufferedColor: Theme.of(context).backgroundColor,
+                    backgroundColor: Theme.of(context).disabledColor),
+              );
+              createListener(controller);
+              showPlayPauseOverlay = !controller.value.isPlaying;
+            }, onError: () {
+              Navigator.pop(context);
+            });
+            if (mounted) setState(() {});
+          },
+          iconData: Icons.refresh,
+          title: 'Redownload attachment',
+        ),
+        OptionItem(
+          onTap: () async {
+            Navigator.pop(context);
+            await AttachmentHelper.saveToGallery(context, widget.file);
+          },
+          iconData: Icons.download,
+          title: 'Save to gallery',
+        ),
+        if (!kIsWeb && !kIsDesktop)
+          OptionItem(
+            onTap: () async {
+              Navigator.pop(context);
+              if (widget.file.path == null) return;
+              Share.file(
+                "Shared ${widget.attachment.mimeType!.split("/")[0]} from BlueBubbles: ${widget.attachment.transferName}",
+                widget.file.path!,
+              );
+            },
+            iconData: Icons.share,
+            title: 'Share',
+          ),
+        OptionItem(
+          onTap: () async {
+            Navigator.pop(context);
+            controller.setVolume(controller.value.volume != 0.0 ? 0.0 : 1.0);
+          },
+          iconData: controller.value.volume == 0.0
+              ? Icons.volume_up
+              : Icons.volume_mute,
+          title: controller.value.volume == 0.0 ? 'Unmute' : 'Mute',
+        ),
+      ]
     );
     createListener(controller);
     showPlayPauseOverlay = !controller.value.isPlaying;
@@ -327,10 +506,12 @@ class _VideoViewerState extends State<VideoViewer> {
         backgroundColor: Theme.of(context).backgroundColor,
         body: Listener(
             onPointerUp: (_) async {
-              setState(() {
-                showPlayPauseOverlay = true;
-              });
-              debounceOverlay();
+              if (SettingsManager().settings.skin.value == Skins.iOS) {
+                setState(() {
+                  showPlayPauseOverlay = true;
+                });
+                debounceOverlay();
+              }
             },
             child: Stack(
               alignment: Alignment.bottomCenter,
@@ -363,7 +544,7 @@ class _VideoViewerState extends State<VideoViewer> {
                     );
                   }
                 }),
-                if (widget.showInteractions)
+                if (widget.showInteractions && SettingsManager().settings.skin.value == Skins.iOS)
                   Positioned(
                     top: 0,
                     left: 0,
