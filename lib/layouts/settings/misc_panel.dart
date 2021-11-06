@@ -6,6 +6,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:local_auth/local_auth.dart';
@@ -206,18 +207,19 @@ class MiscPanel extends StatelessWidget {
                           child: SettingsDivider(color: headerColor),
                         ),
                       ),
+                    if (!kIsWeb && !kIsDesktop)
+                      Obx(() => SettingsSwitch(
+                        onChanged: (bool val) async {
+                          SettingsManager().settings.incognitoKeyboard.value = val;
+                          saveSettings();
+                        },
+                        initialVal: SettingsManager().settings.incognitoKeyboard.value,
+                        title: "Incognito Keyboard",
+                        subtitle: "Disables keyboard suggestions and prevents the keyboard from learning or storing any words you type in the message text field",
+                        backgroundColor: tileColor,
+                      )),
                   ],
                 ),
-              Obx(() => SettingsSwitch(
-                onChanged: (bool val) async {
-                  SettingsManager().settings.incognitoKeyboard.value = val;
-                  saveSettings();
-                },
-                initialVal: SettingsManager().settings.incognitoKeyboard.value,
-                title: "Incognito Keyboard",
-                subtitle: "Disables keyboard suggestions and prevents the keyboard from learning or storing any words you type in the message text field",
-                backgroundColor: tileColor,
-              )),
               SettingsHeader(
                   headerColor: headerColor,
                   tileColor: tileColor,
