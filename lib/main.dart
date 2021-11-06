@@ -150,7 +150,7 @@ Future<Null> main() async {
     }
     if (!kIsWeb) {
       try {
-        DynamicCachedFonts.loadCachedFont("https://github.com/samuelngs/apple-emoji-linux/releases/download/latest/AppleColorEmoji.ttf", fontFamily: "Apple Color Emoji").then((_) {
+        DynamicCachedFonts.loadCachedFont("https://github.com/tneotia/tneotia/releases/download/ios-font-1/IOS.14.2.Daniel.L.ttf", fontFamily: "Apple Color Emoji").then((_) {
           fontExistsOnDisk.value = true;
         });
       } on StateError catch (_) {
