@@ -426,7 +426,7 @@ class _Cupertino extends StatelessWidget {
             parent.update();
             await showConversationTileMenu(
               context,
-              this,
+              parent,
               parent.widget.chat,
               details.globalPosition,
               context.textTheme,
@@ -564,7 +564,7 @@ class _Material extends StatelessWidget {
           parent.update();
           await showConversationTileMenu(
             context,
-            this,
+            parent,
             parent.widget.chat,
             details.globalPosition,
             context.textTheme,
@@ -680,7 +680,7 @@ class _Samsung extends StatelessWidget {
           parent.update();
           await showConversationTileMenu(
             context,
-            this,
+            parent,
             parent.widget.chat,
             details.globalPosition,
             context.textTheme,
