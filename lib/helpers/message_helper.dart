@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/helpers/reaction.dart';
+import 'package:bluebubbles/repository/database.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:universal_html/html.dart' as html;
@@ -28,7 +30,7 @@ class EmojiConst {
 
 Map<String, String> nameMap = {
   'com.apple.Handwriting.HandwritingProvider': 'Handwritten Message',
-  'com.apple.DigitalTouchBalloonProvider': 'Digital Touch'
+  'com.apple.DigitalTouchBalloonProvider': 'Digital Touch Message',
 };
 
 class MessageHelper {
@@ -351,41 +353,31 @@ class MessageHelper {
 
       return "$output: ${attachmentStr.join(attachmentStr.length == 2 ? " & " : ", ")}";
     } else if (![null, ""].contains(message.associatedMessageGuid)) {
-      // It's a reaction message, get the "sender"
+      // It's a reaction message, get the sender
       String? sender = message.isFromMe! ? "You" : ContactManager().getContactTitle(message.handle);
-      String translated = message.text ?? "";
-      if (!kIsWeb && !kIsDesktop) {
-        // translate the reaction text if necessary (to account for different
-        // locales on the tapback sender's phone
-        final languageIdentifier = GoogleMlKit.nlp.languageIdentifier();
-        final locale = Localizations.localeOf(Get.context!);
-        // check if the reaction text is in a different language
-        final splits = message.text!.split("“");
-        final reactionStr = sender + " " + splits.first;
-        final lang = await languageIdentifier.identifyLanguage(reactionStr);
-        // only translate if we have a valid language and it isn't the device's
-        // current language
-        if (lang != "und" && lang != locale.languageCode) {
-          final translateLanguageModelManager = GoogleMlKit.nlp.translateLanguageModelManager();
-          if (!await translateLanguageModelManager.isModelDownloaded(lang)) {
-            await translateLanguageModelManager.downloadModel(lang, isWifiRequired: false);
-          }
-          if (!await translateLanguageModelManager.isModelDownloaded(locale.languageCode)) {
-            await translateLanguageModelManager.downloadModel(locale.languageCode, isWifiRequired: false);
-          }
-          final onDeviceTranslator = GoogleMlKit.nlp.onDeviceTranslator(sourceLanguage: lang, targetLanguage: locale.languageCode);
-          translated = await onDeviceTranslator.translateText(reactionStr);
-          if (splits.length > 1) {
-            translated = translated + (translated.endsWith(" ") ? "“" : " “") + splits.sublist(1).join("“");
-          }
-          if (translated.startsWith(sender)) {
-            translated = translated.substring(sender.length + 1);
-          }
-          languageIdentifier.close();
-          onDeviceTranslator.close();
+      // fetch the associated message object
+      Message? reactionMessage = await Message.findOne({'guid': message.associatedMessageGuid});
+      if (reactionMessage != null) {
+        // grab the verb we'll use from the reactionToVerb map
+        String? verb = ReactionTypes.reactionToVerb[message.associatedMessageType];
+        // we need to check balloonBundleId first because for some reason
+        // game pigeon messages have the text "�"
+        if (reactionMessage.isInteractive()) {
+          return "$sender $verb ${getInteractiveText(reactionMessage)}";
+        // now we check if theres a subject or text and construct out message based off that
+        } else if (isNullOrEmpty(reactionMessage.text, trimString: true) == false
+            || isNullOrEmpty(reactionMessage.text, trimString: true) == false) {
+          String messageText = "${reactionMessage.subject} ${reactionMessage.text}";
+          return '$sender $verb “${messageText.trim()}”';
+        } else if (reactionMessage.hasAttachments) {
+          return '$sender $verb an attachment';
         }
       }
-      return "$sender $translated";
+      // if we cant fetch the associated message for some reason
+      // (or none of the above conditions about it isn't true)
+      // then we should fallback to unparsed reaction messages
+      Logger.info("Couldn't fetch associated message for message: ${message.guid}");
+      return "$sender ${message.text}";
     } else {
       // It's all other message types
       return message.fullText;
