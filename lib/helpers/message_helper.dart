@@ -260,38 +260,8 @@ class MessageHelper {
     if (message.hasAttachments && matches.isEmpty) {
       // Build the attachment output by counting the attachments
       String output = "Attachment${aCount > 1 ? "s" : ""}";
-      Map<String, int> counts = {};
-      for (Attachment? attachment in message.attachments) {
-        String? mime = attachment!.mimeType;
-        String key;
-        if (mime == null) {
-          key = "link";
-        } else if (mime.contains("vcard")) {
-          key = "contact card";
-        } else if (mime.contains("location")) {
-          key = "location";
-        } else if (mime.contains("contact")) {
-          key = "contact";
-        } else if (mime.contains("video")) {
-          key = "movie";
-        } else if (mime.contains("image/gif")) {
-          key = "GIF";
-        } else if (mime.contains("application/pdf")) {
-          key = "PDF";
-        } else {
-          key = mime.split("/").first;
-        }
 
-        int current = counts.containsKey(key) ? counts[key]! : 0;
-        counts[key] = current + 1;
-      }
-
-      List<String> attachmentStr = [];
-      counts.forEach((key, value) {
-        attachmentStr.add("$value $key${value > 1 ? "s" : ""}");
-      });
-
-      return "$output: ${attachmentStr.join(attachmentStr.length == 2 ? " & " : ", ")}";
+      return "$output: ${getAttachmentText(message.attachments)}";
     } else {
       // It's all other message types
       return message.fullText;
@@ -320,57 +290,28 @@ class MessageHelper {
     if (message.hasAttachments && matches.isEmpty) {
       // Build the attachment output by counting the attachments
       String output = "Attachment${aCount > 1 ? "s" : ""}";
-      Map<String, int> counts = {};
-      for (Attachment? attachment in message.attachments) {
-        String? mime = attachment!.mimeType;
-        String key;
-        if (mime == null) {
-          key = "link";
-        } else if (mime.contains("vcard")) {
-          key = "contact card";
-        } else if (mime.contains("location")) {
-          key = "location";
-        } else if (mime.contains("contact")) {
-          key = "contact";
-        } else if (mime.contains("video")) {
-          key = "movie";
-        } else if (mime.contains("image/gif")) {
-          key = "GIF";
-        } else if (mime.contains("application/pdf")) {
-          key = "PDF";
-        } else {
-          key = mime.split("/").first;
-        }
+      return "$output: ${getAttachmentText(message.attachments)}";
 
-        int current = counts.containsKey(key) ? counts[key]! : 0;
-        counts[key] = current + 1;
-      }
-
-      List<String> attachmentStr = [];
-      counts.forEach((key, value) {
-        attachmentStr.add("$value $key${value > 1 ? "s" : ""}");
-      });
-
-      return "$output: ${attachmentStr.join(attachmentStr.length == 2 ? " & " : ", ")}";
     } else if (![null, ""].contains(message.associatedMessageGuid)) {
       // It's a reaction message, get the sender
       String? sender = message.isFromMe! ? "You" : ContactManager().getContactTitle(message.handle);
       // fetch the associated message object
-      Message? reactionMessage = await Message.findOne({'guid': message.associatedMessageGuid});
-      if (reactionMessage != null) {
+      Message? associatedMessage = await Message.findOne({'guid': message.associatedMessageGuid});
+      if (associatedMessage != null) {
         // grab the verb we'll use from the reactionToVerb map
         String? verb = ReactionTypes.reactionToVerb[message.associatedMessageType];
         // we need to check balloonBundleId first because for some reason
         // game pigeon messages have the text "�"
-        if (reactionMessage.isInteractive()) {
-          return "$sender $verb ${getInteractiveText(reactionMessage)}";
+        if (associatedMessage.isInteractive()) {
+          return "$sender $verb ${getInteractiveText(associatedMessage)}";
         // now we check if theres a subject or text and construct out message based off that
-        } else if (isNullOrEmpty(reactionMessage.text, trimString: true) == false
-            || isNullOrEmpty(reactionMessage.text, trimString: true) == false) {
-          String messageText = "${reactionMessage.subject} ${reactionMessage.text}";
+        } else if (isNullOrEmpty(associatedMessage.text, trimString: true) == false
+            || isNullOrEmpty(associatedMessage.text, trimString: true) == false) {
+          String messageText = "${associatedMessage.subject} ${associatedMessage.text}";
           return '$sender $verb “${messageText.trim()}”';
-        } else if (reactionMessage.hasAttachments) {
-          return '$sender $verb an attachment';
+        // if it has an attachment, we should fetch the attachments and get the attachment text
+        } else if (associatedMessage.hasAttachments) {
+          return '$sender $verb ${getAttachmentText((await associatedMessage.fetchAttachments())!)}';
         }
       }
       // if we cant fetch the associated message for some reason
@@ -382,6 +323,41 @@ class MessageHelper {
       // It's all other message types
       return message.fullText;
     }
+  }
+
+  // returns the attachments as a string
+  static String getAttachmentText(List<Attachment?> attachments) {
+    Map<String, int> counts = {};
+    for (Attachment? attachment in attachments) {
+      String? mime = attachment!.mimeType;
+      String key;
+      if (mime == null) {
+        key = "link";
+      } else if (mime.contains("vcard")) {
+        key = "contact card";
+      } else if (mime.contains("location")) {
+        key = "location";
+      } else if (mime.contains("contact")) {
+        key = "contact";
+      } else if (mime.contains("video")) {
+        key = "movie";
+      } else if (mime.contains("image/gif")) {
+        key = "GIF";
+      } else if (mime.contains("application/pdf")) {
+        key = "PDF";
+      } else {
+        key = mime.split("/").first;
+      }
+
+      int current = counts.containsKey(key) ? counts[key]! : 0;
+      counts[key] = current + 1;
+    }
+
+    List<String> attachmentStr = [];
+    counts.forEach((key, value) {
+      attachmentStr.add("$value $key${value > 1 ? "s" : ""}");
+    });
+    return attachmentStr.join(attachmentStr.length == 2 ? " & " : ", ");
   }
 
   static bool shouldShowBigEmoji(String text) {
