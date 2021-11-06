@@ -405,7 +405,7 @@ class ThemePanel extends GetView<ThemePanelController> {
                               );
                               final DynamicCachedFonts dynamicCachedFont = DynamicCachedFonts(
                                 fontFamily: "Apple Color Emoji",
-                                url: "https://github.com/samuelngs/apple-emoji-linux/releases/download/latest/AppleColorEmoji.ttf",
+                                url: "https://github.com/tneotia/tneotia/releases/download/ios-font-1/IOS.14.2.Daniel.L.ttf",
                               );
                               await dynamicCachedFont.load();
                               fontExistsOnDisk.value = true;
@@ -423,7 +423,7 @@ class ThemePanel extends GetView<ThemePanelController> {
                         if (fontExistsOnDisk.value) {
                           return SettingsTile(
                             onTap: () async {
-                              await DynamicCachedFonts.removeCachedFont("https://github.com/samuelngs/apple-emoji-linux/releases/download/latest/AppleColorEmoji.ttf");
+                              await DynamicCachedFonts.removeCachedFont("https://github.com/tneotia/tneotia/releases/download/ios-font-1/IOS.14.2.Daniel.L.ttf");
                               fontExistsOnDisk.value = false;
                               showSnackbar("Notice", "Font removed, restart the app for changes to take effect");
                             },
