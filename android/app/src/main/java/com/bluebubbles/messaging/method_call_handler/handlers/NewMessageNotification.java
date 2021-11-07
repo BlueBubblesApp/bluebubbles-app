@@ -187,7 +187,7 @@ public class NewMessageNotification implements Handler {
                 context,
                 existingNotificationId,
                 new Intent(context, MainActivity.class)
-                        .putExtra("id", existingNotificationId)
+                        .putExtra("id", -1)
                         .putExtra("chatGuid", -1)
                         .putExtra("bubble", "false")
                         .setType("NotificationOpen"),
@@ -357,10 +357,11 @@ public class NewMessageNotification implements Handler {
                 .setContentIntent(openSummaryIntent)
                 // Set the color. This is the blue primary color
                 .setColor(4888294);
-        notificationManagerCompat.notify(-1, summaryNotificationBuilder.build());
 
         // Create the actual notification
         notificationManagerCompat.notify(notificationTag, existingNotificationId, notificationBuilder.build());
+
+        notificationManagerCompat.notify(-1, summaryNotificationBuilder.build());
         
         result.success("");
     }
