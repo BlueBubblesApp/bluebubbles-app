@@ -352,14 +352,14 @@ class _MessageState extends State<MessageWidget> with TickerProviderStateMixin {
           () => GestureDetector(
             behavior: HitTestBehavior.deferToChild,
             onTap: kIsDesktop || kIsWeb ? () => tapped.value = !tapped.value : null,
-            onHorizontalDragStart: (details) {
-              if (!SettingsManager().settings.enablePrivateAPI.value || !SettingsManager().settings.swipeToReply.value || !(chat?.isIMessage ?? true))
-                return;
+            onHorizontalDragStart: !SettingsManager().settings.enablePrivateAPI.value
+                || !SettingsManager().settings.swipeToReply.value
+                || !(chat?.isIMessage ?? true) ? null : (details) {
               baseOffset = details.localPosition.dx;
             },
-            onHorizontalDragUpdate: (details) {
-              if (!SettingsManager().settings.enablePrivateAPI.value || !SettingsManager().settings.swipeToReply.value || !(chat?.isIMessage ?? true))
-                return;
+            onHorizontalDragUpdate: !SettingsManager().settings.enablePrivateAPI.value
+                || !SettingsManager().settings.swipeToReply.value
+                || !(chat?.isIMessage ?? true) ? null : (details) {
               offset.value = min(max((details.localPosition.dx - baseOffset) * (_message.isFromMe! ? -1 : 1), 0),
                   replyThreshold * 1.5);
               if (!gaveHapticFeedback && offset.value >= replyThreshold) {
@@ -370,9 +370,9 @@ class _MessageState extends State<MessageWidget> with TickerProviderStateMixin {
               }
               CurrentChat.of(context)?.setReplyOffset(_message.guid ?? "", offset.value);
             },
-            onHorizontalDragEnd: (details) {
-              if (!SettingsManager().settings.enablePrivateAPI.value || !SettingsManager().settings.swipeToReply.value || !(chat?.isIMessage ?? true))
-                return;
+            onHorizontalDragEnd: !SettingsManager().settings.enablePrivateAPI.value
+                || !SettingsManager().settings.swipeToReply.value
+                || !(chat?.isIMessage ?? true) ? null : (details) {
               if (offset.value >= replyThreshold) {
                 EventDispatcher().emit("focus-keyboard", _message);
               }
