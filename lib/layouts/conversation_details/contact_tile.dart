@@ -137,7 +137,7 @@ class ContactTile extends StatelessWidget {
           handle: handle,
           borderThickness: 0.1,
         ),
-        trailing: kIsWeb ? Container(width: 2) : FittedBox(
+        trailing: kIsWeb || (!isEmail && (contact?.phones.isEmpty ?? true)) ? Container(width: 2) : FittedBox(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             mainAxisSize: MainAxisSize.max,

@@ -127,11 +127,11 @@ bool sameAddress(List<String?> options, String? compared) {
   bool match = false;
   if (compared == null) return match;
   for (String? opt in options) {
-    if (opt == null) continue;
+    if (isNullOrEmpty(opt)!) continue;
     if (opt == compared) {
       match = true;
       break;
-    } else if (compared.endsWith(opt) && opt.length >= 9) {
+    } else if (compared.endsWith(opt!) && opt.length >= 9) {
       match = true;
       break;
     } else if (opt.endsWith(compared) && compared.length >= 9) {
@@ -139,10 +139,8 @@ bool sameAddress(List<String?> options, String? compared) {
       break;
     }
 
-    if (opt.isEmail && !compared.isEmail) continue;
-
     String formatted = slugify(compared, delimiter: '').toString().replaceAll('-', '');
-    if (options.contains(formatted)) {
+    if (opt.endsWith(formatted) || formatted.endsWith(opt)) {
       match = true;
       break;
     }

@@ -300,7 +300,7 @@ class ChatBloc {
         chats = await Chat.getChats(limit: batchSize, offset: i * batchSize);
       }
       if (chats.isEmpty) break;
-
+      await ContactManager().matchHandles();
       for (Chat chat in chats) {
         newChats.add(chat);
         await initTileValsForChat(chat);
@@ -336,7 +336,6 @@ class ChatBloc {
       }
     }
 
-    await ContactManager().matchHandles();
     Logger.info("Finished fetching chats (${_chats.length}).", tag: "ChatBloc");
     await updateAllShareTargets();
 
