@@ -185,10 +185,10 @@ public class NewMessageNotification implements Handler {
         // Create intent for opening the app when the summary is pressed
         PendingIntent openSummaryIntent = PendingIntent.getActivity(
                 context,
-                existingNotificationId,
+                -1,
                 new Intent(context, MainActivity.class)
                         .putExtra("id", -1)
-                        .putExtra("chatGuid", -1)
+                        .putExtra("chatGuid", "-1")
                         .putExtra("bubble", "false")
                         .setType("NotificationOpen"),
                 Intent.FILL_IN_ACTION);
