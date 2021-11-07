@@ -305,8 +305,8 @@ class MessageHelper {
         if (associatedMessage.isInteractive()) {
           return "$sender $verb ${getInteractiveText(associatedMessage)}";
         // now we check if theres a subject or text and construct out message based off that
-        } else if (isNullOrEmpty(associatedMessage.text, trimString: true) == false
-            || isNullOrEmpty(associatedMessage.text, trimString: true) == false) {
+        } else if (!isNullOrEmpty(associatedMessage.text, trimString: true)!
+            || !isNullOrEmpty(associatedMessage.text, trimString: true)!) {
           String messageText = "${associatedMessage.subject} ${associatedMessage.text}";
           return '$sender $verb “${messageText.trim()}”';
         // if it has an attachment, we should fetch the attachments and get the attachment text
@@ -314,8 +314,8 @@ class MessageHelper {
           return '$sender $verb ${getAttachmentText((await associatedMessage.fetchAttachments())!)}';
         }
       }
-      // if we cant fetch the associated message for some reason
-      // (or none of the above conditions about it isn't true)
+      // if we can't fetch the associated message for some reason
+      // (or none of the above conditions about it are true)
       // then we should fallback to unparsed reaction messages
       Logger.info("Couldn't fetch associated message for message: ${message.guid}");
       return "$sender ${message.text}";
