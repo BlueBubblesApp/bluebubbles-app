@@ -359,7 +359,7 @@ class Message {
       {bool awaitNewMessageEvent = true, Chat? chat}) async {
     Message? existing = Message.findOne(guid: oldGuid);
 
-    if (existing == null || existing.handleId == null) {
+    if (existing == null || existing.handleId == null || existing.handle == null) {
       if (awaitNewMessageEvent) {
         await Future.delayed(Duration(milliseconds: 500));
         return replaceMessage(oldGuid, newMessage, awaitNewMessageEvent: false, chat: chat);
@@ -376,7 +376,7 @@ class Message {
 
     newMessage!.id = existing.id;
     newMessage.handleId = existing.handleId;
-    newMessage.handle = Handle.findOne(originalROWID: newMessage.handleId);
+    newMessage.handle = Handle.findOne(address: existing.handle!.address) ?? existing.handle;
     newMessage.hasAttachments = existing.hasAttachments;
     newMessage.hasReactions = existing.hasReactions;
     newMessage.metadata = existing.metadata;

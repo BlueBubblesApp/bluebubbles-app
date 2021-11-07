@@ -544,15 +544,18 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
     initMessageState(widget.message, false);
   }
 
-  List<Color> getBubbleColors() {
-    List<Color> bubbleColors = [context.theme.accentColor, context.theme.accentColor];
-    if (SettingsManager().settings.colorfulBubbles.value) {
-      if (widget.message.handle?.color == null) {
-        bubbleColors = toColorGradient(widget.message.handle?.address);
+  List<Color> getBubbleColors({Message? msg}) {
+    Message message = msg ?? widget.message;
+    List<Color> bubbleColors = message.isFromMe ?? false
+        ? [Theme.of(context).primaryColor, Theme.of(context).primaryColor]
+        : [Theme.of(context).accentColor, Theme.of(context).accentColor];
+    if (SettingsManager().settings.colorfulBubbles.value && !message.isFromMe!) {
+      if (message.handle?.color == null) {
+        bubbleColors = toColorGradient(message.handle?.address);
       } else {
         bubbleColors = [
-          HexColor(widget.message.handle!.color!),
-          HexColor(widget.message.handle!.color!).lightenAmount(0.02),
+          HexColor(message.handle!.color!),
+          HexColor(message.handle!.color!).lightenAmount(0.02),
         ];
       }
     }
@@ -622,7 +625,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
                                 horizontal: 14,
                               ),
                               decoration: BoxDecoration(
-                                border: Border.all(color: getBubbleColors()[0]),
+                                border: Border.all(color: getBubbleColors(msg: msg)[0]),
                                 borderRadius: skin.value == Skins.iOS
                                     ? BorderRadius.only(
                                         bottomLeft: Radius.circular(17),
@@ -648,7 +651,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
                               ),
                               child: FutureBuilder<List<InlineSpan>>(
                                   future: MessageWidgetMixin.buildMessageSpansAsync(context, msg,
-                                      colorOverride: getBubbleColors()[0].lightenOrDarken(30)),
+                                      colorOverride: getBubbleColors(msg: msg)[0].lightenOrDarken(30)),
                                   builder: (context, snapshot) {
                                     if (snapshot.data != null) {
                                       return RichText(
@@ -660,7 +663,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
                                     return RichText(
                                       text: TextSpan(
                                         children: MessageWidgetMixin.buildMessageSpans(context, msg,
-                                            colorOverride: getBubbleColors()[0].lightenOrDarken(30)),
+                                            colorOverride: getBubbleColors(msg: msg)[0].lightenOrDarken(30)),
                                       ),
                                     );
                                   }),

@@ -107,8 +107,10 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
 
   List<Color> getBubbleColors({Message? msg}) {
     Message message = msg ?? widget.message;
-    List<Color> bubbleColors = [context.theme.accentColor, context.theme.accentColor];
-    if (SettingsManager().settings.colorfulBubbles.value) {
+    List<Color> bubbleColors = message.isFromMe ?? false
+        ? [Theme.of(context).primaryColor, Theme.of(context).primaryColor]
+        : [Theme.of(context).accentColor, Theme.of(context).accentColor];
+    if (SettingsManager().settings.colorfulBubbles.value && !message.isFromMe!) {
       if (message.handle?.color == null) {
         bubbleColors = toColorGradient(message.handle?.address);
       } else {
@@ -743,7 +745,8 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                   children: [
                     Obx(() {
                       if ((SettingsManager().settings.alwaysShowAvatars.value ||
-                          (CurrentChat.of(context)?.chat.isGroup() ?? false)) && !msg.isFromMe!) {
+                              (CurrentChat.of(context)?.chat.isGroup() ?? false)) &&
+                          !msg.isFromMe!) {
                         return Padding(
                           padding: EdgeInsets.only(top: 5),
                           child: ContactAvatarWidget(

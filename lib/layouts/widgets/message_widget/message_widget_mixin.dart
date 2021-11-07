@@ -286,6 +286,7 @@ abstract class MessageWidgetMixin {
         );
       }
 
+      if (colorOverride != null && !hideContent) textStyle = textStyle!.apply(color: colorOverride);
       if (linkIndexMatches.isNotEmpty) {
         for (int i = 0; i < linkIndexMatches.length + 1; i++) {
           if (i == 0) {
