@@ -91,6 +91,7 @@ late final Box<AttachmentMessageJoin> amJoinBox;
 late final Box<ChatHandleJoin> chJoinBox;
 late final Box<ChatMessageJoin> cmJoinBox;
 late final Box<ThemeValueJoin> tvJoinBox;
+String? recentIntent;
 
 Future<Null> _reportError(dynamic error, dynamic stackTrace) async {
   // Print the exception to the console.

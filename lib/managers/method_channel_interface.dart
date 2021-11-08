@@ -1,9 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:bluebubbles/managers/life_cycle_manager.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
-import 'package:flutter/foundation.dart';
-import 'package:universal_io/io.dart';
 import 'dart:isolate';
 import 'dart:math';
 import 'dart:ui';
@@ -11,27 +7,32 @@ import 'dart:ui';
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/testing_mode.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/alarm_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
+import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/navigator_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:simple_animations/simple_animations.dart';
+import 'package:universal_io/io.dart';
 
 /// [MethodChannelInterface] is a manager used to talk to native code via a flutter MethodChannel
 ///
@@ -137,9 +138,11 @@ class MethodChannelInterface {
 
         return Future.value("");
       case "ChatOpen":
+        recentIntent = call.arguments["guid"];
         Logger.info("Opening Chat with GUID: ${call.arguments['guid']}, bubble: ${call.arguments['bubble']}");
         LifeCycleManager().isBubble = call.arguments['bubble'] == "true";
         openChat(call.arguments['guid']);
+        recentIntent = null;
         return Future.value("");
       case "socket-error-open":
         Get.toNamed("/settings/server-management-panel");
@@ -197,6 +200,7 @@ class MethodChannelInterface {
         return Future.value("");
       case "shareAttachments":
         if (!SettingsManager().settings.finishedSetup.value) return Future.value("");
+        recentIntent = call.arguments["id"];
         List<PlatformFile> attachments = [];
 
         // Loop through all of the attachments sent by native code
@@ -244,10 +248,12 @@ class MethodChannelInterface {
               ),
               (route) => route.isFirst,
             );
+        recentIntent = null;
         return Future.value("");
 
       case "shareText":
         if (!SettingsManager().settings.finishedSetup.value) return Future.value("");
+        recentIntent = call.arguments["id"];
         // Get the text that was shared to the app
         String? text = call.arguments["text"];
 
@@ -280,7 +286,7 @@ class MethodChannelInterface {
               ),
               (route) => route.isFirst,
             );
-
+        recentIntent = null;
         return Future.value("");
       case "alarm-wake":
         AlarmManager().onReceiveAlarm(call.arguments["id"]);
