@@ -311,7 +311,7 @@ class SetupBloc {
         await MessageHelper.bulkAddMessages(null, messages, onProgress: (progress, total) {
           _progress = (progress / total) * 100;
           data.value = SetupData(_progress, output);
-        });
+        }, notifyForNewMessage: true);
 
         // If we want to download the attachments, do it, and wait for them to finish before continuing
         if (downloadAttachments) {

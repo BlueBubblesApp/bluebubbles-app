@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -223,6 +224,10 @@ class MessageHelper {
     if (!SettingsManager().settings.notifyOnChatList.value && kIsDesktop && LifeCycleManager().isAlive) return;
 
     CurrentChat? currChat = CurrentChat.activeChat;
+
+    // add unread icon as long as it isn't the active chat
+    if (currChat?.chat.guid != chat.guid) ChatBloc().toggleChatUnread(chat, true);
+
     if (((LifeCycleManager().isAlive && !kIsWeb) || (kIsWeb && !(html.window.document.hidden ?? false))) &&
         ((!SettingsManager().settings.notifyOnChatList.value &&
                 currChat == null &&
