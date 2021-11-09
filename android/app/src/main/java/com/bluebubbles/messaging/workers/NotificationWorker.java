@@ -72,7 +72,7 @@ public class NotificationWorker extends Worker implements DartWorker {
             // The backgroundChannel is manually closed through dart code
             // we don't close the background channel when replying because we can't await all
             // the functions due to the socket connection required to send the message
-            while (backgroundChannel != null && !isStopped() && !type.equals("reply")) {
+            while (backgroundChannel != null && !isStopped()) {
             }
             return Result.success();
         } else {
