@@ -465,7 +465,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     SliverToBoxAdapter(
                       child: InkWell(
                         onTap: () async {
-                          if (chat.customAvatarPath.value != null) {
+                          if (chat.customAvatarPath != null) {
                             showDialog(
                               context: context,
                               builder: (BuildContext context) {
@@ -499,9 +499,9 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                                   .subtitle1!
                                                   .apply(color: Theme.of(context).primaryColor)),
                                           onPressed: () {
-                                            File file = File(chat.customAvatarPath.value!);
+                                            File file = File(chat.customAvatarPath!);
                                             file.delete();
-                                            chat.customAvatarPath.value = null;
+                                            chat.customAvatarPath = null;
                                             chat.save();
                                             Get.back();
                                           }),
@@ -809,12 +809,12 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                           final List<String> lines = [];
                           for (Message m in messages) {
                             if (m.hasAttachments) {
-                              await m.fetchAttachments();
+                              m.fetchAttachments();
                             }
-                            final readStr = m.dateRead.value != null ? "Read: ${buildFullDate(m.dateRead.value!)}, " : "";
-                            final deliveredStr = m.dateDelivered.value != null ? "Delivered: ${buildFullDate(m.dateDelivered.value!)}, " : "";
+                            final readStr = m.dateRead != null ? "Read: ${buildFullDate(m.dateRead!)}, " : "";
+                            final deliveredStr = m.dateDelivered != null ? "Delivered: ${buildFullDate(m.dateDelivered!)}, " : "";
                             final sentStr = "Sent: ${buildFullDate(m.dateCreated!)}";
-                            final text = await MessageHelper.getNotificationText(m, withSender: true);
+                            final text = MessageHelper.getNotificationText(m, withSender: true);
                             final line = "(" + readStr + deliveredStr + sentStr + ") " + text;
                             lines.add(line);
                           }
@@ -955,8 +955,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                             if (m.hasAttachments) {
                               await m.fetchAttachments();
                             }
-                            final readStr = m.dateRead.value != null ? "Read: ${buildFullDate(m.dateRead.value!)}, " : "";
-                            final deliveredStr = m.dateDelivered.value != null ? "Delivered: ${buildFullDate(m.dateDelivered.value!)}, " : "";
+                            final readStr = m.dateRead != null ? "Read: ${buildFullDate(m.dateRead!)}, " : "";
+                            final deliveredStr = m.dateDelivered != null ? "Delivered: ${buildFullDate(m.dateDelivered!)}, " : "";
                             final sentStr = "Sent: ${buildFullDate(m.dateCreated!)}";
                             if (m.hasAttachments) {
                               final attachments = m.attachments.where((e) => e?.guid != null && ["image/png", "image/jpg", "image/jpeg"].contains(e!.mimeType));

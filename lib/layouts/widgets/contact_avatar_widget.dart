@@ -54,7 +54,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
 
   String? getInitials({Handle? handle, double size = 30}) {
     if (handle == null) return "Y";
-    String? name = ContactManager().getContactTitle(handle) ?? "Unknown Name";
+    String? name = ContactManager().getContactTitle(handle);
     if (name.isEmail) return name[0].toUpperCase();
 
     // Check if it's just a regular number, no contact

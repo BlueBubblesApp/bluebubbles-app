@@ -269,7 +269,7 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
       if (_newerMessage!.isGroupEvent()) {
         showTail = true;
       } else if (SettingsManager().settings.skin.value == Skins.Samsung) {
-        showTail = MessageHelper.getShowTailReversed(context, _message, _olderMessage);
+        showTail = MessageHelper.getShowTail(context, _message, _olderMessage);
       } else {
         showTail = MessageHelper.getShowTail(context, _message, _newerMessage);
       }
@@ -355,6 +355,7 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
         }
 
         double replyThreshold = 40;
+        final Chat? chat = CurrentChat.of(context)?.chat;
 
         return Obx(
           () => GestureDetector(

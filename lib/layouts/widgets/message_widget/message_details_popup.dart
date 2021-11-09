@@ -702,7 +702,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                 for (Attachment? element in widget.message.attachments) {
                   dynamic content = AttachmentHelper.getContent(element!);
                   if (content is PlatformFile) {
-                    await AttachmentHelper.saveToGallery(context, content);
+                    await AttachmentHelper.saveToGallery(content);
                   }
                 }
               } catch (ex, trace) {

@@ -1,32 +1,31 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
-import 'package:bluebubbles/layouts/setup/qr_scan/text_input_url.dart';
-import 'package:flutter/gestures.dart';
-import 'package:flutter/services.dart';
-import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:universal_io/io.dart';
-import 'package:universal_html/html.dart' as html;
 
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/themes.dart';
-import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/setup/qr_code_scanner.dart';
-import 'package:bluebubbles/repository/models/fcm_data.dart';
-import 'package:bluebubbles/repository/models/settings.dart';
-import 'package:collection/collection.dart';
-import 'package:flutter/foundation.dart';
-import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/share.dart';
+import 'package:bluebubbles/helpers/themes.dart';
+import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
+import 'package:bluebubbles/layouts/setup/qr_code_scanner.dart';
+import 'package:bluebubbles/layouts/setup/qr_scan/text_input_url.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/socket_manager.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:get/get.dart';
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:universal_html/html.dart' as html;
+import 'package:universal_io/io.dart';
 
 class ServerManagementPanelBinding extends Bindings {
   @override

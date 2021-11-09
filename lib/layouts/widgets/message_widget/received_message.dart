@@ -94,7 +94,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
   initState() {
     super.initState();
     showReplies = widget.showReplies;
-    contactTitle = ContactManager().getContactTitle(widget.message.handle)!;
+    contactTitle = ContactManager().getContactTitle(widget.message.handle);
 
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
       if (!event.containsKey("type")) return;

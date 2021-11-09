@@ -40,10 +40,10 @@ String getFullChatTitle(Chat _chat) {
       // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
       String? name = ContactManager().getContactTitle(chat.participants[i]);
 
-      if (chat.participants.length > 1 && !name!.isPhoneNumber) {
+      if (chat.participants.length > 1 && !name.isPhoneNumber) {
         name = name.trim().split(" ")[0];
       } else {
-        name = name!.trim();
+        name = name.trim();
       }
 
       titles.add(name);
@@ -163,7 +163,7 @@ class Chat {
       latestMessageText: json.containsKey("latestMessageText")
           ? json["latestMessageText"]
           : message != null
-              ? MessageHelper.getNotificationText(message)
+              ? null// ? MessageHelper.getNotificationText(message)
               : null,
       fakeLatestMessageText: json.containsKey("latestMessageText")
           ? faker.lorem.words((json["latestMessageText"] ?? "").split(" ").length).join(" ")

@@ -47,10 +47,10 @@ String getFullChatTitle(Chat _chat) {
     for (int i = 0; i < chat.participants.length; i++) {
       String? name = ContactManager().getContactTitle(chat.participants[i]);
 
-      if (chat.participants.length > 1 && !name!.isPhoneNumber) {
+      if (chat.participants.length > 1 && !name.isPhoneNumber) {
         name = name.trim().split(" ")[0];
       } else {
-        name = name!.trim();
+        name = name.trim();
       }
 
       titles.add(name);

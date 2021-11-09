@@ -273,7 +273,7 @@ class ContactManager {
     return await FastContacts.getContactImage(id);
   }
 
-  String? getContactTitle(Handle? handle) {
+  String getContactTitle(Handle? handle) {
     if (handle == null) return "You";
 
     String? address = handle.address;

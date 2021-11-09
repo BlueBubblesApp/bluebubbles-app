@@ -60,6 +60,8 @@ import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
 import 'package:window_manager/window_manager.dart';
 
+import 'layouts/setup/splash_screen.dart';
+
 // final SentryClient _sentry = SentryClient(
 //     dsn:
 //         "https://3123d4f0d82d405190cb599d0e904adc@o373132.ingest.sentry.io/5372783");

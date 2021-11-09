@@ -1,5 +1,4 @@
 import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -132,12 +131,12 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
                             widget.entry.color = newColor;
                             widget.entry.fontWeight = fontWeight;
                             widget.entry.fontSize = fontSize;
-                            await widget.entry.save(widget.currentTheme);
-                            await widget.currentTheme.fetchData();
+                            widget.entry.save(widget.currentTheme);
+                            widget.currentTheme.fetchData();
                             if (widget.currentTheme.selectedDarkTheme) {
-                              await SettingsManager().saveSelectedTheme(_context, selectedDarkTheme: widget.currentTheme);
+                              SettingsManager().saveSelectedTheme(_context, selectedDarkTheme: widget.currentTheme);
                             } else if (widget.currentTheme.selectedLightTheme) {
-                              await SettingsManager().saveSelectedTheme(_context, selectedLightTheme: widget.currentTheme);
+                              SettingsManager().saveSelectedTheme(_context, selectedLightTheme: widget.currentTheme);
                             }
                           },
                           child: Text('SAVE'),
