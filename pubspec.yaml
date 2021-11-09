@@ -105,6 +105,8 @@ dependencies:
   dynamic_cached_fonts: ^0.4.0
   confetti: ^0.6.0
   supercharged: ^2.1.1
+  pdf: ^3.6.1
+  printing: ^5.6.0
 
 dependency_overrides:
   rxdart: ^0.27.2

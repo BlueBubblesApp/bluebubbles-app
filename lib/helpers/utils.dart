@@ -238,7 +238,7 @@ String buildDate(DateTime? dateTime) {
   } else if (DateTime.now().difference(dateTime.toLocal()).inDays <= 7) {
     date = intl.DateFormat("EEEE").format(dateTime);
   } else {
-    date = "${dateTime.month.toString()}/${dateTime.day.toString()}/${dateTime.year.toString()}";
+    date = intl.DateFormat.yMd().format(dateTime);
   }
   return date;
 }
@@ -253,6 +253,10 @@ String buildTime(DateTime? dateTime) {
       ? intl.DateFormat.Hm().format(dateTime)
       : intl.DateFormat.jm().format(dateTime);
   return time;
+}
+
+String buildFullDate(DateTime time) {
+  return intl.DateFormat.yMd().add_jm().format(time);
 }
 
 extension DateHelpers on DateTime {

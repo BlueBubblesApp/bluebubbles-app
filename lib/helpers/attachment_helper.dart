@@ -196,8 +196,8 @@ class AttachmentHelper {
     return !(FileSystemEntity.typeSync(pathName) == FileSystemEntityType.notFound);
   }
 
-  static dynamic getContent(Attachment attachment, {String? path}) {
-    if ((kIsWeb || kIsDesktop) && attachment.bytes == null && attachment.guid != "redacted-mode-demo-attachment") {
+  static dynamic getContent(Attachment attachment, {String? path, bool autoDownload = true}) {
+    if ((kIsWeb || kIsDesktop) && attachment.bytes == null && attachment.guid != "redacted-mode-demo-attachment" && autoDownload) {
       return Get.put(AttachmentDownloadController(attachment: attachment), tag: attachment.guid);
     } else if (kIsWeb || kIsDesktop) {
       return PlatformFile(
@@ -219,7 +219,7 @@ class AttachmentHelper {
         path: pathName,
         size: attachment.totalBytes ?? 0,
       );
-    } else if (attachment.mimeType == null || attachment.mimeType!.startsWith("text/")) {
+    } else if ((attachment.mimeType == null || attachment.mimeType!.startsWith("text/")) && autoDownload) {
       return Get.put(AttachmentDownloadController(attachment: attachment), tag: attachment.guid);
     } else {
       return attachment;

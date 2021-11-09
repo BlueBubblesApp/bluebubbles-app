@@ -748,7 +748,7 @@ class Chat {
     }
 
     // Add pagination
-    String pagination = " ORDER BY message.originalROWID DESC LIMIT $limit OFFSET $offset;";
+    String pagination = " ORDER BY message.originalROWID DESC${limit == 0 ? "" : " LIMIT $limit OFFSET $offset"};";
 
     // Execute the query
     var res = await db

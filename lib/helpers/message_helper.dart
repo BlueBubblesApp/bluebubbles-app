@@ -296,18 +296,19 @@ class MessageHelper {
     }
   }
 
-  static Future<String> getNotificationText(Message message) async {
+  static Future<String> getNotificationText(Message message, {bool withSender = false}) async {
+    String sender = !withSender ? "" : message.isFromMe! ? "You: " : ContactManager().getContactTitle(message.handle) + ": ";
     // If the item type is not 0, it's a group event
     if (message.isGroupEvent()) {
-      return await getGroupEventText(message);
+      return sender + (await getGroupEventText(message));
     }
 
     if (message.isInteractive()) {
-      return "Interactive: ${MessageHelper.getInteractiveText(message)}";
+      return sender + "Interactive: ${MessageHelper.getInteractiveText(message)}";
     }
 
     if (isNullOrEmpty(message.fullText, trimString: true)! && !message.hasAttachments) {
-      return "Empty message";
+      return sender + "Empty message";
     }
 
     // Parse/search for links
@@ -349,10 +350,10 @@ class MessageHelper {
         attachmentStr.add("$value $key${value > 1 ? "s" : ""}");
       });
 
-      return "$output: ${attachmentStr.join(attachmentStr.length == 2 ? " & " : ", ")}";
+      return "$sender$output: ${attachmentStr.join(attachmentStr.length == 2 ? " & " : ", ")}";
     } else if (![null, ""].contains(message.associatedMessageGuid)) {
       // It's a reaction message, get the "sender"
-      String? sender = message.isFromMe! ? "You" : ContactManager().getContactTitle(message.handle);
+      String reactionSender = message.isFromMe! ? "You" : ContactManager().getContactTitle(message.handle);
       String translated = message.text ?? "";
       if (!kIsWeb && !kIsDesktop) {
         // translate the reaction text if necessary (to account for different
@@ -361,7 +362,7 @@ class MessageHelper {
         final locale = Localizations.localeOf(Get.context!);
         // check if the reaction text is in a different language
         final splits = message.text!.split("“");
-        final reactionStr = sender + " " + splits.first;
+        final reactionStr = reactionSender + " " + splits.first;
         final lang = await languageIdentifier.identifyLanguage(reactionStr);
         // only translate if we have a valid language and it isn't the device's
         // current language
@@ -378,17 +379,17 @@ class MessageHelper {
           if (splits.length > 1) {
             translated = translated + (translated.endsWith(" ") ? "“" : " “") + splits.sublist(1).join("“");
           }
-          if (translated.startsWith(sender)) {
-            translated = translated.substring(sender.length + 1);
+          if (translated.startsWith(reactionSender)) {
+            translated = translated.substring(reactionSender.length + 1);
           }
           languageIdentifier.close();
           onDeviceTranslator.close();
         }
       }
-      return "$sender $translated";
+      return "$reactionSender $translated";
     } else {
       // It's all other message types
-      return message.fullText;
+      return sender + message.fullText;
     }
   }
 

@@ -1,9 +1,13 @@
+import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
+import 'package:path/path.dart' hide context;
+import 'package:path_provider/path_provider.dart';
+import 'package:printing/printing.dart';
+import 'package:pdf/widgets.dart' as pw;
 import 'package:universal_io/io.dart';
-import 'dart:ui';
-
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
@@ -706,6 +710,255 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                         SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.trash : Icons.delete_forever,
                                         color: Theme.of(context).primaryColor,
                                       ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (!kIsWeb)
+                    SliverToBoxAdapter(
+                      child: InkWell(
+                        onTap: () async {
+                          Get.defaultDialog(
+                            title: "Saving files...",
+                            titleStyle: Theme.of(context).textTheme.headline1,
+                            confirm: Container(height: 0, width: 0),
+                            cancel: Container(height: 0, width: 0),
+                            content: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: <Widget>[
+                                  SizedBox(
+                                    height: 15.0,
+                                  ),
+                                  buildProgressIndicator(context),
+                                ]
+                            ),
+                            barrierDismissible: false,
+                            backgroundColor: Theme.of(context).backgroundColor,
+                          );
+                          final attachments = await Chat.getAttachments(chat, limit: 0);
+                          final files = attachments.where((e) => e.guid != null).map((e) => AttachmentHelper.getContent(e, autoDownload: false)).whereType<PlatformFile>();
+                          String filePath = "/storage/emulated/0/Download/";
+                          if (kIsDesktop) {
+                            filePath = (await getDownloadsDirectory())!.path;
+                          }
+                          for (PlatformFile f in files) {
+                            final bytes = await File(f.path!).readAsBytes();
+                            await File(join(filePath, f.name)).writeAsBytes(bytes);
+                          }
+                          Navigator.of(context).pop();
+                          showSnackbar("Success", "Downloaded ${attachments.length} attachment${attachments.length > 1 ? "s" : ""} to the downloads folder");
+                        },
+                        child: ListTile(
+                          leading: Text(
+                            "Download All Known Attachments",
+                            style: TextStyle(
+                              color: Theme.of(context).primaryColor,
+                            ),
+                          ),
+                          trailing: Padding(
+                            padding: EdgeInsets.only(right: 15),
+                            child: Icon(
+                              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.folder : Icons.folder,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (!kIsWeb)
+                    SliverToBoxAdapter(
+                      child: InkWell(
+                        onTap: () async {
+                          Get.defaultDialog(
+                            title: "Generating transcript...",
+                            titleStyle: Theme.of(context).textTheme.headline1,
+                            confirm: Container(height: 0, width: 0),
+                            cancel: Container(height: 0, width: 0),
+                            content: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: <Widget>[
+                                  SizedBox(
+                                    height: 15.0,
+                                  ),
+                                  buildProgressIndicator(context),
+                                ]
+                            ),
+                            barrierDismissible: false,
+                            backgroundColor: Theme.of(context).backgroundColor,
+                          );
+                          final messages = (await Chat.getMessages(chat, limit: 0, includeDeleted: true)).reversed;
+                          if (messages.isEmpty) {
+                            Navigator.of(context).pop();
+                            showSnackbar("Error", "No messages found!");
+                            return;
+                          }
+                          final List<String> lines = [];
+                          for (Message m in messages) {
+                            if (m.hasAttachments) {
+                              await m.fetchAttachments();
+                            }
+                            final readStr = m.dateRead.value != null ? "Read: ${buildFullDate(m.dateRead.value!)}, " : "";
+                            final deliveredStr = m.dateDelivered.value != null ? "Delivered: ${buildFullDate(m.dateDelivered.value!)}, " : "";
+                            final sentStr = "Sent: ${buildFullDate(m.dateCreated!)}";
+                            final text = await MessageHelper.getNotificationText(m, withSender: true);
+                            final line = "(" + readStr + deliveredStr + sentStr + ") " + text;
+                            lines.add(line);
+                          }
+                          final now = DateTime.now().toLocal();
+                          String filePath = "/storage/emulated/0/Download/";
+                          if (kIsDesktop) {
+                            filePath = (await getDownloadsDirectory())!.path;
+                          }
+                          filePath = filePath + "${(chat.title ?? "Unknown Chat").replaceAll(RegExp(r'[<>:"/\|?*]'), "")}-transcript-${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}.txt";
+                          File file = File(filePath);
+                          await file.create(recursive: true);
+                          await file.writeAsString(lines.join('\n'));
+                          Navigator.of(context).pop();
+                          showSnackbar("Success", "Saved transcript to the downloads folder");
+                        },
+                        child: ListTile(
+                          leading: Text(
+                            "Download Chat Transcript (Plaintext)",
+                            style: TextStyle(
+                              color: Theme.of(context).primaryColor,
+                            ),
+                          ),
+                          trailing: Padding(
+                            padding: EdgeInsets.only(right: 15),
+                            child: Icon(
+                              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.doc_text : Icons.note,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (!kIsWeb)
+                    SliverToBoxAdapter(
+                      child: InkWell(
+                        onTap: () async {
+                          Get.defaultDialog(
+                            title: "Generating PDF...",
+                            titleStyle: Theme.of(context).textTheme.headline1,
+                            confirm: Container(height: 0, width: 0),
+                            cancel: Container(height: 0, width: 0),
+                            content: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: <Widget>[
+                                  SizedBox(
+                                    height: 15.0,
+                                  ),
+                                  buildProgressIndicator(context),
+                                ]
+                            ),
+                            barrierDismissible: false,
+                            backgroundColor: Theme.of(context).backgroundColor,
+                          );
+                          final messages = (await Chat.getMessages(chat, limit: 0, includeDeleted: true)).reversed;
+                          if (messages.isEmpty) {
+                            Navigator.of(context).pop();
+                            showSnackbar("Error", "No messages found!");
+                            return;
+                          }
+                          final doc = pw.Document();
+                          final List<String> timestamps = [];
+                          final List<dynamic> content = [];
+                          final List<Size?> dimensions = [];
+                          for (Message m in messages) {
+                            if (m.hasAttachments) {
+                              await m.fetchAttachments();
+                            }
+                            final readStr = m.dateRead.value != null ? "Read: ${buildFullDate(m.dateRead.value!)}, " : "";
+                            final deliveredStr = m.dateDelivered.value != null ? "Delivered: ${buildFullDate(m.dateDelivered.value!)}, " : "";
+                            final sentStr = "Sent: ${buildFullDate(m.dateCreated!)}";
+                            if (m.hasAttachments) {
+                              final attachments = m.attachments.where((e) => e?.guid != null && ["image/png", "image/jpg", "image/jpeg"].contains(e!.mimeType));
+                              final files = attachments.map((e) => AttachmentHelper.getContent(e!, autoDownload: false)).whereType<PlatformFile>();
+                              if (files.isNotEmpty) {
+                                for (PlatformFile f in files) {
+                                  final a = attachments.firstWhere((e) => e!.transferName == f.name);
+                                  timestamps.add(readStr + deliveredStr + sentStr);
+                                  content.add(pw.MemoryImage(await File(f.path!).readAsBytes()));
+                                  final aspectRatio = (a!.width ?? 150.0) / (a.height ?? 150.0);
+                                  dimensions.add(Size(400, aspectRatio * 400));
+                                }
+                              }
+                              timestamps.add(readStr + deliveredStr + sentStr);
+                              content.add(await MessageHelper.getNotificationText(m, withSender: true));
+                              dimensions.add(null);
+                            } else {
+                              timestamps.add(readStr + deliveredStr + sentStr);
+                              content.add(await MessageHelper.getNotificationText(m, withSender: true));
+                              dimensions.add(null);
+                            }
+                          }
+                          final font = await PdfGoogleFonts.openSansRegular();
+                          doc.addPage(pw.MultiPage(
+                            maxPages: 1000,
+                            header: (pw.Context context) => pw.Padding(
+                              padding: pw.EdgeInsets.only(bottom: 10),
+                              child: pw.Text(chat.title ?? "Unknown Chat",
+                                  textScaleFactor: 2,
+                                  style: pw.Theme.of(context)
+                                      .defaultTextStyle
+                                      .copyWith(fontWeight: pw.FontWeight.bold, font: font))
+                            ),
+                            build: (pw.Context context) => [
+                              pw.Partitions(
+                                  children: [
+                                    pw.Partition(
+                                      child: pw.Table(
+                                        children: List.generate(timestamps.length, (index) => pw.TableRow(
+                                          children: [
+                                            pw.Padding(
+                                              padding: pw.EdgeInsets.symmetric(horizontal: 3, vertical: 10),
+                                              child: pw.Text(timestamps[index],
+                                                  style: pw.Theme.of(context)
+                                                      .defaultTextStyle
+                                                      .copyWith(font: font)),
+                                            ),
+                                            pw.Container(
+                                              child: pw.Padding(
+                                                  padding: pw.EdgeInsets.symmetric(horizontal: 3, vertical: 10),
+                                                  child: content[index] is pw.MemoryImage
+                                                      ? pw.Image(content[index], width: dimensions[index]!.width, height: dimensions[index]!.height)
+                                                      : pw.Text(content[index].toString(),
+                                                      style: pw.TextStyle(font: font))
+                                              )
+                                            )
+                                          ]
+                                        ))
+                                      )
+                                    ),
+                                  ]
+                              ),
+                            ]
+                          ));
+                          final now = DateTime.now().toLocal();
+                          String filePath = "/storage/emulated/0/Download/";
+                          if (kIsDesktop) {
+                            filePath = (await getDownloadsDirectory())!.path;
+                          }
+                          filePath = filePath + "${(chat.title ?? "Unknown Chat").replaceAll(RegExp(r'[<>:"/\|?*]'), "")}-transcript-${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}.pdf";
+                          File file = File(filePath);
+                          await file.create(recursive: true);
+                          await file.writeAsBytes(await doc.save());
+                          Navigator.of(context).pop();
+                          showSnackbar("Success", "Saved transcript to the downloads folder");
+                        },
+                        child: ListTile(
+                          leading: Text(
+                            "Download Chat Transcript (Richtext)",
+                            style: TextStyle(
+                              color: Theme.of(context).primaryColor,
+                            ),
+                          ),
+                          trailing: Padding(
+                            padding: EdgeInsets.only(right: 15),
+                            child: Icon(
+                              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.doc_on_doc : Icons.picture_as_pdf,
+                              color: Theme.of(context).primaryColor,
+                            ),
                           ),
                         ),
                       ),
