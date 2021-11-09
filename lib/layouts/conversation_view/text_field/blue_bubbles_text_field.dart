@@ -478,26 +478,31 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-        onWillPop: _onWillPop,
-        child: Row(
-          mainAxisSize: MainAxisSize.max,
-          children: [
-            Expanded(
-              child: Container(
-                padding: EdgeInsets.only(left: 5, top: 5, bottom: 5, right: 8),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    buildAttachmentList(),
-                    buildTextFieldAlwaysVisible(),
-                    buildAttachmentPicker(),
-                  ],
+    return SafeArea(
+      left: false,
+      right: false,
+      top: false,
+      child: WillPopScope(
+          onWillPop: _onWillPop,
+          child: Row(
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              Expanded(
+                child: Container(
+                  padding: EdgeInsets.only(left: 5, top: 5, bottom: 5, right: 8),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      buildAttachmentList(),
+                      buildTextFieldAlwaysVisible(),
+                      buildAttachmentPicker(),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
-        ));
+            ],
+          )),
+    );
   }
 
   Widget buildAttachmentList() => Padding(

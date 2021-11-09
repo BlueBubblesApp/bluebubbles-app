@@ -61,6 +61,7 @@ class Settings {
   final RxString globalTextDetection = "".obs;
   final RxBool filterUnknownSenders = false.obs;
   final RxBool tabletMode = true.obs;
+  final RxBool immersiveMode = false.obs;
 
   // final RxString emojiFontFamily;
 
@@ -282,6 +283,8 @@ class Settings {
         settings.filterUnknownSenders.value = entry.value;
       } else if (entry.name == "tabletMode") {
         settings.tabletMode.value = entry.value;
+      } else if (entry.name == "immersiveMode") {
+        settings.immersiveMode.value = entry.value;
       } else if (entry.name == "swipeToReply") {
         settings.swipeToReply.value = entry.value;
       }
@@ -393,6 +396,7 @@ class Settings {
       'globalTextDetection': globalTextDetection.value,
       'filterUnknownSenders': filterUnknownSenders.value,
       'tabletMode': tabletMode.value,
+      'immersiveMode': immersiveMode.value,
       'swipeToReply': swipeToReply.value,
       'enablePrivateAPI': enablePrivateAPI.value,
       'privateSendTypingIndicators': privateSendTypingIndicators.value,
@@ -487,6 +491,7 @@ class Settings {
     SettingsManager().settings.globalTextDetection.value = map['globalTextDetection'] ?? "";
     SettingsManager().settings.filterUnknownSenders.value = map['filterUnknownSenders'] ?? false;
     SettingsManager().settings.tabletMode.value = map['tabletMode'] ?? true;
+    SettingsManager().settings.immersiveMode.value = map['immersiveMode'] ?? false;
     SettingsManager().settings.swipeToReply.value = map['swipeToReply'] ?? false;
     SettingsManager().settings.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     SettingsManager().settings.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
@@ -577,6 +582,7 @@ class Settings {
     s.globalTextDetection.value = map['globalTextDetection'] ?? "";
     s.filterUnknownSenders.value = map['filterUnknownSenders'] ?? false;
     s.tabletMode.value = map['tabletMode'] ?? true;
+    s.immersiveMode.value = map['immersiveMode'] ?? false;
     s.swipeToReply.value = map['swipeToReply'] ?? false;
     s.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     s.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;

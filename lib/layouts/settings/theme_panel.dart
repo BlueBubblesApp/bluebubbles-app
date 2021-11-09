@@ -21,6 +21,7 @@ import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:get/get.dart';
 
@@ -190,6 +191,28 @@ class ThemePanel extends GetView<ThemePanelController> {
                       title: "Tablet Mode",
                       backgroundColor: tileColor,
                       subtitle: "Enables tablet mode (split view) depending on screen width",
+                    )),
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
+                    ),
+                    Obx(() => SettingsSwitch(
+                      onChanged: (bool val) {
+                        controller._settingsCopy.immersiveMode.value = val;
+                        saveSettings();
+                        if (val) {
+                          SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+                        } else {
+                          SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [SystemUiOverlay.bottom, SystemUiOverlay.top]);
+                        }
+                      },
+                      initialVal: controller._settingsCopy.immersiveMode.value,
+                      title: "Immersive Mode",
+                      backgroundColor: tileColor,
+                      subtitle: "Makes the bottom navigation bar transparent. This option is best used with gesture navigation.",
                     )),
                   ],
                 ),

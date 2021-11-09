@@ -78,7 +78,7 @@ class _VideoViewerState extends State<VideoViewer> {
           handleColor: Theme.of(context).primaryColor,
           bufferedColor: Theme.of(context).backgroundColor,
           backgroundColor: Theme.of(context).disabledColor),
-      customControls: Stack(
+      customControls: SettingsManager().settings.skin.value == Skins.iOS ? null : Stack(
         children: [
           Positioned.fill(child: MaterialControls()),
           Positioned(
@@ -497,7 +497,7 @@ class _VideoViewerState extends State<VideoViewer> {
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarColor: Colors.transparent, // navigation bar color
         systemNavigationBarIconBrightness:
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color

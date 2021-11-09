@@ -48,7 +48,7 @@ class _ThemingPanelState extends State<ThemingPanel> with TickerProviderStateMix
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: headerColor, // navigation bar color
+        systemNavigationBarColor: Colors.transparent, // navigation bar color
         systemNavigationBarIconBrightness:
         headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
