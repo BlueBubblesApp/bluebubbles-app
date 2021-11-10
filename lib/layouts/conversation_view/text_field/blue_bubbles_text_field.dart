@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
-import 'dart:ui';
 
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
@@ -349,7 +348,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: Theme.of(context).accentColor,
+          backgroundColor: Theme.of(context).colorScheme.secondary,
           title: Text("Send it?", style: Theme.of(context).textTheme.headline1),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -535,7 +534,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   Widget buildShareButton() {
     double size = SettingsManager().settings.skin.value == Skins.iOS ? 35 : 40;
     return AnimatedSize(
-      vsync: this,
       duration: Duration(milliseconds: 300),
       child: Container(
         height: size,
@@ -664,7 +662,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       fit: FlexFit.loose,
       child: Container(
         child: AnimatedSize(
-          vsync: this,
           duration: Duration(milliseconds: 100),
           curve: Curves.easeInOut,
           child: FocusScope(
@@ -696,7 +693,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
 
                     // Get the word
                     List<String> words = text.trimRight().split(RegExp("[ \n]"));
-                    RegExp punctuation = RegExp("[\!\"\#\$\%\&\'\(\)\*\+\,\-\.\/\:\;\<\=\>\?\@\[\\\]\^\_\`\{\|\}\~]");
+                    RegExp punctuation = RegExp("[!\"#\$%&'()*+,-./:;<=>?@[\\]^_`{|}~]");
                     int trailing = text.length - text.trimRight().length;
                     List<int> counts = words.map((word) => word.length).toList();
                     int end = startPos - 1 - trailing;

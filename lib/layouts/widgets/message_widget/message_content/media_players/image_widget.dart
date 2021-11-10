@@ -1,4 +1,3 @@
-import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
@@ -11,7 +10,6 @@ import 'package:bluebubbles/layouts/image_viewer/attachment_fullscreen_viewer.da
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:visibility_detector/visibility_detector.dart';

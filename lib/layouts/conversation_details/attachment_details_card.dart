@@ -116,7 +116,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
     if (hideAttachments && !hideAttachmentTypes) {
       return Container(
         alignment: Alignment.center,
-        color: Theme.of(context).accentColor,
+        color: Theme.of(context).colorScheme.secondary,
         child: Text(
           widget.attachment.mimeType!,
           textAlign: TextAlign.center,
@@ -125,7 +125,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
     }
     if (hideAttachments) {
       return Container(
-        color: Theme.of(context).accentColor,
+        color: Theme.of(context).colorScheme.secondary,
       );
     }
     if (kIsWeb) {
@@ -139,7 +139,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
         alignment: Alignment.center,
         children: <Widget>[
           Container(
-            color: Theme.of(context).accentColor,
+            color: Theme.of(context).colorScheme.secondary,
           ),
           Center(
             child: !Get.find<AttachmentDownloadService>().downloaders.contains(attachment.guid)
@@ -280,7 +280,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
       );
     } else {
       return Container(
-        color: Theme.of(context).accentColor,
+        color: Theme.of(context).colorScheme.secondary,
         child: Center(
           child: RegularFileOpener(
             file: file,

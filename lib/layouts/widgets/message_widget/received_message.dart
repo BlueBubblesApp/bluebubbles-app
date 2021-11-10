@@ -1,5 +1,4 @@
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
@@ -130,9 +129,9 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
       Theme.of(context).primaryColor,
       Theme.of(context).primaryColor] : [Theme
         .of(context)
-        .accentColor, Theme
+        .colorScheme.secondary, Theme
         .of(context)
-        .accentColor
+        .colorScheme.secondary
     ];
     if (SettingsManager().settings.colorfulBubbles.value && !message.isFromMe!) {
       if (message.handle?.color == null) {
@@ -171,7 +170,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
               height: 70,
               color: Theme
                   .of(context)
-                  .accentColor,
+                  .colorScheme.secondary,
               child: Center(
                 child: Text(
                   "emoji",
@@ -954,7 +953,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                               child: Padding(
                                 padding: EdgeInsets.only(left: addedAvatar ? 50 : 18, right: 8.0, top: 2, bottom: 4),
                                 child: Text(
-                                  "${list.length} Repl${list.length > 1 ? "ies" : "y"}",
+                                  "${list.length} repl${list.length > 1 ? "ies" : "y"}",
                                   style: Theme.of(context).textTheme.subtitle2!.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
                                 ),
                               ),

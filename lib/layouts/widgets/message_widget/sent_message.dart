@@ -1,5 +1,4 @@
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
@@ -97,7 +96,7 @@ class SentMessageHelper {
                       child: Container(
                           width: 70,
                           height: 70,
-                          color: Theme.of(context).accentColor,
+                          color: Theme.of(context).colorScheme.secondary,
                           child: Center(
                             child: Text(
                               "emoji",
@@ -547,7 +546,7 @@ class SentMessage extends StatefulWidget {
   _SentMessageState createState() => _SentMessageState();
 }
 
-class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin, MessageWidgetMixin {
+class _SentMessageState extends State<SentMessage> with MessageWidgetMixin {
   final Rx<Skins> skin = Rx<Skins>(SettingsManager().settings.skin.value);
   late final spanFuture = MessageWidgetMixin.buildMessageSpansAsync(context, widget.message);
   Size? threadOriginatorSize;
@@ -584,7 +583,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
   List<Color> getBubbleColors(Message message) {
     List<Color> bubbleColors = message.isFromMe ?? false
         ? [Theme.of(context).primaryColor, Theme.of(context).primaryColor]
-        : [Theme.of(context).accentColor, Theme.of(context).accentColor];
+        : [Theme.of(context).colorScheme.secondary, Theme.of(context).colorScheme.secondary];
     if (SettingsManager().settings.colorfulBubbles.value && !message.isFromMe!) {
       if (message.handle?.color == null) {
         bubbleColors = toColorGradient(message.handle?.address);
@@ -948,7 +947,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
               child: Padding(
                 padding: const EdgeInsets.only(left: 8.0, right: 18.0, top: 2, bottom: 4),
                 child: Text(
-                  "${list.length} Repl${list.length > 1 ? "ies" : "y"}",
+                  "${list.length} repl${list.length > 1 ? "ies" : "y"}",
                   style:
                       Theme.of(context).textTheme.subtitle2!.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
                 ),

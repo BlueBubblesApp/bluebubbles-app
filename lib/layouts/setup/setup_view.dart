@@ -10,7 +10,6 @@ import 'package:bluebubbles/layouts/setup/syncing_messages/syncing_messages.dart
 import 'package:bluebubbles/layouts/setup/welcome_page/welcome_page.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/socket_manager.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';

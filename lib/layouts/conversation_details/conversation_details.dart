@@ -3,7 +3,6 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
-import 'package:path/path.dart' hide context;
 import 'package:path_provider/path_provider.dart';
 import 'package:printing/printing.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -121,7 +120,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                         context: context,
                         builder: (BuildContext context) {
                           return AlertDialog(
-                            backgroundColor: Theme.of(context).accentColor,
+                            backgroundColor: Theme.of(context).colorScheme.secondary,
                             title: Text(
                               controller.text.isEmpty ? "Removing name..." : "Changing name to ${controller.text}...",
                               style: Theme.of(context).textTheme.bodyText1,
@@ -187,7 +186,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Colors.transparent, // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
         systemNavigationBarIconBrightness:
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
@@ -200,7 +199,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
               backgroundColor: Theme.of(context).backgroundColor,
               appBar: (SettingsManager().settings.skin.value == Skins.iOS
                   ? CupertinoNavigationBar(
-                      backgroundColor: Theme.of(context).accentColor.withAlpha(125),
+                      backgroundColor: Theme.of(context).colorScheme.secondary.withAlpha(125),
                       leading: buildBackButton(context),
                       middle: Text(
                         "Details",
@@ -295,7 +294,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                       context: context,
                                       builder: (BuildContext context) {
                                         return AlertDialog(
-                                            backgroundColor: Theme.of(context).accentColor,
+                                            backgroundColor: Theme.of(context).colorScheme.secondary,
                                             title: Text("Group Naming",
                                                 style:
                                                 TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
@@ -383,7 +382,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                           padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 8.0),
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              primary: Theme.of(context).accentColor,
+                              primary: Theme.of(context).colorScheme.secondary,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(18),
                               ),
@@ -406,7 +405,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                               context: context,
                                               builder: (BuildContext context) {
                                                 return AlertDialog(
-                                                  backgroundColor: Theme.of(context).accentColor,
+                                                  backgroundColor: Theme.of(context).colorScheme.secondary,
                                                   title: Text(
                                                     "Adding ${participantController.text}...",
                                                     style: Theme.of(context).textTheme.bodyText1,
@@ -478,7 +477,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                               context: context,
                               builder: (BuildContext context) {
                                 return AlertDialog(
-                                    backgroundColor: Theme.of(context).accentColor,
+                                    backgroundColor: Theme.of(context).colorScheme.secondary,
                                     title: Text("Custom Avatar",
                                         style: TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
                                     content: Column(
@@ -611,8 +610,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                 value: widget.chat.isPinned!,
                                 activeColor: Theme.of(context).primaryColor,
                                 activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
-                                inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
-                                inactiveThumbColor: Theme.of(context).accentColor,
+                                inactiveTrackColor: Theme.of(context).colorScheme.secondary.withOpacity(0.6),
+                                inactiveThumbColor: Theme.of(context).colorScheme.secondary,
                                 onChanged: (value) async {
                                   await widget.chat.togglePin(!widget.chat.isPinned!);
                                   EventDispatcher().emit("refresh", null);
@@ -629,8 +628,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                 value: widget.chat.muteType == "mute",
                                 activeColor: Theme.of(context).primaryColor,
                                 activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
-                                inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
-                                inactiveThumbColor: Theme.of(context).accentColor,
+                                inactiveTrackColor: Theme.of(context).colorScheme.secondary.withOpacity(0.6),
+                                inactiveThumbColor: Theme.of(context).colorScheme.secondary,
                                 onChanged: (value) async {
                                   await widget.chat.toggleMute(value);
                                   EventDispatcher().emit("refresh", null);
@@ -648,8 +647,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                 value: widget.chat.isArchived!,
                                 activeColor: Theme.of(context).primaryColor,
                                 activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
-                                inactiveTrackColor: Theme.of(context).accentColor.withOpacity(0.6),
-                                inactiveThumbColor: Theme.of(context).accentColor,
+                                inactiveTrackColor: Theme.of(context).colorScheme.secondary.withOpacity(0.6),
+                                inactiveThumbColor: Theme.of(context).colorScheme.secondary,
                                 onChanged: (value) {
                                   if (value) {
                                     ChatBloc().archiveChat(widget.chat);

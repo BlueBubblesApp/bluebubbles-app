@@ -3,7 +3,6 @@ import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 import 'package:universal_html/html.dart' as html;
-import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
@@ -140,7 +139,7 @@ class _VideoViewerState extends State<VideoViewer> {
                   style: Theme.of(context).textTheme.headline1,
                   textAlign: TextAlign.center,
                 ),
-                backgroundColor: Theme.of(context).accentColor,
+                backgroundColor: Theme.of(context).colorScheme.secondary,
                 content: SizedBox(
                   width: CustomNavigator.width(context) * 3 / 5,
                   height: context.height * 1 / 4,
@@ -349,7 +348,7 @@ class _VideoViewerState extends State<VideoViewer> {
                             style: Theme.of(context).textTheme.headline1,
                             textAlign: TextAlign.center,
                           ),
-                          backgroundColor: Theme.of(context).accentColor,
+                          backgroundColor: Theme.of(context).colorScheme.secondary,
                           content: SizedBox(
                             width: CustomNavigator.width(context) * 3 / 5,
                             height: context.height * 1 / 4,
@@ -497,7 +496,7 @@ class _VideoViewerState extends State<VideoViewer> {
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Colors.transparent, // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
         systemNavigationBarIconBrightness:
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
@@ -525,7 +524,7 @@ class _VideoViewerState extends State<VideoViewer> {
                               platform: SettingsManager().settings.skin.value == Skins.iOS
                                   ? TargetPlatform.iOS
                                   : TargetPlatform.android,
-                              dialogBackgroundColor: Theme.of(context).accentColor,
+                              dialogBackgroundColor: Theme.of(context).colorScheme.secondary,
                               iconTheme: Theme.of(context)
                                   .iconTheme
                                   .copyWith(color: Theme.of(context).textTheme.bodyText1?.color)),
@@ -538,7 +537,7 @@ class _VideoViewerState extends State<VideoViewer> {
                   } else {
                     return Center(
                       child: CircularProgressIndicator(
-                        backgroundColor: Theme.of(context).accentColor,
+                        backgroundColor: Theme.of(context).colorScheme.secondary,
                         valueColor: AlwaysStoppedAnimation(Theme.of(context).primaryColor),
                       ),
                     );

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
@@ -22,7 +21,6 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
@@ -47,7 +45,7 @@ class MessagesView extends StatefulWidget {
   MessagesViewState createState() => MessagesViewState();
 }
 
-class MessagesViewState extends State<MessagesView> with TickerProviderStateMixin, WidgetsBindingObserver {
+class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver {
   Completer<LoadMessageResult>? loader;
   bool noMoreMessages = false;
   bool noMoreLocalMessages = false;
@@ -374,7 +372,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
           border: Border.all(
             width: 2,
             style: BorderStyle.solid,
-            color: Theme.of(context).accentColor,
+            color: Theme.of(context).colorScheme.secondary,
           ),
           borderRadius: BorderRadius.circular(19),
         ),
@@ -432,7 +430,6 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                       padding: EdgeInsets.only(top: SettingsManager().settings.skin.value != Skins.iOS ? 8.0 : 0.0),
                       child: AnimatedSize(
                         duration: Duration(milliseconds: 400),
-                        vsync: this,
                         child: internalSmartReplies.isEmpty && replies.isNotEmpty
                             ? Container(
                               height: Theme.of(context).textTheme.bodyText1!.fontSize! + 35,

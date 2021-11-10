@@ -27,7 +27,6 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
 import 'package:convert/convert.dart';
 import 'package:device_info_plus/device_info_plus.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:libphonenumber_plugin/libphonenumber_plugin.dart';
@@ -203,7 +202,7 @@ void showSnackbar(String title, String message,
   Get.snackbar(title, message,
       snackPosition: SnackPosition.BOTTOM,
       colorText: Get.textTheme.bodyText1!.color,
-      backgroundColor: Get.theme.accentColor,
+      backgroundColor: Get.theme.colorScheme.secondary,
       margin: EdgeInsets.only(bottom: 10),
       maxWidth: Get.width - 20,
       isDismissible: false,
@@ -486,8 +485,8 @@ Size getGifDimensions(Uint8List bytes) {
   return size;
 }
 
-Brightness getBrightness(BuildContext context) {
-  return AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ? Brightness.dark : Brightness.light;
+SystemUiOverlayStyle getBrightness(BuildContext context) {
+  return AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark;
 }
 
 /// Take the passed [address] or serverAddress from Settings

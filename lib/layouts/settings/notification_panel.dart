@@ -61,13 +61,13 @@ class NotificationPanel extends StatelessWidget {
         ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
     Color headerColor;
     Color tileColor;
-    if ((Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+    if ((Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
         SettingsManager().settings.skin.value == Skins.Material) && (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
-      headerColor = Theme.of(context).accentColor;
+      headerColor = Theme.of(context).colorScheme.secondary;
       tileColor = Theme.of(context).backgroundColor;
     } else {
       headerColor = Theme.of(context).backgroundColor;
-      tileColor = Theme.of(context).accentColor;
+      tileColor = Theme.of(context).colorScheme.secondary;
     }
     if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
       tileColor = headerColor;
@@ -75,7 +75,7 @@ class NotificationPanel extends StatelessWidget {
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Colors.transparent, // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
         systemNavigationBarIconBrightness: headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
@@ -88,7 +88,8 @@ class NotificationPanel extends StatelessWidget {
             child: ClipRRect(
               child: BackdropFilter(
                 child: AppBar(
-                  brightness: ThemeData.estimateBrightnessForColor(headerColor),
+                  systemOverlayStyle: ThemeData.estimateBrightnessForColor(headerColor) == Brightness.dark
+                      ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
                   toolbarHeight: 100.0,
                   elevation: 0,
                   leading: buildBackButton(context),

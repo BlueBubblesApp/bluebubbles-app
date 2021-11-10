@@ -1,3 +1,4 @@
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -12,7 +13,7 @@ class FailureToStart extends StatelessWidget {
       title: 'BlueBubbles',
       home: AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle(
-          systemNavigationBarColor: Colors.transparent, // navigation bar color
+          systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
           systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
           statusBarColor: Colors.transparent, // status bar color
         ),

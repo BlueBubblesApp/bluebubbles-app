@@ -58,7 +58,7 @@ Widget buildImagePlaceholder(BuildContext context, Attachment attachment, Widget
   // If the image doesn't have a valid size, show the loader with static height/width
   if (!attachment.hasValidSize) {
     return Container(
-        width: placeholderWidth, height: placeholderHeight, color: Theme.of(context).accentColor, child: child);
+        width: placeholderWidth, height: placeholderHeight, color: Theme.of(context).colorScheme.secondary, child: child);
   }
 
   // If we have a valid size, we want to calculate the aspect ratio so the image doesn't "jitter" when loading
@@ -73,14 +73,14 @@ Widget buildImagePlaceholder(BuildContext context, Attachment attachment, Widget
       constraints: BoxConstraints(maxHeight: height, maxWidth: width),
       child: AspectRatio(
           aspectRatio: ratio,
-          child: Container(width: width, height: height, color: Theme.of(context).accentColor, child: child)));
+          child: Container(width: width, height: height, color: Theme.of(context).colorScheme.secondary, child: child)));
 }
 
 Future<void> showConversationTileMenu(context, _this, chat, tapPosition, textTheme) async {
   bool ios = SettingsManager().settings.skin.value == Skins.iOS;
   HapticFeedback.mediumImpact();
   await showMenu(
-    color: Theme.of(context).accentColor,
+    color: Theme.of(context).colorScheme.secondary,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(ios ? 10 : 0)),
     context: context,
     position: RelativeRect.fromLTRB(

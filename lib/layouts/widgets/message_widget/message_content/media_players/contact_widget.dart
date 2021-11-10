@@ -65,7 +65,7 @@ class _ContactWidgetState extends State<ContactWidget> {
         height: 60,
         width: 250,
         child: Material(
-          color: Theme.of(context).accentColor,
+          color: Theme.of(context).colorScheme.secondary,
           child: InkWell(
             onTap: () async {
               if (kIsWeb || widget.file.path == null) {

@@ -6,6 +6,7 @@ import 'package:bluebubbles/layouts/setup/connecting_alert/connecting_alert.dart
 import 'package:bluebubbles/layouts/setup/qr_code_scanner.dart';
 import 'package:bluebubbles/layouts/setup/qr_scan/failed_to_scan_dialog.dart';
 import 'package:bluebubbles/layouts/setup/qr_scan/text_input_url.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
@@ -121,13 +122,13 @@ class _QRScanState extends State<QRScan> {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Colors.transparent, // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
         systemNavigationBarIconBrightness:
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
-        backgroundColor: Theme.of(context).accentColor,
+        backgroundColor: Theme.of(context).colorScheme.secondary,
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

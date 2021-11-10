@@ -35,8 +35,6 @@ import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:get/get.dart';
@@ -394,7 +392,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
             Icons.arrow_downward,
             color: Theme.of(context).textTheme.bodyText1!.color,
           ),
-          backgroundColor: Theme.of(context).accentColor,
+          backgroundColor: Theme.of(context).colorScheme.secondary,
         ),
       );
     } else if (currentChat != null &&
@@ -412,7 +410,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                 child: Container(
                   height: 35,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).accentColor.withOpacity(0.7),
+                    color: Theme.of(context).colorScheme.secondary.withOpacity(0.7),
                     borderRadius: BorderRadius.circular(10.0),
                   ),
                   padding: EdgeInsets.symmetric(horizontal: 10),
@@ -627,7 +625,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Colors.transparent, // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
         systemNavigationBarIconBrightness:
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color

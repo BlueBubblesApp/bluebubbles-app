@@ -16,7 +16,7 @@ class ReactionsWidget extends StatefulWidget {
   _ReactionsWidgetState createState() => _ReactionsWidgetState();
 }
 
-class _ReactionsWidgetState extends State<ReactionsWidget> with TickerProviderStateMixin {
+class _ReactionsWidgetState extends State<ReactionsWidget> {
   @override
   Widget build(BuildContext context) {
     Map<String, Reaction> reactionsMap = {};
@@ -68,7 +68,6 @@ class _ReactionsWidgetState extends State<ReactionsWidget> with TickerProviderSt
     return AnimatedSize(
       duration: Duration(milliseconds: 200),
       reverseDuration: Duration(milliseconds: 200),
-      vsync: this,
       curve: Curves.bounceInOut,
       alignment: Alignment.center,
       child: Stack(

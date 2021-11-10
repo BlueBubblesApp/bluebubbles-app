@@ -9,7 +9,6 @@ import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -154,7 +153,7 @@ class _ContactAvatarWidgetState extends State<ContactAvatarWidget> with Automati
         height: widget.size ?? 40,
         padding: EdgeInsets.all(widget.borderThickness),
         decoration: BoxDecoration(
-          color: SettingsManager().settings.skin.value == Skins.Samsung ? context.theme.accentColor : context.theme.backgroundColor, // border color
+          color: SettingsManager().settings.skin.value == Skins.Samsung ? context.theme.colorScheme.secondary : context.theme.backgroundColor, // border color
           shape: BoxShape.circle,
         ),
         child: Obx(() {

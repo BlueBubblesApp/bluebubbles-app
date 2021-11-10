@@ -71,7 +71,7 @@ class BaseLogger extends GetxService {
       durationMs: 2500,
       button: TextButton(
         style: TextButton.styleFrom(
-          backgroundColor: Get.theme.accentColor,
+          backgroundColor: Get.theme.colorScheme.secondary,
         ),
         onPressed: () {
           Share.file("BlueBubbles Logs", filePath);

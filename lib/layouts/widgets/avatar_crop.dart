@@ -58,7 +58,7 @@ class _AvatarCropState extends State<AvatarCrop> {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Colors.transparent, // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
         systemNavigationBarIconBrightness:
         Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
@@ -70,11 +70,12 @@ class _AvatarCropState extends State<AvatarCrop> {
             child: ClipRRect(
               child: BackdropFilter(
                 child: AppBar(
-                  brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
+                  systemOverlayStyle: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.dark
+                      ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
                   toolbarHeight: 100.0,
                   elevation: 0,
                   leading: buildBackButton(context),
-                  backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
+                  backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
                   title: Text(
                     "Select & Crop Image",
                     style: Theme.of(context).textTheme.headline1,

@@ -169,7 +169,7 @@ class _ChatSelectorTextFieldState extends State<ChatSelectorTextField> {
           // Padding(
           //   padding: EdgeInsets.only(left: 12, right: 10.0),
           //   child: FlatButton(
-          //     color: Theme.of(context).accentColor,
+          //     color: Theme.of(context).colorScheme.secondary,
           //     onPressed: () async {
           //       // widget.onCreate();
           //     },

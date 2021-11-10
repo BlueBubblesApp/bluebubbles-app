@@ -1,5 +1,4 @@
 import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -27,7 +26,7 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
         child: Material(
-          color: widget.entry.color?.lightenOrDarken(50) ?? whiteLightTheme.accentColor,
+          color: widget.entry.color?.lightenOrDarken(50) ?? whiteLightTheme.colorScheme.secondary,
           child: InkWell(
             onTap: () async {
               BuildContext _context = context;

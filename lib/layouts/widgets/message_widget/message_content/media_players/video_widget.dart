@@ -23,7 +23,7 @@ import 'package:visibility_detector/visibility_detector.dart';
 
 enum PlayerStatus { NONE, STOPPED, PAUSED, PLAYING, ENDED }
 
-class VideoWidgetController extends GetxController with SingleGetTickerProviderMixin {
+class VideoWidgetController extends GetxController {
   bool navigated = false;
   bool isVisible = false;
   PlayerStatus status = PlayerStatus.NONE;
@@ -136,7 +136,6 @@ class VideoWidget extends StatelessWidget {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(8.0),
             child: AnimatedSize(
-              vsync: controller,
               curve: Curves.easeInOut,
               alignment: Alignment.center,
               duration: Duration(milliseconds: 250),

@@ -21,7 +21,7 @@ class DeliveredReceipt extends StatefulWidget {
   _DeliveredReceiptState createState() => _DeliveredReceiptState();
 }
 
-class _DeliveredReceiptState extends State<DeliveredReceipt> with TickerProviderStateMixin {
+class _DeliveredReceiptState extends State<DeliveredReceipt> {
   bool shouldShow(Message? myLastMessage, Message? lastReadMessage, Message? lastDeliveredMessage) {
     // If we have no delivered date, don't show anything
     if (widget.message.dateDelivered.value == null) return false;
@@ -96,7 +96,6 @@ class _DeliveredReceiptState extends State<DeliveredReceipt> with TickerProvider
     Widget item;
     if (widget.shouldAnimate) {
       item = AnimatedSize(
-          vsync: this,
           curve: Curves.easeInOut,
           alignment: Alignment.bottomLeft,
           duration: Duration(milliseconds: 250),

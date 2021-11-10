@@ -8,7 +8,6 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 
@@ -55,7 +54,7 @@ class RegularFileOpener extends StatelessWidget {
           maxHeight: 140,
           maxWidth: 200,
         ),
-        color: Theme.of(context).accentColor,
+        color: Theme.of(context).colorScheme.secondary,
         child: Padding(
           padding: const EdgeInsets.all(15.0),
           child: Column(

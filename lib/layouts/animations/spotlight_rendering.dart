@@ -2,11 +2,8 @@
 import 'dart:math';
 
 import 'package:bluebubbles/layouts/animations/spotlight_classes.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/widgets.dart';
 
 class Spotlight extends LeafRenderObjectWidget {
   Spotlight({
@@ -130,8 +127,6 @@ class RenderSpotlight extends RenderBox {
       double tangent1Y = centerY + ad * dy + bd * dyr;
       double tangent2X = centerX + ad * dx - bd * dxr;
       double tangent2Y = centerY + ad * dy - bd * dyr;
-      double angle1 = asin((min(tangent1Y, tangent2Y) - centerY) / size / 2);
-      double angle2 = atan((max(tangent1Y, tangent2Y) - centerY) / (max(tangent1X, tangent2X) - centerX));
       final Path p2 = Path();
       p2.moveTo(pointX, 0);
       p2.lineTo(min(tangent1X, tangent2X), min(tangent1Y, tangent2Y));

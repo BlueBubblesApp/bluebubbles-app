@@ -8,7 +8,6 @@ import 'package:universal_io/io.dart';
 import 'package:universal_html/html.dart' as html;
 import 'dart:isolate';
 import 'dart:typed_data';
-import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/logger.dart';

@@ -2,11 +2,8 @@ import 'dart:math';
 
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/layouts/animations/balloon_classes.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/widgets.dart';
 
 class Balloons extends LeafRenderObjectWidget {
   Balloons({
@@ -97,7 +94,7 @@ class RenderBalloons extends RenderBox {
       double centerY = balloon.position.y;
       double radius = balloon.radius;
 
-      var handleLength = KAPPA * radius;
+      var handleLength = kappa * radius;
 
       var widthDiff = (radius * WIDTH_FACTOR);
       var heightDiff = (radius * HEIGHT_FACTOR);
@@ -214,7 +211,7 @@ class RenderBalloons extends RenderBox {
   }
 }
 
-final KAPPA = (4 * (sqrt(2) - 1))/3;
+final kappa = (4 * (sqrt(2) - 1))/3;
 const WIDTH_FACTOR = 0.0333;
 const HEIGHT_FACTOR = 0.4;
 const TIE_WIDTH_FACTOR = 0.12;

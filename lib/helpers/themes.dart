@@ -2,7 +2,7 @@ import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:flutter/material.dart';
-import 'package:collection/src/iterable_extensions.dart';
+import 'package:collection/collection.dart';
 
 enum DarkThemes {
   OLED,
@@ -24,7 +24,7 @@ class Themes {
 }
 
 bool isEqual(ThemeData one, ThemeData two) {
-  return one.accentColor == two.accentColor && one.backgroundColor == two.backgroundColor;
+  return one.colorScheme.secondary == two.colorScheme.secondary && one.backgroundColor == two.backgroundColor;
 }
 
 ThemeData oledDarkTheme = ThemeData(
@@ -63,6 +63,13 @@ ThemeData oledDarkTheme = ThemeData(
     ),
   ),
   accentColor: HexColor('26262a'),
+  colorScheme: ColorScheme.fromSwatch(
+    primarySwatch: Colors.blue,
+    backgroundColor: Colors.black,
+    accentColor: HexColor('26262a'),
+  ).copyWith(
+    secondary: HexColor('26262a'),
+  ),
   dividerColor: HexColor('27272a'),
   buttonColor: HexColor("666666"),
   backgroundColor: Colors.black,
@@ -105,6 +112,13 @@ ThemeData nordDarkTheme = ThemeData(
     ),
   ),
   accentColor: HexColor('4C566A'),
+  colorScheme: ColorScheme.fromSwatch(
+    primarySwatch: Colors.blue,
+    backgroundColor: HexColor('2E3440'),
+    accentColor: HexColor('4C566A'),
+  ).copyWith(
+    secondary: HexColor("4C566A"),
+  ),
   dividerColor: HexColor('4C566A'),
   buttonColor: HexColor("4C566A"),
   backgroundColor: HexColor('2E3440'),
@@ -147,6 +161,11 @@ ThemeData whiteLightTheme = ThemeData(
     ),
   ),
   accentColor: HexColor('e5e5ea'),
+  colorScheme: ColorScheme.fromSwatch(
+    primarySwatch: Colors.blue,
+    backgroundColor: Colors.white,
+    accentColor: HexColor('e5e5ea'),
+  ),
   dividerColor: HexColor('e5e5ea').withOpacity(0.5),
   backgroundColor: Colors.white,
 );
