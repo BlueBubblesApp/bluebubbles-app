@@ -169,7 +169,7 @@ class AttachmentDownloadController extends GetxController {
             _file.writeAsBytesSync(attachment.bytes!.toList());
           }
         }
-        if (SettingsManager().settings.autoSave.value && !kIsWeb && !kIsDesktop) {
+        if (SettingsManager().settings.autoSave.value && !kIsWeb && !kIsDesktop && !(attachment.isOutgoing ?? false)) {
           String filePath = "/storage/emulated/0/Download/";
           if (attachment.mimeType?.startsWith("image") ?? false) {
             await AttachmentHelper.saveToGallery(file.value!, showAlert: false);
