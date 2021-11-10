@@ -293,13 +293,14 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                   ),
                 ],
               ),
-              SettingsHeader(
-                  headerColor: headerColor,
-                  tileColor: tileColor,
-                  iosSubtitle: iosSubtitle,
-                  materialSubtitle: materialSubtitle,
-                  text: "Connection & Sync"
-              ),
+              if (!kIsWeb)
+                SettingsHeader(
+                    headerColor: headerColor,
+                    tileColor: tileColor,
+                    iosSubtitle: iosSubtitle,
+                    materialSubtitle: materialSubtitle,
+                    text: "Connection & Sync"
+                ),
               if (!kIsWeb)
                 SettingsSection(
                   backgroundColor: tileColor,
