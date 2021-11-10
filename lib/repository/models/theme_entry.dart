@@ -13,6 +13,7 @@ class ThemeEntry {
   Color? color;
   bool? isFont;
   int? fontSize;
+  int? fontWeight;
 
   ThemeEntry({
     this.id,
@@ -21,6 +22,7 @@ class ThemeEntry {
     this.color,
     this.isFont,
     this.fontSize,
+    this.fontWeight,
   });
 
   factory ThemeEntry.fromMap(Map<String, dynamic> json) {
@@ -31,6 +33,7 @@ class ThemeEntry {
       color: HexColor(json["color"]),
       isFont: json["isFont"] == 1,
       fontSize: json["fontSize"],
+      fontWeight: json["fontWeight"],
     );
   }
 
@@ -40,13 +43,14 @@ class ThemeEntry {
       name: title,
       isFont: true,
       fontSize: style.fontSize != null ? style.fontSize!.toInt() : 14,
+      fontWeight: FontWeight.values.indexOf(style.fontWeight ?? FontWeight.w400) + 1,
     );
   }
 
   dynamic get style => isFont!
       ? TextStyle(
           color: color,
-          fontWeight: FontWeight.normal,
+          fontWeight: fontWeight != null ? FontWeight.values[fontWeight! - 1] : FontWeight.normal,
           fontSize: fontSize?.toDouble(),
         )
       : color;
@@ -96,6 +100,7 @@ class ThemeEntry {
             "color": color!.value.toRadixString(16),
             "isFont": isFont! ? 1 : 0,
             "fontSize": fontSize,
+            "fontWeight": fontWeight,
           },
           where: "ROWID = ?",
           whereArgs: [id]);
@@ -133,5 +138,6 @@ class ThemeEntry {
         "color": color!.value.toRadixString(16),
         "isFont": isFont! ? 1 : 0,
         "fontSize": fontSize,
+        "fontWeight": fontWeight,
       };
 }

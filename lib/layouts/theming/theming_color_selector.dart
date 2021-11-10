@@ -32,75 +32,120 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
             onTap: () async {
               BuildContext _context = context;
               if (widget.editable) {
-                final Color color = await showColorPickerDialog(
-                  context,
-                  widget.entry.color!,
-                  title: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8),
-                    child: Text('Choose a Color',
-                        style: Theme.of(context).textTheme.headline6)
-                  ),
-                  heading: StatefulBuilder(
-                    builder: (BuildContext context, void Function(void Function()) setState) {
-                      return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (widget.entry.isFont!)
-                              Padding(
-                                  padding: EdgeInsets.only(left: 25),
-                                  child: Text("Font Size")
-                              ),
-                            if (widget.entry.isFont!)
-                              Slider(
-                                onChanged: (double value) {
-                                  setState(() {
-                                    widget.entry.fontSize = value.floor();
-                                  });
-                                },
-                                value: widget.entry.fontSize!.toDouble(),
-                                min: 5,
-                                max: 30,
-                                divisions: 25,
-                                label: widget.entry.fontSize.toString(),
-                              ),
-                            if (widget.entry.isFont!)
-                              Padding(
-                                  padding: EdgeInsets.only(left: 25, bottom: 10),
-                                  child: Text("Color")
-                              ),
-                          ]
-                      );
-                    },
-                  ),
-                  width: 40,
-                  height: 40,
-                  spacing: 0,
-                  runSpacing: 0,
-                  borderRadius: 0,
-                  wheelDiameter: 165,
-                  enableOpacity: false,
-                  showColorCode: true,
-                  colorCodeHasColor: true,
-                  pickersEnabled: <ColorPickerType, bool>{
-                    ColorPickerType.wheel: true,
-                  },
-                  copyPasteBehavior: const ColorPickerCopyPasteBehavior(
-                    parseShortHexCode: true,
-                  ),
-                  actionButtons: const ColorPickerActionButtons(
-                    dialogActionButtons: true,
-                  ),
-                  constraints: BoxConstraints(
-                      minHeight: 480, minWidth: CustomNavigator.width(context) - 70, maxWidth: CustomNavigator.width(context) - 70),
+                Color newColor = widget.entry.color!;
+                int? fontSize = widget.entry.fontSize;
+                int? fontWeight = widget.entry.fontWeight;
+                await showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      scrollable: true,
+                      content: ColorPicker(
+                        color: newColor,
+                        onColorChanged: (color) {
+                          newColor = color;
+                        },
+                        title: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8),
+                            child: Text('Choose a Color',
+                                style: Theme.of(context).textTheme.headline6)
+                        ),
+                        heading: StatefulBuilder(
+                          builder: (BuildContext context, void Function(void Function()) setState) {
+                            return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (widget.entry.isFont!)
+                                    Padding(
+                                        padding: EdgeInsets.only(left: 25),
+                                        child: Text("Font Size")
+                                    ),
+                                  if (widget.entry.isFont!)
+                                    Slider(
+                                      onChanged: (double value) {
+                                        setState(() {
+                                          fontSize = value.floor();
+                                        });
+                                      },
+                                      value: fontSize!.toDouble(),
+                                      min: 5,
+                                      max: 30,
+                                      divisions: 25,
+                                      label: fontSize.toString(),
+                                    ),
+                                  if (widget.entry.isFont!)
+                                    Padding(
+                                        padding: EdgeInsets.only(left: 25),
+                                        child: Text("Font Weight")
+                                    ),
+                                  if (widget.entry.isFont!)
+                                    Slider(
+                                      onChanged: (double value) {
+                                        setState(() {
+                                          fontWeight = value.floor();
+                                        });
+                                      },
+                                      value: fontWeight!.toDouble(),
+                                      min: 1,
+                                      max: 9,
+                                      divisions: 8,
+                                      label: "w" + fontWeight.toString() + "00" + (fontWeight == 4 ? " (Default)" : ""),
+                                    ),
+                                  if (widget.entry.isFont!)
+                                    Padding(
+                                        padding: EdgeInsets.only(left: 25, bottom: 10),
+                                        child: Text("Color")
+                                    ),
+                                ]
+                            );
+                          },
+                        ),
+                        width: 40,
+                        height: 40,
+                        spacing: 0,
+                        runSpacing: 0,
+                        borderRadius: 0,
+                        wheelDiameter: 165,
+                        enableOpacity: false,
+                        showColorCode: true,
+                        colorCodeHasColor: true,
+                        pickersEnabled: <ColorPickerType, bool>{
+                          ColorPickerType.wheel: true,
+                        },
+                        copyPasteBehavior: const ColorPickerCopyPasteBehavior(
+                          parseShortHexCode: true,
+                        ),
+                        actionButtons: const ColorPickerActionButtons(
+                          dialogActionButtons: true,
+                        ),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          child: Text('CANCEL'),
+                        ),
+                        TextButton(
+                          onPressed: () async {
+                            Navigator.of(context).pop();
+                            widget.entry.color = newColor;
+                            widget.entry.fontWeight = fontWeight;
+                            widget.entry.fontSize = fontSize;
+                            await widget.entry.save(widget.currentTheme);
+                            await widget.currentTheme.fetchData();
+                            if (widget.currentTheme.selectedDarkTheme) {
+                              await SettingsManager().saveSelectedTheme(_context, selectedDarkTheme: widget.currentTheme);
+                            } else if (widget.currentTheme.selectedLightTheme) {
+                              await SettingsManager().saveSelectedTheme(_context, selectedLightTheme: widget.currentTheme);
+                            }
+                          },
+                          child: Text('SAVE'),
+                        ),
+                      ],
+                    );
+                  }
                 );
-                widget.entry.color = color;
-                await widget.entry.save(widget.currentTheme);
-                await widget.currentTheme.fetchData();
-                if (widget.currentTheme.selectedDarkTheme) {
-                  await SettingsManager().saveSelectedTheme(_context, selectedDarkTheme: widget.currentTheme);
-                } else if (widget.currentTheme.selectedLightTheme) {
-                  await SettingsManager().saveSelectedTheme(_context, selectedLightTheme: widget.currentTheme);
-                }
               } else {
                 showSnackbar('Customization', "Please click the edit button to start customizing!");
               }
