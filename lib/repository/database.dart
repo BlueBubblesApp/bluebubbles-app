@@ -441,7 +441,7 @@ class DBProvider {
         "name TEXT NOT NULL,"
         "color TEXT NOT NULL,"
         "isFont INTEGER DEFAULT 0,"
-        "fontSize INTEGER"
+        "fontSize INTEGER,"
         "fontWeight INTEGER"
         ");");
   }

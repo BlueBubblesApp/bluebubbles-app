@@ -138,7 +138,7 @@ class AttachmentHelper {
     return (width / factor) / width;
   }
 
-  static Future<void> saveToGallery(BuildContext context, PlatformFile file) async {
+  static Future<void> saveToGallery(PlatformFile file, {bool showAlert = true}) async {
     if (kIsWeb) {
       final content = base64.encode(file.bytes!);
       html.AnchorElement(
@@ -150,10 +150,11 @@ class AttachmentHelper {
     if (kIsDesktop) {
       String downloadsPath = (await getDownloadsDirectory())!.path;
       File(join(downloadsPath, file.name)).writeAsBytes(file.bytes!);
-      return showSnackbar('Success', 'Saved attachment to $downloadsPath!');
+      if (showAlert) showSnackbar('Success', 'Saved attachment to $downloadsPath!');
+      return;
     }
     void showDeniedSnackbar({String? err}) {
-      showSnackbar("Save Failed", err ?? "Failed to save attachment!");
+      if (showAlert) showSnackbar("Save Failed", err ?? "Failed to save attachment!");
     }
 
     var hasPermissions = await Permission.storage.isGranted;
@@ -176,7 +177,7 @@ class AttachmentHelper {
     }
 
     await ImageGallerySaver.saveFile(file.path!);
-    showSnackbar('Success', 'Saved attachment!');
+    if (showAlert) showSnackbar('Success', 'Saved attachment!');
   }
 
   static String getBaseAttachmentsPath() {

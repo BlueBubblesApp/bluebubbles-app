@@ -133,11 +133,27 @@ class ImageWidget extends StatelessWidget {
             ? Container(
               width: controller.attachment.guid == "redacted-mode-demo-attachment" ? controller.attachment.width!.toDouble() : null,
               height: controller.attachment.guid == "redacted-mode-demo-attachment" ? controller.attachment.height!.toDouble() : null,
-              child: FadeInImage(
-                placeholder: MemoryImage(kTransparentImage),
-                image: MemoryImage(controller.data.value!),
-                fadeInDuration: Duration(milliseconds: 200),
-            ))
+              child: Image.memory(
+                controller.data.value!,
+                // prevents the image widget from "refreshing" when the provider changes
+                gaplessPlayback: true,
+                frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                  return Stack(children: [
+                    buildPlaceHolder(context, controller, isLoaded: wasSynchronouslyLoaded),
+                    AnimatedOpacity(
+                      opacity: (frame == null &&
+                          controller.attachment.guid != "redacted-mode-demo-attachment" &&
+                          !controller.attachment.guid!.contains("theme-selector"))
+                          ? 0
+                          : 1,
+                      child: child,
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeInOut,
+                    )
+                  ]);
+                },
+              ),
+            )
             : buildPlaceHolder(context, controller),
       ));
 

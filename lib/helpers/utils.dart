@@ -277,7 +277,7 @@ extension DateHelpers on DateTime {
     return yesterday.day == day && yesterday.month == month && yesterday.year == year;
   }
 
-  bool isWithin(DateTime other, {int? ms, int? seconds, int? minutes, int? hours}) {
+  bool isWithin(DateTime other, {int? ms, int? seconds, int? minutes, int? hours, int? days}) {
     Duration diff = difference(other);
     if (ms != null) {
       return diff.inMilliseconds < ms;
@@ -287,6 +287,8 @@ extension DateHelpers on DateTime {
       return diff.inMinutes < minutes;
     } else if (hours != null) {
       return diff.inHours < hours;
+    } else if (days != null) {
+      return diff.inDays < days;
     } else {
       throw Exception("No timerange specified!");
     }

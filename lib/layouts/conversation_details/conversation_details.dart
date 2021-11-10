@@ -719,57 +719,6 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                       child: InkWell(
                         onTap: () async {
                           Get.defaultDialog(
-                            title: "Saving files...",
-                            titleStyle: Theme.of(context).textTheme.headline1,
-                            confirm: Container(height: 0, width: 0),
-                            cancel: Container(height: 0, width: 0),
-                            content: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: <Widget>[
-                                  SizedBox(
-                                    height: 15.0,
-                                  ),
-                                  buildProgressIndicator(context),
-                                ]
-                            ),
-                            barrierDismissible: false,
-                            backgroundColor: Theme.of(context).backgroundColor,
-                          );
-                          final attachments = await Chat.getAttachments(chat, limit: 0);
-                          final files = attachments.where((e) => e.guid != null).map((e) => AttachmentHelper.getContent(e, autoDownload: false)).whereType<PlatformFile>();
-                          String filePath = "/storage/emulated/0/Download/";
-                          if (kIsDesktop) {
-                            filePath = (await getDownloadsDirectory())!.path;
-                          }
-                          for (PlatformFile f in files) {
-                            final bytes = await File(f.path!).readAsBytes();
-                            await File(join(filePath, f.name)).writeAsBytes(bytes);
-                          }
-                          Navigator.of(context).pop();
-                          showSnackbar("Success", "Downloaded ${attachments.length} attachment${attachments.length > 1 ? "s" : ""} to the downloads folder");
-                        },
-                        child: ListTile(
-                          leading: Text(
-                            "Download All Known Attachments",
-                            style: TextStyle(
-                              color: Theme.of(context).primaryColor,
-                            ),
-                          ),
-                          trailing: Padding(
-                            padding: EdgeInsets.only(right: 15),
-                            child: Icon(
-                              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.folder : Icons.folder,
-                              color: Theme.of(context).primaryColor,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  if (!kIsWeb)
-                    SliverToBoxAdapter(
-                      child: InkWell(
-                        onTap: () async {
-                          Get.defaultDialog(
                             title: "Generating transcript...",
                             titleStyle: Theme.of(context).textTheme.headline1,
                             confirm: Container(height: 0, width: 0),
@@ -837,6 +786,77 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     SliverToBoxAdapter(
                       child: InkWell(
                         onTap: () async {
+                          int hours = 0;
+                          int days = 0;
+                          await showDialog(
+                            barrierDismissible: false,
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: Text(
+                                  "Select timeframe",
+                                  style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
+                                ),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Padding(
+                                        padding: EdgeInsets.all(15),
+                                        child: Text("Note: Longer timeframes may take a while to generate the PDF")
+                                    ),
+                                    Wrap(
+                                      alignment: WrapAlignment.center,
+                                      children: [
+                                        TextButton(
+                                          child: Text("Cancel"),
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                        ),
+                                        TextButton(
+                                          child: Text("1 Hour"),
+                                          onPressed: () {
+                                            hours = 1;
+                                            Navigator.of(context).pop();
+                                          },
+                                        ),
+                                        TextButton(
+                                          child: Text("1 Day"),
+                                          onPressed: () {
+                                            days = 1;
+                                            Navigator.of(context).pop();
+                                          },
+                                        ),
+                                        TextButton(
+                                          child: Text("1 Week"),
+                                          onPressed: () {
+                                            days = 7;
+                                            Navigator.of(context).pop();
+                                          },
+                                        ),
+                                        TextButton(
+                                          child: Text("1 Month"),
+                                          onPressed: () {
+                                            days = 30;
+                                            Navigator.of(context).pop();
+                                          },
+                                        ),
+                                        TextButton(
+                                          child: Text("1 Year"),
+                                          onPressed: () {
+                                            days = 365;
+                                            Navigator.of(context).pop();
+                                          },
+                                        ),
+                                      ],
+                                    )
+                                  ]
+                                ),
+                                backgroundColor: Theme.of(context).backgroundColor,
+                              );
+                            },
+                          );
+                          if (hours == 0 && days == 0) return;
                           Get.defaultDialog(
                             title: "Generating PDF...",
                             titleStyle: Theme.of(context).textTheme.headline1,
@@ -854,7 +874,9 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                             barrierDismissible: false,
                             backgroundColor: Theme.of(context).backgroundColor,
                           );
-                          final messages = (await Chat.getMessages(chat, limit: 0, includeDeleted: true)).reversed;
+                          final messages = (await Chat.getMessages(chat, limit: 0, includeDeleted: true))
+                              .reversed
+                              .where((e) => DateTime.now().isWithin(e.dateCreated!, hours: hours != 0 ? hours : null, days: days != 0 ? days : null));
                           if (messages.isEmpty) {
                             Navigator.of(context).pop();
                             showSnackbar("Error", "No messages found!");
@@ -948,7 +970,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                         },
                         child: ListTile(
                           leading: Text(
-                            "Download Chat Transcript (Richtext)",
+                            "Download Chat Transcript (PDF)",
                             style: TextStyle(
                               color: Theme.of(context).primaryColor,
                             ),

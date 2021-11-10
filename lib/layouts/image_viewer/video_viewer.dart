@@ -224,7 +224,7 @@ class _VideoViewerState extends State<VideoViewer> {
         OptionItem(
           onTap: () async {
             Navigator.pop(context);
-            await AttachmentHelper.saveToGallery(context, widget.file);
+            await AttachmentHelper.saveToGallery(widget.file);
           },
           iconData: Icons.download,
           title: 'Save to gallery',
@@ -443,7 +443,7 @@ class _VideoViewerState extends State<VideoViewer> {
                   child: CupertinoButton(
                     padding: EdgeInsets.symmetric(horizontal: 5),
                     onPressed: () async {
-                      await AttachmentHelper.saveToGallery(context, widget.file);
+                      await AttachmentHelper.saveToGallery(widget.file);
                     },
                     child: Icon(
                       SettingsManager().settings.skin.value == Skins.iOS

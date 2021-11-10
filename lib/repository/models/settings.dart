@@ -19,6 +19,7 @@ class Settings {
   final RxInt chunkSize = 500.obs;
   final RxBool autoDownload = true.obs;
   final RxBool onlyWifiDownload = false.obs;
+  final RxBool autoSave = false.obs;
   final RxBool autoOpenKeyboard = true.obs;
   final RxBool hideTextPreviews = false.obs;
   final RxBool showIncrementalSync = false.obs;
@@ -135,6 +136,8 @@ class Settings {
         settings.autoDownload.value = entry.value;
       } else if (entry.name == "onlyWifiDownload") {
         settings.onlyWifiDownload.value = entry.value;
+      } else if (entry.name == "autoSave") {
+        settings.autoSave.value = entry.value;
       } else if (entry.name == "hideTextPreviews") {
         settings.hideTextPreviews.value = entry.value;
       } else if (entry.name == "showIncrementalSync") {
@@ -355,6 +358,7 @@ class Settings {
       'chunkSize': chunkSize.value,
       'autoDownload': autoDownload.value,
       'onlyWifiDownload': onlyWifiDownload.value,
+      'autoSave': autoSave.value,
       'autoOpenKeyboard': autoOpenKeyboard.value,
       'hideTextPreviews': hideTextPreviews.value,
       'showIncrementalSync': showIncrementalSync.value,
@@ -450,6 +454,7 @@ class Settings {
     SettingsManager().settings.chunkSize.value = map['chunkSize'] ?? 500;
     SettingsManager().settings.autoDownload.value = map['autoDownload'] ?? true;
     SettingsManager().settings.onlyWifiDownload.value = map['onlyWifiDownload'] ?? false;
+    SettingsManager().settings.autoSave.value = map['autoSave'] ?? true;
     SettingsManager().settings.autoOpenKeyboard.value = map['autoOpenKeyboard'] ?? true;
     SettingsManager().settings.hideTextPreviews.value = map['hideTextPreviews'] ?? false;
     SettingsManager().settings.showIncrementalSync.value = map['showIncrementalSync'] ?? false;
@@ -539,6 +544,7 @@ class Settings {
     s.finishedSetup.value = map['finishedSetup'] ?? false;
     s.chunkSize.value = map['chunkSize'] ?? 500;
     s.autoDownload.value = map['autoDownload'] ?? true;
+    s.autoSave.value = map['autoSave'] ?? true;
     s.onlyWifiDownload.value = map['onlyWifiDownload'] ?? false;
     s.autoOpenKeyboard.value = map['autoOpenKeyboard'] ?? true;
     s.hideTextPreviews.value = map['hideTextPreviews'] ?? false;
