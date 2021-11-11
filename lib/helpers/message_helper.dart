@@ -303,9 +303,9 @@ class MessageHelper {
         if (associatedMessage.isInteractive()) {
           return "$sender $verb ${getInteractiveText(associatedMessage)}";
         // now we check if theres a subject or text and construct out message based off that
-        } else if (!isNullOrEmpty(associatedMessage.text, trimString: true)!
+        } else if (!isNullOrEmpty(associatedMessage.subject, trimString: true)!
             || !isNullOrEmpty(associatedMessage.text, trimString: true)!) {
-          String messageText = "${associatedMessage.subject} ${associatedMessage.text}";
+          String messageText = (associatedMessage.subject ?? "") + (associatedMessage.text ?? "");
           return '$sender $verb “${messageText.trim()}”';
         // if it has an attachment, we should fetch the attachments and get the attachment text
         } else if (associatedMessage.hasAttachments) {
