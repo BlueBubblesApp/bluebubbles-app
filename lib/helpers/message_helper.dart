@@ -1,9 +1,7 @@
 import 'dart:async';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
-import 'package:bluebubbles/repository/database.dart';
 import 'package:flutter/foundation.dart';
-import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:universal_html/html.dart' as html;
 
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
@@ -305,9 +303,9 @@ class MessageHelper {
         if (associatedMessage.isInteractive()) {
           return "$sender $verb ${getInteractiveText(associatedMessage)}";
         // now we check if theres a subject or text and construct out message based off that
-        } else if (!isNullOrEmpty(associatedMessage.text, trimString: true)!
+        } else if (!isNullOrEmpty(associatedMessage.subject, trimString: true)!
             || !isNullOrEmpty(associatedMessage.text, trimString: true)!) {
-          String messageText = "${associatedMessage.subject} ${associatedMessage.text}";
+          String messageText = (associatedMessage.subject ?? "") + (associatedMessage.text ?? "");
           return '$sender $verb “${messageText.trim()}”';
         // if it has an attachment, we should fetch the attachments and get the attachment text
         } else if (associatedMessage.hasAttachments) {

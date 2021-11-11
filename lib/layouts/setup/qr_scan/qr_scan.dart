@@ -5,8 +5,6 @@ import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/setup/connecting_alert/connecting_alert.dart';
 import 'package:bluebubbles/layouts/setup/qr_code_scanner.dart';
-import 'package:bluebubbles/layouts/setup/qr_scan/failed_to_scan_dialog.dart';
-import 'package:bluebubbles/layouts/setup/qr_scan/text_input_url.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
@@ -213,301 +211,312 @@ class _QRScanState extends State<QRScan> {
       ),
       child: Scaffold(
         backgroundColor: Theme.of(context).backgroundColor,
-        body: Padding(
-          padding: const EdgeInsets.only(top: 80.0, left: 20.0, right: 20.0, bottom: 40.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              AnimatedSize(
-                duration: Duration(milliseconds: 200),
-                child: showManualEntry && context.isPhone ? Container() : Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Container(
-                          width: context.width * 2 / 3,
-                          child: Text(
-                              "Server Connection",
-                              style: Theme.of(context).textTheme.bodyText1!.apply(
-                                fontSizeFactor: 2.5,
-                                fontWeightDelta: 2,
-                              ).copyWith(height: 1.5)
-                          ),
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                            kIsWeb || kIsDesktop ? "Enter your server URL and password to access your messages." : "We've created a QR code on your server that you can scan with your phone for easy setup.\n\nAlternatively, you can manually input your URL and password.",
-                            style: Theme.of(context).textTheme.bodyText1!.apply(
-                              fontSizeFactor: 1.1,
-                              color: Colors.grey,
-                            ).copyWith(height: 2)
-                        ),
-                      ),
-                    ),
-                  ],
+        body: LayoutBuilder(
+          builder: (context, size) {
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: size.maxHeight,
                 ),
-              ),
-              Column(
-                children: [
-                  if (error.isNotEmpty)
-                    Container(
-                      width: context.width * 2 / 3,
-                      child: Align(
-                        alignment: Alignment.center,
-                        child: Text(
-                            error,
-                            style: Theme.of(context).textTheme.bodyText1!.apply(
-                              fontSizeFactor: 1.1,
-                              color: Colors.red,
-                            ).copyWith(height: 2)
-                        ),
-                      ),
-                    ),
-                  if (error.isNotEmpty)
-                    SizedBox(height: 20),
-                  if (!kIsWeb && !kIsDesktop)
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(25),
-                        gradient: LinearGradient(
-                          begin: AlignmentDirectional.topStart,
-                          colors: [HexColor('2772C3'), HexColor('5CA7F8').darkenPercent(5)],
-                        ),
-                      ),
-                      height: 40,
-                      child: ElevatedButton(
-                        style: ButtonStyle(
-                          shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                            RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20.0),
-                            ),
-                          ),
-                          backgroundColor: MaterialStateProperty.all(Colors.transparent),
-                          shadowColor: MaterialStateProperty.all(Colors.transparent),
-                          maximumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
-                          minimumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
-                        ),
-                        onPressed: scanQRCode,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 80.0, left: 20.0, right: 20.0, bottom: 40.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      AnimatedSize(
+                        duration: Duration(milliseconds: 200),
+                        child: showManualEntry && context.isPhone ? Container() : Column(
                           children: [
-                            Icon(CupertinoIcons.camera, color: Colors.white, size: 20),
-                            SizedBox(width: 10),
-                            Text(
-                              "Scan QR code",
-                              style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1)
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: Container(
+                                  width: context.width * 2 / 3,
+                                  child: Text(
+                                      "Server Connection",
+                                      style: Theme.of(context).textTheme.bodyText1!.apply(
+                                        fontSizeFactor: 2.5,
+                                        fontWeightDelta: 2,
+                                      ).copyWith(height: 1.5)
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                    kIsWeb || kIsDesktop ? "Enter your server URL and password to access your messages." : "We've created a QR code on your server that you can scan with your phone for easy setup.\n\nAlternatively, you can manually input your URL and password.",
+                                    style: Theme.of(context).textTheme.bodyText1!.apply(
+                                      fontSizeFactor: 1.1,
+                                      color: Colors.grey,
+                                    ).copyWith(height: 2)
+                                ),
+                              ),
                             ),
                           ],
                         ),
                       ),
-                    ),
-                  SizedBox(height: 20),
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(25),
-                      gradient: LinearGradient(
-                        begin: AlignmentDirectional.topStart,
-                        colors: [HexColor('2772C3'), HexColor('5CA7F8').darkenPercent(5)],
-                      ),
-                    ),
-                    height: 40,
-                    padding: EdgeInsets.all(2),
-                    child: ElevatedButton(
-                      style: ButtonStyle(
-                        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                          RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20.0),
-                          ),
-                        ),
-                        backgroundColor: MaterialStateProperty.all(Theme.of(context).backgroundColor),
-                        shadowColor: MaterialStateProperty.all(Theme.of(context).backgroundColor),
-                        maximumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
-                        minimumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
-                      ),
-                      onPressed: () async {
-                        // showDialog(
-                        //   context: context,
-                        //   builder: (connectContext) => TextInputURL(
-                        //     onConnect: () {
-                        //       if (Navigator.of(connectContext).canPop()) {
-                        //         Navigator.of(connectContext).pop();
-                        //       }
-                        //
-                        //       goToNextPage();
-                        //     },
-                        //     onClose: () {
-                        //       if (Navigator.of(connectContext).canPop()) {
-                        //         Navigator.of(connectContext).pop();
-                        //       }
-                        //     },
-                        //   ),
-                        // );
-                        setState(() {
-                          showManualEntry = !showManualEntry;
-                        });
-                      },
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
+                      Column(
                         children: [
-                          Icon(CupertinoIcons.text_cursor, color: Colors.white, size: 20),
-                          SizedBox(width: 10),
-                          Text(
-                            "Manual entry",
-                            style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1)
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  AnimatedSize(
-                    duration: Duration(milliseconds: 200),
-                    child: !showManualEntry ? SizedBox.shrink() : Theme(
-                      data: Theme.of(context).copyWith(
-                          inputDecorationTheme: const InputDecorationTheme(
-                            labelStyle: TextStyle(color: Colors.grey),
-                          )
-                      ),
-                      child: Column(
-                        children: [
-                          SizedBox(height: 20),
-                          Container(
-                            width: context.width * 2 / 3,
-                            child: TextField(
-                              cursorColor: Theme.of(context).primaryColor,
-                              autocorrect: false,
-                              autofocus: true,
-                              controller: urlController,
-                              decoration: InputDecoration(
-                                enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey), borderRadius: BorderRadius.circular(20)),
-                                focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).primaryColor), borderRadius: BorderRadius.circular(20)),
-                                labelText: "URL",
+                          if (error.isNotEmpty)
+                            Container(
+                              width: context.width * 2 / 3,
+                              child: Align(
+                                alignment: Alignment.center,
+                                child: Text(
+                                    error,
+                                    style: Theme.of(context).textTheme.bodyText1!.apply(
+                                      fontSizeFactor: 1.1,
+                                      color: Colors.red,
+                                    ).copyWith(height: 2)
+                                ),
                               ),
                             ),
-                          ),
+                          if (error.isNotEmpty)
+                            SizedBox(height: 20),
+                          if (!kIsWeb && !kIsDesktop)
+                            Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(25),
+                                gradient: LinearGradient(
+                                  begin: AlignmentDirectional.topStart,
+                                  colors: [HexColor('2772C3'), HexColor('5CA7F8').darkenPercent(5)],
+                                ),
+                              ),
+                              height: 40,
+                              child: ElevatedButton(
+                                style: ButtonStyle(
+                                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                    RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20.0),
+                                    ),
+                                  ),
+                                  backgroundColor: MaterialStateProperty.all(Colors.transparent),
+                                  shadowColor: MaterialStateProperty.all(Colors.transparent),
+                                  maximumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
+                                  minimumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
+                                ),
+                                onPressed: scanQRCode,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(CupertinoIcons.camera, color: Colors.white, size: 20),
+                                    SizedBox(width: 10),
+                                    Text(
+                                      "Scan QR code",
+                                      style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1)
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                           SizedBox(height: 20),
                           Container(
-                            width: context.width * 2 / 3,
-                            child: TextField(
-                              cursorColor: Theme.of(context).primaryColor,
-                              autocorrect: false,
-                              autofocus: false,
-                              controller: passwordController,
-                              textInputAction: TextInputAction.next,
-                              onSubmitted: (_) {
-                                if (urlController.text == "googleplaytest" && passwordController.text == "googleplaytest") {
-                                  Get.toNamed("/testing-mode");
-                                  return;
-                                }
-                                connect(urlController.text, passwordController.text);
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(25),
+                              gradient: LinearGradient(
+                                begin: AlignmentDirectional.topStart,
+                                colors: [HexColor('2772C3'), HexColor('5CA7F8').darkenPercent(5)],
+                              ),
+                            ),
+                            height: 40,
+                            padding: EdgeInsets.all(2),
+                            child: ElevatedButton(
+                              style: ButtonStyle(
+                                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                  RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20.0),
+                                  ),
+                                ),
+                                backgroundColor: MaterialStateProperty.all(Theme.of(context).backgroundColor),
+                                shadowColor: MaterialStateProperty.all(Theme.of(context).backgroundColor),
+                                maximumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
+                                minimumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
+                              ),
+                              onPressed: () async {
+                                // showDialog(
+                                //   context: context,
+                                //   builder: (connectContext) => TextInputURL(
+                                //     onConnect: () {
+                                //       if (Navigator.of(connectContext).canPop()) {
+                                //         Navigator.of(connectContext).pop();
+                                //       }
+                                //
+                                //       goToNextPage();
+                                //     },
+                                //     onClose: () {
+                                //       if (Navigator.of(connectContext).canPop()) {
+                                //         Navigator.of(connectContext).pop();
+                                //       }
+                                //     },
+                                //   ),
+                                // );
+                                setState(() {
+                                  showManualEntry = !showManualEntry;
+                                });
                               },
-                              decoration: InputDecoration(
-                                enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey), borderRadius: BorderRadius.circular(20)),
-                                focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).primaryColor), borderRadius: BorderRadius.circular(20)),
-                                labelText: "Password",
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(CupertinoIcons.text_cursor, color: Colors.white, size: 20),
+                                  SizedBox(width: 10),
+                                  Text(
+                                    "Manual entry",
+                                    style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1)
+                                  ),
+                                ],
                               ),
-                              obscureText: true,
                             ),
                           ),
-                          SizedBox(height: 20),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(25),
-                                  gradient: LinearGradient(
-                                    begin: AlignmentDirectional.topStart,
-                                    colors: [HexColor('2772C3'), HexColor('5CA7F8').darkenPercent(5)],
-                                  ),
-                                ),
-                                height: 40,
-                                padding: EdgeInsets.all(2),
-                                child: ElevatedButton(
-                                  style: ButtonStyle(
-                                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                      RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(20.0),
+                          AnimatedSize(
+                            duration: Duration(milliseconds: 200),
+                            child: !showManualEntry ? SizedBox.shrink() : Theme(
+                              data: Theme.of(context).copyWith(
+                                  inputDecorationTheme: const InputDecorationTheme(
+                                    labelStyle: TextStyle(color: Colors.grey),
+                                  )
+                              ),
+                              child: Column(
+                                children: [
+                                  SizedBox(height: 20),
+                                  Container(
+                                    width: context.width * 2 / 3,
+                                    child: TextField(
+                                      cursorColor: Theme.of(context).primaryColor,
+                                      autocorrect: false,
+                                      autofocus: true,
+                                      controller: urlController,
+                                      decoration: InputDecoration(
+                                        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey), borderRadius: BorderRadius.circular(20)),
+                                        focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).primaryColor), borderRadius: BorderRadius.circular(20)),
+                                        labelText: "URL",
                                       ),
                                     ),
-                                    backgroundColor: MaterialStateProperty.all(Theme.of(context).backgroundColor),
-                                    shadowColor: MaterialStateProperty.all(Theme.of(context).backgroundColor),
-                                    maximumSize: MaterialStateProperty.all(Size(200, 36)),
                                   ),
-                                  onPressed: () async {
-                                    setState(() {
-                                      showManualEntry = false;
-                                    });
-                                  },
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
+                                  SizedBox(height: 20),
+                                  Container(
+                                    width: context.width * 2 / 3,
+                                    child: TextField(
+                                      cursorColor: Theme.of(context).primaryColor,
+                                      autocorrect: false,
+                                      autofocus: false,
+                                      controller: passwordController,
+                                      textInputAction: TextInputAction.next,
+                                      onSubmitted: (_) {
+                                        if (urlController.text == "googleplaytest" && passwordController.text == "googleplaytest") {
+                                          Get.toNamed("/testing-mode");
+                                          return;
+                                        }
+                                        connect(urlController.text, passwordController.text);
+                                      },
+                                      decoration: InputDecoration(
+                                        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey), borderRadius: BorderRadius.circular(20)),
+                                        focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).primaryColor), borderRadius: BorderRadius.circular(20)),
+                                        labelText: "Password",
+                                      ),
+                                      obscureText: true,
+                                    ),
+                                  ),
+                                  SizedBox(height: 20),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Icon(Icons.close, color: Colors.white, size: 20),
-                                      SizedBox(width: 10),
-                                      Text(
-                                          "Cancel",
-                                          style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1)
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(25),
+                                          gradient: LinearGradient(
+                                            begin: AlignmentDirectional.topStart,
+                                            colors: [HexColor('2772C3'), HexColor('5CA7F8').darkenPercent(5)],
+                                          ),
+                                        ),
+                                        height: 40,
+                                        padding: EdgeInsets.all(2),
+                                        child: ElevatedButton(
+                                          style: ButtonStyle(
+                                            shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                              RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(20.0),
+                                              ),
+                                            ),
+                                            backgroundColor: MaterialStateProperty.all(Theme.of(context).backgroundColor),
+                                            shadowColor: MaterialStateProperty.all(Theme.of(context).backgroundColor),
+                                            maximumSize: MaterialStateProperty.all(Size(200, 36)),
+                                          ),
+                                          onPressed: () async {
+                                            setState(() {
+                                              showManualEntry = false;
+                                            });
+                                          },
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(Icons.close, color: Colors.white, size: 20),
+                                              SizedBox(width: 10),
+                                              Text(
+                                                  "Cancel",
+                                                  style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1)
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(25),
+                                          gradient: LinearGradient(
+                                            begin: AlignmentDirectional.topStart,
+                                            colors: [HexColor('2772C3'), HexColor('5CA7F8').darkenPercent(5)],
+                                          ),
+                                        ),
+                                        height: 40,
+                                        child: ElevatedButton(
+                                          style: ButtonStyle(
+                                            shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                              RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(20.0),
+                                              ),
+                                            ),
+                                            backgroundColor: MaterialStateProperty.all(Colors.transparent),
+                                            shadowColor: MaterialStateProperty.all(Colors.transparent),
+                                            maximumSize: MaterialStateProperty.all(Size(200, 36)),
+                                          ),
+                                          onPressed: () async {
+                                            if (urlController.text == "googleplaytest" && passwordController.text == "googleplaytest") {
+                                              Get.toNamed("/testing-mode");
+                                              return;
+                                            }
+                                            connect(urlController.text, passwordController.text);
+                                          },
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                  "Connect",
+                                                  style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1)
+                                              ),
+                                              SizedBox(width: 10),
+                                              Icon(Icons.arrow_forward, color: Colors.white, size: 20),
+                                            ],
+                                          ),
+                                        ),
                                       ),
                                     ],
                                   ),
-                                ),
+                                ],
                               ),
-                              Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(25),
-                                  gradient: LinearGradient(
-                                    begin: AlignmentDirectional.topStart,
-                                    colors: [HexColor('2772C3'), HexColor('5CA7F8').darkenPercent(5)],
-                                  ),
-                                ),
-                                height: 40,
-                                child: ElevatedButton(
-                                  style: ButtonStyle(
-                                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                      RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(20.0),
-                                      ),
-                                    ),
-                                    backgroundColor: MaterialStateProperty.all(Colors.transparent),
-                                    shadowColor: MaterialStateProperty.all(Colors.transparent),
-                                    maximumSize: MaterialStateProperty.all(Size(200, 36)),
-                                  ),
-                                  onPressed: () async {
-                                    if (urlController.text == "googleplaytest" && passwordController.text == "googleplaytest") {
-                                      Get.toNamed("/testing-mode");
-                                      return;
-                                    }
-                                    connect(urlController.text, passwordController.text);
-                                  },
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                          "Connect",
-                                          style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1)
-                                      ),
-                                      SizedBox(width: 10),
-                                      Icon(Icons.arrow_forward, color: Colors.white, size: 20),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          )
                         ],
                       ),
-                    ),
-                  )
-                ],
+                    ],
+                  ),
+                ),
               ),
-            ],
-          ),
+            );
+          }
         ),
       ),
     );

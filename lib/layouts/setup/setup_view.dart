@@ -65,6 +65,7 @@ class _SetupViewState extends State<SetupView> {
           body: SafeArea(
             child: Stack(
               fit: StackFit.passthrough,
+              alignment: Alignment.topCenter,
               children: <Widget>[
                 PageView(
                   onPageChanged: (int page) {
@@ -94,53 +95,49 @@ class _SetupViewState extends State<SetupView> {
                     //ThemeSelector(),
                   ],
                 ),
-                Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      Padding(
-                        padding: EdgeInsets.only(top: 20, left: 20, right: 20),
-                        child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                Container(
+                  color: Theme.of(context).backgroundColor,
+                  child: Padding(
+                    padding: EdgeInsets.only(top: 20, left: 20, right: 20),
+                    child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
                             children: [
-                              Row(
-                                children: [
-                                  Hero(
-                                      tag: "setup-icon",
-                                      child: Image.asset("assets/icon/icon.png", width: 30, fit: BoxFit.contain)
-                                  ),
-                                  SizedBox(width: 10),
-                                  Text(
-                                    "BlueBubbles",
-                                    style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2, fontSizeFactor: 1.35),
-                                  ),
-                                ],
+                              Hero(
+                                  tag: "setup-icon",
+                                  child: Image.asset("assets/icon/icon.png", width: 30, fit: BoxFit.contain)
                               ),
-                              Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(25),
-                                  gradient: LinearGradient(
-                                    begin: AlignmentDirectional.topStart,
-                                    colors: [HexColor('2772C3'), HexColor('5CA7F8').darkenPercent(5)],
-                                  ),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 13),
-                                  child: RichText(
-                                    text: TextSpan(
-                                        children: [
-                                          TextSpan(text: "$currentPage", style: Theme.of(context).textTheme.bodyText1!.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
-                                          TextSpan(text: " of ${kIsWeb || kIsDesktop ? "5" : "7"}", style: Theme.of(context).textTheme.bodyText1!.copyWith(color: Colors.white38, fontWeight: FontWeight.bold)),
-                                        ]
-                                    ),
-                                  ),
+                              SizedBox(width: 10),
+                              Text(
+                                "BlueBubbles",
+                                style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2, fontSizeFactor: 1.35),
+                              ),
+                            ],
+                          ),
+                          Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(25),
+                              gradient: LinearGradient(
+                                begin: AlignmentDirectional.topStart,
+                                colors: [HexColor('2772C3'), HexColor('5CA7F8').darkenPercent(5)],
+                              ),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 13),
+                              child: RichText(
+                                text: TextSpan(
+                                    children: [
+                                      TextSpan(text: "$currentPage", style: Theme.of(context).textTheme.bodyText1!.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
+                                      TextSpan(text: " of ${kIsWeb || kIsDesktop ? "5" : "7"}", style: Theme.of(context).textTheme.bodyText1!.copyWith(color: Colors.white38, fontWeight: FontWeight.bold)),
+                                    ]
                                 ),
                               ),
-                            ]
-                        ),
-                      ),
-                    ],
+                            ),
+                          ),
+                        ]
+                    ),
                   ),
                 )
               ],

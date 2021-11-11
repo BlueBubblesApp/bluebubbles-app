@@ -1,4 +1,3 @@
-import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/layouts/setup/connecting_alert/failed_to_connect_dialog.dart';
 import 'package:bluebubbles/socket_manager.dart';
