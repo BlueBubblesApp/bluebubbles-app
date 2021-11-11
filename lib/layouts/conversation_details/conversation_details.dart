@@ -717,6 +717,77 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     SliverToBoxAdapter(
                       child: InkWell(
                         onTap: () async {
+                          int hours = 0;
+                          int days = 0;
+                          await showDialog(
+                            barrierDismissible: false,
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: Text(
+                                  "Select timeframe",
+                                  style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
+                                ),
+                                content: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Padding(
+                                          padding: EdgeInsets.all(15),
+                                          child: Text("Note: Longer timeframes may take a while to generate the PDF")
+                                      ),
+                                      Wrap(
+                                        alignment: WrapAlignment.center,
+                                        children: [
+                                          TextButton(
+                                            child: Text("Cancel"),
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                          ),
+                                          TextButton(
+                                            child: Text("1 Hour"),
+                                            onPressed: () {
+                                              hours = 1;
+                                              Navigator.of(context).pop();
+                                            },
+                                          ),
+                                          TextButton(
+                                            child: Text("1 Day"),
+                                            onPressed: () {
+                                              days = 1;
+                                              Navigator.of(context).pop();
+                                            },
+                                          ),
+                                          TextButton(
+                                            child: Text("1 Week"),
+                                            onPressed: () {
+                                              days = 7;
+                                              Navigator.of(context).pop();
+                                            },
+                                          ),
+                                          TextButton(
+                                            child: Text("1 Month"),
+                                            onPressed: () {
+                                              days = 30;
+                                              Navigator.of(context).pop();
+                                            },
+                                          ),
+                                          TextButton(
+                                            child: Text("1 Year"),
+                                            onPressed: () {
+                                              days = 365;
+                                              Navigator.of(context).pop();
+                                            },
+                                          ),
+                                        ],
+                                      )
+                                    ]
+                                ),
+                                backgroundColor: Theme.of(context).backgroundColor,
+                              );
+                            },
+                          );
+                          if (hours == 0 && days == 0) return;
                           Get.defaultDialog(
                             title: "Generating transcript...",
                             titleStyle: Theme.of(context).textTheme.headline1,
@@ -734,7 +805,9 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                             barrierDismissible: false,
                             backgroundColor: Theme.of(context).backgroundColor,
                           );
-                          final messages = (await Chat.getMessages(chat, limit: 0, includeDeleted: true)).reversed;
+                          final messages = (await Chat.getMessages(chat, limit: 0, includeDeleted: true))
+                              .reversed
+                              .where((e) => DateTime.now().isWithin(e.dateCreated!, hours: hours != 0 ? hours : null, days: days != 0 ? days : null));
                           if (messages.isEmpty) {
                             Navigator.of(context).pop();
                             showSnackbar("Error", "No messages found!");
