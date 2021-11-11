@@ -43,5 +43,5 @@ pubspeck.lock
 **/releases
 
 #objectbox
-!/.dart_tool/build/generated
-!/.dart_tool/build/*/asset_graph.json
+!.dart_tool/build/generated
+!.dart_tool/build/*/asset_graph.json
