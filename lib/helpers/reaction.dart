@@ -6,33 +6,49 @@ import 'package:get/get.dart';
 
 class ReactionTypes {
   // ignore: non_constant_identifier_names
-  static final String LIKE = "like";
+  static final String LOVE = "love";
 
   // ignore: non_constant_identifier_names
-  static final String LOVE = "love";
+  static final String LIKE = "like";
 
   // ignore: non_constant_identifier_names
   static final String DISLIKE = "dislike";
 
   // ignore: non_constant_identifier_names
-  static final String QUESTION = "question";
+  static final String LAUGH = "laugh";
 
   // ignore: non_constant_identifier_names
   static final String EMPHASIZE = "emphasize";
 
   // ignore: non_constant_identifier_names
-  static final String LAUGH = "laugh";
+  static final String QUESTION = "question";
 
   static List<String> toList() {
     return [
-      "love",
-      "like",
-      "dislike",
-      "laugh",
-      "emphasize",
-      "question",
+      LOVE,
+      LIKE,
+      DISLIKE,
+      LAUGH,
+      EMPHASIZE,
+      QUESTION,
     ];
   }
+
+  static final Map<String, String> reactionToVerb = {
+    LOVE: "loved",
+    LIKE: "liked",
+    DISLIKE: "disliked",
+    LAUGH: "laughed at",
+    EMPHASIZE: "emphasized",
+    QUESTION: "questioned",
+    "-$LOVE": "removed a heart from",
+    "-$LIKE": "removed a like from",
+    "-$DISLIKE": "removed a dislike from",
+    "-$LAUGH": "removed a laugh from",
+    "-$EMPHASIZE": "removed an exclamation from",
+    "-$QUESTION": "removed a question mark from",
+  };
+
 }
 
 class Reaction {

@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
+import 'package:bluebubbles/helpers/reaction.dart';
+import 'package:bluebubbles/repository/database.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:universal_html/html.dart' as html;
@@ -28,7 +30,7 @@ class EmojiConst {
 
 Map<String, String> nameMap = {
   'com.apple.Handwriting.HandwritingProvider': 'Handwritten Message',
-  'com.apple.DigitalTouchBalloonProvider': 'Digital Touch'
+  'com.apple.DigitalTouchBalloonProvider': 'Digital Touch Message',
 };
 
 class MessageHelper {
@@ -258,38 +260,8 @@ class MessageHelper {
     if (message.hasAttachments && matches.isEmpty) {
       // Build the attachment output by counting the attachments
       String output = "Attachment${aCount > 1 ? "s" : ""}";
-      Map<String, int> counts = {};
-      for (Attachment? attachment in message.attachments) {
-        String? mime = attachment!.mimeType;
-        String key;
-        if (mime == null) {
-          key = "link";
-        } else if (mime.contains("vcard")) {
-          key = "contact card";
-        } else if (mime.contains("location")) {
-          key = "location";
-        } else if (mime.contains("contact")) {
-          key = "contact";
-        } else if (mime.contains("video")) {
-          key = "movie";
-        } else if (mime.contains("image/gif")) {
-          key = "GIF";
-        } else if (mime.contains("application/pdf")) {
-          key = "PDF";
-        } else {
-          key = mime.split("/").first;
-        }
 
-        int current = counts.containsKey(key) ? counts[key]! : 0;
-        counts[key] = current + 1;
-      }
-
-      List<String> attachmentStr = [];
-      counts.forEach((key, value) {
-        attachmentStr.add("$value $key${value > 1 ? "s" : ""}");
-      });
-
-      return "$output: ${attachmentStr.join(attachmentStr.length == 2 ? " & " : ", ")}";
+      return "$output: ${getAttachmentText(message.attachments)}";
     } else {
       // It's all other message types
       return message.fullText;
@@ -319,78 +291,73 @@ class MessageHelper {
     if (message.hasAttachments && matches.isEmpty) {
       // Build the attachment output by counting the attachments
       String output = "Attachment${aCount > 1 ? "s" : ""}";
-      Map<String, int> counts = {};
-      for (Attachment? attachment in message.attachments) {
-        String? mime = attachment!.mimeType;
-        String key;
-        if (mime == null) {
-          key = "link";
-        } else if (mime.contains("vcard")) {
-          key = "contact card";
-        } else if (mime.contains("location")) {
-          key = "location";
-        } else if (mime.contains("contact")) {
-          key = "contact";
-        } else if (mime.contains("video")) {
-          key = "movie";
-        } else if (mime.contains("image/gif")) {
-          key = "GIF";
-        } else if (mime.contains("application/pdf")) {
-          key = "PDF";
-        } else {
-          key = mime.split("/").first;
-        }
-
-        int current = counts.containsKey(key) ? counts[key]! : 0;
-        counts[key] = current + 1;
-      }
-
-      List<String> attachmentStr = [];
-      counts.forEach((key, value) {
-        attachmentStr.add("$value $key${value > 1 ? "s" : ""}");
-      });
-
-      return "$sender$output: ${attachmentStr.join(attachmentStr.length == 2 ? " & " : ", ")}";
+      return "$output: ${getAttachmentText(message.attachments)}";
     } else if (![null, ""].contains(message.associatedMessageGuid)) {
-      // It's a reaction message, get the "sender"
-      String reactionSender = message.isFromMe! ? "You" : ContactManager().getContactTitle(message.handle);
-      String translated = message.text ?? "";
-      if (!kIsWeb && !kIsDesktop) {
-        // translate the reaction text if necessary (to account for different
-        // locales on the tapback sender's phone
-        final languageIdentifier = GoogleMlKit.nlp.languageIdentifier();
-        final locale = Localizations.localeOf(Get.context!);
-        // check if the reaction text is in a different language
-        final splits = message.text!.split("“");
-        final reactionStr = reactionSender + " " + splits.first;
-        final lang = await languageIdentifier.identifyLanguage(reactionStr);
-        // only translate if we have a valid language and it isn't the device's
-        // current language
-        if (lang != "und" && lang != locale.languageCode) {
-          final translateLanguageModelManager = GoogleMlKit.nlp.translateLanguageModelManager();
-          if (!await translateLanguageModelManager.isModelDownloaded(lang)) {
-            await translateLanguageModelManager.downloadModel(lang, isWifiRequired: false);
-          }
-          if (!await translateLanguageModelManager.isModelDownloaded(locale.languageCode)) {
-            await translateLanguageModelManager.downloadModel(locale.languageCode, isWifiRequired: false);
-          }
-          final onDeviceTranslator = GoogleMlKit.nlp.onDeviceTranslator(sourceLanguage: lang, targetLanguage: locale.languageCode);
-          translated = await onDeviceTranslator.translateText(reactionStr);
-          if (splits.length > 1) {
-            translated = translated + (translated.endsWith(" ") ? "“" : " “") + splits.sublist(1).join("“");
-          }
-          if (translated.startsWith(reactionSender)) {
-            translated = translated.substring(reactionSender.length + 1);
-          }
-          languageIdentifier.close();
-          onDeviceTranslator.close();
+      // It's a reaction message, get the sender
+      String? sender = message.isFromMe! ? "You" : ContactManager().getContactTitle(message.handle);
+      // fetch the associated message object
+      Message? associatedMessage = await Message.findOne({'guid': message.associatedMessageGuid});
+      if (associatedMessage != null) {
+        // grab the verb we'll use from the reactionToVerb map
+        String? verb = ReactionTypes.reactionToVerb[message.associatedMessageType];
+        // we need to check balloonBundleId first because for some reason
+        // game pigeon messages have the text "�"
+        if (associatedMessage.isInteractive()) {
+          return "$sender $verb ${getInteractiveText(associatedMessage)}";
+        // now we check if theres a subject or text and construct out message based off that
+        } else if (!isNullOrEmpty(associatedMessage.text, trimString: true)!
+            || !isNullOrEmpty(associatedMessage.text, trimString: true)!) {
+          String messageText = "${associatedMessage.subject} ${associatedMessage.text}";
+          return '$sender $verb “${messageText.trim()}”';
+        // if it has an attachment, we should fetch the attachments and get the attachment text
+        } else if (associatedMessage.hasAttachments) {
+          return '$sender $verb ${getAttachmentText((await associatedMessage.fetchAttachments())!)}';
         }
       }
-      return "$reactionSender $translated";
+      // if we can't fetch the associated message for some reason
+      // (or none of the above conditions about it are true)
+      // then we should fallback to unparsed reaction messages
+      Logger.info("Couldn't fetch associated message for message: ${message.guid}");
+      return "$sender ${message.text}";
     } else {
       // It's all other message types
       return sender + message.fullText;
     }
+  }
+
+  // returns the attachments as a string
+  static String getAttachmentText(List<Attachment?> attachments) {
+    Map<String, int> counts = {};
+    for (Attachment? attachment in attachments) {
+      String? mime = attachment!.mimeType;
+      String key;
+      if (mime == null) {
+        key = "link";
+      } else if (mime.contains("vcard")) {
+        key = "contact card";
+      } else if (mime.contains("location")) {
+        key = "location";
+      } else if (mime.contains("contact")) {
+        key = "contact";
+      } else if (mime.contains("video")) {
+        key = "movie";
+      } else if (mime.contains("image/gif")) {
+        key = "GIF";
+      } else if (mime.contains("application/pdf")) {
+        key = "PDF";
+      } else {
+        key = mime.split("/").first;
+      }
+
+      int current = counts.containsKey(key) ? counts[key]! : 0;
+      counts[key] = current + 1;
+    }
+
+    List<String> attachmentStr = [];
+    counts.forEach((key, value) {
+      attachmentStr.add("$value $key${value > 1 ? "s" : ""}");
+    });
+    return attachmentStr.join(attachmentStr.length == 2 ? " & " : ", ");
   }
 
   static bool shouldShowBigEmoji(String text) {
