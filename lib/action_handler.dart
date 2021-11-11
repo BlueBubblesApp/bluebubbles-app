@@ -574,6 +574,7 @@ class ActionHandler {
       {bool createAttachmentNotification = false, bool isHeadless = false, bool forceProcess = false}) async {
     Message message = Message.fromMap(data);
     List<Chat> chats = MessageHelper.parseChats(data);
+    Logger.debug('[HandleMessage] Successfully mapped message (Chats: ${chats.length})', tag: 'Queue');
 
     // Handle message differently depending on if there is a temp GUID match
     if (data.containsKey("tempGuid")) {

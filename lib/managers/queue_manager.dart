@@ -29,7 +29,6 @@ abstract class QueueManager {
     // If there are no queued items, we are done processing
     if (queue.isEmpty) {
       isProcessing = false;
-      //MethodChannelInterface().closeThread();
       return;
     }
 
