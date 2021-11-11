@@ -41,3 +41,7 @@ pubspeck.lock
 **/android/key.properties
 **/android/.settings
 **/releases
+
+#objectbox
+!/.dart_tool/build/generated
+!/.dart_tool/build/*/asset_graph.json
