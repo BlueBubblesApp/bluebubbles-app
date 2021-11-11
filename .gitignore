@@ -42,5 +42,9 @@ pubspeck.lock
 **/releases
 
 #objectbox
-.dart_tool/build/!generated/**
-.dart_tool/build/*/!asset_graph.json
+.dart_tool/*
+!.dart_tool/build
+.dart_tool/build/entrypoint
+.dart_tool/build/*/error_cache/**
+!.dart_tool/build/generated
+!*.info
