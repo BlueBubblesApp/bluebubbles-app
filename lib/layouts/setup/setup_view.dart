@@ -39,7 +39,7 @@ class _SetupViewState extends State<SetupView> {
               builder: (context) => FailedToConnectDialog(
                 onDismiss: () {
                   controller.animateToPage(
-                    kIsWeb || kIsDesktop ? 3 : 5,
+                    kIsWeb || kIsDesktop ? 2 : 4,
                     duration: Duration(milliseconds: 500),
                     curve: Curves.easeInOut,
                   );
@@ -58,92 +58,95 @@ class _SetupViewState extends State<SetupView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).backgroundColor,
-      body: SafeArea(
-        child: Stack(
-          fit: StackFit.passthrough,
-          children: <Widget>[
-            PageView(
-              onPageChanged: (int page) {
-                currentPage = page + 1;
-                if (mounted) setState(() {});
-              },
-              physics: NeverScrollableScrollPhysics(),
-              controller: controller,
+    return WillPopScope(
+      onWillPop: () async => false,
+      child: Scaffold(
+          backgroundColor: Theme.of(context).backgroundColor,
+          body: SafeArea(
+            child: Stack(
+              fit: StackFit.passthrough,
               children: <Widget>[
-                WelcomePage(
+                PageView(
+                  onPageChanged: (int page) {
+                    currentPage = page + 1;
+                    if (mounted) setState(() {});
+                  },
+                  physics: NeverScrollableScrollPhysics(),
                   controller: controller,
+                  children: <Widget>[
+                    WelcomePage(
+                      controller: controller,
+                    ),
+                    if (!kIsWeb && !kIsDesktop)
+                      RequestContacts(controller: controller),
+                    if (!kIsWeb && !kIsDesktop)
+                      BatteryOptimizationPage(controller: controller),
+                    SetupMacApp(controller: controller),
+                    QRScan(
+                      controller: controller,
+                    ),
+                    PrepareToDownload(
+                      controller: controller,
+                    ),
+                    SyncingMessages(
+                      controller: controller,
+                    ),
+                    //ThemeSelector(),
+                  ],
                 ),
-                if (!kIsWeb && !kIsDesktop)
-                  RequestContacts(controller: controller),
-                if (!kIsWeb && !kIsDesktop)
-                  BatteryOptimizationPage(controller: controller),
-                SetupMacApp(controller: controller),
-                QRScan(
-                  controller: controller,
-                ),
-                PrepareToDownload(
-                  controller: controller,
-                ),
-                SyncingMessages(
-                  controller: controller,
-                ),
-                //ThemeSelector(),
-              ],
-            ),
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  Padding(
-                    padding: EdgeInsets.only(top: 20, left: 20, right: 20),
-                    child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
+                Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Padding(
+                        padding: EdgeInsets.only(top: 20, left: 20, right: 20),
+                        child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Hero(
-                                tag: "setup-icon",
-                                child: Image.asset("assets/icon/icon.png", width: 30, fit: BoxFit.contain)
+                              Row(
+                                children: [
+                                  Hero(
+                                      tag: "setup-icon",
+                                      child: Image.asset("assets/icon/icon.png", width: 30, fit: BoxFit.contain)
+                                  ),
+                                  SizedBox(width: 10),
+                                  Text(
+                                    "BlueBubbles",
+                                    style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2, fontSizeFactor: 1.35),
+                                  ),
+                                ],
                               ),
-                              SizedBox(width: 10),
-                              Text(
-                                "BlueBubbles",
-                                style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2, fontSizeFactor: 1.35),
-                              ),
-                            ],
-                          ),
-                          Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(25),
-                              gradient: LinearGradient(
-                                begin: AlignmentDirectional.topStart,
-                                colors: [HexColor('2772C3'), HexColor('5CA7F8').darkenPercent(5)],
-                              ),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 13),
-                              child: RichText(
-                                text: TextSpan(
-                                    children: [
-                                      TextSpan(text: "$currentPage", style: Theme.of(context).textTheme.bodyText1!.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
-                                      TextSpan(text: " of ${kIsWeb || kIsDesktop ? "5" : "7"}", style: Theme.of(context).textTheme.bodyText1!.copyWith(color: Colors.white38, fontWeight: FontWeight.bold)),
-                                    ]
+                              Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(25),
+                                  gradient: LinearGradient(
+                                    begin: AlignmentDirectional.topStart,
+                                    colors: [HexColor('2772C3'), HexColor('5CA7F8').darkenPercent(5)],
+                                  ),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 13),
+                                  child: RichText(
+                                    text: TextSpan(
+                                        children: [
+                                          TextSpan(text: "$currentPage", style: Theme.of(context).textTheme.bodyText1!.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
+                                          TextSpan(text: " of ${kIsWeb || kIsDesktop ? "5" : "7"}", style: Theme.of(context).textTheme.bodyText1!.copyWith(color: Colors.white38, fontWeight: FontWeight.bold)),
+                                        ]
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
-                          ),
-                        ]
-                    ),
+                            ]
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            )
-          ],
-        ),
-      )
+                )
+              ],
+            ),
+          )
+      ),
     );
   }
 }
