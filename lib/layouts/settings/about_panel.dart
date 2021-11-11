@@ -1,20 +1,17 @@
-import 'dart:ui';
+import 'dart:math';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
-import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/gestures.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/layouts/settings/settings_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -31,70 +28,32 @@ class AboutPanel extends StatelessWidget {
         ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
     Color headerColor;
     Color tileColor;
-    if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
-        SettingsManager().settings.skin.value != Skins.iOS) {
-      headerColor = Theme.of(context).accentColor;
+    if ((Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+        SettingsManager().settings.skin.value == Skins.Material) && (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
+      headerColor = Theme.of(context).colorScheme.secondary;
       tileColor = Theme.of(context).backgroundColor;
     } else {
       headerColor = Theme.of(context).backgroundColor;
-      tileColor = Theme.of(context).accentColor;
+      tileColor = Theme.of(context).colorScheme.secondary;
     }
     if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
       tileColor = headerColor;
     }
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle(
-        systemNavigationBarColor: headerColor, // navigation bar color
-        systemNavigationBarIconBrightness: headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
-        statusBarColor: Colors.transparent, // status bar color
-      ),
-      child: Scaffold(
-        backgroundColor: SettingsManager().settings.skin.value != Skins.iOS ? tileColor : headerColor,
-        appBar: PreferredSize(
-          preferredSize: Size(CustomNavigator.width(context), 80),
-          child: ClipRRect(
-            child: BackdropFilter(
-              child: AppBar(
-                brightness: ThemeData.estimateBrightnessForColor(headerColor),
-                toolbarHeight: 100.0,
-                elevation: 0,
-                leading: buildBackButton(context),
-                backgroundColor: headerColor.withOpacity(0.5),
-                title: Text(
-                  "About & Links",
-                  style: Theme.of(context).textTheme.headline1,
-                ),
-              ),
-              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-            ),
-          ),
-        ),
-        body: CustomScrollView(
-          physics: ThemeSwitcher.getScrollPhysics(),
-          slivers: <Widget>[
-            SliverList(
-              delegate: SliverChildListDelegate(
-                <Widget>[
-                  Container(
-                      height: SettingsManager().settings.skin.value == Skins.iOS ? 30 : 40,
-                      alignment: Alignment.bottomLeft,
-                      decoration: SettingsManager().settings.skin.value == Skins.iOS
-                          ? BoxDecoration(
-                              color: headerColor,
-                              border: Border(
-                                  bottom: BorderSide(
-                                      color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
-                            )
-                          : BoxDecoration(
-                              color: tileColor,
-                            ),
-                      child: Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0, left: 15),
-                        child: Text("Links".psCapitalize,
-                            style: SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
-                      )),
-                  Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
+    return SettingsScaffold(
+      title: "About & Links",
+      initialHeader: "Links",
+      iosSubtitle: iosSubtitle,
+      materialSubtitle: materialSubtitle,
+      tileColor: tileColor,
+      headerColor: headerColor,
+      bodySlivers: [
+        SliverList(
+          delegate: SliverChildListDelegate(
+            <Widget>[
+              SettingsSection(
+                backgroundColor: tileColor,
+                children: [
                   SettingsTile(
                     backgroundColor: tileColor,
                     title: "Support Us",
@@ -162,18 +121,23 @@ class AboutPanel extends StatelessWidget {
                       width: 32,
                     ),
                   ),
-                  SettingsHeader(
-                      headerColor: headerColor,
-                      tileColor: tileColor,
-                      iosSubtitle: iosSubtitle,
-                      materialSubtitle: materialSubtitle,
-                      text: "Info"),
+                ],
+              ),
+              SettingsHeader(
+                  headerColor: headerColor,
+                  tileColor: tileColor,
+                  iosSubtitle: iosSubtitle,
+                  materialSubtitle: materialSubtitle,
+                  text: "Info"),
+              SettingsSection(
+                backgroundColor: tileColor,
+                children: [
                   SettingsTile(
                     backgroundColor: tileColor,
                     title: "Changelog",
                     onTap: () async {
                       String changelog =
-                          await DefaultAssetBundle.of(context).loadString('assets/changelog/changelog.md');
+                      await DefaultAssetBundle.of(context).loadString('assets/changelog/changelog.md');
                       Navigator.of(context).push(
                         ThemeSwitcher.buildPageRoute(
                           builder: (context) => Scaffold(
@@ -199,15 +163,15 @@ class AboutPanel extends StatelessWidget {
                                     .headline2!
                                     .copyWith(fontSize: 18, fontWeight: FontWeight.bold),
                                 h3: Theme.of(context).textTheme.headline3!.copyWith(
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.bold,
-                                      color: Theme.of(context).textTheme.headline1?.color,
-                                    ),
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).textTheme.headline1?.color,
+                                ),
                               ),
                             ),
                             backgroundColor: Theme.of(context).backgroundColor,
                             appBar: CupertinoNavigationBar(
-                              backgroundColor: Theme.of(context).accentColor,
+                              backgroundColor: Theme.of(context).colorScheme.secondary,
                               middle: Text(
                                 "Changelog",
                                 style: Theme.of(context).textTheme.headline1,
@@ -241,7 +205,7 @@ class AboutPanel extends StatelessWidget {
                             style: Theme.of(context).textTheme.headline1,
                             textAlign: TextAlign.center,
                           ),
-                          backgroundColor: Theme.of(context).accentColor,
+                          backgroundColor: Theme.of(context).colorScheme.secondary,
                           content: SizedBox(
                             width: CustomNavigator.width(context) * 3 / 5,
                             height: context.height * 1 / 9,
@@ -305,8 +269,8 @@ class AboutPanel extends StatelessWidget {
                               child: Text(
                                 "Close",
                                 style: Theme.of(context).textTheme.bodyText1!.copyWith(
-                                      color: Theme.of(context).primaryColor,
-                                    ),
+                                  color: Theme.of(context).primaryColor,
+                                ),
                               ),
                               onPressed: () => Navigator.of(context).pop(),
                             ),
@@ -333,9 +297,9 @@ class AboutPanel extends StatelessWidget {
                       showDialog<void>(
                         context: context,
                         builder: (BuildContext context) {
-                          return FutureBuilder(
+                          return FutureBuilder<PackageInfo>(
                               future: PackageInfo.fromPlatform(),
-                              builder: (BuildContext context, AsyncSnapshot snapshot) {
+                              builder: (BuildContext context, AsyncSnapshot<PackageInfo> snapshot) {
                                 return AlertDialog(
                                   contentPadding: EdgeInsets.only(
                                     top: 24,
@@ -349,7 +313,7 @@ class AboutPanel extends StatelessWidget {
                                     ),
                                   ),
                                   scrollable: true,
-                                  backgroundColor: context.theme.accentColor,
+                                  backgroundColor: context.theme.colorScheme.secondary,
                                   content: ListBody(
                                     children: <Widget>[
                                       Row(
@@ -376,12 +340,12 @@ class AboutPanel extends StatelessWidget {
                                                   ),
                                                   Text(
                                                       "Version Number: " +
-                                                          (snapshot.hasData ? snapshot.data.version : "N/A"),
+                                                          (snapshot.hasData ? snapshot.data!.version : "N/A"),
                                                       style: context.textTheme.subtitle1!),
                                                   Text(
                                                       "Version Code: " +
                                                           (snapshot.hasData
-                                                              ? snapshot.data.buildNumber.toString().lastChars(4)
+                                                              ? snapshot.data!.buildNumber.toString().lastChars(min(4, snapshot.data!.buildNumber.length))
                                                               : "N/A"),
                                                       style: context.textTheme.subtitle1!),
                                                 ],
@@ -401,7 +365,7 @@ class AboutPanel extends StatelessWidget {
                                             data: context.theme,
                                             child: LicensePage(
                                               applicationName: "BlueBubbles",
-                                              applicationVersion: snapshot.hasData ? snapshot.data.version : "",
+                                              applicationVersion: snapshot.hasData ? snapshot.data!.version : "",
                                               applicationIcon: Image.asset(
                                                 "assets/icon/icon.png",
                                                 width: 30,
@@ -429,28 +393,12 @@ class AboutPanel extends StatelessWidget {
                       materialIcon: Icons.info,
                     ),
                   ),
-                  Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
-                  Container(
-                    height: 30,
-                    decoration: SettingsManager().settings.skin.value == Skins.iOS
-                        ? BoxDecoration(
-                            color: headerColor,
-                            border: Border(
-                                top: BorderSide(color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
-                          )
-                        : null,
-                  ),
                 ],
               ),
-            ),
-            SliverList(
-              delegate: SliverChildListDelegate(
-                <Widget>[],
-              ),
-            )
-          ],
+            ],
+          ),
         ),
-      ),
+      ]
     );
   }
 }

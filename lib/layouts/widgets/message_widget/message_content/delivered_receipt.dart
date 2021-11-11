@@ -21,21 +21,20 @@ class DeliveredReceipt extends StatefulWidget {
   _DeliveredReceiptState createState() => _DeliveredReceiptState();
 }
 
-class _DeliveredReceiptState extends State<DeliveredReceipt> with TickerProviderStateMixin {
+class _DeliveredReceiptState extends State<DeliveredReceipt> {
   bool shouldShow(Message? myLastMessage, Message? lastReadMessage, Message? lastDeliveredMessage) {
     // If we have no delivered date, don't show anything
-    if (widget.message.dateDelivered == null) return false;
+    if (widget.message.dateDelivered.value == null) return false;
 
-    if (CurrentChat.of(context) != null) {
-      if (lastReadMessage == null) lastReadMessage = CurrentChat.of(context)?.messageMarkers.lastReadMessage;
-      if (lastDeliveredMessage == null)
-        lastDeliveredMessage = CurrentChat.of(context)?.messageMarkers.lastDeliveredMessage;
-      if (myLastMessage == null) myLastMessage = CurrentChat.of(context)?.messageMarkers.myLastMessage;
+    if (CurrentChat.activeChat != null) {
+      lastReadMessage ??= CurrentChat.activeChat?.messageMarkers.lastReadMessage;
+      lastDeliveredMessage ??= CurrentChat.activeChat?.messageMarkers.lastDeliveredMessage;
+      myLastMessage ??= CurrentChat.activeChat?.messageMarkers.myLastMessage;
     }
 
     // If the message is the same as the last read message, we want to show it
     if (!widget.showDeliveredReceipt &&
-        widget.message.dateRead != null &&
+        widget.message.dateRead.value != null &&
         lastReadMessage != null &&
         widget.message.guid == lastReadMessage.guid) {
       return true;
@@ -43,7 +42,7 @@ class _DeliveredReceiptState extends State<DeliveredReceipt> with TickerProvider
 
     // If the message is the same as the last delivered message, we want to show it
     if (!widget.showDeliveredReceipt &&
-        widget.message.dateDelivered != null &&
+        widget.message.dateDelivered.value != null &&
         lastDeliveredMessage != null &&
         widget.message.guid == lastDeliveredMessage.guid) {
       return true;
@@ -68,10 +67,10 @@ class _DeliveredReceiptState extends State<DeliveredReceipt> with TickerProvider
 
   String getText() {
     String text = "Delivered";
-    if (widget.message.dateRead != null) {
-      text = "Read " + buildDate(widget.message.dateRead);
-    } else if (SettingsManager().settings.showDeliveryTimestamps.value && widget.message.dateDelivered != null) {
-      text = "Delivered " + buildDate(widget.message.dateDelivered);
+    if (widget.message.dateRead.value != null) {
+      text = "Read " + buildDate(widget.message.dateRead.value);
+    } else if (SettingsManager().settings.showDeliveryTimestamps.value && widget.message.dateDelivered.value != null) {
+      text = "Delivered " + buildDate(widget.message.dateDelivered.value);
     }
 
     return text;
@@ -82,7 +81,7 @@ class _DeliveredReceiptState extends State<DeliveredReceipt> with TickerProvider
     Widget timestampWidget = Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
       child: Obx(() {
-        MessageMarkers? markers = CurrentChat.of(context)?.messageMarkers.markers.value ?? null.obs.value;
+        MessageMarkers? markers = CurrentChat.activeChat?.messageMarkers.markers.value ?? null.obs.value;
         if (shouldShow(markers?.myLastMessage, markers?.lastReadMessage, markers?.lastDeliveredMessage)) {
           return Text(
             getText(),
@@ -97,7 +96,6 @@ class _DeliveredReceiptState extends State<DeliveredReceipt> with TickerProvider
     Widget item;
     if (widget.shouldAnimate) {
       item = AnimatedSize(
-          vsync: this,
           curve: Curves.easeInOut,
           alignment: Alignment.bottomLeft,
           duration: Duration(milliseconds: 250),

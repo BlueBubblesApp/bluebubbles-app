@@ -1,7 +1,6 @@
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 
 class VerticalSplitView extends StatefulWidget {
@@ -46,7 +45,7 @@ class _VerticalSplitViewState extends State<VerticalSplitView> {
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
       if (!event.containsKey("type")) return;
 
-      if (event["type"] == 'split-refresh' && this.mounted) {
+      if (event["type"] == 'split-refresh' && mounted) {
         _ratio.value = prefs.getDouble('splitRatio') ?? _ratio.value;
         setState(() {});
       }
@@ -62,7 +61,7 @@ class _VerticalSplitViewState extends State<VerticalSplitView> {
     return LayoutBuilder(builder: (context, BoxConstraints constraints) {
       assert(_ratio <= 1);
       assert(_ratio >= 0);
-      if (_maxWidth == null) _maxWidth = constraints.maxWidth - widget.dividerWidth;
+      _maxWidth ??= constraints.maxWidth - widget.dividerWidth;
       if (_maxWidth != constraints.maxWidth) {
         _maxWidth = constraints.maxWidth - widget.dividerWidth;
       }
@@ -78,7 +77,7 @@ class _VerticalSplitViewState extends State<VerticalSplitView> {
             (widget.allowResize) ? GestureDetector(
               behavior: HitTestBehavior.translucent,
               child: Container(
-                  color: Theme.of(context).accentColor,
+                  color: Theme.of(context).colorScheme.secondary,
                   child: SizedBox(
                     width: widget.dividerWidth,
                     height: constraints.maxHeight,
@@ -90,7 +89,7 @@ class _VerticalSplitViewState extends State<VerticalSplitView> {
             ) : SizedBox(
               width: widget.dividerWidth,
               height: constraints.maxHeight,
-              child: Container(color: Theme.of(context).accentColor)
+              child: Container(color: Theme.of(context).colorScheme.secondary)
             ),
             SizedBox(
               width: _width2,

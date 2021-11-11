@@ -1,4 +1,10 @@
+import 'dart:math';
+
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
+import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:confetti/confetti.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/blocs/setup_bloc.dart';
 import 'package:bluebubbles/layouts/setup/qr_scan/failed_to_scan_dialog.dart';
@@ -15,6 +21,9 @@ class SyncingMessages extends StatefulWidget {
 }
 
 class _SyncingMessagesState extends State<SyncingMessages> {
+  final confettiController = ConfettiController(duration: Duration(milliseconds: 500));
+  bool hasPlayed = false;
+
   @override
   void initState() {
     super.initState();
@@ -31,136 +40,164 @@ class _SyncingMessagesState extends State<SyncingMessages> {
           duration: Duration(milliseconds: 500),
           curve: Curves.easeInOut,
         );
-      } else if ((event?.progress ?? 0) >= 100) {
-        /*widget.controller.nextPage(
-          duration: Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );*/
-        SocketManager().toggleSetupFinished(true, applyToDb: true);
+      } else if ((event?.progress ?? 0) >= 100 && !hasPlayed) {
+        setState(() {
+          hasPlayed = true;
+        });
+        confettiController.play();
       }
     });
-  }
-
-  String getProgressText(double progress) {
-    String txt = 'Setup in progress';
-    if (progress == 0.0) {
-      txt = 'Starting setup';
-    } else if (progress == -1.0) {
-      txt = 'Cancelling';
-    } else if (progress >= 100) {
-      txt = 'Finishing setup';
-    }
-
-    return '$txt...';
   }
 
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
         systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
-        backgroundColor: Theme.of(context).accentColor,
-        body: Obx(() {
-          double progress = SocketManager().setup.progress;
-          if ((SocketManager().setup.data.value?.progress ?? 0) >= 0) {
-            progress = SocketManager().setup.data.value?.progress ?? 0;
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Spacer(
-                    flex: 100,
-                  ),
-                  Text(
-                    "${progress.floor()}%",
-                    style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
-                  ),
-                  Spacer(
-                    flex: 5,
-                  ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: CustomNavigator.width(context) / 4),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: LinearProgressIndicator(
-                        value: progress != 100.0 && progress != 0.0 ? (progress / 100) : null,
-                        backgroundColor: Colors.white,
-                        valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
-                      ),
-                    ),
-                  ),
-                  Spacer(
-                    flex: 20,
-                  ),
-                  SizedBox(
-                    width: CustomNavigator.width(context) * 4 / 5,
-                    height: context.height * 1 / 3,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.black,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      padding: EdgeInsets.all(10),
-                      child: ListView.builder(
-                        physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-                        itemBuilder: (context, index) {
-                          SetupOutputData data = SocketManager().setup.data.value?.output.reversed.toList()[index]
-                              ?? SetupOutputData("Unknown", SetupOutputType.ERROR);
-                          return Text(
-                            data.text,
-                            style: TextStyle(
-                              color: data.type == SetupOutputType.LOG ? Colors.grey : Colors.red,
-                              fontSize: 10,
-                            ),
-                          );
-                        },
-                        itemCount: SocketManager().setup.data.value?.output.length ?? 0,
-                      ),
-                    ),
-                  ),
-                  Spacer(
-                    flex: 100,
-                  ),
-                ],
-              ),
-            );
-          } else {
-            return Center(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: CustomNavigator.width(context) / 4),
+        backgroundColor: Theme.of(context).backgroundColor,
+        body: Stack(
+          alignment: Alignment.topCenter,
+          children: [
+            Obx(() {
+              double progress = SocketManager().setup.data.value?.progress ?? 0;
+              return Padding(
+                padding: const EdgeInsets.only(top: 80.0, left: 20.0, right: 20.0, bottom: 40.0),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: <Widget>[
-                    Spacer(
-                      flex: 100,
+                    Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Container(
+                              width: context.width * 2 / 3,
+                              child: Text(
+                                  hasPlayed ? "Sync complete!" : "Syncing...",
+                                  style: Theme.of(context).textTheme.bodyText1!.apply(
+                                    fontSizeFactor: 2.5,
+                                    fontWeightDelta: 2,
+                                  ).copyWith(height: 1.5)
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    Text(
-                      getProgressText(progress),
-                      style: Theme.of(context).textTheme.bodyText1,
-                    ),
-                    Spacer(
-                      flex: 5,
-                    ),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: LinearProgressIndicator(
-                        backgroundColor: Colors.white,
-                        valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                    if (!hasPlayed)
+                      Column(
+                        children: [
+                          Text(
+                            "${progress.floor()}%",
+                            style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
+                          ),
+                          SizedBox(height: 15),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: CustomNavigator.width(context) / 4),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(20),
+                              child: LinearProgressIndicator(
+                                value: progress != 100.0 && progress != 0.0 ? (progress / 100) : null,
+                                backgroundColor: Colors.white,
+                                valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 20),
+                          SizedBox(
+                            width: CustomNavigator.width(context) * 4 / 5,
+                            height: context.height * 1 / 3,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(25),
+                                color: Theme.of(context).backgroundColor.computeLuminance() > 0.5
+                                    ? Theme.of(context).colorScheme.secondary.lightenPercent(50)
+                                    : Theme.of(context).colorScheme.secondary.darkenPercent(50),
+                              ),
+                              padding: EdgeInsets.all(10),
+                              child: ListView.builder(
+                                physics: AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                                itemBuilder: (context, index) {
+                                  SetupOutputData data = SocketManager().setup.data.value?.output.reversed.toList()[index]
+                                      ?? SetupOutputData("Unknown", SetupOutputType.ERROR);
+                                  return Text(
+                                    data.text,
+                                    style: TextStyle(
+                                      color: data.type == SetupOutputType.LOG ? Colors.grey : Colors.red,
+                                      fontSize: 10,
+                                    ),
+                                  );
+                                },
+                                itemCount: SocketManager().setup.data.value?.output.length ?? 0,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    Spacer(
-                      flex: 100,
-                    ),
+                    if (!hasPlayed)
+                      Container(),
+                    if (hasPlayed)
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(25),
+                          gradient: LinearGradient(
+                            begin: AlignmentDirectional.topStart,
+                            colors: [HexColor('2772C3'), HexColor('5CA7F8').darkenPercent(5)],
+                          ),
+                        ),
+                        height: 40,
+                        child: ElevatedButton(
+                          style: ButtonStyle(
+                            shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                              RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20.0),
+                              ),
+                            ),
+                            backgroundColor: MaterialStateProperty.all(Colors.transparent),
+                            shadowColor: MaterialStateProperty.all(Colors.transparent),
+                            maximumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
+                            minimumSize: MaterialStateProperty.all(Size(context.width * 2 / 3, 36)),
+                          ),
+                          onPressed: () {
+                            SocketManager().toggleSetupFinished(true, applyToDb: true);
+                            Get.offAll(() => ConversationList(
+                              showArchivedChats: false,
+                              showUnknownSenders: false,
+                            ), duration: Duration.zero, transition: Transition.noTransition);
+                          },
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.check,
+                                color: Colors.white,
+                              ),
+                              SizedBox(width: 10),
+                              Text(
+                                  "Finish",
+                                  style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1)
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                   ],
                 ),
-              ),
-            );
-          }
-        }),
+              );
+            }),
+            ConfettiWidget(
+              confettiController: confettiController,
+              blastDirection: pi / 2,
+              blastDirectionality: BlastDirectionality.explosive,
+              emissionFrequency: 0.35,
+            ),
+          ],
+        ),
       ),
     );
   }

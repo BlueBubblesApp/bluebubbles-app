@@ -26,7 +26,7 @@ class _MediaFileState extends State<MediaFile> {
   void initState() {
     super.initState();
     SocketManager().attachmentSenderCompleter.listen((event) {
-      if (event == widget.attachment.guid && this.mounted) {
+      if (event == widget.attachment.guid && mounted) {
         setState(() {});
       }
     });
@@ -83,7 +83,7 @@ class _MediaFileState extends State<MediaFile> {
         if (hideAttachments)
           Positioned.fill(
             child: Container(
-              color: Theme.of(context).accentColor,
+              color: Theme.of(context).colorScheme.secondary,
             ),
           ),
         if (hideAttachments && !hideAttachmentTypes)

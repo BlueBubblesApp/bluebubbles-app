@@ -9,7 +9,7 @@ import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/share.dart';
-import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
+import 'package:bluebubbles/layouts/image_viewer/attachment_fullscreen_viewer.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
@@ -44,7 +44,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
   @override
   void initState() {
     super.initState();
-    controller = new PhotoViewController();
+    controller = PhotoViewController();
   }
 
   @override
@@ -56,13 +56,13 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
   Future<void> initBytes() async {
     if (kIsWeb || widget.file.path == null) {
       bytes = widget.file.bytes;
-    } else if (widget.attachment.mimeType == "image/heic") {
+    } else if (widget.attachment.mimeType == "image/heic" || widget.attachment.mimeType == "image/heif") {
       bytes =
           await AttachmentHelper.compressAttachment(widget.attachment, widget.file.path!, qualityOverride: 100);
     } else {
       bytes = await File(widget.file.path!).readAsBytes();
     }
-    if (this.mounted) setState(() {});
+    if (mounted) setState(() {});
   }
 
   @override
@@ -115,7 +115,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                         ])));
                       }
 
-                      if (metaWidgets.length == 0) {
+                      if (metaWidgets.isEmpty) {
                         metaWidgets.add(Text(
                           "No metadata available",
                           style: Theme.of(context).textTheme.bodyText1!.apply(fontWeightDelta: 2),
@@ -131,7 +131,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                             style: Theme.of(context).textTheme.headline1,
                             textAlign: TextAlign.center,
                           ),
-                          backgroundColor: Theme.of(context).accentColor,
+                          backgroundColor: Theme.of(context).colorScheme.secondary,
                           content: SizedBox(
                             width: CustomNavigator.width(context) * 3 / 5,
                             height: context.height * 1 / 4,
@@ -173,7 +173,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                   child: CupertinoButton(
                     padding: EdgeInsets.symmetric(horizontal: 5),
                     onPressed: () async {
-                      CurrentChat.of(context)?.clearImageData(widget.attachment);
+                      CurrentChat.activeChat?.clearImageData(widget.attachment);
 
                       showSnackbar('In Progress', 'Redownloading attachment. Please wait...');
                       AttachmentHelper.redownloadAttachment(widget.attachment, onComplete: () {
@@ -183,7 +183,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                       });
 
                       bytes = null;
-                      if (this.mounted) setState(() {});
+                      if (mounted) setState(() {});
                     },
                     child: Icon(
                       SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.refresh : Icons.refresh,
@@ -196,7 +196,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                   child: CupertinoButton(
                     padding: EdgeInsets.symmetric(horizontal: 5),
                     onPressed: () async {
-                      await AttachmentHelper.saveToGallery(context, widget.file);
+                      await AttachmentHelper.saveToGallery(widget.file);
                     },
                     child: Icon(
                       SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.cloud_download : Icons.file_download,
@@ -229,14 +229,14 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
 
     var loader = Center(
       child: CircularProgressIndicator(
-        backgroundColor: Theme.of(context).accentColor,
+        backgroundColor: Theme.of(context).colorScheme.secondary,
         valueColor: AlwaysStoppedAnimation(Theme.of(context).primaryColor),
       ),
     );
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
         systemNavigationBarIconBrightness:
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
@@ -245,7 +245,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
         backgroundColor: Colors.black,
         body: GestureDetector(
           onTap: () {
-            if (!this.mounted || !widget.showInteractions) return;
+            if (!mounted || !widget.showInteractions) return;
 
             setState(() {
               showOverlay = !showOverlay;
@@ -264,7 +264,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                       },
                       scaleStateChangedCallback: (scale) {
                         if (AttachmentFullscreenViewer.of(context) == null) return;
-                        if (this.mounted) {
+                        if (mounted) {
                           AttachmentFullscreenViewerState? state = AttachmentFullscreenViewer.of(context);
                           if (scale == PhotoViewScaleState.zoomedIn
                               || scale == PhotoViewScaleState.covering

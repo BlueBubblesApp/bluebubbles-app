@@ -1,10 +1,10 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:bluebubbles/action_handler.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
@@ -21,7 +21,7 @@ import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
 
@@ -45,7 +45,7 @@ class MessagesView extends StatefulWidget {
   MessagesViewState createState() => MessagesViewState();
 }
 
-class MessagesViewState extends State<MessagesView> with TickerProviderStateMixin {
+class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver {
   Completer<LoadMessageResult>? loader;
   bool noMoreMessages = false;
   bool noMoreLocalMessages = false;
@@ -58,6 +58,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
   List<int> loadedPages = [];
   CurrentChat? currentChat;
   bool keyboardOpen = false;
+  bool widgetsBuilt = false;
 
   List<Message> currentMessages = [];
   List<String> replies = [];
@@ -72,14 +73,16 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
   }
 
   bool get showSmartReplies =>
-      SettingsManager().settings.smartReply.value && !kIsWeb && !kIsDesktop &&
+      SettingsManager().settings.smartReply.value &&
+      !kIsWeb &&
+      !kIsDesktop &&
       (!SettingsManager().settings.redactedMode.value || !SettingsManager().settings.hideMessageContent.value);
 
   @override
   void initState() {
     super.initState();
 
-    currentChat = CurrentChat.of(context);
+    currentChat = CurrentChat.activeChat;
     if (widget.messageBloc != null) ever<MessageBlocEvent?>(widget.messageBloc!.event, (e) => handleNewMessage(e));
 
     // See if we need to load anything from the message bloc
@@ -93,8 +96,8 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
 
     smartReplyController = StreamController<List<String>>.broadcast();
 
-    EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (!this.mounted) return;
+    EventDispatcher().stream.listen((Map<String, dynamic> event) async {
+      if (!mounted) return;
       if (!event.containsKey("type")) return;
 
       if (event["type"] == "refresh-messagebloc" && event["data"].containsKey("chatGuid")) {
@@ -109,41 +112,50 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
             loadedPages = [];
 
             // Reload the state after refreshing
-            widget.messageBloc!.refresh().then((_) {
-              if (this.mounted) {
-                setState(() {});
+            widget.messageBloc!.refresh().then((_) async {
+              if (mounted) {
+                await rebuild(this);
               }
             });
           }
         }
       } else if (event["type"] == "add-custom-smartreply") {
         if (event["data"]["path"] != null) {
-          internalSmartReplies.addEntries([_buildReply("Attach recent photo", onTap: () {
-            EventDispatcher().emit('add-attachment', event['data']);
-            internalSmartReplies.remove('Attach recent photo');
-            setState(() {});
-          })]);
-          setState(() {});
+          internalSmartReplies.addEntries([
+            _buildReply("Attach recent photo", onTap: () async {
+              EventDispatcher().emit('add-attachment', event['data']);
+              internalSmartReplies.remove('Attach recent photo');
+              await rebuild(this);
+            })
+          ]);
+          await rebuild(this);
         }
       }
     });
 
     if (widget.initComplete != null) widget.initComplete!();
+
+    WidgetsBinding.instance!.addObserver(this);
+
+    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      widgetsBuilt = true;
+      EventDispatcher().emit("update-highlight", widget.chat!.guid);
+    });
   }
 
-  void resetReplies() {
-    if (replies.length == 0) return;
+  Future<void> resetReplies() async {
+    if (replies.isEmpty) return;
     replies = [];
     internalSmartReplies.clear();
-    setState(() {});
+    await rebuild(this);
     return smartReplyController.sink.add(replies);
   }
 
   void updateReplies() async {
     // If there are no messages or the latest message is from me, reset the replies
-    if (isNullOrEmpty(_messages)!) return resetReplies();
-    if (_messages.first.isFromMe!) return resetReplies();
-    if (kIsWeb || kIsDesktop) return resetReplies();
+    if (isNullOrEmpty(_messages)!) return await resetReplies();
+    if (_messages.first.isFromMe!) return await resetReplies();
+    if (kIsWeb || kIsDesktop) return await resetReplies();
 
     Logger.info("Getting smart replies...");
     Map<String, dynamic> results = await smartReply.suggestReplies();
@@ -175,13 +187,13 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     }
 
     // Create a new completer
-    loader = new Completer();
+    loader = Completer();
     loadedPages.add(messageCount);
 
     // Start loading the next chunk of messages
     widget.messageBloc!
         .loadMessageChunk(_messages.length, checkLocal: !noMoreLocalMessages)
-        .then((LoadMessageResult val) {
+        .then((LoadMessageResult val) async {
       if (val != LoadMessageResult.FAILED_TO_RETREIVE) {
         if (val == LoadMessageResult.RETREIVED_NO_MESSAGES) {
           noMoreMessages = true;
@@ -194,11 +206,6 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
 
       // Complete the future
       loader!.complete(val);
-
-      // Only update the state if there are messages that were added
-      if (val != LoadMessageResult.FAILED_TO_RETREIVE) {
-        if (this.mounted) setState(() {});
-      }
     }).catchError((ex) {
       loader!.complete(LoadMessageResult.FAILED_TO_RETREIVE);
     });
@@ -216,10 +223,10 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     if (!isNullOrEmpty(event.messages)!) {
       event.messages = event.messages.where((element) => element.dateDeleted == null).toList();
     }
-
-    if (event.type == MessageBlocEventType.insert && this.mounted) {
+    int originalMessageLength = _messages.length;
+    if (event.type == MessageBlocEventType.insert && mounted) {
       if (LifeCycleManager().isAlive && !event.outGoing) {
-        NotificationManager().switchChat(CurrentChat.of(context)?.chat);
+        NotificationManager().switchChat(CurrentChat.activeChat?.chat);
       }
 
       bool isNewMessage = true;
@@ -255,10 +262,10 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
 
       if (event.message!.hasAttachments) {
         await currentChat!.updateChatAttachments();
-        if (this.mounted) setState(() {});
+        if (mounted) await rebuild(this);
       }
 
-      if (isNewMessage && this.showSmartReplies) {
+      if (isNewMessage && showSmartReplies) {
         updateReplies();
       }
     } else if (event.type == MessageBlocEventType.remove) {
@@ -271,10 +278,10 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     } else {
       int originalMessageLength = _messages.length;
       _messages = event.messages;
-      _messages.forEach((message) {
+      /*_messages.forEach((message) {
         currentChat?.getAttachmentsForMessage(message);
         currentChat?.messageMarkers.updateMessageMarkers(message);
-      });
+      });*/
 
       // This needs to be in reverse so that the oldest message gets added first
       // We also only want to grab the last 5, so long as there are at least 5 results
@@ -292,21 +299,30 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
 
       // We only want to update smart replies on the intial message fetch
       if (originalMessageLength == 0) {
-        if (this.showSmartReplies) {
-          if (_messages.length > 0) updateReplies();
+        if (showSmartReplies) {
+          if (_messages.isNotEmpty) updateReplies();
         }
       }
-      if (_listKey == null) _listKey = GlobalKey<SliverAnimatedListState>();
+      _listKey ??= GlobalKey<SliverAnimatedListState>();
 
       if (originalMessageLength < _messages.length) {
         for (int i = originalMessageLength; i < _messages.length; i++) {
-          if (_listKey != null && _listKey!.currentState != null)
+          if (_listKey != null && _listKey!.currentState != null) {
+            if (SchedulerBinding.instance!.schedulerPhase != SchedulerPhase.idle) {
+              // wait for the end of that frame.
+              await SchedulerBinding.instance!.endOfFrame;
+            }
             _listKey!.currentState!.insertItem(i, duration: Duration(milliseconds: 0));
+          }
         }
       } else if (originalMessageLength > _messages.length) {
         for (int i = originalMessageLength; i >= _messages.length; i--) {
           if (_listKey != null && _listKey!.currentState != null) {
             try {
+              if (SchedulerBinding.instance!.schedulerPhase != SchedulerPhase.idle) {
+                // wait for the end of that frame.
+                await SchedulerBinding.instance!.endOfFrame;
+              }
               _listKey!.currentState!
                   .removeItem(i, (context, animation) => Container(), duration: Duration(milliseconds: 0));
             } catch (ex) {
@@ -315,10 +331,12 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
             }
           }
         }
+      } else {
+        await rebuild(this);
       }
     }
 
-    if (this.mounted) setState(() {});
+    if (originalMessageLength == 0) await rebuild(this);
   }
 
   /// All message update events are handled within the message widgets, to prevent top level setstates
@@ -346,13 +364,15 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
     return message;
   }
 
-  MapEntry<String, Widget> _buildReply(String text, {Function()? onTap}) => MapEntry(text, Container(
+  MapEntry<String, Widget> _buildReply(String text, {Function()? onTap}) => MapEntry(
+      text,
+      Container(
         margin: EdgeInsets.all(5),
         decoration: BoxDecoration(
           border: Border.all(
             width: 2,
             style: BorderStyle.solid,
-            color: Theme.of(context).accentColor,
+            color: Theme.of(context).colorScheme.secondary,
           ),
           borderRadius: BorderRadius.circular(19),
         ),
@@ -360,14 +380,21 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
           customBorder: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(19),
           ),
-          onTap: onTap ?? () {
-            ActionHandler.sendMessage(currentChat!.chat, text);
-          },
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 13.0),
-            child: Text(
-              text,
-              style: Theme.of(context).textTheme.bodyText1,
+          onTap: onTap ??
+              () {
+                ActionHandler.sendMessage(currentChat!.chat, text);
+              },
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 13.0),
+              child: RichText(
+                text: TextSpan(
+                  children: MessageHelper.buildEmojiText(
+                    text,
+                    Theme.of(context).textTheme.bodyText1!,
+                  ),
+                ),
+              ),
             ),
           ),
         ),
@@ -379,21 +406,22 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
         behavior: HitTestBehavior.deferToChild,
         onHorizontalDragStart: (details) {},
         onHorizontalDragUpdate: (details) {
-          if (SettingsManager().settings.skin.value != Skins.Samsung)
-            CurrentChat.of(context)!.timeStampOffset += details.delta.dx * 0.3;
+          if (SettingsManager().settings.skin.value != Skins.Samsung) {
+            CurrentChat.activeChat!.timeStampOffset += details.delta.dx * 0.3;
+          }
         },
         onHorizontalDragEnd: (details) {
-          if (SettingsManager().settings.skin.value != Skins.Samsung) CurrentChat.of(context)!.timeStampOffset = 0;
+          if (SettingsManager().settings.skin.value != Skins.Samsung) CurrentChat.activeChat!.timeStampOffset = 0;
         },
         onHorizontalDragCancel: () {
-          if (SettingsManager().settings.skin.value != Skins.Samsung) CurrentChat.of(context)!.timeStampOffset = 0;
+          if (SettingsManager().settings.skin.value != Skins.Samsung) CurrentChat.activeChat!.timeStampOffset = 0;
         },
         child: CustomScrollView(
           controller: scrollController ?? ScrollController(),
           reverse: true,
           physics: ThemeSwitcher.getScrollPhysics(),
           slivers: <Widget>[
-            if (this.showSmartReplies)
+            if (showSmartReplies)
               StreamBuilder<List<String?>>(
                 stream: smartReplyController.stream,
                 builder: (context, snapshot) {
@@ -402,17 +430,24 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                       padding: EdgeInsets.only(top: SettingsManager().settings.skin.value != Skins.iOS ? 8.0 : 0.0),
                       child: AnimatedSize(
                         duration: Duration(milliseconds: 400),
-                        vsync: this,
-                        child: internalSmartReplies.isEmpty
-                            ? Container()
-                            : Container(
-                              height: Theme.of(context).textTheme.bodyText1!.fontSize! + 30,
+                        child: internalSmartReplies.isEmpty && replies.isNotEmpty
+                            ? Container(
+                              height: Theme.of(context).textTheme.bodyText1!.fontSize! + 35,
                               child: ListView(
-                                reverse: true,
-                                scrollDirection: Axis.horizontal,
-                                children: (internalSmartReplies..addEntries(replies
-                                    .map((e) => _buildReply(e)))).values.toList().reversed.toList()),
-                            ),
+                                  reverse: true,
+                                  scrollDirection: Axis.horizontal,
+                                  children: replies.map((e) => _buildReply(e).value).toList()))
+                            : internalSmartReplies.isNotEmpty ? Container(
+                                height: Theme.of(context).textTheme.bodyText1!.fontSize! + 35,
+                                child: ListView(
+                                    reverse: true,
+                                    scrollDirection: Axis.horizontal,
+                                    children: (internalSmartReplies..addEntries(replies.map((e) => _buildReply(e))))
+                                        .values
+                                        .toList()
+                                        .reversed
+                                        .toList()),
+                              ) : Container(),
                       ),
                     ),
                   );
@@ -423,7 +458,9 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                 child: Row(
                   children: <Widget>[
                     if (widget.chat?.guid == "theme-selector" ||
-                        (currentChat!.showTypingIndicator && SettingsManager().settings.alwaysShowAvatars.value))
+                        (currentChat!.showTypingIndicator &&
+                            (SettingsManager().settings.skin.value == Skins.Samsung ||
+                                SettingsManager().settings.alwaysShowAvatars.value)))
                       Padding(
                         padding: EdgeInsets.only(left: 10.0),
                         child: ContactAvatarWidget(
@@ -443,108 +480,80 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                   ],
                 ),
               ),
-            widget.messages.isNotEmpty
-                ? SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        Message? olderMessage;
-                        Message? newerMessage;
-                        if (index + 1 >= 0 && index + 1 < _messages.length) {
-                          olderMessage = _messages[index + 1];
+            _listKey != null
+                ? SliverAnimatedList(
+                    initialItemCount: _messages.length + 1,
+                    key: _listKey,
+                    itemBuilder: (BuildContext context, int index, Animation<double> animation) {
+                      // Load more messages if we are at the top and we aren't alrady loading
+                      // and we have more messages to load
+                      if (index == _messages.length) {
+                        if (!noMoreMessages &&
+                            (loader == null || !loader!.isCompleted || !loadedPages.contains(_messages.length))) {
+                          loadNextChunk();
+                          return NewMessageLoader();
                         }
-                        if (index - 1 >= 0 && index - 1 < _messages.length) {
-                          newerMessage = _messages[index - 1];
-                        }
 
-                        return Padding(
-                            padding: EdgeInsets.only(left: 5.0, right: 5.0),
-                            child: MessageWidget(
-                              key: Key(_messages[index].guid!),
-                              message: _messages[index],
-                              olderMessage: olderMessage,
-                              newerMessage: newerMessage,
-                              showHandle: widget.showHandle,
-                              isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages[index].guid,
-                              showHero: false,
-                              onUpdate: (event) => onUpdateMessage(event),
-                              bloc: widget.messageBloc!,
-                            ));
-                      },
-                      childCount: _messages.length,
-                    ),
-                  )
-                : _listKey != null
-                    ? SliverAnimatedList(
-                        initialItemCount: _messages.length + 1,
-                        key: _listKey,
-                        itemBuilder: (BuildContext context, int index, Animation<double> animation) {
-                          // Load more messages if we are at the top and we aren't alrady loading
-                          // and we have more messages to load
-                          if (index == _messages.length) {
-                            if (!noMoreMessages &&
-                                (loader == null || !loader!.isCompleted || !loadedPages.contains(_messages.length))) {
-                              loadNextChunk();
-                              return NewMessageLoader();
-                            }
+                        return Container();
+                      } else if (index > _messages.length) {
+                        return Container();
+                      }
 
-                            return Container();
-                          } else if (index > _messages.length) {
-                            return Container();
-                          }
+                      Message? olderMessage;
+                      Message? newerMessage;
+                      if (index + 1 >= 0 && index + 1 < _messages.length) {
+                        olderMessage = _messages[index + 1];
+                      }
+                      if (index - 1 >= 0 && index - 1 < _messages.length) {
+                        newerMessage = _messages[index - 1];
+                      }
 
-                          Message? olderMessage;
-                          Message? newerMessage;
-                          if (index + 1 >= 0 && index + 1 < _messages.length) {
-                            olderMessage = _messages[index + 1];
-                          }
-                          if (index - 1 >= 0 && index - 1 < _messages.length) {
-                            newerMessage = _messages[index - 1];
-                          }
+                      bool fullAnimation =
+                          index == 0 && (!_messages[index].isFromMe! || _messages[index].originalROWID == null);
 
-                          bool fullAnimation =
-                              index == 0 && (!_messages[index].isFromMe! || _messages[index].originalROWID == null);
+                      Widget messageWidget = Padding(
+                          padding: EdgeInsets.only(left: 5.0, right: 5.0),
+                          child: MessageWidget(
+                            key: Key(_messages[index].guid!),
+                            message: _messages[index],
+                            olderMessage: olderMessage,
+                            newerMessage: newerMessage,
+                            showHandle: widget.showHandle,
+                            isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages[index].guid,
+                            showHero: fullAnimation,
+                            showReplies: true,
+                            onUpdate: (event) => onUpdateMessage(event),
+                            bloc: widget.messageBloc!,
+                            autoplayEffect: index == 0 && _messages[index].originalROWID != null,
+                          ));
 
-                          Widget messageWidget = Padding(
-                              padding: EdgeInsets.only(left: 5.0, right: 5.0),
-                              child: MessageWidget(
-                                key: Key(_messages[index].guid!),
-                                message: _messages[index],
-                                olderMessage: olderMessage,
-                                newerMessage: newerMessage,
-                                showHandle: widget.showHandle,
-                                isFirstSentMessage: widget.messageBloc!.firstSentMessage == _messages[index].guid,
-                                showHero: fullAnimation,
-                                onUpdate: (event) => onUpdateMessage(event),
-                                bloc: widget.messageBloc!,
-                              ));
-
-                          if (fullAnimation) {
-                            return SizeTransition(
-                              axis: Axis.vertical,
-                              sizeFactor: animation
-                                  .drive(Tween(begin: 0.0, end: 1.0).chain(CurveTween(curve: Curves.easeInOut))),
-                              child: SlideTransition(
-                                position: animation.drive(
-                                  Tween(
-                                    begin: Offset(0.0, 1),
-                                    end: Offset(0.0, 0.0),
-                                  ).chain(
-                                    CurveTween(
-                                      curve: Curves.easeInOut,
-                                    ),
-                                  ),
-                                ),
-                                child: Opacity(
-                                  opacity: animation.isCompleted || !_messages[index].isFromMe! ? 1 : 0,
-                                  child: messageWidget,
+                      if (fullAnimation) {
+                        return SizeTransition(
+                          axis: Axis.vertical,
+                          sizeFactor:
+                              animation.drive(Tween(begin: 0.0, end: 1.0).chain(CurveTween(curve: Curves.easeInOut))),
+                          child: SlideTransition(
+                            position: animation.drive(
+                              Tween(
+                                begin: Offset(0.0, 1),
+                                end: Offset(0.0, 0.0),
+                              ).chain(
+                                CurveTween(
+                                  curve: Curves.easeInOut,
                                 ),
                               ),
-                            );
-                          }
+                            ),
+                            child: Opacity(
+                              opacity: animation.isCompleted || !_messages[index].isFromMe! ? 1 : 0,
+                              child: messageWidget,
+                            ),
+                          ),
+                        );
+                      }
 
-                          return messageWidget;
-                        })
-                    : SliverToBoxAdapter(child: Container()),
+                      return messageWidget;
+                    })
+                : SliverToBoxAdapter(child: Container()),
             SliverPadding(
               padding: EdgeInsets.all(70),
             ),

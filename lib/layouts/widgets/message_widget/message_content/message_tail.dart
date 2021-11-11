@@ -4,8 +4,9 @@ import 'package:flutter/widgets.dart';
 class MessageTail extends StatelessWidget {
   final Color color;
   final bool isFromMe;
+  final bool isReply;
 
-  const MessageTail({Key? key, required this.isFromMe, required this.color}) : super(key: key);
+  const MessageTail({Key? key, required this.isFromMe, required this.color, this.isReply = false}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +15,7 @@ class MessageTail extends StatelessWidget {
     if (hideTail) return Container();
 
     return ClipPath(
-      clipper: TailClipper(isFromMe),
+      clipper: isReply ? null : TailClipper(isFromMe),
       child: Container(
         margin: EdgeInsets.only(
           left: isFromMe ? 0.0 : 4.0,
@@ -24,7 +25,7 @@ class MessageTail extends StatelessWidget {
         width: 20,
         height: 15,
         decoration: BoxDecoration(
-          color: color,
+          color: isReply ? null : color,
           borderRadius: BorderRadius.only(
             bottomRight: isFromMe ? Radius.zero : Radius.circular(12),
             bottomLeft: isFromMe ? Radius.circular(12) : Radius.zero,
@@ -62,7 +63,7 @@ class TailClipper extends CustomClipper<Path>{
   }
 
   @override
-  bool shouldReclip(CustomClipper clipper) {
+  bool shouldReclip(covariant CustomClipper oldClipper) {
     return false;
   }
 }

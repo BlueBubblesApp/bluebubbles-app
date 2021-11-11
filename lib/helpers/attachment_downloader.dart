@@ -4,6 +4,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
+import 'package:path/path.dart';
 import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
@@ -72,7 +73,7 @@ class AttachmentDownloadController extends GetxController {
 
   Future<void> getChunkRecursive(String guid, int index, int total, List<int> currentBytes) async {
     // if (index <= total) {
-    Map<String, dynamic> params = new Map();
+    Map<String, dynamic> params = {};
     params["identifier"] = guid;
     params["start"] = index * chunkSize;
     params["chunkSize"] = chunkSize;
@@ -107,7 +108,7 @@ class AttachmentDownloadController extends GetxController {
       if (attachmentResponse['status'] != 200 ||
           (attachmentResponse.containsKey("error") && attachmentResponse["error"] != null)) {
         if (!kIsWeb) {
-          File file = new File(attachment.getPath());
+          File file = File(attachment.getPath());
           if (await file.exists()) {
             await file.delete();
           }
@@ -122,7 +123,7 @@ class AttachmentDownloadController extends GetxController {
 
       int? numBytes = attachmentResponse["byteLength"];
 
-      if (numBytes == chunkSize && (progress.value ?? 0) < 1) {
+      if (numBytes == chunkSize) {
         // Calculate some stats
         double progress = ((index + 1) / total).clamp(0, 1).toDouble();
         Logger.info("Progress: ${(progress * 100).round()}% of the attachment");
@@ -166,6 +167,14 @@ class AttachmentDownloadController extends GetxController {
           if (attachment.bytes != null) {
             File _file = await File(attachment.getPath()).create(recursive: true);
             _file.writeAsBytesSync(attachment.bytes!.toList());
+          }
+        }
+        if (SettingsManager().settings.autoSave.value && !kIsWeb && !kIsDesktop && !(attachment.isOutgoing ?? false)) {
+          String filePath = "/storage/emulated/0/Download/";
+          if (attachment.mimeType?.startsWith("image") ?? false) {
+            await AttachmentHelper.saveToGallery(file.value!, showAlert: false);
+          } else if (file.value?.bytes != null) {
+            await File(join(filePath, file.value!.name)).writeAsBytes(file.value!.bytes!);
           }
         }
       }

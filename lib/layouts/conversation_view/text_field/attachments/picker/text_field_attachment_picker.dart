@@ -32,7 +32,7 @@ class TextFieldAttachmentPicker extends StatefulWidget {
   _TextFieldAttachmentPickerState createState() => _TextFieldAttachmentPickerState();
 }
 
-class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> with SingleTickerProviderStateMixin {
+class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> {
   List<AssetEntity> _images = <AssetEntity>[];
 
   @override
@@ -41,11 +41,11 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
     getAttachments();
     // If the app is reopened, then update the attachments
     LifeCycleManager().stream.listen((event) async {
-      if (event && widget.visible) getAttachments();
+      if (event) getAttachments();
     });
 
     EventDispatcher().stream.listen((Map<String, dynamic> event) {
-      if (!this.mounted) return;
+      if (!mounted) return;
       if (!event.containsKey("type")) return;
 
       if (event["type"] == "add-attachment") {
@@ -56,12 +56,12 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
   }
 
   Future<void> getAttachments() async {
-    if (!this.mounted) return;
+    if (!mounted) return;
     List<AssetPathEntity> list = await PhotoManager.getAssetPathList(onlyAll: true);
-    if (list.length > 0) {
-      List<AssetEntity> images = await list.first.getAssetListRange(start: 0, end: 60);
+    if (list.isNotEmpty) {
+      List<AssetEntity> images = await list.first.getAssetListRange(start: 0, end: 24);
       _images = images;
-      if (DateTime.now().toLocal().isWithin(images.first.modifiedDateTime, minutes: 10)) {
+      if (DateTime.now().toLocal().isWithin(images.first.modifiedDateTime, minutes: 2)) {
         dynamic file = await images.first.file;
         EventDispatcher().emit('add-custom-smartreply', {
           "path": file.path,
@@ -72,10 +72,10 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
       }
     }
 
-    if (this.mounted) setState(() {});
+    if (mounted) setState(() {});
   }
 
-  Future<void> openFullCamera({String type: 'camera'}) async {
+  Future<void> openFullCamera({String type = 'camera'}) async {
     bool camera = await Permission.camera.isGranted;
     if (!camera) {
       bool granted = (await Permission.camera.request()) == PermissionStatus.granted;
@@ -91,7 +91,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
     // Create a file that the camera can write to
     String appDocPath = SettingsManager().appDocDir.path;
     String ext = (type == 'video') ? ".mp4" : ".png";
-    File file = new File("$appDocPath/attachments/" + randomString(16) + ext);
+    File file = File("$appDocPath/attachments/" + randomString(16) + ext);
     await file.create(recursive: true);
 
     // Take the picture after opening the camera
@@ -116,7 +116,6 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
   Widget build(BuildContext context) {
     return AnimatedSize(
       duration: Duration(milliseconds: 300),
-      vsync: this,
       curve: Curves.easeInOut,
       child: widget.visible
           ? SizedBox(
@@ -149,7 +148,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(10),
                                         ),
-                                        primary: Theme.of(context).accentColor,
+                                        primary: Theme.of(context).colorScheme.secondary,
                                       ),
                                       onPressed: () async {
                                         final res = await FilePicker.platform.pickFiles(withData: true, allowMultiple: true);
@@ -198,13 +197,13 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(10),
                                         ),
-                                        primary: Theme.of(context).accentColor,
+                                        primary: Theme.of(context).colorScheme.secondary,
                                       ),
                                       onPressed: () async {
                                         showDialog(
                                           context: context,
                                           builder: (buildContext) => AlertDialog(
-                                            backgroundColor: Theme.of(context).accentColor,
+                                            backgroundColor: Theme.of(context).colorScheme.secondary,
                                             title: Text(
                                               "Send Current Location?",
                                               style: Theme.of(context).textTheme.headline1,
@@ -219,7 +218,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
                                                   style: Theme.of(context).textTheme.bodyText1,
                                                 ),
                                                 onPressed: () async {
-                                                  Share.location(CurrentChat.of(context)!.chat);
+                                                  Share.location(CurrentChat.activeChat!.chat);
                                                   Navigator.of(context).pop();
                                                 },
                                               ),
@@ -282,7 +281,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(10),
                                         ),
-                                        primary: Theme.of(context).accentColor,
+                                        primary: Theme.of(context).colorScheme.secondary,
                                       ),
                                       onPressed: () async {
                                         openFullCamera();
@@ -321,7 +320,7 @@ class _TextFieldAttachmentPickerState extends State<TextFieldAttachmentPicker> w
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(10),
                                         ),
-                                        primary: Theme.of(context).accentColor,
+                                        primary: Theme.of(context).colorScheme.secondary,
                                       ),
                                       onPressed: () async {
                                         openFullCamera(type: "video");

@@ -1,5 +1,4 @@
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
@@ -18,7 +17,7 @@ import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:faker/faker.dart';
-import 'package:bluebubbles/layouts/widgets/CustomCupertinoNavBar.dart';
+import 'package:bluebubbles/layouts/widgets/custom_cupertino_nav_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -89,7 +88,7 @@ class ThemeSelectorController extends GetxController {
         Message(
           guid: "theme-selector-4",
           dateCreated: DateTime(1, 1, 2021, 9, 40),
-          dateDelivered: DateTime(1, 1, 2021, 9, 41),
+          dateDelivered2: DateTime(1, 1, 2021, 9, 41),
           isFromMe: false,
           hasReactions: false,
           hasAttachments: false,
@@ -102,7 +101,7 @@ class ThemeSelectorController extends GetxController {
         Message(
           guid: "theme-selector-3",
           dateCreated: DateTime(1, 1, 2021, 9, 40),
-          dateDelivered: DateTime(1, 1, 2021, 9, 41),
+          dateDelivered2: DateTime(1, 1, 2021, 9, 41),
           isFromMe: true,
           hasReactions: true,
           hasAttachments: false,
@@ -123,7 +122,7 @@ class ThemeSelectorController extends GetxController {
         Message(
           guid: "theme-selector-2",
           dateCreated: DateTime(1, 1, 2021, 9, 45),
-          dateDelivered: DateTime(1, 1, 2021, 9, 46),
+          dateDelivered2: DateTime(1, 1, 2021, 9, 46),
           isFromMe: false,
           hasReactions: true,
           hasAttachments: true,
@@ -154,7 +153,7 @@ class ThemeSelectorController extends GetxController {
         Message(
           guid: "theme-selector-1",
           dateCreated: DateTime(1, 1, 2021, 9, 40),
-          dateDelivered: DateTime(1, 1, 2021, 9, 41),
+          dateDelivered2: DateTime(1, 1, 2021, 9, 41),
           isFromMe: true,
           hasReactions: false,
           hasAttachments: false,
@@ -178,12 +177,12 @@ class ThemeSelector extends StatelessWidget {
       builder: (_) {
         return AnnotatedRegion<SystemUiOverlayStyle>(
           value: SystemUiOverlayStyle(
-            systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+            systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
             systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
             statusBarColor: Colors.transparent, // status bar color
           ),
           child: Scaffold(
-            backgroundColor: Theme.of(context).accentColor,
+            backgroundColor: Theme.of(context).colorScheme.secondary,
             body: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -770,7 +769,8 @@ Widget buildConversationViewHeader(BuildContext context, Chat chat, ThemeData th
   if (skin == Skins.Material ||
       skin == Skins.Samsung) {
     return AppBar(
-      brightness: ThemeData.estimateBrightnessForColor(theme.backgroundColor),
+      systemOverlayStyle: ThemeData.estimateBrightnessForColor(theme.backgroundColor) == Brightness.dark
+          ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
       elevation: 0.0,
       title: Text(
         title!,
@@ -804,19 +804,19 @@ Widget buildConversationViewHeader(BuildContext context, Chat chat, ThemeData th
 
   // Build the stack
   List<Widget> avatars = [];
-  chat.participants.forEach((Handle participant) {
+  for (Handle participant in chat.participants) {
     avatars.add(
       Container(
         height: 42.0, // 2 px larger than the diameter
         width: 42.0, // 2 px larger than the diameter
         child: CircleAvatar(
           radius: 20,
-          backgroundColor: theme.accentColor,
+          backgroundColor: theme.colorScheme.secondary,
           child: ContactAvatarWidget(handle: participant, borderThickness: 0.1, editable: false, onTap: () {}),
         ),
       ),
     );
-  });
+  }
 
   TextStyle? titleStyle = theme.textTheme.bodyText1;
 
@@ -827,7 +827,7 @@ Widget buildConversationViewHeader(BuildContext context, Chat chat, ThemeData th
   if (distance <= -60.0) distance = -35.0;
 
   return CupertinoNavigationBar(
-      backgroundColor: theme.accentColor.withAlpha(125),
+      backgroundColor: theme.colorScheme.secondary.withAlpha(125),
       border: Border(
         bottom: BorderSide(color: Colors.white.withOpacity(0.2), width: 0.2),
       ),

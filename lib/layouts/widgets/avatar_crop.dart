@@ -32,7 +32,7 @@ class _AvatarCropState extends State<AvatarCrop> {
   void onCropped(Uint8List croppedData) async {
     String appDocPath = SettingsManager().appDocDir.path;
     if (widget.index != null) {
-      File file = new File(ChatBloc().chats[widget.index!].customAvatarPath.value ?? "$appDocPath/avatars/${ChatBloc().chats[widget.index!].guid!.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar.jpg");
+      File file = File(ChatBloc().chats[widget.index!].customAvatarPath.value ?? "$appDocPath/avatars/${ChatBloc().chats[widget.index!].guid!.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar.jpg");
       if (ChatBloc().chats[widget.index!].customAvatarPath.value == null) {
         await file.create(recursive: true);
       }
@@ -42,7 +42,7 @@ class _AvatarCropState extends State<AvatarCrop> {
       CustomNavigator.backSettingsCloseOverlays(context);
       showSnackbar("Notice", "Custom chat avatar saved successfully");
     } else {
-      File file = new File(widget.chat!.customAvatarPath.value ?? "$appDocPath/avatars/${widget.chat!.guid!.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar.jpg");
+      File file = File(widget.chat!.customAvatarPath.value ?? "$appDocPath/avatars/${widget.chat!.guid!.characters.where((char) => char.isAlphabetOnly || char.isNumericOnly).join()}/avatar.jpg");
       if (widget.chat!.customAvatarPath.value == null) {
         await file.create(recursive: true);
       }
@@ -58,7 +58,7 @@ class _AvatarCropState extends State<AvatarCrop> {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
         systemNavigationBarIconBrightness:
         Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
@@ -70,11 +70,12 @@ class _AvatarCropState extends State<AvatarCrop> {
             child: ClipRRect(
               child: BackdropFilter(
                 child: AppBar(
-                  brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
+                  systemOverlayStyle: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.dark
+                      ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
                   toolbarHeight: 100.0,
                   elevation: 0,
                   leading: buildBackButton(context),
-                  backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
+                  backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
                   title: Text(
                     "Select & Crop Image",
                     style: Theme.of(context).textTheme.headline1,
@@ -160,7 +161,7 @@ class _AvatarCropState extends State<AvatarCrop> {
                     primary: Theme.of(context).backgroundColor,
                   ),
                   onPressed: () async {
-                    final res = await FilePicker.platform.pickFiles(withData: true, type: FileType.image);
+                    final res = await FilePicker.platform.pickFiles(withData: true, type: FileType.custom, allowedExtensions: ['png', 'jpg', 'jpeg']);
                     if (res == null || res.files.isEmpty || res.files.first.bytes == null) return;
 
                     if (res.files.first.name.endsWith("gif")) {

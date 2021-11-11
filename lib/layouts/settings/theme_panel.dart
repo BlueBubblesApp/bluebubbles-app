@@ -1,24 +1,21 @@
-import 'dart:ui';
-
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
+import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/helpers/themes.dart';
-import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/settings/custom_avatar_color_panel.dart';
 import 'package:bluebubbles/layouts/settings/custom_avatar_panel.dart';
-import 'package:bluebubbles/layouts/settings/settings_panel.dart';
+import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/layouts/theming/theming_panel.dart';
-import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/repository/models/theme_object.dart';
+import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -43,6 +40,13 @@ class ThemePanelController extends GetxController {
   void onInit() {
     super.onInit();
     _settingsCopy = SettingsManager().settings;
+    // revert back to iOS skin since we disabled Samsung
+    if (SettingsManager().settings.skin.value == Skins.Samsung) {
+      SettingsManager().settings.skin.value = Skins.iOS;
+      SettingsManager().settings.hideDividers.value = false;
+      ChatBloc().refreshChats();
+      SettingsManager().saveSettings(SettingsManager().settings);
+    }
   }
 
   @override
@@ -80,70 +84,32 @@ class ThemePanel extends GetView<ThemePanelController> {
           ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
       Color headerColor;
       Color tileColor;
-      if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
-          SettingsManager().settings.skin.value != Skins.iOS) {
-        headerColor = Theme.of(context).accentColor;
+      if ((Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+          SettingsManager().settings.skin.value == Skins.Material) && (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
+        headerColor = Theme.of(context).colorScheme.secondary;
         tileColor = Theme.of(context).backgroundColor;
       } else {
         headerColor = Theme.of(context).backgroundColor;
-        tileColor = Theme.of(context).accentColor;
+        tileColor = Theme.of(context).colorScheme.secondary;
       }
       if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
         tileColor = headerColor;
       }
 
-      return AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle(
-          systemNavigationBarColor: headerColor, // navigation bar color
-          systemNavigationBarIconBrightness: headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
-          statusBarColor: Colors.transparent, // status bar color
-        ),
-        child: Scaffold(
-          backgroundColor: SettingsManager().settings.skin.value != Skins.iOS ? tileColor : headerColor,
-          appBar: PreferredSize(
-            preferredSize: Size(CustomNavigator.width(context), 80),
-            child: ClipRRect(
-              child: BackdropFilter(
-                child: AppBar(
-                  brightness: ThemeData.estimateBrightnessForColor(headerColor),
-                  toolbarHeight: 100.0,
-                  elevation: 0,
-                  leading: buildBackButton(context),
-                  backgroundColor: headerColor.withOpacity(0.5),
-                  title: Text(
-                    "Theming & Styles",
-                    style: Theme.of(context).textTheme.headline1,
-                  ),
-                ),
-                filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-              ),
-            ),
-          ),
-          body: CustomScrollView(
-            physics: ThemeSwitcher.getScrollPhysics(),
-            slivers: <Widget>[
-              SliverList(
-                delegate: SliverChildListDelegate(
-                  <Widget>[
-                    Container(
-                        height: SettingsManager().settings.skin.value == Skins.iOS ? 30 : 40,
-                        alignment: Alignment.bottomLeft,
-                        decoration: SettingsManager().settings.skin.value == Skins.iOS
-                            ? BoxDecoration(
-                                color: headerColor,
-                                border: Border(
-                                    bottom: BorderSide(
-                                        color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
-                              )
-                            : BoxDecoration(
-                                color: tileColor,
-                              ),
-                        child: Padding(
-                          padding: const EdgeInsets.only(bottom: 8.0, left: 15),
-                          child: Text("Appearance".psCapitalize,
-                              style:
-                                  SettingsManager().settings.skin.value == Skins.iOS ? iosSubtitle : materialSubtitle),
-                        )),
+      return SettingsScaffold(
+        title: "Theming & Styles",
+        initialHeader: "Appearance",
+        iosSubtitle: iosSubtitle,
+        materialSubtitle: materialSubtitle,
+        tileColor: tileColor,
+        headerColor: headerColor,
+        bodySlivers: [
+          SliverList(
+            delegate: SliverChildListDelegate(
+              <Widget>[
+                SettingsSection(
+                  backgroundColor: tileColor,
+                  children: [
                     SettingsOptions<AdaptiveThemeMode>(
                       initial: AdaptiveTheme.of(context).mode,
                       onChanged: (val) {
@@ -180,35 +146,40 @@ class ThemePanel extends GetView<ThemePanelController> {
                         },
                         backgroundColor: tileColor,
                       ),
-                    SettingsHeader(
-                        headerColor: headerColor,
-                        tileColor: tileColor,
-                        iosSubtitle: iosSubtitle,
-                        materialSubtitle: materialSubtitle,
-                        text: "Skin and Layout"),
+                  ],
+                ),
+                SettingsHeader(
+                    headerColor: headerColor,
+                    tileColor: tileColor,
+                    iosSubtitle: iosSubtitle,
+                    materialSubtitle: materialSubtitle,
+                    text: "Skin and Layout"),
+                SettingsSection(
+                  backgroundColor: tileColor,
+                  children: [
                     Obx(() => SettingsOptions<Skins>(
-                          initial: controller._settingsCopy.skin.value,
-                          onChanged: (val) {
-                            if (val == null) return;
-                            controller._settingsCopy.skin.value = val;
-                            if (val == Skins.Material) {
-                              controller._settingsCopy.hideDividers.value = true;
-                            } else if (val == Skins.Samsung) {
-                              controller._settingsCopy.hideDividers.value = true;
-                            } else {
-                              controller._settingsCopy.hideDividers.value = false;
-                            }
-                            ChatBloc().refreshChats();
-                            saveSettings();
-                            controller.update();
-                          },
-                          options: Skins.values.where((item) => item != Skins.Samsung).toList(),
-                          textProcessing: (val) => val.toString().split(".").last,
-                          capitalize: false,
-                          title: "App Skin",
-                          backgroundColor: tileColor,
-                          secondaryColor: headerColor,
-                        )),
+                      initial: controller._settingsCopy.skin.value,
+                      onChanged: (val) {
+                        if (val == null) return;
+                        controller._settingsCopy.skin.value = val;
+                        if (val == Skins.Material) {
+                          controller._settingsCopy.hideDividers.value = true;
+                        } else if (val == Skins.Samsung) {
+                          controller._settingsCopy.hideDividers.value = true;
+                        } else {
+                          controller._settingsCopy.hideDividers.value = false;
+                        }
+                        ChatBloc().refreshChats();
+                        saveSettings();
+                        controller.update();
+                      },
+                      options: Skins.values.where((item) => item != Skins.Samsung).toList(),
+                      textProcessing: (val) => val.toString().split(".").last,
+                      capitalize: false,
+                      title: "App Skin",
+                      backgroundColor: tileColor,
+                      secondaryColor: headerColor,
+                    )),
                     Container(
                       color: tileColor,
                       child: Padding(
@@ -226,15 +197,43 @@ class ThemePanel extends GetView<ThemePanelController> {
                       backgroundColor: tileColor,
                       subtitle: "Enables tablet mode (split view) depending on screen width",
                     )),
-                    SettingsHeader(
-                        headerColor: headerColor,
-                        tileColor: tileColor,
-                        iosSubtitle: iosSubtitle,
-                        materialSubtitle: materialSubtitle,
-                        text: "Colors"),
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
+                    ),
+                    Obx(() => SettingsSwitch(
+                      onChanged: (bool val) {
+                        controller._settingsCopy.immersiveMode.value = val;
+                        saveSettings();
+                        if (val) {
+                          SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+                        } else {
+                          SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [SystemUiOverlay.bottom, SystemUiOverlay.top]);
+                        }
+                        EventDispatcher().emit('theme-update', null);
+                      },
+                      initialVal: controller._settingsCopy.immersiveMode.value,
+                      title: "Immersive Mode",
+                      backgroundColor: tileColor,
+                      subtitle: "Makes the bottom navigation bar transparent. This option is best used with gesture navigation.",
+                    )),
+                  ],
+                ),
+                SettingsHeader(
+                    headerColor: headerColor,
+                    tileColor: tileColor,
+                    iosSubtitle: iosSubtitle,
+                    materialSubtitle: materialSubtitle,
+                    text: "Colors"),
+                SettingsSection(
+                  backgroundColor: tileColor,
+                  children: [
                     if (!kIsWeb && !kIsDesktop)
                       Obx(
-                        () => SettingsSwitch(
+                            () => SettingsSwitch(
                           onChanged: (bool val) async {
                             await MethodChannelInterface().invokeMethod("request-notif-permission");
                             try {
@@ -249,9 +248,9 @@ class ThemePanel extends GetView<ThemePanelController> {
                                 await currentDark.save();
                                 SettingsManager().saveSelectedTheme(context,
                                     selectedLightTheme:
-                                        allThemes.firstWhere((element) => element.name == "Music Theme (Light)"),
+                                    allThemes.firstWhere((element) => element.name == "Music Theme (Light)"),
                                     selectedDarkTheme:
-                                        allThemes.firstWhere((element) => element.name == "Music Theme (Dark)"));
+                                    allThemes.firstWhere((element) => element.name == "Music Theme (Dark)"));
                               } else {
                                 var allThemes = await ThemeObject.getThemes();
                                 var previousLight = allThemes.firstWhere((e) => e.previousLightTheme);
@@ -274,7 +273,7 @@ class ThemePanel extends GetView<ThemePanelController> {
                           title: "Colors from Media",
                           backgroundColor: tileColor,
                           subtitle:
-                              "Pull app colors from currently playing media. Note: Requires full notification access & a custom theme to be set",
+                          "Pull app colors from currently playing media. Note: Requires full notification access & a custom theme to be set",
                         ),
                       ),
                     if (!kIsWeb && !kIsDesktop)
@@ -286,15 +285,15 @@ class ThemePanel extends GetView<ThemePanelController> {
                         ),
                       ),
                     Obx(() => SettingsSwitch(
-                          onChanged: (bool val) {
-                            controller._settingsCopy.colorfulAvatars.value = val;
-                            saveSettings();
-                          },
-                          initialVal: controller._settingsCopy.colorfulAvatars.value,
-                          title: "Colorful Avatars",
-                          backgroundColor: tileColor,
-                          subtitle: "Gives letter avatars a splash of color",
-                        )),
+                      onChanged: (bool val) {
+                        controller._settingsCopy.colorfulAvatars.value = val;
+                        saveSettings();
+                      },
+                      initialVal: controller._settingsCopy.colorfulAvatars.value,
+                      title: "Colorful Avatars",
+                      backgroundColor: tileColor,
+                      subtitle: "Gives letter avatars a splash of color",
+                    )),
                     Container(
                       color: tileColor,
                       child: Padding(
@@ -303,15 +302,15 @@ class ThemePanel extends GetView<ThemePanelController> {
                       ),
                     ),
                     Obx(() => SettingsSwitch(
-                          onChanged: (bool val) {
-                            controller._settingsCopy.colorfulBubbles.value = val;
-                            saveSettings();
-                          },
-                          initialVal: controller._settingsCopy.colorfulBubbles.value,
-                          title: "Colorful Bubbles",
-                          backgroundColor: tileColor,
-                          subtitle: "Gives received message bubbles a splash of color",
-                        )),
+                      onChanged: (bool val) {
+                        controller._settingsCopy.colorfulBubbles.value = val;
+                        saveSettings();
+                      },
+                      initialVal: controller._settingsCopy.colorfulBubbles.value,
+                      title: "Colorful Bubbles",
+                      backgroundColor: tileColor,
+                      subtitle: "Gives received message bubbles a splash of color",
+                    )),
                     if (!kIsWeb)
                       Container(
                         color: tileColor,
@@ -356,21 +355,27 @@ class ThemePanel extends GetView<ThemePanelController> {
                         backgroundColor: tileColor,
                         subtitle: "Customize the avatar for different chats",
                       ),
-                    if (!kIsWeb && !kIsDesktop)
+                  ],
+                ),
+                if (!kIsWeb && !kIsDesktop)
+                  Obx(() {
+                    if (controller.refreshRates.length > 2) {
+                      return SettingsHeader(
+                          headerColor: headerColor,
+                          tileColor: tileColor,
+                          iosSubtitle: iosSubtitle,
+                          materialSubtitle: materialSubtitle,
+                          text: "Refresh Rate");
+                    } else {
+                      return SizedBox.shrink();
+                    }
+                  }),
+                if (!kIsWeb && !kIsDesktop)
+                  SettingsSection(
+                    backgroundColor: tileColor,
+                    children: [
                       Obx(() {
-                        if (controller.refreshRates.length > 2)
-                          return SettingsHeader(
-                              headerColor: headerColor,
-                              tileColor: tileColor,
-                              iosSubtitle: iosSubtitle,
-                              materialSubtitle: materialSubtitle,
-                              text: "Refresh Rate");
-                        else
-                          return SizedBox.shrink();
-                      }),
-                    if (!kIsWeb && !kIsDesktop)
-                      Obx(() {
-                        if (controller.refreshRates.length > 2)
+                        if (controller.refreshRates.length > 2) {
                           return SettingsOptions<int>(
                             initial: controller.currentMode.value,
                             onChanged: (val) async {
@@ -385,44 +390,85 @@ class ThemePanel extends GetView<ThemePanelController> {
                             backgroundColor: tileColor,
                             secondaryColor: headerColor,
                           );
-                        else
+                        } else {
                           return SizedBox.shrink();
+                        }
                       }),
-                    // SettingsOptions<String>(
-                    //   initial: controller._settingsCopy.emojiFontFamily == null
-                    //       ? "System"
-                    //       : fontFamilyToString[controller._settingsCopy.emojiFontFamily],
-                    //   onChanged: (val) {
-                    //     controller._settingsCopy.emojiFontFamily = stringToFontFamily[val];
-                    //   },
-                    //   options: stringToFontFamily.keys.toList(),
-                    //   textProcessing: (dynamic val) => val,
-                    //   title: "Emoji Style",
-                    //   showDivider: false,
-                    // ),
-                    Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
-                    Container(
-                      height: 30,
-                      decoration: SettingsManager().settings.skin.value == Skins.iOS
-                          ? BoxDecoration(
-                              color: headerColor,
-                              border: Border(
-                                  top: BorderSide(
-                                      color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
-                            )
-                          : null,
-                    ),
-                  ],
-                ),
-              ),
-              SliverList(
-                delegate: SliverChildListDelegate(
-                  <Widget>[],
-                ),
-              )
-            ],
+                    ],
+                  ),
+                if (!kIsWeb)
+                  SettingsHeader(
+                      headerColor: headerColor,
+                      tileColor: tileColor,
+                      iosSubtitle: iosSubtitle,
+                      materialSubtitle: materialSubtitle,
+                      text: "Text and Font"),
+                if (!kIsWeb)
+                  SettingsSection(
+                    backgroundColor: tileColor,
+                    children: [
+                      Obx(() {
+                        if (!fontExistsOnDisk.value) {
+                          return SettingsTile(
+                            onTap: () async {
+                              Get.defaultDialog(
+                                title: "Downloading font file...",
+                                titleStyle: Theme.of(context).textTheme.headline1,
+                                confirm: Container(height: 0, width: 0),
+                                cancel: Container(height: 0, width: 0),
+                                content: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: <Widget>[
+                                      SizedBox(
+                                        height: 15.0,
+                                      ),
+                                      buildProgressIndicator(context),
+                                      SizedBox(
+                                        height: 15.0,
+                                      ),
+                                      Text("The font file is over 30mb, this may take a moment")
+                                    ]
+                                ),
+                                barrierDismissible: false,
+                                backgroundColor: Theme.of(context).backgroundColor,
+                              );
+                              final DynamicCachedFonts dynamicCachedFont = DynamicCachedFonts(
+                                fontFamily: "Apple Color Emoji",
+                                url: "https://github.com/tneotia/tneotia/releases/download/ios-font-1/IOS.14.2.Daniel.L.ttf",
+                              );
+                              await dynamicCachedFont.load();
+                              fontExistsOnDisk.value = true;
+                              Get.back();
+                              showSnackbar("Notice", "Font loaded");
+                            },
+                            title: "Download iOS Emoji Font",
+                            backgroundColor: tileColor,
+                          );
+                        } else {
+                          return SizedBox.shrink();
+                        }
+                      }),
+                      Obx(() {
+                        if (fontExistsOnDisk.value) {
+                          return SettingsTile(
+                            onTap: () async {
+                              await DynamicCachedFonts.removeCachedFont("https://github.com/tneotia/tneotia/releases/download/ios-font-1/IOS.14.2.Daniel.L.ttf");
+                              fontExistsOnDisk.value = false;
+                              showSnackbar("Notice", "Font removed, restart the app for changes to take effect");
+                            },
+                            title: "Delete iOS Emoji Font",
+                            backgroundColor: tileColor,
+                          );
+                        } else {
+                          return SizedBox.shrink();
+                        }
+                      }),
+                    ],
+                  ),
+              ],
+            ),
           ),
-        ),
+        ]
       );
     });
   }

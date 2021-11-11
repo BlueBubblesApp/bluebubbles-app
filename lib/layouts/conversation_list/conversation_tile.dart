@@ -59,27 +59,10 @@ class ConversationTile extends StatefulWidget {
   _ConversationTileState createState() => _ConversationTileState();
 }
 
-class _ConversationTileState extends State<ConversationTile> with AutomaticKeepAliveClientMixin {
-  bool isFetching = false;
-  Brightness? brightness;
-  Color? previousBackgroundColor;
-  bool gotBrightness = false;
-
+class _ConversationTileState extends State<ConversationTile> {
   // Typing indicator
   bool showTypingIndicator = false;
-
-  void loadBrightness() {
-    Color now = Theme.of(context).backgroundColor;
-    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
-    if (!themeChanged && gotBrightness) return;
-
-    previousBackgroundColor = now;
-
-    bool isDark = now.computeLuminance() < 0.179;
-    brightness = isDark ? Brightness.dark : Brightness.light;
-    gotBrightness = true;
-    if (this.mounted) setState(() {});
-  }
+  bool shouldHighlight = false;
 
   bool get selected {
     if (widget.selected.isEmpty) return false;
@@ -89,7 +72,6 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
   @override
   void initState() {
     super.initState();
-    fetchParticipants();
     // Listen for changes in the group
     NewMessageManager().stream.listen((NewMessageEvent event) async {
       // Make sure we have the required data to qualify for this tile
@@ -107,11 +89,31 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
         Logger.error(ex.toString());
       }
 
-      this.setNewChatData(forceUpdate: true);
+      setNewChatData(forceUpdate: true);
+    });
+
+    EventDispatcher().stream.listen((Map<String, dynamic> event) {
+      if (!event.containsKey("type")) return;
+
+      if (event["type"] == 'update-highlight' && mounted && (kIsWeb || kIsDesktop)) {
+        if (event['data'] == widget.chat.guid) {
+          setState(() {
+            shouldHighlight = true;
+          });
+        } else if (shouldHighlight = true) {
+          setState(() {
+            shouldHighlight = false;
+          });
+        }
+      }
     });
   }
 
-  void setNewChatData({forceUpdate: false}) async {
+  void update() {
+    setState(() {});
+  }
+
+  void setNewChatData({forceUpdate = false}) async {
     // Save the current participant list and get the latest
     List<Handle> ogParticipants = widget.chat.participants;
     await widget.chat.getParticipants();
@@ -122,23 +124,8 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
 
     // If the original data is different, update the state
     if (ogTitle != widget.chat.title || ogParticipants.length != widget.chat.participants.length || forceUpdate) {
-      if (this.mounted) setState(() {});
+      if (mounted) setState(() {});
     }
-  }
-
-  Future<void> fetchParticipants() async {
-    if (isFetching) return;
-    isFetching = true;
-
-    // If our chat does not have any participants, get them
-    if (isNullOrEmpty(widget.chat.participants)!) {
-      await widget.chat.getParticipants();
-      if (!isNullOrEmpty(widget.chat.participants)! && this.mounted) {
-        setState(() {});
-      }
-    }
-
-    isFetching = false;
   }
 
   void onTapUp(details) {
@@ -158,7 +145,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
   }
 
   void onTapUpBypass() {
-    this.onTapUp(TapUpDetails(kind: PointerDeviceKind.touch));
+    onTapUp(TapUpDetails(kind: PointerDeviceKind.touch));
   }
 
   Widget buildSlider(Widget child) {
@@ -176,7 +163,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
                 onTap: () async {
                   await widget.chat.togglePin(!widget.chat.isPinned!);
                   EventDispatcher().emit("refresh", null);
-                  if (this.mounted) setState(() {});
+                  if (mounted) setState(() {});
                 },
               ),
           ],
@@ -188,7 +175,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
                 icon: widget.chat.muteType == "mute" ? CupertinoIcons.bell : CupertinoIcons.bell_slash,
                 onTap: () async {
                   await widget.chat.toggleMute(widget.chat.muteType != "mute");
-                  if (this.mounted) setState(() {});
+                  if (mounted) setState(() {});
                 },
               ),
             if (SettingsManager().settings.iosShowDelete.value)
@@ -236,11 +223,13 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
         SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeContactNames.value;
 
     TextStyle? style = Theme.of(context).textTheme.bodyText1;
-    String? title = widget.chat.title != null ? widget.chat.title : "";
+    String? title = widget.chat.title ?? "";
 
-    if (generateNames)
+    if (generateNames) {
       title = widget.chat.fakeParticipants.length == 1 ? widget.chat.fakeParticipants[0] : "Group Chat";
-    else if (hideInfo) style = style?.copyWith(color: Colors.transparent);
+    } else if (hideInfo) {
+      style = style?.copyWith(color: Colors.transparent);
+    }
 
     return TextOneLine(title ?? 'Fake Person', style: style, overflow: TextOverflow.ellipsis);
   }
@@ -266,13 +255,19 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
                       ),
                 );
 
-            if (generateContent)
+            if (generateContent) {
               latestText = widget.chat.fakeLatestMessageText ?? "";
-            else if (hideContent) style = style.copyWith(color: Colors.transparent);
+            } else if (hideContent) {
+              style = style.copyWith(color: Colors.transparent);
+            }
 
-            return Text(
-              latestText,
-              style: style,
+            return RichText(
+              text: TextSpan(
+                children: MessageHelper.buildEmojiText(
+                  latestText,
+                  style,
+                )
+              ),
               overflow: TextOverflow.ellipsis,
               maxLines: 2,
             );
@@ -302,7 +297,7 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
                         chat: widget.chat,
                         size: 40,
                         editable: false,
-                        onTap: this.onTapUpBypass,
+                        onTap: onTapUpBypass,
                       )
                     : Container(
                         decoration: BoxDecoration(
@@ -411,8 +406,6 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
-    loadBrightness();
     return ThemeSwitcher(
       iOSSkin: _Cupertino(
         parent: this,
@@ -428,69 +421,43 @@ class _ConversationTileState extends State<ConversationTile> with AutomaticKeepA
       ),
     );
   }
-
-  @override
-  bool get wantKeepAlive => true;
 }
 
-class _Cupertino extends StatefulWidget {
+class _Cupertino extends StatelessWidget {
   _Cupertino({Key? key, required this.parent, required this.parentProps}) : super(key: key);
   final _ConversationTileState parent;
   final ConversationTile parentProps;
 
   @override
-  __CupertinoState createState() => __CupertinoState();
-}
-
-class __CupertinoState extends State<_Cupertino> {
-  bool isPressed = false;
-
-  @override
   Widget build(BuildContext context) {
-    return widget.parent.buildSlider(
+    return parent.buildSlider(
       Material(
-        color: !isPressed ? Theme.of(context).backgroundColor : Theme.of(context).backgroundColor.lightenOrDarken(30),
+        color: parent.shouldHighlight && (kIsWeb || kIsDesktop) ? Theme.of(context).primaryColor.withAlpha(120) : Theme.of(context).backgroundColor,
+        borderRadius: BorderRadius.circular(parent.shouldHighlight ? 5 : 0),
         child: GestureDetector(
-          onTapDown: (details) {
-            if (!this.mounted) return;
-
-            setState(() {
-              isPressed = true;
-            });
-          },
           onTapUp: (details) {
-            this.widget.parent.onTapUp(details);
-
-            Future.delayed(Duration(milliseconds: 200), () {
-              if (this.mounted)
-                setState(() {
-                  isPressed = false;
-                });
-            });
-          },
-          onTapCancel: () {
-            if (!this.mounted) return;
-
-            setState(() {
-              isPressed = false;
-            });
+            parent.onTapUp(details);
           },
           onSecondaryTapUp: (details) async {
             if (kIsWeb) {
               (await html.document.onContextMenu.first).preventDefault();
             }
-            showConversationTileMenu(
+            parent.shouldHighlight = true;
+            parent.update();
+            await showConversationTileMenu(
               context,
               this,
-              widget.parent.widget.chat,
+              parent.widget.chat,
               details.globalPosition,
               context.textTheme,
             );
+            parent.shouldHighlight = false;
+            parent.update();
           },
           onLongPress: () async {
             HapticFeedback.mediumImpact();
-            await ChatBloc().toggleChatUnread(widget.parent.widget.chat, !widget.parent.widget.chat.hasUnreadMessage!);
-            if (this.mounted) setState(() {});
+            await ChatBloc().toggleChatUnread(parent.widget.chat, !parent.widget.chat.hasUnreadMessage!);
+            if (parent.mounted) parent.update();
           },
           child: Stack(
             alignment: Alignment.centerLeft,
@@ -513,9 +480,9 @@ class __CupertinoState extends State<_Cupertino> {
                       dense: SettingsManager().settings.denseChatTiles.value,
                       contentPadding: EdgeInsets.only(left: 0),
                       minVerticalPadding: 10,
-                      title: widget.parent.buildTitle(),
-                      subtitle: widget.parent.widget.subtitle ?? widget.parent.buildSubtitle(),
-                      leading: widget.parent.buildLeading(),
+                      title: parent.buildTitle(),
+                      subtitle: parent.widget.subtitle ?? parent.buildSubtitle(),
+                      leading: parent.buildLeading(),
                       trailing: Container(
                         padding: EdgeInsets.only(right: 8),
                         child: FittedBox(
@@ -526,7 +493,7 @@ class __CupertinoState extends State<_Cupertino> {
                             children: <Widget>[
                               Container(
                                 padding: EdgeInsets.only(right: 3),
-                                child: widget.parent._buildDate(),
+                                child: parent._buildDate(),
                               ),
                               Icon(
                                 SettingsManager().settings.skin.value == Skins.iOS
@@ -553,7 +520,7 @@ class __CupertinoState extends State<_Cupertino> {
                       Stack(
                         alignment: AlignmentDirectional.centerStart,
                         children: [
-                          (widget.parent.widget.chat.muteType != "mute" && widget.parent.widget.chat.hasUnreadMessage!)
+                          (parent.widget.chat.muteType != "mute" && parent.widget.chat.hasUnreadMessage!)
                               ? Container(
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(35),
@@ -563,7 +530,7 @@ class __CupertinoState extends State<_Cupertino> {
                                   height: 10,
                                 )
                               : Container(),
-                          widget.parent.widget.chat.isPinned!
+                          parent.widget.chat.isPinned!
                               ? Icon(
                                   CupertinoIcons.pin,
                                   size: 10,
@@ -573,10 +540,10 @@ class __CupertinoState extends State<_Cupertino> {
                               : Container(),
                         ],
                       ),
-                      widget.parent.widget.chat.muteType == "mute"
+                      parent.widget.chat.muteType == "mute"
                           ? SvgPicture.asset(
                               "assets/icon/moon.svg",
-                              color: widget.parentProps.chat.hasUnreadMessage!
+                              color: parentProps.chat.hasUnreadMessage!
                                   ? Theme.of(context).primaryColor.withOpacity(0.8)
                                   : Theme.of(context).textTheme.subtitle1!.color,
                               width: 10,
@@ -603,19 +570,23 @@ class _Material extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: parent.selected ? Theme.of(context).primaryColor.withAlpha(120) : Theme.of(context).backgroundColor,
+      color: parent.shouldHighlight && (kIsWeb || kIsDesktop) ? Theme.of(context).backgroundColor.lightenOrDarken(20) : parent.selected ? Theme.of(context).primaryColor.withAlpha(120) : Theme.of(context).backgroundColor,
       child: GestureDetector(
         onSecondaryTapUp: (details) async {
           if (kIsWeb) {
             (await html.document.onContextMenu.first).preventDefault();
           }
-          showConversationTileMenu(
+          parent.shouldHighlight = true;
+          parent.update();
+          await showConversationTileMenu(
             context,
-            parent,
+            this,
             parent.widget.chat,
             details.globalPosition,
             context.textTheme,
           );
+          parent.shouldHighlight = false;
+          parent.update();
         },
         child: InkWell(
           onTap: () {
@@ -708,22 +679,25 @@ class _Samsung extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.transparent,
+      color: parent.shouldHighlight && (kIsWeb || kIsDesktop) ? Theme.of(context).backgroundColor.lightenOrDarken(20) : parent.selected ? Theme.of(context).primaryColor.withAlpha(120) : Colors.transparent,
       child: GestureDetector(
         onSecondaryTapUp: (details) async {
           if (kIsWeb) {
             (await html.document.onContextMenu.first).preventDefault();
           }
-          showConversationTileMenu(
+          parent.shouldHighlight = true;
+          parent.update();
+          await showConversationTileMenu(
             context,
-            parent,
+            this,
             parent.widget.chat,
             details.globalPosition,
             context.textTheme,
           );
+          parent.shouldHighlight = false;
+          parent.update();
         },
         child: InkWell(
-          hoverColor: Colors.red,
           onTap: () {
             if (parent.selected) {
               parent.onSelect();
@@ -741,12 +715,10 @@ class _Samsung extends StatelessWidget {
           child: Obx(
             () => Container(
               decoration: BoxDecoration(
-                color: Theme.of(context).accentColor,
                 border: (!SettingsManager().settings.hideDividers.value)
                     ? Border(
                         top: BorderSide(
-                          //
-                          color: new Color(0xff2F2F2F),
+                          color: Color(0xff2F2F2F),
                           width: 0.5,
                         ),
                       )
@@ -805,6 +777,3 @@ class _Samsung extends StatelessWidget {
     );
   }
 }
-
-@override
-bool get wantKeepAlive => true;

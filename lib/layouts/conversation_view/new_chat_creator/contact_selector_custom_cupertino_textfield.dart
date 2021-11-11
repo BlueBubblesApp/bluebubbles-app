@@ -9,7 +9,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 
 export 'package:flutter/services.dart'
@@ -256,7 +255,6 @@ class ContactSelectorCustomCupertinoTextfield extends StatefulWidget {
     this.maxLength,
     this.maxLengthEnforced = true,
     this.onChanged,
-    this.onContentCommitted,
     this.onEditingComplete,
     this.onSubmitted,
     this.inputFormatters,
@@ -510,9 +508,6 @@ class ContactSelectorCustomCupertinoTextfield extends StatefulWidget {
 
   /// {@macro flutter.widgets.editableText.onChanged}
   final ValueChanged<String>? onChanged;
-
-  /// Once new content is commited...
-  final ValueChanged<CommittedContent>? onContentCommitted;
 
   /// {@macro flutter.widgets.editableText.onEditingComplete}
   final VoidCallback? onEditingComplete;
@@ -961,7 +956,6 @@ class _CupertinoTextFieldState extends State<ContactSelectorCustomCupertinoTextf
           selectionColor: selectionColor,
           selectionControls: widget.selectionEnabled ? cupertinoTextSelectionControls : null,
           onChanged: widget.onChanged,
-          onContentCommitted: widget.onContentCommitted,
           onSelectionChanged: _handleSelectionChanged,
           onEditingComplete: widget.onEditingComplete,
           onSubmitted: widget.onSubmitted,

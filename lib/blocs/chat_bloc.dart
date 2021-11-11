@@ -12,10 +12,9 @@ import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
-import 'package:contacts_service/contacts_service.dart';
-import 'package:dio_http/dio_http.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -38,6 +37,8 @@ class ChatBloc {
   final RxBool loadedChatBatch = false.obs;
 
   final List<Handle> cachedHandles = [];
+
+  final Map<String, Size> cachedMessageBubbleSizes = {};
 
   void updateUnreads() {
     _unreads.value = chats.where((element) => element.hasUnreadMessage ?? false).map((e) => e.guid).toList().length;
@@ -63,7 +64,7 @@ class ChatBloc {
   Future<Chat?> getChat(String? guid) async {
     if (guid == null) return null;
     if (_chats.isEmpty) {
-      await this.refreshChats();
+      await refreshChats();
     }
 
     for (Chat? chat in _chats) {
@@ -84,15 +85,13 @@ class ChatBloc {
       await chatRequest!.future;
     }
 
-    chatRequest = new Completer<void>();
+    chatRequest = Completer<void>();
     Logger.info("Fetching chats (${force ? 'forced' : 'normal'})...", tag: "ChatBloc");
 
     // Get the contacts in case we haven't
     if (ContactManager().contacts.isEmpty) await ContactManager().getContacts();
 
-    if (_messageSubscription == null) {
-      _messageSubscription = setupMessageListener();
-    }
+    _messageSubscription ??= setupMessageListener();
 
     // Store the last time we fetched
     lastFetch = DateTime.now().toUtc().millisecondsSinceEpoch;
@@ -108,17 +107,17 @@ class ChatBloc {
     DateTime? lastMsgDate = await Message.lastMessageDate();
 
     // If there is no last message, don't do anything
-    if (lastMsgDate == null) {
+    if (!kIsWeb && lastMsgDate == null) {
       Logger.debug("No last message date found! Not doing anything...", tag: 'ChatBloc-Resume');
       return;
     }
 
     // If the last message date is >= the last fetch, let's refetch
-    int lastMs = lastMsgDate.millisecondsSinceEpoch;
-    if (lastMs >= lastFetch) {
+    int? lastMs = lastMsgDate?.millisecondsSinceEpoch;
+    if (kIsWeb || lastMs! >= lastFetch) {
       Logger.info('New messages detected! Refreshing the ChatBloc', tag: 'ChatBloc-Resume');
       Logger.debug("$lastMs >= $lastFetch", tag: 'ChatBloc-Resume');
-      await this.refreshChats();
+      await refreshChats();
     } else {
       Logger.info('No new messages detected. Not refreshing the ChatBloc', tag: 'ChatBloc-Resume');
     }
@@ -127,7 +126,7 @@ class ChatBloc {
   /// Inserts a [chat] into the chat bloc based on the lastMessage data
   Future<void> updateChatPosition(Chat chat) async {
     if (isNullOrEmpty(_chats)!) {
-      await this.refreshChats();
+      await refreshChats();
       if (isNullOrEmpty(_chats)!) return;
     }
 
@@ -186,7 +185,7 @@ class ChatBloc {
 
   Future<void> markAllAsRead() async {
     // Enumerate the unread chats
-    List<Chat> unread = this.chats.where((element) => element.hasUnreadMessage!).toList();
+    List<Chat> unread = chats.where((element) => element.hasUnreadMessage!).toList();
 
     // Mark them as unread
     for (Chat chat in unread) {
@@ -198,17 +197,17 @@ class ChatBloc {
 
     // Update their position in the chat list
     for (Chat chat in unread) {
-      this.updateChatPosition(chat);
+      updateChatPosition(chat);
     }
   }
 
-  Future<void> toggleChatUnread(Chat chat, bool isUnread) async {
+  Future<void> toggleChatUnread(Chat chat, bool isUnread, {bool clearNotifications = true}) async {
     await chat.toggleHasUnread(isUnread);
 
     // Remove from notification shade
-    MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
+    if (clearNotifications) MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
 
-    this.updateChatPosition(chat);
+    updateChatPosition(chat);
   }
 
   Future<void> updateAllShareTargets() async {
@@ -224,11 +223,11 @@ class ChatBloc {
   Future<void> updateShareTarget(Chat chat) async {
     Uint8List? icon;
     Contact? contact =
-        chat.participants.length == 1 ? await ContactManager().getCachedContact(chat.participants.first) : null;
+        chat.participants.length == 1 ? ContactManager().getCachedContact(handle: chat.participants.first) : null;
     try {
       // If there is a contact specified, we can use it's avatar
-      if (contact != null && contact.avatar != null && contact.avatar!.isNotEmpty) {
-        icon = contact.avatar;
+      if (contact != null && contact.avatar.value != null && contact.avatar.value!.isNotEmpty) {
+        icon = contact.avatar.value;
         // Otherwise if there isn't, we use the [defaultAvatar]
       } else {
         // If [defaultAvatar] is not loaded, load it from assets
@@ -300,8 +299,8 @@ class ChatBloc {
       } else {
         chats = await Chat.getChats(limit: batchSize, offset: i * batchSize);
       }
-      if (chats.length == 0) break;
-
+      if (chats.isEmpty) break;
+      await ContactManager().matchHandles();
       for (Chat chat in chats) {
         newChats.add(chat);
         await initTileValsForChat(chat);
@@ -309,17 +308,26 @@ class ChatBloc {
           await chat.getParticipants();
         }
         if (kIsWeb) {
-          chat.participants.forEach((element) {
+          for (Handle element in chat.participants) {
             if (cachedHandles.firstWhereOrNull((e) => e.address == element.address) == null) {
               cachedHandles.add(element);
             }
-          });
-          await ContactManager().matchHandles();
+          }
+          final Message m = await chat.latestMessageFuture;
+          if (m.hasAttachments) {
+            m.fetchAttachments();
+          }
+          if (chat.latestMessage?.handle == null && chat.latestMessage?.handleId != null) chat.latestMessage!.handle = await Handle.findOne({"originalROWID": chat.latestMessage!.handleId});
+          chat.latestMessageText = MessageHelper.getNotificationTextSync(m);
+          chat.fakeLatestMessageText = faker.lorem.words((chat.latestMessageText ?? "").split(" ").length).join(" ");
+          chat.latestMessageDate = m.dateCreated;
         }
       }
 
-      if (newChats.length != 0) {
+      if (newChats.isNotEmpty) {
         _chats.value = newChats;
+        final ids = _chats.map((e) => e.guid).toSet();
+        _chats.retainWhere((element) => ids.remove(element.guid));
         _chats.sort(Chat.sort);
       }
 
@@ -333,26 +341,6 @@ class ChatBloc {
 
     if (chatRequest != null && !chatRequest!.isCompleted) {
       chatRequest!.complete();
-    }
-  }
-
-  Future<void> getMessageStuffWeb(Chat chat) async {
-    Map<String, dynamic> params = Map();
-    params["identifier"] = chat.guid;
-    params["withBlurhash"] = false;
-    params["limit"] = 1;
-    params["where"] = [
-      {"statement": "message.service = 'iMessage'", "args": null}
-    ];
-    List<dynamic> messages = await SocketManager().getChatMessages(params)!;
-    if (messages.isNotEmpty) {
-      Message message = Message.fromMap(messages.first);
-      if (message.hasAttachments) {
-        await message.fetchAttachments();
-      }
-      chat.latestMessageText = await MessageHelper.getNotificationText(message);
-      chat.fakeLatestMessageText = faker.lorem.words((chat.latestMessageText ?? "").split(" ").length).join(" ");
-      chat.latestMessageDate = message.dateCreated;
     }
   }
 
@@ -469,39 +457,38 @@ extension Helpers on RxList<Chat> {
   /// This helps reduce a vast amount of code in build methods so the widgets can
   /// update without StreamBuilders
   RxList<Chat> archivedHelper(bool archived) {
-    if (archived)
-      return this.where((e) => e.isArchived ?? false).toList().obs;
-    else
-      return this.where((e) => !(e.isArchived ?? false)).toList().obs;
+    if (archived) {
+      return where((e) => e.isArchived ?? false).toList().obs;
+    } else {
+      return where((e) => !(e.isArchived ?? false)).toList().obs;
+    }
   }
 
   RxList<Chat> bigPinHelper(bool pinned) {
-    if (pinned)
-      return this
-          .where((e) => SettingsManager().settings.skin.value == Skins.iOS ? (e.isPinned ?? false) : true)
+    if (pinned) {
+      return where((e) => SettingsManager().settings.skin.value == Skins.iOS ? (e.isPinned ?? false) : true)
           .toList()
           .obs;
-    else
-      return this
-          .where((e) => SettingsManager().settings.skin.value == Skins.iOS ? !(e.isPinned ?? false) : true)
+    } else {
+      return where((e) => SettingsManager().settings.skin.value == Skins.iOS ? !(e.isPinned ?? false) : true)
           .toList()
           .obs;
+    }
   }
 
   RxList<Chat> unknownSendersHelper(bool unknown) {
     if (!SettingsManager().settings.filterUnknownSenders.value) return this;
-    if (unknown)
-      return this
-          .where(
+    if (unknown) {
+      return where(
               (e) => e.participants.length == 1 && ContactManager().handleToContact[e.participants[0].address] == null)
           .toList()
           .obs;
-    else
-      return this
-          .where((e) =>
+    } else {
+      return where((e) =>
               e.participants.length > 1 ||
               (e.participants.length == 1 && ContactManager().handleToContact[e.participants[0].address] != null))
           .toList()
           .obs;
+    }
   }
 }

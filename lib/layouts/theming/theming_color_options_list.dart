@@ -4,14 +4,13 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/settings/settings_panel.dart';
+import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/layouts/theming/theming_color_selector.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/theme_object.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class ThemingColorOptionsList extends StatefulWidget {
@@ -43,7 +42,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
         builder: (context) => NewThemeCreateAlert(
           onCreate: (String name) async {
             Navigator.of(context).pop();
-            ThemeObject newTheme = new ThemeObject(data: currentTheme!.themeData, name: name);
+            ThemeObject newTheme = ThemeObject(data: currentTheme!.themeData, name: name);
             allThemes.add(newTheme);
             currentTheme = newTheme;
             if (widget.isDarkMode) {
@@ -77,7 +76,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
       await theme.fetchData();
     }
 
-    if (this.mounted) setState(() {});
+    if (mounted) setState(() {});
   }
 
   @override
@@ -85,13 +84,13 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
     editable = currentTheme != null && !currentTheme!.isPreset;
     Color headerColor;
     Color tileColor;
-    if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+    if (Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
         SettingsManager().settings.skin.value != Skins.iOS) {
-      headerColor = Theme.of(context).accentColor;
+      headerColor = Theme.of(context).colorScheme.secondary;
       tileColor = Theme.of(context).backgroundColor;
     } else {
       headerColor = Theme.of(context).backgroundColor;
-      tileColor = Theme.of(context).accentColor;
+      tileColor = Theme.of(context).colorScheme.secondary;
     }
     if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
       tileColor = headerColor;
@@ -242,17 +241,17 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                 SliverToBoxAdapter(
                   child: TextButton(
                     style: TextButton.styleFrom(
-                      backgroundColor: Theme.of(context).accentColor,
+                      backgroundColor: Theme.of(context).colorScheme.secondary,
                     ),
                     child: Text(
                       "Delete",
                       style: TextStyle(color: Colors.red),
                     ),
                     onPressed: () async {
-                      allThemes.removeWhere((element) => element == this.currentTheme);
-                      await this.currentTheme!.delete();
-                      this.currentTheme =
-                          widget.isDarkMode ? await ThemeObject.getDarkTheme() : await ThemeObject.getLightTheme();
+                      allThemes.removeWhere((element) => element == currentTheme);
+                      await currentTheme!.delete();
+                      currentTheme =
+                        widget.isDarkMode ? await revertToPreviousDarkTheme() : await revertToPreviousLightTheme();
                       allThemes = await ThemeObject.getThemes();
                       if (widget.isDarkMode) {
                         await SettingsManager().saveSelectedTheme(context, selectedDarkTheme: currentTheme);

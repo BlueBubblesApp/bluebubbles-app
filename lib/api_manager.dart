@@ -2,7 +2,8 @@ import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:dio_http/dio_http.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:get/get.dart' hide Response;
+import 'package:get/get.dart' hide Response, FormData, MultipartFile;
+import 'package:universal_io/io.dart';
 
 /// Get an instance of our [ApiService]
 ApiService api = Get.isRegistered<ApiService>() ? Get.find<ApiService>() : Get.put(ApiService());
@@ -29,7 +30,7 @@ class ApiService extends GetxService {
   /// Initialize dio with a couple options and intercept all requests for logging
   @override
   void onInit() {
-    dio = new Dio(BaseOptions(connectTimeout: 30000, receiveTimeout: 30000, sendTimeout: 30000));
+    dio = Dio(BaseOptions(connectTimeout: 30000, receiveTimeout: 30000, sendTimeout: 30000));
     dio.interceptors.add(ApiInterceptor());
     // Uncomment to run tests on most API requests
     // testAPI();
@@ -154,6 +155,40 @@ class ApiService extends GetxService {
     );
   }
 
+  /// Add / remove a participant to the specified chat (using [guid]). [method]
+  /// tells whether to add or remove, and use [address] to specify the address
+  /// of the participant to add / remove.
+  Future<Response> chatParticipant(String method, String guid, String address, {CancelToken? cancelToken}) async {
+    return await dio.post(
+        "$origin/chat/$guid/participant/$method",
+        queryParameters: buildQueryParams(),
+        data: {"address": address},
+        cancelToken: cancelToken
+    );
+  }
+
+  /// Update the specified chat (using [guid]). Use [displayName] to specify the
+  /// new chat name.
+  Future<Response> updateChat(String guid, String displayName, {CancelToken? cancelToken}) async {
+    return await dio.put(
+        "$origin/chat/$guid",
+        queryParameters: buildQueryParams(),
+        data: {"displayName": displayName},
+        cancelToken: cancelToken
+    );
+  }
+
+  /// Create a chat with the specified [addresses]. Requires an initial [message]
+  /// to send.
+  Future<Response> createChat(List<String> addresses, String? message, {CancelToken? cancelToken}) async {
+    return await dio.post(
+        "$origin/chat/new",
+        queryParameters: buildQueryParams(),
+        data: {"addresses": addresses},
+        cancelToken: cancelToken
+    );
+  }
+
   /// Get the number of chats in the server iMessage DB
   Future<Response> chatCount({CancelToken? cancelToken}) async {
     return await dio.get(
@@ -218,6 +253,63 @@ class ApiService extends GetxService {
     return await dio.get(
         "$origin/message/$guid",
         queryParameters: buildQueryParams(),
+        cancelToken: cancelToken
+    );
+  }
+
+  /// Send a message. [chatGuid] specifies the chat, [tempGuid] specifies a
+  /// temporary guid to avoid duplicate messages being sent, [message] is the
+  /// body of the message. Optionally provide [method] to send via private API,
+  /// [effectId] to send with an effect, or [subject] to send with a subject.
+  Future<Response> sendMessage(String chatGuid, String tempGuid, String message, {String? method, String? effectId, String? subject, String? selectedMessageGuid, CancelToken? cancelToken}) async {
+    return await dio.post(
+        "$origin/message/text",
+        queryParameters: buildQueryParams(),
+        data: {
+          "chatGuid": chatGuid,
+          "message": message.isEmpty && (subject?.isNotEmpty ?? false) ? " " : message,
+          "method": method,
+          "effectId": effectId,
+          "subject": subject,
+          "selectedMessageGuid": selectedMessageGuid,
+        },
+        cancelToken: cancelToken
+    );
+  }
+
+  /// Send an attachment. [chatGuid] specifies the chat, [tempGuid] specifies a
+  /// temporary guid to avoid duplicate messages being sent, [file] is the
+  /// body of the message.
+  Future<Response> sendAttachment(String chatGuid, String tempGuid, File file, {void Function(int, int)? onSendProgress, CancelToken? cancelToken}) async {
+    final fileName = file.path.split('/').last;
+    final formData = FormData.fromMap({
+      "file": await MultipartFile.fromFile(file.path, filename: fileName),
+      "chatGuid": chatGuid,
+      "tempGuid": tempGuid,
+      "name": fileName,
+    });
+    return await dio.post(
+      "$origin/message/attachment",
+      queryParameters: buildQueryParams(),
+      cancelToken: cancelToken,
+      data: formData,
+      onSendProgress: onSendProgress
+    );
+  }
+
+  /// Send a reaction. [chatGuid] specifies the chat, [selectedMessageText]
+  /// specifies the text of the message being reacted on, [selectedMessageGuid]
+  /// is the guid of the message, and [reaction] is the reaction type.
+  Future<Response> sendTapback(String chatGuid, String selectedMessageText, String selectedMessageGuid, String reaction, {CancelToken? cancelToken}) async {
+    return await dio.post(
+        "$origin/message/react",
+        queryParameters: buildQueryParams(),
+        data: {
+          "chatGuid": chatGuid,
+          "selectedMessageText": selectedMessageText,
+          "selectedMessageGuid": selectedMessageGuid,
+          "reaction": reaction,
+        },
         cancelToken: cancelToken
     );
   }
@@ -301,7 +393,7 @@ class ApiService extends GetxService {
   /// Get the basic landing page for the server URL
   Future<Response> landingPage({CancelToken? cancelToken}) async {
     return await dio.get(
-        "$origin".replaceAll("/api/v1", ""),
+        origin.replaceAll("/api/v1", ""),
         queryParameters: buildQueryParams(),
         cancelToken: cancelToken
     );
@@ -452,8 +544,10 @@ class ApiInterceptor extends Interceptor {
   @override
   void onError(DioError err, ErrorInterceptorHandler handler) {
     Logger.error("PATH: ${err.requestOptions.path}", tag: "ERROR[${err.response?.statusCode}]");
-    print(err.error);
-    print(err.requestOptions.contentType);
+    Logger.error(err.error, tag: "ERROR[${err.response?.statusCode}]");
+    Logger.error(err.requestOptions.contentType, tag: "ERROR[${err.response?.statusCode}]");
+    Logger.error(err.response?.data, tag: "ERROR[${err.response?.statusCode}]");
+    if (err.response != null) return handler.resolve(err.response!);
     return super.onError(err, handler);
   }
 }

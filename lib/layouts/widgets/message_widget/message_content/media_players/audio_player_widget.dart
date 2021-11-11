@@ -13,8 +13,8 @@ import 'package:flutter/material.dart';
 import 'package:tuple/tuple.dart';
 import 'package:video_player/video_player.dart';
 
-class AudioPlayerWiget extends StatefulWidget {
-  AudioPlayerWiget({
+class AudioPlayerWidget extends StatefulWidget {
+  AudioPlayerWidget({
     Key? key,
     required this.file,
     required this.context,
@@ -28,15 +28,12 @@ class AudioPlayerWiget extends StatefulWidget {
   final bool isFromMe;
 
   @override
-  _AudioPlayerWigetState createState() => _AudioPlayerWigetState();
+  _AudioPlayerWidgetState createState() => _AudioPlayerWidgetState();
 }
 
-class _AudioPlayerWigetState extends State<AudioPlayerWiget> with AutomaticKeepAliveClientMixin {
+class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   late final ChewieAudioController controller;
   late final VideoPlayerController audioController;
-
-  @override
-  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -53,12 +50,12 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> with AutomaticKeepA
         audioController = VideoPlayerController.network(url);
       } else {
         dynamic file = File(widget.file.path!);
-        audioController = new VideoPlayerController.file(file);
+        audioController = VideoPlayerController.file(file);
       }
       controller = ChewieAudioController(
         videoPlayerController: audioController,
         autoPlay: false,
-        looping: true,
+        looping: false,
         showSeekButtons: false,
         showControls: true,
         autoInitialize: true,
@@ -72,7 +69,7 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> with AutomaticKeepA
             handleColor: Theme.of(widget.context).primaryColor,
             bufferedColor: Theme.of(widget.context).backgroundColor,
             backgroundColor: Theme.of(widget.context).disabledColor),
-        cupertinoBackgroundColor: Theme.of(widget.context).accentColor,
+        cupertinoBackgroundColor: Theme.of(widget.context).colorScheme.secondary,
         cupertinoIconColor: Theme.of(widget.context).textTheme.bodyText1?.color,
         cupertinoColumnAlignment: widget.isFromMe ? MainAxisAlignment.end : MainAxisAlignment.start,
       );
@@ -104,16 +101,15 @@ class _AudioPlayerWigetState extends State<AudioPlayerWiget> with AutomaticKeepA
     if (!(ModalRoute.of(context)?.isCurrent ?? false)) {
       controller.pause();
     }
-    super.build(context);
     return Container(
       alignment: Alignment.center,
-      color: Theme.of(context).accentColor,
+      color: Theme.of(context).colorScheme.secondary,
       height: SettingsManager().settings.skin.value == Skins.iOS ? 75 : 48,
-      constraints: new BoxConstraints(maxWidth: maxWidth),
+      constraints: BoxConstraints(maxWidth: maxWidth),
       child: Theme(
         data: Theme.of(context).copyWith(
             platform: SettingsManager().settings.skin.value == Skins.iOS ? TargetPlatform.iOS : TargetPlatform.android,
-            dialogBackgroundColor: Theme.of(context).accentColor,
+            dialogBackgroundColor: Theme.of(context).colorScheme.secondary,
             iconTheme: Theme.of(context).iconTheme.copyWith(color: Theme.of(context).textTheme.bodyText1?.color)),
         child: ChewieAudio(
           controller: controller,

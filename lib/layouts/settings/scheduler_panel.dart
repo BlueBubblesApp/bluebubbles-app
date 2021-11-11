@@ -6,11 +6,11 @@ import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
-import 'package:bluebubbles/layouts/settings/settings_panel.dart';
+import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/scheduled.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -45,9 +45,9 @@ class _SchedulePanelState extends State<SchedulePanel> {
     super.initState();
     setChat(widget.chat);
 
-    messageController = new TextEditingController();
+    messageController = TextEditingController();
     messageController.addListener(() {
-      if (messageController.text.length > 0 && errors.length > 0 && this.mounted) {
+      if (messageController.text.isNotEmpty && errors.isNotEmpty && mounted) {
         setState(() {
           errors = [];
         });
@@ -59,7 +59,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
     if (chat == null) return;
 
     getFullChatTitle(chat).then((String title) {
-      if (!this.mounted) return;
+      if (!mounted) return;
       setState(() {
         this.title = title;
       });
@@ -100,7 +100,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
         systemNavigationBarIconBrightness:
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
@@ -112,11 +112,11 @@ class _SchedulePanelState extends State<SchedulePanel> {
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
-                brightness: getBrightness(context),
+                systemOverlayStyle: getBrightness(context),
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: buildBackButton(context),
-                backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
+                backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
                 title: Text(
                   "Message Scheduler",
                   style: Theme.of(context).textTheme.headline1,
@@ -153,7 +153,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
                                   type: ChatSelectorTypes.ONLY_EXISTING,
                                   onSelect: (List<UniqueContact> selection) {
                                     Navigator.of(context).pop();
-                                    if (selection.length > 0 && selection[0].isChat && this.mounted) {
+                                    if (selection.isNotEmpty && selection[0].isChat && mounted) {
                                       setState(() {
                                         setChat(selection[0].chat);
                                         errors = [];
@@ -167,7 +167,7 @@ class _SchedulePanelState extends State<SchedulePanel> {
                             );
                           },
                         ),
-                  SettingsTextField(title: "Enter a message", controller: this.messageController),
+                  SettingsTextField(title: "Enter a message", controller: messageController),
                   SettingsOptions<List<dynamic>>(
                     initial: timeOptions.first,
                     subtitle: getTimeText(context),
@@ -184,10 +184,11 @@ class _SchedulePanelState extends State<SchedulePanel> {
                         messageTime = await showTimePicker(context: context, initialTime: TimeOfDay.now());
                       }
 
-                      if (this.mounted)
+                      if (mounted) {
                         setState(() {
                           errors = [];
                         });
+                      }
                     },
                     options: timeOptions,
                     textProcessing: (val) => val[1],
@@ -215,22 +216,23 @@ class _SchedulePanelState extends State<SchedulePanel> {
           onPressed: () async {
             errors = [];
             if (_chat == null) errors.add("Please select a chat!");
-            if (scheduleSeconds == -1 && (messageDate == null || messageTime == null))
+            if (scheduleSeconds == -1 && (messageDate == null || messageTime == null)) {
               errors.add("Please set a date and time!");
-            if (messageController.text.length == 0) errors.add("Please enter a message!");
+            }
+            if (messageController.text.isEmpty) errors.add("Please enter a message!");
 
-            if (errors.length > 0 && this.mounted) {
+            if (errors.isNotEmpty && mounted) {
               setState(() {});
             } else {
               DateTime occurs;
               if (scheduleSeconds == -1) {
-                occurs = new DateTime(
+                occurs = DateTime(
                     messageDate!.year, messageDate!.month, messageDate!.day, messageTime!.hour, messageTime!.minute);
               } else {
                 occurs = DateTime.now().add(Duration(seconds: scheduleSeconds!));
               }
 
-              ScheduledMessage scheduled = new ScheduledMessage(
+              ScheduledMessage scheduled = ScheduledMessage(
                   chatGuid: _chat!.guid, message: messageController.text, epochTime: occurs.millisecondsSinceEpoch);
 
               await scheduled.save();

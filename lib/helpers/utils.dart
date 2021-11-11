@@ -1,5 +1,9 @@
 import 'dart:async';
+import 'package:bluebubbles/helpers/navigator.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:universal_io/io.dart';
 import 'dart:math';
 import 'dart:typed_data';
@@ -21,10 +25,8 @@ import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
-import 'package:contacts_service/contacts_service.dart';
 import 'package:convert/convert.dart';
 import 'package:device_info_plus/device_info_plus.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:libphonenumber_plugin/libphonenumber_plugin.dart';
@@ -81,7 +83,7 @@ Future<String> formatPhoneNumber(dynamic item) async {
   }
 
   // If we don't have a valid address, or it's an email, return it
-  if (address == null || address.isEmail) return address!;
+  if (address == null || address.isEmail) return address ?? "Unknown";
   address = address.trim(); // Trim it just in case
 
   String? meta;
@@ -93,7 +95,7 @@ Future<String> formatPhoneNumber(dynamic item) async {
     if (!address.startsWith("+") && cc != null) {
       try {
         meta = await PhoneNumberUtil.formatAsYouType("${cc.dialCode}$address", countryCode);
-      } catch (x) {}
+      } catch (_) {}
     }
   }
 
@@ -109,7 +111,7 @@ Future<List<String>> getCompareOpts(Handle handle) async {
   int maxOpts = 4; // This is relatively arbitrary
   for (int i = 0; i < formatted.length; i += 1) {
     String val = formatted.substring(i);
-    if (val.length == 0) break;
+    if (val.isEmpty) break;
 
     opts.add(val);
     if (i + 1 >= maxOpts) break;
@@ -122,16 +124,22 @@ Future<List<String>> getCompareOpts(Handle handle) async {
 
 bool sameAddress(List<String?> options, String? compared) {
   bool match = false;
+  if (compared == null) return match;
   for (String? opt in options) {
+    if (isNullOrEmpty(opt)!) continue;
     if (opt == compared) {
+      match = true;
+      break;
+    } else if (compared.endsWith(opt!) && opt.length >= 9) {
+      match = true;
+      break;
+    } else if (opt.endsWith(compared) && compared.length >= 9) {
       match = true;
       break;
     }
 
-    if (opt!.isEmail && !compared!.isEmail) continue;
-
-    String formatted = slugify(compared!, delimiter: '').toString().replaceAll('-', '');
-    if (options.contains(formatted)) {
+    String formatted = slugify(compared, delimiter: '').toString().replaceAll('-', '');
+    if (opt.endsWith(formatted) || formatted.endsWith(opt)) {
       match = true;
       break;
     }
@@ -142,12 +150,12 @@ bool sameAddress(List<String?> options, String? compared) {
 
 String getInitials(Contact contact) {
   // Set default initials
-  String initials = (contact.givenName!.isNotEmpty == true ? contact.givenName![0] : "") +
-      (contact.familyName!.isNotEmpty == true ? contact.familyName![0] : "");
+  String initials = (contact.structuredName?.givenName.isNotEmpty == true ? contact.structuredName!.givenName[0] : "") +
+      (contact.structuredName?.familyName.isNotEmpty == true ? contact.structuredName!.familyName[0] : "");
 
   // If the initials are empty, get them from the display name
   if (initials.trim().isEmpty) {
-    initials = contact.displayName != null ? contact.displayName![0] : "";
+    initials = contact.displayName[0];
   }
 
   return initials.toUpperCase();
@@ -170,19 +178,23 @@ String getInitials(Contact contact) {
 
 Future<String?> parsePhoneNumber(String number, String region) async {
   try {
-    return await PhoneNumberUtil.normalizePhoneNumber(number, region);
+    if (kIsWeb) {
+      return await PhoneNumberUtil.normalizePhoneNumber(number, region);
+    } else {
+      return FlutterLibphonenumber().formatNumberSync(number);
+    }
   } catch (ex) {
     return null;
   }
 }
 
 String randomString(int length) {
-  var rand = new Random();
-  var codeUnits = new List.generate(length, (index) {
+  var rand = Random();
+  var codeUnits = List.generate(length, (index) {
     return rand.nextInt(33) + 89;
   });
 
-  return new String.fromCharCodes(codeUnits);
+  return String.fromCharCodes(codeUnits);
 }
 
 void showSnackbar(String title, String message,
@@ -190,7 +202,7 @@ void showSnackbar(String title, String message,
   Get.snackbar(title, message,
       snackPosition: SnackPosition.BOTTOM,
       colorText: Get.textTheme.bodyText1!.color,
-      backgroundColor: Get.theme.accentColor,
+      backgroundColor: Get.theme.colorScheme.secondary,
       margin: EdgeInsets.only(bottom: 10),
       maxWidth: Get.width - 20,
       isDismissible: false,
@@ -216,7 +228,7 @@ String buildDate(DateTime? dateTime) {
   if (dateTime == null || dateTime.millisecondsSinceEpoch == 0) return "";
   String time = SettingsManager().settings.use24HrFormat.value
       ? intl.DateFormat.Hm().format(dateTime)
-      : new intl.DateFormat.jm().format(dateTime);
+      : intl.DateFormat.jm().format(dateTime);
   String date;
   if (dateTime.isToday()) {
     date = time;
@@ -225,32 +237,47 @@ String buildDate(DateTime? dateTime) {
   } else if (DateTime.now().difference(dateTime.toLocal()).inDays <= 7) {
     date = intl.DateFormat("EEEE").format(dateTime);
   } else {
-    date = "${dateTime.month.toString()}/${dateTime.day.toString()}/${dateTime.year.toString()}";
+    date = intl.DateFormat.yMd().format(dateTime);
   }
   return date;
+}
+
+String buildSeparatorDateSamsung(DateTime dateTime) {
+  return intl.DateFormat.yMMMMEEEEd().format(dateTime);
 }
 
 String buildTime(DateTime? dateTime) {
   if (dateTime == null || dateTime.millisecondsSinceEpoch == 0) return "";
   String time = SettingsManager().settings.use24HrFormat.value
       ? intl.DateFormat.Hm().format(dateTime)
-      : new intl.DateFormat.jm().format(dateTime);
+      : intl.DateFormat.jm().format(dateTime);
   return time;
 }
 
+String buildFullDate(DateTime time) {
+  return intl.DateFormat.yMd().add_jm().format(time);
+}
+
 extension DateHelpers on DateTime {
+  bool isTomorrow({DateTime? otherDate}) {
+    final now = otherDate?.add(Duration(days: 1)) ?? DateTime.now().add(Duration(days: 1));
+    return now.day == day &&
+        now.month == month &&
+        now.year == year;
+  }
+
   bool isToday() {
     final now = DateTime.now();
-    return now.day == this.day && now.month == this.month && now.year == this.year;
+    return now.day == day && now.month == month && now.year == year;
   }
 
   bool isYesterday() {
     final yesterday = DateTime.now().subtract(Duration(days: 1));
-    return yesterday.day == this.day && yesterday.month == this.month && yesterday.year == this.year;
+    return yesterday.day == day && yesterday.month == month && yesterday.year == year;
   }
 
-  bool isWithin(DateTime other, {int? ms, int? seconds, int? minutes, int? hours}) {
-    Duration diff = this.difference(other);
+  bool isWithin(DateTime other, {int? ms, int? seconds, int? minutes, int? hours, int? days}) {
+    Duration diff = difference(other);
     if (ms != null) {
       return diff.inMilliseconds < ms;
     } else if (seconds != null) {
@@ -259,8 +286,10 @@ extension DateHelpers on DateTime {
       return diff.inMinutes < minutes;
     } else if (hours != null) {
       return diff.inHours < hours;
+    } else if (days != null) {
+      return diff.inDays < days;
     } else {
-      throw new Exception("No timerange specified!");
+      throw Exception("No timerange specified!");
     }
   }
 }
@@ -310,20 +339,21 @@ String uriToFilename(String? uri, String? mimeType) {
   filename = slugify(filename, delimiter: '_');
 
   // Rebuild the filename
-  return (ext != null && ext.length > 0) ? '$filename.$ext' : filename;
+  return (ext != null && ext.isNotEmpty) ? '$filename.$ext' : filename;
 }
 
 Future<String> getGroupEventText(Message message) async {
   String text = "Unknown group event";
   String? handle = "You";
-  if (!message.isFromMe! && message.handleId != null && message.handle != null)
-    handle = await ContactManager().getContactTitle(message.handle);
+  if (!message.isFromMe! && message.handleId != null && message.handle != null) {
+    handle = ContactManager().getContactTitle(message.handle);
+  }
 
   String? other = "someone";
   if (message.otherHandle != null && [1, 2].contains(message.itemType)) {
     Handle? item = await Handle.findOne({"originalROWID": message.otherHandle});
     if (item != null) {
-      other = await ContactManager().getContactTitle(item);
+      other = ContactManager().getContactTitle(item);
     }
   }
 
@@ -349,10 +379,10 @@ Future<String> getGroupEventText(Message message) async {
   return text;
 }
 
-Future<MemoryImage?> loadAvatar(Chat chat, Handle? handle) async {
+MemoryImage? loadAvatar(Chat chat, Handle? handle) {
   // Get the contact
-  Contact? contact = await ContactManager().getCachedContact(handle);
-  Uint8List? avatar = contact?.avatar;
+  Contact? contact = ContactManager().getCachedContact(handle: handle);
+  Uint8List? avatar = contact?.avatar.value;
   if (isNullOrEmpty(avatar)!) return null;
 
   // Set the contact image
@@ -413,7 +443,7 @@ List<Color> toColorGradient(String? str) {
     total += str!.codeUnitAt(i);
   }
 
-  Random random = new Random(total);
+  Random random = Random(total);
   int seed = random.nextInt(7);
 
   // These are my arbitrary weights. It's based on what I found
@@ -451,12 +481,12 @@ Size getGifDimensions(Uint8List bytes) {
 
   Logger.debug("GIF width: $width");
   Logger.debug("GIF height: $height");
-  Size size = new Size(width.toDouble(), height.toDouble());
+  Size size = Size(width.toDouble(), height.toDouble());
   return size;
 }
 
-Brightness getBrightness(BuildContext context) {
-  return AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ? Brightness.dark : Brightness.light;
+SystemUiOverlayStyle getBrightness(BuildContext context) {
+  return AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark;
 }
 
 /// Take the passed [address] or serverAddress from Settings
@@ -504,7 +534,7 @@ Future<String> getDeviceName() async {
     }
 
     // Set device name
-    if (items.length > 0) {
+    if (items.isNotEmpty) {
       deviceName = items.join("_").toLowerCase();
     }
   } catch (ex) {
@@ -553,13 +583,13 @@ Future<File?> saveImageFromUrl(String guid, String url) async {
   try {
     var response = await get(Uri.parse(url));
 
-    Directory baseDir = new Directory("${AttachmentHelper.getBaseAttachmentsPath()}/$guid");
+    Directory baseDir = Directory("${AttachmentHelper.getBaseAttachmentsPath()}/$guid");
     if (!baseDir.existsSync()) {
       baseDir.createSync(recursive: true);
     }
 
     String newPath = "${baseDir.path}/$filename";
-    File file = new File(newPath);
+    File file = File(newPath);
     file.writeAsBytesSync(response.bodyBytes);
 
     return file;
@@ -640,10 +670,94 @@ Future<PlayerStatus> getControllerStatus(VideoPlayerController controller) async
   return PlayerStatus.NONE;
 }
 
+/// Helps prevent "setState cannot be called while the widget tree is building"
+/// error by checking if setState can actually be called
+Future<bool> rebuild(State s) async {
+  if (!s.mounted) return false;
+
+  // if there's a current frame,
+  if (SchedulerBinding.instance!.schedulerPhase != SchedulerPhase.idle) {
+    // wait for the end of that frame.
+    await SchedulerBinding.instance!.endOfFrame;
+    if (!s.mounted) return false;
+  }
+
+  // ignore protected member use error - that's the whole point of this function
+  s.setState(() {});
+  return true;
+}
+
+final Uint8List kTransparentImage = Uint8List.fromList(<int>[
+  0x89,
+  0x50,
+  0x4E,
+  0x47,
+  0x0D,
+  0x0A,
+  0x1A,
+  0x0A,
+  0x00,
+  0x00,
+  0x00,
+  0x0D,
+  0x49,
+  0x48,
+  0x44,
+  0x52,
+  0x00,
+  0x00,
+  0x00,
+  0x01,
+  0x00,
+  0x00,
+  0x00,
+  0x01,
+  0x08,
+  0x06,
+  0x00,
+  0x00,
+  0x00,
+  0x1F,
+  0x15,
+  0xC4,
+  0x89,
+  0x00,
+  0x00,
+  0x00,
+  0x0A,
+  0x49,
+  0x44,
+  0x41,
+  0x54,
+  0x78,
+  0x9C,
+  0x63,
+  0x00,
+  0x01,
+  0x00,
+  0x00,
+  0x05,
+  0x00,
+  0x01,
+  0x0D,
+  0x0A,
+  0x2D,
+  0xB4,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x49,
+  0x45,
+  0x4E,
+  0x44,
+  0xAE,
+]);
+
 extension PlatformSpecificCapitalize on String {
   String get psCapitalize {
     if (SettingsManager().settings.skin.value == Skins.iOS) {
-      return this.toUpperCase();
+      return toUpperCase();
     } else {
       return this;
     }
@@ -653,5 +767,21 @@ extension PlatformSpecificCapitalize on String {
 extension LastChars on String {
   String lastChars(int n) => substring(length - n);
 }
+
+extension WidgetLocation on GlobalKey {
+  Rect? globalPaintBounds(BuildContext context) {
+    double difference = context.width - CustomNavigator.width(context);
+    final renderObject = currentContext?.findRenderObject();
+    final translation = renderObject?.getTransformTo(null).getTranslation();
+    if (translation != null && renderObject?.paintBounds != null) {
+      final offset = Offset(translation.x, translation.y);
+      final tempRect = renderObject!.paintBounds.shift(offset);
+      return Rect.fromLTRB(tempRect.left - difference, tempRect.top, tempRect.right - difference, tempRect.bottom);
+    } else {
+      return null;
+    }
+  }
+}
+
 
 bool get kIsDesktop => (Platform.isWindows || Platform.isLinux || Platform.isMacOS) && !kIsWeb;

@@ -6,12 +6,10 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
-class PinnedTileTextBubble extends StatefulWidget {
+class PinnedTileTextBubble extends StatelessWidget {
   PinnedTileTextBubble({
     Key? key,
     required this.chat,
@@ -22,38 +20,14 @@ class PinnedTileTextBubble extends StatefulWidget {
   final double size;
 
   @override
-  _PinnedTileTextBubbleState createState() => _PinnedTileTextBubbleState();
-}
-
-class _PinnedTileTextBubbleState extends State<PinnedTileTextBubble> with AutomaticKeepAliveClientMixin {
-  Brightness? brightness;
-  Color? previousBackgroundColor;
-  bool gotBrightness = false;
-
-  void loadBrightness() {
-    Color now = context.theme.backgroundColor;
-    bool themeChanged = previousBackgroundColor == null || previousBackgroundColor != now;
-    if (!themeChanged && gotBrightness) return;
-
-    previousBackgroundColor = now;
-
-    bool isDark = now.computeLuminance() < 0.179;
-    brightness = isDark ? Brightness.dark : Brightness.light;
-    gotBrightness = true;
-    if (this.mounted) setState(() {});
-  }
-
-  @override
   Widget build(BuildContext context) {
-    super.build(context);
-
-    bool showTail = !widget.chat.isGroup();
+    bool showTail = !chat.isGroup();
 
     return FutureBuilder<Message>(
-      future: widget.chat.latestMessageFuture,
+      future: chat.latestMessageFuture,
       builder: (BuildContext context, AsyncSnapshot snapshot) {
         if (!snapshot.hasData) return Container();
-        if (!(widget.chat.hasUnreadMessage ?? false)) return Container();
+        if (!(chat.hasUnreadMessage ?? false)) return Container();
         Message message = snapshot.data;
         bool leftSide = Random(message.id).nextBool();
         bool hide =
@@ -62,7 +36,7 @@ class _PinnedTileTextBubbleState extends State<PinnedTileTextBubble> with Automa
             SettingsManager().settings.generateFakeMessageContent.value;
 
         String messageText = MessageHelper.getNotificationTextSync(message);
-        if (generate) messageText = widget.chat.fakeLatestMessageText ?? "";
+        if (generate) messageText = chat.fakeLatestMessageText ?? "";
         if (message.associatedMessageGuid != null ||
             message.isFromMe! ||
             isNullOrEmpty(messageText, trimString: true)!) {
@@ -83,14 +57,14 @@ class _PinnedTileTextBubbleState extends State<PinnedTileTextBubble> with Automa
             padding: EdgeInsets.only(
               left: showTail
                   ? leftSide
-                      ? widget.size * 0.06
-                      : widget.size * 0.02
-                  : widget.size * 0.04,
+                      ? size * 0.06
+                      : size * 0.02
+                  : size * 0.04,
               right: showTail
                   ? leftSide
-                      ? widget.size * 0.02
-                      : widget.size * 0.06
-                  : widget.size * 0.04,
+                      ? size * 0.02
+                      : size * 0.06
+                  : size * 0.04,
             ),
             child: Stack(
               clipBehavior: Clip.none,
@@ -122,7 +96,7 @@ class _PinnedTileTextBubbleState extends State<PinnedTileTextBubble> with Automa
                         ),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10.0),
-                          color: context.theme.accentColor.withOpacity(0.8),
+                          color: context.theme.colorScheme.secondary.withOpacity(0.8),
                         ),
                         child: Text(
                           messageText,
@@ -142,9 +116,6 @@ class _PinnedTileTextBubbleState extends State<PinnedTileTextBubble> with Automa
       },
     );
   }
-
-  @override
-  bool get wantKeepAlive => true;
 }
 
 class TailPainter extends CustomPainter {
@@ -157,7 +128,7 @@ class TailPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    Paint paint = Paint()..color = Get.theme.accentColor.withOpacity(0.8);
+    Paint paint = Paint()..color = Get.theme.colorScheme.secondary.withOpacity(0.8);
     Path path = Path();
 
     if (leftSide) {

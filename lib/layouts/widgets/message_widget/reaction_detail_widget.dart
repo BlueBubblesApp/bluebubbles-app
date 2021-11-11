@@ -28,19 +28,11 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
     super.initState();
 
     contactTitle = widget.message.isFromMe! ? "You" : widget.handle!.address;
-  }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (widget.message.isFromMe! || widget.handle == null) return;
-
-    ContactManager().getContactTitle(widget.handle).then((String? title) {
-      if (title != contactTitle) {
-        contactTitle = title;
-        if (this.mounted) setState(() {});
-      }
-    });
+    String? title = ContactManager().getContactTitle(widget.handle);
+    if (title != contactTitle) {
+      contactTitle = title;
+    }
   }
 
   @override
@@ -49,7 +41,7 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
     if (hide) return Container();
 
     Color iconColor = Colors.white;
-    if (Theme.of(context).accentColor.computeLuminance() >= 0.179) {
+    if (Theme.of(context).colorScheme.secondary.computeLuminance() >= 0.179) {
       iconColor = Colors.black.withAlpha(95);
     }
 
@@ -67,7 +59,7 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
         Padding(
           padding: EdgeInsets.only(bottom: 8.0),
           child: Text(
-            getContactName(context, contactTitle, widget.handle?.address),
+            widget.message.isFromMe! ? "You" : getContactName(context, contactTitle, widget.handle?.address),
             style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeDelta: -5),
           ),
         ),
@@ -76,9 +68,9 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
           width: 28,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(100),
-            color: Theme.of(context).accentColor,
+            color: Theme.of(context).colorScheme.secondary,
             boxShadow: [
-              new BoxShadow(
+              BoxShadow(
                 blurRadius: 1.0,
                 color: Colors.black,
               )

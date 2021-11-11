@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bluebubbles/helpers/logger.dart';
 
 class QueueItem {
@@ -12,26 +14,27 @@ abstract class QueueManager {
   List<QueueItem> queue = [];
 
   /// Adds an item to the queue and kicks off the processing (if required)
-  Future<void> add(QueueItem item) async {
+  Future<void> add(QueueItem item, {Completer<void>? completer}) async {
     // Add the item to the queue, no matter what
-    this.queue.add(item);
+    queue.add(item);
 
     // Only process this item if we aren't currently processing
-    if (!this.isProcessing) this.processNextItem();
+    if (!isProcessing) processNextItem(completer: completer);
+
+    return completer?.future;
   }
 
   /// Processes the next item in the queue
-  Future<void> processNextItem() async {
+  Future<void> processNextItem({Completer<void>? completer}) async {
     // If there are no queued items, we are done processing
-    if (this.queue.isEmpty) {
-      this.isProcessing = false;
-      //MethodChannelInterface().closeThread();
+    if (queue.isEmpty) {
+      isProcessing = false;
       return;
     }
 
     // Start processing top item
-    this.isProcessing = true;
-    QueueItem queued = this.queue.removeAt(0);
+    isProcessing = true;
+    QueueItem queued = queue.removeAt(0);
 
     try {
       await beforeProcessing(queued, {});
@@ -41,6 +44,8 @@ abstract class QueueManager {
       Logger.error("Failed to handle queued item! " + ex.toString());
       Logger.error(stacktrace.toString());
     }
+
+    completer?.complete();
 
     // Process the next item
     await processNextItem();

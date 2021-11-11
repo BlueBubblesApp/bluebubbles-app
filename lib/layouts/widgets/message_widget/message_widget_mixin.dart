@@ -1,7 +1,7 @@
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/managers/contact_manager.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
+import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:faker/faker.dart';
@@ -16,27 +16,10 @@ import 'package:url_launcher/url_launcher.dart';
 
 // Mixin just for commonly shared functions and properties between the SentMessage and ReceivedMessage
 abstract class MessageWidgetMixin {
-  String contactTitle = "";
-  bool hasHyperlinks = false;
   static const double MAX_SIZE = 3 / 5;
 
-  Future<void> initMessageState(Message message, bool? showHandle) async {
-    this.hasHyperlinks = parseLinks(message.text!).isNotEmpty;
-    await getContactTitle(message, showHandle);
-  }
-
-  Future<void> getContactTitle(Message message, bool? showHandle) async {
-    if (message.handle == null || !showHandle!) return;
-
-    String? title = await ContactManager().getContactTitle(message.handle);
-
-    if (title != contactTitle) {
-      contactTitle = title ?? "";
-    }
-  }
-
   /// Adds reacts to a [message] widget
-  Widget addReactionsToWidget(
+  static Widget addReactionsToWidget(
       {required Widget messageWidget, required Widget reactions, required Message? message, bool shouldShow = true}) {
     if (!shouldShow) return messageWidget;
 
@@ -50,7 +33,7 @@ abstract class MessageWidgetMixin {
   }
 
   /// Adds reacts to a [message] widget
-  Widget addStickersToWidget({required Widget message, required Widget stickers, required bool isFromMe}) {
+  static Widget addStickersToWidget({required Widget message, required Widget stickers, required bool isFromMe}) {
     return Stack(
       alignment: (isFromMe) ? AlignmentDirectional.bottomEnd : AlignmentDirectional.bottomStart,
       children: [
@@ -60,7 +43,7 @@ abstract class MessageWidgetMixin {
     );
   }
 
-  static List<InlineSpan> buildMessageSpans(BuildContext context, Message? message, {List<Color>? colors: const []}) {
+  static List<InlineSpan> buildMessageSpans(BuildContext context, Message? message, {List<Color>? colors = const [], Color? colorOverride}) {
     List<InlineSpan> textSpans = <InlineSpan>[];
 
     final bool generateContent =
@@ -68,42 +51,43 @@ abstract class MessageWidgetMixin {
     final bool hideContent = (message?.guid?.contains("theme-selector") ?? false) ||
         (SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value && !generateContent);
 
-    if (message != null && !isEmptyString(message.text)) {
-      RegExp exp = new RegExp(
+    TextStyle? textStyle = Theme.of(context).textTheme.bodyText2;
+    if (!message!.isFromMe!) {
+      if (SettingsManager().settings.colorfulBubbles.value) {
+        if (!isNullOrEmpty(colors)!) {
+          bool dark = colors![0].computeLuminance() < 0.179;
+          if (!dark) {
+            textStyle = Theme.of(context)
+                .textTheme
+                .bodyText2!
+                .apply(color: hideContent ? Colors.transparent : colors[0].darkenAmount(0.35));
+          } else {
+            textStyle = Theme.of(context).textTheme.bodyText2;
+            if (hideContent) textStyle = textStyle!.apply(color: Colors.transparent);
+          }
+        } else {
+          textStyle = Theme.of(context).textTheme.bodyText2!.apply(
+              color: hideContent
+                  ? Colors.transparent
+                  : toColorGradient(message.handle?.address ?? "")[0].darkenAmount(0.35));
+        }
+      } else if (hideContent) {
+        textStyle = textStyle!.apply(color: Colors.transparent);
+      }
+    } else {
+      textStyle = textStyle!.apply(color: hideContent ? Colors.transparent : Theme.of(context).primaryColor.computeLuminance() > 0.8 ? Colors.black : Colors.white);
+    }
+    if (colorOverride != null && !hideContent) textStyle = textStyle!.apply(color: colorOverride);
+    if ((!isEmptyString(message.text) || !isEmptyString(message.subject))) {
+      RegExp exp = RegExp(
           r'((https?://)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9/()@:%_.~#?&=*\[\]]*)\b');
       List<RegExpMatch> matches = exp.allMatches(message.text!).toList();
 
       List<int> linkIndexMatches = <int>[];
-      matches.forEach((match) {
+      for (RegExpMatch match in matches) {
         linkIndexMatches.add(match.start);
         linkIndexMatches.add(match.end);
-      });
-
-      TextStyle? textStyle = Theme.of(context).textTheme.bodyText2;
-      if (!message.isFromMe!) {
-        if (SettingsManager().settings.colorfulBubbles.value) {
-          if (!isNullOrEmpty(colors)!) {
-            bool dark = colors![0].computeLuminance() < 0.179;
-            if (!dark) {
-              textStyle = Theme.of(context)
-                  .textTheme
-                  .bodyText2!
-                  .apply(color: hideContent ? Colors.transparent : colors[0].darkenAmount(0.35));
-            } else {
-              textStyle = Theme.of(context).textTheme.bodyText2;
-              if (hideContent) textStyle = textStyle!.apply(color: Colors.transparent);
-            }
-          } else {
-            textStyle = Theme.of(context).textTheme.bodyText2!.apply(
-                color: hideContent
-                    ? Colors.transparent
-                    : toColorGradient(message.handle?.address ?? "")[0].darkenAmount(0.35));
-          }
-        } else if (hideContent) textStyle = textStyle!.apply(color: Colors.transparent);
-      } else {
-        textStyle = textStyle!.apply(color: hideContent ? Colors.transparent : Theme.of(context).primaryColor.computeLuminance() > 0.8 ? Colors.black : Colors.white);
       }
-
       if (!isNullOrEmpty(message.subject)!) {
         TextStyle _textStyle = message.isFromMe!
             ? textStyle!.apply(color: Colors.white, fontWeightDelta: 2)
@@ -111,29 +95,30 @@ abstract class MessageWidgetMixin {
         if (hideContent) {
           _textStyle = _textStyle.apply(color: Colors.transparent);
         }
-        textSpans.add(
-          TextSpan(
-            text: "${message.subject}\n",
-            style: _textStyle,
-          ),
+        if (colorOverride != null && !hideContent) _textStyle = _textStyle.apply(color: colorOverride);
+        textSpans.addAll(
+            MessageHelper.buildEmojiText(
+              "${message.subject}\n",
+              _textStyle,
+            )
         );
       }
 
-      if (linkIndexMatches.length > 0) {
+      if (linkIndexMatches.isNotEmpty) {
         for (int i = 0; i < linkIndexMatches.length + 1; i++) {
           if (i == 0) {
-            textSpans.add(
-              TextSpan(
-                text: message.text!.substring(0, linkIndexMatches[i]),
-                style: textStyle,
-              ),
+            textSpans.addAll(
+                MessageHelper.buildEmojiText(
+                  message.text!.substring(0, linkIndexMatches[i]),
+                  textStyle!,
+                )
             );
           } else if (i == linkIndexMatches.length && i - 1 >= 0) {
-            textSpans.add(
-              TextSpan(
-                text: message.text!.substring(linkIndexMatches[i - 1], message.text!.length),
-                style: textStyle,
-              ),
+            textSpans.addAll(
+                MessageHelper.buildEmojiText(
+                  message.text!.substring(linkIndexMatches[i - 1], message.text!.length),
+                  textStyle!,
+                )
             );
           } else if (i - 1 >= 0) {
             String text = message.text!.substring(linkIndexMatches[i - 1], linkIndexMatches[i]);
@@ -141,7 +126,7 @@ abstract class MessageWidgetMixin {
               textSpans.add(
                 TextSpan(
                   text: text,
-                  recognizer: new TapGestureRecognizer()
+                  recognizer: TapGestureRecognizer()
                     ..onTap = () async {
                       String url = text;
                       if (!url.startsWith("http://") && !url.startsWith("https://")) {
@@ -154,21 +139,21 @@ abstract class MessageWidgetMixin {
                 ),
               );
             } else {
-              textSpans.add(
-                TextSpan(
-                  text: text,
-                  style: textStyle,
-                ),
+              textSpans.addAll(
+                  MessageHelper.buildEmojiText(
+                    text,
+                    textStyle!,
+                  )
               );
             }
           }
         }
       } else {
-        textSpans.add(
-          TextSpan(
-            text: message.text,
-            style: textStyle,
-          ),
+        textSpans.addAll(
+            MessageHelper.buildEmojiText(
+              message.text!,
+              textStyle!,
+            )
         );
       }
 
@@ -176,12 +161,19 @@ abstract class MessageWidgetMixin {
         String generatedText = faker.lorem.words(message.text!.split(" ").length).join(" ");
         return [TextSpan(text: generatedText, style: textStyle)];
       }
+    } else {
+      textSpans.addAll(
+          MessageHelper.buildEmojiText(
+            MessageHelper.getNotificationTextSync(message),
+            textStyle!,
+          )
+      );
     }
 
     return textSpans;
   }
 
-  static Future<List<InlineSpan>> buildMessageSpansAsync(BuildContext context, Message? message, {List<Color>? colors: const []}) async {
+  static Future<List<InlineSpan>> buildMessageSpansAsync(BuildContext context, Message? message, {List<Color>? colors = const [], Color? colorOverride}) async {
     List<InlineSpan> textSpans = <InlineSpan>[];
 
     final bool generateContent =
@@ -189,60 +181,73 @@ abstract class MessageWidgetMixin {
     final bool hideContent = (message?.guid?.contains("theme-selector") ?? false) ||
         (SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value && !generateContent);
 
-    if (message != null && !isEmptyString(message.text)) {
-      RegExp exp = new RegExp(
+    TextStyle? textStyle = Theme.of(context).textTheme.bodyText2;
+    if (message == null) return [];
+    if (!message.isFromMe!) {
+      if (SettingsManager().settings.colorfulBubbles.value) {
+        if (!isNullOrEmpty(colors)!) {
+          bool dark = colors![0].computeLuminance() < 0.179;
+          if (!dark) {
+            textStyle = Theme.of(context)
+                .textTheme
+                .bodyText2!
+                .apply(color: hideContent ? Colors.transparent : colors[0].darkenAmount(0.35));
+          } else {
+            textStyle = Theme.of(context).textTheme.bodyText2;
+            if (hideContent) textStyle = textStyle!.apply(color: Colors.transparent);
+          }
+        } else {
+          textStyle = Theme.of(context).textTheme.bodyText2!.apply(
+              color: hideContent
+                  ? Colors.transparent
+                  : toColorGradient(message.handle?.address ?? "")[0].darkenAmount(0.35));
+        }
+      } else if (hideContent) {
+        textStyle = textStyle!.apply(color: Colors.transparent);
+      }
+    } else {
+      textStyle = textStyle!.apply(color: hideContent ? Colors.transparent : Theme.of(context).primaryColor.computeLuminance() > 0.8 ? Colors.black : Colors.white);
+    }
+    if (colorOverride != null && !hideContent) textStyle = textStyle!.apply(color: colorOverride);
+    if ((!isEmptyString(message.text) || !isEmptyString(message.subject))) {
+      RegExp exp = RegExp(
           r'((https?://)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9/()@:%_.~#?&=*\[\]]*)\b');
-      List<RegExpMatch> matches = exp.allMatches(message.text!).toList();
-
       List<Tuple2<String, int>> linkIndexMatches = <Tuple2<String, int>>[];
-      matches.forEach((match) {
-        linkIndexMatches.add(Tuple2("link", match.start));
-        linkIndexMatches.add(Tuple2("link", match.end));
-      });
       if (!kIsWeb && !kIsDesktop) {
-        final List<EntityAnnotation> entities = await GoogleMlKit.nlp.entityExtractor(EntityExtractorOptions.ENGLISH).extractEntities(message.text!);
-        entities.forEach((element) {
+        if (CurrentChat.activeChat?.mlKitParsedText[message.guid!] == null) {
+          CurrentChat.activeChat?.mlKitParsedText[message.guid!] = await GoogleMlKit.nlp.entityExtractor(EntityExtractorOptions.ENGLISH).extractEntities(message.text!);
+        }
+        final entities = CurrentChat.activeChat?.mlKitParsedText[message.guid!] ?? [];
+        List<EntityAnnotation> normalizedEntities = [];
+        if (entities.isNotEmpty) {
+          for (int i = 0; i < entities.length; i++) {
+            if (i == 0 || entities[i].start > normalizedEntities.last.end) {
+              normalizedEntities.add(entities[i]);
+            }
+          }
+        }
+        for (EntityAnnotation element in normalizedEntities) {
           if (element.entities.first is AddressEntity) {
             linkIndexMatches.add(Tuple2("map", element.start));
             linkIndexMatches.add(Tuple2("map", element.end));
-            return;
           } else if (element.entities.first is PhoneEntity) {
             linkIndexMatches.add(Tuple2("phone", element.start));
             linkIndexMatches.add(Tuple2("phone", element.end));
-            return;
           } else if (element.entities.first is EmailEntity) {
             linkIndexMatches.add(Tuple2("email", element.start));
             linkIndexMatches.add(Tuple2("email", element.end));
-            return;
+          } else if (element.entities.first is UrlEntity) {
+            linkIndexMatches.add(Tuple2("link", element.start));
+            linkIndexMatches.add(Tuple2("link", element.end));
           }
-        });
-      }
-
-      TextStyle? textStyle = Theme.of(context).textTheme.bodyText2;
-      if (!message.isFromMe!) {
-        if (SettingsManager().settings.colorfulBubbles.value) {
-          if (!isNullOrEmpty(colors)!) {
-            bool dark = colors![0].computeLuminance() < 0.179;
-            if (!dark) {
-              textStyle = Theme.of(context)
-                  .textTheme
-                  .bodyText2!
-                  .apply(color: hideContent ? Colors.transparent : colors[0].darkenAmount(0.35));
-            } else {
-              textStyle = Theme.of(context).textTheme.bodyText2;
-              if (hideContent) textStyle = textStyle!.apply(color: Colors.transparent);
-            }
-          } else {
-            textStyle = Theme.of(context).textTheme.bodyText2!.apply(
-                color: hideContent
-                    ? Colors.transparent
-                    : toColorGradient(message.handle?.address ?? "")[0].darkenAmount(0.35));
-          }
-        } else if (hideContent) textStyle = textStyle!.apply(color: Colors.transparent);
+        }
       } else {
-        textStyle = textStyle!.apply(color: hideContent ? Colors.transparent : Theme.of(context).primaryColor.computeLuminance() > 0.8 ? Colors.black : Colors.white);
+        List<RegExpMatch> matches = exp.allMatches(message.text!).toList();
+        for (RegExpMatch match in matches) {
+          linkIndexMatches.add(Tuple2("link", match.start));
+          linkIndexMatches.add(Tuple2("link", match.end));
+        }
       }
-
       if (!isNullOrEmpty(message.subject)!) {
         TextStyle _textStyle = message.isFromMe!
             ? textStyle!.apply(color: Colors.white, fontWeightDelta: 2)
@@ -250,29 +255,30 @@ abstract class MessageWidgetMixin {
         if (hideContent) {
           _textStyle = _textStyle.apply(color: Colors.transparent);
         }
-        textSpans.add(
-          TextSpan(
-            text: "${message.subject}\n",
-            style: _textStyle,
-          ),
+        if (colorOverride != null && !hideContent) _textStyle = _textStyle.apply(color: colorOverride);
+        textSpans.addAll(
+          MessageHelper.buildEmojiText(
+            "${message.subject}\n",
+            _textStyle,
+          )
         );
       }
 
-      if (linkIndexMatches.length > 0) {
+      if (linkIndexMatches.isNotEmpty) {
         for (int i = 0; i < linkIndexMatches.length + 1; i++) {
           if (i == 0) {
-            textSpans.add(
-              TextSpan(
-                text: message.text!.substring(0, linkIndexMatches[i].item2),
-                style: textStyle,
-              ),
+            textSpans.addAll(
+                MessageHelper.buildEmojiText(
+                  message.text!.substring(0, linkIndexMatches[i].item2),
+                  textStyle!,
+                )
             );
           } else if (i == linkIndexMatches.length && i - 1 >= 0) {
-            textSpans.add(
-              TextSpan(
-                text: message.text!.substring(linkIndexMatches[i - 1].item2, message.text!.length),
-                style: textStyle,
-              ),
+            textSpans.addAll(
+                MessageHelper.buildEmojiText(
+                  message.text!.substring(linkIndexMatches[i - 1].item2, message.text!.length),
+                  textStyle!,
+                )
             );
           } else if (i - 1 >= 0) {
             String type = linkIndexMatches[i].item1;
@@ -281,7 +287,7 @@ abstract class MessageWidgetMixin {
               textSpans.add(
                 TextSpan(
                   text: text,
-                  recognizer: new TapGestureRecognizer()
+                  recognizer: TapGestureRecognizer()
                     ..onTap = () async {
                       if (type == "link") {
                         String url = text;
@@ -302,21 +308,21 @@ abstract class MessageWidgetMixin {
                 ),
               );
             } else {
-              textSpans.add(
-                TextSpan(
-                  text: text,
-                  style: textStyle,
-                ),
+              textSpans.addAll(
+                  MessageHelper.buildEmojiText(
+                    text,
+                    textStyle!,
+                  )
               );
             }
           }
         }
       } else {
-        textSpans.add(
-          TextSpan(
-            text: message.text,
-            style: textStyle,
-          ),
+        textSpans.addAll(
+          MessageHelper.buildEmojiText(
+            message.text!,
+            textStyle!,
+          )
         );
       }
 
@@ -324,6 +330,13 @@ abstract class MessageWidgetMixin {
         String generatedText = faker.lorem.words(message.text!.split(" ").length).join(" ");
         return [TextSpan(text: generatedText, style: textStyle)];
       }
+    } else {
+      textSpans.addAll(
+        MessageHelper.buildEmojiText(
+          MessageHelper.getNotificationTextSync(message),
+          textStyle!,
+        )
+      );
     }
 
     return textSpans;

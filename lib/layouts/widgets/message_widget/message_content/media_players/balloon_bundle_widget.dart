@@ -65,36 +65,39 @@ class _BalloonBubbleState extends State<BalloonBundleWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-          constraints: BoxConstraints(
-            maxWidth: CustomNavigator.width(context) * 3 / 4,
-          ),
-          child: Container(
-            width: 200,
-            color: Theme.of(context).accentColor,
-            child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 10.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Text(bundleName,
-                      textAlign: TextAlign.center,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.headline1),
-                  Text("Interactive Message",
-                      textAlign: TextAlign.center, maxLines: 1, style: Theme.of(context).textTheme.subtitle1),
-                  Container(height: 10.0),
-                  Icon(bundleIcon, color: Theme.of(context).textTheme.bodyText1!.color, size: 48),
-                  Container(height: 10.0),
-                  Text("(Cannot open on Android)",
-                      textAlign: TextAlign.center, maxLines: 1, style: Theme.of(context).textTheme.subtitle2),
-                ],
-              ),
+    return Padding(
+      padding: EdgeInsets.only(top: 13.0, right: widget.message!.isFromMe! ? 0 : 13, left: widget.message!.isFromMe! ? 13 : 0),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+            constraints: BoxConstraints(
+              maxWidth: CustomNavigator.width(context) * 3 / 4,
             ),
-          )),
+            child: Container(
+              width: 200,
+              color: Theme.of(context).colorScheme.secondary,
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 10.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Text(bundleName,
+                        textAlign: TextAlign.center,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.headline1),
+                    Text("Interactive Message",
+                        textAlign: TextAlign.center, maxLines: 1, style: Theme.of(context).textTheme.subtitle1),
+                    Container(height: 10.0),
+                    Icon(bundleIcon, color: Theme.of(context).textTheme.bodyText1!.color, size: 48),
+                    Container(height: 10.0),
+                    Text("(Cannot open on Android)",
+                        textAlign: TextAlign.center, maxLines: 1, style: Theme.of(context).textTheme.subtitle2),
+                  ],
+                ),
+              ),
+            )),
+      ),
     );
   }
 }

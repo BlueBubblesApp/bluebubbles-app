@@ -28,10 +28,8 @@ class ContactSelectorOption extends StatelessWidget {
 
     List<String> formatted = [];
     for (var item in item.chat!.participants) {
-      String? contact = ContactManager().getCachedContactSync(item.address)?.displayName;
-      if (contact == null) {
-        contact = await formatPhoneNumber(item);
-      }
+      String? contact = ContactManager().getCachedContact(address: item.address)?.displayName;
+      contact ??= await formatPhoneNumber(item);
 
       formatted.add(contact);
     }
@@ -51,10 +49,10 @@ class ContactSelectorOption extends StatelessWidget {
         future: formatPhoneNumber(item),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
-            return this.getTextWidget(context, address);
+            return getTextWidget(context, address);
           }
 
-          return this.getTextWidget(context, snapshot.data);
+          return getTextWidget(context, snapshot.data);
         });
   }
 
@@ -116,33 +114,36 @@ class ContactSelectorOption extends StatelessWidget {
       );
     }
 
-    return ListTile(
-      key: new Key("chat-${item.displayName}"),
-      onTap: () => onSelected(item),
-      title: Text(
-        title,
-        style: Theme.of(context).textTheme.bodyText1,
-        overflow: TextOverflow.ellipsis,
+    return Container(
+      color: SettingsManager().settings.skin.value == Skins.Samsung ? Theme.of(context).colorScheme.secondary : null,
+      child: ListTile(
+        key: Key("chat-${item.displayName}"),
+        onTap: () => onSelected(item),
+        title: Text(
+          title,
+          style: Theme.of(context).textTheme.bodyText1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        tileColor: SettingsManager().settings.skin.value == Skins.Samsung ? null : Theme.of(context).backgroundColor,
+        subtitle: subtitle,
+        leading: !item.isChat
+            ? ContactAvatarWidget(
+                key: Key("${item.address}-contact-selector-option"),
+                handle: Handle(address: item.address!),
+                borderThickness: 0.1,
+                editable: false,
+              )
+            : ContactAvatarGroupWidget(
+                chat: item.chat!,
+                editable: false,
+              ),
+        trailing: item.isChat
+            ? Icon(
+                SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.forward : Icons.arrow_forward,
+                color: Theme.of(context).primaryColor,
+              )
+            : null,
       ),
-      tileColor: Theme.of(context).backgroundColor,
-      subtitle: subtitle,
-      leading: !item.isChat
-          ? ContactAvatarWidget(
-              key: Key("${item.address}-contact-selector-option"),
-              handle: Handle(address: item.address!),
-              borderThickness: 0.1,
-              editable: false,
-            )
-          : ContactAvatarGroupWidget(
-              chat: item.chat!,
-              editable: false,
-            ),
-      trailing: item.isChat
-          ? Icon(
-              SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.forward : Icons.arrow_forward,
-              color: Theme.of(context).primaryColor,
-            )
-          : null,
     );
   }
 }

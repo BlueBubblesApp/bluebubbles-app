@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
@@ -12,7 +13,6 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
@@ -36,22 +36,25 @@ class _ContactWidgetState extends State<ContactWidget> {
   @override
   void initState() {
     super.initState();
+    init();
+  }
 
+  void init() async {
     String appleContact;
 
     if (kIsWeb || widget.file.path == null) {
       appleContact = utf8.decode(widget.file.bytes!);
     } else {
-      appleContact = File(widget.file.path!).readAsStringSync();
+      appleContact = await File(widget.file.path!).readAsString();
     }
 
     try {
       contact = AttachmentHelper.parseAppleContact(appleContact);
     } catch (ex) {
-      contact = new Contact(displayName: "Invalid Contact");
+      contact = Contact(displayName: "Invalid Contact", id: randomString(8));
     }
 
-    if (this.mounted) setState(() {});
+    if (!kIsWeb && widget.file.path != null && mounted) setState(() {});
   }
 
   @override
@@ -62,7 +65,7 @@ class _ContactWidgetState extends State<ContactWidget> {
         height: 60,
         width: 250,
         child: Material(
-          color: Theme.of(context).accentColor,
+          color: Theme.of(context).colorScheme.secondary,
           child: InkWell(
             onTap: () async {
               if (kIsWeb || widget.file.path == null) {
@@ -100,7 +103,7 @@ class _ContactWidgetState extends State<ContactWidget> {
                             style: Theme.of(context).textTheme.subtitle2,
                           ),
                           Text(
-                            contact.displayName ?? "No Name",
+                            contact.displayName,
                             style: Theme.of(context).textTheme.bodyText1,
                             overflow: TextOverflow.ellipsis,
                             maxLines: 2,

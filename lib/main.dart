@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'package:bluebubbles/layouts/setup/splash_screen.dart';
 import 'package:collection/collection.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
+import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:universal_io/io.dart';
 import 'package:universal_html/html.dart' as html;
@@ -29,14 +32,13 @@ import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/theme_object.dart';
-import 'package:bluebubbles/socket_manager.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' hide Priority;
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 import 'package:firebase_dart/firebase_dart.dart';
+//ignore: implementation_imports
 import 'package:firebase_dart/src/auth/utils.dart' as fdu;
 import 'package:get/get.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -68,6 +70,8 @@ bool get isInDebugMode {
 FlutterLocalNotificationsPlugin? flutterLocalNotificationsPlugin;
 late SharedPreferences prefs;
 late FirebaseApp app;
+String? recentIntent;
+final RxBool fontExistsOnDisk = false.obs;
 
 Future<Null> _reportError(dynamic error, dynamic stackTrace) async {
   // Print the exception to the console.
@@ -89,7 +93,7 @@ class MyHttpOverrides extends HttpOverrides {
 }
 
 Future<Null> main() async {
-  HttpOverrides.global = new MyHttpOverrides();
+  HttpOverrides.global = MyHttpOverrides();
 
   // This captures errors reported by the Flutter framework.
   FlutterError.onError = (FlutterErrorDetails details) {
@@ -124,9 +128,25 @@ Future<Null> main() async {
         messagingSenderId: 'ignore',
         authDomain: 'my_project.firebaseapp.com');
     app = await Firebase.initializeApp(options: options);
-    await initializeDateFormatting('fr_FR', null);
+    await initializeDateFormatting();
     await SettingsManager().init();
     await SettingsManager().getSavedSettings(headless: true);
+    if (SettingsManager().settings.immersiveMode.value) {
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    }
+    // this is to avoid a fade-in transition between the android native splash screen
+    // and our dummy splash screen
+    if (!SettingsManager().settings.finishedSetup.value && !kIsWeb && !kIsDesktop) {
+      runApp(
+        MaterialApp(
+          home: SplashScreen(shouldNavigate: false),
+          theme: ThemeData(
+              backgroundColor: SchedulerBinding.instance!.window.platformBrightness == Brightness.dark
+                  ? Colors.black : Colors.white
+          )
+        )
+      );
+    }
     Get.put(AttachmentDownloadService());
     if (!kIsWeb && !kIsDesktop) {
       flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
@@ -139,10 +159,20 @@ Future<Null> main() async {
       if (!await GoogleMlKit.nlp.entityModelManager().isModelDownloaded(EntityExtractorOptions.ENGLISH)) {
         GoogleMlKit.nlp.entityModelManager().downloadModel(EntityExtractorOptions.ENGLISH, isWifiRequired: false);
       }
+      await FlutterLibphonenumber().init();
     }
     if (kIsDesktop) {
       await WindowManager.instance.setTitle('BlueBubbles (Beta)');
       WindowManager.instance.addListener(DesktopWindowListener());
+    }
+    if (!kIsWeb) {
+      try {
+        DynamicCachedFonts.loadCachedFont("https://github.com/tneotia/tneotia/releases/download/ios-font-1/IOS.14.2.Daniel.L.ttf", fontFamily: "Apple Color Emoji").then((_) {
+          fontExistsOnDisk.value = true;
+        });
+      } on StateError catch (_) {
+        fontExistsOnDisk.value = false;
+      }
     }
   } catch (e) {
     exception = e;
@@ -197,8 +227,8 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
     return AdaptiveTheme(
       /// These are the default white and dark themes.
       /// These will be changed by [SettingsManager] when you set a custom theme
-      light: this.lightTheme,
-      dark: this.darkTheme,
+      light: lightTheme,
+      dark: darkTheme,
 
       /// The default is that the dark and light themes will follow the system theme
       /// This will be changed by [SettingsManager]
@@ -207,7 +237,7 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
         /// Hide the debug banner in debug mode
         debugShowCheckedModeBanner: false,
 
-        title: 'BlueBubbles ${kIsWeb ? "(Beta)" : ""}',
+        title: 'BlueBubbles',
 
         /// Set the light theme from the [AdaptiveTheme]
         theme: theme.copyWith(appBarTheme: theme.appBarTheme.copyWith(elevation: 0.0)),
@@ -300,6 +330,7 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> with WidgetsBindingObserver {
   ReceivePort port = ReceivePort();
   bool serverCompatible = true;
+  bool fullyLoaded = false;
 
   @override
   void initState() {
@@ -335,15 +366,19 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
       // create a send port to receive messages from the background isolate when
       // the UI thread is active
-      IsolateNameServer.registerPortWithName(port.sendPort, 'bg_isolate');
+      final result = IsolateNameServer.registerPortWithName(port.sendPort, 'bg_isolate');
+      if (!result) {
+        IsolateNameServer.removePortNameMapping('bg_isolate');
+        IsolateNameServer.registerPortWithName(port.sendPort, 'bg_isolate');
+      }
       port.listen((dynamic data) {
         Logger.info("SendPort received action ${data['action']}");
         if (data['action'] == 'new-message') {
           // Add it to the queue with the data as the item
-          IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_MESSAGE_EVENT, item: {"data": data}));
+          IncomingQueue().add(QueueItem(event: IncomingQueue.HANDLE_MESSAGE_EVENT, item: {"data": data}));
         } else if (data['action'] == 'update-message') {
           // Add it to the queue with the data as the item
-          IncomingQueue().add(new QueueItem(event: IncomingQueue.HANDLE_UPDATE_MESSAGE, item: {"data": data}));
+          IncomingQueue().add(QueueItem(event: IncomingQueue.HANDLE_UPDATE_MESSAGE, item: {"data": data}));
         }
       });
     }
@@ -384,15 +419,15 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
           // Add the attached files to a list
           List<PlatformFile> attachments = [];
-          value.forEach((element) {
+          for (SharedMediaFile element in value) {
             attachments.add(PlatformFile(
               name: element.path.split("/").last,
               path: element.path,
               size: 0,
             ));
-          });
+          }
 
-          if (attachments.length == 0) return;
+          if (attachments.isEmpty) return;
 
           // Go to the new chat creator, with all of our attachments
           CustomNavigator.pushAndRemoveUntil(
@@ -428,9 +463,14 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         MethodChannelInterface().invokeMethod("get-starting-intent").then((value) {
           if (!SettingsManager().settings.finishedSetup.value) return;
           if (value != null) {
-            // Open that chat
-            MethodChannelInterface().openChat(value.toString());
+            LifeCycleManager().isBubble = value['bubble'] == "true";
+            MethodChannelInterface().openChat(value['guid'].toString());
           }
+        });
+      }
+      if (!SettingsManager().settings.finishedSetup.value) {
+        setState(() {
+          fullyLoaded = true;
         });
       }
     });
@@ -458,6 +498,9 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // Call the [LifeCycleManager] events based on the [state]
     if (state == AppLifecycleState.paused) {
+      SystemChannels.textInput.invokeMethod('TextInput.hide').catchError((e) {
+        Logger.error("Error caught while hiding keyboard: ${e.toString()}");
+      });
       LifeCycleManager().close();
     } else if (state == AppLifecycleState.resumed) {
       LifeCycleManager().opened();
@@ -468,7 +511,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-      systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+      systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
       systemNavigationBarIconBrightness:
           Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       statusBarColor: Colors.transparent, // status bar color
@@ -476,7 +519,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
         systemNavigationBarIconBrightness:
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
@@ -484,37 +527,31 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       child: Scaffold(
         backgroundColor: Colors.black,
         // The stream builder connects to the [SocketManager] to check if the app has finished the setup or not
-        body: StreamBuilder(
-          stream: SocketManager().finishedSetup.stream,
-          builder: (BuildContext context, AsyncSnapshot<bool?> snapshot) {
-            if (snapshot.hasData) {
-              // If the app has already gone through setup, show the convo list
-              // Otherwise show the setup
-              if (snapshot.data!) {
-                SystemChrome.setPreferredOrientations([
-                  DeviceOrientation.landscapeRight,
-                  DeviceOrientation.landscapeLeft,
-                  DeviceOrientation.portraitUp,
-                  DeviceOrientation.portraitDown,
-                ]);
-                if (!serverCompatible && kIsWeb) {
-                  return FailureToStart(otherTitle: "Server version too low, please upgrade!", e: "Required Server Version: v0.2.0",);
-                }
-                return ConversationList(
-                  showArchivedChats: false,
-                  showUnknownSenders: false,
-                );
-              } else {
-                SystemChrome.setPreferredOrientations([
-                  DeviceOrientation.portraitUp,
-                ]);
-                return WillPopScope(
-                  onWillPop: () async => false,
-                  child: SetupView(),
-                );
+        body: Builder(
+          builder: (BuildContext context) {
+            if (SettingsManager().settings.finishedSetup.value) {
+              SystemChrome.setPreferredOrientations([
+                DeviceOrientation.landscapeRight,
+                DeviceOrientation.landscapeLeft,
+                DeviceOrientation.portraitUp,
+                DeviceOrientation.portraitDown,
+              ]);
+              if (!serverCompatible && kIsWeb) {
+                return FailureToStart(otherTitle: "Server version too low, please upgrade!", e: "Required Server Version: v0.2.0",);
               }
+              return ConversationList(
+                showArchivedChats: false,
+                showUnknownSenders: false,
+              );
             } else {
-              return Container();
+              SystemChrome.setPreferredOrientations([
+                DeviceOrientation.portraitUp,
+              ]);
+              return WillPopScope(
+                onWillPop: () async => false,
+                child: kIsWeb || kIsDesktop
+                    ? SetupView() : SplashScreen(shouldNavigate: fullyLoaded),
+              );
             }
           },
         ),

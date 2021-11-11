@@ -10,16 +10,14 @@ import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/metadata_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
-import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/message.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class UrlPreviewController extends GetxController with SingleGetTickerProviderMixin {
+class UrlPreviewController extends GetxController {
   final List<Attachment?> linkPreviews;
   final Message message;
   final BuildContext context;
@@ -57,8 +55,8 @@ class UrlPreviewController extends GetxController with SingleGetTickerProviderMi
 
   Future<void> fetchPreview() async {
     // Try to get any already loaded attachment data
-    if (CurrentChat.of(context)!.urlPreviews.containsKey(message.text)) {
-      data.value = CurrentChat.of(context)!.urlPreviews[message.text];
+    if (CurrentChat.activeChat!.urlPreviews.containsKey(message.text)) {
+      data.value = CurrentChat.activeChat!.urlPreviews[message.text];
     }
 
     if (data.value != null || MetadataHelper.isNotEmpty(data.value)) return;
@@ -94,7 +92,7 @@ class UrlPreviewController extends GetxController with SingleGetTickerProviderMi
 
     // Save the metadata
     if (data.value != null) {
-      CurrentChat.of(context)!.urlPreviews[message.text!] = data.value!;
+      CurrentChat.activeChat?.urlPreviews[message.text!] = data.value!;
     }
   }
 }
@@ -109,7 +107,7 @@ class UrlPreviewWidget extends StatelessWidget {
   dynamic attachmentFile(Attachment attachment) {
     String appDocPath = SettingsManager().appDocDir.path;
     String pathName = "$appDocPath/attachments/${attachment.guid}/${attachment.transferName}";
-    return new File(pathName);
+    return File(pathName);
   }
 
   @override
@@ -200,7 +198,7 @@ class UrlPreviewWidget extends StatelessWidget {
                       ],
                     ),
                   ),
-                  (!kIsWeb && linkPreviews.length > 0 && linkPreviews.first!.existsOnDisk)
+                  (!kIsWeb && linkPreviews.isNotEmpty && linkPreviews.first!.existsOnDisk)
                       ? Padding(
                           padding: EdgeInsets.only(left: 10.0, bottom: 10.0),
                           child: ClipRRect(
@@ -222,7 +220,7 @@ class UrlPreviewWidget extends StatelessWidget {
             if (hideContent)
               Positioned.fill(
                 child: Container(
-                  color: Theme.of(context).accentColor,
+                  color: Theme.of(context).colorScheme.secondary,
                 ),
               ),
             if (hideContent && !hideType)
@@ -239,7 +237,6 @@ class UrlPreviewWidget extends StatelessWidget {
             curve: Curves.easeInOut,
             alignment: Alignment.center,
             duration: Duration(milliseconds: 200),
-            vsync: controller,
             child: Padding(
               padding: EdgeInsets.only(
                 top: message.hasReactions ? 18.0 : 4,
@@ -250,7 +247,7 @@ class UrlPreviewWidget extends StatelessWidget {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(20),
                 child: Material(
-                  color: Theme.of(context).accentColor,
+                  color: Theme.of(context).colorScheme.secondary,
                   child: InkResponse(
                     borderRadius: BorderRadius.circular(20),
                     onTap: () async {

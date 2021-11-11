@@ -4,7 +4,7 @@ import 'dart:typed_data';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
-import 'package:bluebubbles/layouts/image_viewer/attachmet_fullscreen_viewer.dart';
+import 'package:bluebubbles/layouts/image_viewer/attachment_fullscreen_viewer.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/cupertino.dart';
@@ -27,24 +27,32 @@ class AttachmentListItem extends StatefulWidget {
 
 class _AttachmentListItemState extends State<AttachmentListItem> {
   Uint8List? preview;
-  String? mimeType;
+  String mimeType = "Unknown File Type";
 
   @override
   void initState() {
     super.initState();
-    mimeType = mime(widget.file.name);
     loadPreview();
   }
 
   Future<void> loadPreview() async {
-    String? mimeType = mime(widget.file.name);
-    if (mimeType != null && mimeType.startsWith("video/") && widget.file.path != null) {
+    mimeType = mime(widget.file.name) ?? "Unknown File Type";
+    if (mimeType.startsWith("video/") && widget.file.path != null) {
       preview = await AttachmentHelper.getVideoThumbnail(widget.file.path!);
-      if (this.mounted) setState(() {});
-    } else if (mimeType == null || mimeType.startsWith("image/")) {
+      if (mounted) setState(() {});
+    } else if (mimeType.startsWith("image/")) {
       // Compress the file, using a dummy attachment object
-      preview = widget.file.bytes;
-      if (this.mounted) setState(() {});
+      if (mimeType == "image/heic" || mimeType == "image/heif") {
+        Attachment fakeAttachment =
+                Attachment(transferName: widget.file.path, mimeType: mimeType, bytes: widget.file.bytes);
+        preview =
+          await AttachmentHelper.compressAttachment(
+            fakeAttachment, widget.file.path!, qualityOverride: 100, getActualPath: false);
+      } else {
+        preview = widget.file.bytes;
+      }
+      
+      if (mounted) setState(() {});
     }
   }
 
@@ -67,9 +75,10 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
           ),
           onTap: () async {
             if (mimeType == null) return;
-            if (!this.mounted) return;
+            if (!mounted) return;
 
-            Attachment fakeAttachment = new Attachment(transferName: widget.file.name, mimeType: mimeType, bytes: widget.file.bytes);
+            Attachment fakeAttachment =
+                Attachment(transferName: widget.file.path, mimeType: mimeType, bytes: widget.file.bytes);
             await Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (context) => AttachmentFullscreenViewer(
@@ -83,7 +92,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
         if (hideAttachments)
           Positioned.fill(
             child: Container(
-              color: Theme.of(context).accentColor,
+              color: Theme.of(context).colorScheme.secondary,
             ),
           ),
         if (hideAttachments && !hideAttachmentTypes)
@@ -98,7 +107,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
           ),
       ]);
     } else {
-      if (mimeType == null || mimeType!.startsWith("video/") || mimeType!.startsWith("image/")) {
+      if (mimeType.startsWith("video/") || mimeType.startsWith("image/")) {
         // If the preview is null and the mimetype is video or image,
         // then that means that we are in the process of loading things
         return Container(
@@ -116,13 +125,13 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
         return Container(
           height: 100,
           width: 100,
-          color: Theme.of(context).accentColor,
+          color: Theme.of(context).colorScheme.secondary,
           padding: EdgeInsets.only(top: 20),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                AttachmentHelper.getIcon(mimeType ?? ""),
+                AttachmentHelper.getIcon(mimeType),
                 color: Theme.of(context).textTheme.bodyText1!.color,
               ),
               Align(
@@ -152,7 +161,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
       child: Stack(
         children: <Widget>[
           getThumbnail(),
-          if (mimeType != null && mimeType!.startsWith("video/"))
+          if (mimeType.startsWith("video/"))
             Align(
               alignment: Alignment.bottomRight,
               child: Icon(

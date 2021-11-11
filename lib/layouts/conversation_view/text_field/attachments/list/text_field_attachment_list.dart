@@ -13,16 +13,15 @@ class TextFieldAttachmentList extends StatefulWidget {
   _TextFieldAttachmentListState createState() => _TextFieldAttachmentListState();
 }
 
-class _TextFieldAttachmentListState extends State<TextFieldAttachmentList> with SingleTickerProviderStateMixin {
+class _TextFieldAttachmentListState extends State<TextFieldAttachmentList> {
   @override
   Widget build(BuildContext context) {
     return AnimatedSize(
-      vsync: this,
       duration: Duration(milliseconds: 300),
       curve: Curves.easeInOut,
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxHeight: widget.attachments.length > 0 ? 100 : 0,
+          maxHeight: widget.attachments.isNotEmpty ? 100 : 0,
         ),
         child: GridView.builder(
           itemCount: widget.attachments.length,
