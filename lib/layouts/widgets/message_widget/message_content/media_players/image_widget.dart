@@ -164,6 +164,8 @@ class ImageWidget extends StatelessWidget {
     }
 
     // If it's not loaded, we are in progress
-    return buildImagePlaceholder(context, controller.attachment, Center(child: buildProgressIndicator(context)));
+    return buildImagePlaceholder(context, controller.attachment,
+        controller.attachment.guid != "redacted-mode-demo-attachment"
+            ? Center(child: buildProgressIndicator(context)) : Container());
   }
 }
