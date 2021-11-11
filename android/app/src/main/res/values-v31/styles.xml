@@ -3,7 +3,7 @@
     <!-- Theme applied to the Android Window while the process is starting when the OS's Dark Mode setting is off -->
     <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
         <item name="android:windowFullscreen">false</item>
-        <item name="android:windowSplashScreenBackground">#4990de</item>
+        <item name="android:windowSplashScreenBackground">#FFFFFF</item>
     </style>
     <!-- Theme applied to the Android Window as soon as the process has started.
          This theme determines the color of the Android Window while your

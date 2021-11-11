@@ -202,7 +202,7 @@ class AttachmentHelper {
     } else if (kIsWeb || kIsDesktop) {
       return PlatformFile(
         name: attachment.transferName!,
-        path: null,
+        path: attachment.guid == "redacted-mode-demo-attachment" ? "dummy path" : null,
         size: attachment.totalBytes ?? 0,
         bytes: attachment.bytes,
       );

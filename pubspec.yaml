@@ -107,6 +107,7 @@ dependencies:
   supercharged: ^2.1.1
   pdf: ^3.6.1
   printing: ^5.6.0
+  shimmer: ^2.0.0
 
 dependency_overrides:
   rxdart: ^0.27.2
@@ -130,9 +131,9 @@ flutter_icons:
   adaptive_icon_background: "#4990de"
 
 flutter_native_splash:
-  color: "#4990de"
+  color: "#FFFFFF"
   color_dark: "#000000"
-  image: "assets/icon/splash-foreground-light.png"
+  image: "assets/icon/splash-foreground-dark.png"
   image_dark: "assets/icon/splash-foreground-dark.png"
   android12: true
 
@@ -170,6 +171,7 @@ flutter:
     - assets/icon/discord.svg
     - assets/images/person.png
     - assets/images/person64.png
+    - assets/images/transparent.png
     - assets/icon/icon.png
     - assets/changelog/changelog.md
   # An image asset can refer to one or more resolution-specific "variants", see

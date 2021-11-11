@@ -938,7 +938,7 @@ class _SentMessageState extends State<SentMessage> with MessageWidgetMixin {
             ),
           ),
         Obx(() {
-          final list = widget.messageBloc?.threadOriginators.values.where((e) => e == widget.message.guid) ?? [];
+          final list = widget.messageBloc?.threadOriginators.values.where((e) => e == widget.message.guid) ?? [].obs.reversed;
           if (list.isNotEmpty) {
             return GestureDetector(
               onTap: () {

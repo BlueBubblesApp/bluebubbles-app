@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:bluebubbles/layouts/setup/splash_screen.dart';
 import 'package:collection/collection.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
@@ -127,11 +128,24 @@ Future<Null> main() async {
         messagingSenderId: 'ignore',
         authDomain: 'my_project.firebaseapp.com');
     app = await Firebase.initializeApp(options: options);
-    await initializeDateFormatting('fr_FR', null);
+    await initializeDateFormatting();
     await SettingsManager().init();
     await SettingsManager().getSavedSettings(headless: true);
     if (SettingsManager().settings.immersiveMode.value) {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    }
+    // this is to avoid a fade-in transition between the android native splash screen
+    // and our dummy splash screen
+    if (!SettingsManager().settings.finishedSetup.value && !kIsWeb && !kIsDesktop) {
+      runApp(
+        MaterialApp(
+          home: SplashScreen(shouldNavigate: false),
+          theme: ThemeData(
+              backgroundColor: SchedulerBinding.instance!.window.platformBrightness == Brightness.dark
+                  ? Colors.black : Colors.white
+          )
+        )
+      );
     }
     Get.put(AttachmentDownloadService());
     if (!kIsWeb && !kIsDesktop) {
@@ -316,6 +330,7 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> with WidgetsBindingObserver {
   ReceivePort port = ReceivePort();
   bool serverCompatible = true;
+  bool fullyLoaded = false;
 
   @override
   void initState() {
@@ -453,6 +468,11 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           }
         });
       }
+      if (!SettingsManager().settings.finishedSetup.value) {
+        setState(() {
+          fullyLoaded = true;
+        });
+      }
     });
 
     // Bind the lifecycle events
@@ -529,7 +549,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
               ]);
               return WillPopScope(
                 onWillPop: () async => false,
-                child: SetupView(),
+                child: kIsWeb || kIsDesktop
+                    ? SetupView() : SplashScreen(shouldNavigate: fullyLoaded),
               );
             }
           },

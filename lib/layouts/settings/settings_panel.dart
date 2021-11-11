@@ -1062,14 +1062,15 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                   ),
                                   backgroundColor: Theme.of(context).backgroundColor,
                                   actions: <Widget>[
-                                    TextButton(
-                                      child: Text("Remove Attachments"),
-                                      onPressed: () async {
-                                        final dir = Directory("${SettingsManager().appDocDir.path}/attachments");
-                                        await dir.delete(recursive: true);
-                                        showSnackbar("Success", "Deleted cached attachments");
-                                      },
-                                    ),
+                                    if (!kIsWeb)
+                                      TextButton(
+                                        child: Text("Remove Attachments"),
+                                        onPressed: () async {
+                                          final dir = Directory("${SettingsManager().appDocDir.path}/attachments");
+                                          await dir.delete(recursive: true);
+                                          showSnackbar("Success", "Deleted cached attachments");
+                                        },
+                                      ),
                                     TextButton(
                                       child: Text("Yes"),
                                       onPressed: () async {
