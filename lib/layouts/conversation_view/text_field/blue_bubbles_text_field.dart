@@ -27,8 +27,8 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:dio_http/dio_http.dart';
-import 'package:file_picker/file_picker.dart' as pf;
 import 'package:file_picker/file_picker.dart' hide PlatformFile;
+import 'package:file_picker/file_picker.dart' as pf;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -823,8 +823,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                         },
                                         iconSize: 17,
                                       ),
-                                      Container(
-                                        width: context.width - 125,
+                                      Expanded(
                                         child: Text.rich(
                                           TextSpan(children: [
                                             TextSpan(text: "Replying to "),
@@ -994,8 +993,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                         },
                                         iconSize: 17,
                                       ),
-                                      Container(
-                                        width: context.width - 125,
+                                      Expanded(
                                         child: Text.rich(
                                           TextSpan(children: [
                                             TextSpan(text: "Replying to "),
@@ -1181,8 +1179,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                         },
                                         iconSize: 17,
                                       ),
-                                      Container(
-                                        width: context.width - 125,
+                                      Expanded(
                                         child: Text.rich(
                                           TextSpan(children: [
                                             TextSpan(text: "Replying to "),
