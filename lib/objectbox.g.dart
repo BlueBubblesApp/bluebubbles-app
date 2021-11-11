@@ -1393,16 +1393,12 @@ ModelDefinition getObjectBoxModel() {
               dateCreated: dateCreatedValue == null
                   ? null
                   : DateTime.fromMillisecondsSinceEpoch(dateCreatedValue),
-              dateRead: dateReadValue == null
-                  ? null
-                  : DateTime.fromMillisecondsSinceEpoch(dateReadValue),
-              dateDelivered: dateDeliveredValue == null
-                  ? null
-                  : DateTime.fromMillisecondsSinceEpoch(dateDeliveredValue),
-              isFromMe:
-                  const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 26),
-              isDelayed: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 28),
-              isAutoReply: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 30),
+              isFromMe: const fb.BoolReader()
+                  .vTableGetNullable(buffer, rootOffset, 26),
+              isDelayed: const fb.BoolReader()
+                  .vTableGetNullable(buffer, rootOffset, 28),
+              isAutoReply:
+                  const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 30),
               isSystemMessage: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 32),
               isServiceMessage: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 34),
               isForward: const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 36),
@@ -1425,6 +1421,12 @@ ModelDefinition getObjectBoxModel() {
               dateDeleted: dateDeletedValue == null ? null : DateTime.fromMillisecondsSinceEpoch(dateDeletedValue),
               threadOriginatorGuid: const fb.StringReader().vTableGetNullable(buffer, rootOffset, 72),
               threadOriginatorPart: const fb.StringReader().vTableGetNullable(buffer, rootOffset, 74))
+            ..dateRead = dateReadValue == null
+                ? null
+                : DateTime.fromMillisecondsSinceEpoch(dateReadValue)
+            ..dateDelivered = dateDeliveredValue == null
+                ? null
+                : DateTime.fromMillisecondsSinceEpoch(dateDeliveredValue)
             ..bigEmoji =
                 const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 76)
             ..error = const fb.Int64Reader().vTableGet(buffer, rootOffset, 78, 0);
