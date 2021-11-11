@@ -1146,7 +1146,7 @@ class _CustomCupertinoTextFieldState extends State<CustomCupertinoTextField>
         child: UnmanagedRestorationScope(
           bucket: bucket,
           child: EditableText(
-            // enableIMEPersonalizedLearning: widget.enableIMEPersonalizedLearning,
+            enableIMEPersonalizedLearning: widget.enableIMEPersonalizedLearning,
             key: editableTextKey,
             controller: controller,
             readOnly: widget.readOnly,
