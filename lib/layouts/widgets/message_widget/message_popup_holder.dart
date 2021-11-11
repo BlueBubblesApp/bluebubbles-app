@@ -134,7 +134,7 @@ class _MessagePopupHolderState extends State<MessagePopupHolder> {
       key: containerKey,
       onDoubleTap: SettingsManager().settings.doubleTapForDetails.value && !widget.message.guid!.startsWith('temp')
           ? openMessageDetails
-          : SettingsManager().settings.enableQuickTapback.value
+          : SettingsManager().settings.enableQuickTapback.value && (CurrentChat.activeChat?.chat.isIMessage ?? true)
               ? () {
                   HapticFeedback.lightImpact();
                   sendReaction(SettingsManager().settings.quickTapbackType.value);

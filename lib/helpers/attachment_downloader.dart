@@ -4,6 +4,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
+import 'package:path/path.dart';
 import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
@@ -166,6 +167,14 @@ class AttachmentDownloadController extends GetxController {
           if (attachment.bytes != null) {
             File _file = await File(attachment.getPath()).create(recursive: true);
             _file.writeAsBytesSync(attachment.bytes!.toList());
+          }
+        }
+        if (SettingsManager().settings.autoSave.value && !kIsWeb && !kIsDesktop && !(attachment.isOutgoing ?? false)) {
+          String filePath = "/storage/emulated/0/Download/";
+          if (attachment.mimeType?.startsWith("image") ?? false) {
+            await AttachmentHelper.saveToGallery(file.value!, showAlert: false);
+          } else if (file.value?.bytes != null) {
+            await File(join(filePath, file.value!.name)).writeAsBytes(file.value!.bytes!);
           }
         }
       }

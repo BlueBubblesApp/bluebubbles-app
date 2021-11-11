@@ -168,8 +168,11 @@ class MethodChannelInterface {
           return Future.value("");
         }
 
+        Completer<void> completer = Completer();
         // Send the message to that chat
-        await ActionHandler.sendMessage(chat, call.arguments["text"]);
+        await ActionHandler.sendMessage(chat, call.arguments["text"], completer: completer);
+
+        closeThread();
 
         return Future.value("");
       case "markAsRead":

@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
@@ -21,6 +19,7 @@ import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:get/get.dart';
 
@@ -78,13 +77,13 @@ class ThemePanel extends GetView<ThemePanelController> {
           ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
       Color headerColor;
       Color tileColor;
-      if ((Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+      if ((Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
           SettingsManager().settings.skin.value == Skins.Material) && (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
-        headerColor = Theme.of(context).accentColor;
+        headerColor = Theme.of(context).colorScheme.secondary;
         tileColor = Theme.of(context).backgroundColor;
       } else {
         headerColor = Theme.of(context).backgroundColor;
-        tileColor = Theme.of(context).accentColor;
+        tileColor = Theme.of(context).colorScheme.secondary;
       }
       if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
         tileColor = headerColor;
@@ -190,6 +189,29 @@ class ThemePanel extends GetView<ThemePanelController> {
                       title: "Tablet Mode",
                       backgroundColor: tileColor,
                       subtitle: "Enables tablet mode (split view) depending on screen width",
+                    )),
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
+                    ),
+                    Obx(() => SettingsSwitch(
+                      onChanged: (bool val) {
+                        controller._settingsCopy.immersiveMode.value = val;
+                        saveSettings();
+                        if (val) {
+                          SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+                        } else {
+                          SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [SystemUiOverlay.bottom, SystemUiOverlay.top]);
+                        }
+                        EventDispatcher().emit('theme-update', null);
+                      },
+                      initialVal: controller._settingsCopy.immersiveMode.value,
+                      title: "Immersive Mode",
+                      backgroundColor: tileColor,
+                      subtitle: "Makes the bottom navigation bar transparent. This option is best used with gesture navigation.",
                     )),
                   ],
                 ),
@@ -405,7 +427,7 @@ class ThemePanel extends GetView<ThemePanelController> {
                               );
                               final DynamicCachedFonts dynamicCachedFont = DynamicCachedFonts(
                                 fontFamily: "Apple Color Emoji",
-                                url: "https://github.com/samuelngs/apple-emoji-linux/releases/download/latest/AppleColorEmoji.ttf",
+                                url: "https://github.com/tneotia/tneotia/releases/download/ios-font-1/IOS.14.2.Daniel.L.ttf",
                               );
                               await dynamicCachedFont.load();
                               fontExistsOnDisk.value = true;
@@ -423,7 +445,7 @@ class ThemePanel extends GetView<ThemePanelController> {
                         if (fontExistsOnDisk.value) {
                           return SettingsTile(
                             onTap: () async {
-                              await DynamicCachedFonts.removeCachedFont("https://github.com/samuelngs/apple-emoji-linux/releases/download/latest/AppleColorEmoji.ttf");
+                              await DynamicCachedFonts.removeCachedFont("https://github.com/tneotia/tneotia/releases/download/ios-font-1/IOS.14.2.Daniel.L.ttf");
                               fontExistsOnDisk.value = false;
                               showSnackbar("Notice", "Font removed, restart the app for changes to take effect");
                             },

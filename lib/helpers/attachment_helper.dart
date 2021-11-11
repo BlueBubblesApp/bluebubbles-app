@@ -8,7 +8,6 @@ import 'package:universal_io/io.dart';
 import 'package:universal_html/html.dart' as html;
 import 'dart:isolate';
 import 'dart:typed_data';
-import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/logger.dart';
@@ -138,7 +137,7 @@ class AttachmentHelper {
     return (width / factor) / width;
   }
 
-  static Future<void> saveToGallery(BuildContext context, PlatformFile file) async {
+  static Future<void> saveToGallery(PlatformFile file, {bool showAlert = true}) async {
     if (kIsWeb) {
       final content = base64.encode(file.bytes!);
       html.AnchorElement(
@@ -150,10 +149,11 @@ class AttachmentHelper {
     if (kIsDesktop) {
       String downloadsPath = (await getDownloadsDirectory())!.path;
       File(join(downloadsPath, file.name)).writeAsBytes(file.bytes!);
-      return showSnackbar('Success', 'Saved attachment to $downloadsPath!');
+      if (showAlert) showSnackbar('Success', 'Saved attachment to $downloadsPath!');
+      return;
     }
     void showDeniedSnackbar({String? err}) {
-      showSnackbar("Save Failed", err ?? "Failed to save attachment!");
+      if (showAlert) showSnackbar("Save Failed", err ?? "Failed to save attachment!");
     }
 
     var hasPermissions = await Permission.storage.isGranted;
@@ -176,7 +176,7 @@ class AttachmentHelper {
     }
 
     await ImageGallerySaver.saveFile(file.path!);
-    showSnackbar('Success', 'Saved attachment!');
+    if (showAlert) showSnackbar('Success', 'Saved attachment!');
   }
 
   static String getBaseAttachmentsPath() {
@@ -196,13 +196,13 @@ class AttachmentHelper {
     return !(FileSystemEntity.typeSync(pathName) == FileSystemEntityType.notFound);
   }
 
-  static dynamic getContent(Attachment attachment, {String? path}) {
-    if ((kIsWeb || kIsDesktop) && attachment.bytes == null && attachment.guid != "redacted-mode-demo-attachment") {
+  static dynamic getContent(Attachment attachment, {String? path, bool autoDownload = true}) {
+    if ((kIsWeb || kIsDesktop) && attachment.bytes == null && attachment.guid != "redacted-mode-demo-attachment" && autoDownload) {
       return Get.put(AttachmentDownloadController(attachment: attachment), tag: attachment.guid);
     } else if (kIsWeb || kIsDesktop) {
       return PlatformFile(
         name: attachment.transferName!,
-        path: null,
+        path: attachment.guid == "redacted-mode-demo-attachment" ? "dummy path" : null,
         size: attachment.totalBytes ?? 0,
         bytes: attachment.bytes,
       );
@@ -219,7 +219,7 @@ class AttachmentHelper {
         path: pathName,
         size: attachment.totalBytes ?? 0,
       );
-    } else if (attachment.mimeType == null || attachment.mimeType!.startsWith("text/")) {
+    } else if ((attachment.mimeType == null || attachment.mimeType!.startsWith("text/")) && autoDownload) {
       return Get.put(AttachmentDownloadController(attachment: attachment), tag: attachment.guid);
     } else {
       return attachment;

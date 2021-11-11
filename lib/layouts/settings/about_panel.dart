@@ -1,5 +1,4 @@
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
@@ -29,13 +28,13 @@ class AboutPanel extends StatelessWidget {
         ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
     Color headerColor;
     Color tileColor;
-    if ((Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+    if ((Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
         SettingsManager().settings.skin.value == Skins.Material) && (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
-      headerColor = Theme.of(context).accentColor;
+      headerColor = Theme.of(context).colorScheme.secondary;
       tileColor = Theme.of(context).backgroundColor;
     } else {
       headerColor = Theme.of(context).backgroundColor;
-      tileColor = Theme.of(context).accentColor;
+      tileColor = Theme.of(context).colorScheme.secondary;
     }
     if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
       tileColor = headerColor;
@@ -172,7 +171,7 @@ class AboutPanel extends StatelessWidget {
                             ),
                             backgroundColor: Theme.of(context).backgroundColor,
                             appBar: CupertinoNavigationBar(
-                              backgroundColor: Theme.of(context).accentColor,
+                              backgroundColor: Theme.of(context).colorScheme.secondary,
                               middle: Text(
                                 "Changelog",
                                 style: Theme.of(context).textTheme.headline1,
@@ -206,7 +205,7 @@ class AboutPanel extends StatelessWidget {
                             style: Theme.of(context).textTheme.headline1,
                             textAlign: TextAlign.center,
                           ),
-                          backgroundColor: Theme.of(context).accentColor,
+                          backgroundColor: Theme.of(context).colorScheme.secondary,
                           content: SizedBox(
                             width: CustomNavigator.width(context) * 3 / 5,
                             height: context.height * 1 / 9,
@@ -314,7 +313,7 @@ class AboutPanel extends StatelessWidget {
                                     ),
                                   ),
                                   scrollable: true,
-                                  backgroundColor: context.theme.accentColor,
+                                  backgroundColor: context.theme.colorScheme.secondary,
                                   content: ListBody(
                                     children: <Widget>[
                                       Row(

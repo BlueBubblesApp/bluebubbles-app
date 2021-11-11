@@ -19,6 +19,7 @@ class Settings {
   final RxInt chunkSize = 500.obs;
   final RxBool autoDownload = true.obs;
   final RxBool onlyWifiDownload = false.obs;
+  final RxBool autoSave = false.obs;
   final RxBool autoOpenKeyboard = true.obs;
   final RxBool hideTextPreviews = false.obs;
   final RxBool showIncrementalSync = false.obs;
@@ -61,6 +62,7 @@ class Settings {
   final RxString globalTextDetection = "".obs;
   final RxBool filterUnknownSenders = false.obs;
   final RxBool tabletMode = true.obs;
+  final RxBool immersiveMode = false.obs;
 
   // final RxString emojiFontFamily;
 
@@ -134,6 +136,8 @@ class Settings {
         settings.autoDownload.value = entry.value;
       } else if (entry.name == "onlyWifiDownload") {
         settings.onlyWifiDownload.value = entry.value;
+      } else if (entry.name == "autoSave") {
+        settings.autoSave.value = entry.value;
       } else if (entry.name == "hideTextPreviews") {
         settings.hideTextPreviews.value = entry.value;
       } else if (entry.name == "showIncrementalSync") {
@@ -282,6 +286,8 @@ class Settings {
         settings.filterUnknownSenders.value = entry.value;
       } else if (entry.name == "tabletMode") {
         settings.tabletMode.value = entry.value;
+      } else if (entry.name == "immersiveMode") {
+        settings.immersiveMode.value = entry.value;
       } else if (entry.name == "swipeToReply") {
         settings.swipeToReply.value = entry.value;
       }
@@ -352,6 +358,7 @@ class Settings {
       'chunkSize': chunkSize.value,
       'autoDownload': autoDownload.value,
       'onlyWifiDownload': onlyWifiDownload.value,
+      'autoSave': autoSave.value,
       'autoOpenKeyboard': autoOpenKeyboard.value,
       'hideTextPreviews': hideTextPreviews.value,
       'showIncrementalSync': showIncrementalSync.value,
@@ -393,6 +400,7 @@ class Settings {
       'globalTextDetection': globalTextDetection.value,
       'filterUnknownSenders': filterUnknownSenders.value,
       'tabletMode': tabletMode.value,
+      'immersiveMode': immersiveMode.value,
       'swipeToReply': swipeToReply.value,
       'enablePrivateAPI': enablePrivateAPI.value,
       'privateSendTypingIndicators': privateSendTypingIndicators.value,
@@ -446,6 +454,7 @@ class Settings {
     SettingsManager().settings.chunkSize.value = map['chunkSize'] ?? 500;
     SettingsManager().settings.autoDownload.value = map['autoDownload'] ?? true;
     SettingsManager().settings.onlyWifiDownload.value = map['onlyWifiDownload'] ?? false;
+    SettingsManager().settings.autoSave.value = map['autoSave'] ?? false;
     SettingsManager().settings.autoOpenKeyboard.value = map['autoOpenKeyboard'] ?? true;
     SettingsManager().settings.hideTextPreviews.value = map['hideTextPreviews'] ?? false;
     SettingsManager().settings.showIncrementalSync.value = map['showIncrementalSync'] ?? false;
@@ -487,6 +496,7 @@ class Settings {
     SettingsManager().settings.globalTextDetection.value = map['globalTextDetection'] ?? "";
     SettingsManager().settings.filterUnknownSenders.value = map['filterUnknownSenders'] ?? false;
     SettingsManager().settings.tabletMode.value = map['tabletMode'] ?? true;
+    SettingsManager().settings.immersiveMode.value = map['immersiveMode'] ?? false;
     SettingsManager().settings.swipeToReply.value = map['swipeToReply'] ?? false;
     SettingsManager().settings.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     SettingsManager().settings.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
@@ -534,6 +544,7 @@ class Settings {
     s.finishedSetup.value = map['finishedSetup'] ?? false;
     s.chunkSize.value = map['chunkSize'] ?? 500;
     s.autoDownload.value = map['autoDownload'] ?? true;
+    s.autoSave.value = map['autoSave'] ?? false;
     s.onlyWifiDownload.value = map['onlyWifiDownload'] ?? false;
     s.autoOpenKeyboard.value = map['autoOpenKeyboard'] ?? true;
     s.hideTextPreviews.value = map['hideTextPreviews'] ?? false;
@@ -577,6 +588,7 @@ class Settings {
     s.globalTextDetection.value = map['globalTextDetection'] ?? "";
     s.filterUnknownSenders.value = map['filterUnknownSenders'] ?? false;
     s.tabletMode.value = map['tabletMode'] ?? true;
+    s.immersiveMode.value = map['immersiveMode'] ?? false;
     s.swipeToReply.value = map['swipeToReply'] ?? false;
     s.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     s.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;

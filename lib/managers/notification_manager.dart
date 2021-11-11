@@ -124,7 +124,7 @@ class NotificationManager {
             android: fln.AndroidNotificationDetails(
           "com.bluebubbles.reminders",
           'Reminders',
-          'Message reminder notifications',
+          channelDescription: 'Message reminder notifications',
           priority: fln.Priority.max,
           importance: fln.Importance.max,
           color: HexColor("4990de"),

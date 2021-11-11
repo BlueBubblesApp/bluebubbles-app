@@ -8,7 +8,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 import 'package:universal_html/html.dart' as html;
-import 'dart:ui';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/logger.dart';
@@ -85,15 +84,15 @@ class _SettingsPanelState extends State<SettingsPanel> {
       }
     });
     Color headerColor;
-    if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+    if (Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
         SettingsManager().settings.skin.value != Skins.iOS) {
-      headerColor = Theme.of(context).accentColor;
+      headerColor = Theme.of(context).colorScheme.secondary;
     } else {
       headerColor = Theme.of(context).backgroundColor;
     }
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: headerColor, // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
         systemNavigationBarIconBrightness: headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
@@ -115,13 +114,13 @@ class _SettingsPanelState extends State<SettingsPanel> {
         ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
     Color headerColor;
     Color tileColor;
-    if ((Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+    if ((Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
         SettingsManager().settings.skin.value == Skins.Material) && (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
-      headerColor = Theme.of(context).accentColor;
+      headerColor = Theme.of(context).colorScheme.secondary;
       tileColor = Theme.of(context).backgroundColor;
     } else {
       headerColor = Theme.of(context).backgroundColor;
-      tileColor = Theme.of(context).accentColor;
+      tileColor = Theme.of(context).colorScheme.secondary;
     }
     if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
       tileColor = headerColor;
@@ -826,7 +825,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                             durationMs: 2000,
                                             button: TextButton(
                                               style: TextButton.styleFrom(
-                                                backgroundColor: Get.theme.accentColor,
+                                                backgroundColor: Get.theme.colorScheme.secondary,
                                               ),
                                               onPressed: () {
                                                 Share.file("BlueBubbles Settings", filePath);
@@ -936,7 +935,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                             durationMs: 2000,
                                             button: TextButton(
                                               style: TextButton.styleFrom(
-                                                backgroundColor: Get.theme.accentColor,
+                                                backgroundColor: Get.theme.colorScheme.secondary,
                                               ),
                                               onPressed: () {
                                                 Share.file("BlueBubbles Theming", filePath);
@@ -1063,14 +1062,15 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                   ),
                                   backgroundColor: Theme.of(context).backgroundColor,
                                   actions: <Widget>[
-                                    TextButton(
-                                      child: Text("Remove Attachments"),
-                                      onPressed: () async {
-                                        final dir = Directory("${SettingsManager().appDocDir.path}/attachments");
-                                        await dir.delete(recursive: true);
-                                        showSnackbar("Success", "Deleted cached attachments");
-                                      },
-                                    ),
+                                    if (!kIsWeb)
+                                      TextButton(
+                                        child: Text("Remove Attachments"),
+                                        onPressed: () async {
+                                          final dir = Directory("${SettingsManager().appDocDir.path}/attachments");
+                                          await dir.delete(recursive: true);
+                                          showSnackbar("Success", "Deleted cached attachments");
+                                        },
+                                      ),
                                     TextButton(
                                       child: Text("Yes"),
                                       onPressed: () async {
@@ -1140,13 +1140,13 @@ class _SettingsPanelState extends State<SettingsPanel> {
   Widget buildForLandscape(BuildContext context, Widget settingsList) {
     Color headerColor;
     Color tileColor;
-    if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+    if (Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
         SettingsManager().settings.skin.value != Skins.iOS) {
-      headerColor = Theme.of(context).accentColor;
+      headerColor = Theme.of(context).colorScheme.secondary;
       tileColor = Theme.of(context).backgroundColor;
     } else {
       headerColor = Theme.of(context).backgroundColor;
-      tileColor = Theme.of(context).accentColor;
+      tileColor = Theme.of(context).colorScheme.secondary;
     }
     if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
       tileColor = headerColor;

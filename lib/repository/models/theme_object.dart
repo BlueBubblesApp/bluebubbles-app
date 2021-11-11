@@ -1,8 +1,8 @@
-import 'dart:async';
 import 'dart:core';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/constants.dart';
+import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/theme_entry.dart';
@@ -63,7 +63,7 @@ class ThemeObject {
         ThemeEntry.fromStyle(ThemeColors.Bodytext2, data!.textTheme.bodyText2!),
         ThemeEntry.fromStyle(ThemeColors.Subtitle1, data!.textTheme.subtitle1!),
         ThemeEntry.fromStyle(ThemeColors.Subtitle2, data!.textTheme.subtitle2!),
-        ThemeEntry(name: ThemeColors.AccentColor, color: data!.accentColor, isFont: false),
+        ThemeEntry(name: ThemeColors.AccentColor, color: data!.colorScheme.secondary, isFont: false),
         ThemeEntry(name: ThemeColors.DividerColor, color: data!.dividerColor, isFont: false),
         ThemeEntry(name: ThemeColors.BackgroundColor, color: data!.backgroundColor, isFont: false),
         ThemeEntry(name: ThemeColors.PrimaryColor, color: data!.primaryColor, isFont: false),
@@ -226,7 +226,8 @@ class ThemeObject {
         " theme_values.name as name,"
         " theme_values.color as color,"
         " theme_values.isFont as isFont,"
-        " theme_values.fontSize as fontSize"
+        " theme_values.fontSize as fontSize,"
+        " theme_values.fontWeight as fontWeight"
         " FROM themes"
         " JOIN theme_value_join AS tvj ON themes.ROWID = tvj.themeId"
         " JOIN theme_values ON theme_values.ROWID = tvj.themeValueId"
@@ -295,6 +296,11 @@ class ThemeObject {
           subtitle2: data[ThemeColors.Subtitle2]!.style,
         ),
         accentColor: data[ThemeColors.AccentColor]!.style,
+        colorScheme: ColorScheme.fromSwatch(
+          primarySwatch: createMaterialColor(data[ThemeColors.PrimaryColor]!.style),
+          accentColor: data[ThemeColors.AccentColor]!.style,
+          backgroundColor: data[ThemeColors.BackgroundColor]!.style,
+        ),
         dividerColor: data[ThemeColors.DividerColor]!.style,
         backgroundColor: data[ThemeColors.BackgroundColor]!.style,
         primaryColor: data[ThemeColors.PrimaryColor]!.style);

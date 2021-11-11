@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
@@ -64,14 +62,14 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
         ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
     Color headerColor;
     Color tileColor;
-    if ((Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+    if ((Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
             SettingsManager().settings.skin.value == Skins.Material) &&
         (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
-      headerColor = Theme.of(context).accentColor;
+      headerColor = Theme.of(context).colorScheme.secondary;
       tileColor = Theme.of(context).backgroundColor;
     } else {
       headerColor = Theme.of(context).backgroundColor;
-      tileColor = Theme.of(context).accentColor;
+      tileColor = Theme.of(context).colorScheme.secondary;
     }
     if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
       tileColor = headerColor;
@@ -208,12 +206,12 @@ class PrivateAPIPanel extends GetView<PrivateAPIPanelController> {
                               value: SettingsManager().settings.enableQuickTapback.value,
                               activeColor: Theme.of(context).primaryColor,
                               activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
-                              inactiveTrackColor: tileColor == Theme.of(context).accentColor
+                              inactiveTrackColor: tileColor == Theme.of(context).colorScheme.secondary
                                   ? Theme.of(context).backgroundColor.withOpacity(0.6)
-                                  : Theme.of(context).accentColor.withOpacity(0.6),
-                              inactiveThumbColor: tileColor == Theme.of(context).accentColor
+                                  : Theme.of(context).colorScheme.secondary.withOpacity(0.6),
+                              inactiveThumbColor: tileColor == Theme.of(context).colorScheme.secondary
                                   ? Theme.of(context).backgroundColor
-                                  : Theme.of(context).accentColor,
+                                  : Theme.of(context).colorScheme.secondary,
                               onChanged: (bool val) {
                                 SettingsManager().settings.enableQuickTapback.value = val;
                                 if (val && SettingsManager().settings.doubleTapForDetails.value) {

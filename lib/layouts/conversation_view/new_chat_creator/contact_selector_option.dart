@@ -115,7 +115,7 @@ class ContactSelectorOption extends StatelessWidget {
     }
 
     return Container(
-      color: SettingsManager().settings.skin.value == Skins.Samsung ? Theme.of(context).accentColor : null,
+      color: SettingsManager().settings.skin.value == Skins.Samsung ? Theme.of(context).colorScheme.secondary : null,
       child: ListTile(
         key: Key("chat-${item.displayName}"),
         onTap: () => onSelected(item),

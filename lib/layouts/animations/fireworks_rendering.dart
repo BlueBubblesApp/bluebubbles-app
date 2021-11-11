@@ -1,6 +1,4 @@
 import 'package:bluebubbles/layouts/animations/fireworks_classes.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 

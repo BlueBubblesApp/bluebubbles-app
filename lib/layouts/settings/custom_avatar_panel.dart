@@ -2,7 +2,6 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:universal_io/io.dart';
-import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
@@ -12,7 +11,6 @@ import 'package:bluebubbles/layouts/widgets/avatar_crop.dart';
 import 'package:get/get.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class CustomAvatarPanelBinding implements Bindings {
@@ -43,13 +41,13 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
   Widget build(BuildContext context) {
     Color headerColor;
     Color tileColor;
-    if ((Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+    if ((Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
         SettingsManager().settings.skin.value == Skins.Material) && (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
-      headerColor = Theme.of(context).accentColor;
+      headerColor = Theme.of(context).colorScheme.secondary;
       tileColor = Theme.of(context).backgroundColor;
     } else {
       headerColor = Theme.of(context).backgroundColor;
-      tileColor = Theme.of(context).accentColor;
+      tileColor = Theme.of(context).colorScheme.secondary;
     }
     if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
       tileColor = headerColor;
@@ -113,7 +111,7 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
                         context: context,
                         builder: (BuildContext context) {
                           return AlertDialog(
-                              backgroundColor: Theme.of(context).accentColor,
+                              backgroundColor: Theme.of(context).colorScheme.secondary,
                               title: Text("Custom Avatar",
                                   style:
                                   TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),

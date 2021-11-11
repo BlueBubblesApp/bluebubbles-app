@@ -5,9 +5,9 @@ import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/settings/scheduler_panel.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
+import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/scheduled.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -79,7 +79,7 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
         systemNavigationBarIconBrightness:
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
@@ -92,11 +92,11 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
-                brightness: getBrightness(context),
+                systemOverlayStyle: getBrightness(context),
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: buildBackButton(context),
-                backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
+                backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
                 title: Text(
                   "Message Scheduling",
                   style: Theme.of(context).textTheme.headline1,
@@ -121,7 +121,7 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
                         ? Container(
                             decoration: BoxDecoration(
                               border: Border.all(
-                                color: Theme.of(context).accentColor,
+                                color: Theme.of(context).colorScheme.secondary,
                                 width: 1,
                               ),
                               borderRadius: BorderRadius.all(Radius.circular(10)),
@@ -132,7 +132,7 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
                                   1: FractionColumnWidth(.4),
                                 },
                                 border: TableBorder.symmetric(
-                                  inside: BorderSide(width: 1, color: Theme.of(context).accentColor),
+                                  inside: BorderSide(width: 1, color: Theme.of(context).colorScheme.secondary),
                                 ),
                                 children: _buildRows(upcoming)))
                         : Text("No upcoming messages to send",
@@ -147,7 +147,7 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
                           ? Container(
                               decoration: BoxDecoration(
                                 border: Border.all(
-                                  color: Theme.of(context).accentColor,
+                                  color: Theme.of(context).colorScheme.secondary,
                                   width: 1,
                                 ),
                                 borderRadius: BorderRadius.all(Radius.circular(10)),
@@ -158,7 +158,7 @@ class _SchedulingPanelState extends State<SchedulingPanel> {
                                     1: FractionColumnWidth(.4),
                                   },
                                   border: TableBorder.symmetric(
-                                    inside: BorderSide(width: 1, color: Theme.of(context).accentColor),
+                                    inside: BorderSide(width: 1, color: Theme.of(context).colorScheme.secondary),
                                   ),
                                   children: _buildRows(old)))
                           : Text("No scheduled messages have been sent",

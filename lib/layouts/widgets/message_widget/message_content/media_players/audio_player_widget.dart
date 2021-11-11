@@ -69,7 +69,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
             handleColor: Theme.of(widget.context).primaryColor,
             bufferedColor: Theme.of(widget.context).backgroundColor,
             backgroundColor: Theme.of(widget.context).disabledColor),
-        cupertinoBackgroundColor: Theme.of(widget.context).accentColor,
+        cupertinoBackgroundColor: Theme.of(widget.context).colorScheme.secondary,
         cupertinoIconColor: Theme.of(widget.context).textTheme.bodyText1?.color,
         cupertinoColumnAlignment: widget.isFromMe ? MainAxisAlignment.end : MainAxisAlignment.start,
       );
@@ -103,13 +103,13 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     }
     return Container(
       alignment: Alignment.center,
-      color: Theme.of(context).accentColor,
+      color: Theme.of(context).colorScheme.secondary,
       height: SettingsManager().settings.skin.value == Skins.iOS ? 75 : 48,
       constraints: BoxConstraints(maxWidth: maxWidth),
       child: Theme(
         data: Theme.of(context).copyWith(
             platform: SettingsManager().settings.skin.value == Skins.iOS ? TargetPlatform.iOS : TargetPlatform.android,
-            dialogBackgroundColor: Theme.of(context).accentColor,
+            dialogBackgroundColor: Theme.of(context).colorScheme.secondary,
             iconTheme: Theme.of(context).iconTheme.copyWith(color: Theme.of(context).textTheme.bodyText1?.color)),
         child: ChewieAudio(
           controller: controller,

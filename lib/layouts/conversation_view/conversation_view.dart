@@ -35,8 +35,6 @@ import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:get/get.dart';
@@ -394,7 +392,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
             Icons.arrow_downward,
             color: Theme.of(context).textTheme.bodyText1!.color,
           ),
-          backgroundColor: Theme.of(context).accentColor,
+          backgroundColor: Theme.of(context).colorScheme.secondary,
         ),
       );
     } else if (currentChat != null &&
@@ -412,7 +410,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                 child: Container(
                   height: 35,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).accentColor.withOpacity(0.7),
+                    color: Theme.of(context).colorScheme.secondary.withOpacity(0.7),
                     borderRadius: BorderRadius.circular(10.0),
                   ),
                   padding: EdgeInsets.symmetric(horizontal: 10),
@@ -627,42 +625,49 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
         systemNavigationBarIconBrightness:
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
-      child: Scaffold(
-        backgroundColor: Theme.of(context).backgroundColor,
-        extendBodyBehindAppBar: !isCreator!,
-        appBar: !isCreator!
-            ? buildConversationViewHeader() as PreferredSizeWidget?
-            : buildChatSelectorHeader() as PreferredSizeWidget?,
-        body: Obx(() => adjustBackground.value ? MirrorAnimation<MultiTweenValues<String>>(
-              tween: ConversationViewMixin.gradientTween.value,
-              curve: Curves.fastOutSlowIn,
-              duration: Duration(seconds: 3),
-              builder: (context, child, anim) {
-                return Container(
-                  decoration: (searchQuery.isEmpty || !isCreator!) && chat != null && adjustBackground.value
-                      ? BoxDecoration(
-                          gradient: LinearGradient(begin: Alignment.topRight, end: Alignment.bottomLeft, stops: [
-                          anim.get("color1"),
-                          anim.get("color2")
-                        ], colors: [
-                          AdaptiveTheme.of(context).mode == AdaptiveThemeMode.light
-                              ? Theme.of(context).primaryColor.lightenPercent(20)
-                              : Theme.of(context).primaryColor.darkenPercent(20),
-                          Theme.of(context).backgroundColor
-                        ]))
-                      : null,
-                  child: child,
-                );
-              },
-              child: child,
-            ) : child),
-        floatingActionButton: AnimatedOpacity(
-            duration: Duration(milliseconds: 250), opacity: 1, curve: Curves.easeInOut, child: buildFAB()),
+      child: Theme(
+        data: Theme.of(context).copyWith(primaryColor: chat?.isTextForwarding ?? false ? Colors.green : Theme.of(context).primaryColor),
+        child: Builder(
+          builder: (context) {
+            return Scaffold(
+              backgroundColor: Theme.of(context).backgroundColor,
+              extendBodyBehindAppBar: !isCreator!,
+              appBar: !isCreator!
+                  ? buildConversationViewHeader(context) as PreferredSizeWidget?
+                  : buildChatSelectorHeader() as PreferredSizeWidget?,
+              body: Obx(() => adjustBackground.value ? MirrorAnimation<MultiTweenValues<String>>(
+                    tween: ConversationViewMixin.gradientTween.value,
+                    curve: Curves.fastOutSlowIn,
+                    duration: Duration(seconds: 3),
+                    builder: (context, child, anim) {
+                      return Container(
+                        decoration: (searchQuery.isEmpty || !isCreator!) && chat != null && adjustBackground.value
+                            ? BoxDecoration(
+                                gradient: LinearGradient(begin: Alignment.topRight, end: Alignment.bottomLeft, stops: [
+                                anim.get("color1"),
+                                anim.get("color2")
+                              ], colors: [
+                                AdaptiveTheme.of(context).mode == AdaptiveThemeMode.light
+                                    ? Theme.of(context).primaryColor.lightenPercent(20)
+                                    : Theme.of(context).primaryColor.darkenPercent(20),
+                                Theme.of(context).backgroundColor
+                              ]))
+                            : null,
+                        child: child,
+                      );
+                    },
+                    child: child,
+                  ) : child),
+              floatingActionButton: AnimatedOpacity(
+                  duration: Duration(milliseconds: 250), opacity: 1, curve: Curves.easeInOut, child: buildFAB()),
+            );
+          }
+        ),
       ),
     );
   }

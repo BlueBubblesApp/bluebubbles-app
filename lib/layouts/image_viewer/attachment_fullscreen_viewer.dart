@@ -119,12 +119,12 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
       child: Container(
         height: 150,
         width: 200,
-        color: Theme.of(context).accentColor,
+        color: Theme.of(context).colorScheme.secondary,
       ),
     );
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
         systemNavigationBarIconBrightness:
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
@@ -230,6 +230,8 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                         if (mounted) setState(() {});
                       });
                       return Obx(() {
+                        // don't remove!! needed to prevent Obx from exception
+                        // improper use of GetX
                         final placeholderVar = null.obs.value;
                         if (content.error.value = true) {
                           return Text(

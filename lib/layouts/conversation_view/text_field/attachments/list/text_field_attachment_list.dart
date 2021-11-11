@@ -13,11 +13,10 @@ class TextFieldAttachmentList extends StatefulWidget {
   _TextFieldAttachmentListState createState() => _TextFieldAttachmentListState();
 }
 
-class _TextFieldAttachmentListState extends State<TextFieldAttachmentList> with SingleTickerProviderStateMixin {
+class _TextFieldAttachmentListState extends State<TextFieldAttachmentList> {
   @override
   Widget build(BuildContext context) {
     return AnimatedSize(
-      vsync: this,
       duration: Duration(milliseconds: 300),
       curve: Curves.easeInOut,
       child: ConstrainedBox(

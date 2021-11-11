@@ -73,7 +73,7 @@ class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepA
                         return Container(
                           width: 150,
                           height: 150,
-                          color: Theme.of(context).accentColor,
+                          color: Theme.of(context).colorScheme.secondary,
                         );
                       } else {
                         return child;
@@ -84,12 +84,12 @@ class _AttachmentPickedState extends State<AttachmentPicked> with AutomaticKeepA
                   Container(
                     width: 150,
                     height: 150,
-                    color: Theme.of(context).accentColor,
+                    color: Theme.of(context).colorScheme.secondary,
                   ),
                 if (hideAttachments)
                   Positioned.fill(
                     child: Container(
-                      color: Theme.of(context).accentColor,
+                      color: Theme.of(context).colorScheme.secondary,
                     ),
                   ),
                 if (hideAttachments && !hideAttachmentTypes)

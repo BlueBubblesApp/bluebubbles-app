@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:ui';
 
-import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
@@ -9,9 +8,11 @@ import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/theming/theming_color_options_list.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 
 class ThemingPanel extends StatefulWidget {
   ThemingPanel({Key? key}) : super(key: key);
@@ -20,8 +21,8 @@ class ThemingPanel extends StatefulWidget {
   _ThemingPanelState createState() => _ThemingPanelState();
 }
 
-class _ThemingPanelState extends State<ThemingPanel> with TickerProviderStateMixin {
-  int? index;
+class _ThemingPanelState extends State<ThemingPanel> {
+  int index = ThemeObject.inDarkMode(Get.context!) ? 1 : 0;
   StreamController streamController = StreamController.broadcast();
 
   @override
@@ -34,13 +35,13 @@ class _ThemingPanelState extends State<ThemingPanel> with TickerProviderStateMix
   Widget build(BuildContext context) {
     Color headerColor;
     Color tileColor;
-    if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance()
+    if (Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance()
         || SettingsManager().settings.skin.value != Skins.iOS) {
-      headerColor = Theme.of(context).accentColor;
+      headerColor = Theme.of(context).colorScheme.secondary;
       tileColor = Theme.of(context).backgroundColor;
     } else {
       headerColor = Theme.of(context).backgroundColor;
-      tileColor = Theme.of(context).accentColor;
+      tileColor = Theme.of(context).colorScheme.secondary;
     }
     if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
       tileColor = headerColor;
@@ -48,14 +49,14 @@ class _ThemingPanelState extends State<ThemingPanel> with TickerProviderStateMix
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: headerColor, // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
         systemNavigationBarIconBrightness:
         headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: DefaultTabController(
         length: 2,
-        initialIndex: index ?? 0,
+        initialIndex: index,
         child: Scaffold(
           backgroundColor: tileColor,
           appBar: PreferredSize(
@@ -63,7 +64,8 @@ class _ThemingPanelState extends State<ThemingPanel> with TickerProviderStateMix
             child: ClipRRect(
               child: BackdropFilter(
                 child: AppBar(
-                  brightness: ThemeData.estimateBrightnessForColor(headerColor),
+                  systemOverlayStyle: ThemeData.estimateBrightnessForColor(headerColor) == Brightness.dark
+                      ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
                   toolbarHeight: 100.0,
                   elevation: 0,
                   leading: buildBackButton(context),

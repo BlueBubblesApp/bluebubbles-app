@@ -23,7 +23,7 @@ class SearchView extends StatefulWidget {
   SearchViewState createState() => SearchViewState();
 }
 
-class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
+class SearchViewState extends State<SearchView> {
   List<dynamic> results = [];
 
   GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
@@ -128,7 +128,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
         systemNavigationBarIconBrightness: Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
@@ -140,11 +140,12 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
-                brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
+                systemOverlayStyle: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.dark
+                      ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: buildBackButton(context),
-                backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
+                backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
                 title: Text(
                   "Search",
                   style: Theme.of(context).textTheme.headline1,
@@ -181,7 +182,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                             decoration: BoxDecoration(
                                 color: Theme.of(context).backgroundColor,
                                 borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: Theme.of(context).accentColor)),
+                                border: Border.all(color: Theme.of(context).colorScheme.secondary)),
                             maxLines: 1,
                           )),
                       (!isSearching)
@@ -204,7 +205,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                               ) : Container(height: 20, width: 20, child: Center(child: CircularProgressIndicator(strokeWidth: 2,))),
                             )
                     ])),
-            Divider(color: Theme.of(context).accentColor),
+            Divider(color: Theme.of(context).colorScheme.secondary),
             (!isSearching && noResults)
                 ? Padding(
                     padding: EdgeInsets.only(top: 25.0),
@@ -301,7 +302,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                                     color: Theme.of(context).textTheme.bodyText1!.color,
                                   ),
                                 ),
-                                Divider(color: Theme.of(context).accentColor)
+                                Divider(color: Theme.of(context).colorScheme.secondary)
                               ],
                             );
                           },

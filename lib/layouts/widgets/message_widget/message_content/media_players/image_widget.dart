@@ -1,4 +1,3 @@
-import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
@@ -11,7 +10,6 @@ import 'package:bluebubbles/layouts/image_viewer/attachment_fullscreen_viewer.da
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:visibility_detector/visibility_detector.dart';
@@ -133,11 +131,27 @@ class ImageWidget extends StatelessWidget {
             ? Container(
               width: controller.attachment.guid == "redacted-mode-demo-attachment" ? controller.attachment.width!.toDouble() : null,
               height: controller.attachment.guid == "redacted-mode-demo-attachment" ? controller.attachment.height!.toDouble() : null,
-              child: FadeInImage(
-                placeholder: MemoryImage(kTransparentImage),
-                image: MemoryImage(controller.data.value!),
-                fadeInDuration: Duration(milliseconds: 200),
-            ))
+              child: Image.memory(
+                controller.data.value!,
+                // prevents the image widget from "refreshing" when the provider changes
+                gaplessPlayback: true,
+                frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                  return Stack(children: [
+                    buildPlaceHolder(context, controller, isLoaded: wasSynchronouslyLoaded),
+                    AnimatedOpacity(
+                      opacity: (frame == null &&
+                          controller.attachment.guid != "redacted-mode-demo-attachment" &&
+                          !controller.attachment.guid!.contains("theme-selector"))
+                          ? 0
+                          : 1,
+                      child: child,
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeInOut,
+                    )
+                  ]);
+                },
+              ),
+            )
             : buildPlaceHolder(context, controller),
       ));
 
@@ -163,6 +177,8 @@ class ImageWidget extends StatelessWidget {
     }
 
     // If it's not loaded, we are in progress
-    return buildImagePlaceholder(context, controller.attachment, Center(child: buildProgressIndicator(context)));
+    return buildImagePlaceholder(context, controller.attachment,
+        controller.attachment.guid != "redacted-mode-demo-attachment"
+            ? Center(child: buildProgressIndicator(context)) : Container());
   }
 }

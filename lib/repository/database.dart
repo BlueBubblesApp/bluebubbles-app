@@ -45,7 +45,7 @@ class DBProvider {
 
   static Database? _database;
   static String _path = "";
-  static int currentVersion = 15;
+  static int currentVersion = 16;
 
   /// Contains list of functions to invoke when going from a previous to the current database verison
   /// The previous version is always [key - 1], for example for key 2, it will be the upgrade scheme from version 1 to version 2
@@ -131,6 +131,11 @@ class DBProvider {
         upgrade: (Database db) {
           db.execute("ALTER TABLE message ADD COLUMN threadOriginatorGuid TEXT DEFAULT NULL;");
           db.execute("ALTER TABLE message ADD COLUMN threadOriginatorPart TEXT DEFAULT NULL;");
+        }),
+    DBUpgradeItem(
+        addedInVersion: 16,
+        upgrade: (Database db) async {
+          db.execute("ALTER TABLE theme_values ADD COLUMN fontWeight INTEGER;");
         }),
   ];
 
@@ -436,7 +441,8 @@ class DBProvider {
         "name TEXT NOT NULL,"
         "color TEXT NOT NULL,"
         "isFont INTEGER DEFAULT 0,"
-        "fontSize INTEGER"
+        "fontSize INTEGER,"
+        "fontWeight INTEGER"
         ");");
   }
 

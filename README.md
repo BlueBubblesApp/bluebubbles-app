@@ -35,9 +35,9 @@ Screenshots:
      <td align="center">Private API Features</td>
   </tr>
   <tr>
-    <td><img src="https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/tanay/object-box-with-rewrite/screenshots/Samsung%20Galaxy%20S10%2B%20Prism%20Black%20-%20imessage_framed.png" width=270 height=583></td>
-    <td><img src="https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/tanay/object-box-with-rewrite/screenshots/Samsung%20Galaxy%20S10+%20Prism%20Black%20-%20messaging_framed.png" width=270 height=583></td>
-    <td><img src="https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/tanay/object-box-with-rewrite/screenshots/Samsung%20Galaxy%20S10+%20Prism%20Black%20-%20privateAPI_framed.png" width=270 height=583></td>
+    <td><img src="https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/tanay/object-box-with-rewrite/screenshots/Samsung%20Galaxy%20S10%2B%20Prism%20Black%20-%20imessage_framed.png" width=270></td>
+    <td><img src="https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/tanay/object-box-with-rewrite/screenshots/Samsung%20Galaxy%20S10+%20Prism%20Black%20-%20messaging_framed.png" width=270></td>
+    <td><img src="https://raw.githubusercontent.com/BlueBubblesApp/bluebubbles-app/tanay/object-box-with-rewrite/screenshots/Samsung%20Galaxy%20S10+%20Prism%20Black%20-%20privateAPI_framed.png" width=270></td>
   </tr>
  </table>
 

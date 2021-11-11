@@ -169,9 +169,11 @@ class ContactManager {
       Contact? contactMatch;
 
       try {
-        handleToFormattedAddress[handle.address] = await formatPhoneNumber(handle.address);
         contactMatch = getContact(handle);
         handleToContact[handle.address] = contactMatch;
+        if (!handle.address.isEmail) {
+          handleToFormattedAddress[handle.address] = await formatPhoneNumber(handle.address);
+        }
       } catch (ex) {
         Logger.error('Failed to match handle for address, "${handle.address}": ${ex.toString()}', tag: tag);
       }
@@ -231,6 +233,14 @@ class ContactManager {
             break;
           }
         }
+
+        // just in case our email parsing fails for whatever reason, if the
+        // contact is an exact match, accept it
+        if (c.phones.isEmpty && c.emails.isNotEmpty) {
+          if (c.emails.contains(handle.address)) {
+            contact = c;
+          }
+        }
       }
 
       // Get an email match
@@ -239,6 +249,14 @@ class ContactManager {
           if (item.replaceAll(" ", "").trim() == handle.address.replaceAll(" ", "").trim()) {
             contact = c;
             break;
+          }
+        }
+
+        // just in case our email parsing fails for whatever reason, if the
+        // contact is an exact match, accept it
+        if (c.emails.isEmpty && c.phones.isNotEmpty) {
+          if (c.phones.map((e) => e.trim().numericOnly()).contains(handle.address.trim().numericOnly())) {
+            contact = c;
           }
         }
       }

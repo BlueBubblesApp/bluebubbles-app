@@ -1,7 +1,6 @@
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 
@@ -118,7 +117,7 @@ class Reaction {
 
     for (int i = 0; i < messages.length; i++) {
       Color iconColor = Colors.white;
-      if (!messages[i].isFromMe! && context.theme.accentColor.computeLuminance() >= 0.179) {
+      if (!messages[i].isFromMe! && context.theme.colorScheme.secondary.computeLuminance() >= 0.179) {
         iconColor = Colors.black.withAlpha(95);
       }
 
@@ -142,7 +141,7 @@ class Reaction {
                     width: 5.5,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(100),
-                      color: context.theme.accentColor,
+                      color: context.theme.colorScheme.secondary,
                       boxShadow: [
                         BoxShadow(
                           blurRadius: 1.0,
@@ -161,7 +160,7 @@ class Reaction {
                     width: 10,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(100),
-                      color: context.theme.accentColor,
+                      color: context.theme.colorScheme.secondary,
                       boxShadow: [
                         BoxShadow(
                           blurRadius: 1.0,
@@ -177,7 +176,7 @@ class Reaction {
                 margin: EdgeInsets.only(right: bigPin ? 10 : 0),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(100),
-                  color: messages[i].isFromMe! ? context.theme.primaryColor : context.theme.accentColor,
+                  color: messages[i].isFromMe! ? context.theme.primaryColor : context.theme.colorScheme.secondary,
                   boxShadow: isReactionPicker
                       ? null
                       : [

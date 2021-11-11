@@ -41,7 +41,7 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
     if (hide) return Container();
 
     Color iconColor = Colors.white;
-    if (Theme.of(context).accentColor.computeLuminance() >= 0.179) {
+    if (Theme.of(context).colorScheme.secondary.computeLuminance() >= 0.179) {
       iconColor = Colors.black.withAlpha(95);
     }
 
@@ -68,7 +68,7 @@ class _ReactionDetailWidgetState extends State<ReactionDetailWidget> {
           width: 28,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(100),
-            color: Theme.of(context).accentColor,
+            color: Theme.of(context).colorScheme.secondary,
             boxShadow: [
               BoxShadow(
                 blurRadius: 1.0,

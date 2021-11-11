@@ -6,7 +6,6 @@ import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:universal_io/io.dart';
-import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/setup_bloc.dart';
@@ -93,7 +92,7 @@ class ConversationListState extends State<ConversationList> {
 
   Widget buildSettingsButton() => !widget.showArchivedChats && !widget.showUnknownSenders
       ? PopupMenuButton(
-          color: context.theme.accentColor,
+          color: context.theme.colorScheme.secondary,
           onSelected: (dynamic value) {
             if (value == 0) {
               ChatBloc().markAllAsRead();
@@ -208,7 +207,7 @@ class ConversationListState extends State<ConversationList> {
               height: 20,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(40),
-                color: context.theme.accentColor,
+                color: context.theme.colorScheme.secondary,
               ),
               child: Icon(
                 Icons.more_horiz,

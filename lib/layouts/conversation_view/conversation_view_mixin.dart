@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
@@ -318,7 +317,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     );
   }
 
-  Widget buildConversationViewHeader() {
+  Widget buildConversationViewHeader(BuildContext context) {
     Color backgroundColor = Theme.of(context).backgroundColor;
     Color? fontColor = Theme.of(context).textTheme.headline1!.color;
     Color? fontColor2 = Theme.of(context).textTheme.subtitle1!.color;
@@ -338,7 +337,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     if (SettingsManager().settings.skin.value == Skins.Material ||
         SettingsManager().settings.skin.value == Skins.Samsung) {
       return AppBar(
-        brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
+        systemOverlayStyle: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor) == Brightness.dark
+                      ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -455,7 +455,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           width: 42.0, // 2 px larger than the diameter
           child: CircleAvatar(
             radius: 20,
-            backgroundColor: Theme.of(context).accentColor,
+            backgroundColor: Theme.of(context).colorScheme.secondary,
             child: ContactAvatarWidget(
                 key: Key("${participant.address}-conversation-view"),
                 handle: participant,
@@ -490,7 +490,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     //                   border: Border(
     //                     bottom: BorderSide(color: Colors.white.withOpacity(0.2), width: 0.2),
     //                   ),
-    //                   color: Theme.of(context).accentColor.withAlpha(125),
+    //                   color: Theme.of(context).colorScheme.secondary.withAlpha(125),
     //                 ),
     //                 child: Row(
     //                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -558,113 +558,112 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     //                       this.buildCupertinoTrailing()
     //                     ])))));
 
-    return CupertinoNavigationBar(
-        backgroundColor: Theme.of(context).accentColor.withAlpha(125),
-        border: Border(
-          bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1.5),
-        ),
-        leading: GestureDetector(
-          onTap: () {
-            if (LifeCycleManager().isBubble) SystemNavigator.pop();
-            EventDispatcher().emit("update-highlight", null);
-            Navigator.of(context).pop();
-          },
-          behavior: HitTestBehavior.translucent,
-          child: Container(
-            width: 40 + (ChatBloc().unreads.value > 0 ? 25 : 0),
-            child: Row(
-              mainAxisSize: cupertino.MainAxisSize.min,
-              mainAxisAlignment: cupertino.MainAxisAlignment.start,
+    final children = [
+      ContactAvatarGroupWidget(
+        chat: chat!,
+        size: avatars.length == 1 ? 40 : 45,
+        onTap: openDetails,
+      ),
+      SizedBox(height: 5.0, width: 5.0),
+      Row(mainAxisSize: MainAxisSize.min, children: [
+        Container(
+          constraints: BoxConstraints(
+            maxWidth: CustomNavigator.width(context) / 2 - 55,
+          ),
+          child: RichText(
+            maxLines: 1,
+            overflow: cupertino.TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            text: TextSpan(
+              style: Theme.of(context).textTheme.headline2,
               children: [
-                buildBackButton(context, callback: () async {
-                  if (LifeCycleManager().isBubble) SystemNavigator.pop();
-                  EventDispatcher().emit("update-highlight", null);
-                  await SystemChannels.textInput.invokeMethod('TextInput.hide');
-                }),
-                if (ChatBloc().unreads.value > 0)
-                  Container(
-                    width: 25.0,
-                    height: 20.0,
-                    decoration: BoxDecoration(
-                        color: Theme.of(context).primaryColor,
-                        shape: BoxShape.rectangle,
-                        borderRadius: BorderRadius.circular(10)),
-                    child: Center(
-                        child: Text(ChatBloc().unreads.value.toString(),
-                            textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 12.0))),
-                  ),
+                ...MessageHelper.buildEmojiText(
+                  title ?? "",
+                  titleStyle!,
+                ),
               ],
             ),
           ),
         ),
-        middle: ListView(
-          physics: cupertino.NeverScrollableScrollPhysics(),
-          padding: EdgeInsets.only(right: newMessages.isNotEmpty ? 10 : 0),
-          children: <Widget>[
-            Container(height: 10.0),
-            GestureDetector(
-              onTap: openDetails,
-              child: Container(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // RowSuper(
-                    //   children: avatars,
-                    //   innerDistance: distance,
-                    //   alignment: Alignment.center,
-                    // ),
-                    ContactAvatarGroupWidget(
-                      chat: chat!,
-                      size: avatars.length == 1 ? 40 : 45,
-                      onTap: openDetails,
+        RichText(
+          text: TextSpan(
+            style: Theme.of(context).textTheme.headline2,
+            children: [
+              TextSpan(
+                text: " >",
+                style: Theme.of(context).textTheme.subtitle1,
+              ),
+            ],
+          ),
+        ),
+      ]),
+    ];
+
+    return PreferredSize(
+      preferredSize: Size.fromHeight(context.orientation == Orientation.landscape && context.isPhone ? 55 : 75),
+      child: CupertinoNavigationBar(
+          backgroundColor: Theme.of(context).colorScheme.secondary.withAlpha(125),
+          border: Border(
+            bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1.5),
+          ),
+          leading: GestureDetector(
+            onTap: () {
+              if (LifeCycleManager().isBubble) SystemNavigator.pop();
+              EventDispatcher().emit("update-highlight", null);
+              Navigator.of(context).pop();
+            },
+            behavior: HitTestBehavior.translucent,
+            child: Container(
+              width: 40 + (ChatBloc().unreads.value > 0 ? 25 : 0),
+              child: Row(
+                mainAxisSize: cupertino.MainAxisSize.min,
+                mainAxisAlignment: cupertino.MainAxisAlignment.start,
+                children: [
+                  buildBackButton(context, callback: () async {
+                    if (LifeCycleManager().isBubble) SystemNavigator.pop();
+                    EventDispatcher().emit("update-highlight", null);
+                    await SystemChannels.textInput.invokeMethod('TextInput.hide');
+                  }),
+                  if (ChatBloc().unreads.value > 0)
+                    Container(
+                      width: 25.0,
+                      height: 20.0,
+                      decoration: BoxDecoration(
+                          color: Theme.of(context).primaryColor,
+                          shape: BoxShape.rectangle,
+                          borderRadius: BorderRadius.circular(10)),
+                      child: Center(
+                          child: Text(ChatBloc().unreads.value.toString(),
+                              textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 12.0))),
                     ),
-                    if (avatars.length == 1) SizedBox(height: 5.0),
-                    Center(
-                        child: Container(
-                      constraints: BoxConstraints(
-                        maxWidth: CustomNavigator.width(context) / 2,
-                      ),
-                      child: Row(mainAxisSize: MainAxisSize.min, children: [
-                        Container(
-                          constraints: BoxConstraints(
-                            maxWidth: CustomNavigator.width(context) / 2 - 55,
-                          ),
-                          child: RichText(
-                            maxLines: 1,
-                            overflow: cupertino.TextOverflow.ellipsis,
-                            textAlign: TextAlign.center,
-                            text: TextSpan(
-                              style: Theme.of(context).textTheme.headline2,
-                              children: [
-                                ...MessageHelper.buildEmojiText(
-                                  title ?? "",
-                                  titleStyle!,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        RichText(
-                          text: TextSpan(
-                            style: Theme.of(context).textTheme.headline2,
-                            children: [
-                              TextSpan(
-                                text: " >",
-                                style: Theme.of(context).textTheme.subtitle1,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ]),
-                    )),
-                  ],
-                ),
+                ],
               ),
             ),
-          ],
-        ),
-        trailing:
-            Obx(() => Container(width: 40 + (ChatBloc().unreads.value > 0 ? 25 : 0), child: buildCupertinoTrailing())));
+          ),
+          middle: cupertino.Padding(
+            padding: EdgeInsets.only(right: newMessages.isNotEmpty ? 10 : 0),
+            child: GestureDetector(
+              onTap: openDetails,
+              child: Builder(
+                builder: (context) {
+                  if (context.orientation == Orientation.landscape && context.isPhone) {
+                    return Row(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: children
+                    );
+                  }
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: children,
+                  );
+                }
+              ),
+            ),
+          ),
+          trailing:
+              Obx(() => Container(width: 40 + (ChatBloc().unreads.value > 0 ? 25 : 0), child: buildCupertinoTrailing()))),
+    );
   }
 
   /// Chat selector methods
@@ -952,7 +951,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            backgroundColor: Theme.of(context).accentColor,
+            backgroundColor: Theme.of(context).colorScheme.secondary,
             title: Text(
               "Creating a new chat...",
               style: Theme.of(context).textTheme.bodyText1,
@@ -1125,7 +1124,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   Widget buildChatSelectorHeader() => PreferredSize(
         preferredSize: Size.fromHeight(40),
         child: cupertino.CupertinoNavigationBar(
-          backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
+          backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
           middle: Container(
             child: Text(
               widget.customHeading ?? "New Message",
@@ -1147,7 +1146,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                 context: context,
                 builder: (BuildContext context) {
                   return AlertDialog(
-                      backgroundColor: Theme.of(context).accentColor,
+                      backgroundColor: Theme.of(context).colorScheme.secondary,
                       title: Text("Group Naming",
                           style:
                           TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
@@ -1157,7 +1156,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Support for creating group chats might be unreliable on MacOS 11 (Big Sur) and up due to limitations imposed by Apple. Enabling the Private API will fix this issue.',
+                            'Support for creating group chats currently does not work on MacOS 11 (Big Sur) and up due to limitations imposed by Apple. We hope to soon implement this feature with the Private API.',
                             style: context.theme.textTheme.subtitle1,
                           ),
                         ],

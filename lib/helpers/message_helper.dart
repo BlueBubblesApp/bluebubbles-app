@@ -268,18 +268,19 @@ class MessageHelper {
     }
   }
 
-  static Future<String> getNotificationText(Message message) async {
+  static Future<String> getNotificationText(Message message, {bool withSender = false}) async {
+    String sender = !withSender ? "" : message.isFromMe! ? "You: " : ContactManager().getContactTitle(message.handle) + ": ";
     // If the item type is not 0, it's a group event
     if (message.isGroupEvent()) {
-      return await getGroupEventText(message);
+      return sender + (await getGroupEventText(message));
     }
 
     if (message.isInteractive()) {
-      return "Interactive: ${MessageHelper.getInteractiveText(message)}";
+      return sender + "Interactive: ${MessageHelper.getInteractiveText(message)}";
     }
 
     if (isNullOrEmpty(message.fullText, trimString: true)! && !message.hasAttachments) {
-      return "Empty message";
+      return sender + "Empty message";
     }
 
     // Parse/search for links
@@ -291,7 +292,6 @@ class MessageHelper {
       // Build the attachment output by counting the attachments
       String output = "Attachment${aCount > 1 ? "s" : ""}";
       return "$output: ${getAttachmentText(message.attachments)}";
-
     } else if (![null, ""].contains(message.associatedMessageGuid)) {
       // It's a reaction message, get the sender
       String? sender = message.isFromMe! ? "You" : ContactManager().getContactTitle(message.handle);
@@ -321,7 +321,7 @@ class MessageHelper {
       return "$sender ${message.text}";
     } else {
       // It's all other message types
-      return message.fullText;
+      return sender + message.fullText;
     }
   }
 

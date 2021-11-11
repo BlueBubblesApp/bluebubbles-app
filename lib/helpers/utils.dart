@@ -27,7 +27,6 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
 import 'package:convert/convert.dart';
 import 'package:device_info_plus/device_info_plus.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:libphonenumber_plugin/libphonenumber_plugin.dart';
@@ -127,11 +126,11 @@ bool sameAddress(List<String?> options, String? compared) {
   bool match = false;
   if (compared == null) return match;
   for (String? opt in options) {
-    if (opt == null) continue;
+    if (isNullOrEmpty(opt)!) continue;
     if (opt == compared) {
       match = true;
       break;
-    } else if (compared.endsWith(opt) && opt.length >= 9) {
+    } else if (compared.endsWith(opt!) && opt.length >= 9) {
       match = true;
       break;
     } else if (opt.endsWith(compared) && compared.length >= 9) {
@@ -139,10 +138,8 @@ bool sameAddress(List<String?> options, String? compared) {
       break;
     }
 
-    if (opt.isEmail && !compared.isEmail) continue;
-
     String formatted = slugify(compared, delimiter: '').toString().replaceAll('-', '');
-    if (options.contains(formatted)) {
+    if (opt.endsWith(formatted) || formatted.endsWith(opt)) {
       match = true;
       break;
     }
@@ -205,7 +202,7 @@ void showSnackbar(String title, String message,
   Get.snackbar(title, message,
       snackPosition: SnackPosition.BOTTOM,
       colorText: Get.textTheme.bodyText1!.color,
-      backgroundColor: Get.theme.accentColor,
+      backgroundColor: Get.theme.colorScheme.secondary,
       margin: EdgeInsets.only(bottom: 10),
       maxWidth: Get.width - 20,
       isDismissible: false,
@@ -240,7 +237,7 @@ String buildDate(DateTime? dateTime) {
   } else if (DateTime.now().difference(dateTime.toLocal()).inDays <= 7) {
     date = intl.DateFormat("EEEE").format(dateTime);
   } else {
-    date = "${dateTime.month.toString()}/${dateTime.day.toString()}/${dateTime.year.toString()}";
+    date = intl.DateFormat.yMd().format(dateTime);
   }
   return date;
 }
@@ -255,6 +252,10 @@ String buildTime(DateTime? dateTime) {
       ? intl.DateFormat.Hm().format(dateTime)
       : intl.DateFormat.jm().format(dateTime);
   return time;
+}
+
+String buildFullDate(DateTime time) {
+  return intl.DateFormat.yMd().add_jm().format(time);
 }
 
 extension DateHelpers on DateTime {
@@ -275,7 +276,7 @@ extension DateHelpers on DateTime {
     return yesterday.day == day && yesterday.month == month && yesterday.year == year;
   }
 
-  bool isWithin(DateTime other, {int? ms, int? seconds, int? minutes, int? hours}) {
+  bool isWithin(DateTime other, {int? ms, int? seconds, int? minutes, int? hours, int? days}) {
     Duration diff = difference(other);
     if (ms != null) {
       return diff.inMilliseconds < ms;
@@ -285,6 +286,8 @@ extension DateHelpers on DateTime {
       return diff.inMinutes < minutes;
     } else if (hours != null) {
       return diff.inHours < hours;
+    } else if (days != null) {
+      return diff.inDays < days;
     } else {
       throw Exception("No timerange specified!");
     }
@@ -482,8 +485,8 @@ Size getGifDimensions(Uint8List bytes) {
   return size;
 }
 
-Brightness getBrightness(BuildContext context) {
-  return AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ? Brightness.dark : Brightness.light;
+SystemUiOverlayStyle getBrightness(BuildContext context) {
+  return AdaptiveTheme.of(context).mode == AdaptiveThemeMode.dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark;
 }
 
 /// Take the passed [address] or serverAddress from Settings

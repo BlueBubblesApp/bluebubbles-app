@@ -41,7 +41,7 @@ class ActionHandler {
   /// sendMessage(chatObject, 'Hello world!')
   /// ```
   static Future<void> sendMessage(Chat chat, String text,
-      {MessageBloc? messageBloc, List<Attachment> attachments = const [], String? subject, String? replyGuid, String? effectId}) async {
+      {MessageBloc? messageBloc, List<Attachment> attachments = const [], String? subject, String? replyGuid, String? effectId, Completer<void>? completer}) async {
     if (isNullOrEmpty(text, trimString: true)! && isNullOrEmpty(subject ?? "", trimString: true)!) return;
 
     if ((await SettingsManager().getMacOSVersion() ?? 10) < 11) {
@@ -116,6 +116,7 @@ class ActionHandler {
       }
 
       // Send all the messages
+      List<Completer<void>> completerList = List.generate(messages.length, (_) => Completer());
       messages.forEachIndexed((index, message) async {
         // Add the message to the UI and DB
         NewMessageManager().addMessage(chat, message, outgoing: true);
@@ -125,8 +126,14 @@ class ActionHandler {
         Map<String, dynamic> params = {"chat": chat, "message": message};
 
         // Add the message send to the queue
-        await OutgoingQueue().add(QueueItem(event: "send-message", item: params));
+        await OutgoingQueue().add(QueueItem(event: "send-message", item: params), completer: completer != null ? completerList[index] : null);
+
+        if (index == messages.length - 1) {
+          completer?.complete();
+        }
       });
+
+      return completer?.future;
     } else {
       // Create the main message
       Message message = Message(
@@ -158,7 +165,7 @@ class ActionHandler {
       Map<String, dynamic> params = {"chat": chat, "message": message};
 
       // Add the message send to the queue
-      await OutgoingQueue().add(QueueItem(event: "send-message", item: params));
+      await OutgoingQueue().add(QueueItem(event: "send-message", item: params), completer: completer);
     }
   }
 
@@ -167,7 +174,7 @@ class ActionHandler {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            backgroundColor: Theme.of(context).accentColor,
+            backgroundColor: Theme.of(context).colorScheme.secondary,
             title: Text(
               "Creating a new chat...",
               style: Theme.of(context).textTheme.bodyText1,

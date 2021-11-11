@@ -1,5 +1,4 @@
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
@@ -11,6 +10,7 @@ import 'package:bluebubbles/helpers/redacted_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/setup/theme_selector/theme_selector.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
+import 'package:bluebubbles/layouts/widgets/message_widget/message_content/delivered_receipt.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/balloon_bundle_widget.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_tail.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_time_stamp.dart';
@@ -31,8 +31,6 @@ import 'package:get/get.dart';
 import 'package:particles_flutter/particles_flutter.dart';
 import 'package:simple_animations/simple_animations.dart';
 import 'package:supercharged/supercharged.dart';
-
-import 'message_content/delivered_receipt.dart';
 
 class ReceivedMessage extends StatefulWidget {
   final bool showTail;
@@ -127,11 +125,13 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
   }
 
   List<Color> getBubbleColors(Message message) {
-    List<Color> bubbleColors = message.isFromMe ?? false ? [Colors.blue, Colors.blue] : [Theme
+    List<Color> bubbleColors = message.isFromMe ?? false ? [
+      Theme.of(context).primaryColor,
+      Theme.of(context).primaryColor] : [Theme
         .of(context)
-        .accentColor, Theme
+        .colorScheme.secondary, Theme
         .of(context)
-        .accentColor
+        .colorScheme.secondary
     ];
     if (SettingsManager().settings.colorfulBubbles.value && !message.isFromMe!) {
       if (message.handle?.color == null) {
@@ -170,7 +170,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
               height: 70,
               color: Theme
                   .of(context)
-                  .accentColor,
+                  .colorScheme.secondary,
               child: Center(
                 child: Text(
                   "emoji",
@@ -928,10 +928,10 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                               padding: EdgeInsets.only(left: addedAvatar ? 50 : 18, right: 8.0, top: 2, bottom: 4),
                               child: Row(
                                 children: [
-                                  Icon(Icons.refresh, size: 10, color: Colors.blue),
+                                  Icon(Icons.refresh, size: 10, color: Theme.of(context).primaryColor),
                                   Text(
                                     " sent with $effect",
-                                    style: Theme.of(context).textTheme.subtitle2!.copyWith(fontWeight: FontWeight.bold, color: Colors.blue),
+                                    style: Theme.of(context).textTheme.subtitle2!.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
                                   ),
                                 ]
                               ),
@@ -939,7 +939,7 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                               padding: EdgeInsets.only(left: addedAvatar ? 50 : 18, right: 8.0, top: 2, bottom: 4),
                               child: Text(
                                 "↺ sent with $effect",
-                                style: Theme.of(context).textTheme.subtitle2!.copyWith(fontWeight: FontWeight.bold, color: Colors.blue),
+                                style: Theme.of(context).textTheme.subtitle2!.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
                               ),
                             ),
                           ),
@@ -953,8 +953,8 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                               child: Padding(
                                 padding: EdgeInsets.only(left: addedAvatar ? 50 : 18, right: 8.0, top: 2, bottom: 4),
                                 child: Text(
-                                  "${list.length} Repl${list.length > 1 ? "ies" : "y"}",
-                                  style: Theme.of(context).textTheme.subtitle2!.copyWith(fontWeight: FontWeight.bold, color: Colors.blue),
+                                  "${list.length} repl${list.length > 1 ? "ies" : "y"}",
+                                  style: Theme.of(context).textTheme.subtitle2!.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
                                 ),
                               ),
                             );

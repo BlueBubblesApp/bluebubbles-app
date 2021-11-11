@@ -3,7 +3,6 @@ import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:universal_io/io.dart';
-import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
@@ -35,7 +34,7 @@ class SamsungConversationList extends StatefulWidget {
   _SamsungConversationListState createState() => _SamsungConversationListState();
 }
 
-class _SamsungConversationListState extends State<SamsungConversationList> with SingleTickerProviderStateMixin {
+class _SamsungConversationListState extends State<SamsungConversationList> {
   List<Chat> selected = [];
   bool openedChatAlready = false;
   final ScrollController scrollController = ScrollController();
@@ -197,7 +196,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
     }
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() || isEqual(Theme.of(context), whiteLightTheme) ? context.theme.accentColor : context.theme.backgroundColor, // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
         systemNavigationBarIconBrightness:
         context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
@@ -384,7 +383,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
           return true;
         },
         child: Scaffold(
-          backgroundColor: Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() || isEqual(Theme.of(context), whiteLightTheme) ? context.theme.accentColor : context.theme.backgroundColor,
+          backgroundColor: Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() || isEqual(Theme.of(context), whiteLightTheme) ? context.theme.colorScheme.secondary : context.theme.backgroundColor,
           body: SafeArea(
             child: ClipRRect(
               borderRadius: BorderRadius.circular(25),
@@ -405,7 +404,7 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
                   controller: scrollController,
                   slivers: [
                     SliverAppBar(
-                      backgroundColor: Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() || isEqual(Theme.of(context), whiteLightTheme) ? context.theme.accentColor : context.theme.backgroundColor,
+                      backgroundColor: Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() || isEqual(Theme.of(context), whiteLightTheme) ? context.theme.colorScheme.secondary : context.theme.backgroundColor,
                       pinned: true,
                       stretch: true,
                       expandedHeight: context.height / 3,
@@ -435,13 +434,13 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
                                 child: Obx(() {
                                   Color headerColor;
                                   Color tileColor;
-                                  if ((Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+                                  if ((Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
                                       SettingsManager().settings.skin.value == Skins.Material) && (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
-                                    headerColor = Theme.of(context).accentColor;
+                                    headerColor = Theme.of(context).colorScheme.secondary;
                                     tileColor = Theme.of(context).backgroundColor;
                                   } else {
                                     headerColor = Theme.of(context).backgroundColor;
-                                    tileColor = Theme.of(context).accentColor;
+                                    tileColor = Theme.of(context).colorScheme.secondary;
                                   }
                                   if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
                                     tileColor = headerColor;
@@ -474,13 +473,13 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
                                     () {
                                   Color headerColor;
                                   Color tileColor;
-                                  if ((Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+                                  if ((Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
                                       SettingsManager().settings.skin.value == Skins.Material) && (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
-                                    headerColor = Theme.of(context).accentColor;
+                                    headerColor = Theme.of(context).colorScheme.secondary;
                                     tileColor = Theme.of(context).backgroundColor;
                                   } else {
                                     headerColor = Theme.of(context).backgroundColor;
-                                    tileColor = Theme.of(context).accentColor;
+                                    tileColor = Theme.of(context).colorScheme.secondary;
                                   }
                                   if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
                                     tileColor = headerColor;
@@ -539,7 +538,6 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
           ),
           bottomNavigationBar: AnimatedSize(
             duration: Duration(milliseconds: 200),
-            vsync: this,
             child: selected.isEmpty ? null : Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -735,7 +733,6 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
 
   Widget buildChatItem(Chat chat) {
     bool showArchived = widget.parent.widget.showArchivedChats;
-    bool showUnknown = widget.parent.widget.showUnknownSenders;
     return Obx(() {
       if (SettingsManager().settings.swipableConversationTiles.value) {
         return Dismissible(

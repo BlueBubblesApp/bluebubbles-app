@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:bluebubbles/layouts/setup/splash_screen.dart';
 import 'package:collection/collection.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
@@ -31,13 +32,13 @@ import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
 import 'package:bluebubbles/repository/models/theme_object.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' hide Priority;
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 import 'package:firebase_dart/firebase_dart.dart';
+//ignore: implementation_imports
 import 'package:firebase_dart/src/auth/utils.dart' as fdu;
 import 'package:get/get.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -127,9 +128,25 @@ Future<Null> main() async {
         messagingSenderId: 'ignore',
         authDomain: 'my_project.firebaseapp.com');
     app = await Firebase.initializeApp(options: options);
-    await initializeDateFormatting('fr_FR', null);
+    await initializeDateFormatting();
     await SettingsManager().init();
     await SettingsManager().getSavedSettings(headless: true);
+    if (SettingsManager().settings.immersiveMode.value) {
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    }
+    // this is to avoid a fade-in transition between the android native splash screen
+    // and our dummy splash screen
+    if (!SettingsManager().settings.finishedSetup.value && !kIsWeb && !kIsDesktop) {
+      runApp(
+        MaterialApp(
+          home: SplashScreen(shouldNavigate: false),
+          theme: ThemeData(
+              backgroundColor: SchedulerBinding.instance!.window.platformBrightness == Brightness.dark
+                  ? Colors.black : Colors.white
+          )
+        )
+      );
+    }
     Get.put(AttachmentDownloadService());
     if (!kIsWeb && !kIsDesktop) {
       flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
@@ -150,7 +167,7 @@ Future<Null> main() async {
     }
     if (!kIsWeb) {
       try {
-        DynamicCachedFonts.loadCachedFont("https://github.com/samuelngs/apple-emoji-linux/releases/download/latest/AppleColorEmoji.ttf", fontFamily: "Apple Color Emoji").then((_) {
+        DynamicCachedFonts.loadCachedFont("https://github.com/tneotia/tneotia/releases/download/ios-font-1/IOS.14.2.Daniel.L.ttf", fontFamily: "Apple Color Emoji").then((_) {
           fontExistsOnDisk.value = true;
         });
       } on StateError catch (_) {
@@ -313,6 +330,7 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> with WidgetsBindingObserver {
   ReceivePort port = ReceivePort();
   bool serverCompatible = true;
+  bool fullyLoaded = false;
 
   @override
   void initState() {
@@ -450,6 +468,11 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           }
         });
       }
+      if (!SettingsManager().settings.finishedSetup.value) {
+        setState(() {
+          fullyLoaded = true;
+        });
+      }
     });
 
     // Bind the lifecycle events
@@ -488,7 +511,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-      systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+      systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
       systemNavigationBarIconBrightness:
           Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
       statusBarColor: Colors.transparent, // status bar color
@@ -496,7 +519,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
         systemNavigationBarIconBrightness:
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
@@ -526,7 +549,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
               ]);
               return WillPopScope(
                 onWillPop: () async => false,
-                child: SetupView(),
+                child: kIsWeb || kIsDesktop
+                    ? SetupView() : SplashScreen(shouldNavigate: fullyLoaded),
               );
             }
           },

@@ -2,7 +2,6 @@ import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:universal_io/io.dart';
-import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
@@ -197,7 +196,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
     hasPinnedChat();
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: context.theme.backgroundColor, // navigation bar color
+        systemNavigationBarColor: SettingsManager().settings.immersiveMode.value ? Colors.transparent : Theme.of(context).backgroundColor, // navigation bar color
         systemNavigationBarIconBrightness:
         context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
@@ -225,7 +224,8 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
               duration: Duration(milliseconds: 500),
               child: selected.isEmpty ? AppBar(
                 iconTheme: IconThemeData(color: context.theme.primaryColor),
-                brightness: ThemeData.estimateBrightnessForColor(context.theme.backgroundColor),
+                systemOverlayStyle: ThemeData.estimateBrightnessForColor(context.theme.backgroundColor) == Brightness.dark
+                    ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
                 bottom: PreferredSize(
                   child: Container(
                     color: context.theme.dividerColor,

@@ -75,7 +75,7 @@ class _BalloonBubbleState extends State<BalloonBundleWidget> {
             ),
             child: Container(
               width: 200,
-              color: Theme.of(context).accentColor,
+              color: Theme.of(context).colorScheme.secondary,
               child: Padding(
                 padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 10.0),
                 child: Column(

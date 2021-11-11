@@ -137,7 +137,7 @@ class ContactTile extends StatelessWidget {
           handle: handle,
           borderThickness: 0.1,
         ),
-        trailing: kIsWeb ? Container(width: 2) : FittedBox(
+        trailing: kIsWeb || (!isEmail && (contact?.phones.isEmpty ?? true)) ? Container(width: 2) : FittedBox(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             mainAxisSize: MainAxisSize.max,
@@ -148,7 +148,7 @@ class ContactTile extends StatelessWidget {
                   child: TextButton(
                     style: TextButton.styleFrom(
                       shape: CircleBorder(),
-                      backgroundColor: Theme.of(context).accentColor,
+                      backgroundColor: Theme.of(context).colorScheme.secondary,
                     ),
                     onPressed: () {
                       startEmail(handle.address);
@@ -161,7 +161,7 @@ class ContactTile extends StatelessWidget {
                 child: TextButton(
                   style: TextButton.styleFrom(
                     shape: CircleBorder(),
-                    backgroundColor: Theme.of(context).accentColor,
+                    backgroundColor: Theme.of(context).colorScheme.secondary,
                   ),
                   onLongPress: () => onPressContactTrailing(context, longPressed: true),
                   onPressed: () => onPressContactTrailing(context),
@@ -190,7 +190,7 @@ class ContactTile extends StatelessWidget {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              backgroundColor: Theme.of(context).accentColor,
+              backgroundColor: Theme.of(context).colorScheme.secondary,
               title: Text("Select a Phone Number",
                   style: TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
               content: ObxValue<Rx<bool>>((data) => Column(

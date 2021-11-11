@@ -6,7 +6,6 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/message.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -97,7 +96,7 @@ class PinnedTileTextBubble extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10.0),
-                          color: context.theme.accentColor.withOpacity(0.8),
+                          color: context.theme.colorScheme.secondary.withOpacity(0.8),
                         ),
                         child: Text(
                           messageText,
@@ -129,7 +128,7 @@ class TailPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    Paint paint = Paint()..color = Get.theme.accentColor.withOpacity(0.8);
+    Paint paint = Paint()..color = Get.theme.colorScheme.secondary.withOpacity(0.8);
     Path path = Path();
 
     if (leftSide) {

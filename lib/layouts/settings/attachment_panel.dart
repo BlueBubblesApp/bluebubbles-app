@@ -18,13 +18,13 @@ class AttachmentPanel extends StatelessWidget {
     final materialSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
     Color headerColor;
     Color tileColor;
-    if ((Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+    if ((Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
         SettingsManager().settings.skin.value == Skins.Material) && (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
-      headerColor = Theme.of(context).accentColor;
+      headerColor = Theme.of(context).colorScheme.secondary;
       tileColor = Theme.of(context).backgroundColor;
     } else {
       headerColor = Theme.of(context).backgroundColor;
-      tileColor = Theme.of(context).accentColor;
+      tileColor = Theme.of(context).colorScheme.secondary;
     }
     if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
       tileColor = headerColor;
@@ -51,6 +51,7 @@ class AttachmentPanel extends StatelessWidget {
                     },
                     initialVal: SettingsManager().settings.autoDownload.value,
                     title: "Auto-download Attachments",
+                    subtitle: "Automatically downloads new attachments from the server and caches them internally",
                     backgroundColor: tileColor,
                   )),
                   Container(
@@ -69,6 +70,25 @@ class AttachmentPanel extends StatelessWidget {
                     title: "Only Auto-download Attachments on WiFi",
                     backgroundColor: tileColor,
                   )),
+                  if (!kIsWeb && !kIsDesktop)
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
+                    ),
+                  if (!kIsWeb && !kIsDesktop)
+                    Obx(() => SettingsSwitch(
+                      onChanged: (bool val) {
+                        SettingsManager().settings.autoSave.value = val;
+                        saveSettings();
+                      },
+                      initialVal: SettingsManager().settings.autoSave.value,
+                      title: "Auto-save Attachments",
+                      subtitle: "Automatically saves all attachments to gallery or downloads folder",
+                      backgroundColor: tileColor,
+                    )),
                 ],
               ),
               SettingsHeader(

@@ -8,7 +8,6 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:universal_io/io.dart';
 import 'package:universal_html/html.dart' as html;
-import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/themes.dart';
@@ -112,13 +111,13 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
     final materialSubtitle = Theme.of(context).textTheme.subtitle1?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
     Color headerColor;
     Color tileColor;
-    if ((Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+    if ((Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
         SettingsManager().settings.skin.value == Skins.Material) && (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
-      headerColor = Theme.of(context).accentColor;
+      headerColor = Theme.of(context).colorScheme.secondary;
       tileColor = Theme.of(context).backgroundColor;
     } else {
       headerColor = Theme.of(context).backgroundColor;
-      tileColor = Theme.of(context).accentColor;
+      tileColor = Theme.of(context).colorScheme.secondary;
     }
     if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
       tileColor = headerColor;
@@ -294,201 +293,203 @@ class ServerManagementPanel extends GetView<ServerManagementPanelController> {
                   ),
                 ],
               ),
-              SettingsHeader(
-                  headerColor: headerColor,
-                  tileColor: tileColor,
-                  iosSubtitle: iosSubtitle,
-                  materialSubtitle: materialSubtitle,
-                  text: "Connection & Sync"
-              ),
-              SettingsSection(
-                backgroundColor: tileColor,
-                children: [
-                  /*Obx(() {
-                    if (controller.proxyService.value != null && SettingsManager().settings.skin.value == Skins.iOS)
-                      return Container(
-                        decoration: BoxDecoration(
-                          color: tileColor,
-                        ),
-                        padding: EdgeInsets.only(left: 15, top: 5),
-                        child: Text("Select Proxy Service"),
-                      );
-                    else return SizedBox.shrink();
-                  }),
-                  Obx(() => controller.proxyService.value != null ? SettingsOptions<String>(
-                    title: "Proxy Service",
-                    options: ["Ngrok", "LocalTunnel", "Dynamic DNS"],
-                    initial: controller.proxyService.value!,
-                    capitalize: false,
-                    textProcessing: (val) => val,
-                    onChanged: (val) async {
-                      String? url;
-                      if (val == "Dynamic DNS") {
-                        TextEditingController controller = TextEditingController();
-                        await showDialog(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              actions: [
-                                TextButton(
-                                  child: Text("OK"),
-                                  onPressed: () async {
-                                    if (!controller.text.isURL) {
-                                      showSnackbar("Error", "Please enter a valid URL");
-                                      return;
-                                    }
-                                    url = controller.text;
-                                    Get.back();
-                                  },
-                                ),
-                                TextButton(
-                                  child: Text("Cancel"),
-                                  onPressed: () {
-                                    Get.back();
-                                  },
-                                )
-                              ],
-                              content: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  TextField(
-                                    controller: controller,
-                                    decoration: InputDecoration(
-                                      labelText: "Server Address",
-                                      border: OutlineInputBorder(),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              title: Text("Enter Server Address"),
-                            )
-                        );
-                        if (url == null) return;
-                      }
-                      var res = await SocketManager().sendMessage("change-proxy-service", {"service": val}, (_) {});
-                      if (res['status'] == 200) {
-                        controller.proxyService.value = val;
-                        await Future.delayed(Duration(seconds: 2));
-                        await SocketManager().refreshConnection();
-                        controller.opacity.value = 0.0;
-                        int now = DateTime.now().toUtc().millisecondsSinceEpoch;
-                        SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
-                          int later = DateTime.now().toUtc().millisecondsSinceEpoch;
-                          controller.latency.value = later - now;
-                          controller.macOSVersion.value = res['data']['os_version'];
-                          controller.serverVersion.value = res['data']['server_version'];
-                          controller.privateAPIStatus.value = res['data']['private_api'];
-                          controller.helperBundleStatus.value = res['data']['helper_connected'];
-                          controller.proxyService.value = res['data']['proxy_service'];
-                          controller.opacity.value = 1.0;
-                        });
-                      }
-                    },
-                    backgroundColor: tileColor,
-                    secondaryColor: headerColor,
-                  ) : SizedBox.shrink()),
-                  Obx(() => controller.proxyService.value != null && !kIsWeb ? Container(
-                    color: tileColor,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 65.0),
-                      child: SettingsDivider(color: headerColor),
-                    ),
-                  ) : SizedBox.shrink()),*/
-                  if (!kIsWeb && !kIsDesktop)
-                    SettingsTile(
-                      title: "Re-configure with BlueBubbles Server",
-                      subtitle: "Tap to scan QR code\nLong press for manual entry",
-                      isThreeLine: true,
-                      leading: SettingsLeadingIcon(
-                        iosIcon: CupertinoIcons.gear,
-                        materialIcon: Icons.room_preferences,
-                      ),
-                      backgroundColor: tileColor,
-                      onLongPress: () {
-                        showDialog(
-                          context: context,
-                          builder: (connectContext) => TextInputURL(
-                            onConnect: () {
-                              Get.back();
-                              SocketManager().authFCM();
-                              SocketManager()
-                                  .startSocketIO(forceNewConnection: true);
-                            },
-                            onClose: () {
-                              Get.back();
-                            },
+              if (!kIsWeb)
+                SettingsHeader(
+                    headerColor: headerColor,
+                    tileColor: tileColor,
+                    iosSubtitle: iosSubtitle,
+                    materialSubtitle: materialSubtitle,
+                    text: "Connection & Sync"
+                ),
+              if (!kIsWeb)
+                SettingsSection(
+                  backgroundColor: tileColor,
+                  children: [
+                    /*Obx(() {
+                      if (controller.proxyService.value != null && SettingsManager().settings.skin.value == Skins.iOS)
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: tileColor,
                           ),
+                          padding: EdgeInsets.only(left: 15, top: 5),
+                          child: Text("Select Proxy Service"),
                         );
-                      },
-                      onTap: () async {
-                        List<dynamic>? fcmData;
-                        try {
-                          fcmData = jsonDecode(
-                            await Navigator.of(context).push(
-                              CupertinoPageRoute(
-                                builder: (BuildContext context) {
-                                  return QRCodeScanner();
-                                },
-                              ),
-                            ),
+                      else return SizedBox.shrink();
+                    }),
+                    Obx(() => controller.proxyService.value != null ? SettingsOptions<String>(
+                      title: "Proxy Service",
+                      options: ["Ngrok", "LocalTunnel", "Dynamic DNS"],
+                      initial: controller.proxyService.value!,
+                      capitalize: false,
+                      textProcessing: (val) => val,
+                      onChanged: (val) async {
+                        String? url;
+                        if (val == "Dynamic DNS") {
+                          TextEditingController controller = TextEditingController();
+                          await showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                actions: [
+                                  TextButton(
+                                    child: Text("OK"),
+                                    onPressed: () async {
+                                      if (!controller.text.isURL) {
+                                        showSnackbar("Error", "Please enter a valid URL");
+                                        return;
+                                      }
+                                      url = controller.text;
+                                      Get.back();
+                                    },
+                                  ),
+                                  TextButton(
+                                    child: Text("Cancel"),
+                                    onPressed: () {
+                                      Get.back();
+                                    },
+                                  )
+                                ],
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    TextField(
+                                      controller: controller,
+                                      decoration: InputDecoration(
+                                        labelText: "Server Address",
+                                        border: OutlineInputBorder(),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                title: Text("Enter Server Address"),
+                              )
                           );
-                        } catch (e) {
-                          return;
+                          if (url == null) return;
                         }
-                        if (fcmData != null && fcmData[0] != null && getServerAddress(address: fcmData[1]) != null) {
-                          controller._fcmDataCopy = FCMData(
-                            projectID: fcmData[2],
-                            storageBucket: fcmData[3],
-                            apiKey: fcmData[4],
-                            firebaseURL: fcmData[5],
-                            clientID: fcmData[6],
-                            applicationID: fcmData[7],
-                          );
-                          controller._settingsCopy.guidAuthKey.value = fcmData[0];
-                          controller._settingsCopy.serverAddress.value = getServerAddress(address: fcmData[1])!;
-
-                          SettingsManager().saveSettings(controller._settingsCopy);
-                          SettingsManager().saveFCMData(controller._fcmDataCopy!);
-                          SocketManager().authFCM();
+                        var res = await SocketManager().sendMessage("change-proxy-service", {"service": val}, (_) {});
+                        if (res['status'] == 200) {
+                          controller.proxyService.value = val;
+                          await Future.delayed(Duration(seconds: 2));
+                          await SocketManager().refreshConnection();
+                          controller.opacity.value = 0.0;
+                          int now = DateTime.now().toUtc().millisecondsSinceEpoch;
+                          SocketManager().sendMessage("get-server-metadata", {}, (Map<String, dynamic> res) {
+                            int later = DateTime.now().toUtc().millisecondsSinceEpoch;
+                            controller.latency.value = later - now;
+                            controller.macOSVersion.value = res['data']['os_version'];
+                            controller.serverVersion.value = res['data']['server_version'];
+                            controller.privateAPIStatus.value = res['data']['private_api'];
+                            controller.helperBundleStatus.value = res['data']['helper_connected'];
+                            controller.proxyService.value = res['data']['proxy_service'];
+                            controller.opacity.value = 1.0;
+                          });
                         }
                       },
-                    ),
-                  if (!kIsWeb && !kIsDesktop)
-                    Container(
+                      backgroundColor: tileColor,
+                      secondaryColor: headerColor,
+                    ) : SizedBox.shrink()),
+                    Obx(() => controller.proxyService.value != null && !kIsWeb ? Container(
                       color: tileColor,
                       child: Padding(
                         padding: const EdgeInsets.only(left: 65.0),
                         child: SettingsDivider(color: headerColor),
                       ),
-                    ),
-                  if (!kIsWeb)
-                    Obx(() {
-                      String subtitle;
-
-                      switch (SocketManager().state.value) {
-                        case SocketState.CONNECTED:
-                          subtitle = "Tap to sync messages";
-                          break;
-                        default:
-                          subtitle = "Disconnected, cannot sync";
-                      }
-
-                      return SettingsTile(
-                          title: "Manually Sync Messages",
-                          subtitle: subtitle,
-                          backgroundColor: tileColor,
-                          leading: SettingsLeadingIcon(
-                            iosIcon: CupertinoIcons.arrow_2_circlepath,
-                            materialIcon: Icons.sync,
-                          ),
-                          onTap: () async {
-                            showDialog(
-                              context: context,
-                              builder: (context) => SyncDialog(),
+                    ) : SizedBox.shrink()),*/
+                    if (!kIsWeb && !kIsDesktop)
+                      SettingsTile(
+                        title: "Re-configure with BlueBubbles Server",
+                        subtitle: "Tap to scan QR code\nLong press for manual entry",
+                        isThreeLine: true,
+                        leading: SettingsLeadingIcon(
+                          iosIcon: CupertinoIcons.gear,
+                          materialIcon: Icons.room_preferences,
+                        ),
+                        backgroundColor: tileColor,
+                        onLongPress: () {
+                          showDialog(
+                            context: context,
+                            builder: (connectContext) => TextInputURL(
+                              onConnect: () {
+                                Get.back();
+                                SocketManager().authFCM();
+                                SocketManager()
+                                    .startSocketIO(forceNewConnection: true);
+                              },
+                              onClose: () {
+                                Get.back();
+                              },
+                            ),
+                          );
+                        },
+                        onTap: () async {
+                          List<dynamic>? fcmData;
+                          try {
+                            fcmData = jsonDecode(
+                              await Navigator.of(context).push(
+                                CupertinoPageRoute(
+                                  builder: (BuildContext context) {
+                                    return QRCodeScanner();
+                                  },
+                                ),
+                              ),
                             );
-                          });
-                    }),
-                ]
-              ),
+                          } catch (e) {
+                            return;
+                          }
+                          if (fcmData != null && fcmData[0] != null && getServerAddress(address: fcmData[1]) != null) {
+                            controller._fcmDataCopy = FCMData(
+                              projectID: fcmData[2],
+                              storageBucket: fcmData[3],
+                              apiKey: fcmData[4],
+                              firebaseURL: fcmData[5],
+                              clientID: fcmData[6],
+                              applicationID: fcmData[7],
+                            );
+                            controller._settingsCopy.guidAuthKey.value = fcmData[0];
+                            controller._settingsCopy.serverAddress.value = getServerAddress(address: fcmData[1])!;
+
+                            SettingsManager().saveSettings(controller._settingsCopy);
+                            SettingsManager().saveFCMData(controller._fcmDataCopy!);
+                            SocketManager().authFCM();
+                          }
+                        },
+                      ),
+                    if (!kIsWeb && !kIsDesktop)
+                      Container(
+                        color: tileColor,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 65.0),
+                          child: SettingsDivider(color: headerColor),
+                        ),
+                      ),
+                    if (!kIsWeb)
+                      Obx(() {
+                        String subtitle;
+
+                        switch (SocketManager().state.value) {
+                          case SocketState.CONNECTED:
+                            subtitle = "Tap to sync messages";
+                            break;
+                          default:
+                            subtitle = "Disconnected, cannot sync";
+                        }
+
+                        return SettingsTile(
+                            title: "Manually Sync Messages",
+                            subtitle: subtitle,
+                            backgroundColor: tileColor,
+                            leading: SettingsLeadingIcon(
+                              iosIcon: CupertinoIcons.arrow_2_circlepath,
+                              materialIcon: Icons.sync,
+                            ),
+                            onTap: () async {
+                              showDialog(
+                                context: context,
+                                builder: (context) => SyncDialog(),
+                              );
+                            });
+                      }),
+                  ]
+                ),
               SettingsHeader(
                   headerColor: headerColor,
                   tileColor: tileColor,

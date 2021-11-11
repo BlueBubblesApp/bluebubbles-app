@@ -10,7 +10,6 @@ import 'package:bluebubbles/repository/models/fcm_data.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:bluebubbles/socket_manager.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:local_auth/local_auth.dart';
@@ -138,7 +137,6 @@ class SettingsManager {
     AdaptiveTheme.of(context).setTheme(
       light: lightTheme,
       dark: darkTheme,
-      isDefault: true,
     );
   }
 

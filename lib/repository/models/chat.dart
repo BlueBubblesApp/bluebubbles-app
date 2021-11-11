@@ -748,7 +748,7 @@ class Chat {
     }
 
     // Add pagination
-    String pagination = " ORDER BY message.originalROWID DESC LIMIT $limit OFFSET $offset;";
+    String pagination = " ORDER BY message.originalROWID DESC${limit == 0 ? "" : " LIMIT $limit OFFSET $offset"};";
 
     // Execute the query
     var res = await db
@@ -1021,6 +1021,12 @@ class Chat {
     }
     return message;
   }
+
+  bool get isTextForwarding => chatIdentifier?.startsWith("sms") ?? false;
+
+  bool get isSMS => false;
+
+  bool get isIMessage => !isTextForwarding && !isSMS;
 
   static int sort(Chat? a, Chat? b) {
     if (a!.pinIndex.value != null && b!.pinIndex.value != null) return a.pinIndex.value!.compareTo(b.pinIndex.value!);

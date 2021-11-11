@@ -18,6 +18,7 @@ import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/chat.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
 import 'package:collection/collection.dart';
@@ -59,7 +60,7 @@ class MessageWidget extends StatefulWidget {
   _MessageState createState() => _MessageState();
 }
 
-class _MessageState extends State<MessageWidget> with TickerProviderStateMixin {
+class _MessageState extends State<MessageWidget> {
   bool showTail = true;
   Completer<void>? associatedMessageRequest;
   Completer<void>? attachmentsRequest;
@@ -345,19 +346,20 @@ class _MessageState extends State<MessageWidget> with TickerProviderStateMixin {
         }
 
         double replyThreshold = 40;
+        final Chat? chat = CurrentChat.of(context)?.chat;
 
         return Obx(
           () => GestureDetector(
             behavior: HitTestBehavior.deferToChild,
             onTap: kIsDesktop || kIsWeb ? () => tapped.value = !tapped.value : null,
-            onHorizontalDragStart: (details) {
-              if (!SettingsManager().settings.enablePrivateAPI.value || !SettingsManager().settings.swipeToReply.value)
-                return;
+            onHorizontalDragStart: !SettingsManager().settings.enablePrivateAPI.value
+                || !SettingsManager().settings.swipeToReply.value
+                || !(chat?.isIMessage ?? true) ? null : (details) {
               baseOffset = details.localPosition.dx;
             },
-            onHorizontalDragUpdate: (details) {
-              if (!SettingsManager().settings.enablePrivateAPI.value || !SettingsManager().settings.swipeToReply.value)
-                return;
+            onHorizontalDragUpdate: !SettingsManager().settings.enablePrivateAPI.value
+                || !SettingsManager().settings.swipeToReply.value
+                || !(chat?.isIMessage ?? true) ? null : (details) {
               offset.value = min(max((details.localPosition.dx - baseOffset) * (_message.isFromMe! ? -1 : 1), 0),
                   replyThreshold * 1.5);
               if (!gaveHapticFeedback && offset.value >= replyThreshold) {
@@ -368,9 +370,9 @@ class _MessageState extends State<MessageWidget> with TickerProviderStateMixin {
               }
               CurrentChat.of(context)?.setReplyOffset(_message.guid ?? "", offset.value);
             },
-            onHorizontalDragEnd: (details) {
-              if (!SettingsManager().settings.enablePrivateAPI.value || !SettingsManager().settings.swipeToReply.value)
-                return;
+            onHorizontalDragEnd: !SettingsManager().settings.enablePrivateAPI.value
+                || !SettingsManager().settings.swipeToReply.value
+                || !(chat?.isIMessage ?? true) ? null : (details) {
               if (offset.value >= replyThreshold) {
                 EventDispatcher().emit("focus-keyboard", _message);
               }
@@ -410,10 +412,9 @@ class _MessageState extends State<MessageWidget> with TickerProviderStateMixin {
                               min(replyThreshold, offset.value) * 0.4,
                             ),
                           ),
-                          color: context.theme.accentColor,
+                          color: context.theme.colorScheme.secondary,
                         ),
                         child: AnimatedSize(
-                          vsync: this,
                           duration: Duration(milliseconds: offset.value == 0 ? 150 : 0),
                           child: Icon(
                             SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.reply : Icons.reply,
