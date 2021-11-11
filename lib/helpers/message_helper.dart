@@ -1,9 +1,7 @@
 import 'dart:async';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/reaction.dart';
-import 'package:bluebubbles/repository/database.dart';
 import 'package:flutter/foundation.dart';
-import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:universal_html/html.dart' as html;
 
 import 'package:bluebubbles/helpers/attachment_downloader.dart';

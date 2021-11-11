@@ -1,18 +1,15 @@
 import 'dart:math';
 
 import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/message.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get_utils/src/extensions/context_extensions.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:simple_animations/simple_animations.dart';
 import 'package:shimmer/shimmer.dart';
 
