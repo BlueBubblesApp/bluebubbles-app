@@ -22,7 +22,6 @@
 
 # Flutter/Dart/Pub related
 **/doc/api/
-.dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
 .packages
@@ -43,5 +42,5 @@ pubspeck.lock
 **/releases
 
 #objectbox
-!.dart_tool/build/generated/**
-!.dart_tool/build/*/asset_graph.json
+.dart_tool/build/!generated/**
+.dart_tool/build/*/!asset_graph.json
