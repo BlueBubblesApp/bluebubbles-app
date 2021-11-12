@@ -10,6 +10,7 @@ import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_tile.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/search/search_view.dart';
+import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/vertical_split_view.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
@@ -727,6 +728,8 @@ class _SamsungConversationListState extends State<SamsungConversationList> with 
     Widget chatList = buildChatList();
     if (showAltLayout && !widget.parent.widget.showUnknownSenders && !widget.parent.widget.showArchivedChats) {
       return buildForLandscape(context, chatList);
+    } else if (kIsDesktop) {
+      return TitleBarWrapper(child: chatList);
     }
 
     return chatList;

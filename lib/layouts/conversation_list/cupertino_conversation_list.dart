@@ -11,6 +11,7 @@ import 'package:bluebubbles/layouts/conversation_list/conversation_tile.dart';
 import 'package:bluebubbles/layouts/conversation_list/pinned_conversation_tile.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/search/search_view.dart';
+import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/vertical_split_view.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
@@ -570,10 +571,12 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
 
   Widget buildForDevice(BuildContext context) {
     bool showAltLayout =
-        (SettingsManager().settings.tabletMode.value || kIsDesktop) && (!context.isPhone || context.isLandscape);
+        SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape);
     Widget chatList = buildChatList(context, showAltLayout);
     if (showAltLayout && !widget.parent.widget.showUnknownSenders && !widget.parent.widget.showArchivedChats) {
       return buildForLandscape(context, chatList);
+    } else if (kIsDesktop) {
+      return TitleBarWrapper(child: chatList);
     }
 
     return chatList;

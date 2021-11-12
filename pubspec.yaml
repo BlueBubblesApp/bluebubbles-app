@@ -214,7 +214,7 @@ flutter:
 
 msix_config:
   display_name: BlueBubbles
-  publisher_display_name: BlueBubbles Development Team
+  publisher_display_name: BlueBubbles
   identity_name: com.bluebubbles.app
   msix_version: 1.0.0.11
   publisher: CN=BlueBubbles, O=BlueBubbles, C=US
