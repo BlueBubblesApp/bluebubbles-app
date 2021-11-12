@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
@@ -158,7 +158,7 @@ class ContactManager {
 
   Future<void> matchHandles() async {
     // Match handles to contacts
-    List<Handle> handles = kIsWeb ? ChatBloc().cachedHandles : await Handle.find({});
+    List<Handle> handles = kIsWeb ? ChatBloc().cachedHandles : Handle.find();
     for (Handle handle in handles) {
       // If we already have a "match", skip
       if (handleToContact.containsKey(handle.address) && handleToContact[handle.address] != null) {
@@ -210,7 +210,7 @@ class ContactManager {
     getAvatarsFuture!.complete();
   }
 
-  Contact? getContact(Handle handle, {bool fetchAvatar = false}) {
+  Contact? getContact(Handle handle) {
     Contact? contact;
 
     // Get a list of comparable options
@@ -266,6 +266,10 @@ class ContactManager {
     }
 
     return contact;
+  }
+
+  Future<Uint8List?> getAvatar(String id) async {
+    return await FastContacts.getContactImage(id);
   }
 
   String getContactTitle(Handle? handle) {

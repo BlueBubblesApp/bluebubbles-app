@@ -6,9 +6,8 @@ import 'package:universal_io/io.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/repository/database.dart';
-import 'package:bluebubbles/repository/models/fcm_data.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
-import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
@@ -66,30 +65,26 @@ class SettingsManager {
   ///
   /// @param [context] is an optional parameter to be used for setting the adaptive theme based on the settings.
   /// Setting to null will prevent the theme from being set and will be set to null in the background isolate
-  Future<void> getSavedSettings({bool headless = false, BuildContext? context}) async {
-    await DBProvider.setupConfigRows();
+  Future<void> getSavedSettings({bool headless = false}) async {
     settings = Settings.getSettings();
 
-    fcmData = await FCMData.getFCM();
+    fcmData = FCMData.getFCM();
     if (headless) return;
-    themes = await ThemeObject.getThemes();
+    themes = ThemeObject.getThemes();
     for (ThemeObject theme in themes) {
-      await theme.fetchData();
+      theme.fetchData();
     }
-
-    // // If [context] is null, then we can't set the theme, and we shouldn't anyway
-    await loadTheme(context);
 
     try {
       // Set the [displayMode] to that saved in settings
       if (!kIsWeb && !kIsDesktop) {
-        await FlutterDisplayMode.setPreferredMode(await settings.getDisplayMode());
+        FlutterDisplayMode.setPreferredMode(await settings.getDisplayMode());
       }
     } catch (_) {}
 
     // Change the [finishedSetup] status to that of the settings
     if (!settings.finishedSetup.value) {
-      await DBProvider.deleteDB();
+      DBProvider.deleteDB();
     }
 
     // If we aren't running in the background, then we should auto start the socket and authorize fcm just in case we haven't
@@ -111,7 +106,7 @@ class SettingsManager {
     try {
       // Set the [displayMode] to that saved in settings
       if (!kIsWeb && !kIsDesktop) {
-        await FlutterDisplayMode.setPreferredMode(await settings.getDisplayMode());
+        FlutterDisplayMode.setPreferredMode(await settings.getDisplayMode());
       }
     } catch (_) {}
   }
@@ -123,17 +118,17 @@ class SettingsManager {
   /// @param [selectedDarkTheme] is the [ThemeObject] of the dark theme to save and set as dark theme in the db
   ///
   /// @param [context] is the [BuildContext] used to set the theme of the new settings
-  Future<void> saveSelectedTheme(
+  void saveSelectedTheme(
     BuildContext context, {
     ThemeObject? selectedLightTheme,
     ThemeObject? selectedDarkTheme,
-  }) async {
-    await selectedLightTheme?.save();
-    await selectedDarkTheme?.save();
-    await ThemeObject.setSelectedTheme(light: selectedLightTheme?.id, dark: selectedDarkTheme?.id);
+  }) {
+    selectedLightTheme?.save();
+    selectedDarkTheme?.save();
+    ThemeObject.setSelectedTheme(light: selectedLightTheme?.id, dark: selectedDarkTheme?.id);
 
-    ThemeData lightTheme = (await ThemeObject.getLightTheme()).themeData;
-    ThemeData darkTheme = (await ThemeObject.getDarkTheme()).themeData;
+    ThemeData lightTheme = ThemeObject.getLightTheme().themeData;
+    ThemeData darkTheme = ThemeObject.getDarkTheme().themeData;
     AdaptiveTheme.of(context).setTheme(
       light: lightTheme,
       dark: darkTheme,
@@ -143,9 +138,9 @@ class SettingsManager {
   /// Updates FCM data and saves to disk. It will also run [authFCM] automatically
   ///
   /// @param [data] is the [FCMData] to save
-  Future<void> saveFCMData(FCMData data) async {
+  void saveFCMData(FCMData data) {
     fcmData = data;
-    await fcmData!.save();
+    fcmData!.save();
     SocketManager().authFCM();
   }
 

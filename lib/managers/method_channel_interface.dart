@@ -26,8 +26,7 @@ import 'package:bluebubbles/managers/navigator_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/theme_object.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -158,7 +157,7 @@ class MethodChannelInterface {
           return Future.value("");
         }
         // Find the chat to reply to
-        Chat? chat = await Chat.findOne({"guid": call.arguments["chat"]});
+        Chat? chat = Chat.findOne(guid: call.arguments["chat"]);
 
         // If no chat is found, then we can't do anything
         if (chat == null) {
@@ -177,7 +176,7 @@ class MethodChannelInterface {
         return Future.value("");
       case "markAsRead":
         // Find the chat to mark as read
-        Chat? chat = await Chat.findOne({"guid": call.arguments["chat"]});
+        Chat? chat = Chat.findOne(guid: call.arguments["chat"]);
 
         // If no chat is found, then we can't do anything
         if (chat == null) {
@@ -188,10 +187,10 @@ class MethodChannelInterface {
         }
 
         // Remove the notificaiton from that chat
-        await SocketManager().removeChatNotification(chat);
+        SocketManager().removeChatNotification(chat);
 
         if (SettingsManager().settings.privateMarkChatAsRead.value) {
-          SocketManager().sendMessage("mark-chat-read", {"chatGuid": chat.guid}, (data) {});
+          await SocketManager().sendMessage("mark-chat-read", {"chatGuid": chat.guid}, (data) {});
         }
 
         // In case this method is called when the app is in a background isolate
@@ -308,14 +307,14 @@ class MethodChannelInterface {
           print("primary color is $primary");
           print("light bg color is $lightBg");
           print("dark bg color is $darkBg");
-          var darkTheme = (await ThemeObject.getThemes()).firstWhere((e) => e.name == "Music Theme (Dark)");
-          var lightTheme = (await ThemeObject.getThemes()).firstWhere((e) => e.name == "Music Theme (Light)");
-          await darkTheme.fetchData();
+          var darkTheme = ThemeObject.getThemes().firstWhere((e) => e.name == "Music Theme (Dark)");
+          var lightTheme = ThemeObject.getThemes().firstWhere((e) => e.name == "Music Theme (Light)");
+          darkTheme.fetchData();
           var darkPrimaryEntry = darkTheme.entries.firstWhere((element) => element.name == "PrimaryColor");
           var darkBgEntry = darkTheme.entries.firstWhere((element) => element.name == "BackgroundColor");
           darkPrimaryEntry.color = primary;
           darkBgEntry.color = darkBg;
-          await lightTheme.fetchData();
+          lightTheme.fetchData();
           var lightPrimaryEntry = lightTheme.entries.firstWhere((element) => element.name == "PrimaryColor");
           var lightBgEntry = lightTheme.entries.firstWhere((element) => element.name == "BackgroundColor");
           lightPrimaryEntry.color = primary;
@@ -347,7 +346,7 @@ class MethodChannelInterface {
                 ..add("color2", Tween<double>(begin: 0.8, end: 1.0));
             }
           }
-          await SettingsManager().saveSelectedTheme(Get.context!, selectedLightTheme: lightTheme, selectedDarkTheme: darkTheme);
+          SettingsManager().saveSelectedTheme(Get.context!, selectedLightTheme: lightTheme, selectedDarkTheme: darkTheme);
           isRunning = false;
         }
         return Future.value("");
@@ -392,15 +391,15 @@ class MethodChannelInterface {
       return;
     }
     // Try to find the specified chat to open
-    Chat? openedChat = await Chat.findOne({"GUID": id});
+    Chat? openedChat = Chat.findOne(guid: id);
 
     // If we did find one, then we can move on
     if (openedChat != null) {
       // Get all of the participants of the chat so that it looks right when it is opened
-      await openedChat.getParticipants();
+      openedChat.getParticipants();
 
       // Make sure that the title is set
-      await openedChat.getTitle();
+      openedChat.getTitle();
 
       // Clear all notifications for this chat
       NotificationManager().switchChat(openedChat);

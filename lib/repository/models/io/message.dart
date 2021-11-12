@@ -786,7 +786,7 @@ class Message {
     }
     // initialize constraints for text rendering
     final constraints = BoxConstraints(
-      maxWidth: maxWidthOverride ?? CustomNavigator.width(context) * MessageWidgetMixin.maxSize - 30,
+      maxWidth: maxWidthOverride ?? CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE - 30,
       minHeight: minHeightOverride ?? Theme.of(context).textTheme.bodyText2!.fontSize!,
     );
     final renderParagraph = RichText(

@@ -9,9 +9,7 @@ import 'package:bluebubbles/managers/attachment_info_bloc.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:chewie_audio/chewie_audio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -255,14 +253,14 @@ class CurrentChat {
     imageData.remove(attachment.guid);
   }
 
-  Future<void> preloadMessageAttachments({List<Message?>? specificMessages}) async {
-    List<Message?> messages = specificMessages ?? await Chat.getMessagesSingleton(chat, limit: 25);
-    for (Message? message in messages) {
-      if (message!.hasAttachments) {
-        List<Attachment?>? attachments = await message.fetchAttachments();
-        messageAttachments[message.guid!] = attachments ?? [];
-      }
-    }
+  void preloadMessageAttachments({List<Message?>? specificMessages}) {
+    List<Message?> messages = specificMessages ?? Chat.getMessages(chat, limit: 25);
+    messageAttachments = Message.fetchAttachmentsByMessages(messages);
+  }
+
+  Future<void> preloadMessageAttachmentsAsync({List<Message?>? specificMessages}) async {
+    List<Message?> messages = specificMessages ?? await Chat.getMessagesAsync(chat, limit: 25);
+    messageAttachments = await Message.fetchAttachmentsByMessagesAsync(messages);
   }
 
   void displayTypingIndicator() {
@@ -288,8 +286,8 @@ class CurrentChat {
   }
 
   /// Retrieve all of the attachments associated with a chat
-  Future<void> updateChatAttachments({bool fetchAll = false}) async {
-    chatAttachments = await Chat.getAttachments(chat, limit: fetchAll ? 0 : 25);
+  Future<void> updateChatAttachments() async {
+    chatAttachments = await chat.getAttachmentsAsync();
   }
 
   void changeCurrentPlayingVideo(Map<String, VideoPlayerController> video) {
