@@ -734,7 +734,6 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                         int hours = 0;
                         int days = 0;
                         await showDialog(
-                          barrierDismissible: false,
                           context: context,
                           builder: (BuildContext context) {
                             return AlertDialog(
@@ -881,7 +880,6 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                         int hours = 0;
                         int days = 0;
                         await showDialog(
-                          barrierDismissible: false,
                           context: context,
                           builder: (BuildContext context) {
                             return AlertDialog(

@@ -435,9 +435,11 @@ packages:
   dynamic_cached_fonts:
     dependency: "direct main"
     description:
-      name: dynamic_cached_fonts
-      url: "https://pub.dartlang.org"
-    source: hosted
+      path: "."
+      ref: "68c9dc69ca63e5d7aa0db621aba16fcf4e4f1da5"
+      resolved-ref: "68c9dc69ca63e5d7aa0db621aba16fcf4e4f1da5"
+      url: "https://github.com/jjoelj/dynamic_cached_fonts"
+    source: git
     version: "0.4.0"
   encrypt:
     dependency: "direct main"

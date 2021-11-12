@@ -96,6 +96,9 @@ late final Box<ChatMessageJoin> cmJoinBox;
 late final Box<ThemeValueJoin> tvJoinBox;
 String? recentIntent;
 final RxBool fontExistsOnDisk = false.obs;
+final RxBool downloadingFont = false.obs;
+final RxnDouble progress = RxnDouble();
+final RxnInt totalSize = RxnInt();
 
 Future<Null> _reportError(dynamic error, dynamic stackTrace) async {
   // Print the exception to the console.

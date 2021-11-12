@@ -111,7 +111,10 @@ dependencies:
   flutter_improved_scrolling: ^0.0.3
   desktop_drop: ^0.1.1
   particles_flutter: ^0.1.4
-  dynamic_cached_fonts: ^0.4.0
+  dynamic_cached_fonts:
+    git:
+      url: https://github.com/jjoelj/dynamic_cached_fonts
+      ref: 68c9dc69ca63e5d7aa0db621aba16fcf4e4f1da5
   confetti: ^0.6.0
   supercharged: ^2.1.1
   pdf: ^3.6.1
