@@ -259,7 +259,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                                         padding: const EdgeInsets.only(right: 30.0),
                                         child: Text(
                                             "Next",
-                                            style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1)
+                                            style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1, color: Colors.white)
                                         ),
                                       ),
                                       Positioned(

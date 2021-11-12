@@ -123,7 +123,7 @@ class _RequestContactsState extends State<RequestContacts> {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.arrow_back, color: Colors.white, size: 20),
+                                  Icon(Icons.arrow_back, color: Theme.of(context).textTheme.bodyText1!.color, size: 20),
                                   SizedBox(width: 10),
                                   Text(
                                     "Back",
@@ -182,7 +182,7 @@ class _RequestContactsState extends State<RequestContacts> {
                                 children: [
                                   Text(
                                     "Next",
-                                    style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1)
+                                    style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.1, color: Colors.white)
                                   ),
                                   SizedBox(width: 10),
                                   Icon(Icons.arrow_forward, color: Colors.white, size: 20),
