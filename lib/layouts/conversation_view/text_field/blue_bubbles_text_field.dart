@@ -1002,7 +1002,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                 focusNode!.requestFocus();
                                 sendMessage();
                               },
-                              // onContentCommitted: onContentCommit,
+                              onContentCommitted: onContentCommit,
                               textCapitalization: TextCapitalization.sentences,
                               focusNode: focusNode,
                               autocorrect: true,

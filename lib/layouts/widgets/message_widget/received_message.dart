@@ -22,7 +22,7 @@ import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:collection/collection.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
@@ -987,7 +987,10 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                     children: msgPopupRow,
                   ),
               ),
-              if ((skin.value != Skins.Samsung && widget.message.guid != widget.olderMessage?.guid))
+              if (!kIsDesktop &&
+                  !kIsWeb &&
+                  skin.value != Skins.Samsung &&
+                  widget.message.guid != widget.olderMessage?.guid)
                 MessageTimeStamp(
                   message: widget.message,
                 )

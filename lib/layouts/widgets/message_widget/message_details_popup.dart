@@ -4,7 +4,6 @@ import 'package:bluebubbles/layouts/widgets/message_widget/show_reply_thread.dar
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:math';
 import 'dart:ui';
@@ -13,7 +12,6 @@ import 'package:bluebubbles/helpers/metadata_helper.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
 import 'package:collection/collection.dart';
 
 import 'package:bluebubbles/action_handler.dart';
@@ -34,9 +32,6 @@ import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/helpers/darty.dart';
 import 'package:flutter/cupertino.dart' as cupertino;
 import 'package:flutter/material.dart';
@@ -74,7 +69,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
   bool showTools = false;
   String? selfReaction;
   String? currentlySelectedReaction;
-  Completer? fetchRequest;
   CurrentChat? currentChat;
   Chat? dmChat;
 
@@ -127,26 +121,16 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
     });
   }
 
-  Future<void> fetchReactions() async {
-    if (fetchRequest != null && !fetchRequest!.isCompleted) {
-      return fetchRequest!.future;
-    }
-
-    // Create a new fetch request
-    fetchRequest = Completer();
-
+  void fetchReactions() {
     // If there are no associated messages, return now
     List<Message> reactions = widget.message.getReactions();
-    if (reactions.isEmpty) {
-      return fetchRequest!.complete();
-    }
 
     // Filter down the messages to the unique ones (one per user, newest)
     List<Message> reactionMessages = Reaction.getUniqueReactionMessages(reactions);
 
     reactionWidgets = [];
     for (Message reaction in reactionMessages) {
-      await reaction.getHandle();
+      reaction.handle ??= reaction.getHandle();
       if (reaction.isFromMe!) {
         selfReaction = reaction.associatedMessageType;
         currentlySelectedReaction = selfReaction;
@@ -158,13 +142,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
         ),
       );
     }
-
-    // If we aren't mounted, get out
-    if (!mounted) return fetchRequest!.complete();
-
-    // Tell the component to re-render
-    setState(() {});
-    return fetchRequest!.complete();
   }
 
   void sendReaction(String type) {
@@ -571,7 +548,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
         child: InkWell(
           onTap: () async {
             NewMessageManager().removeMessage(widget.currentChat!.chat, widget.message.guid);
-            await Message.softDelete({"guid": widget.message.guid});
+            Message.softDelete(widget.message.guid!);
             Navigator.of(context).pop();
           },
           child: ListTile(

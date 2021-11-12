@@ -1,6 +1,6 @@
 import 'package:bluebubbles/helpers/reaction.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
 
 class ReactionsWidget extends StatefulWidget {

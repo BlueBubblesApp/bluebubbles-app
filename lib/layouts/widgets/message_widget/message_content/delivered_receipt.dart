@@ -2,7 +2,7 @@ import 'package:bluebubbles/helpers/message_marker.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -23,9 +23,6 @@ class DeliveredReceipt extends StatefulWidget {
 
 class _DeliveredReceiptState extends State<DeliveredReceipt> {
   bool shouldShow(Message? myLastMessage, Message? lastReadMessage, Message? lastDeliveredMessage) {
-    // If we have no delivered date, don't show anything
-    if (widget.message.dateDelivered.value == null) return false;
-
     if (CurrentChat.activeChat != null) {
       lastReadMessage ??= CurrentChat.activeChat?.messageMarkers.lastReadMessage;
       lastDeliveredMessage ??= CurrentChat.activeChat?.messageMarkers.lastDeliveredMessage;
@@ -34,7 +31,7 @@ class _DeliveredReceiptState extends State<DeliveredReceipt> {
 
     // If the message is the same as the last read message, we want to show it
     if (!widget.showDeliveredReceipt &&
-        widget.message.dateRead.value != null &&
+        widget.message.dateRead != null &&
         lastReadMessage != null &&
         widget.message.guid == lastReadMessage.guid) {
       return true;
@@ -42,7 +39,7 @@ class _DeliveredReceiptState extends State<DeliveredReceipt> {
 
     // If the message is the same as the last delivered message, we want to show it
     if (!widget.showDeliveredReceipt &&
-        widget.message.dateDelivered.value != null &&
+        widget.message.dateDelivered != null &&
         lastDeliveredMessage != null &&
         widget.message.guid == lastDeliveredMessage.guid) {
       return true;
@@ -66,11 +63,15 @@ class _DeliveredReceiptState extends State<DeliveredReceipt> {
   }
 
   String getText() {
-    String text = "Delivered";
-    if (widget.message.dateRead.value != null) {
-      text = "Read " + buildDate(widget.message.dateRead.value);
-    } else if (SettingsManager().settings.showDeliveryTimestamps.value && widget.message.dateDelivered.value != null) {
-      text = "Delivered " + buildDate(widget.message.dateDelivered.value);
+    String text = "Sent";
+    if (!(widget.message.isFromMe ?? false)) {
+      text = "Received " + buildDate(widget.message.dateCreated);
+    } else if (widget.message.dateRead != null) {
+      text = "Read " + buildDate(widget.message.dateRead);
+    } else if (SettingsManager().settings.showDeliveryTimestamps.value && widget.message.dateDelivered != null) {
+      text = "Delivered " + buildDate(widget.message.dateDelivered);
+    } else if (SettingsManager().settings.showDeliveryTimestamps.value && widget.message.dateCreated != null) {
+      text = "Sent " + buildDate(widget.message.dateCreated);
     }
 
     return text;

@@ -4,8 +4,7 @@ import 'package:universal_io/io.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -29,12 +28,6 @@ class _StickersWidgetState extends State<StickersWidget> {
     loadStickers();
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    loadStickers();
-  }
-
   void toggleShow() {
     if (!mounted) return;
     setState(() {
@@ -43,20 +36,13 @@ class _StickersWidgetState extends State<StickersWidget> {
   }
 
   Future<void> loadStickers() async {
-    // If we are already trying to load the stickers, don't try again
-    if (request != null && !request!.isCompleted) {
-      return;
-    }
-
-    request = Completer();
-
     // For each message, load the sticker for it
     for (Message msg in widget.messages) {
       // If the message type isn't a sticker, skip it
       if (msg.associatedMessageType != "sticker") continue;
 
       // Get the associated attachments
-      await msg.fetchAttachments();
+      msg.fetchAttachments();
       for (Attachment? attachment in msg.attachments) {
         // If we've already loaded it, don't try again
         if (loaded.contains(attachment!.guid)) continue;
@@ -80,10 +66,7 @@ class _StickersWidgetState extends State<StickersWidget> {
         }
       }
     }
-
-    // Fulfill/Complete any outstanding requests
     if (mounted) setState(() {});
-    request!.complete();
   }
 
   @override

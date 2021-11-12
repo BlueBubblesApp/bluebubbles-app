@@ -3,8 +3,7 @@ import 'package:universal_io/io.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachment.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:path/path.dart' as p;
@@ -66,7 +65,7 @@ class MessageAttachments extends StatelessWidget {
 
   List<Widget> _buildAttachments(BuildContext context) {
     List<Widget> content = <Widget>[];
-    dynamic items;
+    List<Attachment?>? items;
     if (message?.guid == "redacted-mode-demo" || message!.guid!.contains("theme-selector")) {
       items = message!.attachments;
     } else {
@@ -82,7 +81,7 @@ class MessageAttachments extends StatelessWidget {
           isFromMe: message?.isFromMe ?? false,
         );
 
-        if (message!.error.value == 0) {
+        if (message!.error == 0) {
           content.add(attachmentWidget);
         } else {
           content.add(Row(

@@ -18,9 +18,7 @@ import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -62,9 +60,6 @@ class MessageWidget extends StatefulWidget {
 
 class _MessageState extends State<MessageWidget> {
   bool showTail = true;
-  Completer<void>? associatedMessageRequest;
-  Completer<void>? attachmentsRequest;
-  Completer<void>? handleRequest;
   int lastRequestCount = -1;
   int attachmentCount = 0;
   int associatedCount = 0;
@@ -73,9 +68,9 @@ class _MessageState extends State<MessageWidget> {
   late Message _message;
   Message? _newerMessage;
   Message? _olderMessage;
-  RxBool tapped = false.obs;
+  final RxBool tapped = false.obs;
   double baseOffset = 0;
-  RxDouble offset = 0.0.obs;
+  final RxDouble offset = 0.0.obs;
   bool gaveHapticFeedback = false;
 
   @override
@@ -89,12 +84,15 @@ class _MessageState extends State<MessageWidget> {
   }
 
   void init() {
-    checkHandle();
-    fetchAssociatedMessages();
-    fetchAttachments();
+    if (!_message.hasReactions && _message.getReactions().isNotEmpty) {
+      _message.hasReactions = true;
+      _message.save();
+    }
 
-    // If we already are listening to the stream, no need to do it again
-    if (subscription != null) return;
+    // todo just in case
+    /*checkHandle();
+    fetchAssociatedMessages();
+    fetchAttachments();*/
 
     // Listen for new messages
     subscription = NewMessageManager().stream.listen((data) {
@@ -173,37 +171,20 @@ class _MessageState extends State<MessageWidget> {
     super.dispose();
   }
 
-  Future<void> checkHandle() async {
-    // If we've already started, return the request
-    if (handleRequest != null) return handleRequest!.future;
-    handleRequest = Completer();
-
+  void checkHandle() {
     // Checks ordered in a specific way to ever so slightly reduce processing
-    if (_message.isFromMe!) return handleRequest!.complete();
-    if (_message.handle != null) return handleRequest!.complete();
+    if (_message.isFromMe!) return;
+    if (_message.handle != null) return;
 
     try {
-      Handle? handle = await _message.getHandle();
-      if (mounted && handle != null) {
-        setState(() {});
-      }
-    } catch (ex) {
-      handleRequest!.completeError(ex);
-    }
+      _message.handle = _message.getHandle();
+    } catch (_) {}
   }
 
-  Future<void> fetchAssociatedMessages({bool forceReload = false}) async {
-    // If there is already a request being made, return that request
-    if (!forceReload && associatedMessageRequest != null) return associatedMessageRequest!.future;
-
-    // Create a new request and get the messages
-    associatedMessageRequest = Completer();
-
+  void fetchAssociatedMessages({bool forceReload = false}) {
     try {
-      await _message.fetchAssociatedMessages(bloc: widget.bloc);
-    } catch (ex) {
-      return associatedMessageRequest!.completeError(ex);
-    }
+      _message.fetchAssociatedMessages(bloc: widget.bloc);
+    } catch (_) {}
 
     bool hasChanges = false;
     if (_message.associatedMessages.length != associatedCount || forceReload) {
@@ -217,28 +198,17 @@ class _MessageState extends State<MessageWidget> {
       // Update the DB so it saves that we have reactions
       if (!_message.hasReactions && _message.getReactions().isNotEmpty) {
         _message.hasReactions = true;
-        _message.update();
+        _message.save();
       }
 
       if (mounted) setState(() {});
     }
-
-    associatedMessageRequest!.complete();
   }
 
-  Future<void> fetchAttachments({bool forceReload = false}) async {
-    // If there is already a request being made, return that request
-    if (!forceReload && attachmentsRequest != null) return attachmentsRequest!.future;
-
-    // Create a new request and get the attachments
-    attachmentsRequest = Completer();
-    if (!mounted) return attachmentsRequest!.complete();
-
+  void fetchAttachments({bool forceReload = false}) {
     try {
-      await _message.fetchAttachments(currentChat: currentChat);
-    } catch (ex) {
-      return attachmentsRequest!.completeError(ex);
-    }
+      _message.fetchAttachments(currentChat: currentChat);
+    } catch (_) {}
 
     bool hasChanges = false;
     if (_message.attachments.length != attachmentCount || forceReload) {
@@ -250,8 +220,6 @@ class _MessageState extends State<MessageWidget> {
     if (mounted && hasChanges) {
       setState(() {});
     }
-
-    if (!attachmentsRequest!.isCompleted) attachmentsRequest!.complete();
   }
 
   @override
@@ -402,7 +370,7 @@ class _MessageState extends State<MessageWidget> {
                       child: AnimatedContainer(
                         margin: EdgeInsets.only(
                             bottom: min(replyThreshold, offset.value) * (!_message.isFromMe! ? 0.10 : 0.20) +
-                                (widget.isFirstSentMessage && _message.dateDelivered.value != null ? 20 : 0)),
+                                (widget.isFirstSentMessage && _message.dateDelivered != null ? 20 : 0)),
                         duration: Duration(milliseconds: offset.value == 0 ? 150 : 0),
                         width: min(replyThreshold, offset.value) * 0.8,
                         height: min(replyThreshold, offset.value) * 0.8,
