@@ -70,7 +70,7 @@ packages:
       name: async
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.8.1"
+    version: "2.8.2"
   barcode:
     dependency: transitive
     description:
@@ -87,6 +87,41 @@ packages:
       url: "https://github.com/ChangJoo-Park/battery_optimization"
     source: git
     version: "0.0.0"
+  bitsdojo_window:
+    dependency: "direct main"
+    description:
+      name: bitsdojo_window
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.1.1+1"
+  bitsdojo_window_linux:
+    dependency: transitive
+    description:
+      name: bitsdojo_window_linux
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.1.1"
+  bitsdojo_window_macos:
+    dependency: transitive
+    description:
+      name: bitsdojo_window_macos
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.1.0"
+  bitsdojo_window_platform_interface:
+    dependency: transitive
+    description:
+      name: bitsdojo_window_platform_interface
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.1.0"
+  bitsdojo_window_windows:
+    dependency: transitive
+    description:
+      name: bitsdojo_window_windows
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.1.0"
   boolean_selector:
     dependency: transitive
     description:
@@ -170,7 +205,7 @@ packages:
       name: characters
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.1.0"
+    version: "1.2.0"
   charcode:
     dependency: transitive
     description:
@@ -341,6 +376,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.5.6"
+  desktop_drop:
+    dependency: "direct main"
+    description:
+      name: desktop_drop
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.1.2"
   device_info_plus:
     dependency: "direct main"
     description:
@@ -393,9 +435,11 @@ packages:
   dynamic_cached_fonts:
     dependency: "direct main"
     description:
-      name: dynamic_cached_fonts
-      url: "https://pub.dartlang.org"
-    source: hosted
+      path: "."
+      ref: "68c9dc69ca63e5d7aa0db621aba16fcf4e4f1da5"
+      resolved-ref: "68c9dc69ca63e5d7aa0db621aba16fcf4e4f1da5"
+      url: "https://github.com/jjoelj/dynamic_cached_fonts"
+    source: git
     version: "0.4.0"
   encrypt:
     dependency: "direct main"
@@ -563,6 +607,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "3.0.1"
+  flutter_improved_scrolling:
+    dependency: "direct main"
+    description:
+      name: flutter_improved_scrolling
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.0.3"
   flutter_keyboard_visibility:
     dependency: "direct main"
     description:
@@ -971,7 +1022,7 @@ packages:
       name: matcher
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.12.10"
+    version: "0.12.11"
   matrix4_transform:
     dependency: transitive
     description:
@@ -1049,6 +1100,27 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.0.1"
+  objectbox:
+    dependency: "direct main"
+    description:
+      name: objectbox
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.2.1"
+  objectbox_flutter_libs:
+    dependency: "direct main"
+    description:
+      name: objectbox_flutter_libs
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.2.1"
+  objectbox_generator:
+    dependency: "direct dev"
+    description:
+      name: objectbox_generator
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.2.1"
   openid_client:
     dependency: transitive
     description:
@@ -1325,9 +1397,11 @@ packages:
   quick_notify:
     dependency: "direct main"
     description:
-      name: quick_notify
-      url: "https://pub.dartlang.org"
-    source: hosted
+      path: "."
+      ref: "41030fb6468e7990b230bb08e42fd99928d6fd64"
+      resolved-ref: "41030fb6468e7990b230bb08e42fd99928d6fd64"
+      url: "https://github.com/jjoelj/quick_notify"
+    source: git
     version: "0.1.0+2"
   quiver:
     dependency: transitive
@@ -1544,6 +1618,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.5.1"
+  source_gen:
+    dependency: transitive
+    description:
+      name: source_gen
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.1.1"
   source_map_stack_trace:
     dependency: transitive
     description:
@@ -1663,6 +1744,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "3.0.0"
+  system_tray:
+    dependency: "direct main"
+    description:
+      name: system_tray
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.0.7"
   term_glyph:
     dependency: transitive
     description:
@@ -1676,21 +1764,21 @@ packages:
       name: test
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.17.10"
+    version: "1.17.12"
   test_api:
     dependency: transitive
     description:
       name: test_api
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.4.2"
+    version: "0.4.3"
   test_core:
     dependency: transitive
     description:
       name: test_core
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.4.0"
+    version: "0.4.2"
   timezone:
     dependency: transitive
     description:
@@ -1809,7 +1897,7 @@ packages:
       name: vector_math
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.1.0"
+    version: "2.1.1"
   video_player:
     dependency: "direct main"
     description:

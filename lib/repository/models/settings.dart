@@ -62,6 +62,7 @@ class Settings {
   final RxString globalTextDetection = "".obs;
   final RxBool filterUnknownSenders = false.obs;
   final RxBool tabletMode = true.obs;
+  final RxBool highlightSelectedChat = true.obs;
   final RxBool immersiveMode = false.obs;
 
   // final RxString emojiFontFamily;
@@ -402,6 +403,7 @@ class Settings {
       'tabletMode': tabletMode.value,
       'immersiveMode': immersiveMode.value,
       'swipeToReply': swipeToReply.value,
+      'highlightSelectedChat': highlightSelectedChat.value,
       'enablePrivateAPI': enablePrivateAPI.value,
       'privateSendTypingIndicators': privateSendTypingIndicators.value,
       'privateMarkChatAsRead': privateMarkChatAsRead.value,
@@ -459,12 +461,13 @@ class Settings {
     SettingsManager().settings.hideTextPreviews.value = map['hideTextPreviews'] ?? false;
     SettingsManager().settings.showIncrementalSync.value = map['showIncrementalSync'] ?? false;
     SettingsManager().settings.lowMemoryMode.value = map['lowMemoryMode'] ?? false;
-    SettingsManager().settings.lastIncrementalSync.value = map['lastIncrementalSync'] ?? 0;
     SettingsManager().settings.refreshRate.value = map['refreshRate'] ?? 0;
     SettingsManager().settings.colorfulAvatars.value = map['colorfulAvatars'] ?? false;
     SettingsManager().settings.colorfulBubbles.value = map['colorfulBubbles'] ?? false;
     SettingsManager().settings.hideDividers.value = map['hideDividers'] ?? false;
-    SettingsManager().settings.scrollVelocity.value = map['scrollVelocity'] is int? ? (map['scrollVelocity'] as int? ?? 1).toDouble() : map['scrollVelocity'] as double? ?? 1.0;
+    SettingsManager().settings.scrollVelocity.value = map['scrollVelocity'] is int?
+        ? (map['scrollVelocity'] as int? ?? 1).toDouble()
+        : map['scrollVelocity'] as double? ?? 1.0;
     SettingsManager().settings.sendWithReturn.value = map['sendWithReturn'] ?? (kIsWeb || kIsDesktop);
     SettingsManager().settings.doubleTapForDetails.value = map['doubleTapForDetails'] ?? false;
     SettingsManager().settings.denseChatTiles.value = map['denseChatTiles'] ?? false;
@@ -496,6 +499,7 @@ class Settings {
     SettingsManager().settings.globalTextDetection.value = map['globalTextDetection'] ?? "";
     SettingsManager().settings.filterUnknownSenders.value = map['filterUnknownSenders'] ?? false;
     SettingsManager().settings.tabletMode.value = map['tabletMode'] ?? true;
+    SettingsManager().settings.highlightSelectedChat.value = map['highlightSelectedChat'] ?? true;
     SettingsManager().settings.immersiveMode.value = map['immersiveMode'] ?? false;
     SettingsManager().settings.swipeToReply.value = map['swipeToReply'] ?? false;
     SettingsManager().settings.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
@@ -521,14 +525,21 @@ class Settings {
     SettingsManager().settings.iosShowDelete.value = map['iosShowDelete'] ?? true;
     SettingsManager().settings.iosShowMarkRead.value = map['iosShowMarkRead'] ?? true;
     SettingsManager().settings.iosShowArchive.value = map['iosShowArchive'] ?? true;
-    SettingsManager().settings.materialRightAction.value = map['materialRightAction'] != null ? MaterialSwipeAction.values[map['materialRightAction']] : MaterialSwipeAction.pin;
-    SettingsManager().settings.materialLeftAction.value = map['materialLeftAction'] != null ? MaterialSwipeAction.values[map['materialLeftAction']] : MaterialSwipeAction.archive;
+    SettingsManager().settings.materialRightAction.value = map['materialRightAction'] != null
+        ? MaterialSwipeAction.values[map['materialRightAction']]
+        : MaterialSwipeAction.pin;
+    SettingsManager().settings.materialLeftAction.value = map['materialLeftAction'] != null
+        ? MaterialSwipeAction.values[map['materialLeftAction']]
+        : MaterialSwipeAction.archive;
     SettingsManager().settings.shouldSecure.value = map['shouldSecure'] ?? false;
-    SettingsManager().settings.securityLevel.value = map['securityLevel'] != null ? SecurityLevel.values[map['securityLevel']] : SecurityLevel.locked;
+    SettingsManager().settings.securityLevel.value =
+        map['securityLevel'] != null ? SecurityLevel.values[map['securityLevel']] : SecurityLevel.locked;
     SettingsManager().settings.incognitoKeyboard.value = map['incognitoKeyboard'] ?? false;
     SettingsManager().settings.skin.value = map['skin'] != null ? Skins.values[map['skin']] : Skins.iOS;
     SettingsManager().settings.theme.value = map['theme'] != null ? ThemeMode.values[map['theme']] : ThemeMode.system;
-    SettingsManager().settings.fullscreenViewerSwipeDir.value = map['fullscreenViewerSwipeDir'] != null ? SwipeDirection.values[map['fullscreenViewerSwipeDir']] : SwipeDirection.RIGHT;
+    SettingsManager().settings.fullscreenViewerSwipeDir.value = map['fullscreenViewerSwipeDir'] != null
+        ? SwipeDirection.values[map['fullscreenViewerSwipeDir']]
+        : SwipeDirection.RIGHT;
     SettingsManager().settings.pinRowsPortrait.value = map['pinRowsPortrait'] ?? 3;
     SettingsManager().settings.pinColumnsPortrait.value = map['pinColumnsPortrait'] ?? 3;
     SettingsManager().settings.pinRowsLandscape.value = map['pinRowsLandscape'] ?? 1;
@@ -588,6 +599,7 @@ class Settings {
     s.globalTextDetection.value = map['globalTextDetection'] ?? "";
     s.filterUnknownSenders.value = map['filterUnknownSenders'] ?? false;
     s.tabletMode.value = map['tabletMode'] ?? true;
+    s.highlightSelectedChat.value = map['highlightSelectedChat'] ?? true;
     s.immersiveMode.value = map['immersiveMode'] ?? false;
     s.swipeToReply.value = map['swipeToReply'] ?? false;
     s.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
@@ -613,14 +625,21 @@ class Settings {
     s.iosShowDelete.value = map['iosShowDelete'] ?? true;
     s.iosShowMarkRead.value = map['iosShowMarkRead'] ?? true;
     s.iosShowArchive.value = map['iosShowArchive'] ?? true;
-    s.materialRightAction.value = map['materialRightAction'] != null ? MaterialSwipeAction.values[map['materialRightAction']] : MaterialSwipeAction.pin;
-    s.materialLeftAction.value = map['materialLeftAction'] != null ? MaterialSwipeAction.values[map['materialLeftAction']] : MaterialSwipeAction.archive;
+    s.materialRightAction.value = map['materialRightAction'] != null
+        ? MaterialSwipeAction.values[map['materialRightAction']]
+        : MaterialSwipeAction.pin;
+    s.materialLeftAction.value = map['materialLeftAction'] != null
+        ? MaterialSwipeAction.values[map['materialLeftAction']]
+        : MaterialSwipeAction.archive;
     s.shouldSecure.value = map['shouldSecure'] ?? false;
-    s.securityLevel.value = map['securityLevel'] != null ? SecurityLevel.values[map['securityLevel']] : SecurityLevel.locked;
+    s.securityLevel.value =
+        map['securityLevel'] != null ? SecurityLevel.values[map['securityLevel']] : SecurityLevel.locked;
     s.incognitoKeyboard.value = map['incognitoKeyboard'] ?? false;
     s.skin.value = map['skin'] != null ? Skins.values[map['skin']] : Skins.iOS;
     s.theme.value = map['theme'] != null ? ThemeMode.values[map['theme']] : ThemeMode.system;
-    s.fullscreenViewerSwipeDir.value = map['fullscreenViewerSwipeDir'] != null ? SwipeDirection.values[map['fullscreenViewerSwipeDir']] : SwipeDirection.RIGHT;
+    s.fullscreenViewerSwipeDir.value = map['fullscreenViewerSwipeDir'] != null
+        ? SwipeDirection.values[map['fullscreenViewerSwipeDir']]
+        : SwipeDirection.RIGHT;
     s.pinRowsPortrait.value = map['pinRowsPortrait'] ?? 3;
     s.pinColumnsPortrait.value = map['pinColumnsPortrait'] ?? 3;
     s.pinRowsLandscape.value = map['pinRowsLandscape'] ?? 1;

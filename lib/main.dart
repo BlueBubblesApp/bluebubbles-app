@@ -1,27 +1,24 @@
 import 'dart:async';
-import 'package:bluebubbles/layouts/setup/splash_screen.dart';
-import 'package:collection/collection.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
-import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
-import 'package:google_ml_kit/google_ml_kit.dart';
-import 'package:universal_io/io.dart';
-import 'package:universal_html/html.dart' as html;
+import 'dart:convert';
 import 'dart:isolate';
 import 'dart:ui';
 
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/setup/failure_to_start.dart';
 import 'package:bluebubbles/layouts/setup/setup_view.dart';
+import 'package:bluebubbles/layouts/setup/splash_screen.dart';
+import 'package:bluebubbles/layouts/setup/upgrading_db.dart';
 import 'package:bluebubbles/layouts/testing_mode.dart';
+import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/managers/background_isolate.dart';
 import 'package:bluebubbles/managers/incoming_queue.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
@@ -31,24 +28,36 @@ import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/database.dart';
-import 'package:bluebubbles/repository/models/theme_object.dart';
+import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/repository/models/objectbox.dart';
+import 'package:collection/collection.dart';
+import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
+import 'package:firebase_dart/firebase_dart.dart';
+// ignore: implementation_imports
+import 'package:firebase_dart/src/auth/utils.dart' as fdu;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' hide Priority;
 import 'package:flutter/services.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart' hide Message;
 import 'package:flutter_native_timezone/flutter_native_timezone.dart';
-import 'package:firebase_dart/firebase_dart.dart';
-//ignore: implementation_imports
-import 'package:firebase_dart/src/auth/utils.dart' as fdu;
 import 'package:get/get.dart';
+import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:path/path.dart' show join;
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:secure_application/secure_application.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:system_tray/system_tray.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:universal_html/html.dart' as html;
+import 'package:universal_io/io.dart';
 import 'package:window_manager/window_manager.dart';
 
 // final SentryClient _sentry = SentryClient(
@@ -69,9 +78,25 @@ bool get isInDebugMode {
 
 FlutterLocalNotificationsPlugin? flutterLocalNotificationsPlugin;
 late SharedPreferences prefs;
-late FirebaseApp app;
+late final FirebaseApp app;
+late final Store store;
+late final Box<Attachment> attachmentBox;
+late final Box<Chat> chatBox;
+late final Box<FCMData> fcmDataBox;
+late final Box<Handle> handleBox;
+late final Box<Message> messageBox;
+late final Box<ScheduledMessage> scheduledBox;
+late final Box<ThemeEntry> themeEntryBox;
+late final Box<ThemeObject> themeObjectBox;
+late final Box<AttachmentMessageJoin> amJoinBox;
+late final Box<ChatHandleJoin> chJoinBox;
+late final Box<ChatMessageJoin> cmJoinBox;
+late final Box<ThemeValueJoin> tvJoinBox;
 String? recentIntent;
 final RxBool fontExistsOnDisk = false.obs;
+final RxBool downloadingFont = false.obs;
+final RxnDouble progress = RxnDouble();
+final RxnInt totalSize = RxnInt();
 
 Future<Null> _reportError(dynamic error, dynamic stackTrace) async {
   // Print the exception to the console.
@@ -111,9 +136,61 @@ Future<Null> main() async {
 
   WidgetsFlutterBinding.ensureInitialized();
   dynamic exception;
+  dynamic stacktrace;
   try {
     prefs = await SharedPreferences.getInstance();
-    if (!kIsWeb) await DBProvider.db.initDB();
+    if (!kIsWeb) {
+      Directory documentsDirectory =
+          //ignore: unnecessary_cast, we need this as a workaround
+          (kIsDesktop ? await getApplicationSupportDirectory() : await getApplicationDocumentsDirectory()) as Directory;
+      final objectBoxDirectory = Directory(documentsDirectory.path + '/objectbox/');
+      final sqlitePath = join(documentsDirectory.path, "chat.db");
+
+      Future<void> initStore({bool saveThemes = false}) async {
+        store = await openStore(directory: documentsDirectory.path + '/objectbox');
+        attachmentBox = store.box<Attachment>();
+        chatBox = store.box<Chat>();
+        fcmDataBox = store.box<FCMData>();
+        handleBox = store.box<Handle>();
+        messageBox = store.box<Message>();
+        scheduledBox = store.box<ScheduledMessage>();
+        themeEntryBox = store.box<ThemeEntry>();
+        themeObjectBox = store.box<ThemeObject>();
+        amJoinBox = store.box<AttachmentMessageJoin>();
+        chJoinBox = store.box<ChatHandleJoin>();
+        cmJoinBox = store.box<ChatMessageJoin>();
+        tvJoinBox = store.box<ThemeValueJoin>();
+        if (saveThemes && themeObjectBox.isEmpty()) {
+          for (ThemeObject theme in Themes.themes) {
+            if (theme.name == "OLED Dark") theme.selectedDarkTheme = true;
+            if (theme.name == "Bright White") theme.selectedLightTheme = true;
+            theme.save(updateIfNotAbsent: false);
+          }
+        }
+      }
+
+      if (!objectBoxDirectory.existsSync() && File(sqlitePath).existsSync()) {
+        runApp(UpgradingDB());
+        print("Converting sqflite to ObjectBox...");
+        Stopwatch s = Stopwatch();
+        s.start();
+        await DBProvider.db.initDB(initStore: initStore);
+        s.stop();
+        Logger.info("Migrated in ${s.elapsedMilliseconds} ms");
+      } else {
+        if (File(sqlitePath).existsSync() && prefs.getBool('objectbox-migration') != true) {
+          runApp(UpgradingDB());
+          print("Converting sqflite to ObjectBox...");
+          Stopwatch s = Stopwatch();
+          s.start();
+          await DBProvider.db.initDB(initStore: initStore);
+          s.stop();
+          print("Migrated in ${s.elapsedMilliseconds} ms");
+        } else {
+          await initStore(saveThemes: true);
+        }
+      }
+    }
     FirebaseDart.setup(
       platform: fdu.Platform.web(
         currentUrl: Uri.base.toString(),
@@ -152,7 +229,7 @@ Future<Null> main() async {
       flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
       const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('ic_stat_icon');
       final InitializationSettings initializationSettings =
-      InitializationSettings(android: initializationSettingsAndroid);
+          InitializationSettings(android: initializationSettingsAndroid);
       await flutterLocalNotificationsPlugin!.initialize(initializationSettings);
       tz.initializeTimeZones();
       tz.setLocalLocation(tz.getLocation(await FlutterNativeTimezone.getLocalTimezone()));
@@ -164,37 +241,40 @@ Future<Null> main() async {
     if (kIsDesktop) {
       await WindowManager.instance.setTitle('BlueBubbles (Beta)');
       WindowManager.instance.addListener(DesktopWindowListener());
+      doWhenWindowReady(() {
+        appWindow.minSize = Size(900, 600);
+        appWindow.alignment = Alignment.center;
+        appWindow.title = 'BlueBubbles (Beta)';
+        appWindow.show();
+      });
     }
     if (!kIsWeb) {
       try {
-        DynamicCachedFonts.loadCachedFont("https://github.com/tneotia/tneotia/releases/download/ios-font-1/IOS.14.2.Daniel.L.ttf", fontFamily: "Apple Color Emoji").then((_) {
+        DynamicCachedFonts.loadCachedFont(
+                "https://github.com/tneotia/tneotia/releases/download/ios-font-1/IOS.14.2.Daniel.L.ttf",
+                fontFamily: "Apple Color Emoji")
+            .then((_) {
           fontExistsOnDisk.value = true;
         });
       } on StateError catch (_) {
         fontExistsOnDisk.value = false;
       }
     }
-  } catch (e) {
+  } catch (e, s) {
     exception = e;
+    stacktrace = s;
   }
 
   if (exception == null) {
-    runZonedGuarded<Future<Null>>(() async {
-      ThemeObject light = await ThemeObject.getLightTheme();
-      ThemeObject dark = await ThemeObject.getDarkTheme();
-
-      runApp(Main(
-        lightTheme: light.themeData,
-        darkTheme: dark.themeData,
-      ));
-    }, (Object error, StackTrace stackTrace) async {
-      // Whenever an error occurs, call the `_reportError` function. This sends
-      // Dart errors to the dev console or Sentry depending on the environment.
-      await _reportError(error, stackTrace);
-    });
+    ThemeObject light = ThemeObject.getLightTheme();
+    ThemeObject dark = ThemeObject.getDarkTheme();
+    runApp(Main(
+      lightTheme: light.themeData,
+      darkTheme: dark.themeData,
+    ));
   } else {
     runApp(FailureToStart(e: exception));
-    throw Exception(exception);
+    throw Exception("$exception $stacktrace");
   }
 }
 
@@ -220,6 +300,7 @@ class DesktopWindowListener extends WindowListener {
 class Main extends StatelessWidget with WidgetsBindingObserver {
   final ThemeData darkTheme;
   final ThemeData lightTheme;
+
   const Main({Key? key, required this.lightTheme, required this.darkTheme}) : super(key: key);
 
   @override
@@ -336,6 +417,10 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   void initState() {
     super.initState();
 
+    if (kIsDesktop) {
+      initSystemTray();
+    }
+
     // we want to refresh the page rather than loading a new instance of [Home]
     // to avoid errors
     if (LifeCycleManager().isAlive && kIsWeb) {
@@ -348,10 +433,11 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     // We initialize the [LifeCycleManager] so that it is open, because [initState] occurs when the app is opened
     LifeCycleManager().opened();
 
-    if (!kIsWeb && !kIsDesktop) {
+    if (!kIsWeb) {
       // This initialization sets the function address in the native code to be used later
       BackgroundIsolateInterface.initialize();
-
+      // Set a reference to the DB so it can be used in another isolate
+      prefs.setString("objectbox-reference", base64.encode(store.reference.buffer.asUint8List()));
       // Create the notification in case it hasn't been already. Doing this multiple times won't do anything, so we just do it on every app start
       NotificationManager().createNotificationChannel(
         NotificationManager.NEW_MESSAGE_CHANNEL,
@@ -385,7 +471,14 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
     // Get the saved settings from the settings manager after the first frame
     SchedulerBinding.instance!.addPostFrameCallback((_) async {
-      await SettingsManager().getSavedSettings(context: context);
+      FirebaseDart.setup(
+        platform: fdu.Platform.web(
+          currentUrl: Uri.base.toString(),
+          isMobile: false,
+          isOnline: true,
+        ),
+      );
+      await SettingsManager().getSavedSettings();
 
       if (SettingsManager().settings.colorsFromMedia.value) {
         try {
@@ -436,7 +529,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
               existingAttachments: attachments,
               isCreator: true,
             ),
-                (route) => route.isFirst,
+            (route) => route.isFirst,
           );
         });
 
@@ -452,7 +545,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
               existingText: text,
               isCreator: true,
             ),
-                (route) => route.isFirst,
+            (route) => route.isFirst,
           );
         });
 
@@ -526,7 +619,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       ),
       child: Scaffold(
         backgroundColor: Colors.black,
-        // The stream builder connects to the [SocketManager] to check if the app has finished the setup or not
         body: Builder(
           builder: (BuildContext context) {
             if (SettingsManager().settings.finishedSetup.value) {
@@ -537,7 +629,10 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                 DeviceOrientation.portraitDown,
               ]);
               if (!serverCompatible && kIsWeb) {
-                return FailureToStart(otherTitle: "Server version too low, please upgrade!", e: "Required Server Version: v0.2.0",);
+                return FailureToStart(
+                  otherTitle: "Server version too low, please upgrade!",
+                  e: "Required Server Version: v0.2.0",
+                );
               }
               return ConversationList(
                 showArchivedChats: false,
@@ -549,8 +644,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
               ]);
               return WillPopScope(
                 onWillPop: () async => false,
-                child: kIsWeb || kIsDesktop
-                    ? SetupView() : SplashScreen(shouldNavigate: fullyLoaded),
+                child: TitleBarWrapper(child: kIsWeb || kIsDesktop
+                    ? SetupView() : SplashScreen(shouldNavigate: fullyLoaded)),
               );
             }
           },
@@ -558,4 +653,53 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       ),
     );
   }
+}
+
+Future<void> initSystemTray() async {
+  final _systemTray = SystemTray();
+  String path;
+  if (Platform.isWindows) {
+    path = p.joinAll([p.dirname(Platform.resolvedExecutable), 'data/flutter_assets/assets/icon', 'icon.ico']);
+  } else if (Platform.isMacOS) {
+    path = p.joinAll(['AppIcon']);
+  } else {
+    path = p.joinAll([p.dirname(Platform.resolvedExecutable), 'data/flutter_assets/assets/icon', 'icon.png']);
+  }
+
+  // We first init the systray menu and then add the menu entries
+  await _systemTray.initSystemTray("BlueBubbles", iconPath: path, toolTip: "BlueBubbles (Beta)");
+
+  await _systemTray.setContextMenu(
+    [
+      MenuItem(
+        label: 'Open App',
+        onClicked: () {
+          LifeCycleManager().opened();
+          appWindow.show();
+        },
+      ),
+      MenuItem(
+        label: 'Hide App',
+        onClicked: () {
+          LifeCycleManager().close();
+          appWindow.hide();
+        },
+      ),
+      MenuItem(
+        label: 'Close App',
+        onClicked: () {
+          appWindow.close();
+        },
+      ),
+    ],
+  );
+
+  // handle system tray event
+  _systemTray.registerSystemTrayEventHandler((eventName) {
+    switch (eventName) {
+      case 'leftMouseUp':
+        appWindow.show();
+        break;
+    }
+  });
 }

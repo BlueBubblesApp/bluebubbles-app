@@ -97,12 +97,24 @@ dependencies:
   dio_http: ^5.0.4
   flutter_dropzone: ^3.0.0
   transparent_pointer: ^1.0.0
-  quick_notify: ^0.1.0+2
+  quick_notify:
+    git:
+      url: https://github.com/jjoelj/quick_notify
+      ref: 41030fb6468e7990b230bb08e42fd99928d6fd64
   qr_flutter: ^4.0.0
   window_manager: ^0.0.5
+  objectbox: ^1.2.0
+  objectbox_flutter_libs: any
   js: ^0.6.3
+  bitsdojo_window: ^0.1.1+1
+  system_tray: ^0.0.7
+  flutter_improved_scrolling: ^0.0.3
+  desktop_drop: ^0.1.1
   particles_flutter: ^0.1.4
-  dynamic_cached_fonts: ^0.4.0
+  dynamic_cached_fonts:
+    git:
+      url: https://github.com/jjoelj/dynamic_cached_fonts
+      ref: 68c9dc69ca63e5d7aa0db621aba16fcf4e4f1da5
   confetti: ^0.6.0
   supercharged: ^2.1.1
   pdf: ^3.6.1
@@ -120,6 +132,7 @@ dev_dependencies:
   flutter_lints: ^1.0.4
   msix: ^2.6.2
   peanut: ^4.1.1
+  objectbox_generator: any
   flutter_test:
     sdk: flutter
 
@@ -174,6 +187,7 @@ flutter:
     - assets/images/transparent.png
     - assets/icon/icon.png
     - assets/changelog/changelog.md
+    - assets/icon/icon.ico
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
   # For details regarding adding assets from package dependencies, see
@@ -202,13 +216,10 @@ msix_config:
   display_name: BlueBubbles
   publisher_display_name: BlueBubbles Development Team
   identity_name: com.bluebubbles.app
-  msix_version: 1.0.0.4
+  msix_version: 1.0.0.11
   publisher: CN=BlueBubbles, O=BlueBubbles, C=US
-  logo_path: assets/icon/icon.png # todo
-  start_menu_icon_path: assets/icon/icon.png # todo
-  tile_icon_path: assets/icon/icon.png # todo
-  # todo vs_generated_images_folder_path
-  # todo icons_background_color
+  vs_generated_images_folder_path: windows/icons
+  icons_background_color: transparent
   languages: en-us # todo
   architecture: x64 # todo
   capabilities: internetClient, location, microphone, webcam # todo
