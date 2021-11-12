@@ -563,125 +563,118 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     //                       this.buildCupertinoTrailing()
     //                     ])))));
 
-    return CupertinoNavigationBar(
-      padding: EdgeInsetsDirectional.only(top: kIsDesktop && avatars.length == 1 ? 5 : 0),
-      backgroundColor: Theme.of(context).accentColor.withAlpha(125),
-      border: Border(
-        bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1.5),
+    final children = [
+      ContactAvatarGroupWidget(
+        chat: chat!,
+        size: kIsDesktop && SettingsManager().settings.skin.value == Skins.iOS
+            ? avatars.length == 1
+            ? 35
+            : 45
+            : avatars.length == 1
+            ? 40
+            : 45,
+        onTap: openDetails,
       ),
-      leading: GestureDetector(
-        onTap: () {
-          if (LifeCycleManager().isBubble) SystemNavigator.pop();
-          EventDispatcher().emit("update-highlight", null);
-          Navigator.of(context).pop();
-        },
-        behavior: HitTestBehavior.translucent,
-        child: Container(
-          width: 40 + (ChatBloc().unreads.value > 0 ? 25 : 0),
-          child: Row(
-            mainAxisSize: cupertino.MainAxisSize.min,
-            mainAxisAlignment: cupertino.MainAxisAlignment.start,
-            children: [
-              buildBackButton(context, callback: () async {
-                if (LifeCycleManager().isBubble) SystemNavigator.pop();
-                EventDispatcher().emit("update-highlight", null);
-                await SystemChannels.textInput.invokeMethod('TextInput.hide');
-              }),
-              if (ChatBloc().unreads.value > 0)
-                Container(
-                  margin: EdgeInsets.only(left: kIsDesktop ? 10 : 0),
-                  width: 25.0,
-                  height: 20.0,
-                  decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor,
-                      shape: BoxShape.rectangle,
-                      borderRadius: BorderRadius.circular(10)),
-                  child: Center(
-                      child: Text(ChatBloc().unreads.value.toString(),
-                          textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 12.0))),
+      SizedBox(height: 5.0, width: 5.0),
+      Row(mainAxisSize: MainAxisSize.min, children: [
+        Container(
+          constraints: BoxConstraints(
+            maxWidth: CustomNavigator.width(context) / 2 - 55,
+          ),
+          child: RichText(
+            maxLines: 1,
+            overflow: cupertino.TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            text: TextSpan(
+              style: Theme.of(context).textTheme.headline2,
+              children: [
+                ...MessageHelper.buildEmojiText(
+                  title ?? "",
+                  titleStyle!,
                 ),
+              ],
+            ),
+          ),
+        ),
+        RichText(
+          text: TextSpan(
+            style: Theme.of(context).textTheme.headline2,
+            children: [
+              TextSpan(
+                text: " >",
+                style: Theme.of(context).textTheme.subtitle1,
+              ),
             ],
           ),
         ),
-      ),
-      middle: ListView(
-        physics: cupertino.NeverScrollableScrollPhysics(),
-        padding: EdgeInsets.only(right: newMessages.isNotEmpty ? 10 : 0),
-        children: <Widget>[
-          Container(height: 10.0),
-          GestureDetector(
-            onTap: openDetails,
+      ]),
+    ];
+
+    return PreferredSize(
+      preferredSize: Size.fromHeight(context.orientation == Orientation.landscape && context.isPhone ? 55 : 75),
+      child: CupertinoNavigationBar(
+          padding: EdgeInsetsDirectional.only(top: kIsDesktop && avatars.length == 1 ? 5 : 0),
+          backgroundColor: Theme.of(context).accentColor.withAlpha(125),
+          border: Border(
+            bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1.5),
+          ),
+          leading: GestureDetector(
+            onTap: () {
+              if (LifeCycleManager().isBubble) SystemNavigator.pop();
+              EventDispatcher().emit("update-highlight", null);
+              Navigator.of(context).pop();
+            },
+            behavior: HitTestBehavior.translucent,
             child: Container(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
+              width: 40 + (ChatBloc().unreads.value > 0 ? 25 : 0),
+              child: Row(
+                mainAxisSize: cupertino.MainAxisSize.min,
+                mainAxisAlignment: cupertino.MainAxisAlignment.start,
                 children: [
-                  // RowSuper(
-                  //   children: avatars,
-                  //   innerDistance: distance,
-                  //   alignment: Alignment.center,
-                  // ),
-                  ContactAvatarGroupWidget(
-                    chat: chat!,
-                    size: kIsDesktop && SettingsManager().settings.skin.value == Skins.iOS
-                        ? avatars.length == 1
-                            ? 35
-                            : 45
-                        : avatars.length == 1
-                            ? 40
-                            : 45,
-                    onTap: openDetails,
-                  ),
-                  if (avatars.length == 1) SizedBox(height: 5.0),
-                  Center(
-                      child: Container(
-                    constraints: BoxConstraints(
-                      maxWidth: CustomNavigator.width(context) / 2,
+                  buildBackButton(context, callback: () async {
+                    if (LifeCycleManager().isBubble) SystemNavigator.pop();
+                    EventDispatcher().emit("update-highlight", null);
+                    await SystemChannels.textInput.invokeMethod('TextInput.hide');
+                  }),
+                  if (ChatBloc().unreads.value > 0)
+                    Container(
+                      width: 25.0,
+                      height: 20.0,
+                      decoration: BoxDecoration(
+                          color: Theme.of(context).primaryColor,
+                          shape: BoxShape.rectangle,
+                          borderRadius: BorderRadius.circular(10)),
+                      child: Center(
+                          child: Text(ChatBloc().unreads.value.toString(),
+                              textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 12.0))),
                     ),
-                    child: Row(mainAxisSize: MainAxisSize.min, children: [
-                      Container(
-                        constraints: BoxConstraints(
-                          maxWidth: CustomNavigator.width(context) / 2 - 55,
-                        ),
-                        child: RichText(
-                          maxLines: 1,
-                          overflow: cupertino.TextOverflow.ellipsis,
-                          textAlign: TextAlign.center,
-                          text: TextSpan(
-                            style: Theme.of(context).textTheme.headline2,
-                            children: [
-                              TextSpan(
-                                text: title,
-                                style: titleStyle,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      RichText(
-                        text: TextSpan(
-                          style: Theme.of(context).textTheme.headline2,
-                          children: [
-                            TextSpan(
-                              text: " >",
-                              style: Theme.of(context).textTheme.subtitle1,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ]),
-                  )),
                 ],
               ),
             ),
           ),
-        ],
-      ),
-      trailing: Obx(
-        () => Container(
-          width: 40 + (ChatBloc().unreads.value > 0 ? 25 : 0),
-          child: buildCupertinoTrailing(),
-        ),
-      ),
+          middle: cupertino.Padding(
+            padding: EdgeInsets.only(right: newMessages.isNotEmpty ? 10 : 0),
+            child: GestureDetector(
+              onTap: openDetails,
+              child: Builder(
+                builder: (context) {
+                  if (context.orientation == Orientation.landscape && context.isPhone) {
+                    return Row(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: children
+                    );
+                  }
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: children,
+                  );
+                }
+              ),
+            ),
+          ),
+          trailing:
+              Obx(() => Container(width: 40 + (ChatBloc().unreads.value > 0 ? 25 : 0), child: buildCupertinoTrailing()))),
     );
   }
 

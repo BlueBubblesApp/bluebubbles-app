@@ -12,6 +12,7 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:path/path.dart';
 import 'package:universal_io/io.dart';
 
 class AttachmentDownloadService extends GetxService {
@@ -164,6 +165,14 @@ class AttachmentDownloadController extends GetxController {
           if (attachment.bytes != null) {
             File _file = await File(attachment.getPath()).create(recursive: true);
             _file.writeAsBytesSync(currentBytes);
+          }
+          if (SettingsManager().settings.autoSave.value && !kIsWeb && !kIsDesktop && !(attachment.isOutgoing ?? false)) {
+            String filePath = "/storage/emulated/0/Download/";
+            if (attachment.mimeType?.startsWith("image") ?? false) {
+              await AttachmentHelper.saveToGallery(file.value!, showAlert: false);
+            } else if (file.value?.bytes != null) {
+              await File(join(filePath, file.value!.name)).writeAsBytes(file.value!.bytes!);
+            }
           }
         }
       }

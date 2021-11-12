@@ -192,7 +192,7 @@ class _ImageViewerState extends State<ImageViewer> with AutomaticKeepAliveClient
                   child: CupertinoButton(
                     padding: EdgeInsets.symmetric(horizontal: 5),
                     onPressed: () async {
-                      await AttachmentHelper.saveToGallery(context, widget.file);
+                      await AttachmentHelper.saveToGallery(widget.file);
                     },
                     child: Icon(
                       SettingsManager().settings.skin.value == Skins.iOS

@@ -222,7 +222,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
     hasPinnedChat();
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        systemNavigationBarColor: context.theme.backgroundColor, // navigation bar color
+        systemNavigationBarColor: Colors.transparent, // navigation bar color
         systemNavigationBarIconBrightness:
             context.theme.backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color

@@ -234,7 +234,7 @@ String buildDate(DateTime? dateTime) {
   } else if (DateTime.now().difference(dateTime.toLocal()).inDays <= 7) {
     date = intl.DateFormat("EEEE").format(dateTime);
   } else {
-    date = "${dateTime.month.toString()}/${dateTime.day.toString()}/${dateTime.year.toString()}";
+    date = intl.DateFormat.yMd().format(dateTime);
   }
   return date;
 }
@@ -251,10 +251,16 @@ String buildTime(DateTime? dateTime) {
   return time;
 }
 
+String buildFullDate(DateTime time) {
+  return intl.DateFormat.yMd().add_jm().format(time);
+}
+
 extension DateHelpers on DateTime {
   bool isTomorrow({DateTime? otherDate}) {
     final now = otherDate?.add(Duration(days: 1)) ?? DateTime.now().add(Duration(days: 1));
-    return now.day == day && now.month == month && now.year == year;
+    return now.day == day &&
+        now.month == month &&
+        now.year == year;
   }
 
   bool isToday() {
@@ -267,7 +273,7 @@ extension DateHelpers on DateTime {
     return yesterday.day == day && yesterday.month == month && yesterday.year == year;
   }
 
-  bool isWithin(DateTime other, {int? ms, int? seconds, int? minutes, int? hours}) {
+  bool isWithin(DateTime other, {int? ms, int? seconds, int? minutes, int? hours, int? days}) {
     Duration diff = difference(other);
     if (ms != null) {
       return diff.inMilliseconds < ms;
@@ -277,6 +283,8 @@ extension DateHelpers on DateTime {
       return diff.inMinutes < minutes;
     } else if (hours != null) {
       return diff.inHours < hours;
+    } else if (days != null) {
+      return diff.inDays < days;
     } else {
       throw Exception("No timerange specified!");
     }

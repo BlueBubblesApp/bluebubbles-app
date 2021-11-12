@@ -6,7 +6,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachment_fullscreen_viewer.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -39,14 +39,17 @@ class ImageWidgetController extends GetxController {
     // initGate prevents this from running more than once
     // Especially if the compression takes a while
     if (!runForcefully && data.value != null) return;
-    Uint8List? tmpData;
+
+    // Try to get the image data from the "cache"
+    Uint8List? tmpData = CurrentChat.activeChat?.getImageData(attachment);
     if (tmpData == null) {
       // If it's an image, compress the image when loading it
       if (kIsWeb || file.path == null) {
         if (attachment.guid != "redacted-mode-demo-attachment") {
           tmpData = file.bytes;
         } else {
-          tmpData = Uint8List.view((await rootBundle.load(attachment.transferName!)).buffer);
+          data.value = Uint8List.view((await rootBundle.load(attachment.transferName!)).buffer);
+          return;
         }
       } else if (AttachmentHelper.canCompress(attachment) &&
           attachment.guid != "redacted-mode-demo-attachment" &&
@@ -61,10 +64,10 @@ class ImageWidgetController extends GetxController {
         tmpData = await File(file.path!).readAsBytes();
       }
 
-      if (tmpData == null) return;
-      if (!(attachment.mimeType?.endsWith("heic") ?? false)) {
-        await precacheImage(MemoryImage(tmpData), context,
-            size: attachment.width == null ? null : Size.fromWidth(attachment.width! / 2));
+      if (tmpData == null || CurrentChat.activeChat == null) return;
+      CurrentChat.activeChat?.saveImageData(tmpData, attachment);
+      if (!(attachment.mimeType?.endsWith("heic") ?? false) && !(attachment.mimeType?.endsWith("heif") ?? false)) {
+        await precacheImage(MemoryImage(tmpData), context, size: attachment.width == null ? null : Size.fromWidth(attachment.width! / 2));
       }
     }
     data.value = tmpData;
@@ -95,6 +98,7 @@ class ImageWidget extends StatelessWidget {
           if (!SettingsManager().settings.lowMemoryMode.value) return;
           if (info.visibleFraction == 0 && controller.visible && !controller.navigated) {
             controller.visible = false;
+            CurrentChat.activeChat?.clearImageData(controller.attachment);
             controller.update();
           } else if (!controller.visible) {
             controller.visible = true;
@@ -105,7 +109,7 @@ class ImageWidget extends StatelessWidget {
           child: buildSwitcher(context, controller),
           onTap: () async {
             controller.navigated = true;
-            CurrentChat? currentChat = CurrentChat.of(context);
+            CurrentChat? currentChat = CurrentChat.activeChat;
             await Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (context) => AttachmentFullscreenViewer(
@@ -127,18 +131,29 @@ class ImageWidget extends StatelessWidget {
       child: Obx(
         () => controller.data.value != null
             ? Container(
-                width: controller.attachment.guid == "redacted-mode-demo-attachment"
-                    ? controller.attachment.width!.toDouble()
-                    : null,
-                height: controller.attachment.guid == "redacted-mode-demo-attachment"
-                    ? controller.attachment.height!.toDouble()
-                    : null,
-                child: FadeInImage(
-                  placeholder: MemoryImage(kTransparentImage),
-                  image: MemoryImage(controller.data.value!),
-                  fadeInDuration: Duration(milliseconds: 200),
-                ),
-              )
+              width: controller.attachment.guid == "redacted-mode-demo-attachment" ? controller.attachment.width!.toDouble() : null,
+              height: controller.attachment.guid == "redacted-mode-demo-attachment" ? controller.attachment.height!.toDouble() : null,
+              child: Image.memory(
+                controller.data.value!,
+                // prevents the image widget from "refreshing" when the provider changes
+                gaplessPlayback: true,
+                frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                  return Stack(children: [
+                    buildPlaceHolder(context, controller, isLoaded: wasSynchronouslyLoaded),
+                    AnimatedOpacity(
+                      opacity: (frame == null &&
+                          controller.attachment.guid != "redacted-mode-demo-attachment" &&
+                          !controller.attachment.guid!.contains("theme-selector"))
+                          ? 0
+                          : 1,
+                      child: child,
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeInOut,
+                    )
+                  ]);
+                },
+              ),
+            )
             : buildPlaceHolder(context, controller),
       ));
 
@@ -164,8 +179,6 @@ class ImageWidget extends StatelessWidget {
     }
 
     // If it's not loaded, we are in progress
-    return buildImagePlaceholder(context, controller.attachment,
-        controller.attachment.guid != "redacted-mode-demo-attachment"
-            ? Center(child: buildProgressIndicator(context)) : Container());
+    return buildImagePlaceholder(context, controller.attachment, Center(child: buildProgressIndicator(context)));
   }
 }

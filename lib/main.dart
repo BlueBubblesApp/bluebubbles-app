@@ -190,6 +190,22 @@ Future<Null> main() async {
     }
     await SettingsManager().init();
     await SettingsManager().getSavedSettings(headless: true);
+    if (SettingsManager().settings.immersiveMode.value) {
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    }
+    // this is to avoid a fade-in transition between the android native splash screen
+    // and our dummy splash screen
+    if (!SettingsManager().settings.finishedSetup.value && !kIsWeb && !kIsDesktop) {
+      runApp(
+        MaterialApp(
+          home: SplashScreen(shouldNavigate: false),
+          theme: ThemeData(
+              backgroundColor: SchedulerBinding.instance!.window.platformBrightness == Brightness.dark
+                  ? Colors.black : Colors.white
+          )
+        )
+      );
+    }
     Get.put(AttachmentDownloadService());
     if (!kIsWeb && !kIsDesktop) {
       flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();

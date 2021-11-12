@@ -4,9 +4,9 @@ import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
+import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/layouts/settings/custom_avatar_color_panel.dart';
 import 'package:bluebubbles/layouts/settings/custom_avatar_panel.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
@@ -15,8 +15,8 @@ import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/io/theme_object.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
-import 'package:bluebubbles/repository/models/theme_object.dart';
 import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -78,13 +78,13 @@ class ThemePanel extends GetView<ThemePanelController> {
           ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
       Color headerColor;
       Color tileColor;
-      if ((Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+      if ((Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
           SettingsManager().settings.skin.value == Skins.Material) && (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
-        headerColor = Theme.of(context).accentColor;
+        headerColor = Theme.of(context).colorScheme.secondary;
         tileColor = Theme.of(context).backgroundColor;
       } else {
         headerColor = Theme.of(context).backgroundColor;
-        tileColor = Theme.of(context).accentColor;
+        tileColor = Theme.of(context).colorScheme.secondary;
       }
       if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
         tileColor = headerColor;
@@ -167,7 +167,7 @@ class ThemePanel extends GetView<ThemePanelController> {
                         saveSettings();
                         controller.update();
                       },
-                      options: Skins.values.toList(),
+                      options: Skins.values.where((item) => item != Skins.Samsung).toList(),
                       textProcessing: (val) => val.toString().split(".").last,
                       capitalize: false,
                       title: "App Skin",
@@ -190,6 +190,29 @@ class ThemePanel extends GetView<ThemePanelController> {
                       title: "Tablet Mode",
                       backgroundColor: tileColor,
                       subtitle: "Enables tablet mode (split view) depending on screen width",
+                    )),
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
+                    ),
+                    Obx(() => SettingsSwitch(
+                      onChanged: (bool val) {
+                        controller._settingsCopy.immersiveMode.value = val;
+                        saveSettings();
+                        if (val) {
+                          SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+                        } else {
+                          SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [SystemUiOverlay.bottom, SystemUiOverlay.top]);
+                        }
+                        EventDispatcher().emit('theme-update', null);
+                      },
+                      initialVal: controller._settingsCopy.immersiveMode.value,
+                      title: "Immersive Mode",
+                      backgroundColor: tileColor,
+                      subtitle: "Makes the bottom navigation bar transparent. This option is best used with gesture navigation.",
                     )),
                   ],
                 ),

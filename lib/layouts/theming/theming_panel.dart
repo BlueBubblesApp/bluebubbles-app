@@ -8,9 +8,11 @@ import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/theming/theming_color_options_list.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
+import 'package:bluebubbles/repository/models/io/theme_object.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 
 class ThemingPanel extends StatefulWidget {
   ThemingPanel({Key? key}) : super(key: key);
@@ -20,7 +22,7 @@ class ThemingPanel extends StatefulWidget {
 }
 
 class _ThemingPanelState extends State<ThemingPanel> with TickerProviderStateMixin {
-  int? index;
+  int index = ThemeObject.inDarkMode(Get.context!) ? 1 : 0;
   StreamController streamController = StreamController.broadcast();
 
   @override
@@ -54,7 +56,7 @@ class _ThemingPanelState extends State<ThemingPanel> with TickerProviderStateMix
       ),
       child: DefaultTabController(
         length: 2,
-        initialIndex: index ?? 0,
+        initialIndex: index,
         child: Scaffold(
           backgroundColor: tileColor,
           appBar: PreferredSize(

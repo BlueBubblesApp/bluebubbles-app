@@ -136,10 +136,11 @@ class AttachmentHelper {
     return (width / factor) / width;
   }
 
-  static Future<void> saveToGallery(BuildContext context, PlatformFile file) async {
+  static Future<void> saveToGallery(PlatformFile file, {bool showAlert = true}) async {
     if (kIsWeb) {
       final content = base64.encode(file.bytes!);
-      html.AnchorElement(href: "data:application/octet-stream;charset=utf-16le;base64,$content")
+      html.AnchorElement(
+          href: "data:application/octet-stream;charset=utf-16le;base64,$content")
         ..setAttribute("download", file.name)
         ..click();
       return;
@@ -157,7 +158,7 @@ class AttachmentHelper {
       return showSnackbar('Failed', 'You didn' 't select a file path!');
     }
     void showDeniedSnackbar({String? err}) {
-      showSnackbar("Save Failed", err ?? "Failed to save attachment!");
+      if (showAlert) showSnackbar("Save Failed", err ?? "Failed to save attachment!");
     }
 
     var hasPermissions = await Permission.storage.isGranted;
@@ -200,13 +201,13 @@ class AttachmentHelper {
     return !(FileSystemEntity.typeSync(pathName) == FileSystemEntityType.notFound);
   }
 
-  static dynamic getContent(Attachment attachment, {String? path}) {
-    if (kIsWeb && attachment.bytes == null && attachment.guid != "redacted-mode-demo-attachment") {
+  static dynamic getContent(Attachment attachment, {String? path, bool autoDownload = true}) {
+    if (kIsWeb && attachment.bytes == null && attachment.guid != "redacted-mode-demo-attachment" && autoDownload) {
       return Get.put(AttachmentDownloadController(attachment: attachment), tag: attachment.guid);
     } else if (kIsWeb) {
       return PlatformFile(
         name: attachment.transferName!,
-        path: attachment.guid == "redacted-mode-demo-attachment" ? "dummy path" : null,
+        path: null,
         size: attachment.totalBytes ?? 0,
         bytes: attachment.bytes,
       );
@@ -224,7 +225,7 @@ class AttachmentHelper {
         path: pathName,
         size: attachment.totalBytes ?? 0,
       );
-    } else if (attachment.mimeType == null || attachment.mimeType!.startsWith("text/")) {
+    } else if ((attachment.mimeType == null || attachment.mimeType!.startsWith("text/")) && autoDownload) {
       return Get.put(AttachmentDownloadController(attachment: attachment), tag: attachment.guid);
     } else {
       return attachment;
