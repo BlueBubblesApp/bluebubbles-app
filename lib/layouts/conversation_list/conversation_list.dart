@@ -1,7 +1,7 @@
 import 'package:bluebubbles/layouts/setup/setup_view.dart';
+import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/repository/database.dart';
-import 'package:bluebubbles/repository/models/fcm_data.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -47,6 +47,10 @@ class ConversationListState extends State<ConversationList> {
   @override
   void initState() {
     super.initState();
+    if (kIsDesktop && !widget.showUnknownSenders) {
+      ChatBloc().refreshChats();
+    }
+
     SystemChannels.textInput.invokeMethod('TextInput.hide').catchError((e) {
       Logger.error("Error caught while hiding keyboard: ${e.toString()}");
     });
@@ -80,6 +84,7 @@ class ConversationListState extends State<ConversationList> {
   }
 
   void openNewChatCreator({List<PlatformFile>? existing}) async {
+    EventDispatcher().emit("update-highlight", null);
     CustomNavigator.pushAndRemoveUntil(
       context,
       ConversationView(
@@ -139,9 +144,12 @@ class ConversationListState extends State<ConversationList> {
                           await SettingsManager().resetConnection();
                           SettingsManager().settings.finishedSetup.value = false;
                           Get.offAll(() => WillPopScope(
-                            onWillPop: () async => false,
-                            child: SetupView(),
-                          ), duration: Duration.zero, transition: Transition.noTransition);
+                              onWillPop: () async => false,
+                              child: TitleBarWrapper(child: SetupView()),
+                            ),
+                            duration: Duration.zero,
+                            transition: Transition.noTransition
+                          );
                           SettingsManager().settings = Settings();
                           SettingsManager().settings.save();
                           SettingsManager().fcmData = null;

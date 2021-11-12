@@ -1,4 +1,3 @@
-import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:universal_io/io.dart';
@@ -18,7 +17,7 @@ import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -174,7 +173,7 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
     if (ChatBloc().chatRequest != null
         && prefs.getString('lastOpenedChat') != null
         && (!context.isPhone || context.isLandscape)
-        && SettingsManager().settings.tabletMode.value
+        && (SettingsManager().settings.tabletMode.value || kIsDesktop)
         && CurrentChat.activeChat?.chat.guid != prefs.getString('lastOpenedChat')) {
       await ChatBloc().chatRequest!.future;
       CustomNavigator.pushAndRemoveUntil(
@@ -217,396 +216,398 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
           }
           return true;
         },
-        child: Scaffold(
-          appBar: PreferredSize(
-            preferredSize: Size.fromHeight(60),
-            child: AnimatedSwitcher(
-              duration: Duration(milliseconds: 500),
-              child: selected.isEmpty ? AppBar(
-                iconTheme: IconThemeData(color: context.theme.primaryColor),
-                systemOverlayStyle: ThemeData.estimateBrightnessForColor(context.theme.backgroundColor) == Brightness.dark
-                    ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
-                bottom: PreferredSize(
-                  child: Container(
-                    color: context.theme.dividerColor,
-                    height: 0,
+        child: Padding(
+          padding: EdgeInsets.only(top: kIsDesktop ? 20 : 0),
+          child: Scaffold(
+            appBar: PreferredSize(
+              preferredSize: Size.fromHeight(60),
+              child: AnimatedSwitcher(
+                duration: Duration(milliseconds: 500),
+                child: selected.isEmpty ? AppBar(
+                  iconTheme: IconThemeData(color: context.theme.primaryColor),
+                  systemOverlayStyle: ThemeData.estimateBrightnessForColor(context.theme.backgroundColor) == Brightness.dark
+                      ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+                  bottom: PreferredSize(
+                    child: Container(
+                      color: context.theme.dividerColor,
+                      height: 0,
+                    ),
+                    preferredSize: Size.fromHeight(0.5),
                   ),
-                  preferredSize: Size.fromHeight(0.5),
-                ),
-                title: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    widget.parent.getHeaderTextWidget(size: 20),
-                    widget.parent.getConnectionIndicatorWidget(),
-                    widget.parent.getSyncIndicatorWidget(),
-                  ],
-                ),
-                actions: [
-                  (!showArchived && !showUnknown)
-                      ? GestureDetector(
-                    onTap: () async {
-                      CustomNavigator.pushLeft(
-                        context,
-                        SearchView(),
-                      );
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Icon(
-                        Icons.search,
-                        color: context.textTheme.bodyText1!.color,
-                      ),
-                    ),
-                  )
-                      : Container(),
-                  (SettingsManager().settings.moveChatCreatorToHeader.value && !showArchived && !showUnknown)
-                      ? GestureDetector(
-                    onTap: () {
-                      EventDispatcher().emit("update-highlight", null);
-                      CustomNavigator.pushAndRemoveUntil(
-                        context,
-                        ConversationView(
-                          isCreator: true,
+                  title: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      widget.parent.getHeaderTextWidget(size: 20),
+                      widget.parent.getConnectionIndicatorWidget(),
+                      widget.parent.getSyncIndicatorWidget(),
+                    ],
+                  ),
+                  actions: [
+                    (!showArchived && !showUnknown)
+                        ? GestureDetector(
+                      onTap: () async {
+                        CustomNavigator.pushLeft(
+                          context,
+                          SearchView(),
+                        );
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Icon(
+                          Icons.search,
+                          color: context.textTheme.bodyText1!.color,
                         ),
-                            (route) => route.isFirst,
-                      );
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Icon(
-                        Icons.create,
-                        color: context.textTheme.bodyText1!.color,
                       ),
-                    ),
-                  )
-                      : Container(),
-                  (SettingsManager().settings.moveChatCreatorToHeader.value
-                      && SettingsManager().settings.cameraFAB.value
-                      && !showArchived && !showUnknown)
-                      ? GestureDetector(
-                    onTap: () async {
-                      bool camera = await Permission.camera.isGranted;
-                      if (!camera) {
-                        bool granted = (await Permission.camera.request()) == PermissionStatus.granted;
-                        if (!granted) {
-                          showSnackbar(
-                              "Error",
-                              "Camera was denied"
-                          );
+                    )
+                        : Container(),
+                    (SettingsManager().settings.moveChatCreatorToHeader.value && !showArchived && !showUnknown)
+                        ? GestureDetector(
+                      onTap: () {
+                        EventDispatcher().emit("update-highlight", null);
+                        CustomNavigator.pushAndRemoveUntil(
+                          context,
+                          ConversationView(
+                            isCreator: true,
+                          ),
+                              (route) => route.isFirst,
+                        );
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Icon(
+                          Icons.create,
+                          color: context.textTheme.bodyText1!.color,
+                        ),
+                      ),
+                    )
+                        : Container(),
+                    (SettingsManager().settings.moveChatCreatorToHeader.value
+                        && SettingsManager().settings.cameraFAB.value
+                        && !showArchived && !showUnknown)
+                        ? GestureDetector(
+                      onTap: () async {
+                        bool camera = await Permission.camera.isGranted;
+                        if (!camera) {
+                          bool granted = (await Permission.camera.request()) == PermissionStatus.granted;
+                          if (!granted) {
+                            showSnackbar(
+                                "Error",
+                                "Camera was denied"
+                            );
+                            return;
+                          }
+                        }
+
+                        String appDocPath = SettingsManager().appDocDir.path;
+                        String ext = ".png";
+                        File file = File("$appDocPath/attachments/" + randomString(16) + ext);
+                        await file.create(recursive: true);
+
+                        // Take the picture after opening the camera
+                        await MethodChannelInterface().invokeMethod("open-camera", {"path": file.path, "type": "camera"});
+
+                        // If we don't get data back, return outta here
+                        if (!file.existsSync()) return;
+                        if (file.statSync().size == 0) {
+                          file.deleteSync();
                           return;
                         }
-                      }
 
-                      String appDocPath = SettingsManager().appDocDir.path;
-                      String ext = ".png";
-                      File file = File("$appDocPath/attachments/" + randomString(16) + ext);
-                      await file.create(recursive: true);
-
-                      // Take the picture after opening the camera
-                      await MethodChannelInterface().invokeMethod("open-camera", {"path": file.path, "type": "camera"});
-
-                      // If we don't get data back, return outta here
-                      if (!file.existsSync()) return;
-                      if (file.statSync().size == 0) {
-                        file.deleteSync();
-                        return;
-                      }
-
-                      widget.parent.openNewChatCreator(existing: [PlatformFile(
-                        name: file.path.split("/").last,
-                        path: file.path,
-                        bytes: file.readAsBytesSync(),
-                        size: file.lengthSync(),
-                      )]);
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Icon(
-                        Icons.photo_camera,
-                        color: context.textTheme.bodyText1!.color,
-                      ),
-                    ),
-                  )
-                      : Container(),
-                  Padding(
-                    padding: EdgeInsets.only(right: 20),
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(vertical: 15.5),
-                      child: Container(
-                        width: 40,
-                        child: widget.parent.buildSettingsButton(),
-                      ),
-                    ),
-                  ),
-                ],
-                backgroundColor: context.theme.backgroundColor,
-              )
-                  : Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.max,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        if (([0, selected.length])
-                            .contains(selected.where((element) => element.hasUnreadMessage!).length))
-                          GestureDetector(
-                            onTap: () {
-                              for (Chat element in selected) {
-                                element.toggleHasUnread(!element.hasUnreadMessage!);
-                              }
-                              selected = [];
-                              if (mounted) setState(() {});
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Icon(
-                                selected[0].hasUnreadMessage! ? Icons.mark_chat_read : Icons.mark_chat_unread,
-                                color: context.textTheme.bodyText1!.color,
-                              ),
-                            ),
-                          ),
-                        if (([0, selected.length])
-                            .contains(selected.where((element) => element.muteType == "mute").length))
-                          GestureDetector(
-                            onTap: () {
-                              for (Chat element in selected) {
-                                element.toggleMute(element.muteType != "mute");
-                              }
-                              selected = [];
-                              if (mounted) setState(() {});
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Icon(
-                                selected[0].muteType == "mute"
-                                    ? Icons.notifications_active
-                                    : Icons.notifications_off,
-                                color: context.textTheme.bodyText1!.color,
-                              ),
-                            ),
-                          ),
-                        if (([0, selected.length])
-                            .contains(selected.where((element) => element.isPinned!).length))
-                          GestureDetector(
-                            onTap: () {
-                              for (Chat element in selected) {
-                                element.togglePin(!element.isPinned!);
-                              }
-                              selected = [];
-                              if (mounted) setState(() {});
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Icon(
-                                selected[0].isPinned! ? Icons.star_outline : Icons.star,
-                                color: context.textTheme.bodyText1!.color,
-                              ),
-                            ),
-                          ),
-                        GestureDetector(
-                          onTap: () {
-                            for (Chat element in selected) {
-                              if (element.isArchived!) {
-                                ChatBloc().unArchiveChat(element);
-                              } else {
-                                ChatBloc().archiveChat(element);
-                              }
-                            }
-                            selected = [];
-                            if (mounted) setState(() {});
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Icon(
-                              showArchived ? Icons.unarchive : Icons.archive,
-                              color: context.textTheme.bodyText1!.color,
-                            ),
-                          ),
+                        widget.parent.openNewChatCreator(existing: [PlatformFile(
+                          name: file.path.split("/").last,
+                          path: file.path,
+                          bytes: file.readAsBytesSync(),
+                          size: file.lengthSync(),
+                        )]);
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Icon(
+                          Icons.photo_camera,
+                          color: context.textTheme.bodyText1!.color,
                         ),
-                        if (selected[0].isArchived!)
-                          GestureDetector(
-                            onTap: () {
-                              for (Chat element in selected) {
-                                ChatBloc().deleteChat(element);
-                                Chat.deleteChat(element);
-                              }
-                              selected = [];
-                              if (mounted) setState(() {});
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Icon(
-                                Icons.delete_forever,
-                                color: context.textTheme.bodyText1!.color,
-                              ),
-                            ),
-                          ),
-                      ],
+                      ),
+                    )
+                        : Container(),
+                    Padding(
+                      padding: EdgeInsets.only(right: 20),
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 15.5),
+                        child: Container(
+                          width: 40,
+                          child: widget.parent.buildSettingsButton(),
+                        ),
+                      ),
                     ),
                   ],
+                  backgroundColor: context.theme.backgroundColor,
+                ) : Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.max,
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          if (([0, selected.length])
+                              .contains(selected.where((element) => element.hasUnreadMessage!).length))
+                            GestureDetector(
+                              onTap: () {
+                                for (Chat element in selected) {
+                                  element.toggleHasUnread(!element.hasUnreadMessage!);
+                                }
+                                selected = [];
+                                if (mounted) setState(() {});
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Icon(
+                                  selected[0].hasUnreadMessage! ? Icons.mark_chat_read : Icons.mark_chat_unread,
+                                  color: context.textTheme.bodyText1!.color,
+                                ),
+                              ),
+                            ),
+                          if (([0, selected.length])
+                              .contains(selected.where((element) => element.muteType == "mute").length))
+                            GestureDetector(
+                              onTap: () {
+                                for (Chat element in selected) {
+                                  element.toggleMute(element.muteType != "mute");
+                                }
+                                selected = [];
+                                if (mounted) setState(() {});
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Icon(
+                                  selected[0].muteType == "mute"
+                                      ? Icons.notifications_active
+                                      : Icons.notifications_off,
+                                  color: context.textTheme.bodyText1!.color,
+                                ),
+                              ),
+                            ),
+                          if (([0, selected.length])
+                              .contains(selected.where((element) => element.isPinned!).length))
+                            GestureDetector(
+                              onTap: () {
+                                for (Chat element in selected) {
+                                  element.togglePin(!element.isPinned!);
+                                }
+                                selected = [];
+                                if (mounted) setState(() {});
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Icon(
+                                  selected[0].isPinned! ? Icons.star_outline : Icons.star,
+                                  color: context.textTheme.bodyText1!.color,
+                                ),
+                              ),
+                            ),
+                          GestureDetector(
+                            onTap: () {
+                              for (Chat element in selected) {
+                                if (element.isArchived!) {
+                                  ChatBloc().unArchiveChat(element);
+                                } else {
+                                  ChatBloc().archiveChat(element);
+                                }
+                              }
+                              selected = [];
+                              if (mounted) setState(() {});
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Icon(
+                                showArchived ? Icons.unarchive : Icons.archive,
+                                color: context.textTheme.bodyText1!.color,
+                              ),
+                            ),
+                          ),
+                          if (selected[0].isArchived!)
+                            GestureDetector(
+                              onTap: () {
+                                for (Chat element in selected) {
+                                  ChatBloc().deleteChat(element);
+                                  Chat.deleteChat(element);
+                                }
+                                selected = [];
+                                if (mounted) setState(() {});
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Icon(
+                                  Icons.delete_forever,
+                                  color: context.textTheme.bodyText1!.color,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-          backgroundColor: context.theme.backgroundColor,
-          body: Obx(
-                () {
-              if (!ChatBloc().loadedChatBatch.value) {
-                return Center(
-                  child: Container(
-                    padding: EdgeInsets.only(top: 50.0),
-                    child: Column(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Text(
-                            "Loading chats...",
-                            style: Theme.of(context).textTheme.subtitle1,
+            backgroundColor: context.theme.backgroundColor,
+            body: Obx(
+                  () {
+                if (!ChatBloc().loadedChatBatch.value) {
+                  return Center(
+                    child: Container(
+                      padding: EdgeInsets.only(top: 50.0),
+                      child: Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text(
+                              "Loading chats...",
+                              style: Theme.of(context).textTheme.subtitle1,
+                            ),
                           ),
-                        ),
-                        buildProgressIndicator(context, size: 15),
-                      ],
+                          buildProgressIndicator(context, size: 15),
+                        ],
+                      ),
                     ),
-                  ),
-                );
-              }
-              if (ChatBloc().loadedChatBatch.value && ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).isEmpty) {
-                return Center(
-                  child: Container(
-                    padding: EdgeInsets.only(top: 50.0),
-                    child: Text(
-                      "You have no archived chats :(",
-                      style: context.textTheme.subtitle1,
+                  );
+                }
+                if (ChatBloc().loadedChatBatch.value && ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).isEmpty) {
+                  return Center(
+                    child: Container(
+                      padding: EdgeInsets.only(top: 50.0),
+                      child: Text(
+                        "You have no archived chats :(",
+                        style: context.textTheme.subtitle1,
+                      ),
                     ),
-                  ),
-                );
-              }
-              return ListView.builder(
-                physics: ThemeSwitcher.getScrollPhysics(),
-                itemBuilder: (context, index) {
-                  return Obx(() {
-                    if (SettingsManager().settings.swipableConversationTiles.value) {
-                      return Dismissible(
-                          background:
-                          (kIsDesktop || kIsWeb) ? null : Obx(() => slideRightBackground(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index])),
-                          secondaryBackground:
-                          (kIsDesktop || kIsWeb) ? null : Obx(() => slideLeftBackground(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index])),
-                          // Each Dismissible must contain a Key. Keys allow Flutter to
-                          // uniquely identify widgets.
-                          key: UniqueKey(),
-                          // Provide a function that tells the app
-                          // what to do after an item has been swiped away.
-                          onDismissed: (direction) async {
-                            if (direction == DismissDirection.endToStart) {
-                              if (SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.pin) {
-                                await ChatBloc()
-                                    .chats
-                                    .archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]
-                                    .togglePin(!ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isPinned!);
-                                EventDispatcher().emit("refresh", null);
-                                if (mounted) setState(() {});
-                              } else if (SettingsManager().settings.materialLeftAction.value ==
-                                  MaterialSwipeAction.alerts) {
-                                await ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].toggleMute(
-                                    ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].muteType != "mute");
-                                if (mounted) setState(() {});
-                              } else if (SettingsManager().settings.materialLeftAction.value ==
-                                  MaterialSwipeAction.delete) {
-                                ChatBloc().deleteChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
-                                Chat.deleteChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
-                              } else if (SettingsManager().settings.materialLeftAction.value ==
-                                  MaterialSwipeAction.mark_read) {
-                                ChatBloc().toggleChatUnread(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index],
-                                    !ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].hasUnreadMessage!);
-                              } else {
-                                if (ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isArchived!) {
-                                  ChatBloc().unArchiveChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
-                                } else {
-                                  ChatBloc().archiveChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
-                                }
-                              }
-                            } else {
-                              if (SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.pin) {
-                                await ChatBloc()
-                                    .chats
-                                    .archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]
-                                    .togglePin(!ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isPinned!);
-                                EventDispatcher().emit("refresh", null);
-                                if (mounted) setState(() {});
-                              } else if (SettingsManager().settings.materialRightAction.value ==
-                                  MaterialSwipeAction.alerts) {
-                                await ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].toggleMute(
-                                    ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].muteType != "mute");
-                                if (mounted) setState(() {});
-                              } else if (SettingsManager().settings.materialRightAction.value ==
-                                  MaterialSwipeAction.delete) {
-                                ChatBloc().deleteChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
-                                Chat.deleteChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
-                              } else if (SettingsManager().settings.materialRightAction.value ==
-                                  MaterialSwipeAction.mark_read) {
-                                ChatBloc().toggleChatUnread(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index],
-                                    !ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].hasUnreadMessage!);
-                              } else {
-                                if (ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isArchived!) {
-                                  ChatBloc().unArchiveChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
-                                } else {
-                                  ChatBloc().archiveChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
-                                }
-                              }
-                            }
-                          },
-                          child: (!showArchived && ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isArchived!)
-                              ? Container()
-                              : (showArchived && !ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isArchived!)
-                              ? Container()
-                              : ConversationTile(
+                  );
+                }
+                return ListView.builder(
+                  physics: ThemeSwitcher.getScrollPhysics(),
+                  itemBuilder: (context, index) {
+                    return Obx(() {
+                      if (SettingsManager().settings.swipableConversationTiles.value) {
+                        return Dismissible(
+                            background:
+                            (kIsDesktop || kIsWeb) ? null : Obx(() => slideRightBackground(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index])),
+                            secondaryBackground:
+                            (kIsDesktop || kIsWeb) ? null : Obx(() => slideLeftBackground(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index])),
+                            // Each Dismissible must contain a Key. Keys allow Flutter to
+                            // uniquely identify widgets.
                             key: UniqueKey(),
-                            chat: ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index],
-                            inSelectMode: selected.isNotEmpty,
-                            selected: selected,
-                            onSelect: (bool selected) {
-                              if (selected) {
-                                this.selected.add(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
-                                setState(() {});
+                            // Provide a function that tells the app
+                            // what to do after an item has been swiped away.
+                            onDismissed: (direction) async {
+                              if (direction == DismissDirection.endToStart) {
+                                if (SettingsManager().settings.materialLeftAction.value == MaterialSwipeAction.pin) {
+                                  ChatBloc()
+                                      .chats
+                                      .archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]
+                                      .togglePin(!ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isPinned!);
+                                  EventDispatcher().emit("refresh", null);
+                                  if (mounted) setState(() {});
+                                } else if (SettingsManager().settings.materialLeftAction.value ==
+                                    MaterialSwipeAction.alerts) {
+                                  ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].toggleMute(
+                                      ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].muteType != "mute");
+                                  if (mounted) setState(() {});
+                                } else if (SettingsManager().settings.materialLeftAction.value ==
+                                    MaterialSwipeAction.delete) {
+                                  ChatBloc().deleteChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
+                                  Chat.deleteChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
+                                } else if (SettingsManager().settings.materialLeftAction.value ==
+                                    MaterialSwipeAction.mark_read) {
+                                  ChatBloc().toggleChatUnread(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index],
+                                      !ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].hasUnreadMessage!);
+                                } else {
+                                  if (ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isArchived!) {
+                                    ChatBloc().unArchiveChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
+                                  } else {
+                                    ChatBloc().archiveChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
+                                  }
+                                }
                               } else {
-                                this.selected.removeWhere((element) =>
-                                element.guid ==
-                                    ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].guid);
-                                setState(() {});
+                                if (SettingsManager().settings.materialRightAction.value == MaterialSwipeAction.pin) {
+                                  ChatBloc()
+                                      .chats
+                                      .archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]
+                                      .togglePin(!ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isPinned!);
+                                  EventDispatcher().emit("refresh", null);
+                                  if (mounted) setState(() {});
+                                } else if (SettingsManager().settings.materialRightAction.value ==
+                                    MaterialSwipeAction.alerts) {
+                                  ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].toggleMute(
+                                      ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].muteType != "mute");
+                                  if (mounted) setState(() {});
+                                } else if (SettingsManager().settings.materialRightAction.value ==
+                                    MaterialSwipeAction.delete) {
+                                  ChatBloc().deleteChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
+                                  Chat.deleteChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
+                                } else if (SettingsManager().settings.materialRightAction.value ==
+                                    MaterialSwipeAction.mark_read) {
+                                  ChatBloc().toggleChatUnread(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index],
+                                      !ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].hasUnreadMessage!);
+                                } else {
+                                  if (ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isArchived!) {
+                                    ChatBloc().unArchiveChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
+                                  } else {
+                                    ChatBloc().archiveChat(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
+                                  }
+                                }
                               }
                             },
-                          ));
-                    } else {
-                      return ConversationTile(
-                        key: UniqueKey(),
-                        chat: ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index],
-                        inSelectMode: selected.isNotEmpty,
-                        selected: selected,
-                        onSelect: (bool selected) {
-                          if (selected) {
-                            this.selected.add(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
-                            setState(() {});
-                          } else {
-                            this.selected.removeWhere((element) =>
-                            element.guid == ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].guid);
-                            setState(() {});
-                          }
-                        },
-                      );
-                    }
-                  });
-                },
-                itemCount: ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).length,
-              );
-            },
+                            child: (!showArchived && ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isArchived!)
+                                ? Container()
+                                : (showArchived && !ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].isArchived!)
+                                ? Container()
+                                : ConversationTile(
+                              key: UniqueKey(),
+                              chat: ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index],
+                              inSelectMode: selected.isNotEmpty,
+                              selected: selected,
+                              onSelect: (bool selected) {
+                                if (selected) {
+                                  this.selected.add(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
+                                  setState(() {});
+                                } else {
+                                  this.selected.removeWhere((element) =>
+                                  element.guid ==
+                                      ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].guid);
+                                  setState(() {});
+                                }
+                              },
+                            ));
+                      } else {
+                        return ConversationTile(
+                          key: UniqueKey(),
+                          chat: ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index],
+                          inSelectMode: selected.isNotEmpty,
+                          selected: selected,
+                          onSelect: (bool selected) {
+                            if (selected) {
+                              this.selected.add(ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index]);
+                              setState(() {});
+                            } else {
+                              this.selected.removeWhere((element) =>
+                              element.guid == ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown)[index].guid);
+                              setState(() {});
+                            }
+                          },
+                        );
+                      }
+                    });
+                  },
+                  itemCount: ChatBloc().chats.archivedHelper(showArchived).unknownSendersHelper(showUnknown).length,
+                );
+              },
+            ),
+            floatingActionButton: selected.isEmpty && !SettingsManager().settings.moveChatCreatorToHeader.value
+                ? widget.parent.buildFloatingActionButton()
+                : null,
           ),
-          floatingActionButton: selected.isEmpty && !SettingsManager().settings.moveChatCreatorToHeader.value
-              ? widget.parent.buildFloatingActionButton()
-              : null,
         ),
       ),
     );
@@ -685,7 +686,8 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
   }
 
   Widget buildForDevice() {
-    bool showAltLayout = SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape);
+    bool showAltLayout =
+        (SettingsManager().settings.tabletMode.value || kIsDesktop) && (!context.isPhone || context.isLandscape);
     Widget chatList = buildChatList();
     if (showAltLayout && !widget.parent.widget.showUnknownSenders && !widget.parent.widget.showArchivedChats) {
       return buildForLandscape(context, chatList);

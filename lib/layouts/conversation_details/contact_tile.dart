@@ -5,8 +5,7 @@ import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_widget.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
@@ -15,7 +14,6 @@ import 'package:bluebubbles/helpers/redacted_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -137,7 +135,7 @@ class ContactTile extends StatelessWidget {
           handle: handle,
           borderThickness: 0.1,
         ),
-        trailing: kIsWeb || (!isEmail && (contact?.phones.isEmpty ?? true)) ? Container(width: 2) : FittedBox(
+        trailing: kIsWeb || (kIsDesktop && !isEmail) || (!isEmail && (contact?.phones.isEmpty ?? true)) ? Container(width: 2) : FittedBox(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             mainAxisSize: MainAxisSize.max,
@@ -284,7 +282,7 @@ class ContactTile extends StatelessWidget {
                 Chat updatedChat = Chat.fromMap(response["data"]);
                 updatedChat.save();
                 await ChatBloc().updateChatPosition(updatedChat);
-                Chat chatWithParticipants = await updatedChat.getParticipants();
+                Chat chatWithParticipants = updatedChat.getParticipants();
 
                 Logger.info("Updating chat with ${chatWithParticipants.participants.length} participants");
                 updateChat(chatWithParticipants);

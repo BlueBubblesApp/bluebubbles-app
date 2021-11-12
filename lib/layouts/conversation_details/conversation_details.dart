@@ -1,7 +1,6 @@
 import 'package:bluebubbles/helpers/attachment_helper.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/contact_avatar_group_widget.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:printing/printing.dart';
@@ -10,7 +9,6 @@ import 'package:universal_io/io.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
 import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/conversation_details/attachment_details_card.dart';
@@ -19,10 +17,7 @@ import 'package:bluebubbles/layouts/widgets/avatar_crop.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -75,22 +70,11 @@ class _ConversationDetailsState extends State<ConversationDetails> {
     ever(ChatBloc().chats, (List<Chat> chats) async {
       Chat? _chat = chats.firstWhereOrNull((e) => e.guid == widget.chat.guid);
       if (_chat == null) return;
-      await _chat.getParticipants();
+      _chat.getParticipants();
       chat = _chat;
       readOnly = !(chat.participants.length > 1);
       if (mounted) setState(() {});
     });
-  }
-
-  @override
-  void didChangeDependencies() async {
-    super.didChangeDependencies();
-
-    await chat.getParticipants();
-    readOnly = !(chat.participants.length > 1);
-
-    Logger.info("Updated readonly $readOnly");
-    if (mounted) setState(() {});
   }
 
   void fetchAttachments() {
@@ -99,7 +83,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
       if (mounted) setState(() {});
       return;
     }
-    Chat.getAttachments(chat).then((value) {
+    chat.getAttachmentsAsync().then((value) {
       attachmentsForChat = value;
       if (attachmentsForChat.length > 25) attachmentsForChat = attachmentsForChat.sublist(0, 25);
       if (mounted) setState(() {});
@@ -148,8 +132,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     }
                   } else {
                     Get.back();
-                    await widget.chat.changeName(controller.text);
-                    await widget.chat.getTitle();
+                    widget.chat.changeName(controller.text);
+                    widget.chat.getTitle();
                     ChatBloc().updateChat(chat);
                   }
                 },
@@ -472,7 +456,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                     SliverToBoxAdapter(
                       child: InkWell(
                         onTap: () async {
-                          if (chat.customAvatarPath.value != null) {
+                          if (chat.customAvatarPath != null) {
                             showDialog(
                               context: context,
                               builder: (BuildContext context) {
@@ -506,9 +490,9 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                                   .subtitle1!
                                                   .apply(color: Theme.of(context).primaryColor)),
                                           onPressed: () {
-                                            File file = File(chat.customAvatarPath.value!);
+                                            File file = File(chat.customAvatarPath!);
                                             file.delete();
-                                            chat.customAvatarPath.value = null;
+                                            chat.customAvatarPath = null;
                                             chat.save();
                                             Get.back();
                                           }),
@@ -612,8 +596,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                 activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
                                 inactiveTrackColor: Theme.of(context).colorScheme.secondary.withOpacity(0.6),
                                 inactiveThumbColor: Theme.of(context).colorScheme.secondary,
-                                onChanged: (value) async {
-                                  await widget.chat.togglePin(!widget.chat.isPinned!);
+                                onChanged: (value) {
+                                  widget.chat.togglePin(!widget.chat.isPinned!);
                                   EventDispatcher().emit("refresh", null);
                                   if (mounted) setState(() {});
                               }))),
@@ -630,8 +614,8 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                 activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
                                 inactiveTrackColor: Theme.of(context).colorScheme.secondary.withOpacity(0.6),
                                 inactiveThumbColor: Theme.of(context).colorScheme.secondary,
-                                onChanged: (value) async {
-                                  await widget.chat.toggleMute(value);
+                                onChanged: (value) {
+                                  widget.chat.toggleMute(value);
                                   EventDispatcher().emit("refresh", null);
 
                                   if (mounted) setState(() {});
@@ -662,7 +646,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                   if (!kIsWeb)
                     SliverToBoxAdapter(
                       child: InkWell(
-                        onTap: () async {
+                        onTap: () {
                           if (mounted) {
                             setState(() {
                               isClearing = true;
@@ -670,7 +654,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                           }
 
                           try {
-                            await widget.chat.clearTranscript();
+                            widget.chat.clearTranscript();
                             EventDispatcher().emit("refresh-messagebloc", {"chatGuid": widget.chat.guid});
                             if (mounted) {
                               setState(() {
@@ -805,7 +789,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                             barrierDismissible: false,
                             backgroundColor: Theme.of(context).backgroundColor,
                           );
-                          final messages = (await Chat.getMessages(chat, limit: 0, includeDeleted: true))
+                          final messages = (await Chat.getMessagesAsync(chat, limit: 0, includeDeleted: true))
                               .reversed
                               .where((e) => DateTime.now().isWithin(e.dateCreated!, hours: hours != 0 ? hours : null, days: days != 0 ? days : null));
                           if (messages.isEmpty) {
@@ -816,12 +800,12 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                           final List<String> lines = [];
                           for (Message m in messages) {
                             if (m.hasAttachments) {
-                              await m.fetchAttachments();
+                              m.fetchAttachments();
                             }
-                            final readStr = m.dateRead.value != null ? "Read: ${buildFullDate(m.dateRead.value!)}, " : "";
-                            final deliveredStr = m.dateDelivered.value != null ? "Delivered: ${buildFullDate(m.dateDelivered.value!)}, " : "";
+                            final readStr = m.dateRead != null ? "Read: ${buildFullDate(m.dateRead!)}, " : "";
+                            final deliveredStr = m.dateDelivered != null ? "Delivered: ${buildFullDate(m.dateDelivered!)}, " : "";
                             final sentStr = "Sent: ${buildFullDate(m.dateCreated!)}";
-                            final text = await MessageHelper.getNotificationText(m, withSender: true);
+                            final text = MessageHelper.getNotificationText(m, withSender: true);
                             final line = "(" + readStr + deliveredStr + sentStr + ") " + text;
                             lines.add(line);
                           }
@@ -946,7 +930,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                             barrierDismissible: false,
                             backgroundColor: Theme.of(context).backgroundColor,
                           );
-                          final messages = (await Chat.getMessages(chat, limit: 0, includeDeleted: true))
+                          final messages = (await Chat.getMessagesAsync(chat, limit: 0, includeDeleted: true))
                               .reversed
                               .where((e) => DateTime.now().isWithin(e.dateCreated!, hours: hours != 0 ? hours : null, days: days != 0 ? days : null));
                           if (messages.isEmpty) {
@@ -960,10 +944,10 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                           final List<Size?> dimensions = [];
                           for (Message m in messages) {
                             if (m.hasAttachments) {
-                              await m.fetchAttachments();
+                              m.fetchAttachments();
                             }
-                            final readStr = m.dateRead.value != null ? "Read: ${buildFullDate(m.dateRead.value!)}, " : "";
-                            final deliveredStr = m.dateDelivered.value != null ? "Delivered: ${buildFullDate(m.dateDelivered.value!)}, " : "";
+                            final readStr = m.dateRead != null ? "Read: ${buildFullDate(m.dateRead!)}, " : "";
+                            final deliveredStr = m.dateDelivered != null ? "Delivered: ${buildFullDate(m.dateDelivered!)}, " : "";
                             final sentStr = "Sent: ${buildFullDate(m.dateCreated!)}";
                             if (m.hasAttachments) {
                               final attachments = m.attachments.where((e) => e?.guid != null && ["image/png", "image/jpg", "image/jpeg"].contains(e!.mimeType));
@@ -978,11 +962,11 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                 }
                               }
                               timestamps.add(readStr + deliveredStr + sentStr);
-                              content.add(await MessageHelper.getNotificationText(m, withSender: true));
+                              content.add(MessageHelper.getNotificationText(m, withSender: true));
                               dimensions.add(null);
                             } else {
                               timestamps.add(readStr + deliveredStr + sentStr);
-                              content.add(await MessageHelper.getNotificationText(m, withSender: true));
+                              content.add(MessageHelper.getNotificationText(m, withSender: true));
                               dimensions.add(null);
                             }
                           }
@@ -1114,7 +1098,7 @@ class _SyncDialogState extends State<SyncDialog> {
   void syncMessages() async {
     int offset = 0;
     if (widget.withOffset) {
-      offset = await Message.countForChat(widget.chat) ?? 0;
+      offset = Message.countForChat(widget.chat) ?? 0;
     }
 
     SocketManager().fetchMessages(widget.chat, offset: offset, limit: widget.limit)!.then((dynamic messages) {

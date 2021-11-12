@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:bluebubbles/repository/models/platform_file.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 import 'dart:typed_data';
@@ -15,7 +15,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
@@ -180,7 +180,7 @@ class _AttachmentDetailsCardState extends State<AttachmentDetailsCard> with Auto
   }
 
   Future<void> getVideoPreview(PlatformFile file) async {
-    if (previewImage != null || kIsWeb || file.path == null) return;
+    if (previewImage != null || kIsWeb || kIsDesktop || file.path == null) return;
     previewImage = await AttachmentHelper.getVideoThumbnail(file.path!);
     Size size = await AttachmentHelper.getImageSizing("${file.path}.thumbnail");
     widget.attachment.width = size.width.toInt();
