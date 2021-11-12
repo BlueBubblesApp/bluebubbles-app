@@ -421,8 +421,7 @@ class ThemePanel extends GetView<ThemePanelController> {
                                   confirm: Obx(
                                     () => downloadingFont.value
                                         ? Container(height: 0, width: 0)
-                                        : Flexible(
-                                            child: Container(
+                                        : Container(
                                               margin: EdgeInsets.only(bottom: 10),
                                               child: TextButton(
                                                 child: Text("CLOSE"),
@@ -433,7 +432,6 @@ class ThemePanel extends GetView<ThemePanelController> {
                                                 },
                                               ),
                                             ),
-                                          ),
                                   ),
                                   cancel: Container(height: 0, width: 0),
                                   content: ConstrainedBox(
