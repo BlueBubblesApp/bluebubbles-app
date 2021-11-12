@@ -1022,7 +1022,7 @@ class Chat {
     return message;
   }
 
-  bool get isTextForwarding => chatIdentifier?.startsWith("sms") ?? false;
+  bool get isTextForwarding => guid?.startsWith("SMS") ?? false;
 
   bool get isSMS => false;
 
