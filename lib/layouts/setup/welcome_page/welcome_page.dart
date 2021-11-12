@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:bluebubbles/helpers/hex_color.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -88,7 +89,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                 ),
                 child: SafeArea(
                   child: Padding(
-                    padding: const EdgeInsets.only(top: 80.0, left: 20.0, right: 20.0, bottom: 40.0),
+                    padding: EdgeInsets.only(top: 80.0 + (kIsDesktop ? 20 : 0), left: 20.0, right: 20.0, bottom: 40.0),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: <Widget>[
