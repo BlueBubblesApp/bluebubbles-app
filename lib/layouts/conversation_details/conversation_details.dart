@@ -737,13 +737,14 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                           context: context,
                           builder: (BuildContext context) {
                             return AlertDialog(
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                               title: Text(
                                 "Select timeframe",
                                 style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
                               ),
                               content: Column(mainAxisSize: MainAxisSize.min, children: [
                                 Padding(
-                                    padding: EdgeInsets.all(15),
+                                    padding: EdgeInsets.only(bottom: 15),
                                     child: Text("Note: Longer timeframes may take a while to generate the txt file")),
                                 Wrap(
                                   alignment: WrapAlignment.center,
@@ -792,12 +793,13 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                   ],
                                 )
                               ]),
-                              backgroundColor: Theme.of(context).backgroundColor,
+                              backgroundColor: Theme.of(context).colorScheme.secondary,
                             );
                           },
                         );
                         if (hours == 0 && days == 0) return;
                         Get.defaultDialog(
+                          radius: 15,
                           title: "Generating transcript...",
                           titleStyle: Theme.of(context).textTheme.headline1,
                           confirm: Container(height: 0, width: 0),
@@ -815,7 +817,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                             DateTime.now().isWithin(e.dateCreated!,
                                 hours: hours != 0 ? hours : null, days: days != 0 ? days : null));
                         if (messages.isEmpty) {
-                          Navigator.of(context).pop();
+                          Get.close(1);
                           showSnackbar("Error", "No messages found!");
                           return;
                         }
@@ -846,6 +848,9 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                             await file.writeAsString(lines.join('\n'));
                             Get.close(1);
                             return showSnackbar('Success', 'Saved transcript to $savePath!');
+                          } else {
+                            Get.close(1);
+                            return;
                           }
                         }
                         String filePath = "/storage/emulated/0/Download/" + fileName;
@@ -883,13 +888,15 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                           context: context,
                           builder: (BuildContext context) {
                             return AlertDialog(
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                              backgroundColor: context.theme.colorScheme.secondary,
                               title: Text(
                                 "Select timeframe",
                                 style: Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 1.5),
                               ),
                               content: Column(mainAxisSize: MainAxisSize.min, children: [
                                 Padding(
-                                    padding: EdgeInsets.all(15),
+                                    padding: EdgeInsets.only(bottom: 15),
                                     child: Text("Note: Longer timeframes may take a while to generate the PDF")),
                                 Wrap(
                                   alignment: WrapAlignment.center,
@@ -938,12 +945,12 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                   ],
                                 )
                               ]),
-                              backgroundColor: Theme.of(context).backgroundColor,
                             );
                           },
                         );
                         if (hours == 0 && days == 0) return;
                         Get.defaultDialog(
+                          radius: 15,
                           title: "Generating PDF...",
                           titleStyle: Theme.of(context).textTheme.headline1,
                           confirm: Container(height: 0, width: 0),
@@ -955,13 +962,13 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                             buildProgressIndicator(context),
                           ]),
                           barrierDismissible: false,
-                          backgroundColor: Theme.of(context).backgroundColor,
+                          backgroundColor: Theme.of(context).colorScheme.secondary,
                         );
                         final messages = Chat.getMessages(chat, limit: 0, includeDeleted: true).reversed.where((e) =>
                             DateTime.now().isWithin(e.dateCreated!,
                                 hours: hours != 0 ? hours : null, days: days != 0 ? days : null));
                         if (messages.isEmpty) {
-                          Navigator.of(context).pop();
+                          Get.close(1);
                           showSnackbar("Error", "No messages found!");
                           return;
                         }
@@ -1052,6 +1059,9 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                             await file.writeAsBytes(await doc.save());
                             Get.close(1);
                             return showSnackbar('Success', 'Saved transcript to $savePath!');
+                          } else {
+                            Get.close(1);
+                            return;
                           }
                         }
                         String filePath = "/storage/emulated/0/Download/" + fileName;
