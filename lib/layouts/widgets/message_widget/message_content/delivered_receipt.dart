@@ -24,8 +24,6 @@ class DeliveredReceipt extends StatefulWidget {
 class _DeliveredReceiptState extends State<DeliveredReceipt> with TickerProviderStateMixin {
   bool shouldShow(Message? myLastMessage, Message? lastReadMessage, Message? lastDeliveredMessage) {
     // If we have no delivered date, don't show anything
-    if (widget.message.dateDelivered == null) return false;
-
     if (CurrentChat.activeChat != null) {
       lastReadMessage ??= CurrentChat.activeChat?.messageMarkers.lastReadMessage;
       lastDeliveredMessage ??= CurrentChat.activeChat?.messageMarkers.lastDeliveredMessage;

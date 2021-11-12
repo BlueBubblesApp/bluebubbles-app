@@ -575,7 +575,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
             : 45,
         onTap: openDetails,
       ),
-      SizedBox(height: 5.0, width: 5.0),
+      SizedBox(height: avatars.length == 1 ? 5.0 : 0, width: 5.0),
       Row(mainAxisSize: MainAxisSize.min, children: [
         Container(
           constraints: BoxConstraints(
@@ -613,7 +613,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     return PreferredSize(
       preferredSize: Size.fromHeight(context.orientation == Orientation.landscape && context.isPhone ? 55 : 75),
       child: CupertinoNavigationBar(
-          padding: EdgeInsetsDirectional.only(top: kIsDesktop && avatars.length == 1 ? 5 : 0),
+          padding: EdgeInsetsDirectional.only(top: kIsDesktop ? avatars.length == 1 ? 10 : 5 : 0),
           backgroundColor: Theme.of(context).colorScheme.secondary.withAlpha(125),
           border: Border(
             bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1.5),
