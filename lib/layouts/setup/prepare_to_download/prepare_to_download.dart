@@ -87,6 +87,7 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                         ],
                       ),
                       Container(
+                        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(25),
                           color: Theme.of(context).backgroundColor.computeLuminance() > 0.5
@@ -106,7 +107,7 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                             Padding(
                               padding: const EdgeInsets.all(8.0),
                               child: Text(
-                                "Number of Messages to Sync Per Chat: $numberOfMessages",
+                                "Number of Messages to Sync Per Chat: ${numberOfMessages.round()}",
                                 style: Theme.of(context).textTheme.bodyText1!.apply(
                                   color: Colors.grey,
                                 ).copyWith(height: 1.5),
@@ -130,9 +131,9 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                             ),
                             SizedBox(height: 10),
                             Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 40.0),
+                              padding: EdgeInsets.symmetric(horizontal: 20.0),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment: MainAxisAlignment.end,
                                 mainAxisSize: MainAxisSize.max,
                                 children: [
                                   Text(
@@ -140,7 +141,7 @@ class _PrepareToDownloadState extends State<PrepareToDownload> {
                                     style: Theme.of(context).textTheme.bodyText1!.apply(
                                       color: Colors.grey,
                                     ).copyWith(height: 1.5),
-                                    textAlign: TextAlign.center,
+                                    textAlign: TextAlign.right,
                                   ),
                                   Switch(
                                     value: skipEmptyChats,

@@ -96,7 +96,7 @@ class _SetupViewState extends State<SetupView> {
                   ],
                 ),
                 Container(
-                  color: Theme.of(context).backgroundColor,
+                  color: Colors.transparent,
                   child: Padding(
                     padding: EdgeInsets.only(top: 20 + (kIsDesktop ? 20 : 0), left: 20, right: 20),
                     child: Row(
