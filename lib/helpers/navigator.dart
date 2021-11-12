@@ -1,4 +1,3 @@
-import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
@@ -36,8 +35,9 @@ class BaseNavigator extends GetxService {
 
   /// Push a new route onto the chat list right side navigator
   void push(BuildContext context, Widget widget) {
-    if (Get.keys.containsKey(2) && (!context.isPhone || context.isLandscape)
-        && (SettingsManager().settings.tabletMode.value || kIsDesktop)) {
+    if (Get.keys.containsKey(2) &&
+        (!context.isPhone || context.isLandscape) &&
+        (SettingsManager().settings.tabletMode.value)) {
       Get.to(() => widget, transition: Transition.rightToLeft, id: 2);
     } else {
       Navigator.of(context).push(ThemeSwitcher.buildPageRoute(
@@ -48,8 +48,9 @@ class BaseNavigator extends GetxService {
 
   /// Push a new route onto the chat list left side navigator
   void pushLeft(BuildContext context, Widget widget) {
-    if (Get.keys.containsKey(1) && (!context.isPhone || context.isLandscape)
-        && (SettingsManager().settings.tabletMode.value || kIsDesktop)) {
+    if (Get.keys.containsKey(1) &&
+        (!context.isPhone || context.isLandscape) &&
+        (SettingsManager().settings.tabletMode.value)) {
       Get.to(() => widget, transition: Transition.leftToRight, id: 1);
     } else {
       Navigator.of(context).push(ThemeSwitcher.buildPageRoute(
@@ -60,8 +61,9 @@ class BaseNavigator extends GetxService {
 
   /// Push a new route onto the settings navigator
   void pushSettings(BuildContext context, Widget widget, {Bindings? binding}) {
-    if (Get.keys.containsKey(3) && (!context.isPhone || context.isLandscape)
-        && (SettingsManager().settings.tabletMode.value || kIsDesktop)) {
+    if (Get.keys.containsKey(3) &&
+        (!context.isPhone || context.isLandscape) &&
+        (SettingsManager().settings.tabletMode.value)) {
       Get.to(() => widget, transition: Transition.rightToLeft, id: 3, binding: binding);
     } else {
       binding?.dependencies();
@@ -73,13 +75,17 @@ class BaseNavigator extends GetxService {
 
   /// Push a new route, popping all previous routes, on the chat list right side navigator
   void pushAndRemoveUntil(BuildContext context, Widget widget, bool Function(Route) predicate) {
-    if (Get.keys.containsKey(2) && (!context.isPhone || context.isLandscape)
-        && (SettingsManager().settings.tabletMode.value || kIsDesktop)) {
-      Get.offUntil(GetPageRoute(
-        page: () => widget,
-        transition: Transition.noTransition,
-        transitionDuration: Duration.zero,
-      ), predicate, id: 2);
+    if (Get.keys.containsKey(2) &&
+        (!context.isPhone || context.isLandscape) &&
+        (SettingsManager().settings.tabletMode.value)) {
+      Get.offUntil(
+          GetPageRoute(
+            page: () => widget,
+            transition: Transition.noTransition,
+            transitionDuration: Duration.zero,
+          ),
+          predicate,
+          id: 2);
     } else {
       Navigator.of(context).pushAndRemoveUntil(ThemeSwitcher.buildPageRoute(
         builder: (BuildContext context) => widget,
@@ -88,9 +94,11 @@ class BaseNavigator extends GetxService {
   }
 
   /// Push a new route, popping all previous routes, on the settings navigator
-  void pushAndRemoveSettingsUntil(BuildContext context, Widget widget, bool Function(Route) predicate, {Bindings? binding}) {
-    if (Get.keys.containsKey(3) && (!context.isPhone || context.isLandscape)
-        && (SettingsManager().settings.tabletMode.value || kIsDesktop)) {
+  void pushAndRemoveSettingsUntil(BuildContext context, Widget widget, bool Function(Route) predicate,
+      {Bindings? binding}) {
+    if (Get.keys.containsKey(3) &&
+        (!context.isPhone || context.isLandscape) &&
+        (SettingsManager().settings.tabletMode.value)) {
       // we only want to offUntil when in landscape, otherwise when the user presses back, the previous page will be the chat list
       Get.offUntil(GetPageRoute(
           page: () => widget,
@@ -108,7 +116,9 @@ class BaseNavigator extends GetxService {
   }
 
   void backSettingsCloseOverlays(BuildContext context) {
-    if (Get.keys.containsKey(3) && (!context.isPhone || context.isLandscape) && SettingsManager().settings.tabletMode.value) {
+    if (Get.keys.containsKey(3) &&
+        (!context.isPhone || context.isLandscape) &&
+        (SettingsManager().settings.tabletMode.value)) {
       Get.back(closeOverlays: true, id: 3);
     } else {
       Get.back(closeOverlays: true);

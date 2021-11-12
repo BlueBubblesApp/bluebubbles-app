@@ -11,6 +11,7 @@ import 'package:bluebubbles/layouts/conversation_list/conversation_list.dart';
 import 'package:bluebubbles/layouts/conversation_list/conversation_tile.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/search/search_view.dart';
+import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/layouts/widgets/vertical_split_view.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
@@ -687,10 +688,12 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
 
   Widget buildForDevice() {
     bool showAltLayout =
-        (SettingsManager().settings.tabletMode.value || kIsDesktop) && (!context.isPhone || context.isLandscape);
+        SettingsManager().settings.tabletMode.value && (!context.isPhone || context.isLandscape);
     Widget chatList = buildChatList();
     if (showAltLayout && !widget.parent.widget.showUnknownSenders && !widget.parent.widget.showArchivedChats) {
       return buildForLandscape(context, chatList);
+    } else if (kIsDesktop) {
+      return TitleBarWrapper(child: chatList);
     }
 
     return chatList;

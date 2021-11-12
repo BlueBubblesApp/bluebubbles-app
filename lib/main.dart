@@ -242,7 +242,7 @@ Future<Null> main() async {
       await WindowManager.instance.setTitle('BlueBubbles (Beta)');
       WindowManager.instance.addListener(DesktopWindowListener());
       doWhenWindowReady(() {
-        appWindow.minSize = Size(900, 600);
+        appWindow.minSize = Size(300, 300);
         appWindow.alignment = Alignment.center;
         appWindow.title = 'BlueBubbles (Beta)';
         appWindow.show();

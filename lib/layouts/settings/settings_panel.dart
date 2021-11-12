@@ -23,6 +23,8 @@ import 'package:bluebubbles/layouts/settings/redacted_mode_panel.dart';
 import 'package:bluebubbles/layouts/settings/server_management_panel.dart';
 import 'package:bluebubbles/layouts/settings/theme_panel.dart';
 import 'package:bluebubbles/layouts/settings/troubleshoot_panel.dart';
+import 'package:bluebubbles/layouts/setup/setup_view.dart';
+import 'package:bluebubbles/layouts/titlebar_wrapper.dart';
 import 'package:bluebubbles/layouts/widgets/vertical_split_view.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:collection/collection.dart';
@@ -1198,6 +1200,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
     Widget settingsList = buildSettingsList();
     if (showAltLayout) {
       return buildForLandscape(context, settingsList);
+    } else if (kIsDesktop) {
+      return TitleBarWrapper(child: settingsList);
     }
 
     return settingsList;
