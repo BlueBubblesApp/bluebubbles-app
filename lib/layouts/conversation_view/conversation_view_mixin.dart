@@ -24,12 +24,10 @@ import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
-import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart' as cupertino;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -134,14 +132,14 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     });
   }
 
-  void setNewChatData({forceUpdate = false}) async {
+  void setNewChatData({forceUpdate = false}) {
     // Save the current participant list and get the latest
     List<Handle> ogParticipants = widget.chat!.participants;
-    await widget.chat!.getParticipants();
+    widget.chat!.getParticipants();
 
     // Save the current title and generate the new one
     String? ogTitle = widget.chat!.title;
-    await widget.chat!.getTitle();
+    widget.chat!.getTitle();
 
     // If the original data is different, update the state
     if (ogTitle != widget.chat!.title || ogParticipants.length != widget.chat!.participants.length || forceUpdate) {
@@ -186,7 +184,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
 
     // If we don't have participants, get them
     if (chat!.participants.isEmpty) {
-      await chat!.getParticipants();
+      chat!.getParticipants();
 
       // If we have participants, refresh the state
       if (chat!.participants.isNotEmpty) {
@@ -201,7 +199,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         Chat? data = await fetchChatSingleton(chat!.guid!);
         // If we got data back, fetch the participants and update the state
         if (data != null) {
-          await chat!.getParticipants();
+          chat!.getParticipants();
           if (chat!.participants.isNotEmpty) {
             Logger.info("Got new chat participants. Updating state.", tag: "ConversationView");
             if (mounted) setState(() {});
@@ -218,7 +216,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     processingParticipants = false;
   }
 
-  Future<void> openDetails() async {
+  void openDetails() {
     Navigator.of(context).push(
       ThemeSwitcher.buildPageRoute(
         builder: (context) => ConversationDetails(
@@ -739,7 +737,12 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     // If it's just one recipient, try manual lookup
     if (selected.length == 1) {
       try {
-        Chat? existingChat = await Chat.findOne({"chatIdentifier": slugify(selected[0].address!, delimiter: '')});
+        Chat? existingChat;
+        if (kIsWeb) {
+          existingChat = await Chat.findOneWeb(chatIdentifier: slugify(selected[0].address!, delimiter: ''));
+        } else {
+          existingChat = Chat.findOne(chatIdentifier: slugify(selected[0].address!, delimiter: ''));
+        }
         if (existingChat != null) {
           matchingChats.add(existingChat);
         }
@@ -792,7 +795,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     messageBloc = initMessageBloc();
 
     // Tell the notification manager that we are looking at a specific chat
-    await NotificationManager().switchChat(chat);
+    NotificationManager().switchChat(chat);
     if (mounted) setState(() {});
   }
 
@@ -804,11 +807,11 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       await ChatBloc().refreshChats();
     }
 
-    Future<void> setChats(List<Chat> newChats) async {
+    void setChats(List<Chat> newChats) {
       conversations = newChats;
       for (int i = 0; i < conversations.length; i++) {
         if (isNullOrEmpty(conversations[i].participants)!) {
-          await conversations[i].getParticipants();
+          conversations[i].getParticipants();
         }
       }
 
@@ -823,13 +826,13 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       previousContactCount = chats.length;
 
       // Update and filter the chats
-      await setChats(chats);
+      setChats(chats);
     });
 
     // When the chat request is finished, set the chats
     if (ChatBloc().chatRequest != null) {
       await ChatBloc().chatRequest!.future;
-      await setChats(ChatBloc().chats);
+      setChats(ChatBloc().chats);
     }
   }
 
@@ -973,7 +976,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     Logger.info("Starting chat with participants: ${participants.join(", ")}");
 
     Future<void> returnChat(Chat newChat) async {
-      await newChat.save();
+      newChat.save();
       await ChatBloc().updateChatPosition(newChat);
       completer.complete(newChat);
       Navigator.of(context).pop();
@@ -982,7 +985,11 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     // If there is only 1 participant, try to find the chat
     Chat? existingChat;
     if (participants.length == 1) {
-      existingChat = await Chat.findOne({"chatIdentifier": slugify(participants[0], delimiter: '')});
+      if (kIsWeb) {
+        existingChat = await Chat.findOneWeb(chatIdentifier: slugify(participants[0], delimiter: ''));
+      } else {
+        existingChat = Chat.findOne(chatIdentifier: slugify(participants[0], delimiter: ''));
+      }
     }
 
     if (SettingsManager().settings.enablePrivateAPI.value && (await SettingsManager().getMacOSVersion() ?? 0) > 10 && existingChat == null) {

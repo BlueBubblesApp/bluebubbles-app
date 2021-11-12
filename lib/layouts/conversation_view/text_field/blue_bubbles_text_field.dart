@@ -19,12 +19,7 @@ import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/handle.dart';
-import 'package:bluebubbles/repository/models/js.dart';
-import 'package:bluebubbles/repository/models/message.dart';
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:bluebubbles/socket_manager.dart';
 import 'package:dio_http/dio_http.dart';
 import 'package:faker/faker.dart';
@@ -613,15 +608,14 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
             placeholder = chat?.isTextForwarding ?? false
                 ? "Text Forwarding" : "iMessage";
           } else {
-            String? title = await CurrentChat.forGuid(widget.chatGuid)?.chat.getTitle();
+            String? title = CurrentChat.forGuid(widget.chatGuid)?.chat.getTitle();
             if (!isNullOrEmpty(title)!) {
               placeholder = title!;
             }
           }
         } else if (!isNullOrEmpty(CurrentChat.forGuid(widget.chatGuid)?.chat.participants)!) {
           if (generateNames) {
-            placeholder = CurrentChat.forGuid(widget.chatGuid)!.chat.fakeParticipants[0] ??
-                (chat?.isTextForwarding ?? false ? "Text Forwarding" : "iMessage");
+            placeholder = CurrentChat.forGuid(widget.chatGuid)!.chat.fakeParticipants[0];
           } else if (hideInfo) {
             placeholder = chat?.isTextForwarding ?? false ? "Text Forwarding" : "iMessage";
           } else {
@@ -922,7 +916,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                             ),
                                             TextSpan(
                                               text:
-                                                  " - ${generateContent ? faker.lorem.words(MessageHelper.getNotificationTextSync(reply).split(" ").length).join(" ") : MessageHelper.getNotificationTextSync(reply)}",
+                                                  " - ${generateContent ? faker.lorem.words(MessageHelper.getNotificationText(reply).split(" ").length).join(" ") : MessageHelper.getNotificationText(reply)}",
                                               style: Theme.of(context).textTheme.subtitle1!.copyWith(
                                                   fontStyle: FontStyle.italic,
                                                   color: hideContent ? Colors.transparent : null),
@@ -1008,7 +1002,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                 focusNode!.requestFocus();
                                 sendMessage();
                               },
-                              onContentCommitted: onContentCommit,
+                              // onContentCommitted: onContentCommit,
                               textCapitalization: TextCapitalization.sentences,
                               focusNode: focusNode,
                               autocorrect: true,
@@ -1107,7 +1101,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                                       .subtitle1!
                                                       .copyWith(fontWeight: FontWeight.bold)),
                                               TextSpan(
-                                                  text: " - ${MessageHelper.getNotificationTextSync(reply)}",
+                                                  text: " - ${MessageHelper.getNotificationText(reply)}",
                                                   style: Theme.of(context)
                                                       .textTheme
                                                       .subtitle1!
@@ -1309,7 +1303,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                                                       .subtitle1!
                                                       .copyWith(fontWeight: FontWeight.bold)),
                                               TextSpan(
-                                                  text: " - ${MessageHelper.getNotificationTextSync(reply)}",
+                                                  text: " - ${MessageHelper.getNotificationText(reply)}",
                                                   style: Theme.of(context)
                                                       .textTheme
                                                       .subtitle1!
