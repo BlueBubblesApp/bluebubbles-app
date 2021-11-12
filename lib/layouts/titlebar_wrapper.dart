@@ -47,7 +47,7 @@ class WindowButtons extends StatelessWidget {
         iconNormal: context.theme.primaryColor,
         mouseOver: context.theme.primaryColor,
         mouseDown: context.theme.primaryColorDark,
-        iconMouseOver: context.theme.accentColor,
+        iconMouseOver: context.theme.colorScheme.secondary,
         iconMouseDown: context.theme.primaryColorLight);
 
     WindowButtonColors closeButtonColors = WindowButtonColors(

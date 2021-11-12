@@ -97,7 +97,7 @@ class RenderBalloons extends RenderBox {
       double centerY = balloon.position.y;
       double radius = balloon.radius;
 
-      var handleLength = KAPPA * radius;
+      var handleLength = kappa * radius;
 
       var widthDiff = (radius * WIDTH_FACTOR);
       var heightDiff = (radius * HEIGHT_FACTOR);
@@ -215,7 +215,7 @@ class RenderBalloons extends RenderBox {
   }
 }
 
-final KAPPA = (4 * (sqrt(2) - 1)) / 3;
+final kappa = (4 * (sqrt(2) - 1)) / 3;
 const WIDTH_FACTOR = 0.0333;
 const HEIGHT_FACTOR = 0.4;
 const TIE_WIDTH_FACTOR = 0.12;

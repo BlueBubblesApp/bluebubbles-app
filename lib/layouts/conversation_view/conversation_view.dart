@@ -405,7 +405,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
             Icons.arrow_downward,
             color: Theme.of(context).textTheme.bodyText1!.color,
           ),
-          backgroundColor: Theme.of(context).accentColor,
+          backgroundColor: Theme.of(context).colorScheme.secondary,
         ),
       );
     } else if (currentChat != null &&
@@ -423,7 +423,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                 child: Container(
                   height: 35,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).accentColor.withOpacity(0.7),
+                    color: Theme.of(context).colorScheme.secondary.withOpacity(0.7),
                     borderRadius: BorderRadius.circular(10.0),
                   ),
                   padding: EdgeInsets.symmetric(horizontal: 10),

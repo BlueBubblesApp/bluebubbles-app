@@ -164,7 +164,7 @@ class ActionHandler {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            backgroundColor: Theme.of(context).accentColor,
+            backgroundColor: Theme.of(context).colorScheme.secondary,
             title: Text(
               "Creating a new chat...",
               style: Theme.of(context).textTheme.bodyText1,

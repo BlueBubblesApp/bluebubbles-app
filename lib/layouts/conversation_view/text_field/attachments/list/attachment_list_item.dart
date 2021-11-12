@@ -91,7 +91,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
         if (hideAttachments)
           Positioned.fill(
             child: Container(
-              color: Theme.of(context).accentColor,
+              color: Theme.of(context).colorScheme.secondary,
             ),
           ),
         if (hideAttachments && !hideAttachmentTypes)
@@ -124,7 +124,7 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
         return Container(
           height: 100,
           width: 100,
-          color: Theme.of(context).accentColor,
+          color: Theme.of(context).colorScheme.secondary,
           padding: EdgeInsets.only(top: 20),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

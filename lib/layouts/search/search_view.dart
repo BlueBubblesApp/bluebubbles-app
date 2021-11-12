@@ -144,11 +144,10 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
-                brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: buildBackButton(context),
-                backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
+                backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
                 title: Text(
                   "Search",
                   style: Theme.of(context).textTheme.headline1,
@@ -186,7 +185,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                             decoration: BoxDecoration(
                                 color: Theme.of(context).backgroundColor,
                                 borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: Theme.of(context).accentColor)),
+                                border: Border.all(color: Theme.of(context).colorScheme.secondary)),
                             maxLines: 1,
                           )),
                       (!isSearching)
@@ -217,7 +216,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                                       ))),
                             )
                     ])),
-            Divider(color: Theme.of(context).accentColor),
+            Divider(color: Theme.of(context).colorScheme.secondary),
             (!isSearching && noResults)
                 ? Padding(
                     padding: EdgeInsets.only(top: 25.0),
@@ -317,7 +316,7 @@ class SearchViewState extends State<SearchView> with TickerProviderStateMixin {
                                     color: Theme.of(context).textTheme.bodyText1!.color,
                                   ),
                                 ),
-                                Divider(color: Theme.of(context).accentColor)
+                                Divider(color: Theme.of(context).colorScheme.secondary)
                               ],
                             );
                           },

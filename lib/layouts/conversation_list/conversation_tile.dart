@@ -710,7 +710,7 @@ class _Samsung extends StatelessWidget {
           child: Obx(
             () => Container(
               decoration: BoxDecoration(
-                color: Theme.of(context).accentColor,
+                color: Theme.of(context).colorScheme.secondary,
                 border: (!SettingsManager().settings.hideDividers.value)
                     ? Border(
                         top: BorderSide(

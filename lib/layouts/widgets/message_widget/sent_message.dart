@@ -96,7 +96,7 @@ class SentMessageHelper {
                       child: Container(
                           width: 70,
                           height: 70,
-                          color: Theme.of(context).accentColor,
+                          color: Theme.of(context).colorScheme.secondary,
                           child: Center(
                             child: Text(
                               "emoji",
@@ -560,7 +560,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
   List<Color> getBubbleColors(Message message) {
     List<Color> bubbleColors = message.isFromMe ?? false
         ? [Theme.of(context).primaryColor, Theme.of(context).primaryColor]
-        : [Theme.of(context).accentColor, Theme.of(context).accentColor];
+        : [Theme.of(context).colorScheme.secondary, Theme.of(context).colorScheme.secondary];
     if (SettingsManager().settings.colorfulBubbles.value && !message.isFromMe!) {
       if (message.handle?.color == null) {
         bubbleColors = toColorGradient(message.handle?.address);

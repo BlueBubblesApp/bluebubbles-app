@@ -72,7 +72,7 @@ class _SyncingMessagesState extends State<SyncingMessages> {
         statusBarColor: Colors.transparent, // status bar color
       ),
       child: Scaffold(
-        backgroundColor: Theme.of(context).accentColor,
+        backgroundColor: Theme.of(context).colorScheme.secondary,
         body: Obx(() {
           double progress = SocketManager().setup.progress;
           if ((SocketManager().setup.data.value?.progress ?? 0) >= 0) {

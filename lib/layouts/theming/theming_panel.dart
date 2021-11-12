@@ -35,13 +35,13 @@ class _ThemingPanelState extends State<ThemingPanel> with TickerProviderStateMix
   Widget build(BuildContext context) {
     Color headerColor;
     Color tileColor;
-    if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance()
+    if (Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance()
         || SettingsManager().settings.skin.value != Skins.iOS) {
-      headerColor = Theme.of(context).accentColor;
+      headerColor = Theme.of(context).colorScheme.secondary;
       tileColor = Theme.of(context).backgroundColor;
     } else {
       headerColor = Theme.of(context).backgroundColor;
-      tileColor = Theme.of(context).accentColor;
+      tileColor = Theme.of(context).colorScheme.secondary;
     }
     if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
       tileColor = headerColor;
@@ -64,7 +64,6 @@ class _ThemingPanelState extends State<ThemingPanel> with TickerProviderStateMix
             child: ClipRRect(
               child: BackdropFilter(
                 child: AppBar(
-                  brightness: ThemeData.estimateBrightnessForColor(headerColor),
                   toolbarHeight: 100.0,
                   elevation: 0,
                   leading: buildBackButton(context),

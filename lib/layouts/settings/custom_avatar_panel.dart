@@ -57,11 +57,10 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
-                brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: buildBackButton(context),
-                backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
+                backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
                 title: Text(
                   "Custom Avatars",
                   style: Theme.of(context).textTheme.headline1,
@@ -137,7 +136,7 @@ class CustomAvatarPanel extends GetView<CustomAvatarPanelController> {
                               context: context,
                               builder: (BuildContext context) {
                                 return AlertDialog(
-                                    backgroundColor: Theme.of(context).accentColor,
+                                    backgroundColor: Theme.of(context).colorScheme.secondary,
                                     title: Text("Custom Avatar",
                                         style: TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
                                     content: Column(

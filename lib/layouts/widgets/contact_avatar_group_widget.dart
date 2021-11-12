@@ -85,7 +85,7 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
                         height: widget.size,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(widget.size / 2),
-                          color: context.theme.accentColor.withOpacity(0.6),
+                          color: context.theme.colorScheme.secondary.withOpacity(0.6),
                         ),
                       ),
                       ...List.generate(
@@ -116,7 +116,7 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
                                     height: size,
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(size),
-                                      color: context.theme.accentColor.withOpacity(0.8),
+                                      color: context.theme.colorScheme.secondary.withOpacity(0.8),
                                     ),
                                     child: Icon(
                                       SettingsManager().settings.skin.value == Skins.iOS

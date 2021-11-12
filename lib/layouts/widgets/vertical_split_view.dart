@@ -83,7 +83,7 @@ class _VerticalSplitViewState extends State<VerticalSplitView> {
                       ? GestureDetector(
                           behavior: HitTestBehavior.translucent,
                           child: Container(
-                              color: Theme.of(context).accentColor,
+                              color: Theme.of(context).colorScheme.secondary,
                               child: SizedBox(
                                 width: widget.dividerWidth,
                                 height: constraints.maxHeight,
@@ -98,7 +98,7 @@ class _VerticalSplitViewState extends State<VerticalSplitView> {
                       : SizedBox(
                           width: widget.dividerWidth,
                           height: constraints.maxHeight,
-                          child: Container(color: Theme.of(context).accentColor)),
+                          child: Container(color: Theme.of(context).colorScheme.secondary)),
                   SizedBox(
                     width: _width2,
                     child: widget.right,

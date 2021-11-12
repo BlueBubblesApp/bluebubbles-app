@@ -111,7 +111,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                         context: context,
                         builder: (BuildContext context) {
                           return AlertDialog(
-                            backgroundColor: Theme.of(context).accentColor,
+                            backgroundColor: Theme.of(context).colorScheme.secondary,
                             title: Text(
                               controller.text.isEmpty ? "Removing name..." : "Changing name to ${controller.text}...",
                               style: Theme.of(context).textTheme.bodyText1,
@@ -606,7 +606,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                 inactiveTrackColor: Theme.of(context).colorScheme.secondary.withOpacity(0.6),
                                 inactiveThumbColor: Theme.of(context).colorScheme.secondary,
                                 onChanged: (value) async {
-                                  await widget.chat.togglePin(!widget.chat.isPinned!);
+                                  widget.chat.togglePin(!widget.chat.isPinned!);
                                   EventDispatcher().emit("refresh", null);
                                   if (mounted) setState(() {});
                               }))),
@@ -624,7 +624,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                 inactiveTrackColor: Theme.of(context).colorScheme.secondary.withOpacity(0.6),
                                 inactiveThumbColor: Theme.of(context).colorScheme.secondary,
                                 onChanged: (value) async {
-                                  await widget.chat.toggleMute(value);
+                                  widget.chat.toggleMute(value);
                                   EventDispatcher().emit("refresh", null);
 
                                   if (mounted) setState(() {});
@@ -798,7 +798,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                             barrierDismissible: false,
                             backgroundColor: Theme.of(context).backgroundColor,
                           );
-                          final messages = (await Chat.getMessages(chat, limit: 0, includeDeleted: true))
+                          final messages = Chat.getMessages(chat, limit: 0, includeDeleted: true)
                               .reversed
                               .where((e) => DateTime.now().isWithin(e.dateCreated!, hours: hours != 0 ? hours : null, days: days != 0 ? days : null));
                           if (messages.isEmpty) {
@@ -939,7 +939,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                             barrierDismissible: false,
                             backgroundColor: Theme.of(context).backgroundColor,
                           );
-                          final messages = (await Chat.getMessages(chat, limit: 0, includeDeleted: true))
+                          final messages = Chat.getMessages(chat, limit: 0, includeDeleted: true)
                               .reversed
                               .where((e) => DateTime.now().isWithin(e.dateCreated!, hours: hours != 0 ? hours : null, days: days != 0 ? days : null));
                           if (messages.isEmpty) {
@@ -953,7 +953,7 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                           final List<Size?> dimensions = [];
                           for (Message m in messages) {
                             if (m.hasAttachments) {
-                              await m.fetchAttachments();
+                              m.fetchAttachments();
                             }
                             final readStr = m.dateRead != null ? "Read: ${buildFullDate(m.dateRead!)}, " : "";
                             final deliveredStr = m.dateDelivered != null ? "Delivered: ${buildFullDate(m.dateDelivered!)}, " : "";
@@ -971,11 +971,11 @@ class _ConversationDetailsState extends State<ConversationDetails> {
                                 }
                               }
                               timestamps.add(readStr + deliveredStr + sentStr);
-                              content.add(await MessageHelper.getNotificationText(m, withSender: true));
+                              content.add(MessageHelper.getNotificationText(m, withSender: true));
                               dimensions.add(null);
                             } else {
                               timestamps.add(readStr + deliveredStr + sentStr);
-                              content.add(await MessageHelper.getNotificationText(m, withSender: true));
+                              content.add(MessageHelper.getNotificationText(m, withSender: true));
                               dimensions.add(null);
                             }
                           }

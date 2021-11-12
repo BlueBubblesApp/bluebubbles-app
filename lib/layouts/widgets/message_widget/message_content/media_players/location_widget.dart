@@ -68,7 +68,7 @@ class _LocationWidgetState extends State<LocationWidget> {
           onTap: openMaps,
           child: Container(
               height: 240,
-              color: Theme.of(context).accentColor,
+              color: Theme.of(context).colorScheme.secondary,
               child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,

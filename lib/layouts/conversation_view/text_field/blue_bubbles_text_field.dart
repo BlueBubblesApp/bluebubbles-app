@@ -5,18 +5,14 @@ import 'dart:ui';
 
 import 'package:bluebubbles/blocs/text_field_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
-import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
 import 'package:bluebubbles/helpers/message_helper.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/share.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/list/text_field_attachment_list.dart';
 import 'package:bluebubbles/layouts/conversation_view/text_field/attachments/picker/text_field_attachment_picker.dart';
 import 'package:bluebubbles/layouts/widgets/custom_cupertino_text_field.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/audio_player_widget.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
-import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/layouts/widgets/scroll_physics/custom_bouncing_scroll_physics.dart';
 import 'package:bluebubbles/layouts/widgets/send_effect_picker.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
@@ -40,7 +36,6 @@ import 'package:flutter_dropzone/flutter_dropzone.dart';
 import 'package:get/get.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:record/record.dart';
-import 'package:simple_animations/simple_animations.dart';
 import 'package:transparent_pointer/transparent_pointer.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:universal_io/io.dart';
@@ -351,7 +346,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: Theme.of(context).accentColor,
+          backgroundColor: Theme.of(context).colorScheme.secondary,
           title: Text("Send it?", style: Theme.of(context).textTheme.headline1),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -532,7 +527,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
   Widget buildShareButton() {
     double size = SettingsManager().settings.skin.value == Skins.iOS ? 35 : 40;
     return AnimatedSize(
-      vsync: this,
       duration: Duration(milliseconds: 300),
       child: Container(
         height: size,
@@ -613,7 +607,7 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
           } else if (hideInfo) {
             placeholder = chat?.isTextForwarding ?? false ? "Text Forwarding" : "iMessage";
           } else {
-            String? title = await CurrentChat.forGuid(widget.chatGuid)?.chat.getTitle();
+            String? title = CurrentChat.forGuid(widget.chatGuid)?.chat.getTitle();
             if (!isNullOrEmpty(title)!) {
               placeholder = title!;
             }
@@ -661,7 +655,6 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
       fit: FlexFit.loose,
       child: Container(
         child: AnimatedSize(
-          vsync: this,
           duration: Duration(milliseconds: 100),
           curve: Curves.easeInOut,
           child: FocusScope(

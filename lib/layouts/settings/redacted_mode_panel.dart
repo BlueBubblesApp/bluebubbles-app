@@ -23,14 +23,14 @@ class RedactedModePanel extends StatelessWidget {
         ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
     Color headerColor;
     Color tileColor;
-    if ((Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+    if ((Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
             SettingsManager().settings.skin.value == Skins.Material) &&
         (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
-      headerColor = Theme.of(context).accentColor;
+      headerColor = Theme.of(context).colorScheme.secondary;
       tileColor = Theme.of(context).backgroundColor;
     } else {
       headerColor = Theme.of(context).backgroundColor;
-      tileColor = Theme.of(context).accentColor;
+      tileColor = Theme.of(context).colorScheme.secondary;
     }
     if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
       tileColor = headerColor;
@@ -69,7 +69,7 @@ class RedactedModePanel extends StatelessWidget {
                     AbsorbPointer(
                       absorbing: true,
                       child: Container(
-                        color: headerColor == Theme.of(context).accentColor ? tileColor : headerColor,
+                        color: headerColor == Theme.of(context).colorScheme.secondary ? tileColor : headerColor,
                         child: MessageWidget(
                           newerMessage: null,
                           olderMessage: null,

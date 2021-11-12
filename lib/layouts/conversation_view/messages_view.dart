@@ -373,7 +373,7 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
           border: Border.all(
             width: 2,
             style: BorderStyle.solid,
-            color: Theme.of(context).accentColor,
+            color: Theme.of(context).colorScheme.secondary,
           ),
           borderRadius: BorderRadius.circular(19),
         ),
@@ -475,7 +475,6 @@ class MessagesViewState extends State<MessagesView> with TickerProviderStateMixi
                                     top: SettingsManager().settings.skin.value != Skins.iOS ? 8.0 : 0.0),
                                 child: AnimatedSize(
                                   duration: Duration(milliseconds: 400),
-                                  vsync: this,
                                   child: internalSmartReplies.isEmpty
                                       ? Container()
                                       : Container(

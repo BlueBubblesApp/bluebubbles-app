@@ -145,7 +145,7 @@ class ContactTile extends StatelessWidget {
                         child: TextButton(
                           style: TextButton.styleFrom(
                             shape: CircleBorder(),
-                            backgroundColor: Theme.of(context).accentColor,
+                            backgroundColor: Theme.of(context).colorScheme.secondary,
                           ),
                           onPressed: () {
                             startEmail(handle.address);
@@ -162,7 +162,7 @@ class ContactTile extends StatelessWidget {
                             child: TextButton(
                               style: TextButton.styleFrom(
                                 shape: CircleBorder(),
-                                backgroundColor: Theme.of(context).accentColor,
+                                backgroundColor: Theme.of(context).colorScheme.secondary,
                               ),
                               onLongPress: () => onPressContactTrailing(context, longPressed: true),
                               onPressed: () => onPressContactTrailing(context),
@@ -196,7 +196,7 @@ class ContactTile extends StatelessWidget {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              backgroundColor: Theme.of(context).accentColor,
+              backgroundColor: Theme.of(context).colorScheme.secondary,
               title:
                   Text("Select a Phone Number", style: TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),
               content: ObxValue<Rx<bool>>(
@@ -292,7 +292,7 @@ class ContactTile extends StatelessWidget {
                       Chat updatedChat = Chat.fromMap(response["data"]);
                       updatedChat.save();
                       await ChatBloc().updateChatPosition(updatedChat);
-                      Chat chatWithParticipants = await updatedChat.getParticipants();
+                      Chat chatWithParticipants = updatedChat.getParticipants();
 
                       Logger.info("Updating chat with ${chatWithParticipants.participants.length} participants");
                       updateChat(chatWithParticipants);

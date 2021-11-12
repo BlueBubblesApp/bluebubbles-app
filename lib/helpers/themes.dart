@@ -15,7 +15,7 @@ class Themes {
 }
 
 bool isEqual(ThemeData one, ThemeData two) {
-  return one.accentColor == two.accentColor && one.backgroundColor == two.backgroundColor;
+  return one.colorScheme.secondary == two.colorScheme.secondary && one.backgroundColor == two.backgroundColor;
 }
 
 ThemeData oledDarkTheme = ThemeData(

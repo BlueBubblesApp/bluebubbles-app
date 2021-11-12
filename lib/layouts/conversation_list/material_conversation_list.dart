@@ -254,7 +254,6 @@ class _MaterialConversationListState extends State<MaterialConversationList> {
                 child: selected.isEmpty
                     ? AppBar(
                         iconTheme: IconThemeData(color: context.theme.primaryColor),
-                        brightness: ThemeData.estimateBrightnessForColor(context.theme.backgroundColor),
                         bottom: PreferredSize(
                           child: Container(
                             color: context.theme.dividerColor,

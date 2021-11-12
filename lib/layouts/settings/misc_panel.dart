@@ -23,14 +23,14 @@ class MiscPanel extends StatelessWidget {
         ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
     Color headerColor;
     Color tileColor;
-    if ((Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+    if ((Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
             SettingsManager().settings.skin.value == Skins.Material) &&
         (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
-      headerColor = Theme.of(context).accentColor;
+      headerColor = Theme.of(context).colorScheme.secondary;
       tileColor = Theme.of(context).backgroundColor;
     } else {
       headerColor = Theme.of(context).backgroundColor;
-      tileColor = Theme.of(context).accentColor;
+      tileColor = Theme.of(context).colorScheme.secondary;
     }
     if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
       tileColor = headerColor;

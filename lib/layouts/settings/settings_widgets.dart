@@ -64,7 +64,6 @@ class SettingsScaffold extends StatelessWidget {
                 child: ClipRRect(
                   child: BackdropFilter(
                     child: AppBar(
-                      brightness: ThemeData.estimateBrightnessForColor(headerColor),
                       toolbarHeight: 100.0,
                       elevation: 0,
                       leading: buildBackButton(context),
@@ -253,15 +252,15 @@ class SettingsTile extends StatelessWidget {
     return Container(
       color: SettingsManager().settings.skin.value == Skins.Samsung ? null : backgroundColor,
       child: ListTile(
-        onLongPress: this.onLongPress as void Function()?,
+        onLongPress: onLongPress as void Function()?,
         tileColor: SettingsManager().settings.skin.value == Skins.Samsung ? null : backgroundColor,
-        onTap: this.onTap as void Function()?,
+        onTap: onTap as void Function()?,
         leading: leading,
         title: Text(
-          this.title!,
+          title!,
           style: Theme.of(context).textTheme.bodyText1,
         ),
-        trailing: this.trailing,
+        trailing: trailing,
         subtitle: subtitle != null
             ? Text(
                 subtitle!,
@@ -301,15 +300,15 @@ class SettingsTextField extends StatelessWidget {
     return Material(
       color: Theme.of(context).backgroundColor,
       child: InkWell(
-        onTap: this.onTap as void Function()?,
+        onTap: onTap as void Function()?,
         child: Column(
           children: <Widget>[
             ListTile(
               title: Text(
-                this.title,
+                title,
                 style: Theme.of(context).textTheme.bodyText1,
               ),
-              trailing: this.trailing,
+              trailing: trailing,
               subtitle: Padding(
                 padding: EdgeInsets.only(top: 10.0),
                 child: CustomCupertinoTextField(
@@ -349,7 +348,7 @@ class SettingsTextField extends StatelessWidget {
               ),
             ),
             Divider(
-              color: Theme.of(context).accentColor.withOpacity(0.5),
+              color: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
               thickness: 1,
             ),
           ],
@@ -393,12 +392,12 @@ class SettingsSwitch extends StatelessWidget {
         value: initialVal,
         activeColor: Theme.of(context).primaryColor,
         activeTrackColor: Theme.of(context).primaryColor.withAlpha(200),
-        inactiveTrackColor: backgroundColor == Theme.of(context).accentColor
+        inactiveTrackColor: backgroundColor == Theme.of(context).colorScheme.secondary
             ? Theme.of(context).backgroundColor.withOpacity(0.6)
-            : Theme.of(context).accentColor.withOpacity(0.6),
-        inactiveThumbColor: backgroundColor == Theme.of(context).accentColor
+            : Theme.of(context).colorScheme.secondary.withOpacity(0.6),
+        inactiveThumbColor: backgroundColor == Theme.of(context).colorScheme.secondary
             ? Theme.of(context).backgroundColor
-            : Theme.of(context).accentColor,
+            : Theme.of(context).colorScheme.secondary,
         onChanged: onChanged,
       ),
     );
@@ -485,12 +484,12 @@ class SettingsOptions<T extends Object> extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: 9),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
-                color: Theme.of(context).accentColor,
+                color: Theme.of(context).colorScheme.secondary,
               ),
               child: Center(
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<T>(
-                    dropdownColor: Theme.of(context).accentColor,
+                    dropdownColor: Theme.of(context).colorScheme.secondary,
                     icon: Icon(
                       Icons.arrow_drop_down,
                       color: Theme.of(context).textTheme.bodyText1!.color,
@@ -702,7 +701,7 @@ class SettingsDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     if (SettingsManager().settings.skin.value == Skins.iOS) {
       return Divider(
-        color: color ?? Theme.of(context).accentColor.withOpacity(0.5),
+        color: color ?? Theme.of(context).colorScheme.secondary.withOpacity(0.5),
         thickness: 1,
       );
     } else {

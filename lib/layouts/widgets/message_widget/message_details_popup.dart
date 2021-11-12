@@ -172,7 +172,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
                   child: Container(
-                    color: oledDarkTheme.accentColor.withOpacity(0.3),
+                    color: oledDarkTheme.colorScheme.secondary.withOpacity(0.3),
                   ),
                 ),
               ),
@@ -191,7 +191,6 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                 top: 40,
                 left: 10,
                 child: AnimatedSize(
-                  vsync: this,
                   duration: Duration(milliseconds: 500),
                   curve: Sprung.underDamped,
                   alignment: Alignment.center,
@@ -204,7 +203,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                               alignment: Alignment.center,
                               height: 120,
                               width: CustomNavigator.width(context) - 20,
-                              color: Theme.of(context).accentColor,
+                              color: Theme.of(context).colorScheme.secondary,
                               child: Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 0),
                                 child: ListView.builder(
@@ -260,7 +259,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             .toDouble();
     Color iconColor = Colors.white;
 
-    if (Theme.of(context).accentColor.computeLuminance() >= 0.179) {
+    if (Theme.of(context).colorScheme.secondary.computeLuminance() >= 0.179) {
       iconColor = Colors.black.withAlpha(95);
     }
 
@@ -275,7 +274,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
             padding: const EdgeInsets.all(5),
             height: menuHeight,
             decoration: BoxDecoration(
-              color: Theme.of(context).accentColor.withAlpha(150),
+              color: Theme.of(context).colorScheme.secondary.withAlpha(150),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
@@ -291,7 +290,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                         decoration: BoxDecoration(
                           color: currentlySelectedReaction == e
                               ? Theme.of(context).primaryColor
-                              : Theme.of(context).accentColor.withAlpha(150),
+                              : Theme.of(context).colorScheme.secondary.withAlpha(150),
                           borderRadius: BorderRadius.circular(
                             20,
                           ),
@@ -644,13 +643,13 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                     if (SettingsManager().settings.skin.value == Skins.iOS) {
                       return CupertinoAlertDialog(
                         title: title,
-                        backgroundColor: Theme.of(context).accentColor,
+                        backgroundColor: Theme.of(context).colorScheme.secondary,
                         content: content,
                       );
                     }
                     return AlertDialog(
                       title: title,
-                      backgroundColor: Theme.of(context).accentColor,
+                      backgroundColor: Theme.of(context).colorScheme.secondary,
                       content: content,
                       actions: actions,
                     );
@@ -817,7 +816,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
         child: Container(
-          color: Theme.of(context).accentColor.withAlpha(150),
+          color: Theme.of(context).colorScheme.secondary.withAlpha(150),
           width: maxMenuWidth,
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -839,12 +838,12 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> with TickerPro
                             );
                             if (SettingsManager().settings.skin.value == Skins.iOS) {
                               return CupertinoAlertDialog(
-                                backgroundColor: Theme.of(context).accentColor,
+                                backgroundColor: Theme.of(context).colorScheme.secondary,
                                 content: content,
                               );
                             }
                             return AlertDialog(
-                              backgroundColor: Theme.of(context).accentColor,
+                              backgroundColor: Theme.of(context).colorScheme.secondary,
                               content: content,
                             );
                           });

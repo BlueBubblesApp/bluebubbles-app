@@ -16,7 +16,6 @@ class _TextFieldAttachmentListState extends State<TextFieldAttachmentList> with 
   @override
   Widget build(BuildContext context) {
     return AnimatedSize(
-      vsync: this,
       duration: Duration(milliseconds: 300),
       curve: Curves.easeInOut,
       child: ConstrainedBox(

@@ -153,7 +153,7 @@ class ThemeSelector extends StatelessWidget {
             statusBarColor: Colors.transparent, // status bar color
           ),
           child: Scaffold(
-            backgroundColor: Theme.of(context).accentColor,
+            backgroundColor: Theme.of(context).colorScheme.secondary,
             body: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -681,7 +681,6 @@ Widget buildConversationViewHeader(BuildContext context, Chat chat, ThemeData th
   Skins skin = Skin.of(context)!.skin;
   if (skin == Skins.Material || skin == Skins.Samsung) {
     return AppBar(
-      brightness: ThemeData.estimateBrightnessForColor(theme.backgroundColor),
       elevation: 0.0,
       title: Text(
         title!,
@@ -722,7 +721,7 @@ Widget buildConversationViewHeader(BuildContext context, Chat chat, ThemeData th
         width: 42.0, // 2 px larger than the diameter
         child: CircleAvatar(
           radius: 20,
-          backgroundColor: theme.accentColor,
+          backgroundColor: theme.colorScheme.secondary,
           child: ContactAvatarWidget(handle: participant, borderThickness: 0.1, editable: false, onTap: () {}),
         ),
       ),
@@ -738,7 +737,7 @@ Widget buildConversationViewHeader(BuildContext context, Chat chat, ThemeData th
   if (distance <= -60.0) distance = -35.0;
 
   return CupertinoNavigationBar(
-      backgroundColor: theme.accentColor.withAlpha(125),
+      backgroundColor: theme.colorScheme.secondary.withAlpha(125),
       border: Border(
         bottom: BorderSide(color: Colors.white.withOpacity(0.2), width: 0.2),
       ),

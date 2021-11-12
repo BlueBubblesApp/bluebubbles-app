@@ -85,9 +85,9 @@ class _SettingsPanelState extends State<SettingsPanel> {
       }
     });
     Color headerColor;
-    if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+    if (Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
         SettingsManager().settings.skin.value != Skins.iOS) {
-      headerColor = Theme.of(context).accentColor;
+      headerColor = Theme.of(context).colorScheme.secondary;
     } else {
       headerColor = Theme.of(context).backgroundColor;
     }
@@ -115,14 +115,14 @@ class _SettingsPanelState extends State<SettingsPanel> {
         ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
     Color headerColor;
     Color tileColor;
-    if ((Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+    if ((Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
             SettingsManager().settings.skin.value == Skins.Material) &&
         (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
-      headerColor = Theme.of(context).accentColor;
+      headerColor = Theme.of(context).colorScheme.secondary;
       tileColor = Theme.of(context).backgroundColor;
     } else {
       headerColor = Theme.of(context).backgroundColor;
-      tileColor = Theme.of(context).accentColor;
+      tileColor = Theme.of(context).colorScheme.secondary;
     }
     if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
       tileColor = headerColor;
@@ -655,12 +655,12 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                       primary: Theme.of(context).primaryColor,
                                     ),
                                     onPressed: () async {
-                                      List<ThemeObject> allThemes = (await ThemeObject.getThemes())
+                                      List<ThemeObject> allThemes = ThemeObject.getThemes()
                                           .where((element) => !element.isPreset)
                                           .toList();
                                       for (ThemeObject e in allThemes) {
                                         List<dynamic> entryJson = [];
-                                        await e.fetchData();
+                                        e.fetchData();
                                         for (ThemeEntry e2 in e.entries) {
                                           entryJson.add(e2.toMap());
                                         }
@@ -834,7 +834,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                         durationMs: 2000,
                                         button: TextButton(
                                           style: TextButton.styleFrom(
-                                            backgroundColor: Get.theme.accentColor,
+                                            backgroundColor: Get.theme.colorScheme.secondary,
                                           ),
                                           onPressed: () {
                                             Share.file("BlueBubbles Settings", filePath);
@@ -897,11 +897,11 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                         primary: Theme.of(context).primaryColor,
                                       ),
                                       onPressed: () async {
-                                        List<ThemeObject> allThemes = await ThemeObject.getThemes();
+                                        List<ThemeObject> allThemes = ThemeObject.getThemes();
                                         String jsonStr = "[";
                                         allThemes.forEachIndexed((index, e) async {
                                           String entryJson = "[";
-                                          await e.fetchData();
+                                          e.fetchData();
                                           e.entries.forEachIndexed((index, e2) {
                                             entryJson = entryJson + jsonEncode(e2.toMap());
                                             if (index != e.entries.length - 1) {
@@ -944,7 +944,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                                           durationMs: 2000,
                                           button: TextButton(
                                             style: TextButton.styleFrom(
-                                              backgroundColor: Get.theme.accentColor,
+                                              backgroundColor: Get.theme.colorScheme.secondary,
                                             ),
                                             onPressed: () {
                                               Share.file("BlueBubbles Theming", filePath);
@@ -1157,13 +1157,13 @@ class _SettingsPanelState extends State<SettingsPanel> {
   Widget buildForLandscape(BuildContext context, Widget settingsList) {
     Color headerColor;
     Color tileColor;
-    if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+    if (Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
         SettingsManager().settings.skin.value != Skins.iOS) {
-      headerColor = Theme.of(context).accentColor;
+      headerColor = Theme.of(context).colorScheme.secondary;
       tileColor = Theme.of(context).backgroundColor;
     } else {
       headerColor = Theme.of(context).backgroundColor;
-      tileColor = Theme.of(context).accentColor;
+      tileColor = Theme.of(context).colorScheme.secondary;
     }
     if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
       tileColor = headerColor;

@@ -26,7 +26,7 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
         child: Material(
-          color: widget.entry.color?.lightenOrDarken(50) ?? whiteLightTheme.accentColor,
+          color: widget.entry.color?.lightenOrDarken(50) ?? whiteLightTheme.colorScheme.secondary,
           child: InkWell(
             onTap: () async {
               BuildContext _context = context;

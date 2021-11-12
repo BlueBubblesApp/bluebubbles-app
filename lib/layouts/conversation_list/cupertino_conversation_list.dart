@@ -48,7 +48,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
     super.initState();
     widget.parent.scrollController.addListener(() {
       if (widget.parent.scrollController.hasClients && widget.parent.scrollController.offset > (125 - kToolbarHeight)) {
-        headerColor.value = Get.context!.theme.accentColor.withOpacity(0.5);
+        headerColor.value = Get.context!.theme.colorScheme.secondary.withOpacity(0.5);
       } else {
         headerColor.value = Colors.transparent;
       }
@@ -90,7 +90,6 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
   Widget buildChatList(BuildContext context, bool showAltLayout) {
     bool showArchived = widget.parent.widget.showArchivedChats;
     bool showUnknown = widget.parent.widget.showUnknownSenders;
-    Brightness brightness = ThemeData.estimateBrightnessForColor(context.theme.backgroundColor);
     return Obx(
       () => Scaffold(
         appBar: kIsWeb || kIsDesktop
@@ -118,7 +117,6 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                             elevation: 0,
                             backgroundColor: headerColor.value,
                             centerTitle: true,
-                            brightness: brightness,
                             title: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: <Widget>[
@@ -136,7 +134,6 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                           firstChild: AppBar(
                             leading: Container(),
                             elevation: 0,
-                            brightness: brightness,
                             backgroundColor: context.theme.backgroundColor,
                           ),
                         ),
@@ -215,7 +212,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                               if (!showArchived && !showUnknown)
                                 ClipOval(
                                   child: Material(
-                                    color: context.theme.accentColor, // button color
+                                    color: context.theme.colorScheme.secondary, // button color
                                     child: InkWell(
                                       child: SizedBox(
                                           width: 20,
@@ -234,7 +231,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                                   !showUnknown)
                                 ClipOval(
                                   child: Material(
-                                    color: context.theme.accentColor, // button color
+                                    color: context.theme.colorScheme.secondary, // button color
                                     child: InkWell(
                                       child: SizedBox(
                                         width: 20,
@@ -254,7 +251,7 @@ class CupertinoConversationListState extends State<CupertinoConversationList> {
                                   !showUnknown)
                                 ClipOval(
                                   child: Material(
-                                    color: context.theme.accentColor, // button color
+                                    color: context.theme.colorScheme.secondary, // button color
                                     child: InkWell(
                                       child: SizedBox(
                                         width: 20,

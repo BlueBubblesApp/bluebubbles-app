@@ -234,26 +234,26 @@ class ThemePanel extends GetView<ThemePanelController> {
                             try {
                               await MethodChannelInterface().invokeMethod("start-notif-listener");
                               if (val) {
-                                var allThemes = await ThemeObject.getThemes();
-                                var currentLight = await ThemeObject.getLightTheme();
-                                var currentDark = await ThemeObject.getDarkTheme();
+                                var allThemes = ThemeObject.getThemes();
+                                var currentLight = ThemeObject.getLightTheme();
+                                var currentDark = ThemeObject.getDarkTheme();
                                 currentLight.previousLightTheme = true;
                                 currentDark.previousDarkTheme = true;
-                                await currentLight.save();
-                                await currentDark.save();
+                                currentLight.save();
+                                currentDark.save();
                                 SettingsManager().saveSelectedTheme(context,
                                     selectedLightTheme:
                                     allThemes.firstWhere((element) => element.name == "Music Theme (Light)"),
                                     selectedDarkTheme:
                                     allThemes.firstWhere((element) => element.name == "Music Theme (Dark)"));
                               } else {
-                                var allThemes = await ThemeObject.getThemes();
+                                var allThemes = ThemeObject.getThemes();
                                 var previousLight = allThemes.firstWhere((e) => e.previousLightTheme);
                                 var previousDark = allThemes.firstWhere((e) => e.previousDarkTheme);
                                 previousLight.previousLightTheme = false;
                                 previousDark.previousDarkTheme = false;
-                                await previousLight.save();
-                                await previousDark.save();
+                                previousLight.save();
+                                previousDark.save();
                                 SettingsManager().saveSelectedTheme(context,
                                     selectedLightTheme: previousLight, selectedDarkTheme: previousDark);
                               }

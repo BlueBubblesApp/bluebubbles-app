@@ -119,7 +119,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
       child: Container(
         height: 150,
         width: 200,
-        color: Theme.of(context).accentColor,
+        color: Theme.of(context).colorScheme.secondary,
       ),
     );
     return AnnotatedRegion<SystemUiOverlayStyle>(

@@ -90,7 +90,7 @@ class _MediaFileState extends State<MediaFile> {
         if (hideAttachments)
           Positioned.fill(
             child: Container(
-              color: Theme.of(context).accentColor,
+              color: Theme.of(context).colorScheme.secondary,
             ),
           ),
         if (hideAttachments && !hideAttachmentTypes)

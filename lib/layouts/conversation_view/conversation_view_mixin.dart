@@ -335,7 +335,6 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     if (SettingsManager().settings.skin.value == Skins.Material ||
         SettingsManager().settings.skin.value == Skins.Samsung) {
       return AppBar(
-        brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -461,7 +460,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
           width: 42.0, // 2 px larger than the diameter
           child: CircleAvatar(
             radius: 20,
-            backgroundColor: Theme.of(context).accentColor,
+            backgroundColor: Theme.of(context).colorScheme.secondary,
             child: ContactAvatarWidget(
                 key: Key("${participant.address}-conversation-view"),
                 handle: participant,
@@ -496,7 +495,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     //                   border: Border(
     //                     bottom: BorderSide(color: Colors.white.withOpacity(0.2), width: 0.2),
     //                   ),
-    //                   color: Theme.of(context).accentColor.withAlpha(125),
+    //                   color: Theme.of(context).colorScheme.secondary.withAlpha(125),
     //                 ),
     //                 child: Row(
     //                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -615,7 +614,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
       preferredSize: Size.fromHeight(context.orientation == Orientation.landscape && context.isPhone ? 55 : 75),
       child: CupertinoNavigationBar(
           padding: EdgeInsetsDirectional.only(top: kIsDesktop && avatars.length == 1 ? 5 : 0),
-          backgroundColor: Theme.of(context).accentColor.withAlpha(125),
+          backgroundColor: Theme.of(context).colorScheme.secondary.withAlpha(125),
           border: Border(
             bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1.5),
           ),
@@ -968,7 +967,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            backgroundColor: Theme.of(context).accentColor,
+            backgroundColor: Theme.of(context).colorScheme.secondary,
             title: Text(
               "Creating a new chat...",
               style: Theme.of(context).textTheme.bodyText1,
@@ -1147,7 +1146,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   Widget buildChatSelectorHeader() => PreferredSize(
         preferredSize: Size.fromHeight(40),
         child: cupertino.CupertinoNavigationBar(
-          backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
+          backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
           middle: Container(
             child: Text(
               widget.customHeading ?? "New Message",
@@ -1172,7 +1171,7 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
                 context: context,
                 builder: (BuildContext context) {
                   return AlertDialog(
-                      backgroundColor: Theme.of(context).accentColor,
+                      backgroundColor: Theme.of(context).colorScheme.secondary,
                       title: Text("Group Naming",
                           style:
                           TextStyle(color: Theme.of(context).textTheme.bodyText1!.color)),

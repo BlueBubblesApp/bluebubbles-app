@@ -63,7 +63,6 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
       skin.value = Skin.of(context)!.skin;
     }
     return AnimatedSize(
-      vsync: this,
       duration: Duration(milliseconds: 200),
       child: widget.visible
           ? Row(
@@ -76,7 +75,7 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
                       Container(
                         margin: EdgeInsets.only(left: widget.bigPin ? 18 : 2),
                         decoration: BoxDecoration(
-                          color: context.theme.accentColor,
+                          color: context.theme.colorScheme.secondary,
                           borderRadius: BorderRadius.circular(40),
                         ),
                         width: 10,
@@ -86,7 +85,7 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
                       Container(
                         margin: EdgeInsets.only(left: 9, bottom: 10),
                         decoration: BoxDecoration(
-                          color: context.theme.accentColor,
+                          color: context.theme.colorScheme.secondary,
                           borderRadius: BorderRadius.circular(40),
                         ),
                         width: 15,
@@ -107,7 +106,7 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
                       ),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(20),
-                        color: context.theme.accentColor,
+                        color: context.theme.colorScheme.secondary,
                       ),
                       child: Stack(
                         alignment: Alignment.center,
@@ -137,7 +136,7 @@ class _TypingIndicatorState extends State<TypingIndicator> with TickerProviderSt
         builder: (context, child) {
           return Container(
             decoration: BoxDecoration(
-              color: context.theme.accentColor.lightenOrDarken(
+              color: context.theme.colorScheme.secondary.lightenOrDarken(
                   (math.sin(animation.value + (index) * math.pi / 4).abs() * 20).clamp(1, 20).toDouble()),
               borderRadius: BorderRadius.circular(30),
             ),

@@ -421,7 +421,7 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
                               min(replyThreshold, offset.value) * 0.4,
                             ),
                           ),
-                          color: context.theme.accentColor,
+                          color: context.theme.colorScheme.secondary,
                         ),
                         child: AnimatedScale(
                           duration: Duration(milliseconds: offset.value == 0 ? 150 : 0),

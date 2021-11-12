@@ -68,7 +68,6 @@ class _ReactionsWidgetState extends State<ReactionsWidget> with TickerProviderSt
     return AnimatedSize(
       duration: Duration(milliseconds: 200),
       reverseDuration: Duration(milliseconds: 200),
-      vsync: this,
       curve: Curves.bounceInOut,
       alignment: Alignment.center,
       child: Stack(

@@ -85,11 +85,10 @@ class CustomAvatarColorPanel extends GetView<CustomAvatarColorPanelController> {
           child: ClipRRect(
             child: BackdropFilter(
               child: AppBar(
-                brightness: ThemeData.estimateBrightnessForColor(Theme.of(context).backgroundColor),
                 toolbarHeight: 100.0,
                 elevation: 0,
                 leading: buildBackButton(context),
-                backgroundColor: Theme.of(context).accentColor.withOpacity(0.5),
+                backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
                 title: Text(
                   "Custom Avatar Colors",
                   style: Theme.of(context).textTheme.headline1,

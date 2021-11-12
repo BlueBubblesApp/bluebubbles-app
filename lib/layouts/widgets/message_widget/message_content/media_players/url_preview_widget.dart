@@ -223,7 +223,7 @@ class UrlPreviewWidget extends StatelessWidget {
             if (hideContent)
               Positioned.fill(
                 child: Container(
-                  color: Theme.of(context).accentColor,
+                  color: Theme.of(context).colorScheme.secondary,
                 ),
               ),
             if (hideContent && !hideType)
@@ -240,7 +240,6 @@ class UrlPreviewWidget extends StatelessWidget {
             curve: Curves.easeInOut,
             alignment: Alignment.center,
             duration: Duration(milliseconds: 200),
-            vsync: controller,
             child: Padding(
               padding: EdgeInsets.only(
                 top: message.hasReactions ? 18.0 : 4,
@@ -251,7 +250,7 @@ class UrlPreviewWidget extends StatelessWidget {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(20),
                 child: Material(
-                  color: Theme.of(context).accentColor,
+                  color: Theme.of(context).colorScheme.secondary,
                   child: InkResponse(
                     borderRadius: BorderRadius.circular(20),
                     onTap: () async {

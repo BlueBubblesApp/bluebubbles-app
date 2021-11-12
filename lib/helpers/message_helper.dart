@@ -153,7 +153,7 @@ class MessageHelper {
     if (chat?.guid != null) {
       chats[chat!.guid!] = chat;
       if (chat.id == null) {
-        await chat.save();
+        chat.save();
       }
     }
 

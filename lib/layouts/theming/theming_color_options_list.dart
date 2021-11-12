@@ -85,13 +85,13 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
     editable = currentTheme != null && !currentTheme!.isPreset;
     Color headerColor;
     Color tileColor;
-    if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+    if (Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
         SettingsManager().settings.skin.value != Skins.iOS) {
-      headerColor = Theme.of(context).accentColor;
+      headerColor = Theme.of(context).colorScheme.secondary;
       tileColor = Theme.of(context).backgroundColor;
     } else {
       headerColor = Theme.of(context).backgroundColor;
-      tileColor = Theme.of(context).accentColor;
+      tileColor = Theme.of(context).colorScheme.secondary;
     }
     if (SettingsManager().settings.skin.value == Skins.iOS && isEqual(Theme.of(context), oledDarkTheme)) {
       tileColor = headerColor;
@@ -242,7 +242,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                 SliverToBoxAdapter(
                   child: TextButton(
                     style: TextButton.styleFrom(
-                      backgroundColor: Theme.of(context).accentColor,
+                      backgroundColor: Theme.of(context).colorScheme.secondary,
                     ),
                     child: Text(
                       "Delete",

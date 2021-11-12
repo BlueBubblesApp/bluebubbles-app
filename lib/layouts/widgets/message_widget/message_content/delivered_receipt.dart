@@ -100,7 +100,6 @@ class _DeliveredReceiptState extends State<DeliveredReceipt> with TickerProvider
     Widget item;
     if (widget.shouldAnimate) {
       item = AnimatedSize(
-          vsync: this,
           curve: Curves.easeInOut,
           alignment: Alignment.bottomLeft,
           duration: Duration(milliseconds: 250),
