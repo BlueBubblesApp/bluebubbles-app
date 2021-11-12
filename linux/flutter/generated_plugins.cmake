@@ -3,8 +3,13 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  bitsdojo_window_linux
+  desktop_drop
   maps_launcher
+  objectbox_flutter_libs
+  printing
   quick_notify
+  system_tray
   url_launcher_linux
   window_manager
 )
