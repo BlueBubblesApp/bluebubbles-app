@@ -1,6 +1,5 @@
 import 'package:bluebubbles/managers/new_message_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:get/get.dart';
 
 class MessageMarkers {
@@ -33,18 +32,18 @@ class MessageMarkers {
       myLastMessage = msg;
     }
 
-    if ((lastReadMessage == null && msg.dateRead.value != null) ||
-        (lastReadMessage?.dateRead.value != null &&
-            msg.dateRead.value != null &&
-            msg.dateRead.value!.millisecondsSinceEpoch > lastReadMessage!.dateRead.value!.millisecondsSinceEpoch)) {
+    if ((lastReadMessage == null && msg.dateRead != null) ||
+        (lastReadMessage?.dateRead != null &&
+            msg.dateRead != null &&
+            msg.dateRead!.millisecondsSinceEpoch > lastReadMessage!.dateRead!.millisecondsSinceEpoch)) {
       lastReadMessage = msg;
     }
 
-    if ((lastDeliveredMessage == null && msg.dateDelivered.value != null) ||
-        (lastDeliveredMessage?.dateDelivered.value != null &&
-            msg.dateDelivered.value != null &&
-            msg.dateDelivered.value!.millisecondsSinceEpoch >
-                lastDeliveredMessage!.dateDelivered.value!.millisecondsSinceEpoch)) {
+    if ((lastDeliveredMessage == null && msg.dateDelivered != null) ||
+        (lastDeliveredMessage?.dateDelivered != null &&
+            msg.dateDelivered != null &&
+            msg.dateDelivered!.millisecondsSinceEpoch >
+                lastDeliveredMessage!.dateDelivered!.millisecondsSinceEpoch)) {
       lastDeliveredMessage = msg;
     }
     markers.value = this;

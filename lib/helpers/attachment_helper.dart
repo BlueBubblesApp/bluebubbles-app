@@ -1,9 +1,7 @@
 import 'dart:convert';
 
 import 'package:bluebubbles/repository/models/models.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
-import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:file_picker/file_picker.dart' hide PlatformFile;
 import 'package:universal_io/io.dart';
 import 'package:universal_html/html.dart' as html;
 import 'dart:isolate';
@@ -22,7 +20,6 @@ import 'package:get/get.dart';
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/attachment.dart';
 import 'package:flutter/material.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:image_size_getter/image_size_getter.dart' as isg;
@@ -147,10 +144,16 @@ class AttachmentHelper {
       return;
     }
     if (kIsDesktop) {
-      String downloadsPath = (await getDownloadsDirectory())!.path;
-      File(join(downloadsPath, file.name)).writeAsBytes(file.bytes!);
-      if (showAlert) showSnackbar('Success', 'Saved attachment to $downloadsPath!');
-      return;
+      String? savePath = await FilePicker.platform.saveFile(
+        dialogTitle: 'Choose a location to save this file',
+        fileName: file.name,
+      );
+      Logger.info(savePath);
+      if (savePath != null) {
+        File(file.path!).copy(savePath);
+        return showSnackbar('Success', 'Saved attachment to $savePath!');
+      }
+      return showSnackbar('Failed', 'You didn' 't select a file path!');
     }
     void showDeniedSnackbar({String? err}) {
       if (showAlert) showSnackbar("Save Failed", err ?? "Failed to save attachment!");
@@ -197,9 +200,9 @@ class AttachmentHelper {
   }
 
   static dynamic getContent(Attachment attachment, {String? path, bool autoDownload = true}) {
-    if ((kIsWeb || kIsDesktop) && attachment.bytes == null && attachment.guid != "redacted-mode-demo-attachment" && autoDownload) {
+    if (kIsWeb && attachment.bytes == null && attachment.guid != "redacted-mode-demo-attachment" && autoDownload) {
       return Get.put(AttachmentDownloadController(attachment: attachment), tag: attachment.guid);
-    } else if (kIsWeb || kIsDesktop) {
+    } else if (kIsWeb) {
       return PlatformFile(
         name: attachment.transferName!,
         path: attachment.guid == "redacted-mode-demo-attachment" ? "dummy path" : null,
@@ -428,7 +431,7 @@ class AttachmentHelper {
     }
 
     // If we should update the attachment data, do it right before we return, no awaiting
-    attachment.update();
+    attachment.save(null);
 
     // Return the bytes
     return previewData;
