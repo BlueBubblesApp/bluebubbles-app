@@ -82,10 +82,11 @@ class ChatBloc {
       await chatRequest!.future;
     }
 
-    if (ContactManager().contacts.isEmpty) await ContactManager().getContacts();
-
     chatRequest = Completer<void>();
     Logger.info("Fetching chats (${force ? 'forced' : 'normal'})...", tag: "ChatBloc");
+
+    // Get the contacts in case we haven't
+    if (ContactManager().contacts.isEmpty) await ContactManager().getContacts();
 
     _messageSubscription ??= setupMessageListener();
 
@@ -199,13 +200,11 @@ class ChatBloc {
     }
   }
 
-  void toggleChatUnread(Chat chat, bool isUnread) {
+  Future<void> toggleChatUnread(Chat chat, bool isUnread, {bool clearNotifications = true}) async {
     chat.toggleHasUnread(isUnread);
 
     // Remove from notification shade
-    if (!LifeCycleManager().isBubble) {
-      MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
-    }
+    if (clearNotifications) MethodChannelInterface().invokeMethod("clear-chat-notifs", {"chatGuid": chat.guid});
 
     updateChatPosition(chat);
   }
@@ -291,7 +290,11 @@ class ChatBloc {
     // Reset chat lists
     List<Chat> newChats = [];
 
-    int batches = count == 0 ? 1 : (count < batchSize) ? batchSize : (count / batchSize).ceil();
+    int batches = count == 0
+        ? 1
+        : (count < batchSize)
+            ? batchSize
+            : (count / batchSize).ceil();
     for (int i = 0; i < batches; i++) {
       List<Chat> chats = [];
       if (kIsWeb) {
@@ -300,7 +303,7 @@ class ChatBloc {
         chats = await Chat.getChats(limit: batchSize, offset: i * batchSize, fakeNames: fakeNames);
       }
       if (chats.isEmpty) break;
-
+      await ContactManager().matchHandles();
       for (Chat chat in chats) {
         newChats.add(chat);
         initTileValsForChat(chat);
@@ -316,7 +319,8 @@ class ChatBloc {
           if (chat.latestMessageGetter.hasAttachments) {
             chat.latestMessageGetter.fetchAttachments();
           }
-          if (chat.latestMessage?.handle == null && chat.latestMessage?.handleId != null) chat.latestMessage!.handle = Handle.findOne(originalROWID: chat.latestMessage!.handleId);
+          if (chat.latestMessage?.handle == null && chat.latestMessage?.handleId != null)
+            chat.latestMessage!.handle = Handle.findOne(originalROWID: chat.latestMessage!.handleId);
           chat.latestMessageText = MessageHelper.getNotificationText(chat.latestMessageGetter);
           chat.fakeLatestMessageText = faker.lorem.words((chat.latestMessageText ?? "").split(" ").length).join(" ");
           chat.latestMessageDate = chat.latestMessageGetter.dateCreated;
@@ -325,6 +329,8 @@ class ChatBloc {
 
       if (newChats.isNotEmpty) {
         _chats.value = newChats;
+        final ids = _chats.map((e) => e.guid).toSet();
+        _chats.retainWhere((element) => ids.remove(element.guid));
         _chats.sort(Chat.sort);
       }
 
@@ -333,7 +339,6 @@ class ChatBloc {
       }
     }
 
-    await ContactManager().matchHandles();
     Logger.info("Finished fetching chats (${_chats.length}).", tag: "ChatBloc");
     await updateAllShareTargets();
 
@@ -375,18 +380,12 @@ class ChatBloc {
     final item = _chats.bigPinHelper(true)[oldIndex];
     if (newIndex > oldIndex) {
       newIndex = newIndex - 1;
-      _chats
-          .bigPinHelper(true)
-          .where((p0) => p0.pinIndex != null && p0.pinIndex! <= newIndex)
-          .forEach((element) {
+      _chats.bigPinHelper(true).where((p0) => p0.pinIndex != null && p0.pinIndex! <= newIndex).forEach((element) {
         element.pinIndex = element.pinIndex! - 1;
       });
       item.pinIndex = newIndex;
     } else {
-      _chats
-          .bigPinHelper(true)
-          .where((p0) => p0.pinIndex != null && p0.pinIndex! >= newIndex)
-          .forEach((element) {
+      _chats.bigPinHelper(true).where((p0) => p0.pinIndex != null && p0.pinIndex! >= newIndex).forEach((element) {
         element.pinIndex = element.pinIndex! + 1;
       });
       item.pinIndex = newIndex;

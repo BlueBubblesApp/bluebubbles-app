@@ -154,7 +154,7 @@ class AttachmentHelper {
         File(file.path!).copy(savePath);
         return showSnackbar('Success', 'Saved attachment to $savePath!');
       }
-      return showSnackbar('Failed', 'You didn''t select a file path!');
+      return showSnackbar('Failed', 'You didn' 't select a file path!');
     }
     void showDeniedSnackbar({String? err}) {
       showSnackbar("Save Failed", err ?? "Failed to save attachment!");
@@ -388,11 +388,8 @@ class AttachmentHelper {
 
     // Handle getting heic images
     if (attachment.mimeType == 'image/heic') {
-      dynamic file = await FlutterNativeImage.compressImage(
-        filePath,
-        percentage: 100,
-        quality: qualityOverride ?? SettingsManager().compressionQuality
-      );
+      dynamic file = await FlutterNativeImage.compressImage(filePath,
+          percentage: 100, quality: qualityOverride ?? SettingsManager().compressionQuality);
       originalFile = file;
     }
 

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
@@ -14,6 +15,7 @@ import 'package:bluebubbles/layouts/widgets/message_widget/received_message.dart
 import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/stickers_widget.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -21,8 +23,10 @@ import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get_rx/src/rx_types/rx_types.dart';
 import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
+import 'package:get/get_utils/src/extensions/context_extensions.dart';
 
 class MessageWidget extends StatefulWidget {
   MessageWidget({
@@ -69,6 +73,9 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
   Message? _newerMessage;
   Message? _olderMessage;
   RxBool tapped = false.obs;
+  double baseOffset = 0;
+  RxDouble offset = 0.0.obs;
+  bool gaveHapticFeedback = false;
 
   @override
   void initState() {
@@ -152,9 +159,13 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
             if (mounted) {
               setState(() {
                 if (_message.guid == oldGuid) {
+                  final associatedMessages = _message.associatedMessages;
                   _message = result;
+                  _message.associatedMessages = associatedMessages;
                 } else if (_newerMessage!.guid == oldGuid) {
+                  final associatedMessages = _newerMessage!.associatedMessages;
                   _newerMessage = result;
+                  _newerMessage!.associatedMessages = associatedMessages;
                 }
               });
             }
@@ -190,7 +201,6 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
   }
 
   Future<void> fetchAssociatedMessages({bool forceReload = false}) async {
-
     // If there is already a request being made, return that request
     if (!forceReload && associatedMessageRequest != null) return associatedMessageRequest!.future;
 
@@ -200,7 +210,9 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
     associatedCount = _message.associatedMessages.length;
     try {
       _message.fetchAssociatedMessages(bloc: widget.bloc);
-    } catch (_) {}
+    } catch (ex) {
+      return associatedMessageRequest!.completeError(ex);
+    }
 
     bool hasChanges = false;
     if (_message.associatedMessages.length != associatedCount || forceReload) {
@@ -216,6 +228,8 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
         _message.hasReactions = true;
         _message.save();
       }
+
+      if (mounted) setState(() {});
     }
 
     associatedMessageRequest!.complete();
@@ -236,8 +250,8 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
     }
 
     bool hasChanges = false;
-    if (_message.attachments!.length != attachmentCount || forceReload) {
-      attachmentCount = _message.attachments!.length;
+    if (_message.attachments.length != attachmentCount || forceReload) {
+      attachmentCount = _message.attachments.length;
       hasChanges = true;
     }
 
@@ -287,7 +301,6 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
         StickersWidget(key: Key("stickers-${associatedCount.toString()}"), messages: _message.associatedMessages);
     ReactionsWidget reactionsWidget = ReactionsWidget(
         key: Key("reactions-${associatedCount.toString()}"), associatedMessages: _message.associatedMessages);
-
     final separator = MessageTimeStampSeparator(
       newerMessage: _message,
       message: _olderMessage ?? _message,
@@ -341,13 +354,93 @@ class _MessageState extends State<MessageWidget> with AutomaticKeepAliveClientMi
           );
         }
 
-        return GestureDetector(
-          onTap: kIsDesktop || kIsWeb ? () => tapped.value = !tapped.value : null,
-          child: Column(
-            children: [
-              message,
-              separator2,
-            ],
+        double replyThreshold = 40;
+
+        return Obx(
+          () => GestureDetector(
+            behavior: HitTestBehavior.deferToChild,
+            onTap: kIsDesktop || kIsWeb ? () => tapped.value = !tapped.value : null,
+            onHorizontalDragStart: !SettingsManager().settings.enablePrivateAPI.value
+                || !SettingsManager().settings.swipeToReply.value
+                || !(chat?.isIMessage ?? true) ? null : (details) {
+              baseOffset = details.localPosition.dx;
+            },
+            onHorizontalDragUpdate: !SettingsManager().settings.enablePrivateAPI.value
+                || !SettingsManager().settings.swipeToReply.value
+                || !(chat?.isIMessage ?? true) ? null : (details) {
+              offset.value = min(max((details.localPosition.dx - baseOffset) * (_message.isFromMe! ? -1 : 1), 0),
+                  replyThreshold * 1.5);
+              if (!gaveHapticFeedback && offset.value >= replyThreshold) {
+                HapticFeedback.lightImpact();
+                gaveHapticFeedback = true;
+              } else if (offset.value < replyThreshold) {
+                gaveHapticFeedback = false;
+              }
+              CurrentChat.of(context)?.setReplyOffset(_message.guid ?? "", offset.value);
+            },
+            onHorizontalDragEnd: !SettingsManager().settings.enablePrivateAPI.value
+                || !SettingsManager().settings.swipeToReply.value
+                || !(chat?.isIMessage ?? true) ? null : (details) {
+              if (offset.value >= replyThreshold) {
+                EventDispatcher().emit("focus-keyboard", _message);
+              }
+              offset.value = 0;
+              CurrentChat.of(context)?.setReplyOffset(_message.guid ?? "", offset.value);
+            },
+            child: AnimatedContainer(
+              duration: Duration(milliseconds: offset.value == 0 ? 150 : 0),
+              padding: _message.isFromMe!
+                  ? EdgeInsets.only(
+                      right: max(0, offset.value),
+                    )
+                  : EdgeInsets.only(
+                      left: max(0, offset.value),
+                    ),
+              child: Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.center,
+                children: <Widget>[
+                  AnimatedPositioned(
+                    duration: Duration(milliseconds: offset.value == 0 ? 150 : 0),
+                    left: !_message.isFromMe! ? -offset.value * 0.8 : null,
+                    right: _message.isFromMe! ? -offset.value * 0.8 : null,
+                    child: AnimatedOpacity(
+                      duration: Duration(milliseconds: offset.value == 0 ? 150 : 0),
+                      opacity: offset.value == 0 ? 0 : 1,
+                      child: AnimatedContainer(
+                        margin: EdgeInsets.only(
+                            bottom: min(replyThreshold, offset.value) * (!_message.isFromMe! ? 0.10 : 0.20) +
+                                (widget.isFirstSentMessage && _message.dateDelivered != null ? 20 : 0)),
+                        duration: Duration(milliseconds: offset.value == 0 ? 150 : 0),
+                        width: min(replyThreshold, offset.value) * 0.8,
+                        height: min(replyThreshold, offset.value) * 0.8,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.all(
+                            Radius.circular(
+                              min(replyThreshold, offset.value) * 0.4,
+                            ),
+                          ),
+                          color: context.theme.accentColor,
+                        ),
+                        child: AnimatedScale(
+                          duration: Duration(milliseconds: offset.value == 0 ? 150 : 0),
+                          scale: min(replyThreshold, offset.value) * (offset.value >= replyThreshold ? 0.5 : 0.4),
+                          child: Icon(
+                            SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.reply : Icons.reply,
+                            size: 1,
+                            color: context.textTheme.headline1!.color,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Column(children: <Widget>[
+                    message,
+                    separator2,
+                  ]),
+                ],
+              ),
+            ),
           ),
         );
       },

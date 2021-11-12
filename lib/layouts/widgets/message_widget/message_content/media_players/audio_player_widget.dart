@@ -53,7 +53,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
       controller = ChewieAudioController(
         videoPlayerController: audioController,
         autoPlay: false,
-        looping: true,
+        looping: false,
         showSeekButtons: false,
         showControls: true,
         autoInitialize: true,

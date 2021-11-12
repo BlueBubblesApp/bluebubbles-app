@@ -70,6 +70,7 @@ class Handle {
     store.runInTransaction(TxMode.write, () {
       /// Find a list of existing handles
       List<Handle> existingHandles = Handle.find(cond: Handle_.address.oneOf(handles.map((e) => e.address).toList()));
+
       /// Match existing to the handles to save, where possible
       for (Handle h in handles) {
         final existing = existingHandles.firstWhereOrNull((e) => e.address == h.address);
@@ -132,6 +133,7 @@ class Handle {
       final chatIdQuery = chJoinBox.query(ChatHandleJoin_.handleId.equals(id!)).build();
       final chatIds = chatIdQuery.property(ChatHandleJoin_.chatId).find();
       chatIdQuery.close();
+
       /// Find the chats themselves
       final chats = chatBox.getMany(chatIds, growableResult: true)..removeWhere((e) => e == null);
       final nonNullChats = List<Chat>.from(chats);

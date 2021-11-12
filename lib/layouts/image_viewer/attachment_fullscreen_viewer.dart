@@ -94,6 +94,7 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
 
     currentIndex = startingIndex ?? 0;
     controller = PageController(initialPage: startingIndex ?? 0);
+    if (mounted) setState(() {});
   }
 
   void getStartingIndex() {
@@ -136,7 +137,9 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                   focusNode: FocusNode(),
                   autofocus: true,
                   onKey: (node, event) {
-                    Logger.info("Got key label ${event.data.keyLabel}, physical key ${event.data.physicalKey.toString()}, logical key ${event.data.logicalKey.toString()}", tag: "RawKeyboardListener");
+                    Logger.info(
+                        "Got key label ${event.data.keyLabel}, physical key ${event.data.physicalKey.toString()}, logical key ${event.data.logicalKey.toString()}",
+                        tag: "RawKeyboardListener");
                     if (event.data.physicalKey.debugName == "Arrow Right") {
                       if (SettingsManager().settings.fullscreenViewerSwipeDir.value == SwipeDirection.RIGHT) {
                         controller!.previousPage(duration: Duration(milliseconds: 300), curve: Curves.easeIn);
@@ -166,14 +169,16 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                         onDismissed: (_) => Navigator.of(context).pop(),
                         child: Builder(builder: (_) {
                           Logger.info("Showing index: " + index.toString());
-                          Attachment attachment =
-                              !kIsWeb && widget.currentChat != null ? widget.currentChat!.chatAttachments[index] : widget.attachment;
+                          Attachment attachment = !kIsWeb && widget.currentChat != null
+                              ? widget.currentChat!.chatAttachments[index]
+                              : widget.attachment;
                           String mimeType = attachment.mimeType!;
                           mimeType = mimeType.substring(0, mimeType.indexOf("/"));
                           dynamic content = AttachmentHelper.getContent(attachment,
                               path: attachment.guid == null ? attachment.transferName : null);
 
-                          String viewerKey = attachment.guid ?? attachment.transferName ?? Random().nextInt(100).toString();
+                          String viewerKey =
+                              attachment.guid ?? attachment.transferName ?? Random().nextInt(100).toString();
 
                           if (content is PlatformFile) {
                             content = content;
@@ -204,11 +209,12 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                               children: [
                                 Center(
                                   child: AttachmentDownloaderWidget(
-                                    key:
-                                        Key(attachment.guid ?? attachment.transferName ?? Random().nextInt(100).toString()),
+                                    key: Key(
+                                        attachment.guid ?? attachment.transferName ?? Random().nextInt(100).toString()),
                                     attachment: attachment,
                                     onPressed: () {
-                                      Get.put(AttachmentDownloadController(attachment: attachment), tag: attachment.guid);
+                                      Get.put(AttachmentDownloadController(attachment: attachment),
+                                          tag: attachment.guid);
                                       content = AttachmentHelper.getContent(attachment);
                                       if (mounted) setState(() {});
                                     },
@@ -292,8 +298,9 @@ class AttachmentFullscreenViewerState extends State<AttachmentFullscreenViewer> 
                     onPageChanged: (int val) => currentIndex = val,
                     controller: controller,
                   ),
-              ),
-            ) : Container(),
+                ),
+              )
+            : Container(),
       ),
     );
   }

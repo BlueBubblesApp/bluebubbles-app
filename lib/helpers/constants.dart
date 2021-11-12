@@ -36,7 +36,7 @@ final effectMap = {
   "love": "com.apple.messages.effect.CKHeartEffect",
   "lasers": "com.apple.messages.effect.CKLasersEffect",
   "fireworks": "com.apple.messages.effect.CKFireworksEffect",
-  "celebration": "com.apple.messages.effect.CKCelebrationEffect",
+  "celebration": "com.apple.messages.effect.CKSparklesEffect",
 };
 
 final stringToMessageEffect = {
@@ -72,7 +72,11 @@ enum MessageEffect {
 }
 
 extension EffectHelper on MessageEffect {
-  bool get isBubble => this == MessageEffect.slam || this == MessageEffect.loud || this == MessageEffect.gentle || this == MessageEffect.invisibleInk;
+  bool get isBubble =>
+      this == MessageEffect.slam ||
+      this == MessageEffect.loud ||
+      this == MessageEffect.gentle ||
+      this == MessageEffect.invisibleInk;
 
   bool get isScreen => !isBubble && this != MessageEffect.none;
 }

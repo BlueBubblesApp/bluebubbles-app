@@ -10,6 +10,7 @@ import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
@@ -32,7 +33,6 @@ class NotificationManager {
   static const String socketErrorChannel = "com.bluebubbles.socket_error";
 
   static final NotificationManager _manager = NotificationManager._internal();
-
   NotificationManager._internal();
 
   /// [processedItems] holds all of the notifications that have already been notified / processed
@@ -124,7 +124,7 @@ class NotificationManager {
             android: fln.AndroidNotificationDetails(
           "com.bluebubbles.reminders",
           'Reminders',
-          'Message reminder notifications',
+          channelDescription: 'Message reminder notifications',
           priority: fln.Priority.max,
           importance: fln.Importance.max,
           color: HexColor("4990de"),

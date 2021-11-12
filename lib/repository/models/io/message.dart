@@ -73,8 +73,16 @@ class Message {
 
   set error(int i) => _error.value = i;
   DateTime? dateCreated;
-  DateTime? dateRead;
-  DateTime? dateDelivered;
+  final Rxn<DateTime> _dateRead = Rxn<DateTime>();
+
+  DateTime? get dateRead => _dateRead.value;
+
+  set dateRead(DateTime? d) => _dateRead.value = d;
+  final Rxn<DateTime> _dateDelivered = Rxn<DateTime>();
+
+  DateTime? get dateDelivered => _dateDelivered.value;
+
+  set dateDelivered(DateTime? d) => _dateDelivered.value = d;
   bool? isFromMe;
   bool? isDelayed;
   bool? isAutoReply;
@@ -102,7 +110,8 @@ class Message {
   Map<String, dynamic>? metadata;
   String? threadOriginatorGuid;
   String? threadOriginatorPart;
-  List<Attachment?>? attachments = [];
+
+  List<Attachment?> attachments = [];
   List<Message> associatedMessages = [];
   bool? bigEmoji;
 
@@ -117,8 +126,8 @@ class Message {
       this.country,
       int? error2,
       this.dateCreated,
-      this.dateRead,
-      this.dateDelivered,
+      DateTime? dateRead2,
+      DateTime? dateDelivered2,
       this.isFromMe = true,
       this.isDelayed = false,
       this.isAutoReply = false,
@@ -149,6 +158,8 @@ class Message {
       this.threadOriginatorGuid,
       this.threadOriginatorPart}) {
     if (error2 != null) _error.value = error2;
+    if (dateRead2 != null) _dateRead.value = dateRead2;
+    if (dateDelivered2 != null) _dateDelivered.value = dateDelivered2;
   }
 
   String get fullText {
@@ -204,8 +215,8 @@ class Message {
       country: json.containsKey("country") ? json["country"] : null,
       error2: json.containsKey("_error") ? json["_error"] : 0,
       dateCreated: json.containsKey("dateCreated") ? parseDate(json["dateCreated"]) : null,
-      dateRead: json.containsKey("dateRead") ? parseDate(json["dateRead"]) : null,
-      dateDelivered: json.containsKey("dateDelivered") ? parseDate(json["dateDelivered"]) : null,
+      dateRead2: json.containsKey("_dateRead") ? parseDate(json["_dateRead"]) : null,
+      dateDelivered2: json.containsKey("_dateDelivered") ? parseDate(json["_dateDelivered"]) : null,
       isFromMe: (json["isFromMe"] is bool) ? json['isFromMe'] : ((json['isFromMe'] == 1) ? true : false),
       isDelayed: (json["isDelayed"] is bool) ? json['isDelayed'] : ((json['isDelayed'] == 1) ? true : false),
       isAutoReply: (json["isAutoReply"] is bool) ? json['isAutoReply'] : ((json['isAutoReply'] == 1) ? true : false),
@@ -372,6 +383,9 @@ class Message {
       }
 
       return newMessage;
+    } else {
+      existing._dateDelivered.value = newMessage?._dateDelivered.value ?? existing._dateDelivered.value;
+      existing._dateRead.value = newMessage?._dateRead.value ?? existing._dateRead.value;
     }
 
     newMessage!.id = existing.id;
@@ -401,13 +415,13 @@ class Message {
       {CurrentChat? currentChat}) {
     final Map<String, List<Attachment?>> map = {};
     if (kIsWeb) {
-      map.addEntries(messages.map((e) => MapEntry(e!.guid!, e.attachments ?? [])));
+      map.addEntries(messages.map((e) => MapEntry(e!.guid!, e.attachments)));
       return map;
     }
 
     /// If we have a [CurrentChat] just return the attachments stored in it
     if (currentChat != null) {
-      map.addEntries(messages.map((e) => MapEntry(e!.guid!, currentChat.getAttachmentsForMessage(e) ?? [])));
+      map.addEntries(messages.map((e) => MapEntry(e!.guid!, currentChat.getAttachmentsForMessage(e))));
       return map;
     }
 
@@ -436,12 +450,12 @@ class Message {
       {CurrentChat? currentChat}) async {
     final Map<String, List<Attachment?>> map = {};
     if (kIsWeb) {
-      map.addEntries(messages.map((e) => MapEntry(e!.guid!, e.attachments ?? [])));
+      map.addEntries(messages.map((e) => MapEntry(e!.guid!, e.attachments)));
       return map;
     }
 
     if (currentChat != null) {
-      map.addEntries(messages.map((e) => MapEntry(e!.guid!, currentChat.getAttachmentsForMessage(e) ?? [])));
+      map.addEntries(messages.map((e) => MapEntry(e!.guid!, currentChat.getAttachmentsForMessage(e))));
       return map;
     }
 
@@ -455,14 +469,13 @@ class Message {
   /// Fetch attachments for a single message. Prefer using [fetchAttachmentsByMessages]
   /// or [fetchAttachmentsByMessagesAsync] when working with a list of messages.
   List<Attachment?>? fetchAttachments({CurrentChat? currentChat}) {
-    if (kIsWeb || (hasAttachments && attachments != null && attachments!.isNotEmpty)) {
+    if (kIsWeb || (hasAttachments && attachments.isNotEmpty)) {
       return attachments;
     }
 
     if (currentChat != null) {
       attachments = currentChat.getAttachmentsForMessage(this);
-      attachments ??= [];
-      if (attachments!.isNotEmpty) return attachments;
+      if (attachments.isNotEmpty) return attachments;
     }
 
     if (id == null) return [];
@@ -630,11 +643,11 @@ class Message {
   }
 
   List<Attachment?> getRealAttachments() {
-    return attachments!.where((item) => item!.mimeType != null).toList();
+    return attachments.where((item) => item!.mimeType != null).toList();
   }
 
   List<Attachment?> getPreviewAttachments() {
-    return attachments!.where((item) => item!.mimeType == null).toList();
+    return attachments.where((item) => item!.mimeType == null).toList();
   }
 
   List<Message> getReactions() {
@@ -668,11 +681,11 @@ class Message {
     if (dateCreated == null && otherMessage.dateCreated != null) {
       dateCreated = otherMessage.dateCreated;
     }
-    if (dateDelivered == null && otherMessage.dateDelivered != null) {
-      dateDelivered = otherMessage.dateDelivered;
+    if (_dateDelivered.value == null && otherMessage._dateDelivered.value != null) {
+      _dateDelivered.value = otherMessage._dateDelivered.value;
     }
-    if (dateRead == null && otherMessage.dateRead != null) {
-      dateRead = otherMessage.dateRead;
+    if (_dateRead.value == null && otherMessage._dateRead.value != null) {
+      _dateRead.value = otherMessage._dateRead.value;
     }
     if (dateDeleted == null && otherMessage.dateDeleted != null) {
       dateDeleted = otherMessage.dateDeleted;
@@ -732,8 +745,9 @@ class Message {
     // to check that it isn't actually an outlined bubble representing the
     // thread originator), don't connect
     if (olderMessage == null ||
-        (olderMessage.threadOriginatorGuid != threadOriginatorGuid && !upperIsThreadOriginatorBubble(olderMessage)))
+        (olderMessage.threadOriginatorGuid != threadOriginatorGuid && !upperIsThreadOriginatorBubble(olderMessage))) {
       return false;
+    }
     // if the older message is the outlined bubble, or the originator is from
     // someone else and the message is from me, then draw the connecting line
     // (the second condition might be redundant / unnecessary but I left it in
@@ -761,12 +775,12 @@ class Message {
     // cache this value because the calculation can be expensive
     if (ChatBloc().cachedMessageBubbleSizes[guid!] != null) return ChatBloc().cachedMessageBubbleSizes[guid!]!;
     // if attachment, then grab width / height
-    if (fullText.isEmpty && (attachments ?? []).isNotEmpty) {
+    if (fullText.isEmpty && (attachments).isNotEmpty) {
       return Size(
-          attachments!
+          attachments
               .map((e) => e!.width)
               .fold(0, (p, e) => max(p, (e ?? CustomNavigator.width(context) / 2).toDouble()) + 28),
-          attachments!
+          attachments
               .map((e) => e!.height)
               .fold(0, (p, e) => max(p, (e ?? CustomNavigator.width(context) / 2).toDouble())));
     }
@@ -814,10 +828,10 @@ class Message {
       "text": sanitizeString(text),
       "subject": subject,
       "country": country,
-      "_error": _error.value,
+      "error": _error.value,
       "dateCreated": (dateCreated == null) ? null : dateCreated!.millisecondsSinceEpoch,
-      "dateRead": (dateRead == null) ? null : dateRead!.millisecondsSinceEpoch,
-      "dateDelivered": (dateDelivered == null) ? null : dateDelivered!.millisecondsSinceEpoch,
+      "dateRead": (_dateRead.value == null) ? null : _dateRead.value!.millisecondsSinceEpoch,
+      "dateDelivered": (_dateDelivered.value == null) ? null : _dateDelivered.value!.millisecondsSinceEpoch,
       "isFromMe": isFromMe! ? 1 : 0,
       "isDelayed": isDelayed! ? 1 : 0,
       "isAutoReply": isAutoReply! ? 1 : 0,
@@ -848,7 +862,7 @@ class Message {
       "threadOriginatorPart": threadOriginatorPart,
     };
     if (includeObjects) {
-      map['attachments'] = (attachments ?? []).map((e) => e!.toMap()).toList();
+      map['attachments'] = (attachments).map((e) => e!.toMap()).toList();
       map['handle'] = handle?.toMap();
     }
     return map;

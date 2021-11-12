@@ -20,6 +20,7 @@ import 'package:bluebubbles/layouts/conversation_view/text_field/blue_bubbles_te
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/message_attachments.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/sent_message.dart';
+import 'package:bluebubbles/layouts/widgets/screen_effects_widget.dart';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';
@@ -101,6 +102,10 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   void initState() {
     super.initState();
 
+    getAdjustBackground();
+
+    getShowAlert();
+
     selected = widget.selected.isEmpty ? [] : widget.selected;
     existingAttachments = widget.existingAttachments.isEmpty ? [] : widget.existingAttachments;
     existingText = widget.existingText;
@@ -159,13 +164,6 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
 
     initListener();
 
-    SchedulerBinding.instance!.addPostFrameCallback((_) async {
-      if (widget.isCreator && (await SettingsManager().getMacOSVersion())! >= 11) {
-        showSnackbar('Warning',
-            'Support for creating chats is currently limited on MacOS 11 (Big Sur) and up due to limitations imposed by Apple');
-      }
-    });
-
     // Bind the lifecycle events
     WidgetsBinding.instance!.addObserver(this);
   }
@@ -179,6 +177,10 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     } else {
       if (adjustBackground.value != false) adjustBackground.value = false;
     }
+  }
+
+  void getShowAlert() async {
+    shouldShowAlert = widget.isCreator && (await SettingsManager().getMacOSVersion())! >= 11;
   }
 
   void initListener() {
@@ -218,7 +220,8 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
             setState(() {
               tween = Tween<double>(
                   begin: CustomNavigator.width(context) - 30,
-                  end: min(size.width + 68, CustomNavigator.width(context) * MessageWidgetMixin.maxSize + 40));
+                  end: min(max(size.width, size2.width) + 68,
+                      CustomNavigator.width(context) * MessageWidgetMixin.maxSize + 40));
               controller = CustomAnimationControl.play;
               message = event.message;
             });
@@ -246,6 +249,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused && mounted) {
       Logger.info("Removing CurrentChat imageData");
+      CurrentChat.activeChat?.imageData.clear();
     }
     if (widgetsBuilt) didChangeDependenciesConversationView();
   }
@@ -277,19 +281,30 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         } catch (_) {}
       }
 
-      if (chat == null && (await SettingsManager().getMacOSVersion() ?? 10) > 10 && SettingsManager().settings.enablePrivateAPI.value == false) {
+      if (chat == null &&
+          (await SettingsManager().getMacOSVersion() ?? 10) >
+              10 /*&& SettingsManager().settings.enablePrivateAPI.value == false*/) {
         if (searchQuery.isNotEmpty) {
           selected.add(UniqueContact(address: searchQuery, displayName: searchQuery));
+          resetCursor();
         }
         if (selected.length > 1) {
           showSnackbar("Error", "Creating group chats is currently unsupported on Big Sur without Private API!");
           return false;
         } else if (isNullOrEmpty(text, trimString: true)!) {
-          showSnackbar("Error", "Starting new chats with an attachment is currently unsupported on Big Sur without Private API! Please start the chat with a text instead.");
+          showSnackbar("Error",
+              "Starting new chats with an attachment is currently unsupported on Big Sur without Private API! Please start the chat with a text instead.");
           return false;
         } else if (!isNullOrEmpty(cleansePhoneNumber(selected.firstOrNull?.address ?? ""))!) {
-          chat = await ActionHandler.createChatBigSur(context, cleansePhoneNumber(selected.firstOrNull?.address ?? ""), text);
-          alreadySent = true;
+          chat = await ActionHandler.createChatBigSur(
+              context, cleansePhoneNumber(selected.firstOrNull?.address ?? ""), text);
+          if (chat == null) {
+            Navigator.of(context).pop();
+            showSnackbar("Error", "Failed to create chat.");
+            return false;
+          } else {
+            alreadySent = true;
+          }
         }
       } else {
         chat ??= await createChat();
@@ -439,7 +454,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     });
     currentChat?.isAlive = true;
 
-    if (messageBloc == null && !widget.isCreator) {
+    if (messageBloc == null) {
       messageBloc = initMessageBloc();
       messageBloc!.getMessages();
     }
@@ -451,6 +466,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
       isCreator: isCreator,
       existingAttachments: existingAttachments,
       existingText: existingText,
+      chatGuid: widget.chat?.guid,
     );
 
     final Widget child = Column(
@@ -501,6 +517,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
         }),
         Expanded(
           child: Stack(children: [
+            Positioned.fill(child: ScreenEffectsWidget()),
             Column(mainAxisAlignment: MainAxisAlignment.end, mainAxisSize: MainAxisSize.min, children: [
               Expanded(
                 child: Obx(
@@ -578,10 +595,10 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                     tween = Tween<double>(begin: 1, end: 0);
                     controller = CustomAnimationControl.stop;
                     message = null;
-                    isCreator = false;
-                    wasCreator = true;
                     existingText = "";
                     existingAttachments = [];
+                    isCreator = false;
+                    wasCreator = true;
                   });
                 }
               },
@@ -608,7 +625,9 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
                         customContent: child,
                       );
                     },
-                    child: (message?.hasAttachments ?? false) && (message?.text?.isEmpty ?? true)
+                    child: (message?.hasAttachments ?? false) &&
+                            (message?.text?.isEmpty ?? true) &&
+                            (message?.subject?.isEmpty ?? true)
                         ? MessageAttachments(
                             message: message,
                             showTail: true,
@@ -629,50 +648,45 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
             Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
         statusBarColor: Colors.transparent, // status bar color
       ),
-      child: Obx(
-        () {
-          bool ios = SettingsManager().settings.skin.value == Skins.iOS;
-          return Padding(
-            padding: EdgeInsets.only(
-              top: kIsDesktop && !ios ? 20 : 0,
-            ),
-            child: Scaffold(
-              backgroundColor: Theme.of(context).backgroundColor,
-              extendBodyBehindAppBar: !isCreator!,
-              appBar: !isCreator!
-                  ? buildConversationViewHeader() as PreferredSizeWidget?
-                  : buildChatSelectorHeader() as PreferredSizeWidget?,
-              body: Obx(() => adjustBackground.value
-                  ? MirrorAnimation<MultiTweenValues<String>>(
-                      tween: ConversationViewMixin.gradientTween.value,
-                      curve: Curves.fastOutSlowIn,
-                      duration: Duration(seconds: 3),
-                      builder: (context, child, anim) {
-                        return Container(
-                          decoration: (searchQuery.isEmpty || !isCreator!) && chat != null && adjustBackground.value
-                              ? BoxDecoration(
-                                  gradient:
-                                      LinearGradient(begin: Alignment.topRight, end: Alignment.bottomLeft, stops: [
-                                  anim.get("color1"),
-                                  anim.get("color2")
-                                ], colors: [
-                                  AdaptiveTheme.of(context).mode == AdaptiveThemeMode.light
-                                      ? Theme.of(context).primaryColor.lightenPercent(20)
-                                      : Theme.of(context).primaryColor.darkenPercent(20),
-                                  Theme.of(context).backgroundColor
-                                ]))
-                              : null,
-                          child: child,
-                        );
-                      },
-                      child: child,
-                    )
-                  : child),
-              floatingActionButton: AnimatedOpacity(
-                  duration: Duration(milliseconds: 250), opacity: 1, curve: Curves.easeInOut, child: buildFAB()),
-            ),
+      child: Theme(
+        data: Theme.of(context)
+            .copyWith(primaryColor: chat?.isTextForwarding ?? false ? Colors.green : Theme.of(context).primaryColor),
+        child: Builder(builder: (context) {
+          return Scaffold(
+            backgroundColor: Theme.of(context).backgroundColor,
+            extendBodyBehindAppBar: !isCreator!,
+            appBar: !isCreator!
+                ? buildConversationViewHeader() as PreferredSizeWidget?
+                : buildChatSelectorHeader() as PreferredSizeWidget?,
+            body: Obx(() => adjustBackground.value
+                ? MirrorAnimation<MultiTweenValues<String>>(
+                    tween: ConversationViewMixin.gradientTween.value,
+                    curve: Curves.fastOutSlowIn,
+                    duration: Duration(seconds: 3),
+                    builder: (context, child, anim) {
+                      return Container(
+                        decoration: (searchQuery.isEmpty || !isCreator!) && chat != null && adjustBackground.value
+                            ? BoxDecoration(
+                                gradient: LinearGradient(begin: Alignment.topRight, end: Alignment.bottomLeft, stops: [
+                                anim.get("color1"),
+                                anim.get("color2")
+                              ], colors: [
+                                AdaptiveTheme.of(context).mode == AdaptiveThemeMode.light
+                                    ? Theme.of(context).primaryColor.lightenPercent(20)
+                                    : Theme.of(context).primaryColor.darkenPercent(20),
+                                Theme.of(context).backgroundColor
+                              ]))
+                            : null,
+                        child: child,
+                      );
+                    },
+                    child: child,
+                  )
+                : child),
+            floatingActionButton: AnimatedOpacity(
+                duration: Duration(milliseconds: 250), opacity: 1, curve: Curves.easeInOut, child: buildFAB()),
           );
-        },
+        }),
       ),
     );
   }

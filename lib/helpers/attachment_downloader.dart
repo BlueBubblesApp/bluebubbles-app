@@ -105,10 +105,10 @@ class AttachmentDownloadController extends GetxController {
     SocketManager().sendMessage("get-attachment-chunk", params, (attachmentResponse) async {
       if (attachmentResponse['status'] != 200 ||
           (attachmentResponse.containsKey("error") && attachmentResponse["error"] != null)) {
-          File file = File(attachment.getPath());
-          if (await file.exists()) {
-            await file.delete();
-          }
+        File file = File(attachment.getPath());
+        if (await file.exists()) {
+          await file.delete();
+        }
 
         if (onError != null) onError!.call();
 

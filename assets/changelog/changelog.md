@@ -2,6 +2,99 @@
 
 Below are the last few BlueBubbles App release changelogs
 
+## v1.7.0
+
+**NOTE**: If you want to try out the new Private API features (or Big Sur Private API), server version v0.3.0 and Private API helper version v0.0.3 are _required_!
+
+## Changes
+
+### The Big Stuff
+
+- Private API support for Big Sur+ (*Intel only Macs*)
+- Big Sur+ chat creation (DMs only for right now, we hope to add group chat support via the Private API soon)
+- View replies (requires Big Sur and up)
+- View message effects
+- New Private API features!
+   - Rename group chats
+   - Add & remove participants from group chats
+   - Send effects
+   - Send subject lines
+   - Send replies (requires Big Sur and up)
+- iOS Emojis
+- Text Forwarding support (this is *not* Android SMS support, just SMS support for those who have iPhone Text Forwarding / SMS Relay enabled)
+- Minor bug fixes & improvements
+
+### The Nitty Gritty
+
+#### New Features
+
+- **Private API Features**
+   - Rename group chats
+   - Add & remove participants from group chats
+   - Send effects
+   - Send subject lines
+   - Send replies (requires Big Sur and up)
+- **UI Features / iMessage Feature Parity**
+   - View message effects
+   - View replies (requires Big Sur and up)
+   - DM chat creation for Big Sur+
+   - iOS Emojis
+   - Text Forwarding / SMS Relay support
+   - Add immersive mode option (make bottom navigation bar transparent and show app contents behind it)
+   - Added ability to change font weight (bold / light) of text in theme settings
+- Added ability to delete attachments to free up space without resetting the whole app
+- Added support for copying the server address when tapping it
+- Support underlining multiple phones / emails / links in a single message
+- Support translating reaction text ('somebody liked "a message"') if it was sent from a device in another language
+- Add incognito keyboard option on Android (when enabled, the keyboard will not store any data as you type)
+- Added support for automatically saving pictures to gallery and files to downloads folder
+- Added support for generating a chat transcript, either as a plaintext or PDF document
+- Completely redesigned setup screen UI
+
+#### Bug Fixes
+
+- Fixed padding for images sent with a message
+- Fixed attach recent photo text misalignment
+- Fixed off-center icons
+- Fixed video preview in attachment picker
+- Removed the ability to set .heic images as a custom avatar (it would crash the app)
+- Fixed chat creator defaulting to the message text field rather than the participant text field
+- Fixed clicking on a selected attachment selects it a second time
+- Fixed attachment viewer wouldn't show images past the most recent 25
+- Fixed text field text would carry over to a different chat when opening that chat through a notification popup
+- Removed empty box when there are no smart replies
+- Fixed overlay not disappearing in material mode video player
+- Fixed issues with sent / delivered / read receipts not updating
+- Fixed reply from notification shade not working
+- Fixed reaction alignment for digital touch messages
+- Fixed changing color on theme picker dark mode would reset the tab bar selected item to light mode
+- **Android fixes**
+   - Fixed duplicate notification issue
+   - Fixed contact avatars not showing for notifications sometimes
+   - Fixed a lot of bugs with unread blue dot
+   - Fixed link parsing incorrect with some characters (this will still remain an issue on web and desktop because Google MLKit is unsupported there)
+   - Swipe back gesture in tablet mode will now exit the app
+   - Fixed .heic images not loading
+- **Web fixes**
+   - Fixed reactions not displaying in message preview
+   - Fixed connection & sync empty header display in settings
+
+#### Improvements
+
+- Moved server statistics to its own dialog to reduce clutter
+- Added dismiss button to QR code generation
+- Under-the-hood improvements when fetching notifications to fix avatars not loading
+- Reduced attach recent photo threshold
+- Removed extra notification categories in android settings
+- Made server connection dialog continue when pressing enter on the password field
+- Improved notification reliability
+- Improved speed of launching chat details page
+- Hide more database related items on Web, since database is unsupported there
+- Hide keyboard when app is not in foreground (mainly to not show the keyboard input method notification)
+- Show server details as the first page in tablet mode settings
+- When in phone landscape mode, the chat header will shrink to allow more content to show
+- When in dark mode, the theme settings will now automatically start in the dark mode tab
+
 ## v1.6.0
 
 **NOTE**: Please update your BlueBubbles Server to v0.2.0 for extended capabilities! If you want to try out BlueBubbles Web/Desktop, v0.2.0 is _required_!

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/message_marker.dart';
 import 'package:bluebubbles/helpers/utils.dart';
@@ -32,10 +33,11 @@ class CurrentChat {
 
   Chat chat;
 
+  Map<String, Uint8List> imageData = {};
   Map<String, Metadata> urlPreviews = {};
   Map<String, VideoPlayerController> currentPlayingVideo = {};
   Map<String, Tuple2<ChewieAudioController, VideoPlayerController>> audioPlayers = {};
-  Map<String, List<EntityAnnotation>> entityExtractorData = {};
+  Map<String, List<EntityAnnotation>> mlKitParsedText = {};
   List<VideoPlayerController> videoControllersToDispose = [];
   List<Attachment> chatAttachments = [];
   List<Message?> sentMessages = [];
@@ -50,17 +52,34 @@ class CurrentChat {
   Map<String, List<Attachment?>> messageAttachments = {};
 
   double _timeStampOffset = 0.0;
+  double _replyOffset = 0.0;
 
   StreamController<double> timeStampOffsetStream = StreamController<double>.broadcast();
+  StreamController<Map<String, dynamic>> replyOffsetStream = StreamController<Map<String, dynamic>>.broadcast();
+  StreamController<dynamic> totalOffsetStream = StreamController<dynamic>.broadcast();
 
   late MessageMarkers messageMarkers;
 
   double get timeStampOffset => _timeStampOffset;
 
+  double get replyOffset => _replyOffset;
+
+  double get totalOffset => _timeStampOffset + _replyOffset;
+
   set timeStampOffset(double value) {
     if (_timeStampOffset == value) return;
     _timeStampOffset = value;
     if (!timeStampOffsetStream.isClosed) timeStampOffsetStream.sink.add(_timeStampOffset);
+    if (!totalOffsetStream.isClosed) totalOffsetStream.sink.add(_timeStampOffset - _replyOffset);
+  }
+
+  setReplyOffset(String guid, double value) {
+    if (_replyOffset == value) return;
+    _replyOffset = value;
+    if (!replyOffsetStream.isClosed) replyOffsetStream.sink.add({"guid": guid, "offset": _replyOffset});
+    if (!totalOffsetStream.isClosed) {
+      totalOffsetStream.sink.add({"guid": guid, "offset": _timeStampOffset - _replyOffset, "else": _timeStampOffset});
+    }
   }
 
   ScrollController scrollController = ScrollController();
@@ -92,6 +111,11 @@ class CurrentChat {
     }
 
     return currentChat;
+  }
+
+  static CurrentChat? forGuid(String? guid) {
+    if (guid == null) return null;
+    return AttachmentInfoBloc().getCurrentChat(guid);
   }
 
   static bool isActive(String chatGuid) => AttachmentInfoBloc().getCurrentChat(chatGuid)?.isAlive ?? false;
@@ -148,6 +172,7 @@ class CurrentChat {
   void init() {
     dispose();
 
+    imageData = {};
     currentPlayingVideo = {};
     audioPlayers = {};
     urlPreviews = {};
@@ -174,17 +199,17 @@ class CurrentChat {
 
   /// Fetch and store all of the attachments for a [message]
   /// @param [message] the message you want to fetch for
-  List<Attachment?>? getAttachmentsForMessage(Message? message) {
+  List<Attachment?> getAttachmentsForMessage(Message? message) {
     // If we have already disposed, do nothing
     if (!messageAttachments.containsKey(message!.guid)) {
       preloadMessageAttachments(specificMessages: [message]);
-      return messageAttachments[message.guid];
+      return messageAttachments[message.guid] ?? [];
     }
     if (messageAttachments[message.guid] != null && messageAttachments[message.guid]!.isNotEmpty) {
       final guids = messageAttachments[message.guid]!.map((e) => e!.guid).toSet();
       messageAttachments[message.guid]!.retainWhere((element) => guids.remove(element!.guid));
     }
-    return messageAttachments[message.guid];
+    return messageAttachments[message.guid] ?? [];
   }
 
   List<Attachment?>? updateExistingAttachments(NewMessageEvent event) {
@@ -192,13 +217,16 @@ class CurrentChat {
     String? oldGuid = event.event["oldGuid"];
     if (!messageAttachments.containsKey(oldGuid)) return [];
     Message message = event.event["message"];
-    if (message.attachments!.isEmpty) return [];
+    if (message.attachments.isEmpty) return [];
 
     messageAttachments.remove(oldGuid);
-    messageAttachments[message.guid!] = message.attachments ?? [];
+    messageAttachments[message.guid!] = message.attachments;
 
-    String? newAttachmentGuid = message.attachments!.first!.guid;
-    if (currentPlayingVideo.containsKey(oldGuid)) {
+    String? newAttachmentGuid = message.attachments.first!.guid;
+    if (imageData.containsKey(oldGuid)) {
+      Uint8List data = imageData.remove(oldGuid)!;
+      imageData[newAttachmentGuid!] = data;
+    } else if (currentPlayingVideo.containsKey(oldGuid)) {
       VideoPlayerController data = currentPlayingVideo.remove(oldGuid)!;
       currentPlayingVideo[newAttachmentGuid!] = data;
     } else if (audioPlayers.containsKey(oldGuid)) {
@@ -211,15 +239,27 @@ class CurrentChat {
     return message.attachments;
   }
 
+  Uint8List? getImageData(Attachment attachment) {
+    if (!imageData.containsKey(attachment.guid)) return null;
+    return imageData[attachment.guid];
+  }
+
+  void saveImageData(Uint8List data, Attachment attachment) {
+    imageData[attachment.guid!] = data;
+  }
+
+  void clearImageData(Attachment attachment) {
+    if (!imageData.containsKey(attachment.guid)) return;
+    imageData.remove(attachment.guid);
+  }
+
   void preloadMessageAttachments({List<Message?>? specificMessages}) {
-    List<Message?> messages =
-        specificMessages ?? Chat.getMessages(chat, limit: 25);
+    List<Message?> messages = specificMessages ?? Chat.getMessages(chat, limit: 25);
     messageAttachments = Message.fetchAttachmentsByMessages(messages);
   }
 
   Future<void> preloadMessageAttachmentsAsync({List<Message?>? specificMessages}) async {
-    List<Message?> messages =
-        specificMessages ?? await Chat.getMessagesAsync(chat, limit: 25);
+    List<Message?> messages = specificMessages ?? await Chat.getMessagesAsync(chat, limit: 25);
     messageAttachments = await Message.fetchAttachmentsByMessagesAsync(messages);
   }
 
@@ -286,6 +326,7 @@ class CurrentChat {
 
     _timeStampOffset = 0;
     showScrollDown.value = false;
+    imageData = {};
     currentPlayingVideo = {};
     audioPlayers = {};
     urlPreviews = {};

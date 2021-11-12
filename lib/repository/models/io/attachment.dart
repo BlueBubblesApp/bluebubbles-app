@@ -157,8 +157,11 @@ class Attachment {
     return store.runInTransaction(TxMode.write, () {
       /// convert List<List<Attachment>> into just List<Attachment> (flatten it)
       final attachments = map.values.expand((element) => element).toList();
+
       /// find existing attachments
-      List<Attachment> existingAttachments = Attachment.find(cond: Attachment_.guid.oneOf(attachments.map((e) => e.guid!).toList()));
+      List<Attachment> existingAttachments =
+          Attachment.find(cond: Attachment_.guid.oneOf(attachments.map((e) => e.guid!).toList()));
+
       /// map existing attachment IDs to the attachments to save, if applicable
       for (Attachment a in attachments) {
         final existing = existingAttachments.firstWhereOrNull((e) => e.guid == a.guid);
@@ -172,12 +175,14 @@ class Attachment {
         for (int i = 0; i < attachments.length; i++) {
           attachments[i].id = ids[i];
         }
+
         /// convert the map of messages and lists into an [AttachmentMessageJoin]
         /// with some fancy list operations
-        amJoinBox.putMany(map.entries.map(
-            (e) => e.value.map(
-                    (e2) => AttachmentMessageJoin(attachmentId: e2.id ?? 0, messageId: e.key.id ?? 0)))
-        .expand((element) => element).toList()..removeWhere((element) => element.attachmentId == 0 || element.messageId == 0));
+        amJoinBox.putMany(map.entries
+            .map((e) => e.value.map((e2) => AttachmentMessageJoin(attachmentId: e2.id ?? 0, messageId: e.key.id ?? 0)))
+            .expand((element) => element)
+            .toList()
+          ..removeWhere((element) => element.attachmentId == 0 || element.messageId == 0));
       } on UniqueViolationException catch (_) {}
     });
   }

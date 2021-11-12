@@ -21,11 +21,13 @@ import 'package:bluebubbles/layouts/widgets/message_widget/message_widget_mixin.
 import 'package:bluebubbles/layouts/widgets/message_widget/reply_line_painter.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/show_reply_thread.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
+import 'package:bluebubbles/managers/event_dispatcher.dart';
 import 'package:bluebubbles/managers/new_message_manager.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:collection/src/iterable_extensions.dart';
+import 'package:faker/faker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -59,8 +61,15 @@ class SentMessageHelper {
         ? Theme.of(context).primaryColor.darkenAmount(0.2)
         : Theme.of(context).primaryColor;
 
-    final bool hideContent =
-        SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideEmojis.value;
+    final bool hideEmoji = SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideEmojis.value;
+    final bool generateContent =
+        SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeMessageContent.value;
+    final bool hideContent = (SettingsManager().settings.redactedMode.value &&
+        SettingsManager().settings.hideMessageContent.value &&
+        !generateContent);
+    final subject =
+        generateContent ? faker.lorem.words(message?.subject?.split(" ").length ?? 0).join(" ") : message?.subject;
+    final text = generateContent ? faker.lorem.words(message?.text?.split(" ").length ?? 0).join(" ") : message?.text;
 
     Widget msg;
     bool hasReactions = (message?.getReactions() ?? []).isNotEmpty;
@@ -81,7 +90,7 @@ class SentMessageHelper {
                 top: (hasReactions) ? 15.0 : 0.0,
                 right: 5,
               ),
-              child: hideContent
+              child: hideEmoji
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(25.0),
                       child: Container(
@@ -96,10 +105,10 @@ class SentMessageHelper {
                             ),
                           )),
                     )
-                  : Text(
-                      message!.text!,
-                      style: Theme.of(context).textTheme.bodyText2!.apply(fontSizeFactor: 4),
-                    ),
+                  : RichText(
+                      text: TextSpan(
+                          children: MessageHelper.buildEmojiText(
+                              message!.text!, Theme.of(context).textTheme.bodyText1!.apply(fontSizeFactor: 4)))),
             ),
           );
         })
@@ -135,61 +144,61 @@ class SentMessageHelper {
             ),
           LayoutBuilder(builder: (_, constraints) {
             return Container(
-              width: customWidth != null ? constraints.maxWidth : null,
-              constraints: customWidth == null
-                  ? BoxConstraints(
-                      maxWidth: CustomNavigator.width(context) * MessageWidgetMixin.maxSize + (!padding ? 100 : 0),
-                    )
-                  : null,
-              margin: EdgeInsets.only(
-                top: hasReactions && margin ? 18 : 0,
-                left: margin ? 10 : 0,
-                right: margin ? 10 : 0,
-              ),
-              padding: EdgeInsets.symmetric(
-                vertical: padding ? 8 : 0,
-                horizontal: padding ? 14 : 0,
-              ),
-              decoration: BoxDecoration(
-                borderRadius: currentSkin == Skins.iOS
-                    ? BorderRadius.only(
-                        bottomLeft: Radius.circular(20),
-                        bottomRight: Radius.circular(17),
-                        topLeft: Radius.circular(20),
-                        topRight: Radius.circular(20),
+                width: customWidth != null ? constraints.maxWidth : null,
+                constraints: customWidth == null
+                    ? BoxConstraints(
+                        maxWidth: CustomNavigator.width(context) * MessageWidgetMixin.maxSize + (!padding ? 100 : 0),
                       )
-                    : (currentSkin == Skins.Material)
-                        ? BorderRadius.only(
-                            topLeft: Radius.circular(20),
-                            topRight: olderMessage == null || MessageHelper.getShowTail(context, olderMessage, message)
-                                ? Radius.circular(20)
-                                : Radius.circular(5),
-                            bottomLeft: Radius.circular(20),
-                            bottomRight: Radius.circular(showTail ? 20 : 5),
-                          )
-                        : (currentSkin == Skins.Samsung)
-                            ? BorderRadius.only(
-                                topLeft: Radius.circular(17.5),
-                                topRight: Radius.circular(17.5),
-                                bottomRight: Radius.circular(17.5),
-                                bottomLeft: Radius.circular(17.5),
-                              )
-                            : null,
-                color: customColor ?? bubbleColor,
-              ),
-              child: customContent ??
-                  (effect.isBubble && controller != CustomAnimationControl.stop
-                      ? CustomAnimation<TimelineValue<String>>(
-                          control: controller,
-                          tween: tween!,
-                          duration: Duration(milliseconds: 1800),
-                          builder: (context, child, anim) {
-                            double value = anim.get("size");
-                            return StatefulBuilder(
-                              builder: (context, setState) {
+                    : null,
+                margin: EdgeInsets.only(
+                  top: hasReactions && margin ? 18 : 0,
+                  left: margin ? 10 : 0,
+                  right: margin ? 10 : 0,
+                ),
+                padding: EdgeInsets.symmetric(
+                  vertical: padding ? 8 : 0,
+                  horizontal: padding ? 14 : 0,
+                ),
+                decoration: BoxDecoration(
+                  borderRadius: currentSkin == Skins.iOS
+                      ? BorderRadius.only(
+                          bottomLeft: Radius.circular(20),
+                          bottomRight: Radius.circular(17),
+                          topLeft: Radius.circular(20),
+                          topRight: Radius.circular(20),
+                        )
+                      : (currentSkin == Skins.Material)
+                          ? BorderRadius.only(
+                              topLeft: Radius.circular(20),
+                              topRight:
+                                  olderMessage == null || MessageHelper.getShowTail(context, olderMessage, message)
+                                      ? Radius.circular(20)
+                                      : Radius.circular(5),
+                              bottomLeft: Radius.circular(20),
+                              bottomRight: Radius.circular(showTail ? 20 : 5),
+                            )
+                          : (currentSkin == Skins.Samsung)
+                              ? BorderRadius.only(
+                                  topLeft: Radius.circular(17.5),
+                                  topRight: Radius.circular(17.5),
+                                  bottomRight: Radius.circular(17.5),
+                                  bottomLeft: Radius.circular(17.5),
+                                )
+                              : null,
+                  color: customColor ?? bubbleColor,
+                ),
+                child: customContent ??
+                    (effect.isBubble && controller != CustomAnimationControl.stop
+                        ? CustomAnimation<TimelineValue<String>>(
+                            control: controller,
+                            tween: tween!,
+                            duration: Duration(milliseconds: 1800),
+                            builder: (context, child, anim) {
+                              double value = anim.get("size");
+                              return StatefulBuilder(builder: (context, setState) {
                                 return GestureDetector(
-                                  onTap: () {
-                                    if (effect == MessageEffect.invisibleInk) {
+                                  onHorizontalDragEnd: (DragEndDetails details) {
+                                    if ((details.primaryVelocity ?? 0) > 0 && effect == MessageEffect.invisibleInk) {
                                       setState(() {
                                         opacity = 1 - opacity;
                                       });
@@ -206,19 +215,23 @@ class SentMessageHelper {
                                             children: [
                                               if (!isNullOrEmpty(message!.subject)!)
                                                 TextSpan(
-                                                  text: "${message.subject}\n",
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .bodyText2!
-                                                      .apply(fontWeightDelta: 2, color: Colors.white),
+                                                  text: "$subject\n",
+                                                  style: Theme.of(context).textTheme.bodyText2!.apply(
+                                                      fontWeightDelta: 2,
+                                                      color: hideContent ? Colors.transparent : Colors.white),
                                                 ),
                                               TextSpan(
-                                                text: message.text,
-                                                style:
-                                                    Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
+                                                text: text,
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodyText2!
+                                                    .apply(color: hideContent ? Colors.transparent : Colors.white),
                                               ),
                                             ],
-                                            style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyText2!
+                                                .apply(color: hideContent ? Colors.transparent : Colors.white),
                                           ),
                                         ),
                                       ),
@@ -228,19 +241,23 @@ class SentMessageHelper {
                                             children: [
                                               if (!isNullOrEmpty(message.subject)!)
                                                 TextSpan(
-                                                  text: "${message.subject}\n",
+                                                  text: "$subject\n",
                                                   style: Theme.of(context).textTheme.bodyText2!.apply(
-                                                      fontWeightDelta: 2, fontSizeFactor: value, color: Colors.white),
+                                                      fontWeightDelta: 2,
+                                                      fontSizeFactor: value,
+                                                      color: hideContent ? Colors.transparent : Colors.white),
                                                 ),
                                               TextSpan(
-                                                text: message.text,
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .bodyText2!
-                                                    .apply(fontSizeFactor: value, color: Colors.white),
+                                                text: text,
+                                                style: Theme.of(context).textTheme.bodyText2!.apply(
+                                                    fontSizeFactor: value,
+                                                    color: hideContent ? Colors.transparent : Colors.white),
                                               ),
                                             ],
-                                            style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyText2!
+                                                .apply(color: hideContent ? Colors.transparent : Colors.white),
                                           ),
                                         ),
                                       if (effect == MessageEffect.invisibleInk &&
@@ -265,23 +282,19 @@ class SentMessageHelper {
                                     ],
                                   ),
                                 );
-                              },
-                            );
-                          },
-                        )
-                      : FutureBuilder<List<InlineSpan>>(
-                          future: msgSpanFuture,
-                          initialData: MessageWidgetMixin.buildMessageSpans(context, message),
-                          builder: (context, snapshot) {
-                            return RichText(
-                              text: TextSpan(
-                                children: snapshot.data ?? MessageWidgetMixin.buildMessageSpans(context, message),
-                                style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
-                              ),
-                            );
-                          },
-                        )),
-            );
+                              });
+                            })
+                        : FutureBuilder<List<InlineSpan>>(
+                            future: msgSpanFuture,
+                            initialData: MessageWidgetMixin.buildMessageSpans(context, message),
+                            builder: (context, snapshot) {
+                              return RichText(
+                                text: TextSpan(
+                                  children: snapshot.data ?? MessageWidgetMixin.buildMessageSpans(context, message),
+                                  style: Theme.of(context).textTheme.bodyText2!.apply(color: Colors.white),
+                                ),
+                              );
+                            })));
           }),
         ],
       );
@@ -536,16 +549,15 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
   Size? messageSize;
   bool showReplies = false;
   CustomAnimationControl animController = CustomAnimationControl.stop;
+  final GlobalKey key = GlobalKey();
 
   @override
   void initState() {
     super.initState();
     showReplies = widget.showReplies;
-    initMessageState(widget.message, false);
   }
 
-  List<Color> getBubbleColors({Message? msg}) {
-    Message message = msg ?? widget.message;
+  List<Color> getBubbleColors(Message message) {
     List<Color> bubbleColors = message.isFromMe ?? false
         ? [Theme.of(context).primaryColor, Theme.of(context).primaryColor]
         : [Theme.of(context).accentColor, Theme.of(context).accentColor];
@@ -580,10 +592,20 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
           onTap: () {
             showReplyThread(context, widget.message, widget.messageBloc);
           },
-          child: StreamBuilder<double>(
-              stream: CurrentChat.of(context)?.timeStampOffsetStream.stream,
+          child: StreamBuilder<dynamic>(
+              stream: CurrentChat.of(context)?.totalOffsetStream.stream,
               builder: (context, snapshot) {
-                final offset = (-(snapshot.data ?? 0)).clamp(0, 70).toDouble();
+                dynamic data;
+                if (snapshot.data is double) {
+                  data = snapshot.data;
+                } else if (snapshot.data is Map<String, dynamic>) {
+                  if (snapshot.data["guid"] == widget.message.guid) {
+                    data = snapshot.data["offset"];
+                  } else {
+                    data = snapshot.data["else"];
+                  }
+                }
+                final offset = (-(data ?? 0)).clamp(0, 70).toDouble();
                 return AnimatedContainer(
                   duration: Duration(milliseconds: offset == 0 ? 150 : 0),
                   width: CustomNavigator.width(context) - 10 - offset,
@@ -593,7 +615,9 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
                       crossAxisAlignment: CrossAxisAlignment.end,
                       mainAxisAlignment: msg.isFromMe ?? false ? MainAxisAlignment.end : MainAxisAlignment.start,
                       children: [
-                        if ((SettingsManager().settings.alwaysShowAvatars.value || (CurrentChat.of(context)?.chat.isGroup() ?? false)) && !msg.isFromMe!)
+                        if ((SettingsManager().settings.alwaysShowAvatars.value ||
+                                (CurrentChat.of(context)?.chat.isGroup() ?? false)) &&
+                            !msg.isFromMe!)
                           Padding(
                             padding: EdgeInsets.only(top: 5, left: 6),
                             child: ContactAvatarWidget(
@@ -609,7 +633,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
                             if (skin.value == Skins.iOS)
                               MessageTail(
                                 isFromMe: false,
-                                color: getBubbleColors()[0],
+                                color: getBubbleColors(msg)[0],
                                 isReply: true,
                               ),
                             Container(
@@ -625,7 +649,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
                                 horizontal: 14,
                               ),
                               decoration: BoxDecoration(
-                                border: Border.all(color: getBubbleColors(msg: msg)[0]),
+                                border: Border.all(color: getBubbleColors(msg)[0]),
                                 borderRadius: skin.value == Skins.iOS
                                     ? BorderRadius.only(
                                         bottomLeft: Radius.circular(17),
@@ -651,7 +675,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
                               ),
                               child: FutureBuilder<List<InlineSpan>>(
                                   future: MessageWidgetMixin.buildMessageSpansAsync(context, msg,
-                                      colorOverride: getBubbleColors(msg: msg)[0].lightenOrDarken(30)),
+                                      colorOverride: getBubbleColors(msg)[0].lightenOrDarken(30)),
                                   builder: (context, snapshot) {
                                     if (snapshot.data != null) {
                                       return RichText(
@@ -663,7 +687,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
                                     return RichText(
                                       text: TextSpan(
                                         children: MessageWidgetMixin.buildMessageSpans(context, msg,
-                                            colorOverride: getBubbleColors(msg: msg)[0].lightenOrDarken(30)),
+                                            colorOverride: getBubbleColors(msg)[0].lightenOrDarken(30)),
                                       ),
                                     );
                                   }),
@@ -705,7 +729,13 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
     } else if (!isEmptyString(widget.message.text)) {
       messageWidget = SentMessageHelper.buildMessageWithTail(context, widget.message, widget.showTail,
           widget.message.hasReactions, widget.message.bigEmoji ?? false, spanFuture,
-          olderMessage: widget.olderMessage);
+          olderMessage: widget.olderMessage,
+          effect: stringToMessageEffect[effect] ?? MessageEffect.none,
+          controller: animController, updateController: () {
+        setState(() {
+          animController = CustomAnimationControl.stop;
+        });
+      });
       if (widget.showHero) {
         messageWidget = Hero(
           tag: "first",
@@ -749,10 +779,20 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
         }
         messageSize ??= widget.message.getBubbleSize(context);
         messageColumn.add(
-          StreamBuilder<double>(
-              stream: CurrentChat.of(context)?.timeStampOffsetStream.stream,
+          StreamBuilder<dynamic>(
+              stream: CurrentChat.of(context)?.totalOffsetStream.stream,
               builder: (context, snapshot) {
-                final offset = (-(snapshot.data ?? 0)).clamp(0, 70).toDouble();
+                double? data;
+                if (snapshot.data is double) {
+                  data = snapshot.data;
+                } else if (snapshot.data is Map<String, dynamic>) {
+                  if (snapshot.data["guid"] == widget.message.guid) {
+                    data = snapshot.data["offset"];
+                  } else {
+                    data = snapshot.data["else"];
+                  }
+                }
+                final offset = (-(data ?? 0)).clamp(0, 70).toDouble();
                 final originalWidth = max(
                     min(CustomNavigator.width(context) - messageSize!.width - 150, CustomNavigator.width(context) / 3),
                     10);
@@ -800,6 +840,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
                       MessageWidgetMixin.addStickersToWidget(
                         message: MessageWidgetMixin.addReactionsToWidget(
                             messageWidget: Padding(
+                              key: showReplies ? key : null,
                               padding: EdgeInsets.only(bottom: widget.showTail ? 2.0 : 0),
                               child: messageWidget,
                             ),
@@ -818,6 +859,7 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
           MessageWidgetMixin.addStickersToWidget(
             message: MessageWidgetMixin.addReactionsToWidget(
                 messageWidget: Padding(
+                  key: showReplies ? key : null,
                   padding: EdgeInsets.only(bottom: widget.showTail ? 2.0 : 0),
                   child: messageWidget,
                 ),
@@ -845,15 +887,37 @@ class _SentMessageState extends State<SentMessage> with TickerProviderStateMixin
                     animController = CustomAnimationControl.playFromStart;
                   });
                 }
+              } else {
+                EventDispatcher().emit('play-effect', {
+                  'type': effect,
+                  'size': key.globalPaintBounds(context),
+                });
               }
             },
-            child: Padding(
-              padding: const EdgeInsets.only(left: 8.0, top: 2, right: 8.0, bottom: 2),
-              child: Text(
-                "↺ sent with $effect",
-                style: Theme.of(context).textTheme.subtitle2!.copyWith(fontWeight: FontWeight.bold, color: Colors.blue),
-              ),
-            ),
+            child: kIsWeb
+                ? Padding(
+                    padding: const EdgeInsets.only(left: 8.0, top: 2, right: 8.0, bottom: 2),
+                    child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+                      Icon(Icons.refresh, size: 10, color: Colors.blue),
+                      Text(
+                        " sent with $effect",
+                        style: Theme.of(context)
+                            .textTheme
+                            .subtitle2!
+                            .copyWith(fontWeight: FontWeight.bold, color: Colors.blue),
+                      ),
+                    ]),
+                  )
+                : Padding(
+                    padding: const EdgeInsets.only(left: 8.0, top: 2, right: 8.0, bottom: 2),
+                    child: Text(
+                      "↺ sent with $effect",
+                      style: Theme.of(context)
+                          .textTheme
+                          .subtitle2!
+                          .copyWith(fontWeight: FontWeight.bold, color: Colors.blue),
+                    ),
+                  ),
           ),
         Obx(() {
           final list = widget.messageBloc?.threadOriginators.values.where((e) => e == widget.message.guid) ?? [];

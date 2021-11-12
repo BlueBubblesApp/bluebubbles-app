@@ -3,18 +3,25 @@ import 'dart:ui';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
 
 void showReplyThread(BuildContext context, Message message, MessageBloc? messageBloc) {
   List<Message> _messages = [];
   if (message.threadOriginatorGuid != null) {
-    _messages = messageBloc?.messages.values.where((e) => e.threadOriginatorGuid == message.threadOriginatorGuid || e.guid == message.threadOriginatorGuid).toList() ?? [];
+    _messages = messageBloc?.messages.values
+            .where(
+                (e) => e.threadOriginatorGuid == message.threadOriginatorGuid || e.guid == message.threadOriginatorGuid)
+            .toList() ??
+        [];
   } else {
-    _messages = messageBloc?.messages.values.where((e) => e.threadOriginatorGuid == message.guid || e.guid == message.guid).toList() ?? [];
+    _messages = messageBloc?.messages.values
+            .where((e) => e.threadOriginatorGuid == message.guid || e.guid == message.guid)
+            .toList() ??
+        [];
   }
-  _messages.sort((a, b) => a.id!.compareTo(b.id!));
+  if (!kIsWeb) _messages.sort((a, b) => a.id!.compareTo(b.id!));
   _messages.sort((a, b) => a.dateCreated!.compareTo(b.dateCreated!));
   final controller = ScrollController();
   Navigator.push(
@@ -34,7 +41,7 @@ void showReplyThread(BuildContext context, Message message, MessageBloc? message
                 value: SystemUiOverlayStyle(
                   systemNavigationBarColor: Theme.of(context).backgroundColor, // navigation bar color
                   systemNavigationBarIconBrightness:
-                  Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
+                      Theme.of(context).backgroundColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
                   statusBarColor: Colors.transparent, // status bar color
                 ),
                 child: Scaffold(
@@ -75,8 +82,7 @@ void showReplyThread(BuildContext context, Message message, MessageBloc? message
                   ),
                 ),
               ),
-            )
-        );
+            ));
       },
       fullscreenDialog: true,
       opaque: false,

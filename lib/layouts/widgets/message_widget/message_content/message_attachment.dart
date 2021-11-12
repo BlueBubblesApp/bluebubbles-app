@@ -201,15 +201,15 @@ class MessageAttachmentState extends State<MessageAttachment> with AutomaticKeep
                         : Container(),
                     (content.attachment.mimeType != null)
                         ? Container(
-                          height: 50,
-                          alignment: Alignment.center,
-                          child: Text(
-                            content.attachment.mimeType,
-                            style: Theme.of(context).textTheme.bodyText1,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        )
+                            height: 50,
+                            alignment: Alignment.center,
+                            child: Text(
+                              content.attachment.mimeType,
+                              style: Theme.of(context).textTheme.bodyText1,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          )
                         : Container()
                   ],
                 ),

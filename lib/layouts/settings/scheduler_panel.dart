@@ -6,7 +6,7 @@ import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
-import 'package:bluebubbles/layouts/settings/settings_panel.dart';
+import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
@@ -219,38 +219,39 @@ class _SchedulePanelState extends State<SchedulePanel> {
                 ),
               )
             ],
-          ),),
-          floatingActionButton: FloatingActionButton(
-            backgroundColor: Theme.of(context).primaryColor,
-            child: Icon(Icons.done, color: Colors.white, size: 25),
-            onPressed: () async {
-              errors = [];
-              if (_chat == null) errors.add("Please select a chat!");
-              if (scheduleSeconds == -1 && (messageDate == null || messageTime == null)) {
-                errors.add("Please set a date and time!");
-              }
-              if (messageController.text.isEmpty) errors.add("Please enter a message!");
-
-              if (errors.isNotEmpty && mounted) {
-                setState(() {});
-              } else {
-                DateTime occurs;
-                if (scheduleSeconds == -1) {
-                  occurs = DateTime(
-                      messageDate!.year, messageDate!.month, messageDate!.day, messageTime!.hour, messageTime!.minute);
-                } else {
-                  occurs = DateTime.now().add(Duration(seconds: scheduleSeconds!));
-                }
-
-                ScheduledMessage scheduled = ScheduledMessage(
-                    chatGuid: _chat!.guid, message: messageController.text, epochTime: occurs.millisecondsSinceEpoch);
-
-                scheduled.save();
-                Navigator.of(context).pop();
-              }
-            },
           ),
         ),
+        floatingActionButton: FloatingActionButton(
+          backgroundColor: Theme.of(context).primaryColor,
+          child: Icon(Icons.done, color: Colors.white, size: 25),
+          onPressed: () async {
+            errors = [];
+            if (_chat == null) errors.add("Please select a chat!");
+            if (scheduleSeconds == -1 && (messageDate == null || messageTime == null)) {
+              errors.add("Please set a date and time!");
+            }
+            if (messageController.text.isEmpty) errors.add("Please enter a message!");
+
+            if (errors.isNotEmpty && mounted) {
+              setState(() {});
+            } else {
+              DateTime occurs;
+              if (scheduleSeconds == -1) {
+                occurs = DateTime(
+                    messageDate!.year, messageDate!.month, messageDate!.day, messageTime!.hour, messageTime!.minute);
+              } else {
+                occurs = DateTime.now().add(Duration(seconds: scheduleSeconds!));
+              }
+
+              ScheduledMessage scheduled = ScheduledMessage(
+                  chatGuid: _chat!.guid, message: messageController.text, epochTime: occurs.millisecondsSinceEpoch);
+
+              scheduled.save();
+              Navigator.of(context).pop();
+            }
+          },
+        ),
+      ),
     );
   }
 }

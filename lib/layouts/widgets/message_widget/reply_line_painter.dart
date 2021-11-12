@@ -23,18 +23,18 @@ class LinePainter extends CustomPainter {
   final double offset;
 
   LinePainter(
-      this.context,
-      this.msg,
-      this.olderMsg,
-      this.newerMsg,
-      this.threadOriginator,
-      this.upperSize,
-      this.size,
-      this.extendPastTimestampAbove,
-      this.extendPastTimestampBelow,
-      this.extendPastSender,
-      this.offset,
-      );
+    this.context,
+    this.msg,
+    this.olderMsg,
+    this.newerMsg,
+    this.threadOriginator,
+    this.upperSize,
+    this.size,
+    this.extendPastTimestampAbove,
+    this.extendPastTimestampBelow,
+    this.extendPastSender,
+    this.offset,
+  );
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -59,20 +59,26 @@ class LinePainter extends CustomPainter {
         path.moveTo(topMaxWidth, -upperSize.height / 2 - 8);
         path.lineTo(size.height / 2, -upperSize.height / 2 - 8);
         // add a rounded corner
-        path.addArc(Rect.fromCenter(
-          center: Offset(size.height / 2, -upperSize.height / 2 - 8 + size.height / 2),
-          height: size.height,
-          width: size.height,
-        ), pi, pi / 2);
+        path.addArc(
+            Rect.fromCenter(
+              center: Offset(size.height / 2, -upperSize.height / 2 - 8 + size.height / 2),
+              height: size.height,
+              width: size.height,
+            ),
+            pi,
+            pi / 2);
         // draw the vertical portion of the C
         path.moveTo(0, -upperSize.height / 2 - 8 + size.height / 2);
         path.lineTo(0, size.height / 2);
         // add a rounded corner
-        path.addArc(Rect.fromCenter(
-          center: Offset(size.height / 2, size.height / 2),
-          height: size.height,
-          width: size.height,
-        ), pi / 2, pi / 2);
+        path.addArc(
+            Rect.fromCenter(
+              center: Offset(size.height / 2, size.height / 2),
+              height: size.height,
+              width: size.height,
+            ),
+            pi / 2,
+            pi / 2);
         // draw the bottom part of the C
         path.moveTo(size.height / 2, size.height);
         path.lineTo(size.width, size.height);
@@ -82,11 +88,14 @@ class LinePainter extends CustomPainter {
         path.moveTo(0, -upperSize.height * 2 / 3 - 12 - (extendPastTimestampAbove ? 40 : 0));
         path.lineTo(0, size.height / 2);
         // add a rounded corner
-        path.addArc(Rect.fromCenter(
-          center: Offset(size.height / 2, size.height / 2),
-          height: size.height,
-          width: size.height,
-        ), pi / 2, pi / 2);
+        path.addArc(
+            Rect.fromCenter(
+              center: Offset(size.height / 2, size.height / 2),
+              height: size.height,
+              width: size.height,
+            ),
+            pi / 2,
+            pi / 2);
         // draw the bottom part of the L
         path.moveTo(size.height / 2, size.height);
         path.lineTo(size.width, size.height);
@@ -104,28 +113,39 @@ class LinePainter extends CustomPainter {
       if (upperIsOriginator) {
         path.moveTo(size.width - topMaxWidth, -upperSize.height / 2 - 8 - (extendPastSender ? 20 : 0));
         path.lineTo(size.width - size.height / 2, -upperSize.height / 2 - 8 - (extendPastSender ? 20 : 0));
-        path.addArc(Rect.fromCenter(
-          center: Offset(size.width - size.height / 2, -upperSize.height / 2 - 8 - (extendPastSender ? 20 : 0) + size.height / 2),
-          height: size.height,
-          width: size.height,
-        ), 3 * pi / 2, pi / 2);
+        path.addArc(
+            Rect.fromCenter(
+              center: Offset(size.width - size.height / 2,
+                  -upperSize.height / 2 - 8 - (extendPastSender ? 20 : 0) + size.height / 2),
+              height: size.height,
+              width: size.height,
+            ),
+            3 * pi / 2,
+            pi / 2);
         path.moveTo(size.width, -upperSize.height / 2 - 8 - (extendPastSender ? 20 : 0) + size.height / 2);
         path.lineTo(size.width, size.height / 2);
-        path.addArc(Rect.fromCenter(
-          center: Offset(size.width - size.height / 2, size.height / 2),
-          height: size.height,
-          width: size.height,
-        ), 0, pi / 2);
+        path.addArc(
+            Rect.fromCenter(
+              center: Offset(size.width - size.height / 2, size.height / 2),
+              height: size.height,
+              width: size.height,
+            ),
+            0,
+            pi / 2);
         path.moveTo(size.width - size.height / 2, size.height);
         path.lineTo(0, size.height);
       } else if (connectUpper) {
-        path.moveTo(size.width, -upperSize.height / 2 - 12 - (extendPastTimestampAbove ? 40 : 0) - (extendPastSender ? 20 : 0));
+        path.moveTo(
+            size.width, -upperSize.height / 2 - 12 - (extendPastTimestampAbove ? 40 : 0) - (extendPastSender ? 20 : 0));
         path.lineTo(size.width, size.height / 2);
-        path.addArc(Rect.fromCenter(
-          center: Offset(size.width - size.height / 2, size.height / 2),
-          height: size.height,
-          width: size.height,
-        ), 0, pi / 2);
+        path.addArc(
+            Rect.fromCenter(
+              center: Offset(size.width - size.height / 2, size.height / 2),
+              height: size.height,
+              width: size.height,
+            ),
+            0,
+            pi / 2);
         path.moveTo(size.width - size.height / 2, size.height);
         path.lineTo(0, size.height);
       }
@@ -142,11 +162,14 @@ class LinePainter extends CustomPainter {
         path.moveTo(0, (extendPastTimestampAbove ? -40 : 0));
         path.lineTo(0, size.height / 2);
         // add a rounded corner
-        path.addArc(Rect.fromCenter(
-          center: Offset(size.height / 2, size.height / 2),
-          height: size.height,
-          width: size.height,
-        ), pi / 2, pi / 2);
+        path.addArc(
+            Rect.fromCenter(
+              center: Offset(size.height / 2, size.height / 2),
+              height: size.height,
+              width: size.height,
+            ),
+            pi / 2,
+            pi / 2);
         // add the bottom portion of the L
         path.moveTo(size.height / 2, size.height);
         path.lineTo(size.width, size.height);
@@ -161,13 +184,16 @@ class LinePainter extends CustomPainter {
       // slightly different coordinates
     } else if (lineType == LineType.meToOther) {
       if (upperIsOriginator || connectUpper) {
-        path.moveTo(size.width, (extendPastTimestampAbove ? -40 : 0)- (extendPastSender ? 20 : 0));
+        path.moveTo(size.width, (extendPastTimestampAbove ? -40 : 0) - (extendPastSender ? 20 : 0));
         path.lineTo(size.width, size.height / 2);
-        path.addArc(Rect.fromCenter(
-          center: Offset(size.width - size.height / 2, size.height / 2),
-          height: size.height,
-          width: size.height,
-        ), 0, pi / 2);
+        path.addArc(
+            Rect.fromCenter(
+              center: Offset(size.width - size.height / 2, size.height / 2),
+              height: size.height,
+              width: size.height,
+            ),
+            0,
+            pi / 2);
         path.moveTo(size.width - size.height / 2, size.height);
         path.lineTo(0, size.height);
       }

@@ -71,6 +71,7 @@ class Settings {
   final RxBool privateMarkChatAsRead = false.obs;
   final RxBool privateManualMarkAsRead = false.obs;
   final RxBool privateSubjectLine = false.obs;
+  final RxBool swipeToReply = false.obs;
 
   // Redacted Mode Settings
   final RxBool redactedMode = false.obs;
@@ -282,8 +283,8 @@ class Settings {
         settings.filterUnknownSenders.value = entry.value;
       } else if (entry.name == "tabletMode") {
         settings.tabletMode.value = entry.value;
-      } else if (entry.name == "highlightSelectedChat") {
-        settings.highlightSelectedChat.value = entry.value;
+      } else if (entry.name == "swipeToReply") {
+        settings.swipeToReply.value = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -393,6 +394,7 @@ class Settings {
       'globalTextDetection': globalTextDetection.value,
       'filterUnknownSenders': filterUnknownSenders.value,
       'tabletMode': tabletMode.value,
+      'swipeToReply': swipeToReply.value,
       'highlightSelectedChat': highlightSelectedChat.value,
       'enablePrivateAPI': enablePrivateAPI.value,
       'privateSendTypingIndicators': privateSendTypingIndicators.value,
@@ -489,6 +491,7 @@ class Settings {
     SettingsManager().settings.filterUnknownSenders.value = map['filterUnknownSenders'] ?? false;
     SettingsManager().settings.tabletMode.value = map['tabletMode'] ?? true;
     SettingsManager().settings.highlightSelectedChat.value = map['highlightSelectedChat'] ?? true;
+    SettingsManager().settings.swipeToReply.value = map['swipeToReply'] ?? false;
     SettingsManager().settings.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     SettingsManager().settings.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
     SettingsManager().settings.privateMarkChatAsRead.value = map['privateMarkChatAsRead'] ?? false;
@@ -586,6 +589,7 @@ class Settings {
     s.filterUnknownSenders.value = map['filterUnknownSenders'] ?? false;
     s.tabletMode.value = map['tabletMode'] ?? true;
     s.highlightSelectedChat.value = map['highlightSelectedChat'] ?? true;
+    s.swipeToReply.value = map['swipeToReply'] ?? false;
     s.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     s.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
     s.privateMarkChatAsRead.value = map['privateMarkChatAsRead'] ?? false;

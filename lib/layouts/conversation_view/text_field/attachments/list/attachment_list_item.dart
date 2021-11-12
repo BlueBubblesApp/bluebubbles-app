@@ -1,4 +1,3 @@
-import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'dart:typed_data';
 
 import 'package:bluebubbles/helpers/attachment_helper.dart';
@@ -7,6 +6,7 @@ import 'package:bluebubbles/helpers/ui_helpers.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachment_fullscreen_viewer.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mime_type/mime_type.dart';
@@ -44,10 +44,9 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
       // Compress the file, using a dummy attachment object
       if (mimeType == "image/heic") {
         Attachment fakeAttachment =
-                Attachment(transferName: widget.file.path, mimeType: mimeType, bytes: widget.file.bytes);
-        preview =
-          await AttachmentHelper.compressAttachment(
-            fakeAttachment, widget.file.path!, qualityOverride: 100, getActualPath: false);
+            Attachment(transferName: widget.file.path, mimeType: mimeType, bytes: widget.file.bytes);
+        preview = await AttachmentHelper.compressAttachment(fakeAttachment, widget.file.path!,
+            qualityOverride: 100, getActualPath: false);
       } else {
         preview = widget.file.bytes;
       }

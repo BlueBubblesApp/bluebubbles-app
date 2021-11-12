@@ -31,6 +31,7 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/objectbox.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:collection/collection.dart';
+import 'package:dynamic_cached_fonts/dynamic_cached_fonts.dart';
 import 'package:firebase_dart/firebase_dart.dart';
 import 'package:firebase_dart/src/auth/utils.dart' as fdu;
 import 'package:flutter/cupertino.dart';
@@ -92,6 +93,7 @@ late final Box<ChatHandleJoin> chJoinBox;
 late final Box<ChatMessageJoin> cmJoinBox;
 late final Box<ThemeValueJoin> tvJoinBox;
 String? recentIntent;
+final RxBool fontExistsOnDisk = false.obs;
 
 Future<Null> _reportError(dynamic error, dynamic stackTrace) async {
   // Print the exception to the console.
@@ -188,6 +190,20 @@ Future<Null> main() async {
     }
     await SettingsManager().init();
     await SettingsManager().getSavedSettings(headless: true);
+    Get.put(AttachmentDownloadService());
+    if (!kIsWeb && !kIsDesktop) {
+      flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+      const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('ic_stat_icon');
+      final InitializationSettings initializationSettings =
+          InitializationSettings(android: initializationSettingsAndroid);
+      await flutterLocalNotificationsPlugin!.initialize(initializationSettings);
+      tz.initializeTimeZones();
+      tz.setLocalLocation(tz.getLocation(await FlutterNativeTimezone.getLocalTimezone()));
+      if (!await GoogleMlKit.nlp.entityModelManager().isModelDownloaded(EntityExtractorOptions.ENGLISH)) {
+        GoogleMlKit.nlp.entityModelManager().downloadModel(EntityExtractorOptions.ENGLISH, isWifiRequired: false);
+      }
+      await FlutterLibphonenumber().init();
+    }
     if (kIsDesktop) {
       await WindowManager.instance.setTitle('BlueBubbles (Beta)');
       WindowManager.instance.addListener(DesktopWindowListener());
@@ -197,6 +213,18 @@ Future<Null> main() async {
         appWindow.title = 'BlueBubbles (Beta)';
         appWindow.show();
       });
+    }
+    if (!kIsWeb) {
+      try {
+        DynamicCachedFonts.loadCachedFont(
+                "https://github.com/tneotia/tneotia/releases/download/ios-font-1/IOS.14.2.Daniel.L.ttf",
+                fontFamily: "Apple Color Emoji")
+            .then((_) {
+          fontExistsOnDisk.value = true;
+        });
+      } on StateError catch (_) {
+        fontExistsOnDisk.value = false;
+      }
     }
   } catch (e, s) {
     exception = e;

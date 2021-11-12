@@ -70,8 +70,15 @@ class ConversationListState extends State<ConversationList> {
     if (size != null) style = style!.copyWith(fontSize: size);
 
     return Padding(
-      padding: EdgeInsets.only(right: 10.0, left: kIsDesktop && SettingsManager().settings.skin.value != Skins.iOS ? 5 : 0),
-      child: Text(widget.showArchivedChats ? "Archive" : widget.showUnknownSenders ? "Unknown Senders" : "Messages", style: style),
+      padding:
+          EdgeInsets.only(right: 10.0, left: kIsDesktop && SettingsManager().settings.skin.value != Skins.iOS ? 5 : 0),
+      child: Text(
+          widget.showArchivedChats
+              ? "Archive"
+              : widget.showUnknownSenders
+                  ? "Unknown Senders"
+                  : "Messages",
+          style: style),
     );
   }
 
@@ -103,12 +110,11 @@ class ConversationListState extends State<ConversationList> {
               ChatBloc().markAllAsRead();
             } else if (value == 1) {
               CustomNavigator.pushLeft(
-                context,
-                ConversationList(
-                  showArchivedChats: true,
-                  showUnknownSenders: false,
-                )
-              );
+                  context,
+                  ConversationList(
+                    showArchivedChats: true,
+                    showUnknownSenders: false,
+                  ));
             } else if (value == 2) {
               Navigator.of(context).push(
                 ThemeSwitcher.buildPageRoute(
@@ -119,12 +125,11 @@ class ConversationListState extends State<ConversationList> {
               );
             } else if (value == 3) {
               CustomNavigator.pushLeft(
-                context,
-                ConversationList(
-                  showArchivedChats: false,
-                  showUnknownSenders: true,
-                )
-              );
+                  context,
+                  ConversationList(
+                    showArchivedChats: false,
+                    showUnknownSenders: true,
+                  ));
             } else if (value == 4) {
               showDialog(
                 barrierDismissible: false,
@@ -142,10 +147,13 @@ class ConversationListState extends State<ConversationList> {
                         onPressed: () async {
                           await SettingsManager().resetConnection();
                           SettingsManager().settings.finishedSetup.value = false;
-                          Get.offAll(() => WillPopScope(
-                            onWillPop: () async => false,
-                            child: TitleBarWrapper(child: SetupView()),
-                          ), duration: Duration.zero, transition: Transition.noTransition);
+                          Get.offAll(
+                              () => WillPopScope(
+                                    onWillPop: () async => false,
+                                    child: TitleBarWrapper(child: SetupView()),
+                                  ),
+                              duration: Duration.zero,
+                              transition: Transition.noTransition);
                           SettingsManager().settings = Settings();
                           SettingsManager().settings.save();
                           SettingsManager().fcmData = null;
@@ -197,12 +205,11 @@ class ConversationListState extends State<ConversationList> {
               ),
               if (kIsWeb)
                 PopupMenuItem(
-                  value: 4,
-                  child: Text(
-                    'Logout',
-                    style: context.textTheme.bodyText1,
-                  )
-                )
+                    value: 4,
+                    child: Text(
+                      'Logout',
+                      style: context.textTheme.bodyText1,
+                    ))
             ];
           },
           child: ThemeSwitcher(
@@ -245,7 +252,7 @@ class ConversationListState extends State<ConversationList> {
             ),
             child: FloatingActionButton(
               child: Icon(
-                  SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.camera : Icons.photo_camera,
+                SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.camera : Icons.photo_camera,
                 size: 20,
               ),
               onPressed: () async {
@@ -253,10 +260,7 @@ class ConversationListState extends State<ConversationList> {
                 if (!camera) {
                   bool granted = (await Permission.camera.request()) == PermissionStatus.granted;
                   if (!granted) {
-                    showSnackbar(
-                        "Error",
-                        "Camera was denied"
-                    );
+                    showSnackbar("Error", "Camera was denied");
                     return;
                   }
                 }
@@ -276,12 +280,14 @@ class ConversationListState extends State<ConversationList> {
                   return;
                 }
 
-                openNewChatCreator(existing: [PlatformFile(
-                  name: file.path.split("/").last,
-                  path: file.path,
-                  bytes: file.readAsBytesSync(),
-                  size: file.lengthSync(),
-                )]);
+                openNewChatCreator(existing: [
+                  PlatformFile(
+                    name: file.path.split("/").last,
+                    path: file.path,
+                    bytes: file.readAsBytesSync(),
+                    size: file.lengthSync(),
+                  )
+                ]);
               },
               heroTag: null,
             ),
@@ -292,7 +298,8 @@ class ConversationListState extends State<ConversationList> {
           ),
         FloatingActionButton(
             backgroundColor: context.theme.primaryColor,
-            child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.pencil : Icons.message, color: Colors.white, size: 25),
+            child: Icon(SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.pencil : Icons.message,
+                color: Colors.white, size: 25),
             onPressed: openNewChatCreator),
       ],
     );
@@ -302,9 +309,9 @@ class ConversationListState extends State<ConversationList> {
     if (!SettingsManager().settings.showConnectionIndicator.value) return Container();
 
     return Obx(() => Padding(
-      padding: const EdgeInsets.only(right: 10.0),
-      child: getIndicatorIcon(SocketManager().state.value, size: 12),
-    ));
+          padding: const EdgeInsets.only(right: 10.0),
+          child: getIndicatorIcon(SocketManager().state.value, size: 12),
+        ));
   }
 
   @override

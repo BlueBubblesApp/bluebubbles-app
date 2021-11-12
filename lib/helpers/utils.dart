@@ -9,6 +9,7 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/country_codes.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
 import 'package:bluebubbles/helpers/logger.dart';
+import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/layouts/conversation_view/conversation_view_mixin.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_content/media_players/video_widget.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
@@ -122,11 +123,11 @@ bool sameAddress(List<String?> options, String? compared) {
   bool match = false;
   if (compared == null) return match;
   for (String? opt in options) {
-    if (opt == null) continue;
+    if (isNullOrEmpty(opt)!) continue;
     if (opt == compared) {
       match = true;
       break;
-    } else if (compared.endsWith(opt) && opt.length >= 9) {
+    } else if (compared.endsWith(opt!) && opt.length >= 9) {
       match = true;
       break;
     } else if (opt.endsWith(compared) && compared.length >= 9) {
@@ -134,10 +135,8 @@ bool sameAddress(List<String?> options, String? compared) {
       break;
     }
 
-    if (opt.isEmail && !compared.isEmail) continue;
-
     String formatted = slugify(compared, delimiter: '').toString().replaceAll('-', '');
-    if (options.contains(formatted)) {
+    if (opt.endsWith(formatted) || formatted.endsWith(opt)) {
       match = true;
       break;
     }
@@ -240,6 +239,10 @@ String buildDate(DateTime? dateTime) {
   return date;
 }
 
+String buildSeparatorDateSamsung(DateTime dateTime) {
+  return intl.DateFormat.yMMMMEEEEd().format(dateTime);
+}
+
 String buildTime(DateTime? dateTime) {
   if (dateTime == null || dateTime.millisecondsSinceEpoch == 0) return "";
   String time = SettingsManager().settings.use24HrFormat.value
@@ -249,6 +252,11 @@ String buildTime(DateTime? dateTime) {
 }
 
 extension DateHelpers on DateTime {
+  bool isTomorrow({DateTime? otherDate}) {
+    final now = otherDate?.add(Duration(days: 1)) ?? DateTime.now().add(Duration(days: 1));
+    return now.day == day && now.month == month && now.year == year;
+  }
+
   bool isToday() {
     final now = DateTime.now();
     return now.day == day && now.month == month && now.year == year;
@@ -580,33 +588,25 @@ Future<File?> saveImageFromUrl(String guid, String url) async {
 }
 
 Widget getIndicatorIcon(SocketState socketState, {double size = 24, bool showAlpha = true}) {
-  return Padding(
-    padding: EdgeInsets.only(right: kIsDesktop ? 10 : 0),
-    child: Obx(
-      () {
-        if (SettingsManager().settings.colorblindMode.value) {
-          if (socketState == SocketState.CONNECTING) {
-            return Icon(Icons.cloud_upload, color: HexColor('ffd500').withAlpha(showAlpha ? 200 : 255), size: size);
-          } else if (socketState == SocketState.CONNECTED) {
-            return Icon(Icons.cloud_done, color: HexColor('32CD32').withAlpha(showAlpha ? 200 : 255), size: size);
-          } else {
-            return Icon(Icons.cloud_off, color: HexColor('DC143C').withAlpha(showAlpha ? 200 : 255), size: size);
-          }
-        } else {
-          if (socketState == SocketState.CONNECTING) {
-            return Icon(Icons.fiber_manual_record,
-                color: HexColor('ffd500').withAlpha(showAlpha ? 200 : 255), size: size);
-          } else if (socketState == SocketState.CONNECTED) {
-            return Icon(Icons.fiber_manual_record,
-                color: HexColor('32CD32').withAlpha(showAlpha ? 200 : 255), size: size);
-          } else {
-            return Icon(Icons.fiber_manual_record,
-                color: HexColor('DC143C').withAlpha(showAlpha ? 200 : 255), size: size);
-          }
-        }
-      },
-    ),
-  );
+  return Obx(() {
+    if (SettingsManager().settings.colorblindMode.value) {
+      if (socketState == SocketState.CONNECTING) {
+        return Icon(Icons.cloud_upload, color: HexColor('ffd500').withAlpha(showAlpha ? 200 : 255), size: size);
+      } else if (socketState == SocketState.CONNECTED) {
+        return Icon(Icons.cloud_done, color: HexColor('32CD32').withAlpha(showAlpha ? 200 : 255), size: size);
+      } else {
+        return Icon(Icons.cloud_off, color: HexColor('DC143C').withAlpha(showAlpha ? 200 : 255), size: size);
+      }
+    } else {
+      if (socketState == SocketState.CONNECTING) {
+        return Icon(Icons.fiber_manual_record, color: HexColor('ffd500').withAlpha(showAlpha ? 200 : 255), size: size);
+      } else if (socketState == SocketState.CONNECTED) {
+        return Icon(Icons.fiber_manual_record, color: HexColor('32CD32').withAlpha(showAlpha ? 200 : 255), size: size);
+      } else {
+        return Icon(Icons.fiber_manual_record, color: HexColor('DC143C').withAlpha(showAlpha ? 200 : 255), size: size);
+      }
+    }
+  });
 }
 
 Color getIndicatorColor(SocketState socketState) {
@@ -755,6 +755,21 @@ extension PlatformSpecificCapitalize on String {
 
 extension LastChars on String {
   String lastChars(int n) => substring(length - n);
+}
+
+extension WidgetLocation on GlobalKey {
+  Rect? globalPaintBounds(BuildContext context) {
+    double difference = context.width - CustomNavigator.width(context);
+    final renderObject = currentContext?.findRenderObject();
+    final translation = renderObject?.getTransformTo(null).getTranslation();
+    if (translation != null && renderObject?.paintBounds != null) {
+      final offset = Offset(translation.x, translation.y);
+      final tempRect = renderObject!.paintBounds.shift(offset);
+      return Rect.fromLTRB(tempRect.left - difference, tempRect.top, tempRect.right - difference, tempRect.bottom);
+    } else {
+      return null;
+    }
+  }
 }
 
 bool get kIsDesktop => (Platform.isWindows || Platform.isLinux || Platform.isMacOS) && !kIsWeb;

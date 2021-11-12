@@ -128,8 +128,12 @@ class SetupBloc {
 
     try {
       addOutput("Getting contacts...", SetupOutputType.LOG);
+      Stopwatch s = Stopwatch();
+      s.start();
       await ContactManager().getContacts(force: true);
-      addOutput("Received contacts list. Size: ${ContactManager().contacts.length}", SetupOutputType.LOG);
+      s.stop();
+      addOutput("Received contacts list. Size: ${ContactManager().contacts.length}, speed: ${s.elapsedMilliseconds} ms",
+          SetupOutputType.LOG);
       addOutput("Getting Chats...", SetupOutputType.LOG);
       List<Chat> chats = await SocketManager().getChats({"withLastMessage": kIsWeb});
 
@@ -158,6 +162,12 @@ class SetupBloc {
           _currentIndex += 1;
           _progress = (_currentIndex / chats.length) * 100;
         }
+        addOutput("Fetching contacts from server...", SetupOutputType.LOG);
+        await ContactManager().getContacts(force: true);
+        addOutput("Received contacts list. Size: ${ContactManager().contacts.length}", SetupOutputType.LOG);
+        addOutput("Matching contacts to chats...", SetupOutputType.LOG);
+        await ContactManager().matchHandles();
+        _progress = 100;
         finishSetup();
         startIncrementalSync(settings);
         return;
@@ -172,14 +182,15 @@ class SetupBloc {
               params["identifier"] = chat.guid;
               params["withBlurhash"] = false;
               params["limit"] = numberOfMessagesPerPage.round();
-              params["where"] = [
-                {"statement": "message.service = 'iMessage'", "args": null}
-              ];
               List<dynamic> messages = await SocketManager().getChatMessages(params)!;
               addOutput(
                   "Received ${messages.length} messages for chat, '${chat.chatIdentifier}'!", SetupOutputType.LOG);
               if (!skipEmptyChats || (skipEmptyChats && messages.isNotEmpty)) {
-                chat = chat.save();
+                chat.save();
+
+                // Re-match the handles with the contacts
+                await ContactManager().matchHandles();
+
                 await syncChat(chat, messages);
                 addOutput("Finished syncing chat, '${chat.chatIdentifier}'", SetupOutputType.LOG);
               } else {
@@ -295,9 +306,6 @@ class SetupBloc {
       params["withAttachments"] = true; // We want the attachment data
       params["withHandle"] = true; // We want to know who sent it
       params["sort"] = "DESC"; // Sort my DESC so we receive the newest messages first
-      params["where"] = [
-        {"statement": "message.service = 'iMessage'", "args": null}
-      ];
 
       List<dynamic> messages = await SocketManager().getMessages(params)!;
       if (messages.isEmpty) {
@@ -311,7 +319,7 @@ class SetupBloc {
         await MessageHelper.bulkAddMessages(null, messages, onProgress: (progress, total) {
           _progress = (progress / total) * 100;
           data.value = SetupData(_progress, output);
-        }, notifyForNewMessage: true);
+        }, notifyForNewMessage: !kIsWeb);
 
         // If we want to download the attachments, do it, and wait for them to finish before continuing
         if (downloadAttachments) {

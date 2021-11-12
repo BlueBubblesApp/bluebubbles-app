@@ -307,11 +307,18 @@ class _PinnedConversationTileState extends State<PinnedConversationTile> {
                                       ),
                                     ),
                                     Padding(
-                                      padding: EdgeInsets.only(left: shouldShow(widget.chat.latestMessage, markers?.myLastMessage,
-                                          markers?.lastReadMessage, markers?.lastDeliveredMessage) ==
-                                          Indicator.SENT ? 0 : 1, top: 1, right: shouldShow(widget.chat.latestMessage, markers?.myLastMessage,
-                                          markers?.lastReadMessage, markers?.lastDeliveredMessage) ==
-                                          Indicator.SENT ? 1 : 0),
+                                      padding: EdgeInsets.only(
+                                          left: shouldShow(widget.chat.latestMessage, markers?.myLastMessage,
+                                                      markers?.lastReadMessage, markers?.lastDeliveredMessage) ==
+                                                  Indicator.SENT
+                                              ? 0
+                                              : 1,
+                                          top: 1,
+                                          right: shouldShow(widget.chat.latestMessage, markers?.myLastMessage,
+                                                      markers?.lastReadMessage, markers?.lastDeliveredMessage) ==
+                                                  Indicator.SENT
+                                              ? 1
+                                              : 0),
                                       child: Transform.rotate(
                                         angle: shouldShow(widget.chat.latestMessage, markers?.myLastMessage,
                                                     markers?.lastReadMessage, markers?.lastDeliveredMessage) !=

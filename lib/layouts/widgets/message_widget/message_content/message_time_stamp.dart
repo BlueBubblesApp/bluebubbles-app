@@ -6,7 +6,8 @@ import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
 
 class MessageTimeStamp extends StatelessWidget {
-  const MessageTimeStamp({Key? key, required this.message, this.singleLine = false, this.useYesterday = false, this.shownByTap = false})
+  const MessageTimeStamp(
+      {Key? key, required this.message, this.singleLine = false, this.useYesterday = false, this.shownByTap = false})
       : super(key: key);
   final Message message;
   final bool singleLine;
@@ -29,8 +30,9 @@ class MessageTimeStamp extends StatelessWidget {
 
           return AnimatedContainer(
             duration: Duration(milliseconds: offset == 0 ? 150 : 0),
-            width: (!shownByTap && (SettingsManager().settings.skin.value == Skins.iOS ||
-                    SettingsManager().settings.skin.value == Skins.Material))
+            width: (!shownByTap &&
+                    (SettingsManager().settings.skin.value == Skins.iOS ||
+                        SettingsManager().settings.skin.value == Skins.Material))
                 ? (-offset).clamp(0, 70).toDouble()
                 : (singleLine)
                     ? 100
@@ -46,9 +48,10 @@ class MessageTimeStamp extends StatelessWidget {
                   duration: Duration(milliseconds: offset == 0 ? 150 : 0),
                   child: Text(
                     text,
-                    textAlign: (message.isFromMe! && (SettingsManager().settings.skin.value == Skins.Samsung || shownByTap))
-                        ? TextAlign.right
-                        : TextAlign.left,
+                    textAlign:
+                        (message.isFromMe! && (SettingsManager().settings.skin.value == Skins.Samsung || shownByTap))
+                            ? TextAlign.right
+                            : TextAlign.left,
                     style: Theme.of(context).textTheme.subtitle1!.apply(fontSizeFactor: 0.8),
                     overflow: TextOverflow.visible,
                     maxLines: 2,

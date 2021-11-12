@@ -8,6 +8,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   desktop_drop
   maps_launcher
   objectbox_flutter_libs
+  printing
   quick_notify
   secure_application
   system_tray

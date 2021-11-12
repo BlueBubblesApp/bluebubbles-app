@@ -3,19 +3,13 @@ import 'dart:ui';
 
 import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/hex_color.dart';
-import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
-import 'package:bluebubbles/helpers/ui_helpers.dart';
-import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/layouts/settings/settings_panel.dart';
+import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/message_widget.dart';
-import 'package:bluebubbles/layouts/widgets/theme_switcher/theme_switcher.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_improved_scrolling/flutter_improved_scrolling.dart';
 import 'package:get/get.dart';
 
 class RedactedModePanel extends StatelessWidget {
@@ -29,8 +23,9 @@ class RedactedModePanel extends StatelessWidget {
         ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold);
     Color headerColor;
     Color tileColor;
-    if (Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
-        SettingsManager().settings.skin.value != Skins.iOS) {
+    if ((Theme.of(context).accentColor.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+            SettingsManager().settings.skin.value == Skins.Material) &&
+        (SettingsManager().settings.skin.value != Skins.Samsung || isEqual(Theme.of(context), whiteLightTheme))) {
       headerColor = Theme.of(context).accentColor;
       tileColor = Theme.of(context).backgroundColor;
     } else {
@@ -41,73 +36,20 @@ class RedactedModePanel extends StatelessWidget {
       tileColor = headerColor;
     }
 
-    final scrollController = ScrollController();
-
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle(
-        systemNavigationBarColor: headerColor, // navigation bar color
-        systemNavigationBarIconBrightness: headerColor.computeLuminance() > 0.5 ? Brightness.dark : Brightness.light,
-        statusBarColor: Colors.transparent, // status bar color
-      ),
-      child: Scaffold(
-        backgroundColor: SettingsManager().settings.skin.value != Skins.iOS ? tileColor : headerColor,
-        appBar: PreferredSize(
-          preferredSize: Size(CustomNavigator.width(context), 80),
-          child: ClipRRect(
-            child: BackdropFilter(
-              child: AppBar(
-                brightness: ThemeData.estimateBrightnessForColor(headerColor),
-                toolbarHeight: 100.0,
-                elevation: 0,
-                leading: buildBackButton(context),
-                backgroundColor: headerColor.withOpacity(0.5),
-                title: Text(
-                  "Redacted Mode Settings",
-                  style: Theme.of(context).textTheme.headline1,
-                ),
-              ),
-              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-            ),
-          ),
-        ),
-        body: ImprovedScrolling(
-          enableMMBScrolling: true,
-          enableKeyboardScrolling: true,
-          mmbScrollConfig: MMBScrollConfig(
-            customScrollCursor: DefaultCustomScrollCursor(
-              cursorColor: context.textTheme.subtitle1!.color!,
-              backgroundColor: Colors.white,
-              borderColor: context.textTheme.headline1!.color!,
-            ),
-          ),
-          scrollController: scrollController,
-          child: CustomScrollView(
-            controller: scrollController,
-            physics: ThemeSwitcher.getScrollPhysics(),
-            slivers: <Widget>[
-              Obx(() => SliverList(
-                    delegate: SliverChildListDelegate(
-                      <Widget>[
-                        Container(
-                            height: SettingsManager().settings.skin.value == Skins.iOS ? 30 : 40,
-                            alignment: Alignment.bottomLeft,
-                            decoration: SettingsManager().settings.skin.value == Skins.iOS
-                                ? BoxDecoration(
-                                    color: headerColor,
-                                    border: Border(
-                                        bottom: BorderSide(
-                                            color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
-                                  )
-                                : BoxDecoration(
-                                    color: tileColor,
-                                  ),
-                            child: Padding(
-                              padding: const EdgeInsets.only(bottom: 8.0, left: 15),
-                              child: Text("Redacted Mode".psCapitalize,
-                                  style: SettingsManager().settings.skin.value == Skins.iOS
-                                      ? iosSubtitle
-                                      : materialSubtitle),
-                            )),
+    return SettingsScaffold(
+        title: "Redacted Mode",
+        initialHeader: "Redacted Mode",
+        iosSubtitle: iosSubtitle,
+        materialSubtitle: materialSubtitle,
+        tileColor: tileColor,
+        headerColor: headerColor,
+        bodySlivers: [
+          Obx(() => SliverList(
+                delegate: SliverChildListDelegate(
+                  <Widget>[
+                    SettingsSection(
+                      backgroundColor: tileColor,
+                      children: [
                         Container(
                             decoration: SettingsManager().settings.skin.value == Skins.iOS
                                 ? BoxDecoration(
@@ -122,64 +64,71 @@ class RedactedModePanel extends StatelessWidget {
                               child: Text(
                                   "Redacted Mode hides your personal information, such as contact names, message content, and more. This is useful when taking screenshots to send to developers."),
                             )),
-                        AbsorbPointer(
-                          absorbing: true,
-                          child: Container(
-                            color: headerColor == Theme.of(context).accentColor ? tileColor : headerColor,
-                            child: MessageWidget(
-                              newerMessage: null,
-                              olderMessage: null,
-                              isFirstSentMessage: false,
-                              showHandle: true,
-                              showHero: false,
-                              showReplies: false,
-                              autoplayEffect: false,
-                              message: Message(
-                                guid: "redacted-mode-demo",
-                                dateDelivered: DateTime.now().toLocal(),
-                                dateCreated: DateTime.now().toLocal(),
-                                isFromMe: false,
-                                hasReactions: true,
-                                hasAttachments: true,
-                                text: "This is a preview of Redacted Mode settings.",
-                                handle: Handle(
-                                  id: Random.secure().nextInt(10000),
-                                  address: "John Doe",
-                                ),
-                                associatedMessages: [
-                                  Message(
-                                    dateCreated: DateTime.now().toLocal(),
-                                    guid: "redacted-mode-demo",
-                                    text: "Jane Doe liked a message you sent",
-                                    associatedMessageType: "like",
-                                    isFromMe: true,
-                                  ),
-                                ],
-                                attachments: [
-                                  Attachment(
-                                    guid: "redacted-mode-demo-attachment",
-                                    originalROWID: Random.secure().nextInt(10000),
-                                    transferName: "assets/icon/icon.png",
-                                    mimeType: "image/png",
-                                    width: 100,
-                                    height: 100,
-                                  )
-                                ],
-                              ),
+                      ],
+                    ),
+                    AbsorbPointer(
+                      absorbing: true,
+                      child: Container(
+                        color: headerColor == Theme.of(context).accentColor ? tileColor : headerColor,
+                        child: MessageWidget(
+                          newerMessage: null,
+                          olderMessage: null,
+                          isFirstSentMessage: false,
+                          showHandle: true,
+                          showHero: false,
+                          showReplies: false,
+                          autoplayEffect: false,
+                          message: Message(
+                            guid: "redacted-mode-demo",
+                            dateDelivered2: DateTime.now().toLocal(),
+                            dateCreated: DateTime.now().toLocal(),
+                            isFromMe: false,
+                            hasReactions: true,
+                            hasAttachments: true,
+                            text: "This is a preview of Redacted Mode settings.",
+                            handle: Handle(
+                              id: Random.secure().nextInt(10000),
+                              address: "John Doe",
                             ),
+                            associatedMessages: [
+                              Message(
+                                dateCreated: DateTime.now().toLocal(),
+                                guid: "redacted-mode-demo",
+                                text: "Jane Doe liked a message you sent",
+                                associatedMessageType: "like",
+                                isFromMe: true,
+                              ),
+                            ],
+                            attachments: [
+                              Attachment(
+                                guid: "redacted-mode-demo-attachment",
+                                originalROWID: Random.secure().nextInt(10000),
+                                transferName: "assets/icon/icon.png",
+                                mimeType: "image/png",
+                                width: 100,
+                                height: 100,
+                              )
+                            ],
                           ),
                         ),
-                        Container(
-                          decoration: SettingsManager().settings.skin.value == Skins.iOS
-                              ? BoxDecoration(
-                                  color: headerColor,
-                                  border: Border(
-                                      top: BorderSide(
-                                          color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
-                                )
-                              : null,
-                        ),
-                        Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
+                      ),
+                    ),
+                    Container(
+                      decoration: SettingsManager().settings.skin.value == Skins.iOS
+                          ? BoxDecoration(
+                              color: headerColor,
+                              border: Border(
+                                  top: BorderSide(
+                                      color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
+                            )
+                          : null,
+                    ),
+                    Container(
+                        color: SettingsManager().settings.skin.value == Skins.Samsung ? null : tileColor,
+                        padding: EdgeInsets.only(top: 5.0)),
+                    SettingsSection(
+                      backgroundColor: tileColor,
+                      children: [
                         SettingsSwitch(
                           onChanged: (bool val) {
                             SettingsManager().settings.redactedMode.value = val;
@@ -189,13 +138,18 @@ class RedactedModePanel extends StatelessWidget {
                           title: "Enable Redacted Mode",
                           backgroundColor: tileColor,
                         ),
-                        if (SettingsManager().settings.redactedMode.value) ...[
-                          SettingsHeader(
-                              headerColor: headerColor,
-                              tileColor: tileColor,
-                              iosSubtitle: iosSubtitle,
-                              materialSubtitle: materialSubtitle,
-                              text: "Hide Content"),
+                      ],
+                    ),
+                    if (SettingsManager().settings.redactedMode.value) ...[
+                      SettingsHeader(
+                          headerColor: headerColor,
+                          tileColor: tileColor,
+                          iosSubtitle: iosSubtitle,
+                          materialSubtitle: materialSubtitle,
+                          text: "Hide Content"),
+                      SettingsSection(
+                        backgroundColor: tileColor,
+                        children: [
                           SettingsSwitch(
                             onChanged: (bool val) {
                               SettingsManager().settings.hideMessageContent.value = val;
@@ -216,13 +170,18 @@ class RedactedModePanel extends StatelessWidget {
                             backgroundColor: tileColor,
                             subtitle: "Removes any trace of reactions from messages",
                           ),
-                          SettingsHeader(
-                            headerColor: headerColor,
-                            tileColor: tileColor,
-                            iosSubtitle: iosSubtitle,
-                            materialSubtitle: materialSubtitle,
-                            text: "Hide Emojis & Attachments",
-                          ),
+                        ],
+                      ),
+                      SettingsHeader(
+                        headerColor: headerColor,
+                        tileColor: tileColor,
+                        iosSubtitle: iosSubtitle,
+                        materialSubtitle: materialSubtitle,
+                        text: "Hide Emojis & Attachments",
+                      ),
+                      SettingsSection(
+                        backgroundColor: tileColor,
+                        children: [
                           SettingsSwitch(
                             onChanged: (bool val) {
                               SettingsManager().settings.hideEmojis.value = val;
@@ -253,12 +212,17 @@ class RedactedModePanel extends StatelessWidget {
                             backgroundColor: tileColor,
                             subtitle: "Removes the attachment file type text from the placeholder box",
                           ),
-                          SettingsHeader(
-                              headerColor: headerColor,
-                              tileColor: tileColor,
-                              iosSubtitle: iosSubtitle,
-                              materialSubtitle: materialSubtitle,
-                              text: "Hide Contact Info"),
+                        ],
+                      ),
+                      SettingsHeader(
+                          headerColor: headerColor,
+                          tileColor: tileColor,
+                          iosSubtitle: iosSubtitle,
+                          materialSubtitle: materialSubtitle,
+                          text: "Hide Contact Info"),
+                      SettingsSection(
+                        backgroundColor: tileColor,
+                        children: [
                           SettingsSwitch(
                             onChanged: (bool val) {
                               SettingsManager().settings.hideContactPhotos.value = val;
@@ -289,12 +253,17 @@ class RedactedModePanel extends StatelessWidget {
                             backgroundColor: tileColor,
                             subtitle: "Replaces letter avatars with generic person avatars",
                           ),
-                          SettingsHeader(
-                              headerColor: headerColor,
-                              tileColor: tileColor,
-                              iosSubtitle: iosSubtitle,
-                              materialSubtitle: materialSubtitle,
-                              text: "Generate Fake Info"),
+                        ],
+                      ),
+                      SettingsHeader(
+                          headerColor: headerColor,
+                          tileColor: tileColor,
+                          iosSubtitle: iosSubtitle,
+                          materialSubtitle: materialSubtitle,
+                          text: "Generate Fake Info"),
+                      SettingsSection(
+                        backgroundColor: tileColor,
+                        children: [
                           SettingsSwitch(
                             onChanged: (bool val) {
                               SettingsManager().settings.generateFakeContactNames.value = val;
@@ -316,31 +285,12 @@ class RedactedModePanel extends StatelessWidget {
                             subtitle: "Replaces message text with lorem-ipsum text",
                           ),
                         ],
-                        Container(color: tileColor, padding: EdgeInsets.only(top: 5.0)),
-                        Container(
-                          height: 30,
-                          decoration: SettingsManager().settings.skin.value == Skins.iOS
-                              ? BoxDecoration(
-                                  color: headerColor,
-                                  border: Border(
-                                      top: BorderSide(
-                                          color: Theme.of(context).dividerColor.lightenOrDarken(40), width: 0.3)),
-                                )
-                              : null,
-                        ),
-                      ],
-                    ),
-                  )),
-              SliverList(
-                delegate: SliverChildListDelegate(
-                  <Widget>[],
+                      ),
+                    ],
+                  ],
                 ),
-              )
-            ],
-          ),
-        ),
-      ),
-    );
+              )),
+        ]);
   }
 
   void saveSettings() {

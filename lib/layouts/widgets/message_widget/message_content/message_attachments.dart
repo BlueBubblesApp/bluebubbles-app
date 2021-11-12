@@ -69,7 +69,7 @@ class MessageAttachments extends StatelessWidget {
     } else {
       items = CurrentChat.of(context)?.getAttachmentsForMessage(message) ?? [];
     }
-    for (Attachment? attachment in items ?? []) {
+    for (Attachment? attachment in items) {
       if (attachment!.mimeType != null) {
         Widget attachmentWidget = MessageAttachment(
           attachment: attachment,

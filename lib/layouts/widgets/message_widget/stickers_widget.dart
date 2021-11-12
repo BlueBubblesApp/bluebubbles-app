@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:universal_io/io.dart';
 
 import 'package:bluebubbles/helpers/attachment_downloader.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
@@ -7,6 +6,7 @@ import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/repository/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:universal_io/io.dart';
 
 class StickersWidget extends StatefulWidget {
   StickersWidget({Key? key, required this.messages}) : super(key: key);
@@ -37,14 +37,15 @@ class _StickersWidgetState extends State<StickersWidget> {
 
   void loadStickers() async {
     // For each message, load the sticker for it
-    final map = Message.fetchAttachmentsByMessages(widget.messages.where((element) => element.associatedMessageType == "sticker").toList());
+    final map = Message.fetchAttachmentsByMessages(
+        widget.messages.where((element) => element.associatedMessageType == "sticker").toList());
     for (Message msg in widget.messages) {
       // If the message type isn't a sticker, skip it
       if (msg.associatedMessageType != "sticker") continue;
 
       // Get the associated attachments
-      msg.attachments = map[msg.guid];
-      for (Attachment? attachment in msg.attachments!) {
+      msg.attachments = map[msg.guid]!;
+      for (Attachment? attachment in msg.attachments) {
         // If we've already loaded it, don't try again
         if (loaded.contains(attachment!.guid)) continue;
 
@@ -54,14 +55,18 @@ class _StickersWidgetState extends State<StickersWidget> {
         // Check if the attachment exists
         if (await FileSystemEntity.type(pathName) == FileSystemEntityType.notFound) {
           // Download the attachment and when complete, re-render the UI
-          Get.put(AttachmentDownloadController(attachment: attachment, onComplete: () async {
-            // Make sure it downloaded correctly
-            if (await FileSystemEntity.type(pathName) == FileSystemEntityType.notFound) {
-              // Add the attachment as a sticker, and re-render the UI
-              stickers.add(attachment);
-              if (mounted) setState(() {});
-            }
-          }), tag: attachment.guid);
+          Get.put(
+              AttachmentDownloadController(
+                  attachment: attachment,
+                  onComplete: () async {
+                    // Make sure it downloaded correctly
+                    if (await FileSystemEntity.type(pathName) == FileSystemEntityType.notFound) {
+                      // Add the attachment as a sticker, and re-render the UI
+                      stickers.add(attachment);
+                      if (mounted) setState(() {});
+                    }
+                  }),
+              tag: attachment.guid);
         } else {
           stickers.add(attachment);
         }
@@ -77,7 +82,8 @@ class _StickersWidgetState extends State<StickersWidget> {
     List<Widget> stickers = this.stickers.map((item) {
       String pathName = AttachmentHelper.getAttachmentPath(item);
       dynamic file = File(pathName);
-      return Image.file(file, width: CustomNavigator.width(context) * 2 / 3, height: CustomNavigator.width(context) * 2 / 4);
+      return Image.file(file,
+          width: CustomNavigator.width(context) * 2 / 3, height: CustomNavigator.width(context) * 2 / 4);
     }).toList();
 
     return GestureDetector(

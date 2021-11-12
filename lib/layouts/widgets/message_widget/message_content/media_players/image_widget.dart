@@ -1,19 +1,19 @@
-import 'package:bluebubbles/helpers/utils.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
-import 'package:flutter/foundation.dart';
-import 'package:universal_io/io.dart';
 import 'dart:typed_data';
 
-import 'package:bluebubbles/helpers/ui_helpers.dart';
-import 'package:flutter/services.dart';
 import 'package:bluebubbles/helpers/attachment_helper.dart';
+import 'package:bluebubbles/helpers/ui_helpers.dart';
+import 'package:bluebubbles/helpers/utils.dart';
 import 'package:bluebubbles/layouts/image_viewer/attachment_fullscreen_viewer.dart';
 import 'package:bluebubbles/managers/current_chat.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:bluebubbles/repository/models/models.dart';
+import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:universal_io/io.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
 class ImageWidgetController extends GetxController {
@@ -63,7 +63,8 @@ class ImageWidgetController extends GetxController {
 
       if (tmpData == null) return;
       if (!(attachment.mimeType?.endsWith("heic") ?? false)) {
-        await precacheImage(MemoryImage(tmpData), context, size: attachment.width == null ? null : Size.fromWidth(attachment.width! / 2));
+        await precacheImage(MemoryImage(tmpData), context,
+            size: attachment.width == null ? null : Size.fromWidth(attachment.width! / 2));
       }
     }
     data.value = tmpData;
@@ -126,14 +127,18 @@ class ImageWidget extends StatelessWidget {
       child: Obx(
         () => controller.data.value != null
             ? Container(
-              width: controller.attachment.guid == "redacted-mode-demo-attachment" ? controller.attachment.width!.toDouble() : null,
-              height: controller.attachment.guid == "redacted-mode-demo-attachment" ? controller.attachment.height!.toDouble() : null,
-              child: FadeInImage(
+                width: controller.attachment.guid == "redacted-mode-demo-attachment"
+                    ? controller.attachment.width!.toDouble()
+                    : null,
+                height: controller.attachment.guid == "redacted-mode-demo-attachment"
+                    ? controller.attachment.height!.toDouble()
+                    : null,
+                child: FadeInImage(
                   placeholder: MemoryImage(kTransparentImage),
                   image: MemoryImage(controller.data.value!),
                   fadeInDuration: Duration(milliseconds: 200),
                 ),
-            )
+              )
             : buildPlaceHolder(context, controller),
       ));
 

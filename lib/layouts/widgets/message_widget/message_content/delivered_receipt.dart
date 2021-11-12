@@ -23,13 +23,13 @@ class DeliveredReceipt extends StatefulWidget {
 
 class _DeliveredReceiptState extends State<DeliveredReceipt> with TickerProviderStateMixin {
   bool shouldShow(Message? myLastMessage, Message? lastReadMessage, Message? lastDeliveredMessage) {
-    // If we have no sent date, don't show anything
-    if (widget.message.dateCreated == null) return false;
+    // If we have no delivered date, don't show anything
+    if (widget.message.dateDelivered == null) return false;
 
-    if (CurrentChat.of(context) != null) {
-      lastReadMessage ??= CurrentChat.of(context)?.messageMarkers.lastReadMessage;
-      lastDeliveredMessage ??= CurrentChat.of(context)?.messageMarkers.lastDeliveredMessage;
-      myLastMessage ??= CurrentChat.of(context)?.messageMarkers.myLastMessage;
+    if (CurrentChat.activeChat != null) {
+      lastReadMessage ??= CurrentChat.activeChat?.messageMarkers.lastReadMessage;
+      lastDeliveredMessage ??= CurrentChat.activeChat?.messageMarkers.lastDeliveredMessage;
+      myLastMessage ??= CurrentChat.activeChat?.messageMarkers.myLastMessage;
     }
 
     // If the message is the same as the last read message, we want to show it
@@ -45,14 +45,6 @@ class _DeliveredReceiptState extends State<DeliveredReceipt> with TickerProvider
         widget.message.dateDelivered != null &&
         lastDeliveredMessage != null &&
         widget.message.guid == lastDeliveredMessage.guid) {
-      return true;
-    }
-
-    // If the message is the same as the last sent message, we want to show it
-    if (!widget.showDeliveredReceipt &&
-        widget.message.dateCreated != null &&
-        myLastMessage != null &&
-        widget.message.guid == myLastMessage.guid) {
       return true;
     }
 
@@ -93,7 +85,7 @@ class _DeliveredReceiptState extends State<DeliveredReceipt> with TickerProvider
     Widget timestampWidget = Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
       child: Obx(() {
-        MessageMarkers? markers = CurrentChat.of(context)?.messageMarkers.markers.value ?? null.obs.value;
+        MessageMarkers? markers = CurrentChat.activeChat?.messageMarkers.markers.value ?? null.obs.value;
         if (shouldShow(markers?.myLastMessage, markers?.lastReadMessage, markers?.lastDeliveredMessage)) {
           return Text(
             getText(),
