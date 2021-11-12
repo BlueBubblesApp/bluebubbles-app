@@ -17,9 +17,7 @@ import 'package:bluebubbles/managers/method_channel_interface.dart';
 import 'package:bluebubbles/managers/notification_manager.dart';
 import 'package:bluebubbles/managers/queue_manager.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
-import 'package:bluebubbles/repository/models/chat.dart';
-import 'package:bluebubbles/repository/models/fcm_data.dart';
-import 'package:bluebubbles/repository/models/message.dart';
+import 'package:bluebubbles/repository/models/models.dart';
 import 'package:bluebubbles/repository/models/settings.dart';
 import 'package:firebase_dart/firebase_dart.dart';
 import 'package:flutter/foundation.dart';
@@ -49,8 +47,8 @@ class SocketManager {
 
   SocketManager._internal();
 
-  Future<void> removeChatNotification(Chat chat) async {
-    await chat.toggleHasUnread(false);
+  void removeChatNotification(Chat chat) {
+    chat.toggleHasUnread(false);
     ChatBloc().updateChat(chat);
   }
 
@@ -156,7 +154,7 @@ class SocketManager {
               value(true);
             }
             socketProcesses = {};
-            if (!LifeCycleManager().isAlive) {
+            if (!LifeCycleManager().isAlive && !kIsDesktop) {
               closeSocket(force: true);
             }
           });
@@ -323,23 +321,23 @@ class SocketManager {
         // If there are no chats, try to find it in the DB via the message
         Chat? chat;
         if (isNullOrEmpty(data["chats"])!) {
-          chat = await Message.getChat(message);
+          chat = message.getChat();
         } else {
           chat = Chat.fromMap(data['chats'][0]);
         }
 
         // Save the chat in-case is doesn't exist
         if (chat != null) {
-          await chat.save();
+          chat.save();
         }
 
         // Lastly, find the message
-        Message msg = (await Message.findOne({'guid': message.guid}))!;
+        Message msg = Message.findOne(guid: message.guid)!;
 
         // Check if we already have an error, and save if we don't
-        if (msg.error.value == 0) {
+        if (msg.error == 0) {
           // TODO: ADD NOTIFICATION TO USER IF FAILURE
-          await message.save();
+          message.save();
         }
 
         return Future.value("");
@@ -354,9 +352,9 @@ class SocketManager {
         Logger.info("Client received message timeout", tag: tag);
         Map<String, dynamic> data = _data;
 
-        Message? message = await Message.findOne({"guid": data["tempGuid"]});
+        Message? message = Message.findOne(guid: data["tempGuid"]);
         if (message == null) return Future.value("");
-        message.error.value = 1003;
+        message.error = 1003;
         message.guid = message.guid!.replaceAll("temp", "error-Message Timeout");
         await Message.replaceMessage(data["tempGuid"], message);
         return Future.value("");
@@ -569,7 +567,7 @@ class SocketManager {
     Map<String, dynamic> params = {};
     params["chatGuid"] = chatGuid;
     params["withParticipants"] = withParticipants;
-    SocketManager().sendMessage("get-chat", params, (data) async {
+    SocketManager().sendMessage("get-chat", params, (data) {
       if (data['status'] != 200 && !completer.isCompleted) {
         return completer.completeError(Exception(data['error']['message']));
       }
@@ -584,7 +582,7 @@ class SocketManager {
       Chat newChat = Chat.fromMap(chatData);
 
       // Resave the chat after we've got the participants
-      await newChat.save();
+      newChat.save();
       completer.complete(newChat);
     });
 
