@@ -457,11 +457,11 @@ class ThemePanel extends GetView<ThemePanelController> {
                                       SizedBox(
                                         height: 15.0,
                                       ),
-                                      Text(
-                                        "You can close this dialog. The font will continue to download in the background.",
+                                      Obx(() => Text(
+                                        progress.value == 1 ? "Download Complete!" : "You can close this dialog. The font will continue to download in the background.",
                                         maxLines: 2,
                                         textAlign: TextAlign.center,
-                                      )
+                                      ),),
                                     ]),
                                   ),
                                 );
