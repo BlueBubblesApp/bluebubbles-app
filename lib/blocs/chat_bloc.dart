@@ -362,7 +362,7 @@ class ChatBloc {
   void removePinIndices() {
     _chats.bigPinHelper(true).forEach((element) {
       element.pinIndex = null;
-      element.save();
+      element.save(updateLocalVals: true);
     });
     _chats.sort(Chat.sort);
   }
@@ -388,7 +388,7 @@ class ChatBloc {
       item.pinIndex = newIndex;
     }
     _chats.sort(Chat.sort);
-    item.save();
+    item.save(updateLocalVals: true);
   }
 
   void deleteChat(Chat chat) async {

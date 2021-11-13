@@ -184,7 +184,7 @@ class Chat {
     return data;
   }
 
-  Chat save() {
+  Chat save({bool updateLocalVals = false}) {
     return this;
   }
 

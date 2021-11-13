@@ -700,7 +700,7 @@ class ChatListState extends State<ChatList> {
                                                   chat.muteType = "mute_individuals";
                                                   chat.muteArgs = existing.join(",");
                                                   Get.back();
-                                                  chat.save();
+                                                  chat.save(updateLocalVals: true);
                                                   if (mounted) setState(() {});
                                                   EventDispatcher().emit("refresh", null);
                                                 },
@@ -715,6 +715,7 @@ class ChatListState extends State<ChatList> {
                                               if (shouldMuteDateTime(chat.muteArgs)) {
                                                 chat.muteType = null;
                                                 chat.muteArgs = null;
+                                                chat.save(updateLocalVals: true);
                                               } else {
                                                 final messageDate = await showDatePicker(
                                                     context: context,
@@ -728,7 +729,7 @@ class ChatListState extends State<ChatList> {
                                                     chat.toggleMute(false);
                                                     chat.muteType = "temporary_mute";
                                                     chat.muteArgs = finalDate.toIso8601String();
-                                                    chat.save();
+                                                    chat.save(updateLocalVals: true);
                                                     if (mounted) setState(() {});
                                                     EventDispatcher().emit("refresh", null);
                                                   }
@@ -783,7 +784,7 @@ class ChatListState extends State<ChatList> {
                                                   chat.muteType = "text_detection";
                                                   chat.muteArgs = controller.text;
                                                   Get.back();
-                                                  chat.save();
+                                                  chat.save(updateLocalVals: true);
                                                   if (mounted) setState(() {});
                                                   EventDispatcher().emit("refresh", null);
                                                 },
@@ -798,7 +799,7 @@ class ChatListState extends State<ChatList> {
                                               chat.toggleMute(false);
                                               chat.muteType = null;
                                               chat.muteArgs = null;
-                                              chat.save();
+                                              chat.save(updateLocalVals: true);
                                               if (mounted) setState(() {});
                                               EventDispatcher().emit("refresh", null);
                                             },

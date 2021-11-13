@@ -2,6 +2,7 @@ import 'package:bluebubbles/helpers/constants.dart';
 import 'package:bluebubbles/helpers/navigator.dart';
 import 'package:bluebubbles/helpers/themes.dart';
 import 'package:bluebubbles/helpers/utils.dart';
+import 'package:bluebubbles/layouts/settings/pinned_order_panel.dart';
 import 'package:bluebubbles/layouts/settings/settings_widgets.dart';
 import 'package:bluebubbles/managers/settings_manager.dart';
 import 'package:flutter/cupertino.dart';
@@ -256,29 +257,29 @@ class ChatListPanel extends StatelessWidget {
                       return SizedBox.shrink();
                     }
                   }),
+                  Obx(() {
+                    if (SettingsManager().settings.skin.value == Skins.iOS) {
+                      return SettingsTile(
+                        title: "Pinned Order",
+                        subtitle: "Set the order for your pinned chats",
+                        backgroundColor: tileColor,
+                        onTap: () {
+                          CustomNavigator.pushSettings(
+                            context,
+                            PinnedOrderPanel(),
+                          );
+                        },
+                        trailing: Icon(
+                          SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.chevron_right : Icons.arrow_forward,
+                          color: Colors.grey,
+                        ),
+                      );
+                    } else {
+                      return SizedBox.shrink();
+                    }
+                  }),
                 ],
               ),
-              // Obx(() {
-              //   if (SettingsManager().settings.skin.value == Skins.iOS)
-              //     return SettingsTile(
-              //       title: "Pinned Order",
-              //       subtitle:
-              //       "Set the order for your pinned chats",
-              //       backgroundColor: tileColor,
-              //       onTap: () {
-              //         CustomNavigator.pushSettings(
-              //           context,
-              //           PinnedOrderPanel(),
-              //         );
-              //       },
-              //       trailing: Icon(
-              //         SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.chevron_right : Icons.arrow_forward,
-              //         color: Colors.grey,
-              //       ),
-              //     );
-              //   else
-              //     return SizedBox.shrink();
-              // }),
               if (!kIsWeb && !kIsDesktop)
                 SettingsHeader(
                     headerColor: headerColor,

@@ -437,12 +437,20 @@ class Chat {
   }
 
   /// Save a chat to the DB
-  Chat save() {
+  Chat save({bool updateLocalVals = false}) {
     if (kIsWeb) return this;
     store.runInTransaction(TxMode.write, () {
       /// Find an existing, and update the ID to the existing ID if necessary
       Chat? existing = Chat.findOne(guid: guid);
       id = existing?.id ?? id;
+      if (!updateLocalVals) {
+        muteType = existing?.muteType ?? muteType;
+        muteArgs = existing?.muteArgs ?? muteArgs;
+        isPinned = existing?.isPinned ?? isPinned;
+        pinIndex = existing?.pinIndex ?? pinIndex;
+        isArchived = existing?.isArchived ?? isArchived;
+        hasUnreadMessage = existing?.hasUnreadMessage ?? hasUnreadMessage;
+      }
 
       /// Save the chat and add the participants
       try {
@@ -513,7 +521,7 @@ class Chat {
         toggleMute(false);
         muteType = null;
         muteArgs = null;
-        save();
+        save(updateLocalVals: true);
       }
       return shouldMute;
 
@@ -561,7 +569,7 @@ class Chat {
     }
 
     hasUnreadMessage = hasUnread;
-    save();
+    save(updateLocalVals: true);
 
     if (hasUnread) {
       EventDispatcher().emit("add-unread-chat", {"chatGuid": guid});
@@ -934,7 +942,7 @@ class Chat {
     if (id == null) return this;
     this.isPinned = isPinned;
     _pinIndex.value = null;
-    save();
+    save(updateLocalVals: true);
     ChatBloc().updateChat(this);
     return this;
   }
@@ -943,7 +951,7 @@ class Chat {
     if (id == null) return this;
     muteType = isMuted ? "mute" : null;
     muteArgs = null;
-    save();
+    save(updateLocalVals: true);
     ChatBloc().updateChat(this);
     return this;
   }
@@ -951,7 +959,7 @@ class Chat {
   Chat toggleArchived(bool isArchived) {
     if (id == null) return this;
     this.isArchived = isArchived;
-    save();
+    save(updateLocalVals: true);
     ChatBloc().updateChat(this);
     return this;
   }
