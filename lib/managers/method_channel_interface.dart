@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:bluebubbles/main.dart';
+import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
 import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
@@ -374,6 +375,9 @@ class MethodChannelInterface {
     if (id == "-1") {
       NavigatorManager().navigatorKey.currentState!.popUntil((route) => route.isFirst);
       return;
+    }
+    if (!ContactManager().hasFetchedContacts) {
+      await ContactManager().getContacts();
     }
     if (CurrentChat.activeChat?.chat.guid == id) {
       NotificationManager().switchChat(CurrentChat.activeChat!.chat);

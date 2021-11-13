@@ -141,13 +141,13 @@ class ContactManager {
         }
       }
     }
-    hasFetchedContacts = true;
 
     // Match handles in the database with contacts
     await matchHandles();
 
     Logger.info("Finished fetching contacts (${handleToContact.length})", tag: tag);
     if (getContactsFuture != null && !getContactsFuture!.isCompleted) {
+      hasFetchedContacts = true;
       getContactsFuture!.complete(true);
     }
 
