@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:bluebubbles/main.dart';
 import 'package:bluebubbles/managers/contact_manager.dart';
 import 'package:bluebubbles/managers/life_cycle_manager.dart';
-import 'package:bluebubbles/repository/models/platform_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:universal_io/io.dart';
 import 'dart:isolate';

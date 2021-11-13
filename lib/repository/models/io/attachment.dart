@@ -11,6 +11,8 @@ import 'package:bluebubbles/repository/models/io/message.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:mime_type/mime_type.dart';
+// (needed when generating objectbox model code)
+// ignore: unnecessary_import
 import 'package:objectbox/objectbox.dart';
 import 'package:universal_io/io.dart';
 

@@ -304,7 +304,7 @@ class Chat {
     }
 
     // Save any attachments
-    for (Attachment? attachment in message.attachments ?? []) {
+    for (Attachment? attachment in message.attachments) {
       attachment!.save(newMessage);
     }
 
@@ -497,7 +497,7 @@ class Chat {
     return null;
   }
 
-  static List<Chat> getChats({int limit = 15, int offset = 0}) {
+  static List<Chat> getChats({int limit = 15, int offset = 0, required Map fakeNames}) {
     throw Exception("Use socket to get chats on Web!");
   }
 
@@ -508,6 +508,12 @@ class Chat {
   void clearTranscript() {
     return;
   }
+
+  bool get isTextForwarding => guid?.startsWith("SMS") ?? false;
+
+  bool get isSMS => false;
+
+  bool get isIMessage => !isTextForwarding && !isSMS;
 
   Message get latestMessageGetter {
     if (latestMessage != null) return latestMessage!;
@@ -521,8 +527,9 @@ class Chat {
   }
 
   static int sort(Chat? a, Chat? b) {
-    if (a!._pinIndex.value != null && b!._pinIndex.value != null)
+    if (a!._pinIndex.value != null && b!._pinIndex.value != null) {
       return a._pinIndex.value!.compareTo(b._pinIndex.value!);
+    }
     if (b!._pinIndex.value != null) return 1;
     if (a._pinIndex.value != null) return -1;
     if (!a.isPinned! && b.isPinned!) return 1;

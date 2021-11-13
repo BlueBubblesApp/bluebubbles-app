@@ -83,7 +83,7 @@ class ThemeObject {
     return;
   }
 
-  static ThemeObject getLightTheme() {
+  static ThemeObject getLightTheme({bool fetchData = true}) {
     List<ThemeObject> res = ThemeObject.getThemes();
     List<ThemeObject> themes = res.where((element) => element.selectedLightTheme).toList();
     if (themes.isEmpty) {
@@ -91,11 +91,13 @@ class ThemeObject {
       return Themes.themes[1];
     }
     ThemeObject theme = themes.first;
-    theme.fetchData();
+    if (fetchData) {
+      theme.fetchData();
+    }
     return theme;
   }
 
-  static ThemeObject getDarkTheme() {
+  static ThemeObject getDarkTheme({bool fetchData = true}) {
     List<ThemeObject> res = ThemeObject.getThemes();
     List<ThemeObject> themes = res.where((element) => element.selectedDarkTheme).toList();
     if (themes.isEmpty) {
@@ -103,7 +105,9 @@ class ThemeObject {
       return Themes.themes[0];
     }
     ThemeObject theme = themes.first;
-    theme.fetchData();
+    if (fetchData) {
+      theme.fetchData();
+    }
     return theme;
   }
 

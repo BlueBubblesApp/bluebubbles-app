@@ -10,6 +10,8 @@ import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+// (needed when generating objectbox model code)
+// ignore: unnecessary_import
 import 'package:objectbox/objectbox.dart';
 
 @Entity()

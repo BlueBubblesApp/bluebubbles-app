@@ -3,6 +3,8 @@ import 'package:bluebubbles/objectbox.g.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart' hide Condition;
+// (needed when generating objectbox model code)
+// ignore: unnecessary_import
 import 'package:objectbox/objectbox.dart';
 
 import './chat.dart';

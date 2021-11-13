@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:bluebubbles/blocs/message_bloc.dart';
 import 'package:bluebubbles/layouts/widgets/message_widget/show_reply_thread.dart';
 import 'package:bluebubbles/managers/event_dispatcher.dart';

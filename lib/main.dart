@@ -98,12 +98,6 @@ final RxBool downloadingFont = false.obs;
 final RxnDouble progress = RxnDouble();
 final RxnInt totalSize = RxnInt();
 
-Future<Null> _reportError(dynamic error, dynamic stackTrace) async {
-  // Print the exception to the console.
-  Logger.error('Caught error: $error');
-  Logger.error(stackTrace.toString());
-}
-
 class MyHttpOverrides extends HttpOverrides {
   @override
   HttpClient createHttpClient(SecurityContext? context) {

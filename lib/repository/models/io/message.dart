@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/blocs/message_bloc.dart';
@@ -24,6 +23,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide Condition;
 import 'package:metadata_fetch/metadata_fetch.dart';
+// (needed when generating objectbox model code)
+// ignore: unnecessary_import
 import 'package:objectbox/objectbox.dart';
 
 import 'chat.dart';
