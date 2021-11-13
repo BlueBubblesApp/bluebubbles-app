@@ -64,6 +64,7 @@ class Settings {
   final RxBool tabletMode = true.obs;
   final RxBool highlightSelectedChat = true.obs;
   final RxBool immersiveMode = false.obs;
+  final RxDouble avatarScale = 1.0.obs;
 
   // final RxString emojiFontFamily;
 
@@ -291,6 +292,8 @@ class Settings {
         settings.immersiveMode.value = entry.value;
       } else if (entry.name == "swipeToReply") {
         settings.swipeToReply.value = entry.value;
+      } else if (entry.name == "avatarScale") {
+        settings.avatarScale.value = entry.value;
       }
 
       // else if (entry.name == "emojiFontFamily") {
@@ -402,6 +405,7 @@ class Settings {
       'filterUnknownSenders': filterUnknownSenders.value,
       'tabletMode': tabletMode.value,
       'immersiveMode': immersiveMode.value,
+      'avatarScale': avatarScale.value,
       'swipeToReply': swipeToReply.value,
       'highlightSelectedChat': highlightSelectedChat.value,
       'enablePrivateAPI': enablePrivateAPI.value,
@@ -501,6 +505,7 @@ class Settings {
     SettingsManager().settings.tabletMode.value = map['tabletMode'] ?? true;
     SettingsManager().settings.highlightSelectedChat.value = map['highlightSelectedChat'] ?? true;
     SettingsManager().settings.immersiveMode.value = map['immersiveMode'] ?? false;
+    SettingsManager().settings.avatarScale.value = map['avatarScale'] ?? 1.0;
     SettingsManager().settings.swipeToReply.value = map['swipeToReply'] ?? false;
     SettingsManager().settings.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     SettingsManager().settings.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;
@@ -601,6 +606,7 @@ class Settings {
     s.tabletMode.value = map['tabletMode'] ?? true;
     s.highlightSelectedChat.value = map['highlightSelectedChat'] ?? true;
     s.immersiveMode.value = map['immersiveMode'] ?? false;
+    s.avatarScale.value = map['avatarScale'] ?? 1.0;
     s.swipeToReply.value = map['swipeToReply'] ?? false;
     s.enablePrivateAPI.value = map['enablePrivateAPI'] ?? false;
     s.privateSendTypingIndicators.value = map['privateSendTypingIndicators'] ?? false;

@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/helpers/constants.dart';
@@ -145,6 +147,39 @@ class ThemePanel extends GetView<ThemePanelController> {
                         },
                         backgroundColor: tileColor,
                       ),
+                    Container(
+                      color: tileColor,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 65.0),
+                        child: SettingsDivider(color: headerColor),
+                      ),
+                    ),
+                    Obx(() {
+                      if (SettingsManager().settings.skin.value == Skins.iOS) {
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: tileColor,
+                          ),
+                          padding: EdgeInsets.only(left: 15),
+                          child: Text("Avatar Scale Factor"),
+                        );
+                      } else {
+                        return SizedBox.shrink();
+                      }
+                    }),
+                    Obx(() => SettingsSlider(
+                        text: "Avatar Scale Factor",
+                        startingVal: SettingsManager().settings.avatarScale.value.toDouble(),
+                        update: (double val) {
+                          SettingsManager().settings.avatarScale.value = val;
+                          saveSettings();
+                        },
+                        formatValue: ((double val) => val.toPrecision(2).toString()),
+                        backgroundColor: tileColor,
+                        min: 0.8,
+                        max: 1.2,
+                        divisions: 4
+                    )),
                   ],
                 ),
                 SettingsHeader(
