@@ -30,6 +30,18 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
   @override
   void initState() {
     super.initState();
+    if (widget.isDarkMode) {
+      currentTheme = ThemeObject.getDarkTheme();
+    } else {
+      currentTheme = ThemeObject.getLightTheme();
+    }
+    currentTheme!.fetchData();
+
+    allThemes = ThemeObject.getThemes();
+    for (ThemeObject theme in allThemes) {
+      theme.fetchData();
+    }
+
     widget.controller.stream.listen((event) {
       if (!currentTheme!.isPreset) {
         showSnackbar('Customization', "Click on an item to customize");
@@ -59,24 +71,6 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
       );
       // }
     });
-  }
-
-  @override
-  void didChangeDependencies() async {
-    super.didChangeDependencies();
-    if (widget.isDarkMode) {
-      currentTheme = ThemeObject.getDarkTheme();
-    } else {
-      currentTheme = ThemeObject.getLightTheme();
-    }
-    currentTheme!.fetchData();
-
-    allThemes = ThemeObject.getThemes();
-    for (ThemeObject theme in allThemes) {
-      theme.fetchData();
-    }
-
-    if (mounted) setState(() {});
   }
 
   @override
