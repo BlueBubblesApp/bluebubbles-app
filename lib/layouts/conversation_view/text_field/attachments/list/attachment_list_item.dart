@@ -155,39 +155,42 @@ class _AttachmentListItemState extends State<AttachmentListItem> {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(10),
-      child: Stack(
-        children: <Widget>[
-          getThumbnail(),
-          if (mimeType.startsWith("video/"))
-            Align(
-              alignment: Alignment.bottomRight,
-              child: Icon(
-                SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.play : Icons.play_arrow,
-                color: Colors.white,
-              ),
-            ),
-          GestureDetector(
-            onTap: widget.onRemove,
-            child: Align(
-              alignment: Alignment.topRight,
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(80),
-                  color: Colors.black,
-                ),
-                width: 25,
-                height: 25,
+    return Padding(
+      padding: const EdgeInsets.only(right: 5.0),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Stack(
+          children: <Widget>[
+            getThumbnail(),
+            if (mimeType.startsWith("video/"))
+              Align(
+                alignment: Alignment.bottomRight,
                 child: Icon(
-                  SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.xmark : Icons.close,
+                  SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.play : Icons.play_arrow,
                   color: Colors.white,
-                  size: 15,
                 ),
               ),
-            ),
-          )
-        ],
+            GestureDetector(
+              onTap: widget.onRemove,
+              child: Align(
+                alignment: Alignment.topRight,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(80),
+                    color: Colors.black,
+                  ),
+                  width: 25,
+                  height: 25,
+                  child: Icon(
+                    SettingsManager().settings.skin.value == Skins.iOS ? CupertinoIcons.xmark : Icons.close,
+                    color: Colors.white,
+                    size: 15,
+                  ),
+                ),
+              ),
+            )
+          ],
+        ),
       ),
     );
   }
