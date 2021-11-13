@@ -1134,8 +1134,8 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
   );
 
   Widget buildChatSelectorHeader() => AppBar(
-    toolbarHeight: kIsDesktop ? 30 : 0,
-        backgroundColor: Theme.of(context).backgroundColor,
+        toolbarHeight: kIsDesktop ? 30 : 0,
+        backgroundColor: Theme.of(context).colorScheme.secondary,
         leading: null,
         automaticallyImplyLeading: false,
         bottom: cupertino.CupertinoNavigationBar(

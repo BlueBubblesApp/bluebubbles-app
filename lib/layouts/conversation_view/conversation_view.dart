@@ -443,7 +443,7 @@ class ConversationViewState extends State<ConversationView> with ConversationVie
     });
     currentChat?.isAlive = true;
 
-    if (messageBloc == null) {
+    if (messageBloc == null && !isCreator!) {
       messageBloc = initMessageBloc();
       messageBloc!.getMessages();
     }
