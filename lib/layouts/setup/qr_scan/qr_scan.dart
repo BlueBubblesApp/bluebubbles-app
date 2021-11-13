@@ -523,6 +523,15 @@ class _QRScanState extends State<QRScan> {
   }
 
   void goToNextPage() {
+    if (kIsWeb) {
+      // Set the number of messages to sync
+      SocketManager().setup.numberOfMessagesPerPage = 25;
+      SocketManager().setup.downloadAttachments = false;
+      SocketManager().setup.skipEmptyChats = true;
+
+      // Start syncing
+      SocketManager().setup.startFullSync(SettingsManager().settings);
+    }
     widget.controller.nextPage(
       duration: Duration(milliseconds: 300),
       curve: Curves.easeInOut,

@@ -86,9 +86,10 @@ class _SetupViewState extends State<SetupView> {
                     QRScan(
                       controller: controller,
                     ),
-                    PrepareToDownload(
-                      controller: controller,
-                    ),
+                    if (!kIsWeb)
+                      PrepareToDownload(
+                        controller: controller,
+                      ),
                     SyncingMessages(
                       controller: controller,
                     ),
@@ -130,7 +131,7 @@ class _SetupViewState extends State<SetupView> {
                                 text: TextSpan(
                                     children: [
                                       TextSpan(text: "$currentPage", style: Theme.of(context).textTheme.bodyText1!.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
-                                      TextSpan(text: " of ${kIsWeb || kIsDesktop ? "5" : "7"}", style: Theme.of(context).textTheme.bodyText1!.copyWith(color: Colors.white38, fontWeight: FontWeight.bold)),
+                                      TextSpan(text: " of ${kIsWeb ? "4" : kIsDesktop ? "5" : "7"}", style: Theme.of(context).textTheme.bodyText1!.copyWith(color: Colors.white38, fontWeight: FontWeight.bold)),
                                     ]
                                 ),
                               ),
