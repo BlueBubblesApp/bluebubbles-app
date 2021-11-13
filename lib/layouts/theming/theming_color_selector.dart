@@ -169,8 +169,7 @@ class _ThemingColorSelectorState extends State<ThemingColorSelector> {
               ),
             ),
           ),
-        ),
-      ),
+        ),),
     );
   }
 }

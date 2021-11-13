@@ -78,7 +78,8 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
     editable = currentTheme != null && !currentTheme!.isPreset;
     Color headerColor;
     Color tileColor;
-    if (Theme.of(context).colorScheme.secondary.computeLuminance() < Theme.of(context).backgroundColor.computeLuminance() ||
+    if (Theme.of(context).colorScheme.secondary.computeLuminance() <
+            Theme.of(context).backgroundColor.computeLuminance() ||
         SettingsManager().settings.skin.value != Skins.iOS) {
       headerColor = Theme.of(context).colorScheme.secondary;
       tileColor = Theme.of(context).backgroundColor;
@@ -228,7 +229,7 @@ class _ThemingColorOptionsListState extends State<ThemingColorOptionsList> {
                   childCount: ThemeColors.Colors.length, // ThemeColors.values.length,
                 ),
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
+                  crossAxisCount: kIsDesktop ? (CustomNavigator.width(context) / 150).floor() : 2,
                 ),
               ),
               if (!currentTheme!.isPreset)
