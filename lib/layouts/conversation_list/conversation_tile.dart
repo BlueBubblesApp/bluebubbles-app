@@ -232,7 +232,7 @@ class _ConversationTileState extends State<ConversationTile> {
 
     TextStyle? style = Theme.of(context).textTheme.bodyText1;
     return FutureBuilder<String?>(
-        future: widget.chat.getTitle(),
+        future: getOrUpdateChatTitle(),
         builder: (context, snapshot) {
           String? title = snapshot.data ?? "";
           if (generateNames) {
