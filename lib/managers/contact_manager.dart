@@ -107,39 +107,7 @@ class ContactManager {
         id: e.id,
       )).toList();
     } else {
-      try {
-        contacts.clear();
-        var vcfs = await SocketManager().sendMessage("get-vcf", {}, (_) {});
-        if (vcfs['data'] != null) {
-          if (vcfs['data'] is String) {
-            vcfs['data'] = jsonDecode(vcfs['data']);
-          }
-          for (var c in vcfs['data']) {
-            contacts.add(Contact.fromMap(c));
-          }
-        }
-      } catch (e, s) {
-        print(e);
-        print(s);
-      }
-      if (contacts.isEmpty) {
-        try {
-          if (contacts.isEmpty) {
-            var response = await api.contacts();
-            for (Map<String, dynamic> map in response.data['data']){
-              ContactManager().contacts.add(Contact(
-                id: randomString(9),
-                displayName: map['firstName'] + " " + map['lastName'],
-                emails: (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList(),
-                phones: (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList(),
-              ));
-            }
-          }
-        } catch (e, s) {
-          print(e);
-          print(s);
-        }
-      }
+      await fetchContactsDesktop();
     }
 
     // Match handles in the database with contacts
@@ -154,6 +122,52 @@ class ContactManager {
     // Lazy load thumbnails after rendering initial contacts.
     getAvatars();
     return true;
+  }
+
+  Future<void> fetchContactsDesktop({Function(String)? logger}) async {
+    try {
+      contacts.clear();
+      logger?.call("Trying to fetch contacts from Android...");
+      var vcfs = await SocketManager().sendMessage("get-vcf", {}, (_) {});
+      if (vcfs['data'] != null) {
+        logger?.call("Found Android contacts!");
+        if (vcfs['data'] is String) {
+          logger?.call("Parsing string into JSON...");
+          vcfs['data'] = jsonDecode(vcfs['data']);
+        }
+        for (var c in vcfs['data']) {
+          logger?.call("Parsing contact: ${c['displayName']}");
+          contacts.add(Contact.fromMap(c));
+        }
+      }
+    } catch (e, s) {
+      print(e);
+      print(s);
+      logger?.call("Got exception: $e");
+      logger?.call(s.toString());
+    }
+    if (contacts.isEmpty) {
+      logger?.call("Android contacts didn't exist, falling back to macOS contacts...");
+      try {
+        var response = await api.contacts();
+        logger?.call("Found macOS contacts!");
+        for (Map<String, dynamic> map in response.data['data']) {
+          logger?.call("Parsing contact: ${[map['firstName'], map['lastName']].where((e) => e != null).toList().join(" ")}");
+          contacts.add(Contact(
+            id: randomString(8),
+            displayName: [map['firstName'], map['lastName']].where((e) => e != null).toList().join(" "),
+            emails: (map['emails'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList(),
+            phones: (map['phoneNumbers'] as List<dynamic>? ?? []).map((e) => e['address'].toString()).toList(),
+          ));
+        }
+      } catch (e, s) {
+        print(e);
+        print(s);
+        logger?.call("Got exception: $e");
+        logger?.call(s.toString());
+      }
+    }
+    logger?.call("Finished contacts sync");
   }
 
   Future<void> matchHandles() async {
