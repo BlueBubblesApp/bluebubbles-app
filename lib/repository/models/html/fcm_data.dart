@@ -58,6 +58,9 @@ class FCMData {
   }
 
   FCMData save() {
+    for (MapEntry entry in toMap().entries) {
+      prefs.setString(entry.key, entry.value);
+    }
     return this;
   }
 
