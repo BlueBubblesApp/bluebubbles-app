@@ -1591,11 +1591,17 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                   constraints: BoxConstraints(maxWidth: 35, maxHeight: 34),
                   padding: EdgeInsets.only(right: 4, top: 2, bottom: 2),
                   child: GestureDetector(
-                    onSecondaryTapUp: (details) async {
+                    onSecondaryTapUp: (_) async {
                       if (kIsWeb) {
                         (await html.document.onContextMenu.first).preventDefault();
                       }
-                      if ((sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value && (chat?.isIMessage ?? true)) {
+                      if ((sendCountdown == null
+                          && (!canRecord.value
+                              || (kIsDesktop
+                                  && (controller!.text.trim().isNotEmpty
+                                      || subjectController!.text.trim().isNotEmpty))))
+                          && !isRecording.value
+                          && (chat?.isIMessage ?? true)) {
                         sendEffectAction(context, this, controller!.text.trim(), subjectController!.text.trim(), replyToMessage.value?.guid, widget.chatGuid, sendMessage);
                       }
                     },
@@ -1676,7 +1682,13 @@ class BlueBubblesTextFieldState extends State<BlueBubblesTextField> with TickerP
                             if (kIsWeb) {
                               (await html.document.onContextMenu.first).preventDefault();
                             }
-                            if ((sendCountdown == null && (!canRecord.value || kIsDesktop)) && !isRecording.value && (chat?.isIMessage ?? true)) {
+                            if ((sendCountdown == null
+                                && (!canRecord.value
+                                    || (kIsDesktop
+                                        && (controller!.text.trim().isNotEmpty
+                                            || subjectController!.text.trim().isNotEmpty))))
+                                && !isRecording.value
+                                && (chat?.isIMessage ?? true)) {
                               sendEffectAction(context, this, controller!.text.trim(), subjectController!.text.trim(), replyToMessage.value?.guid, widget.chatGuid, sendMessage);
                             }
                           },
