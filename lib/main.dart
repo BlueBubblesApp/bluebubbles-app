@@ -308,8 +308,16 @@ class Main extends StatelessWidget with WidgetsBindingObserver {
     return AdaptiveTheme(
       /// These are the default white and dark themes.
       /// These will be changed by [SettingsManager] when you set a custom theme
-      light: lightTheme,
-      dark: darkTheme,
+      light: lightTheme.copyWith(
+        textSelectionTheme: TextSelectionThemeData(
+          selectionColor: lightTheme.primaryColor
+        )
+      ),
+      dark: darkTheme.copyWith(
+        textSelectionTheme: TextSelectionThemeData(
+          selectionColor: darkTheme.primaryColor
+        )
+      ),
 
       /// The default is that the dark and light themes will follow the system theme
       /// This will be changed by [SettingsManager]
