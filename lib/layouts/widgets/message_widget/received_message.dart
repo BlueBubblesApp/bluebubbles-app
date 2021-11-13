@@ -148,13 +148,44 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
 
   /// Builds the message bubble with teh tail (if applicable)
   Widget _buildMessageWithTail(Message message, MessageEffect effect) {
+    Animatable<TimelineValue<String>>? tween;
+    Size bubbleSize = Size(0, 0);
+    double opacity = 0;
+    if (controller != CustomAnimationControl.stop) {
+      bubbleSize = message.getBubbleSize(context);
+    }
+    if (effect == MessageEffect.gentle && controller != CustomAnimationControl.stop) {
+      tween = TimelineTween<String>()
+        ..addScene(begin: Duration.zero, duration: const Duration(milliseconds: 500))
+            .animate("size", tween: 0.5.tweenTo(0.5))
+        ..addScene(begin: Duration(milliseconds: 1000), duration: const Duration(milliseconds: 800), curve: Curves.easeInOut)
+            .animate("size", tween: 0.5.tweenTo(1.0));
+      opacity = 1;
+    } else if (controller != CustomAnimationControl.stop) {
+      tween = TimelineTween<String>()
+        ..addScene(begin: Duration.zero, duration: const Duration(milliseconds: 500), curve: Curves.easeInOut)
+            .animate("size", tween: 1.0.tweenTo(1.0));
+    }
+    if (effect == MessageEffect.invisibleInk && controller != CustomAnimationControl.stop) {
+      setState(() {
+        opacity = 1;
+      });
+    }
+    double topPadding = widget.message
+        .getReactions().isNotEmpty && !widget.message.hasAttachments
+        ? 18
+        : (widget.message.isFromMe != widget.olderMessage?.isFromMe && skin.value != Skins.Samsung)
+        ? 5.0
+        : 0;
+
+    late final Widget child;
     if (message.isBigEmoji()) {
       final bool hideContent =
           SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideEmojis.value;
 
       bool hasReactions = message
           .getReactions().isNotEmpty;
-      return Padding(
+      child = Padding(
         padding: EdgeInsets.only(
           left: CurrentChat
               .activeChat?.chat.isGroup() ?? false ? 5.0 : 0.0,
@@ -191,192 +222,164 @@ class _ReceivedMessageState extends State<ReceivedMessage> with MessageWidgetMix
                         .bodyText1!
                         .apply(fontSizeFactor: 4)))),
       );
-    }
-    Animatable<TimelineValue<String>>? tween;
-    Size bubbleSize = Size(0, 0);
-    double opacity = 0;
-    if (controller != CustomAnimationControl.stop) {
-      bubbleSize = message.getBubbleSize(context);
-    }
-    if (effect == MessageEffect.gentle && controller != CustomAnimationControl.stop) {
-      tween = TimelineTween<String>()
-        ..addScene(begin: Duration.zero, duration: const Duration(milliseconds: 500))
-            .animate("size", tween: 0.5.tweenTo(0.5))
-        ..addScene(begin: Duration(milliseconds: 1000), duration: const Duration(milliseconds: 800), curve: Curves.easeInOut)
-            .animate("size", tween: 0.5.tweenTo(1.0));
-      opacity = 1;
-    } else if (controller != CustomAnimationControl.stop) {
-      tween = TimelineTween<String>()
-        ..addScene(begin: Duration.zero, duration: const Duration(milliseconds: 500), curve: Curves.easeInOut)
-            .animate("size", tween: 1.0.tweenTo(1.0));
-    }
-    if (effect == MessageEffect.invisibleInk && controller != CustomAnimationControl.stop) {
-      setState(() {
-        opacity = 1;
-      });
-    }
-    double topPadding = widget.message
-        .getReactions().isNotEmpty && !widget.message.hasAttachments
-        ? 18
-        : (widget.message.isFromMe != widget.olderMessage?.isFromMe && skin.value != Skins.Samsung)
-        ? 5.0
-        : 0;
-    final child = Stack(
-      alignment: AlignmentDirectional.bottomStart,
-      children: [
-        if (widget.showTail && skin.value == Skins.iOS)
-          Obx(() => MessageTail(
-            isFromMe: false,
-            color: getBubbleColors(widget.message)[0],
-          )),
-        Container(
-          margin: EdgeInsets.only(
-            top: topPadding,
-            left: 10,
-            right: 10,
-          ),
-          constraints: BoxConstraints(
-            maxWidth: CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE,
-          ),
-          padding: EdgeInsets.symmetric(
-            vertical: 8,
-            horizontal: 14,
-          ),
-          decoration: BoxDecoration(
-            borderRadius: skin.value == Skins.iOS
-                ? BorderRadius.only(
-              bottomLeft: Radius.circular(17),
-              bottomRight: Radius.circular(20),
-              topLeft: Radius.circular(20),
-              topRight: Radius.circular(20),
-            )
-                : (skin.value == Skins.Material)
-                ? BorderRadius.only(
-              topLeft: widget.olderMessage == null ||
-                  MessageHelper.getShowTail(context, widget.olderMessage, widget.message)
-                  ? Radius.circular(20)
-                  : Radius.circular(5),
-              topRight: Radius.circular(20),
-              bottomRight: Radius.circular(20),
-              bottomLeft: Radius.circular(widget.showTail ? 20 : 5),
-            )
-                : (skin.value == Skins.Samsung)
-                ? BorderRadius.only(
-              topLeft: Radius.circular(17.5),
-              topRight: Radius.circular(17.5),
-              bottomRight: Radius.circular(17.5),
-              bottomLeft: Radius.circular(17.5),
-            )
-                : null,
-            gradient: LinearGradient(
-              begin: AlignmentDirectional.bottomCenter,
-              end: AlignmentDirectional.topCenter,
-              colors: getBubbleColors(widget.message),
+    } else {
+      child = Stack(
+        alignment: AlignmentDirectional.bottomStart,
+        children: [
+          if (widget.showTail && skin.value == Skins.iOS)
+            Obx(() => MessageTail(
+              isFromMe: false,
+              color: getBubbleColors(widget.message)[0],
+            )),
+          Container(
+            margin: EdgeInsets.only(
+              top: topPadding,
+              left: 10,
+              right: 10,
             ),
-          ),
-          child: effect.isBubble && controller != CustomAnimationControl.stop ? CustomAnimation<TimelineValue<String>>(
-            control: controller,
-            tween: tween!,
-            duration: Duration(milliseconds: 1800),
-            builder: (context, child, anim) {
-              double value = anim.get("size");
-              return StatefulBuilder(
-                builder: (context, setState) {
-                  final bool generateContent =
-                      SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeMessageContent.value;
-                  final bool hideContent =
-                      (SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value && !generateContent);
-                  final subject = generateContent ? faker.lorem.words(message.subject?.split(" ").length).join(" ") : message.subject;
-                  final text = generateContent ? faker.lorem.words(message.text?.split(" ").length).join(" ") : message.text;
-                  return GestureDetector(
-                    onHorizontalDragEnd: (DragEndDetails details) {
-                      if ((details.primaryVelocity ?? 0) < 0 && effect == MessageEffect.invisibleInk) {
-                        setState(() {
-                          opacity = 1 - opacity;
-                          controller = CustomAnimationControl.stop;
-                        });
-                      }
-                    },
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Opacity(
-                          opacity: 1 - opacity,
-                          child: RichText(
-                            text: TextSpan(
-                              children: [
-                                if (!isNullOrEmpty(message.subject)!)
-                                  TextSpan(
-                                    text: "$subject\n",
-                                    style: Theme.of(context).textTheme.bodyText2!.apply(fontWeightDelta: 2, color: hideContent ? Colors.transparent : Colors.white),
+            constraints: BoxConstraints(
+              maxWidth: CustomNavigator.width(context) * MessageWidgetMixin.MAX_SIZE,
+            ),
+            padding: EdgeInsets.symmetric(
+              vertical: 8,
+              horizontal: 14,
+            ),
+            decoration: BoxDecoration(
+              borderRadius: skin.value == Skins.iOS
+                  ? BorderRadius.only(
+                bottomLeft: Radius.circular(17),
+                bottomRight: Radius.circular(20),
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              )
+                  : (skin.value == Skins.Material)
+                  ? BorderRadius.only(
+                topLeft: widget.olderMessage == null ||
+                    MessageHelper.getShowTail(context, widget.olderMessage, widget.message)
+                    ? Radius.circular(20)
+                    : Radius.circular(5),
+                topRight: Radius.circular(20),
+                bottomRight: Radius.circular(20),
+                bottomLeft: Radius.circular(widget.showTail ? 20 : 5),
+              )
+                  : (skin.value == Skins.Samsung)
+                  ? BorderRadius.only(
+                topLeft: Radius.circular(17.5),
+                topRight: Radius.circular(17.5),
+                bottomRight: Radius.circular(17.5),
+                bottomLeft: Radius.circular(17.5),
+              )
+                  : null,
+              gradient: LinearGradient(
+                begin: AlignmentDirectional.bottomCenter,
+                end: AlignmentDirectional.topCenter,
+                colors: getBubbleColors(widget.message),
+              ),
+            ),
+            child: effect.isBubble && controller != CustomAnimationControl.stop ? CustomAnimation<TimelineValue<String>>(
+                control: controller,
+                tween: tween!,
+                duration: Duration(milliseconds: 1800),
+                builder: (context, child, anim) {
+                  double value = anim.get("size");
+                  return StatefulBuilder(
+                      builder: (context, setState) {
+                        final bool generateContent =
+                            SettingsManager().settings.redactedMode.value && SettingsManager().settings.generateFakeMessageContent.value;
+                        final bool hideContent =
+                        (SettingsManager().settings.redactedMode.value && SettingsManager().settings.hideMessageContent.value && !generateContent);
+                        final subject = generateContent ? faker.lorem.words(message.subject?.split(" ").length).join(" ") : message.subject;
+                        final text = generateContent ? faker.lorem.words(message.text?.split(" ").length).join(" ") : message.text;
+                        return GestureDetector(
+                          onHorizontalDragEnd: (DragEndDetails details) {
+                            if ((details.primaryVelocity ?? 0) < 0 && effect == MessageEffect.invisibleInk) {
+                              setState(() {
+                                opacity = 1 - opacity;
+                                controller = CustomAnimationControl.stop;
+                              });
+                            }
+                          },
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Opacity(
+                                opacity: 1 - opacity,
+                                child: RichText(
+                                  text: TextSpan(
+                                    children: [
+                                      if (!isNullOrEmpty(message.subject)!)
+                                        TextSpan(
+                                          text: "$subject\n",
+                                          style: Theme.of(context).textTheme.bodyText2!.apply(fontWeightDelta: 2, color: hideContent ? Colors.transparent : Colors.white),
+                                        ),
+                                      TextSpan(
+                                        text: text,
+                                        style: Theme.of(context).textTheme.bodyText2!.apply(color: hideContent ? Colors.transparent : Colors.white),
+                                      ),
+                                    ],
+                                    style: Theme.of(context).textTheme.bodyText2!.apply(color: hideContent ? Colors.transparent : Colors.white),
                                   ),
-                                TextSpan(
-                                  text: text,
-                                  style: Theme.of(context).textTheme.bodyText2!.apply(color: hideContent ? Colors.transparent : Colors.white),
                                 ),
-                              ],
-                              style: Theme.of(context).textTheme.bodyText2!.apply(color: hideContent ? Colors.transparent : Colors.white),
-                            ),
-                          ),
-                        ),
-                        if (effect == MessageEffect.gentle)
-                          RichText(
-                            text: TextSpan(
-                              children: [
-                                if (!isNullOrEmpty(message.subject)!)
-                                  TextSpan(
-                                    text: "$subject\n",
-                                    style: Theme.of(context).textTheme.bodyText2!.apply(fontWeightDelta: 2, fontSizeFactor: value, color: hideContent ? Colors.transparent : Colors.white),
-                                  ),
-                                TextSpan(
-                                  text: text,
-                                  style: Theme.of(context).textTheme.bodyText2!.apply(fontSizeFactor: value, color: hideContent ? Colors.transparent : Colors.white),
-                                ),
-                              ],
-                              style: Theme.of(context).textTheme.bodyText2!.apply(color: hideContent ? Colors.transparent : Colors.white),
-                            ),
-                          ),
-                        if (effect == MessageEffect.invisibleInk && controller != CustomAnimationControl.stop)
-                          Opacity(
-                            opacity: opacity,
-                            child: AbsorbPointer(
-                              absorbing: true,
-                              child: CircularParticle(
-                                key: UniqueKey(),
-                                numberOfParticles: bubbleSize.height * bubbleSize.width / 25,
-                                speedOfParticles: 0.25,
-                                height: bubbleSize.height - 20,
-                                width: bubbleSize.width - 25,
-                                particleColor: Colors.white.withAlpha(150),
-                                maxParticleSize: (bubbleSize.height / 75).clamp(0.5, 1),
-                                isRandSize: true,
-                                isRandomColor: false,
                               ),
-                            ),
+                              if (effect == MessageEffect.gentle)
+                                RichText(
+                                  text: TextSpan(
+                                    children: [
+                                      if (!isNullOrEmpty(message.subject)!)
+                                        TextSpan(
+                                          text: "$subject\n",
+                                          style: Theme.of(context).textTheme.bodyText2!.apply(fontWeightDelta: 2, fontSizeFactor: value, color: hideContent ? Colors.transparent : Colors.white),
+                                        ),
+                                      TextSpan(
+                                        text: text,
+                                        style: Theme.of(context).textTheme.bodyText2!.apply(fontSizeFactor: value, color: hideContent ? Colors.transparent : Colors.white),
+                                      ),
+                                    ],
+                                    style: Theme.of(context).textTheme.bodyText2!.apply(color: hideContent ? Colors.transparent : Colors.white),
+                                  ),
+                                ),
+                              if (effect == MessageEffect.invisibleInk && controller != CustomAnimationControl.stop)
+                                Opacity(
+                                  opacity: opacity,
+                                  child: AbsorbPointer(
+                                    absorbing: true,
+                                    child: CircularParticle(
+                                      key: UniqueKey(),
+                                      numberOfParticles: bubbleSize.height * bubbleSize.width / 25,
+                                      speedOfParticles: 0.25,
+                                      height: bubbleSize.height - 20,
+                                      width: bubbleSize.width - 25,
+                                      particleColor: Colors.white.withAlpha(150),
+                                      maxParticleSize: (bubbleSize.height / 75).clamp(0.5, 1),
+                                      isRandSize: true,
+                                      isRandomColor: false,
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
-                      ],
+                        );
+                      }
+                  );
+                }
+            ) : FutureBuilder<List<InlineSpan>>(
+                future: spanFuture,
+                initialData: MessageWidgetMixin.buildMessageSpans(context, widget.message,
+                    colors: widget.message.handle?.color != null ? getBubbleColors(widget.message) : null),
+                builder: (context, snapshot) {
+                  return RichText(
+                    text: TextSpan(
+                      children: snapshot.data ?? MessageWidgetMixin.buildMessageSpans(context, widget.message,
+                          colors: widget.message.handle?.color != null ? getBubbleColors(widget.message) : null),
+                      style: Theme.of(context).textTheme.bodyText2,
                     ),
                   );
                 }
-              );
-            }
-          ) : FutureBuilder<List<InlineSpan>>(
-              future: spanFuture,
-              initialData: MessageWidgetMixin.buildMessageSpans(context, widget.message,
-                  colors: widget.message.handle?.color != null ? getBubbleColors(widget.message) : null),
-              builder: (context, snapshot) {
-                return RichText(
-                  text: TextSpan(
-                    children: snapshot.data ?? MessageWidgetMixin.buildMessageSpans(context, widget.message,
-                        colors: widget.message.handle?.color != null ? getBubbleColors(widget.message) : null),
-                    style: Theme.of(context).textTheme.bodyText2,
-                  ),
-                );
-              }
+            ),
           ),
-        ),
-      ],
-    );
+        ],
+      );
+    }
 
     if (effect.isBubble && effect != MessageEffect.invisibleInk && controller != CustomAnimationControl.stop) {
       Animatable<TimelineValue<String>> tween = TimelineTween<String>()
