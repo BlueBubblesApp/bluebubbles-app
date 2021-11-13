@@ -696,7 +696,7 @@ class MessageDetailsPopupState extends State<MessageDetailsPopup> {
             ),
           ),
         ),
-      if ((widget.message.hasAttachments && !kIsWeb && !kIsDesktop) || widget.message.text!.isNotEmpty)
+      if ((widget.message.hasAttachments && !kIsWeb && !kIsDesktop) || (widget.message.text!.isNotEmpty && !kIsDesktop))
         Material(
           color: Colors.transparent,
           child: InkWell(
