@@ -1,4 +1,6 @@
+import 'package:bluebubbles/blocs/chat_bloc.dart';
 import 'package:bluebubbles/repository/models/html/chat.dart';
+import 'package:collection/collection.dart';
 
 class Handle {
   int? id;
@@ -53,7 +55,8 @@ class Handle {
   }
 
   static Handle? findOne({int? originalROWID, String? address}) {
-    return null;
+    // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
+    return ChatBloc().cachedHandles.firstWhereOrNull((e) => originalROWID != null ? e.originalROWID == originalROWID : e.address == address);
   }
 
   static List<Handle> find() {

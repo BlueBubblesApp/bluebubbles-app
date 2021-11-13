@@ -435,7 +435,7 @@ class MessagesViewState extends State<MessagesView> with WidgetsBindingObserver 
               behavior: HitTestBehavior.deferToChild,
               onHorizontalDragStart: (details) {},
               onHorizontalDragUpdate: (details) {
-                if (SettingsManager().settings.skin.value != Skins.Samsung) {
+                if (SettingsManager().settings.skin.value != Skins.Samsung && !kIsWeb && !kIsDesktop) {
                   CurrentChat.activeChat!.timeStampOffset += details.delta.dx * 0.3;
                 }
               },

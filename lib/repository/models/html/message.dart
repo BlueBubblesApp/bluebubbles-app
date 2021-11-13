@@ -215,6 +215,8 @@ class Message {
       hasReactions: json.containsKey('hasReactions') ? ((json['hasReactions'] == 1) ? true : false) : false,
       dateDeleted: json.containsKey("dateDeleted") ? parseDate(json["dateDeleted"]) : null,
       metadata: metadata is String ? null : metadata,
+      threadOriginatorGuid: json.containsKey('threadOriginatorGuid') ? json['threadOriginatorGuid'] : null,
+      threadOriginatorPart: json.containsKey('threadOriginatorPart') ? json['threadOriginatorPart'] : null,
     );
 
     // Adds fallback getter for the ID
@@ -282,9 +284,17 @@ class Message {
     if (associatedMessages.isNotEmpty && associatedMessages.length == 1 && associatedMessages[0].guid == guid) {
       return this;
     }
-    associatedMessages =
-        (bloc?.reactionMessages.values.where((element) => element.associatedMessageGuid == guid).toList() ?? [])
-            .cast<Message>();
+    associatedMessages = (bloc?.reactionMessages.values.where((element) => element.associatedMessageGuid == guid).toList() ?? []).cast<Message>();
+    if (threadOriginatorGuid != null) {
+      final existing = bloc?.messages.values.firstWhereOrNull((e) => e.guid == threadOriginatorGuid);
+      final threadOriginator = existing;
+      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
+      threadOriginator?.handle ??= Handle.findOne(originalROWID: threadOriginator.handleId);
+      // ignore: argument_type_not_assignable, return_of_invalid_type, invalid_assignment, for_in_of_invalid_element_type
+      if (threadOriginator != null) associatedMessages.add(threadOriginator);
+      if (existing == null && threadOriginator != null) bloc?.addMessage(threadOriginator);
+      if (!guid!.startsWith("temp")) bloc?.threadOriginators[guid!] = threadOriginatorGuid!;
+    }
     associatedMessages.sort((a, b) => a.originalROWID!.compareTo(b.originalROWID!));
     return this;
   }
@@ -559,5 +569,7 @@ class Message {
         "hasReactions": hasReactions ? 1 : 0,
         "dateDeleted": (dateDeleted == null) ? null : dateDeleted!.millisecondsSinceEpoch,
         "metadata": jsonEncode(metadata),
+        "threadOriginatorGuid": threadOriginatorGuid,
+        "threadOriginatorPart": threadOriginatorPart,
       };
 }
