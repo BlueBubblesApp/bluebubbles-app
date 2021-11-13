@@ -364,7 +364,7 @@
     },
     {
       "id": "10:7380334062783734091",
-      "lastPropertyId": "6:205399809771216750",
+      "lastPropertyId": "7:2424613981822393823",
       "name": "ThemeEntry",
       "properties": [
         {
@@ -397,6 +397,11 @@
           "id": "6:205399809771216750",
           "name": "dbColor",
           "type": 9
+        },
+        {
+          "id": "7:2424613981822393823",
+          "name": "fontWeight",
+          "type": 6
         }
       ],
       "relations": []

@@ -540,7 +540,7 @@ class Message {
   }
 
   Handle? getHandle() {
-    if (kIsWeb) return null;
+    if (kIsWeb || handleId == 0) return null;
     return handleBox.get(handleId!);
   }
 

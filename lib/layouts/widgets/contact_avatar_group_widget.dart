@@ -28,7 +28,8 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
   late final RxList<Handle> participants;
 
   @override
-  Widget build(BuildContext context) {
+  void initState() {
+    super.initState();
     participants = widget.chat.participants.obs;
 
     participants.sort((a, b) {
@@ -42,7 +43,10 @@ class _ContactAvatarGroupWidgetState extends State<ContactAvatarGroupWidget> {
     for (Handle participant in participants) {
       if (!(ContactManager().handleToContact[participant]?.avatar.value?.isNotEmpty ?? false)) {}
     }
+  }
 
+  @override
+  Widget build(BuildContext context) {
     if (participants.isEmpty) {
       return Container(
         width: widget.size,

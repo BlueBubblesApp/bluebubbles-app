@@ -29,6 +29,7 @@ import 'package:bluebubbles/socket_manager.dart';
 import 'package:flutter/cupertino.dart' as cupertino;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:simple_animations/simple_animations.dart';
@@ -147,8 +148,12 @@ mixin ConversationViewMixin<ConversationViewState extends StatefulWidget> on Sta
     }
   }
 
-  void didChangeDependenciesConversationView() {
+  void didChangeDependenciesConversationView() async {
     if (isCreator!) return;
+    if (SchedulerBinding.instance!.schedulerPhase != SchedulerPhase.idle) {
+      // wait for the end of that frame.
+      await SchedulerBinding.instance!.endOfFrame;
+    }
     SocketManager().removeChatNotification(chat!);
   }
 

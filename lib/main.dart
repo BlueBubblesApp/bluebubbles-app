@@ -471,13 +471,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
     // Get the saved settings from the settings manager after the first frame
     SchedulerBinding.instance!.addPostFrameCallback((_) async {
-      FirebaseDart.setup(
-        platform: fdu.Platform.web(
-          currentUrl: Uri.base.toString(),
-          isMobile: false,
-          isOnline: true,
-        ),
-      );
       await SettingsManager().getSavedSettings();
 
       if (SettingsManager().settings.colorsFromMedia.value) {

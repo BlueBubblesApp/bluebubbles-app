@@ -89,10 +89,9 @@ class _MessageState extends State<MessageWidget> {
       _message.save();
     }
 
-    // todo just in case
-    /*checkHandle();
+    checkHandle();
     fetchAssociatedMessages();
-    fetchAttachments();*/
+    fetchAttachments();
 
     // Listen for new messages
     subscription = NewMessageManager().stream.listen((data) {
