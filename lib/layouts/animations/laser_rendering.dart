@@ -93,7 +93,7 @@ class RenderLaser extends RenderBox {
       final Path p = Path();
       double centerX = controller.laser!.position.x;
       double centerY = controller.laser!.position.y;
-      double screenHeight = max(controller.windowSize.height, controller.windowSize.width);
+      double screenHeight = max(controller.windowSize.height, controller.windowSize.width) * sqrt(2);
       Color color = HSVColor.fromAHSV(1, controller.globalHue % 360, 1, 1).toColor();
       p.addArc(Rect.fromCenter(
         center: Offset(centerX, centerY),
