@@ -420,6 +420,7 @@ class _Cupertino extends StatelessWidget {
             if (kIsWeb) {
               (await html.document.onContextMenu.first).preventDefault();
             }
+            final shouldCancelHighlight = !parent.shouldHighlight;
             if ((kIsDesktop || kIsWeb) && SettingsManager().settings.highlightSelectedChat.value) {
               parent.shouldHighlight = true;
             }
@@ -431,8 +432,10 @@ class _Cupertino extends StatelessWidget {
               details.globalPosition,
               context.textTheme,
             );
-            parent.shouldHighlight = false;
-            parent.update();
+            if (shouldCancelHighlight) {
+              parent.shouldHighlight = false;
+              parent.update();
+            }
           },
           onLongPress: () async {
             HapticFeedback.mediumImpact();
@@ -556,17 +559,20 @@ class _Material extends StatelessWidget {
           if (kIsWeb) {
             (await html.document.onContextMenu.first).preventDefault();
           }
+          final shouldCancelHighlight = !parent.shouldHighlight;
           parent.shouldHighlight = true;
           parent.update();
           await showConversationTileMenu(
             context,
-            this,
+            parent,
             parent.widget.chat,
             details.globalPosition,
             context.textTheme,
           );
-          parent.shouldHighlight = false;
-          parent.update();
+          if (shouldCancelHighlight) {
+            parent.shouldHighlight = false;
+            parent.update();
+          }
         },
         child: InkWell(
           onTap: () {
@@ -668,17 +674,20 @@ class _Samsung extends StatelessWidget {
           if (kIsWeb) {
             (await html.document.onContextMenu.first).preventDefault();
           }
+          final shouldCancelHighlight = !parent.shouldHighlight;
           parent.shouldHighlight = true;
           parent.update();
           await showConversationTileMenu(
             context,
-            this,
+            parent,
             parent.widget.chat,
             details.globalPosition,
             context.textTheme,
           );
-          parent.shouldHighlight = false;
-          parent.update();
+          if (shouldCancelHighlight) {
+            parent.shouldHighlight = false;
+            parent.update();
+          }
         },
         child: InkWell(
           onTap: () {
